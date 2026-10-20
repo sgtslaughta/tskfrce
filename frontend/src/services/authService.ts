@@ -127,8 +127,13 @@ export class AuthService {
 
       return response.data;
     } catch (error) {
-      console.error('AuthService: Login error:', error);
-      throw new Error('Login failed. Please check your credentials.');
+      // Expected failures are shown inline by the login form, so nothing is logged here.
+      const status = (error as { status_code?: number }).status_code;
+      throw new Error(
+        status && status < 500
+          ? 'Incorrect username or password'
+          : "Can't reach the home box. Check it's plugged in and on Wi-Fi."
+      );
     }
   }
 

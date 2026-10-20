@@ -306,7 +306,6 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       updateAuthState({ isLoading: false });
       
     } catch (error: any) {
-      console.error('Login error:', error);
       updateAuthState({
         error: error.message || 'Login failed. Please check your credentials.',
         isLoading: false,
