@@ -28,6 +28,19 @@ def current_chore_day(fam: FamilySettings, now_utc: datetime) -> date:
     return fam.last_reset_date or local_now(fam.timezone, now_utc).date()
 
 
+def chore_state(t: Task) -> str:
+    """done (parent-approved) | needs_you (submitted) | todo."""
+    if (
+        t.status == TaskStatus.DONE
+        and t.approved_by is not None
+        and t.approved_by.role == UserRole.PARENT
+    ):
+        return "done"
+    if t.status == TaskStatus.SUBMITTED_FOR_APPROVAL:
+        return "needs_you"
+    return "todo"
+
+
 def is_chore_filter():
     """SQL filter: rows marked as chores (definitions and instances)."""
     return Task.recurrence_pattern["chore"].as_boolean().is_(True)

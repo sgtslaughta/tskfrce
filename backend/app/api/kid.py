@@ -1,5 +1,6 @@
 """Kid API: kids are identified by the device they use (no password)."""
 
+import ipaddress
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -8,12 +9,11 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user, get_db
-from app.api.family import _state
 from app.core.auth import AuthService
 from app.core.client_ip import client_ip
-from app.core.ratelimit import limit
+from app.core.ratelimit import check, hit
 from app.lock.loop import trigger
-from app.lock.reset import current_chore_day, is_chore_filter, midnight
+from app.lock.reset import chore_state, current_chore_day, is_chore_filter, midnight
 from app.lock.rules import is_online
 from app.lock.schedule import local_now
 from app.lock.state import device_facts
@@ -39,9 +39,21 @@ def require_kid(user: User = Depends(get_current_active_user)) -> User:
     return user
 
 
+def norm_ip(x: str | None) -> str | None:
+    """Canonical form (IPv4-mapped IPv6 -> IPv4, zone id dropped); None if not an IP."""
+    try:
+        a = ipaddress.ip_address(str(x).split("%")[0].strip())
+    except ValueError:
+        return None
+    return str(getattr(a, "ipv4_mapped", None) or a)
+
+
 def request_device(db: Session, ip: str) -> Device | None:
+    want = norm_ip(ip)
+    if want is None:
+        return None
     for d in db.query(Device).all():
-        if d.ip == ip or ip in (d.ipv6 or []):
+        if want in {norm_ip(d.ip), *(norm_ip(v) for v in d.ipv6 or [])}:
             return d
     return None
 
@@ -60,13 +72,16 @@ def whoami(request: Request, db: Session = Depends(get_db)):
 @router.post("/login")
 def login(body: KidLogin, request: Request, db: Session = Depends(get_db)):
     ip = client_ip(request)
-    limit(f"kid:{ip}", 5, 60)
+    key = f"kid:{ip}"
+    check(key, 5, 60)  # only failed tries count
     dev = request_device(db, ip)
     kid = next((k for k in (dev.owners if dev else []) if k.id == body.kid_id), None)
     if kid is None or kid.role != UserRole.KID or not kid.is_active:
+        hit(key, 60)
         raise HTTPException(status_code=403, detail=NOT_YOURS)
     auth = AuthService(db)
     if kid.pin_hash and not (body.pin and auth.verify_password(body.pin, kid.pin_hash)):
+        hit(key, 60)
         raise HTTPException(status_code=401, detail="Wrong PIN. Try again.")
     return {"access_token": auth.create_access_token(data={"sub": str(kid.id)})}
 
@@ -83,7 +98,6 @@ def _locked(db: Session, kid: User, ip: str, now: datetime) -> bool:
 def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(require_kid)):
     now = datetime.now(UTC)
     day = current_chore_day(get_family(db), now)
-    parent_ids = {i for (i,) in db.query(User.id).filter(User.role == UserRole.PARENT)}
     tasks = (
         db.query(Task)
         .filter(
@@ -104,7 +118,7 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(r
     return {
         "locked": _locked(db, kid, client_ip(request), now),
         "chores": [
-            {"id": t.id, "title": t.title, "points": t.points or 0, "state": _state(t, parent_ids)}
+            {"id": t.id, "title": t.title, "points": t.points or 0, "state": chore_state(t)}
             for t in tasks
         ],
         "points_balance": int(balance),
@@ -120,8 +134,12 @@ def done(chore_id: int, db: Session = Depends(get_db), kid: User = Depends(requi
     )
     if t is None or t.status not in (TaskStatus.TODO, TaskStatus.IN_PROGRESS):
         raise HTTPException(status_code=403, detail="That isn't your chore to finish.")
+    now = datetime.now(UTC).replace(tzinfo=None)
+    day = current_chore_day(get_family(db), now.replace(tzinfo=UTC))
+    if t.due_date != midnight(day):
+        raise HTTPException(status_code=409, detail="That chore is from another day.")
     t.status = TaskStatus.SUBMITTED_FOR_APPROVAL
-    t.submitted_for_approval_at = datetime.utcnow()
+    t.submitted_for_approval_at = now
     db.commit()
     trigger()
     return {

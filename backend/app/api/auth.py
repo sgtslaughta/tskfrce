@@ -12,9 +12,10 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
 from app.core.auth import AuthService
+from app.core.client_ip import client_ip
 from app.core.config import settings
 from app.core.database import get_db_session
-from app.core.ratelimit import client_ip, limit
+from app.core.ratelimit import limit
 from app.models.user import UsedInvite, User, UserRole
 from app.schemas.auth import (
     LoginRequest,

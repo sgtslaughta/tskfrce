@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db, require_parent
 from app.api.devices import device_out
 from app.lock.loop import trigger
-from app.lock.reset import current_chore_day, is_chore_filter, midnight
+from app.lock.reset import chore_state, current_chore_day, is_chore_filter, midnight
 from app.models.family import get_family
 from app.models.lock import Device
 from app.models.task import Task, TaskStatus
@@ -53,19 +53,10 @@ def patch_family(body: FamilyPatch, db: Session = Depends(get_db)):
     return _fam_out(fam)
 
 
-def _state(t: Task, parent_ids: set[int]) -> str:
-    if t.status == TaskStatus.DONE and t.approved_by_id in parent_ids:
-        return "done"
-    if t.status == TaskStatus.SUBMITTED_FOR_APPROVAL:
-        return "needs_you"
-    return "todo"
-
-
 @router.get("/today")
 def today(db: Session = Depends(get_db)):
     fam, now = get_family(db), datetime.now(UTC)
     day = current_chore_day(fam, now)
-    parent_ids = {i for (i,) in db.query(User.id).filter(User.role == UserRole.PARENT)}
     tasks = (
         db.query(Task)
         .filter(
@@ -81,7 +72,7 @@ def today(db: Session = Depends(get_db)):
     for k in db.query(User).filter(User.role == UserRole.KID).order_by(User.id):
         devs = [device_out(db, d, fam, now) for d in k.devices]
         chores = [
-            {"id": t.id, "title": t.title, "points": t.points or 0, "state": _state(t, parent_ids)}
+            {"id": t.id, "title": t.title, "points": t.points or 0, "state": chore_state(t)}
             for t in tasks
             if t.assigned_to_id == k.id
         ]
