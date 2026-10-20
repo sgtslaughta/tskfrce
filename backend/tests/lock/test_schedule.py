@@ -53,3 +53,21 @@ def test_occurs_on():
 def test_local_now():
     n = local_now("America/New_York", datetime(2026, 10, 20, 12, tzinfo=UTC))
     assert n.hour == 8
+
+
+def test_wrap_window_not_active_on_unrelated_days():
+    w = Window(frozenset({0}), time(20), time(2))
+    assert not in_window(w, at(date(2026, 10, 21), 1))  # Wed 01:00
+    assert not in_window(w, at(MON, 1))  # Mon 01:00 (Sunday not in days)
+
+
+def test_whole_day_window_does_not_spill_to_next_day():
+    w = Window(frozenset({0}), time(0), time(0))
+    assert in_window(w, at(MON, 12))
+    assert not in_window(w, at(TUE, 0, 30))
+
+
+def test_local_now_dst_fallback():
+    # 2026-11-01 06:00 UTC is the instant NY falls back: 02:00 EDT -> 01:00 EST
+    n = local_now("America/New_York", datetime(2026, 11, 1, 6, tzinfo=UTC))
+    assert (n.hour, n.minute, n.utcoffset().total_seconds()) == (1, 0, -5 * 3600)

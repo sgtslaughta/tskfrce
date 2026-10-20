@@ -30,6 +30,7 @@ from app.api import (
     websocket_router,
     workflow_router,
 )
+from app.api.chores import router as chores_router
 from app.api.notifications import router as notifications_router
 from app.api.setup import router as setup_router
 from app.core.logging import configure_logging, get_logger
@@ -133,6 +134,7 @@ fastapi_app.include_router(presence_router, prefix="/api/v1/presence", tags=["pr
 fastapi_app.include_router(
     notifications_router, prefix="/api/v1/notifications", tags=["notifications"]
 )
+fastapi_app.include_router(chores_router)
 fastapi_app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
 
 # Create the final app with ASGI middleware
