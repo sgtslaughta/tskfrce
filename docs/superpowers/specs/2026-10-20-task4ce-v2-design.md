@@ -116,6 +116,11 @@ A **manual lock** beats everything. A **manual unlock** with no timer stays on u
 - Kids spend points on bonus minutes.
 - Default: bonus time only applies **after** chores are approved and **never past allowed hours**.
 - Family setting: "Points can unlock early" (off by default) lets bonus time bypass the chore lock (still not allowed hours).
+- **When bonus time can be spent** (owner decision 2026-10-20, ships v2.1): a parent setting `bonus_when` with two choices:
+  - `during_windows`: bonus minutes count only inside allowed hours. Useful with "Points can unlock early" (skip chores for a while) or with free-time/allowed windows shorter than the whole day.
+  - `after_windows`: bonus minutes extend past the end of allowed hours (e.g. 30 min past bedtime), only after chores are approved.
+  - Rule-engine change in v2.1: with `after_windows`, an active bonus satisfies the allowed-hours check too.
+- Later (not v2.x scope): deeper rewards — points → allowance or other privileges (parent-defined reward catalog).
 
 ## 6. People & accounts
 - Roles: **Parent** and **Kid** only. Replace old `user/organizer/admin`.
