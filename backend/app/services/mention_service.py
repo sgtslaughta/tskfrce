@@ -7,6 +7,7 @@ in comments and messages with real-time notifications.
 
 import re
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
@@ -122,7 +123,7 @@ class MentionService:
                     ]
                 )
             if search_conditions:
-                query = query.filter(db.or_(*search_conditions))  # noqa: F821 - legacy bug, module removed in plan 1
+                query = query.filter(or_(*search_conditions))
 
         # Get users
         users = query.limit(limit).all()
