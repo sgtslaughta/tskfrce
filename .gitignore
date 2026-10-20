@@ -228,4 +228,4 @@ docs/task_workflow_enhancement_plan.md
 
 # Development files
 .env.development
-.env.no-rate-limit
+.env.no-rate-limit.superpowers/
