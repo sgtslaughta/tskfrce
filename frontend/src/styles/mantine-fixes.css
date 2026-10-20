@@ -1,0 +1,101 @@
+/**
+ * @fileoverview Mantine CSS fixes
+ * @description Overrides to fix Mantine CSS calc() warnings
+ * @author TaaskMaaster Team
+ * @version 1.0.0
+ */
+
+/* Fix Mantine scale variable to prevent calc() warnings */
+:root {
+  --mantine-scale: 1;
+}
+
+/* Override all Mantine calc() expressions with fixed values */
+* {
+  /* This is a more aggressive approach to prevent calc() warnings */
+  --mantine-scale: 1 !important;
+}
+
+/* Ensure all Mantine components use fixed values instead of calc() - but allow natural sizing */
+.mantine-Input-root,
+.mantine-Select-root,
+.mantine-TextInput-root,
+.mantine-NumberInput-root,
+.mantine-PasswordInput-root,
+.mantine-Textarea-root,
+.mantine-Checkbox-root,
+.mantine-Radio-root,
+.mantine-Switch-root,
+.mantine-Slider-root,
+.mantine-Rating-root,
+.mantine-Modal-root,
+.mantine-Drawer-root,
+.mantine-Popover-root,
+.mantine-Tooltip-root,
+.mantine-Notification-root {
+  /* Force override any calc() expressions for these components only */
+  min-width: auto !important;
+  min-height: auto !important;
+  max-width: none !important;
+  max-height: none !important;
+}
+
+/* Fix specific ActionIcon calc() issues - but allow proper sizing */
+.mantine-ActionIcon-root {
+  /* Remove fixed sizing to allow proper size variants */
+}
+
+/* Fix Icon calc() issues if they occur */
+.mantine-ActionIcon-root svg,
+.mantine-Button-leftSection svg,
+.mantine-Button-rightSection svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Ensure consistent sizing across different icon contexts */
+.tabler-icon {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* Additional fixes for Mantine components that use calc() with --mantine-scale - but preserve button/ActionIcon sizing */
+.mantine-Input-root,
+.mantine-Select-root,
+.mantine-TextInput-root,
+.mantine-NumberInput-root,
+.mantine-PasswordInput-root,
+.mantine-Textarea-root,
+.mantine-Checkbox-root,
+.mantine-Radio-root,
+.mantine-Switch-root,
+.mantine-Slider-root,
+.mantine-Rating-root {
+  /* Override any calc() expressions that might cause warnings for these components only */
+}
+
+/* Fix for specific Mantine components that commonly use calc() - use proper sizes */
+.mantine-ActionIcon-root[data-size="xs"] {
+  width: 1.75rem !important;
+  height: 1.75rem !important;
+}
+
+.mantine-ActionIcon-root[data-size="sm"] {
+  width: 1.875rem !important; /* 30px */
+  height: 1.875rem !important;
+}
+
+.mantine-ActionIcon-root[data-size="md"] {
+  width: 2.25rem !important; /* 36px - proper medium size */
+  height: 2.25rem !important;
+}
+
+.mantine-ActionIcon-root[data-size="lg"] {
+  width: 2.625rem !important; /* 42px */
+  height: 2.625rem !important;
+}
+
+.mantine-ActionIcon-root[data-size="xl"] {
+  width: 3rem !important; /* 48px */
+  height: 3rem !important;
+}

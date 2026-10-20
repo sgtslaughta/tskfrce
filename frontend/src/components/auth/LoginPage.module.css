@@ -1,0 +1,31 @@
+/* Login Page Styles - Following Mantine AuthenticationImage pattern */
+.wrapper {
+  height: 100vh;
+  width: 100vw;
+  position: relative;
+  overflow: hidden;
+}
+
+.form {
+  width: 400px;
+}
+
+.title {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 600;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .form {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 var(--mantine-spacing-md);
+  }
+}
+
+@media (max-width: 480px) {
+  .form {
+    margin: 0 var(--mantine-spacing-sm);
+  }
+}
