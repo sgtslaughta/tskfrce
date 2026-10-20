@@ -132,6 +132,17 @@
 - [ ] **Step 2–4:** FAIL → implement (hash password via the same helper `/api/v1/auth` registration uses) → PASS. Migration revision.
 - [ ] **Step 5:** Commit `feat(auth): parent and kid roles with first-run setup`.
 
+### Task 7A: Auth hardening (v1 security debt)
+
+Automated security review of the v1 code found spoofable identity everywhere. A kid must never be able to act as a parent.
+
+**Files:** Modify `backend/app/api/deps.py` (remove `get_current_user_from_header` / `X-User-Data` fallback), `backend/app/api/{messaging,comments,workflow,notifications,mentions,presence}.py` (drop `get_user_data_from_header`, use `Depends(get_current_active_user)`), `backend/app/api/websocket.py` (require `?token=<JWT>`, verify before `accept()`, close 4401 otherwise), `backend/app/api/{goals,media}.py` (remove `current_user_id: int = 1`), `backend/app/api/gamification.py` (mutating routes `require_parent`; per-user reads: self or parent), `backend/app/api/users.py` (`update_user`: self or parent; only parents change `role`/`is_active`/`is_superuser`), `backend/app/services/permission_service.py` (unknown resource → `False`; remove unconditional `TASK_VIEW` grant → visible if creator, assignee, or parent), `frontend/src/components/pages/auth/LoginPage.tsx` (empty initial form), `frontend/pages/api/proxy/[...path].ts` (no header logging; must forward `Authorization`), frontend websocket client (send `?token=`). Delete the duplicate `get_current_user` set in `core/auth.py:200-260` if unused after this. Test: `backend/tests/test_auth_hardening.py`.
+
+- [ ] **Step 1:** `grep -rn "x_user_data\|X-User-Data\|user_data_param\|current_user_id: int = 1" backend frontend/src frontend/pages` → list every hit; all must be gone at the end.
+- [ ] **Step 2:** Tests: `test_x_user_data_header_alone_is_401` (header `X-User-Data: {"user_id": <parent.id>}` on `GET /api/v1/notifications` → 401); `test_kid_cannot_award_points` (403); `test_kid_cannot_promote_self_to_parent` (`PUT /api/v1/users/{kid.id}` with `role: parent` → 403); `test_user_cannot_update_other_user` (403); `test_websocket_without_token_rejected`.
+- [ ] **Step 3–4:** FAIL → implement → PASS. Frontend: `npm run lint && npm run type-check` pass; frontend calls that relied on `X-User-Data` now send the bearer token.
+- [ ] **Step 5:** Commit `fix(security): remove spoofable header identity and enforce authz`.
+
 ### Task 8: Lock models
 
 **Files:**
