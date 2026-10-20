@@ -78,6 +78,22 @@ docker-compose up -d
 docker-compose logs -f
 ```
 
+### Dev instance memory
+
+The dev frontend compiles `/hub` on first request and needs about 4-6 GB of RAM for that compile. If the container is killed (OOM), raise the limit with an override file, for example:
+
+```yaml
+# mem.yml
+services:
+  frontend:
+    mem_limit: 6g
+    memswap_limit: 6g
+    environment:
+      NODE_OPTIONS: "--max-old-space-size=4096 --max-semi-space-size=128"
+```
+
+Then run `docker compose -f docker-compose.yml -f mem.yml up -d --build`. The production image (Plan 4) is prebuilt and does not need this.
+
 ### 🌐 Access Your Application
 
 Once Docker containers are running:
