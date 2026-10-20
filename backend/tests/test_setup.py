@@ -1,6 +1,6 @@
 import pytest
 from app.api.deps import require_parent
-from app.models.family import FamilySettings, get_family
+from app.models.family import get_family
 from app.models.user import User, UserRole
 from fastapi import HTTPException
 
@@ -40,12 +40,19 @@ def test_require_parent_rejects_kid(kid, parent):
     assert require_parent(parent) is parent
 
 
-def test_setup_loses_race_when_family_row_exists(client, db):
-    # simulates a concurrent setup that already claimed family id=1
-    db.add(FamilySettings(id=1, name="Other"))
+def test_setup_works_when_family_row_pre_exists(client, db):
+    get_family(db)
     db.commit()
-    r = client.post("/api/v1/setup", json=BODY)
-    assert r.status_code == 409
+    assert client.get("/api/v1/setup").json() == {"needed": True}
+    assert client.post("/api/v1/setup", json=BODY).status_code == 201
+    assert get_family(db).name == "Sotos"
+
+
+def test_setup_409_when_owner_already_set(client, db):
+    get_family(db).owner_id = 999
+    db.commit()
+    assert client.get("/api/v1/setup").json() == {"needed": False}
+    assert client.post("/api/v1/setup", json=BODY).status_code == 409
     assert db.query(User).count() == 0
 
 

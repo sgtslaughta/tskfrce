@@ -5,13 +5,14 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.core.auth import AuthService
 from app.core.config import settings
-from app.models.family import FamilySettings
+from app.models.family import FamilySettings, get_family
 from app.models.user import User, UserRole
 
 router = APIRouter(prefix="/api/v1/setup", tags=["setup"])
@@ -40,20 +41,26 @@ class SetupIn(BaseModel):
         return v
 
 
+def _owner_set(db: Session) -> bool:
+    fam = db.get(FamilySettings, 1)
+    return fam is not None and fam.owner_id is not None
+
+
 @router.get("")
 def setup_needed(db: Session = Depends(get_db)):
-    return {"needed": db.query(User.id).first() is None}
+    return {"needed": db.query(User.id).first() is None and not _owner_set(db)}
 
 
 @router.post("", status_code=status.HTTP_201_CREATED)
 def run_setup(body: SetupIn, db: Session = Depends(get_db)):
-    if db.query(User.id).first() is not None:
+    if db.query(User.id).first() is not None or _owner_set(db):
         raise HTTPException(status.HTTP_409_CONFLICT, DONE)
     auth = AuthService(db)
     try:
-        # Family row id=1 is the lock: a concurrent setup hits the PK and loses.
-        db.add(FamilySettings(id=1, name=body.family_name, timezone=body.timezone))
-        db.flush()
+        try:
+            get_family(db)
+        except IntegrityError:  # concurrent insert of row id=1
+            db.rollback()
         user = User(
             username=body.parent.username,
             email=f"{body.parent.username}@family.local",
@@ -64,7 +71,15 @@ def run_setup(body: SetupIn, db: Session = Depends(get_db)):
         )
         db.add(user)
         db.flush()
-        db.get(FamilySettings, 1).owner_id = user.id
+        # Compare-and-set on owner_id is the lock: only one setup can win.
+        won = db.execute(
+            update(FamilySettings)
+            .where(FamilySettings.id == 1, FamilySettings.owner_id.is_(None))
+            .values(owner_id=user.id, name=body.family_name, timezone=body.timezone)
+        ).rowcount
+        if won != 1:
+            db.rollback()
+            raise HTTPException(status.HTTP_409_CONFLICT, DONE)
         db.commit()
     except IntegrityError:
         db.rollback()
