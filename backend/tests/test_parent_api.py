@@ -237,3 +237,73 @@ def test_delete_group_removes_windows(client, db, parent_headers):
     db.commit()
     assert client.delete(f"/api/v1/groups/{g['id']}", headers=parent_headers).status_code == 200
     assert db.query(TimeWindow).count() == 0 and db.query(Device).count() == 1
+
+
+def test_delete_kid_cancels_their_chores(client, db, parent, kid, parent_headers):
+    setup_day(db)
+    j = client.post(
+        "/api/v1/chores/",
+        json={"title": "Dishes", "kid_id": kid.id, "repeat": {"type": "daily"}},
+        headers=parent_headers,
+    ).json()
+    done = mkchore(db, parent, kid, TaskStatus.DONE, approved=True)
+    r = client.delete(f"/api/v1/kids/{kid.id}", headers=parent_headers)
+    assert r.status_code == 200
+    db.expire_all()
+    defn, inst = db.get(Task, j["definition"]["id"]), db.get(Task, j["instance"]["id"])
+    assert defn.is_recurring is False and defn.status == TaskStatus.CANCELLED
+    assert inst.status == TaskStatus.CANCELLED
+    assert db.get(Task, done.id).status == TaskStatus.DONE
+    from app.lock.reset import run_reset
+
+    assert run_reset(db, date(2026, 10, 21)) == 0
+
+
+def test_legacy_user_delete_refuses_kids(client, db, parent, kid, parent_headers):
+    parent.is_superuser = True
+    db.commit()
+    r = client.delete(f"/api/v1/users/{kid.id}", headers=parent_headers)
+    assert r.status_code == 403 and r.json()["detail"] == "Use the kids screen to remove a kid."
+
+
+def test_device_datetimes_are_utc_z(client, db, parent_headers):
+    d = mkdev(db)
+    d.last_seen = datetime(2026, 10, 20, 12, 0, 0)
+    db.commit()
+    client.post(
+        f"/api/v1/devices/{d.id}/override",
+        json={"action": "lock", "minutes": 5},
+        headers=parent_headers,
+    )
+    j = client.get("/api/v1/devices", headers=parent_headers).json()[0]
+    assert j["last_seen"] == "2026-10-20T12:00:00Z"
+    assert j["override"]["expires_at"].endswith("Z")
+
+
+def test_owner_ids_keep_explicit_guest(client, db, kid, parent_headers):
+    d = mkdev(db)
+    url = f"/api/v1/devices/{d.id}"
+    r = client.patch(url, json={"owner_ids": [kid.id], "status": "guest"}, headers=parent_headers)
+    assert r.json()["status"] == "guest"
+    r = client.patch(url, json={"owner_ids": []}, headers=parent_headers)
+    assert r.json()["status"] == "guest"
+    client.patch(url, json={"owner_ids": [kid.id], "status": "assigned"}, headers=parent_headers)
+    r = client.patch(url, json={"owner_ids": []}, headers=parent_headers)
+    assert r.json()["status"] == "unassigned"
+
+
+def test_hhmm_rejects_trailing_newline(client, kid, parent_headers):
+    body = {"kind": "allowed", "kid_id": kid.id, "days": "1", "start": "08:00\n", "end": "20:00"}
+    assert client.post("/api/v1/windows", json=body, headers=parent_headers).status_code == 422
+
+
+def test_window_needs_a_target(client, parent_headers):
+    body = {"kind": "allowed", "days": "1", "start": "08:00", "end": "20:00"}
+    r = client.post("/api/v1/windows", json=body, headers=parent_headers)
+    assert r.status_code == 400 and r.json()["detail"] == "Pick a kid or a group."
+
+
+def test_today_online_all_false_without_devices(client, db, kid, parent_headers):
+    setup_day(db)
+    k = client.get("/api/v1/today", headers=parent_headers).json()["kids"][0]
+    assert k["devices"] == [] and k["online_all"] is False

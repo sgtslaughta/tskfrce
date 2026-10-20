@@ -21,6 +21,7 @@ from app.models.gamification import Points
 from app.models.lock import Device
 from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
+from app.schemas.lock import utc_z
 
 router = APIRouter(prefix="/api/v1/kid", tags=["kid"])
 
@@ -135,5 +136,5 @@ def done(chore_id: int, db: Session = Depends(get_db), kid: User = Depends(requi
     return {
         "id": t.id,
         "status": t.status.value,
-        "submitted_for_approval_at": t.submitted_for_approval_at,
+        "submitted_for_approval_at": utc_z(t.submitted_for_approval_at),
     }

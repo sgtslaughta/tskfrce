@@ -213,3 +213,10 @@ def test_x_real_ip_trusted_from_loopback(client, db, kid):
     lc = from_ip("127.0.0.1")
     j = lc.get("/api/v1/kid/whoami", headers={"X-Real-IP": "10.9.9.9"}).json()
     assert j["device"] is not None
+
+
+def test_done_timestamp_is_utc_z(kc, db, parent, kid):
+    get_family(db).last_reset_date = DAY.date()
+    t = mkchore(db, parent, kid)
+    r = kc.post(f"/api/v1/kid/chores/{t.id}/done", headers=kid_hdr(db, kid))
+    assert r.json()["submitted_for_approval_at"].endswith("Z")

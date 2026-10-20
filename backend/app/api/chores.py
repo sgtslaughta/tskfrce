@@ -99,13 +99,11 @@ def delete_chore(
     d = db.get(Task, definition_id)
     if d is None or not d.is_recurring or not (d.recurrence_pattern or {}).get("chore"):
         raise HTTPException(404, "We couldn't find that repeating chore.")
-    d.is_recurring = False  # stops future instances; finished history stays
+    d.is_recurring = False  # stops future instances; approved history stays
     d.status = TaskStatus.CANCELLED
     for t in db.query(Task).filter(
         Task.parent_task_id == d.id,
-        Task.status.notin_(
-            [TaskStatus.DONE, TaskStatus.CANCELLED, TaskStatus.SUBMITTED_FOR_APPROVAL]
-        ),
+        Task.status.notin_([TaskStatus.DONE, TaskStatus.CANCELLED]),
     ):
         t.status = TaskStatus.CANCELLED
     db.commit()

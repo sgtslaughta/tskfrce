@@ -158,3 +158,17 @@ def test_tz_change_backwards_does_not_rerun_reset(db, parent, kid):
     assert tick(db, now) == []
     assert fam.last_reset_date == date(2026, 10, 21)
     assert db.query(Task).count() == 2
+
+
+def test_loop_survives_locked_db(monkeypatch):
+    from app.lock import loop
+    from sqlalchemy.exc import OperationalError
+
+    def boom(db, now):
+        raise OperationalError("tick", {}, Exception("database is locked"))
+
+    monkeypatch.setattr(loop, "tick", boom)
+    monkeypatch.setattr(loop, "_busy_ticks", 0)
+    loop._run_once()
+    loop._run_once()
+    assert loop._busy_ticks == 2

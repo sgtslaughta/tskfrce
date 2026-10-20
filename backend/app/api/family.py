@@ -81,7 +81,7 @@ def today(db: Session = Depends(get_db)):
                 "id": k.id,
                 "name": k.full_name,
                 "avatar": k.avatar,
-                "online_all": all(d["online"] for d in devs),
+                "online_all": bool(devs) and all(d["online"] for d in devs),
                 "chores": chores,
                 "devices": [
                     {"id": d["id"], "name": d["name"], "vendor": d["vendor"], "online": d["online"]}

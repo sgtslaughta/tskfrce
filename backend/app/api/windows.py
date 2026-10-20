@@ -40,7 +40,9 @@ def list_windows(
 
 @router.post("")
 def create_window(body: WindowIn, db: Session = Depends(get_db)):
-    if (body.kid_id is None) == (body.group_id is None):
+    if body.kid_id is None and body.group_id is None:
+        raise HTTPException(400, "Pick a kid or a group.")
+    if body.kid_id is not None and body.group_id is not None:
         raise HTTPException(400, "Pick a kid or a group, not both.")
     if body.kid_id is not None:
         kid = db.get(User, body.kid_id)

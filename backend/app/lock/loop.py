@@ -3,6 +3,8 @@
 import asyncio
 from datetime import UTC, datetime
 
+from sqlalchemy.exc import OperationalError
+
 from app.core.config import settings
 from app.core.database import SessionLocal
 from app.core.logging import get_logger
@@ -12,6 +14,7 @@ from app.lock.state import tick
 logger = get_logger(__name__)
 _loop: asyncio.AbstractEventLoop | None = None
 _event: asyncio.Event | None = None
+_busy_ticks = 0  # ticks skipped because SQLite was busy
 
 
 def trigger() -> None:
@@ -26,9 +29,16 @@ def trigger() -> None:
 
 
 def _run_once() -> None:
+    global _busy_ticks
     db = SessionLocal()
     try:
         push_blocked(tick(db, datetime.now(UTC)))
+    except OperationalError as exc:
+        if "database is locked" not in str(exc):
+            logger.error("Lock tick failed", error=str(exc))
+        else:
+            _busy_ticks += 1
+            logger.warning("Lock tick skipped: database busy", busy_ticks=_busy_ticks)
     except Exception as exc:
         logger.error("Lock tick failed", error=str(exc))
     finally:

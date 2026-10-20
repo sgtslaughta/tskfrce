@@ -74,7 +74,8 @@ def test_kid_cannot_approve(client, db, parent, kid, kid_headers):
     assert client.post(f"/api/v1/chores/{t.id}/approve", headers=kid_headers).status_code == 403
 
 
-def test_delete_keeps_submitted_instance(client, db, parent, kid, parent_headers):
+def test_delete_cancels_submitted_instance(client, db, parent, kid, parent_headers):
+    """Deleting a chore must not keep a kid locked by it."""
     set_day(db)
     j = client.post(
         "/api/v1/chores/", json={**BODY, "kid_id": kid.id}, headers=parent_headers
@@ -84,7 +85,7 @@ def test_delete_keeps_submitted_instance(client, db, parent, kid, parent_headers
     db.commit()
     client.delete(f"/api/v1/chores/{j['definition']['id']}", headers=parent_headers)
     db.refresh(inst)
-    assert inst.status == TaskStatus.SUBMITTED_FOR_APPROVAL
+    assert inst.status == TaskStatus.CANCELLED
 
 
 def test_approve_non_chore_is_404(client, db, parent, kid, parent_headers):

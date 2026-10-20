@@ -1,15 +1,24 @@
 """Request bodies for the parent lock APIs."""
 
 import re
+from datetime import UTC, datetime
 from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-HHMM = r"^([01]\d|2[0-3]):[0-5]\d$"
+HHMM = r"([01]\d|2[0-3]):[0-5]\d"
+
+
+def utc_z(dt: datetime | None) -> str | None:
+    """Naive-UTC (or aware) datetime -> ISO string ending in Z."""
+    if dt is None:
+        return None
+    dt = dt.replace(tzinfo=UTC) if dt.tzinfo is None else dt.astimezone(UTC)
+    return dt.isoformat().replace("+00:00", "Z")
 
 
 def _hhmm(v: str | None) -> str | None:
-    if v is not None and not re.match(HHMM, v):
+    if v is not None and not re.fullmatch(HHMM, v):
         raise ValueError("Use 24-hour HH:MM, like 06:00.")
     return v
 

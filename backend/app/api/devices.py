@@ -15,7 +15,7 @@ from app.lock.state import device_facts
 from app.models.family import FamilySettings, get_family
 from app.models.lock import Device, DeviceGroup, Override, TimeWindow, device_group_members
 from app.models.user import User, UserRole
-from app.schemas.lock import DevicePatch, GroupIn, OverrideIn
+from app.schemas.lock import DevicePatch, GroupIn, OverrideIn, utc_z
 
 router = APIRouter(prefix="/api/v1", tags=["devices"], dependencies=[Depends(require_parent)])
 
@@ -40,8 +40,8 @@ def device_out(db: Session, d: Device, fam: FamilySettings, now: datetime) -> di
         "owner_ids": sorted(o.id for o in d.owners),
         "group_ids": sorted(g.id for g in d.groups),
         "online": online,
-        "override": {"action": ov.action, "expires_at": ov.expires_at} if ov else None,
-        "last_seen": d.last_seen,
+        "override": {"action": ov.action, "expires_at": utc_z(ov.expires_at)} if ov else None,
+        "last_seen": utc_z(d.last_seen),
     }
 
 
@@ -77,8 +77,8 @@ def patch_device(device_id: int, body: DevicePatch, db: Session = Depends(get_db
         if len(kids) != len(set(body.owner_ids)):
             raise HTTPException(400, "Owners must be existing kids. Pick from the kid list.")
         d.owners = kids
-        if kids:
-            d.status = "assigned"
+        if body.status != "guest" and not (d.status == "guest" and not kids):
+            d.status = "assigned" if kids else "unassigned"
     if body.group_ids is not None:
         groups = db.query(DeviceGroup).filter(DeviceGroup.id.in_(body.group_ids)).all()
         if len(groups) != len(set(body.group_ids)):

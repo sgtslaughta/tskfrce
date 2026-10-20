@@ -190,7 +190,12 @@ async def delete_user(
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_superuser),
 ):
-    """Delete a user account."""
+    """Delete a user account (kids go through /kids so their chores are cleaned up)."""
+    target = db.get(User, user_id)
+    if target is not None and target.role == UserRole.KID:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Use the kids screen to remove a kid."
+        )
     user_service = UserService(db)
     success = user_service.delete_user(user_id)
 
