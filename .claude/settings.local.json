@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:ui.mantine.dev)",
+      "mcp__ide__getDiagnostics",
+      "mcp__mantine-ui__list_components",
+      "mcp__mantine-ui__search_components",
+      "mcp__mantine-ui__get_component_docs",
+      "mcp__mantine-ui__get_component_docs",
+      "WebFetch(domain:github.com)",
+      "Bash(find:*)",
+      "Bash(sed:*)",
+      "Bash(docker-compose:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker compose:*)",
+      "Bash(docker exec:*)",
+      "WebFetch(domain:mantine.dev)",
+      "Bash(docker logs:*)",
+      "Bash(docker restart:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tsc:*)",
+      "Read(//home/user/Pictures/Screenshots/**)",
+      "WebFetch(domain:v6.mantine.dev)",
+      "Bash(curl:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
