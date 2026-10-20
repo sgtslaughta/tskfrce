@@ -47,6 +47,7 @@ def _instance(db, parent, kid, status):
         assigned_to_id=kid.id,
         due_date=datetime(2026, 10, 20),
         status=status,
+        recurrence_pattern={"chore": True},
     )
     db.add(t)
     db.commit()
@@ -71,3 +72,30 @@ def test_approve_marks_done(client, db, parent, kid, parent_headers):
 def test_kid_cannot_approve(client, db, parent, kid, kid_headers):
     t = _instance(db, parent, kid, TaskStatus.SUBMITTED_FOR_APPROVAL)
     assert client.post(f"/api/v1/chores/{t.id}/approve", headers=kid_headers).status_code == 403
+
+
+def test_delete_keeps_submitted_instance(client, db, parent, kid, parent_headers):
+    set_day(db)
+    j = client.post(
+        "/api/v1/chores/", json={**BODY, "kid_id": kid.id}, headers=parent_headers
+    ).json()
+    inst = db.get(Task, j["instance"]["id"])
+    inst.status = TaskStatus.SUBMITTED_FOR_APPROVAL
+    db.commit()
+    client.delete(f"/api/v1/chores/{j['definition']['id']}", headers=parent_headers)
+    db.refresh(inst)
+    assert inst.status == TaskStatus.SUBMITTED_FOR_APPROVAL
+
+
+def test_approve_non_chore_is_404(client, db, parent, kid, parent_headers):
+    t = Task(title="v1", created_by_id=parent.id, status=TaskStatus.SUBMITTED_FOR_APPROVAL)
+    db.add(t)
+    db.commit()
+    r = client.post(f"/api/v1/chores/{t.id}/approve", headers=parent_headers)
+    assert r.status_code == 404  # (global 404 handler replaces the detail text)
+
+
+def test_today_works_on_fresh_install(client, db, kid, parent_headers):
+    client.post("/api/v1/chores/", json={**BODY, "kid_id": kid.id}, headers=parent_headers)
+    today = client.get("/api/v1/chores/today", headers=parent_headers).json()
+    assert len(today[str(kid.id)]) == 1

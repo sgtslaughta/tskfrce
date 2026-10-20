@@ -2,13 +2,13 @@
 
 from datetime import date, datetime, time
 
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.lock.rules import OwnerChores
-from app.lock.schedule import occurs_on
+from app.lock.schedule import local_now, occurs_on
 from app.models.family import FamilySettings
 from app.models.task import Task, TaskStatus
+from app.models.user import User, UserRole
 
 
 def reset_due(fam: FamilySettings, now_local: datetime) -> bool:
@@ -21,6 +21,16 @@ def reset_due(fam: FamilySettings, now_local: datetime) -> bool:
 def chore_day(fam: FamilySettings) -> date | None:
     """The chore day every rule/query uses (changes only at reset)."""
     return fam.last_reset_date
+
+
+def current_chore_day(fam: FamilySettings, now_utc: datetime) -> date:
+    """last_reset_date, or local today on a fresh install."""
+    return fam.last_reset_date or local_now(fam.timezone, now_utc).date()
+
+
+def is_chore_filter():
+    """SQL filter: rows marked as chores (definitions and instances)."""
+    return Task.recurrence_pattern["chore"].as_boolean().is_(True)
 
 
 def midnight(day: date) -> datetime:
@@ -37,20 +47,21 @@ def make_instance(defn: Task, day: date) -> Task:
         assigned_to_id=defn.assigned_to_id,
         created_by_id=defn.created_by_id,
         points=defn.points,
-        recurrence_pattern=defn.recurrence_pattern,
+        recurrence_pattern=dict(defn.recurrence_pattern or {}),
     )
 
 
 def run_reset(db: Session, day: date) -> int:
     """Cancel unfinished older instances, create today's. Caller commits."""
     for t in db.query(Task).filter(
+        is_chore_filter(),
         Task.is_recurring.is_(False),
         Task.due_date < midnight(day),
         Task.status.notin_([TaskStatus.DONE, TaskStatus.CANCELLED]),
     ):
         t.status = TaskStatus.CANCELLED
     created = 0
-    for defn in db.query(Task).filter(Task.is_recurring.is_(True)).all():
+    for defn in db.query(Task).filter(is_chore_filter(), Task.is_recurring.is_(True)).all():
         if not occurs_on(defn.recurrence_pattern or {}, day):
             continue
         exists = (
@@ -70,11 +81,21 @@ def run_reset(db: Session, day: date) -> int:
 
 
 def chore_counts(db: Session, kid_id: int, day: date) -> OwnerChores:
-    q = db.query(Task.status, func.count()).filter(
-        Task.is_recurring.is_(False),
-        Task.assigned_to_id == kid_id,
-        Task.due_date == midnight(day),
-        Task.status != TaskStatus.CANCELLED,
+    """Approved counts only when a parent approved (status alone is not enough)."""
+    rows = (
+        db.query(Task.status, User.id)
+        .outerjoin(
+            User,
+            (User.id == Task.approved_by_id) & (User.role == UserRole.PARENT),
+        )
+        .filter(
+            is_chore_filter(),
+            Task.is_recurring.is_(False),
+            Task.assigned_to_id == kid_id,
+            Task.due_date == midnight(day),
+            Task.status != TaskStatus.CANCELLED,
+        )
+        .all()
     )
-    rows = dict(q.group_by(Task.status).all())
-    return OwnerChores(sum(rows.values()), rows.get(TaskStatus.DONE, 0))
+    approved = sum(1 for st, uid in rows if st == TaskStatus.DONE and uid is not None)
+    return OwnerChores(len(rows), approved)

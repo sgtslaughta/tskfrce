@@ -6,8 +6,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_parent
-from app.lock.reset import chore_day, make_instance, midnight
-from app.lock.schedule import local_now, occurs_on
+from app.lock.reset import current_chore_day, is_chore_filter, make_instance, midnight
+from app.lock.schedule import occurs_on
 from app.models.family import get_family
 from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
@@ -36,8 +36,8 @@ def create_chore(
     if kid is None or kid.role != UserRole.KID:
         raise HTTPException(404, "That kid doesn't exist. Pick a kid from the list.")
     fam = get_family(db)
-    day = chore_day(fam) or local_now(fam.timezone, datetime.utcnow()).date()
-    pattern = {**body.repeat.model_dump(), "needs_photo": body.needs_photo}
+    day = current_chore_day(fam, datetime.utcnow())
+    pattern = {**body.repeat.model_dump(), "needs_photo": body.needs_photo, "chore": True}
     once = body.repeat.type == "once"
     defn = Task(
         title=body.title,
@@ -65,24 +65,24 @@ def create_chore(
 
 @router.get("/today")
 def today(db: Session = Depends(get_db), _: User = Depends(require_parent)):
-    day = chore_day(get_family(db))
+    day = current_chore_day(get_family(db), datetime.utcnow())
     out: dict[str, list] = {}
-    if day is not None:
-        rows = db.query(Task).filter(
-            Task.is_recurring.is_(False),
-            Task.due_date == midnight(day),
-            Task.status != TaskStatus.CANCELLED,
-        )
-        for t in rows:
-            out.setdefault(str(t.assigned_to_id), []).append(_out(t))
+    rows = db.query(Task).filter(
+        is_chore_filter(),
+        Task.is_recurring.is_(False),
+        Task.due_date == midnight(day),
+        Task.status != TaskStatus.CANCELLED,
+    )
+    for t in rows:
+        out.setdefault(str(t.assigned_to_id), []).append(_out(t))
     return out
 
 
 @router.post("/{chore_id}/approve")
 def approve(chore_id: int, db: Session = Depends(get_db), parent: User = Depends(require_parent)):
     t = db.get(Task, chore_id)
-    if t is None:
-        raise HTTPException(404, "We couldn't find that chore.")
+    if t is None or not (t.recurrence_pattern or {}).get("chore"):
+        raise HTTPException(404, "That chore doesn't exist.")
     if t.status != TaskStatus.SUBMITTED_FOR_APPROVAL:
         raise HTTPException(409, "This chore isn't waiting for approval.")
     t.status = TaskStatus.DONE
@@ -97,13 +97,15 @@ def delete_chore(
     definition_id: int, db: Session = Depends(get_db), _: User = Depends(require_parent)
 ):
     d = db.get(Task, definition_id)
-    if d is None or not d.is_recurring:
+    if d is None or not d.is_recurring or not (d.recurrence_pattern or {}).get("chore"):
         raise HTTPException(404, "We couldn't find that repeating chore.")
     d.is_recurring = False  # stops future instances; finished history stays
     d.status = TaskStatus.CANCELLED
     for t in db.query(Task).filter(
         Task.parent_task_id == d.id,
-        Task.status.notin_([TaskStatus.DONE, TaskStatus.CANCELLED]),
+        Task.status.notin_(
+            [TaskStatus.DONE, TaskStatus.CANCELLED, TaskStatus.SUBMITTED_FOR_APPROVAL]
+        ),
     ):
         t.status = TaskStatus.CANCELLED
     db.commit()
