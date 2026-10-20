@@ -18,7 +18,7 @@ class DeviceFacts:
     owners: tuple[OwnerChores, ...]
     allowed_sets: tuple[tuple[Window, ...], ...]  # one per owner/group with windows
     free: tuple[Window, ...]  # union of owners' + groups' free windows
-    override: str | None  # newest unexpired: "lock" | "unlock" | None
+    override: str | None  # newest unexpired manual: "lock" | "unlock" | None
     bonus_active: bool
     new_devices_blocked: bool
     points_unlock_early: bool

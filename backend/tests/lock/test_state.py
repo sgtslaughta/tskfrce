@@ -109,3 +109,52 @@ def test_push_blocked_returns_false_when_blocker_down(monkeypatch):
 
     monkeypatch.setattr(settings, "BLOCKER_URL", "http://127.0.0.1:1")
     assert push_blocked(["aa:bb:cc:dd:ee:01"]) is False
+
+
+def test_manual_lock_beats_newer_bonus_unlock(db, parent, kid):
+    fam = get_family(db)
+    fam.points_unlock_early = True
+    db.commit()
+    d = mk_device(db, status="assigned", owners=[kid])
+    exp = (NOW + timedelta(hours=1)).replace(tzinfo=None)
+    old = NOW.replace(tzinfo=None) - timedelta(minutes=10)
+    db.add(Override(device_id=d.id, action="lock", source="manual", expires_at=exp, created_at=old))
+    db.add(
+        Override(
+            device_id=d.id,
+            action="unlock",
+            source="bonus",
+            expires_at=exp,
+            created_at=old + timedelta(minutes=5),
+        )
+    )
+    db.commit()
+    assert desired_blocked(db, NOW) == [d.mac]
+
+
+def test_tz_change_backwards_does_not_rerun_reset(db, parent, kid):
+    fam = get_family(db)
+    fam.timezone, fam.reset_time = "Asia/Tokyo", "06:00"
+    db.commit()
+    now = datetime(2026, 10, 20, 22, 0, tzinfo=UTC)  # Tokyo Oct 21 07:00
+    mk_device(db, status="assigned", owners=[kid])
+    db.add(
+        Task(
+            title="Dishes",
+            is_recurring=True,
+            recurrence_pattern={"type": "daily", "chore": True},
+            assigned_to_id=kid.id,
+            created_by_id=parent.id,
+        )
+    )
+    db.commit()
+    assert tick(db, now) == ["aa:bb:cc:dd:ee:01"]
+    assert fam.last_reset_date == date(2026, 10, 21)
+    db.query(Task).filter(Task.is_recurring.is_(False)).update(
+        {"status": TaskStatus.DONE, "approved_by_id": parent.id}
+    )
+    fam.timezone = "America/Los_Angeles"  # LA Oct 20 15:00
+    db.commit()
+    assert tick(db, now) == []
+    assert fam.last_reset_date == date(2026, 10, 21)
+    assert db.query(Task).count() == 2

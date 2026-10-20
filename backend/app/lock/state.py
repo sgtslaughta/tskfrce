@@ -40,6 +40,7 @@ def device_facts(
         .all()
     )
     live = [o for o in overrides if o.expires_at is None or o.expires_at > now]
+    manual = [o for o in live if o.source == "manual"]
     allowed_sets: list[tuple[Window, ...]] = []
     free: list[Window] = []
     targets = [{"kid_id": o.id} for o in device.owners] + [
@@ -55,7 +56,7 @@ def device_facts(
         owners=tuple(chore_counts(db, o.id, day) for o in device.owners),
         allowed_sets=tuple(allowed_sets),
         free=tuple(free),
-        override=live[0].action if live else None,
+        override=manual[0].action if manual else None,
         bonus_active=any(o.source == "bonus" for o in live),
         new_devices_blocked=fam.new_devices_blocked,
         points_unlock_early=fam.points_unlock_early,

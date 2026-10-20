@@ -12,9 +12,9 @@ from app.models.user import User, UserRole
 
 
 def reset_due(fam: FamilySettings, now_local: datetime) -> bool:
-    return (
-        now_local.time() >= time.fromisoformat(fam.reset_time)
-        and fam.last_reset_date != now_local.date()
+    """Chore day only moves forward (a time zone change west must not rewind it)."""
+    return now_local.time() >= time.fromisoformat(fam.reset_time) and (
+        fam.last_reset_date is None or now_local.date() > fam.last_reset_date
     )
 
 
