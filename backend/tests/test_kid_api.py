@@ -1,0 +1,176 @@
+from datetime import datetime
+
+import pytest
+from app.core.auth import AuthService
+from app.main import app
+from app.models.family import get_family
+from app.models.gamification import Points, PointsType
+from app.models.lock import Device
+from app.models.task import Task, TaskStatus
+from app.models.user import User, UserRole
+from fastapi.testclient import TestClient
+
+IP = "192.168.1.50"
+DAY = datetime(2026, 10, 20)
+
+
+def from_ip(ip):
+    """TestClient whose requests appear to come from `ip` (installed TestClient has no client=)."""
+
+    async def asgi(scope, receive, send):
+        if scope["type"] == "http":
+            scope["client"] = (ip, 5000)
+        await app(scope, receive, send)
+
+    return TestClient(asgi, base_url="http://localhost")
+
+
+@pytest.fixture
+def kc(client):
+    """Client whose requests come from IP (the kid's tablet)."""
+    return from_ip(IP)
+
+
+def mkdev(db, owner=None, ip=IP, mac="aa:bb:cc:dd:ee:01"):
+    d = Device(mac=mac, name="Tablet", status="assigned", ip=ip)
+    if owner:
+        d.owners.append(owner)
+    db.add(d)
+    db.commit()
+    return d
+
+
+def mkchore(db, parent, kid, **kw):
+    t = Task(
+        title="x",
+        created_by_id=parent.id,
+        assigned_to_id=kid.id,
+        due_date=DAY,
+        status=kw.pop("status", TaskStatus.TODO),
+        points=3,
+        recurrence_pattern={"chore": True},
+        **kw,
+    )
+    db.add(t)
+    db.commit()
+    return t
+
+
+def other_kid(db):
+    u = User(
+        username="sis",
+        email="sis@family.local",
+        hashed_password="x",
+        full_name="Sis",
+        role=UserRole.KID,
+    )
+    db.add(u)
+    db.commit()
+    return u
+
+
+def kid_hdr(db, kid):
+    return {"Authorization": f"Bearer {AuthService(db).create_access_token({'sub': str(kid.id)})}"}
+
+
+def test_whoami_unknown_ip_returns_null_device(kc, db, kid):
+    mkdev(db, kid, ip="10.0.0.9")
+    assert kc.get("/api/v1/kid/whoami").json() == {"device": None, "kids": []}
+
+
+def test_whoami_lists_owners_by_ip_or_ipv6(kc, db, kid):
+    d = mkdev(db, kid, ip=None)
+    d.ipv6 = [IP]
+    db.commit()
+    j = kc.get("/api/v1/kid/whoami").json()
+    assert j["device"]["id"] == d.id
+    assert j["kids"] == [{"id": kid.id, "full_name": "Timmy", "avatar": None, "has_pin": False}]
+
+
+def test_login_ok_returns_kid_token(kc, db, kid):
+    mkdev(db, kid)
+    r = kc.post("/api/v1/kid/login", json={"kid_id": kid.id})
+    assert r.status_code == 200
+    me = kc.get(
+        "/api/v1/kid/today", headers={"Authorization": f"Bearer {r.json()['access_token']}"}
+    )
+    assert me.status_code == 200
+
+
+def test_login_from_other_kids_device_403(kc, db, kid):
+    mkdev(db, other_kid(db))
+    r = kc.post("/api/v1/kid/login", json={"kid_id": kid.id})
+    assert (
+        r.status_code == 403
+        and r.json()["detail"] == "This device doesn't belong to you. Ask a parent."
+    )
+
+
+def test_login_unknown_ip_403(kc, db, kid):
+    mkdev(db, kid, ip="10.0.0.9")
+    assert kc.post("/api/v1/kid/login", json={"kid_id": kid.id}).status_code == 403
+
+
+def test_login_wrong_pin_401(kc, db, kid):
+    kid.pin_hash = AuthService(db).get_password_hash("1234")
+    db.commit()
+    mkdev(db, kid)
+    r = kc.post("/api/v1/kid/login", json={"kid_id": kid.id, "pin": "0000"})
+    assert r.status_code == 401 and r.json()["detail"] == "Wrong PIN. Try again."
+    assert kc.post("/api/v1/kid/login", json={"kid_id": kid.id}).status_code == 401
+    assert kc.post("/api/v1/kid/login", json={"kid_id": kid.id, "pin": "1234"}).status_code == 200
+
+
+def test_kid_login_rate_limited(kc, db, kid):
+    mkdev(db, kid)
+    codes = [kc.post("/api/v1/kid/login", json={"kid_id": kid.id}).status_code for _ in range(6)]
+    assert codes == [200] * 5 + [429]
+
+
+def test_today_only_own_chores_points_and_locked(kc, db, parent, kid):
+    get_family(db).last_reset_date = DAY.date()
+    mkdev(db, kid)
+    mine = mkchore(db, parent, kid)
+    mkchore(db, parent, other_kid(db))
+    db.add(Points(user_id=kid.id, points_type=PointsType.TASK_COMPLETION, amount=7))
+    db.commit()
+    j = kc.get("/api/v1/kid/today", headers=kid_hdr(db, kid)).json()
+    assert j["chores"] == [{"id": mine.id, "title": "x", "points": 3, "state": "todo"}]
+    assert j["points_balance"] == 7 and j["locked"] is True
+
+
+def test_kid_marks_own_chore_done(kc, db, parent, kid, monkeypatch):
+    calls = []
+    monkeypatch.setattr("app.api.kid.trigger", lambda: calls.append(1))
+    t = mkchore(db, parent, kid)
+    r = kc.post(f"/api/v1/kid/chores/{t.id}/done", headers=kid_hdr(db, kid))
+    assert r.status_code == 200 and r.json()["status"] == "submitted_for_approval"
+    assert r.json()["submitted_for_approval_at"] and calls == [1]
+    db.refresh(t)
+    assert t.status == TaskStatus.SUBMITTED_FOR_APPROVAL
+
+
+def test_kid_cannot_mark_other_kids_chore(kc, db, parent, kid):
+    t = mkchore(db, parent, other_kid(db))
+    r = kc.post(f"/api/v1/kid/chores/{t.id}/done", headers=kid_hdr(db, kid))
+    assert r.status_code == 403
+    db.refresh(t)
+    assert t.status == TaskStatus.TODO
+
+
+def test_parent_token_rejected(kc, db, parent, parent_headers):
+    assert kc.get("/api/v1/kid/today", headers=parent_headers).status_code == 403
+
+
+def test_x_real_ip_ignored_from_non_loopback(kc, db, kid):
+    mkdev(db, kid, ip="10.9.9.9")
+    h = {"X-Real-IP": "10.9.9.9"}
+    assert kc.get("/api/v1/kid/whoami", headers=h).json()["device"] is None
+    assert kc.post("/api/v1/kid/login", json={"kid_id": kid.id}, headers=h).status_code == 403
+
+
+def test_x_real_ip_trusted_from_loopback(client, db, kid):
+    mkdev(db, kid, ip="10.9.9.9")
+    lc = from_ip("127.0.0.1")
+    j = lc.get("/api/v1/kid/whoami", headers={"X-Real-IP": "10.9.9.9"}).json()
+    assert j["device"] is not None

@@ -35,6 +35,7 @@ from app.api.chores import router as chores_router
 from app.api.devices import router as devices_router
 from app.api.family import router as family_router
 from app.api.internal import router as internal_router
+from app.api.kid import router as kid_router
 from app.api.kids import router as kids_router
 from app.api.notifications import router as notifications_router
 from app.api.setup import router as setup_router
@@ -144,6 +145,7 @@ fastapi_app.include_router(chores_router)
 fastapi_app.include_router(internal_router)
 fastapi_app.include_router(devices_router)
 fastapi_app.include_router(kids_router)
+fastapi_app.include_router(kid_router)
 fastapi_app.include_router(windows_router)
 fastapi_app.include_router(family_router)
 fastapi_app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
