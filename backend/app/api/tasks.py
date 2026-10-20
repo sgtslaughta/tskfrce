@@ -78,6 +78,11 @@ from app.services.workflow_service import KID_STATUSES, PARENTS_ONLY
 router = APIRouter(prefix="/api/v1/tasks", tags=["tasks"])
 
 KID_FIELDS = {"status", "actual_hours"}
+KID_CREATE_FIELDS = {"title", "description", "priority", "due_date", "assigned_to_id"}
+
+
+def _is_chore(task: Task | None) -> bool:
+    return task is not None and bool((task.recurrence_pattern or {}).get("chore"))
 
 
 def _guard_kid_update(db: Session, user: User, task_ids: list[int], updates: dict) -> None:
@@ -96,11 +101,12 @@ def _guard_kid_update(db: Session, user: User, task_ids: list[int], updates: dic
 
 
 def _guard_kid_create(user: User, data: TaskCreate) -> None:
-    """Kids may create only zero-reward tasks for themselves (templates can carry points)."""
+    """Kids may set only title/description/priority/due_date on tasks for themselves."""
     if user.role == UserRole.PARENT:
         return
     if (
-        data.points > 0
+        data.model_fields_set - KID_CREATE_FIELDS
+        or data.points > 0
         or data.reward_value > 0
         or data.template_id is not None
         or data.assigned_to_id not in (None, user.id)
@@ -425,6 +431,13 @@ async def delete_task_json(
     current_user: User = Depends(get_current_active_user),
 ):
     """Delete a task using JSON request body."""
+    if current_user.role != UserRole.PARENT:
+        task = db.get(Task, request.task_id)
+        parent_task = db.get(Task, task.parent_task_id) if task and task.parent_task_id else None
+        if task and (
+            task.created_by_id != current_user.id or _is_chore(task) or _is_chore(parent_task)
+        ):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=PARENTS_ONLY)
     task_service = TaskService(db)
     success = await task_service.delete_task(request.task_id, current_user.id)
 

@@ -119,3 +119,19 @@ def test_done_without_parent_approval_does_not_count(db, parent, kid):
     row.approved_by_id = parent.id
     db.commit()
     assert chore_counts(db, kid.id, D) == OwnerChores(1, 1)
+
+
+def test_reset_ignores_kid_made_placeholder(db, parent, kid):
+    d = defn(db, parent, kid, {"type": "daily"})
+    fake = Task(
+        title="x",
+        created_by_id=kid.id,
+        assigned_to_id=kid.id,
+        parent_task_id=d.id,
+        due_date=datetime(2026, 10, 20),
+        status=TaskStatus.DONE,
+    )
+    db.add(fake)
+    db.commit()
+    assert run_reset(db, D) == 1
+    assert chore_counts(db, kid.id, D) == OwnerChores(1, 0)

@@ -365,3 +365,52 @@ def test_invite_reuse_rejected_even_if_user_removed(client, db, parent_headers):
     db.query(User).filter(User.username == "dad").delete()
     db.commit()
     assert client.post("/api/v1/auth/register", json=body).status_code == 403
+
+
+def _chore(db, parent, kid, **kw):
+    t = Task(
+        title="Dishes",
+        created_by_id=parent.id,
+        assigned_to_id=kid.id,
+        recurrence_pattern={"type": "daily", "chore": True},
+        **kw,
+    )
+    db.add(t)
+    db.commit()
+    return t
+
+
+def test_kid_cannot_delete_chores(client, db, parent, kid, kid_headers):
+    defn = _chore(db, parent, kid, is_recurring=True)
+    inst = _chore(db, parent, kid, parent_task_id=defn.id)
+    # even a chore-linked row the kid "created" is off limits
+    sneaky = Task(title="x", created_by_id=kid.id, assigned_to_id=kid.id, parent_task_id=defn.id)
+    db.add(sneaky)
+    db.commit()
+    for t in (defn, inst, sneaky):
+        r = client.post("/api/v1/tasks/delete", json={"task_id": t.id}, headers=kid_headers)
+        assert r.status_code == 403, t.id
+        assert r.json()["detail"] == "Only parents can do this."
+    assert db.query(Task).count() == 3
+
+
+def test_kid_can_delete_own_plain_task(client, db, kid, kid_headers):
+    own = Task(title="mine", created_by_id=kid.id, assigned_to_id=kid.id)
+    db.add(own)
+    db.commit()
+    r = client.post("/api/v1/tasks/delete", json={"task_id": own.id}, headers=kid_headers)
+    assert r.status_code == 204
+
+
+def test_kid_create_only_basic_fields(client, kid_headers):
+    for extra in (
+        {"parent_task_id": 1},
+        {"is_recurring": True},
+        {"category_id": 1},
+        {"recurrence_pattern": {"chore": True}},
+        {"tag_names": ["x"]},
+    ):
+        r = client.post("/api/v1/tasks/", json={"title": "t", **extra}, headers=kid_headers)
+        assert r.status_code == 403, extra
+    ok = {"title": "t", "description": "d", "priority": "high", "due_date": "2026-10-21T00:00:00"}
+    assert client.post("/api/v1/tasks/", json=ok, headers=kid_headers).status_code == 201

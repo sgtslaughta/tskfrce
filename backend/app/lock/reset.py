@@ -79,7 +79,12 @@ def run_reset(db: Session, day: date) -> int:
             continue
         exists = (
             db.query(Task.id)
-            .filter(Task.parent_task_id == defn.id, Task.due_date == midnight(day))
+            .filter(
+                is_chore_filter(),
+                Task.parent_task_id == defn.id,
+                Task.created_by_id == defn.created_by_id,
+                Task.due_date == midnight(day),
+            )
             .first()
         )
         if exists:
