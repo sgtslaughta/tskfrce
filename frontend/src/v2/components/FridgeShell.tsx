@@ -5,6 +5,7 @@ import { Box, Burger, Button, Drawer } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { ColorSchemeToggle } from './ColorSchemeToggle'
+import { startSignOut } from './RequireParent'
 
 export const NAV = [
   { href: '/', label: 'Today' },
@@ -44,8 +45,9 @@ export function FridgeShell({
   useEffect(() => setDay(new Date().toLocaleDateString(undefined, { weekday: 'long' })), [])
 
   const logOut = async () => {
+    startSignOut()
     await logout()
-    router.push('/login')
+    router.replace('/login')
   }
 
   return (
