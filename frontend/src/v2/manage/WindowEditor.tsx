@@ -91,7 +91,7 @@ export function WindowEditor({ target, label }: Props) {
           <TextInput type="time" label="End" value={end} onChange={(e) => setEnd(e.currentTarget.value)} />
           <div aria-live="polite">
             {overnight && <Text size="sm">Ends the next morning</Text>}
-            {same && <Text size="sm">Start and end can't be the same.</Text>}
+            {same && <Text size="sm">Start and end can&apos;t be the same.</Text>}
           </div>
           <Button onClick={save} disabled={!days.length || !start || !end || same} loading={add.isPending}>
             Add
