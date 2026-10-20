@@ -153,3 +153,10 @@ button.f-pill { cursor: pointer; min-height: 44px; padding-inline: 10px 12px; }
   .f-shell *::before,
   .f-shell *::after { transition: none !important; animation: none !important; }
 }
+
+[data-focused='true'] {
+  outline: 4px solid var(--f-sun);
+  outline-offset: 2px;
+  animation: f-pulse 1.2s ease-in-out 3;
+}
+@keyframes f-pulse { 50% { outline-offset: 6px; } }

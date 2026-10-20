@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Button, Checkbox, Chip, NativeSelect, NumberInput, TextInput } from '@mantine/core'
 import { useCreateChore, type ChoreCreated, type Repeat } from '@/v2/hooks/useChores'
-import { DAYS } from './WindowEditor'
+import { DAYS } from '@/v2/days'
 import { toastFail, toastOk } from './notify'
 
 const CHOICES = ['Every day', 'Weekdays', 'Pick days', 'Just today'] as const

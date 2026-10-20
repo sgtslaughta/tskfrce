@@ -60,7 +60,7 @@ export function KidEditor({ kid }: { kid?: Kid }) {
             opened={confirm}
             title={`Delete ${label}?`}
             body={`Deleting ${label} removes their chores and frees their devices.`}
-            onConfirm={() => del.mutate(kid.id, { onError: toastFail, onSuccess: () => toastOk('Deleted') })}
+            onConfirm={() => del.mutate(kid.id)}
             onClose={close}
           />
         </>

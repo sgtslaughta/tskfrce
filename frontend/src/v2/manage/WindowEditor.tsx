@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { ActionIcon, Button, Chip, Text, TextInput } from '@mantine/core'
 import { useAddWindow, useDeleteWindow, useWindows } from '@/v2/hooks/useWindows'
+import { DAYS } from '@/v2/days'
 import type { TimeWindow } from '@/v2/types'
 import { toastFail, toastOk } from './notify'
 
-export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 type Kind = TimeWindow['kind']
 const KINDS: { kind: Kind; title: string; add: string }[] = [
   { kind: 'allowed', title: 'Allowed hours', add: 'Add allowed hours' },
@@ -32,6 +32,7 @@ export function WindowEditor({ target, label }: Props) {
     'kid_id' in target ? w.kid_id === target.kid_id : w.group_id === target.group_id,
   )
   const overnight = end < start
+  const same = start === end && start !== ''
 
   const save = () =>
     adding &&
@@ -88,8 +89,11 @@ export function WindowEditor({ target, label }: Props) {
           </Chip.Group>
           <TextInput type="time" label="Start" value={start} onChange={(e) => setStart(e.currentTarget.value)} />
           <TextInput type="time" label="End" value={end} onChange={(e) => setEnd(e.currentTarget.value)} />
-          {overnight && <Text size="sm">Ends the next morning</Text>}
-          <Button onClick={save} disabled={!days.length || !start || !end} loading={add.isPending}>
+          <div aria-live="polite">
+            {overnight && <Text size="sm">Ends the next morning</Text>}
+            {same && <Text size="sm">Start and end can't be the same.</Text>}
+          </div>
+          <Button onClick={save} disabled={!days.length || !start || !end || same} loading={add.isPending}>
             Add
           </Button>
           <Button variant="default" onClick={() => setAdding(null)}>

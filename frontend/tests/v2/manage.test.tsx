@@ -1,10 +1,11 @@
 import { beforeAll, beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
 import type { ReactNode } from 'react'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { notifications } from '@mantine/notifications'
 import { fridgeTheme } from '@/v2/theme'
 import { api } from '@/v2/api'
 import { DeviceRow } from '@/v2/manage/DeviceRow'
@@ -14,6 +15,7 @@ import { WindowEditor } from '@/v2/manage/WindowEditor'
 import { SettingsPage } from '@/v2/manage/SettingsPage'
 import type { Device, Family, Kid } from '@/v2/types'
 
+jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
 jest.mock('@/v2/today/DeviceQuickMenu', () => ({
   DeviceQuickMenu: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -96,6 +98,21 @@ describe('devices', () => {
     )
   })
 
+  test('delete asks first, then toasts Deleted', async () => {
+    render(wrap(<DeviceRow device={device} kids={kids} />))
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    expect(calls('DELETE')).toHaveLength(0)
+    const dialog = await screen.findByRole('dialog')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(calls('DELETE')[0][0]).toBe('/devices/1'))
+    await waitFor(() => expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Deleted' })))
+  })
+
+  test('focused row is marked', () => {
+    render(wrap(<DeviceRow device={device} kids={kids} focused />))
+    expect(document.getElementById('device-1')).toHaveAttribute('data-focused', 'true')
+  })
+
   test('group create POSTs name and members', async () => {
     render(wrap(<GroupsPanel devices={[device]} />))
     await userEvent.type(screen.getByLabelText('New group name'), 'Tablets')
@@ -142,6 +159,22 @@ describe('windows', () => {
     await userEvent.clear(end)
     await userEvent.type(end, '07:00')
     expect(await screen.findByText('Ends the next morning')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Add' }))
+    await waitFor(() =>
+      expect(calls('POST')[0]).toEqual([
+        '/windows',
+        { method: 'POST', body: { kind: 'allowed', days: '0123456', start: '21:00', end: '07:00', kid_id: 7 } },
+      ]),
+    )
+  })
+
+  test('same start and end is rejected', async () => {
+    render(wrap(<WindowEditor target={{ kid_id: 7 }} label="Maya" />))
+    await userEvent.click(screen.getAllByRole('button', { name: 'Add free time' })[0])
+    await userEvent.clear(screen.getByLabelText('End'))
+    await userEvent.type(screen.getByLabelText('End'), '15:00')
+    expect(await screen.findByText("Start and end can't be the same.")).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled()
   })
 })
 

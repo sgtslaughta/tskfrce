@@ -72,7 +72,7 @@ export function DeviceRow({ device, kids, focused }: Props) {
         opened={confirm}
         title={`Delete ${device.name}?`}
         body="It will show up as a new device if it connects again."
-        onConfirm={() => del.mutate(device.id, toasts('Deleted'))}
+        onConfirm={() => del.mutate(device.id)}
         onClose={close}
       />
     </div>
