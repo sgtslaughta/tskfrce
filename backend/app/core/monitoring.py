@@ -101,14 +101,6 @@ def get_health_status() -> dict[str, Any]:
     Returns:
         Dictionary containing health status information
     """
-    # Check Redis health
-    try:
-        from app.services.redis_service import redis_service
-
-        redis_health = "healthy" if redis_service.health_check() else "unhealthy"
-    except Exception:
-        redis_health = "unavailable"
-
     # Check database health (basic check)
     try:
         from sqlalchemy import text
@@ -142,7 +134,6 @@ def get_health_status() -> dict[str, Any]:
         "version": "0.1.0",
         "services": {
             "database": database_health,
-            "redis": redis_health,
             "minio": minio_health,
         },
     }

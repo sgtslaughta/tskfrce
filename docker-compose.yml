@@ -23,7 +23,6 @@ services:
       DATABASE_URL: ${DATABASE_URL:-sqlite:///./taaskmaaster.db}
       SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt-secret-change-in-production}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
       MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin123}
@@ -38,8 +37,6 @@ services:
       - backend_data:/app/data
     depends_on:
       minio:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     networks:
       - taaskmaaster-network
@@ -112,23 +109,6 @@ services:
       timeout: 20s
       retries: 3
 
-  # Redis for caching and job queue
-  redis:
-    image: redis:7-alpine
-    container_name: taaskmaaster-redis
-    # Redis port not exposed externally - only accessible within the network
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_data:/data
-    networks:
-      - taaskmaaster-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   # PostgreSQL (optional, for production)
   # postgres:
   #   image: postgres:15-alpine
@@ -150,7 +130,6 @@ services:
 volumes:
   backend_data:
   minio_data:
-  redis_data:
   frontend_next_cache:  # Named volume for Next.js build cache
   # postgres_data:  # Commented out since postgres is disabled
 

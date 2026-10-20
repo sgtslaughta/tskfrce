@@ -30,7 +30,7 @@
 ### 🔧 **Technical Excellence**
 - **Containerized Deployment**: Full Docker Compose setup for easy deployment
 - **Modern Frontend**: Next.js 14 with TypeScript, Tailwind CSS, and responsive design
-- **Robust Backend**: FastAPI with SQLAlchemy, Redis caching, and comprehensive API
+- **Robust Backend**: FastAPI with SQLAlchemy, and comprehensive API
 - **File Storage**: MinIO integration for photos and media attachments
 - **Security**: JWT authentication, rate limiting, and security scanning
 - **Monitoring**: Health checks, metrics, and comprehensive logging
@@ -395,7 +395,6 @@ DATABASE_URL=sqlite:///./taaskmaaster.db
 # DATABASE_URL=postgresql://user:pass@postgres:5432/taaskmaaster
 
 # Services (Internal - defaults are fine)
-REDIS_URL=redis://redis:6379
 MINIO_ACCESS_KEY=minioadmin
 MINIO_SECRET_KEY=minioadmin123
 

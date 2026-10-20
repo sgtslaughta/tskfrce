@@ -7,7 +7,7 @@ and session management for the TaaskMaaster application.
 
 from collections.abc import Iterator
 
-from sqlalchemy import MetaData, create_engine, text
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -46,9 +46,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # Create declarative base
 Base = declarative_base()
 
-# Metadata for migrations
-metadata = MetaData()
-
 
 def get_db_session() -> Iterator[Session]:
     """FastAPI dependency yielding a session that is always closed."""
@@ -57,18 +54,6 @@ def get_db_session() -> Iterator[Session]:
         yield db
     finally:
         db.close()
-
-
-def create_database():
-    """
-    Create database tables.
-    """
-    try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("Database tables created successfully")
-    except Exception as e:
-        logger.error(f"Failed to create database tables: {e}")
-        raise
 
 
 def drop_database():

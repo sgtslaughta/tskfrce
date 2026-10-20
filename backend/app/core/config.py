@@ -43,11 +43,6 @@ class Settings(BaseSettings):
     DATABASE_URL: str = "sqlite:///./taaskmaaster.db"
     DATABASE_ECHO: bool = False
 
-    # Redis settings
-    REDIS_URL: str = "redis://localhost:6379"
-    REDIS_PASSWORD: str | None = None
-    REDIS_DB: int = 0
-
     # CORS settings
     BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
@@ -118,7 +113,6 @@ class Settings(BaseSettings):
 
     # Rate limiting settings
     RATE_LIMIT_ENABLED: bool = True
-    RATE_LIMIT_REDIS_URL: str | None = None
 
     # Logging settings
     LOG_LEVEL: str = "INFO"
@@ -220,15 +214,6 @@ def get_database_url() -> str:
     Get database URL with proper formatting.
     """
     return settings.DATABASE_URL
-
-
-def get_redis_url() -> str:
-    """
-    Get Redis URL with proper formatting.
-    """
-    if settings.REDIS_PASSWORD:
-        return f"redis://:{settings.REDIS_PASSWORD}@{settings.REDIS_URL.split('://')[1]}/{settings.REDIS_DB}"
-    return f"{settings.REDIS_URL}/{settings.REDIS_DB}"
 
 
 def is_development() -> bool:

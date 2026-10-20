@@ -58,7 +58,6 @@ cd taaskMaaster
    - Backend API: http://localhost:8000
    - API Documentation: http://localhost:8000/docs
    - MinIO Console: http://localhost:9001
-   - Redis: localhost:6379
 
 ### Local Development
 

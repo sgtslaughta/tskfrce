@@ -5,6 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from app.core.database import Base, _import_all_models
 from sqlalchemy import create_engine, inspect
 
 BACKEND = Path(__file__).resolve().parent.parent
@@ -18,6 +19,6 @@ def test_alembic_upgrade_creates_tables(tmp_path):
         env={**os.environ, "DATABASE_URL": url},
         check=True,
     )
-    tables = inspect(create_engine(url)).get_table_names()
-    assert "users" in tables
-    assert "tasks" in tables
+    tables = set(inspect(create_engine(url)).get_table_names()) - {"alembic_version"}
+    _import_all_models()
+    assert tables == set(Base.metadata.tables)

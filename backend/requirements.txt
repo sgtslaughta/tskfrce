@@ -21,11 +21,6 @@ pydantic-settings==2.1.0
 
 # File Storage
 minio==7.2.0
-boto3==1.34.0
-
-# Caching and Job Queue
-redis==5.0.1
-celery==5.3.4
 
 # HTTP Client
 httpx==0.25.2
