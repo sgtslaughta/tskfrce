@@ -4,13 +4,17 @@ Media API router for TaaskMaaster.
 This module contains API endpoints for media attachment and file management.
 """
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+import io
+
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db_session
 from app.models.media import MediaType
 from app.schemas.media import (
     FileUploadRequest,
+    MediaAttachmentCreate,
     MediaAttachmentList,
     MediaAttachmentResponse,
 )
@@ -154,29 +158,16 @@ async def get_storage_statistics(
     return statistics
 
 
-@router.get("/minio-statistics")
-async def get_minio_statistics(
-    db: Session = Depends(get_db_session),
-    # TODO: Add authentication dependency
-    current_user_id: int = 1,  # Temporary for development
-):
-    """Get MinIO storage statistics."""
-    media_service = MediaService(db)
-    statistics = media_service.get_minio_statistics()
-    return statistics
-
-
 @router.get("/attachments/{attachment_id}/download-url")
 async def get_download_url(
     attachment_id: int,
-    expires: int = Query(3600, description="URL expiration time in seconds"),
     db: Session = Depends(get_db_session),
     # TODO: Add authentication dependency
     current_user_id: int = 1,  # Temporary for development
 ):
-    """Get presigned download URL for a media attachment."""
+    """Get the download URL for a media attachment."""
     media_service = MediaService(db)
-    download_url = media_service.get_download_url(attachment_id, current_user_id, expires)
+    download_url = media_service.get_download_url(attachment_id, current_user_id)
 
     if not download_url:
         raise HTTPException(
@@ -184,49 +175,50 @@ async def get_download_url(
             detail="Attachment not found or access denied",
         )
 
-    return {
-        "download_url": download_url,
-        "expires_in_seconds": expires,
-        "attachment_id": attachment_id,
-    }
+    return {"download_url": download_url, "attachment_id": attachment_id}
 
 
-@router.post("/upload-url")
-async def get_upload_url(
-    request: FileUploadRequest,
-    expires: int = Query(3600, description="URL expiration time in seconds"),
+@router.get("/files/{key:path}")
+async def get_file(key: str, db: Session = Depends(get_db_session)):
+    """Serve an uploaded file."""
+    try:
+        path = MediaService(db).storage.open(key)
+    except (ValueError, FileNotFoundError):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="File not found. Check the link or upload it again.",
+        )
+    return FileResponse(path)
+
+
+@router.post("/upload", response_model=MediaAttachmentResponse, status_code=status.HTTP_201_CREATED)
+async def upload_file(
+    file: UploadFile = File(...),
+    task_id: int | None = Form(None),
+    description: str | None = Form(None),
     db: Session = Depends(get_db_session),
     # TODO: Add authentication dependency
     current_user_id: int = 1,  # Temporary for development
 ):
-    """Get presigned upload URL for direct file upload to MinIO."""
+    """Upload a file (multipart form) and attach it to the current user."""
     media_service = MediaService(db)
+    data = await file.read()
+    mime_type = file.content_type or "application/octet-stream"
+    filename = file.filename or "upload"
 
-    # Validate upload request
-    validation = media_service.validate_file_upload(request)
+    validation = media_service.validate_file_upload(
+        FileUploadRequest(filename=filename, mime_type=mime_type, file_size=max(len(data), 1))
+    )
     if not validation["valid"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail={
-                "message": "Invalid upload request",
-                "errors": validation["errors"],
-            },
+            detail={"message": "Invalid upload", "errors": validation["errors"]},
         )
 
-    upload_url = media_service.get_upload_url(
-        request.filename, request.mime_type, current_user_id, expires
+    return media_service.create_media_attachment(
+        MediaAttachmentCreate(filename=filename, task_id=task_id, description=description),
+        current_user_id,
+        io.BytesIO(data),
+        len(data),
+        mime_type,
     )
-
-    if not upload_url:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to generate upload URL",
-        )
-
-    return {
-        "upload_url": upload_url,
-        "expires_in_seconds": expires,
-        "filename": request.filename,
-        "mime_type": request.mime_type,
-        "warnings": validation["warnings"],
-    }

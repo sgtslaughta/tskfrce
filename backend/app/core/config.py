@@ -6,6 +6,7 @@ including database, authentication, and external service configurations.
 """
 
 import os
+from pathlib import Path
 from typing import Any
 
 try:
@@ -71,6 +72,7 @@ class Settings(BaseSettings):
     EMAILS_FROM_NAME: str | None = None
 
     # File upload settings
+    DATA_DIR: Path = Path("./data")
     UPLOAD_DIR: str = "uploads"
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
     ALLOWED_EXTENSIONS: list[str] = [
@@ -99,13 +101,6 @@ class Settings(BaseSettings):
         ".tar",
         ".gz",
     ]
-
-    # MinIO/S3 settings
-    MINIO_ENDPOINT: str | None = None
-    MINIO_ACCESS_KEY: str | None = None
-    MINIO_SECRET_KEY: str | None = None
-    MINIO_BUCKET: str = "taaskmaaster"
-    MINIO_SECURE: bool = False
 
     # WebSocket settings
     WEBSOCKET_HEARTBEAT_INTERVAL: int = 30

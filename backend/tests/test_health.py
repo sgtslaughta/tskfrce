@@ -29,7 +29,7 @@ class TestHealthEndpoints:
         assert "services" in data
         services = data["services"]
         # Check that expected services are present
-        expected_services = ["database", "minio"]
+        expected_services = ["database"]
         for service in expected_services:
             assert service in services
             assert services[service] in ["healthy", "unhealthy", "unavailable"]

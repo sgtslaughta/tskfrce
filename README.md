@@ -31,7 +31,7 @@
 - **Containerized Deployment**: Full Docker Compose setup for easy deployment
 - **Modern Frontend**: Next.js 14 with TypeScript, Tailwind CSS, and responsive design
 - **Robust Backend**: FastAPI with SQLAlchemy, and comprehensive API
-- **File Storage**: MinIO integration for photos and media attachments
+- **File Storage**: Local-disk storage for photos and media attachments
 - **Security**: JWT authentication, rate limiting, and security scanning
 - **Monitoring**: Health checks, metrics, and comprehensive logging
 
@@ -394,9 +394,6 @@ JWT_SECRET_KEY=your-jwt-secret-key-here
 DATABASE_URL=sqlite:///./taaskmaaster.db
 # DATABASE_URL=postgresql://user:pass@postgres:5432/taaskmaaster
 
-# Services (Internal - defaults are fine)
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin123
 
 # Application
 NEXT_PUBLIC_API_URL=http://localhost:8000

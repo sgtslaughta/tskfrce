@@ -11,10 +11,11 @@ from typing import Any, BinaryIO
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.logging import get_logger
 from app.models.media import MediaAttachment, MediaType
 from app.schemas.media import FileUploadRequest, MediaAttachmentCreate
-from app.services.storage_service import MinIOStorageService
+from app.services.local_storage import LocalStorage
 
 logger = get_logger(__name__)
 
@@ -25,12 +26,7 @@ class MediaService:
     def __init__(self, db: Session):
         """Initialize media service with database session."""
         self.db = db
-        try:
-            self.storage_service = MinIOStorageService()
-        except Exception as e:
-            # Log the error but don't fail initialization
-            logger.warning(f"MinIO storage service initialization failed: {e}")
-            self.storage_service = None
+        self.storage = LocalStorage(settings.DATA_DIR / "uploads")
 
     def create_media_attachment(
         self,
@@ -41,7 +37,7 @@ class MediaService:
         mime_type: str,
     ) -> MediaAttachment:
         """
-        Create a new media attachment and upload to MinIO.
+        Create a new media attachment and save it to local disk.
 
         Args:
             attachment_data: Attachment creation data
@@ -56,35 +52,16 @@ class MediaService:
         # Determine media type from MIME type
         media_type = self._get_media_type_from_mime(mime_type)
 
-        # Generate unique object name for MinIO
+        # Generate unique storage key
         file_extension = os.path.splitext(attachment_data.filename)[1]
-        object_name = f"uploads/{user_id}/{uuid.uuid4()}{file_extension}"
+        object_name = f"{user_id}/{uuid.uuid4()}{file_extension}"
 
-        # Upload file to MinIO
-        if self.storage_service:
-            try:
-                self.storage_service.upload_file(
-                    file_data=file_data,
-                    object_name=object_name,
-                    content_type=mime_type,
-                    metadata={
-                        "user_id": str(user_id),
-                        "filename": attachment_data.filename,
-                        "task_id": (
-                            str(attachment_data.task_id) if attachment_data.task_id else ""
-                        ),
-                        "is_public": str(attachment_data.is_public),
-                    },
-                )
-            except Exception as e:
-                logger.error(f"Failed to upload file to MinIO: {e}")
-                raise
-        else:
-            logger.warning("MinIO storage service not available - file not uploaded to storage")
+        # Save file
+        self.storage.save(object_name, file_data.read(), mime_type)
 
         attachment = MediaAttachment(
             filename=attachment_data.filename,
-            file_path=object_name,  # Store MinIO object key
+            file_path=object_name,  # Store storage key
             file_size=file_size,
             mime_type=mime_type,
             media_type=media_type,
@@ -303,70 +280,16 @@ class MediaService:
             "warnings": warnings,
         }
 
-    def get_download_url(self, attachment_id: int, user_id: int, expires: int = 3600) -> str | None:
-        """
-        Generate a presigned download URL for a media attachment.
-
-        Args:
-            attachment_id: Attachment ID
-            user_id: User ID for access control
-            expires: URL expiration time in seconds
-
-        Returns:
-            Presigned download URL or None if not found/accessible
-        """
-        if not self.storage_service:
-            logger.warning("MinIO storage service not available")
-            return None
-
+    def get_download_url(self, attachment_id: int, user_id: int) -> str | None:
+        """Return the API path to download an attachment, or None if not accessible."""
         attachment = self.get_media_attachment(attachment_id, user_id)
         if not attachment:
             return None
-
-        try:
-            return self.storage_service.get_presigned_url(
-                object_name=attachment.file_path, method="GET", expires=expires
-            )
-        except Exception as e:
-            logger.error(f"Error generating download URL: {e}")
-            return None
-
-    def get_upload_url(
-        self, filename: str, mime_type: str, user_id: int, expires: int = 3600
-    ) -> str | None:
-        """
-        Generate a presigned upload URL for direct file upload to MinIO.
-
-        Args:
-            filename: Original filename
-            mime_type: MIME type of the file
-            user_id: User ID
-            expires: URL expiration time in seconds
-
-        Returns:
-            Presigned upload URL
-        """
-        if not self.storage_service:
-            logger.warning("MinIO storage service not available")
-            return None
-
-        try:
-            # Generate unique object name
-            file_extension = os.path.splitext(filename)[1]
-            object_name = f"uploads/{user_id}/{uuid.uuid4()}{file_extension}"
-
-            return self.storage_service.get_upload_url(
-                object_name=object_name,
-                content_type=mime_type,
-                expires=expires,
-            )
-        except Exception as e:
-            logger.error(f"Error generating upload URL: {e}")
-            return None
+        return f"/api/v1/media/files/{attachment.file_path}"
 
     def delete_media_attachment(self, attachment_id: int, user_id: int) -> bool:
         """
-        Delete a media attachment and its file from MinIO.
+        Delete a media attachment and its file from disk.
 
         Args:
             attachment_id: Attachment ID
@@ -380,53 +303,11 @@ class MediaService:
             return False
 
         try:
-            # Delete from MinIO if available
-            if self.storage_service:
-                if self.storage_service.delete_file(attachment.file_path):
-                    # Delete from database
-                    self.db.delete(attachment)
-                    self.db.commit()
-                    logger.info(f"Deleted media attachment {attachment_id} for user {user_id}")
-                    return True
-                else:
-                    logger.error(f"Failed to delete file from MinIO: {attachment.file_path}")
-                    return False
-            else:
-                # MinIO not available, just delete from database
-                self.db.delete(attachment)
-                self.db.commit()
-                logger.info(
-                    f"Deleted media attachment {attachment_id} from database (MinIO not available)"
-                )
-                return True
+            self.storage.delete(attachment.file_path)
+            self.db.delete(attachment)
+            self.db.commit()
+            logger.info(f"Deleted media attachment {attachment_id} for user {user_id}")
+            return True
         except Exception as e:
             logger.error(f"Error deleting media attachment: {e}")
             return False
-
-    def get_minio_statistics(self) -> dict[str, Any]:
-        """
-        Get MinIO storage statistics.
-
-        Returns:
-            MinIO storage statistics dictionary
-        """
-        if not self.storage_service:
-            return {
-                "total_files": 0,
-                "total_size_bytes": 0,
-                "total_size_mb": 0.0,
-                "bucket_name": "unknown",
-                "error": "MinIO storage service not available",
-            }
-
-        try:
-            return self.storage_service.get_storage_statistics()
-        except Exception as e:
-            logger.error(f"Error getting MinIO statistics: {e}")
-            return {
-                "total_files": 0,
-                "total_size_bytes": 0,
-                "total_size_mb": 0.0,
-                "bucket_name": "unknown",
-                "error": str(e),
-            }

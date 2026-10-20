@@ -114,15 +114,6 @@ def get_health_status() -> dict[str, Any]:
     except Exception:
         database_health = "unhealthy"
 
-    # Check MinIO health (basic check)
-    try:
-        from app.services.storage_service import MinIOStorageService
-
-        MinIOStorageService()
-        minio_health = "healthy"
-    except Exception:
-        minio_health = "unavailable"
-
     # Overall health status
     overall_health = "healthy"
     if database_health != "healthy":
@@ -134,7 +125,6 @@ def get_health_status() -> dict[str, Any]:
         "version": "0.1.0",
         "services": {
             "database": database_health,
-            "minio": minio_health,
         },
     }
 

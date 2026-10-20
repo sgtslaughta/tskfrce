@@ -13,7 +13,6 @@ from .messaging_service import MessagingService, UserStatusService
 from .notification_service import NotificationService
 from .presence_service import PresenceService
 from .search_service import SearchService
-from .storage_service import MinIOStorageService
 from .task_service import TaskService
 from .user_service import UserService
 from .websocket_service import WebSocketManager, websocket_manager
@@ -25,7 +24,6 @@ __all__ = [
     "GoalService",
     "GamificationService",
     "MediaService",
-    "MinIOStorageService",
     # New workflow and messaging services
     "CommentService",
     "MentionService",

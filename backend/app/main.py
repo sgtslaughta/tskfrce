@@ -37,7 +37,6 @@ from app.core.monitoring import (
     get_health_status,
     get_metrics,
 )
-from app.services.storage_service import MinIOStorageService
 
 # Configure logging
 configure_logging()
@@ -217,21 +216,6 @@ async def internal_error_handler(request: Request, exc: Exception) -> JSONRespon
     return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
-async def initialize_minio() -> None:
-    """Initialize MinIO storage service."""
-    try:
-        MinIOStorageService()
-        logger.info("MinIO storage service initialized successfully")
-    except Exception as e:
-        logger.warning(f"MinIO storage service not available: {e}")
-        logger.info("Continuing without MinIO storage service")
-
-
-async def cleanup_minio() -> None:
-    """Cleanup MinIO storage service."""
-    logger.info("MinIO storage service cleanup completed")
-
-
 # Startup event
 @fastapi_app.on_event("startup")
 async def startup_event():
@@ -245,7 +229,6 @@ async def startup_event():
     logger.info("Database ready")
 
     # Initialize services here
-    await initialize_minio()
 
     logger.info("TaaskMaaster API startup complete")
 
@@ -258,7 +241,6 @@ async def shutdown_event():
 
     # Cleanup services here
     # await cleanup_database()
-    await cleanup_minio()
 
     logger.info("TaaskMaaster API shutdown complete")
 

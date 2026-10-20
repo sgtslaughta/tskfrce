@@ -34,7 +34,6 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "pydantic>=2.5.0",
     "pydantic-settings>=2.1.0",
-    "minio>=7.2.0",
     "httpx>=0.25.0",
     "requests>=2.32.4",
     "structlog>=23.2.0",
