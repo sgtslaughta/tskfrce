@@ -23,7 +23,7 @@
   --f-mute: #34416b;
 }
 /* text on sun/red/green stays dark navy in both schemes */
-:root { --f-on-color: var(--f-on-color); }
+:root { --f-on-color: #1d2b53; }
 
 .f-shell {
   min-height: 100vh;
