@@ -232,3 +232,4 @@ docs/task_workflow_enhancement_plan.md
 # Runtime data (db, uploads, secrets)
 data/
 .claude/worktrees/
+*.tsbuildinfo
