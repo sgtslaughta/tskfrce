@@ -307,3 +307,11 @@ def test_today_online_all_false_without_devices(client, db, kid, parent_headers)
     setup_day(db)
     k = client.get("/api/v1/today", headers=parent_headers).json()["kids"][0]
     assert k["devices"] == [] and k["online_all"] is False
+
+
+def test_clear_pin(client, db, parent_headers):
+    k = client.post(
+        "/api/v1/kids", json={"full_name": "Sam", "pin": "1234"}, headers=parent_headers
+    ).json()
+    r = client.patch(f"/api/v1/kids/{k['id']}", json={"clear_pin": True}, headers=parent_headers)
+    assert r.json()["has_pin"] is False

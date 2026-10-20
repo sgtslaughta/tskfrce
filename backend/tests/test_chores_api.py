@@ -100,3 +100,27 @@ def test_today_works_on_fresh_install(client, db, kid, parent_headers):
     client.post("/api/v1/chores/", json={**BODY, "kid_id": kid.id}, headers=parent_headers)
     today = client.get("/api/v1/chores/today", headers=parent_headers).json()
     assert len(today[str(kid.id)]) == 1
+
+
+def test_definitions_lists_repeating_only(client, db, kid, parent_headers, kid_headers):
+    set_day(db)
+    mk = lambda **kw: client.post(  # noqa: E731
+        "/api/v1/chores/", json={**BODY, "kid_id": kid.id, **kw}, headers=parent_headers
+    )
+    d = mk().json()["definition"]
+    mk(repeat={"type": "once"})
+    r = client.get(f"/api/v1/chores/definitions?kid_id={kid.id}", headers=parent_headers)
+    assert r.json() == [
+        {
+            "id": d["id"],
+            "title": "Dishes",
+            "points": 10,
+            "kid_id": kid.id,
+            "repeat": {"type": "daily", "days": []},
+            "needs_photo": True,
+        }
+    ]
+    assert (
+        client.get("/api/v1/chores/definitions?kid_id=999999", headers=parent_headers).json() == []
+    )
+    assert client.get("/api/v1/chores/definitions", headers=kid_headers).status_code == 403
