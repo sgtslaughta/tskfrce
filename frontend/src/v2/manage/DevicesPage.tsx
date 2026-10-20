@@ -14,7 +14,7 @@ const SECTIONS: { status: Device['status']; title: string }[] = [
   { status: 'guest', title: 'Guests (always online)' },
 ]
 
-export function DevicesPage() {
+function DevicesBody() {
   const router = useRouter()
   const focus = Number(router.query.focus)
   const devices = useDevices()
@@ -22,23 +22,29 @@ export function DevicesPage() {
   const all = devices.data ?? []
 
   return (
+    <FridgeShell title="Devices">
+      {devices.isError && <Text role="alert">{devices.error.message}</Text>}
+      {SECTIONS.map(({ status, title }) => {
+        const rows = all.filter((d) => d.status === status)
+        return (
+          <section key={status} aria-label={title}>
+            <h2 className="f-display">{title}</h2>
+            {rows.length === 0 && <Text>None.</Text>}
+            {rows.map((d) => (
+              <DeviceRow key={d.id} device={d} kids={kids.data ?? []} focused={d.id === focus} />
+            ))}
+          </section>
+        )
+      })}
+      <GroupsPanel devices={all} />
+    </FridgeShell>
+  )
+}
+
+export function DevicesPage() {
+  return (
     <RequireParent>
-      <FridgeShell title="Devices">
-        {devices.isError && <Text role="alert">{devices.error.message}</Text>}
-        {SECTIONS.map(({ status, title }) => {
-          const rows = all.filter((d) => d.status === status)
-          return (
-            <section key={status} aria-label={title}>
-              <h2 className="f-display">{title}</h2>
-              {rows.length === 0 && <Text>None.</Text>}
-              {rows.map((d) => (
-                <DeviceRow key={d.id} device={d} kids={kids.data ?? []} focused={d.id === focus} />
-              ))}
-            </section>
-          )
-        })}
-        <GroupsPanel devices={all} />
-      </FridgeShell>
+      <DevicesBody />
     </RequireParent>
   )
 }

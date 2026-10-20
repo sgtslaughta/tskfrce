@@ -96,24 +96,30 @@ function FamilyForm({ fam }: { fam: Family }) {
   )
 }
 
-export function SettingsPage() {
+function SettingsBody() {
   const family = useFamily()
   const kids = useKids()
   const groups = useGroups()
   return (
+    <FridgeShell title="Settings">
+      {family.isError && <Text role="alert">{family.error.message}</Text>}
+      {family.data && <FamilyForm fam={family.data} />}
+      <h2 className="f-display">Hours</h2>
+      {kids.data?.map((k) => (
+        <WindowEditor key={`k${k.id}`} target={{ kid_id: k.id }} label={k.full_name ?? k.username} />
+      ))}
+      {groups.data?.map((g) => (
+        <WindowEditor key={`g${g.id}`} target={{ group_id: g.id }} label={`Group: ${g.name}`} />
+      ))}
+      <Invite />
+    </FridgeShell>
+  )
+}
+
+export function SettingsPage() {
+  return (
     <RequireParent>
-      <FridgeShell title="Settings">
-        {family.isError && <Text role="alert">{family.error.message}</Text>}
-        {family.data && <FamilyForm fam={family.data} />}
-        <h2 className="f-display">Hours</h2>
-        {kids.data?.map((k) => (
-          <WindowEditor key={`k${k.id}`} target={{ kid_id: k.id }} label={k.full_name ?? k.username} />
-        ))}
-        {groups.data?.map((g) => (
-          <WindowEditor key={`g${g.id}`} target={{ group_id: g.id }} label={`Group: ${g.name}`} />
-        ))}
-        <Invite />
-      </FridgeShell>
+      <SettingsBody />
     </RequireParent>
   )
 }

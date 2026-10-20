@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Button, PasswordInput, TextInput } from '@mantine/core'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
+import { api } from '@/v2/api'
+import type { SetupStatus } from '@/v2/types'
 import { StickerCard } from '@/v2/components/StickerCard'
 
 /** Only same-site paths survive; anything a browser could reinterpret falls back to "/". */
@@ -28,15 +30,23 @@ export function LoginForm() {
 
   useEffect(() => {
     if (isAuthenticated) router.replace(next)
-  }, [isAuthenticated, next, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, next])
+
+  useEffect(() => {
+    // first run: nobody can log in yet
+    api<SetupStatus>('/setup')
+      .then((s) => s.needed && router.replace('/setup'))
+      .catch(() => {})
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     setBusy(true)
     setError('')
     try {
-      await login({ username: username.trim(), password })
-      router.replace(next)
+      await login({ username: username.trim(), password }) // the effect above redirects
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Incorrect username or password')
       setBusy(false)
