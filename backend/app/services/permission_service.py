@@ -80,20 +80,7 @@ class PermissionService:
                 Permission.MESSAGE_VIEW,
                 Permission.MESSAGE_DELETE,
             },
-            UserRole.ORGANIZER: {
-                Permission.TASK_VIEW,
-                Permission.TASK_EDIT,
-                Permission.TASK_ASSIGN,
-                Permission.TASK_APPROVE,
-                Permission.TASK_COMMENT,
-                Permission.COMMENT_VIEW,
-                Permission.COMMENT_CREATE,
-                Permission.COMMENT_EDIT,
-                Permission.COMMENT_DELETE,
-                Permission.MESSAGE_SEND,
-                Permission.MESSAGE_VIEW,
-            },
-            UserRole.USER: {
+            UserRole.KID: {
                 Permission.TASK_VIEW,
                 Permission.TASK_COMMENT,
                 Permission.COMMENT_VIEW,

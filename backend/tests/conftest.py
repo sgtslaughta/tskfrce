@@ -45,3 +45,51 @@ def client(db):
         yield TestClient(app, base_url="http://localhost")
     finally:
         fastapi_app.dependency_overrides.clear()
+
+
+def _make_user(db, username, role):
+    from app.core.auth import AuthService
+    from app.models.user import User
+
+    u = User(
+        username=username,
+        email=f"{username}@family.local",
+        hashed_password=AuthService(db).get_password_hash("pw-12345"),
+        full_name=username.title(),
+        role=role,
+    )
+    db.add(u)
+    db.commit()
+    db.refresh(u)
+    return u
+
+
+def _headers(db, user):
+    from app.core.auth import AuthService
+
+    token = AuthService(db).create_access_token(data={"sub": str(user.id)})
+    return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def parent(db):
+    from app.models.user import UserRole
+
+    return _make_user(db, "mom", UserRole.PARENT)
+
+
+@pytest.fixture
+def kid(db):
+    from app.models.user import UserRole
+
+    return _make_user(db, "timmy", UserRole.KID)
+
+
+@pytest.fixture
+def parent_headers(db, parent):
+    return _headers(db, parent)
+
+
+@pytest.fixture
+def kid_headers(db, kid):
+    return _headers(db, kid)

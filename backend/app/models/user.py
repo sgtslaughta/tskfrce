@@ -17,9 +17,12 @@ from app.core.database import Base
 class UserRole(str, Enum):
     """User roles for RBAC."""
 
-    USER = "user"  # Basic user - can only view their own tasks
-    ORGANIZER = "organizer"  # Can create and manage tasks, view all tasks
-    ADMIN = "admin"  # Full system access
+    PARENT = "parent"
+    KID = "kid"
+    # ponytail: aliases keep v1 code compiling; remove as code is touched
+    ADMIN = "parent"
+    ORGANIZER = "parent"
+    USER = "kid"
 
 
 class User(Base):
@@ -49,7 +52,7 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     full_name = Column(String(255), nullable=True)
-    role = Column(SQLEnum(UserRole), default=UserRole.USER, nullable=False)
+    role = Column(SQLEnum(UserRole), default=UserRole.KID, nullable=False)
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -57,6 +60,8 @@ class User(Base):
     profile_picture = Column(String(500), nullable=True)
     timezone = Column(String(50), default="UTC")
     preferences = Column(Text, nullable=True)  # JSON string
+    pin_hash = Column(String(255), nullable=True)
+    avatar = Column(String(255), nullable=True)
 
     # Relationships
     tasks = relationship(

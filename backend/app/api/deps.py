@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.database import get_db_session
 from app.core.logging import get_logger
-from app.models.user import User
+from app.models.user import User, UserRole
 
 logger = get_logger(__name__)
 
@@ -115,6 +115,15 @@ def get_current_active_user(current_user: User = Depends(get_current_user)) -> U
     if not current_user.is_active:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
     return current_user
+
+
+def require_parent(user: User = Depends(get_current_active_user)) -> User:
+    """Allow parents only."""
+    if user.role != UserRole.PARENT:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only parents can do this."
+        )
+    return user
 
 
 def get_current_superuser(current_user: User = Depends(get_current_user)) -> User:

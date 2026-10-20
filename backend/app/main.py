@@ -31,6 +31,7 @@ from app.api import (
     workflow_router,
 )
 from app.api.notifications import router as notifications_router
+from app.api.setup import router as setup_router
 from app.core.logging import configure_logging, get_logger
 from app.core.monitoring import (
     MetricsMiddleware,
@@ -115,6 +116,7 @@ async def log_requests(request: Request, call_next):
 
 # Include API routers
 fastapi_app.include_router(auth_router)
+fastapi_app.include_router(setup_router)
 fastapi_app.include_router(users_router)
 fastapi_app.include_router(tasks_router)
 fastapi_app.include_router(goals_router)

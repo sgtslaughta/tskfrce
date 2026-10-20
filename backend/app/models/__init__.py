@@ -17,6 +17,7 @@ from .comment import (
 )
 from .conversation import Conversation, ConversationSettings
 from .direct_message import DirectMessage, MessageReaction
+from .family import FamilySettings, get_family
 from .gamification import (
     Achievement,
     Leaderboard,
@@ -44,6 +45,8 @@ from .user import User
 __all__ = [
     # Core models
     "User",
+    "FamilySettings",
+    "get_family",
     "Task",
     "TaskTemplate",
     "TaskCategory",

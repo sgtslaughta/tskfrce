@@ -166,6 +166,7 @@ def _import_all_models():
             Conversation,
             ConversationSettings,
             DirectMessage,
+            FamilySettings,
             Goal,
             GoalProgress,
             Leaderboard,
