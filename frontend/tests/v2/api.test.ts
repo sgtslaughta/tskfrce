@@ -4,11 +4,12 @@ import { tokenManager } from '@/services/tokenManager'
 import { api, ApiError, AuthError, KID_TOKEN_KEY } from '@/v2/api'
 
 jest.mock('@/services/tokenManager', () => ({
-  tokenManager: { getAccessToken: jest.fn(), refreshTokens: jest.fn() },
+  tokenManager: { getAccessToken: jest.fn(), getRefreshToken: jest.fn(), refreshTokens: jest.fn() },
 }))
 
 const tm = tokenManager as unknown as {
   getAccessToken: Mock<() => string | null>
+  getRefreshToken: Mock<() => string | null>
   refreshTokens: Mock<() => Promise<{ success: boolean; shouldLogout: boolean }>>
 }
 
@@ -26,6 +27,7 @@ beforeEach(() => {
   global.fetch = fetchMock
   tm.getAccessToken.mockReset().mockReturnValue('parent-tok')
   tm.refreshTokens.mockReset()
+  tm.getRefreshToken.mockReset().mockReturnValue('refresh-tok')
   localStorage.clear()
 })
 
@@ -69,6 +71,14 @@ describe('api', () => {
     fetchMock.mockResolvedValueOnce(res(401)).mockResolvedValueOnce(res(200, { ok: 1 }))
     await expect(api('/today')).resolves.toEqual({ ok: 1 })
     expect(headersOf(1).Authorization).toBe('Bearer new')
+  })
+
+  test('parent 401 with no refresh token skips refresh', async () => {
+    tm.getRefreshToken.mockReturnValue(null)
+    fetchMock.mockResolvedValue(res(401, { detail: 'Not authenticated' }))
+    await expect(api('/today')).rejects.toBeInstanceOf(AuthError)
+    expect(tm.refreshTokens).not.toHaveBeenCalled()
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
   test('kid 401 throws AuthError without refreshing', async () => {

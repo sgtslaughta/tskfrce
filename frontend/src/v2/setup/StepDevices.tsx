@@ -34,8 +34,8 @@ export function StepDevices({ kids }: { kids: Kid[] }) {
             <legend style={{ fontWeight: 700 }}>{d.name}</legend>
             <Chip.Group multiple value={value} onChange={(v) => change(d, v)}>
               <div className="f-row">
-                {kids.map((k) => <Chip key={k.id} value={String(k.id)}>{k.avatar} {k.full_name}</Chip>)}
-                <Chip value={GUEST}>Guest</Chip>
+                {kids.map((k) => <Chip key={k.id} value={String(k.id)} disabled={patch.isPending}>{k.avatar} {k.full_name}</Chip>)}
+                <Chip value={GUEST} disabled={patch.isPending}>Guest</Chip>
               </div>
             </Chip.Group>
           </fieldset>

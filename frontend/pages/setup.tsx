@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import Head from 'next/head'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
@@ -24,6 +25,8 @@ export default function SetupPage() {
   const [tried, setTried] = useState(false)
   const [conflict, setConflict] = useState(false)
   const [accountDone, setAccountDone] = useState(false)
+  const [loginFailed, setLoginFailed] = useState(false)
+  const [kidDraft, setKidDraft] = useState('')
   const justCreated = useRef(false)
   const [family, setFamily] = useState({ name: '', tz: detectTz() })
   const [parent, setParent] = useState<ParentForm>({ username: '', password: '', fullName: '' })
@@ -41,7 +44,7 @@ export default function SetupPage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      const r = await api<{ access_token: string }>('/setup', {
+      const r = await api<{ access_token: string; refresh_token: string; expires_in: number }>('/setup', {
         method: 'POST',
         body: {
           family_name: family.name.trim(),
@@ -49,14 +52,21 @@ export default function SetupPage() {
           parent: { username: parent.username, password: parent.password, full_name: parent.fullName.trim() },
         },
       })
+      // The account exists from here on. Never POST /setup again, even if logging in fails.
       justCreated.current = true
-      await loginWithToken(r.access_token)
-      qc.setQueryData(['setup'], { needed: false })
-    },
-    onSuccess: () => {
       setAccountDone(true)
+      qc.setQueryData(['setup'], { needed: false })
+      try {
+        await loginWithToken(r.access_token, r.refresh_token, r.expires_in)
+        return true
+      } catch {
+        return false
+      }
+    },
+    onSuccess: (loggedIn) => {
       setTried(false)
-      setStep(3)
+      if (loggedIn) setStep(3)
+      else setLoginFailed(true)
     },
     onError: (e) => {
       if (e instanceof ApiError && e.status === 409) setConflict(true)
@@ -72,16 +82,23 @@ export default function SetupPage() {
         applied.current.add(j.key)
       }
     },
-    onSuccess: () => setStep((s) => s + 1),
+    onSuccess: () => go(step + 1),
   })
+
+  const go = (n: number) => {
+    create.reset()
+    apply.reset()
+    setStep(n)
+  }
 
   const next = () => {
     if (step === 1) {
       if (!family.name.trim()) return setTried(true)
-      return setStep(2)
+      return go(2)
     }
     if (step === 2) {
-      if (accountDone) return setStep(3)
+      if (loginFailed) return
+      if (accountDone) return go(3)
       const e = parentErrors(parent)
       if (e.fullName || e.username || e.password) return setTried(true)
       setConflict(false)
@@ -110,7 +127,8 @@ export default function SetupPage() {
       )
     }
     if (step === LAST) return void router.push('/')
-    setStep(step + 1)
+    if (step === 3 && kidDraft.trim()) return setTried(true)
+    go(step + 1)
   }
 
   const err = (create.error && !conflict ? create.error.message : null) ?? apply.error?.message
@@ -121,10 +139,10 @@ export default function SetupPage() {
       <div className="f-shell" style={{ minHeight: '100vh' }}>
         <WizardFrame
           step={step}
-          onBack={step > 2 ? () => setStep(step - 1) : undefined}
+          onBack={step > 2 ? () => go(step - 1) : undefined}
           onNext={next}
           nextLabel={step === LAST ? 'Finish' : 'Next'}
-          onSkip={step >= 3 && step < LAST ? () => setStep(step + 1) : undefined}
+          onSkip={step >= 3 && step < LAST ? () => go(step + 1) : undefined}
           busy={create.isPending || apply.isPending}
         >
           {step === 1 && (
@@ -132,7 +150,11 @@ export default function SetupPage() {
               onName={(name) => setFamily({ ...family, name })} onTz={(tz) => setFamily({ ...family, tz })} />
           )}
           {step === 2 && <StepParent value={parent} showError={tried} conflict={conflict} onChange={setParent} />}
-          {step === 3 && <StepKids kids={kids} onAdd={(k) => setKids([...kids, k])} />}
+          {step === 2 && loginFailed && (
+            <p role="alert">Your account was created. <Link href="/login">Log in</Link> to continue.</p>
+          )}
+          {step === 3 && <StepKids kids={kids} name={kidDraft} onName={setKidDraft} onAdd={(k) => setKids([...kids, k])}
+              draftError={tried && kidDraft.trim() ? `Add ${kidDraft.trim()} first or clear the box.` : undefined} />}
           {step === 4 && <StepDevices kids={kids} />}
           {step === 5 && <StepChores selected={chores} hasKids={kids.length > 0} onChange={setChores} />}
           {step === 6 && <StepWindows bedtime={bedtime} hasKids={kids.length > 0} onChange={setBedtime} />}

@@ -61,7 +61,7 @@ async function send(path: string, init: ApiInit): Promise<Response> {
 /** Fetch a v2 backend path (e.g. `/today`) through the Next proxy. */
 export async function api<T>(path: string, init: ApiInit = {}): Promise<T> {
   let res = await send(path, init)
-  if (res.status === 401 && !init.kid) {
+  if (res.status === 401 && !init.kid && tokenManager.getRefreshToken()) {
     const r = await tokenManager.refreshTokens()
     if (r.success) res = await send(path, init)
   }
