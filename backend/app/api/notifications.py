@@ -9,7 +9,7 @@ import random
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_active_user, get_db
+from app.api.deps import get_current_active_user, get_db, require_parent
 from app.core.logging import get_logger
 from app.models.user import User
 from app.schemas.notification import (
@@ -194,7 +194,7 @@ async def mark_all_notifications_read(
 
 @router.post("/demo")
 async def generate_demo_notifications(
-    db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db), current_user: User = Depends(require_parent)
 ):
     """
     Generate demo notifications for testing purposes.

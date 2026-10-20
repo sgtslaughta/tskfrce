@@ -9,8 +9,9 @@ import json
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, user_from_token
+from app.api.deps import get_current_active_user, get_db, user_from_token
 from app.core.logging import get_logger
+from app.models.user import User
 from app.services.websocket_service import websocket_manager
 
 logger = get_logger(__name__)
@@ -204,7 +205,7 @@ async def websocket_messaging_endpoint(websocket: WebSocket, db: Session = Depen
 
 
 @router.get("/stats")
-async def get_websocket_stats():
+async def get_websocket_stats(_: User = Depends(get_current_active_user)):
     """
     Get WebSocket connection statistics.
 

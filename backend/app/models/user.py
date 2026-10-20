@@ -116,3 +116,12 @@ class User(Base):
             f"<User(id={self.id}, username='{self.username}', "
             f"email='{self.email}', role='{self.role}')>"
         )
+
+
+class UsedInvite(Base):
+    """Redeemed parent-invite token ids; the primary key makes each invite single-use."""
+
+    __tablename__ = "used_invites"
+
+    jti = Column(String(64), primary_key=True)
+    used_at = Column(DateTime, default=datetime.utcnow, nullable=False)

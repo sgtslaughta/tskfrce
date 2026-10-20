@@ -193,6 +193,7 @@ def _import_all_models():
             TaskTag,
             TaskTemplate,
             TimeWindow,
+            UsedInvite,
             User,
             UserAchievement,
         )

@@ -15,7 +15,7 @@ from app.core.auth import AuthService
 from app.core.config import settings
 from app.core.database import get_db_session
 from app.core.ratelimit import client_ip, limit
-from app.models.user import User, UserRole
+from app.models.user import UsedInvite, User, UserRole
 from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
@@ -214,8 +214,11 @@ ASK_PARENT = "Ask a parent to add you."
 async def register(body: RegisterIn, db: Session = Depends(get_db_session)):
     """No public sign-up: only a parent's one-time invite token creates a new parent."""
     auth = AuthService(db)
-    username = auth.read_invite(body.token)
-    if not username or auth.user_service.get_user_by_username(username):
+    invite = auth.read_invite(body.token)
+    if invite is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ASK_PARENT)
+    username, jti = invite
+    if db.get(UsedInvite, jti) or auth.user_service.get_user_by_username(username):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ASK_PARENT)
     user = User(
         username=username,
@@ -225,10 +228,10 @@ async def register(body: RegisterIn, db: Session = Depends(get_db_session)):
         role=UserRole.PARENT,
         is_superuser=True,  # same powers as the setup parent (manage kids)
     )
-    db.add(user)
+    db.add_all([user, UsedInvite(jti=jti)])
     try:
         db.commit()
-    except IntegrityError:  # same invite redeemed twice at once
+    except IntegrityError:  # same invite (or username) redeemed twice at once
         db.rollback()
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ASK_PARENT) from None
     return {"user_id": user.id, "username": user.username}

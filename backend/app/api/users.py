@@ -28,7 +28,7 @@ from app.services.user_service import UserService
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
-PARENT_ONLY_FIELDS = {"role", "is_active", "is_superuser"}
+KID_EDITABLE = {"full_name", "profile_picture", "preferences"}
 
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -168,10 +168,10 @@ async def update_user(
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Update a user account. Kids may edit only themselves; only parents change access."""
+    """Update a user. Kids may edit only their own name, avatar and preferences."""
     require_self_or_parent(user_id, current_user)
-    privileged = user_data.model_dump(exclude_unset=True).keys() & PARENT_ONLY_FIELDS
-    if privileged and current_user.role != UserRole.PARENT:
+    changed = user_data.model_dump(exclude_unset=True).keys()
+    if current_user.role != UserRole.PARENT and changed - KID_EDITABLE:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, detail="Only parents can do this."
         )

@@ -50,7 +50,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_active_user
+from app.api.deps import get_current_active_user, require_parent
 from app.core.database import get_db_session
 from app.models.task import RewardType, Task, TaskPriority, TaskStatus
 from app.models.user import User, UserRole
@@ -95,6 +95,19 @@ def _guard_kid_update(db: Session, user: User, task_ids: list[int], updates: dic
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=PARENTS_ONLY)
 
 
+def _guard_kid_create(user: User, data: TaskCreate) -> None:
+    """Kids may create only zero-reward tasks for themselves (templates can carry points)."""
+    if user.role == UserRole.PARENT:
+        return
+    if (
+        data.points > 0
+        or data.reward_value > 0
+        or data.template_id is not None
+        or data.assigned_to_id not in (None, user.id)
+    ):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=PARENTS_ONLY)
+
+
 @router.post("/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 async def create_task(
     task_data: TaskCreate,
@@ -123,6 +136,7 @@ async def create_task(
     - is_recurring: Whether task repeats (default: false)
     - tag_names: List of tag names (optional)
     """
+    _guard_kid_create(current_user, task_data)
     task_service = TaskService(db)
     task = await task_service.create_task(task_data, current_user.id)
     return task_service.to_task_response(task)
@@ -186,7 +200,7 @@ async def export_tasks(
 
 
 @router.get("/reward-types")
-async def get_reward_types():
+async def get_reward_types(_: User = Depends(get_current_active_user)):
     """
     Get available reward types.
 
@@ -297,7 +311,7 @@ async def get_task_templates(
 async def create_task_from_template(
     request: CreateFromTemplateRequest,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_parent),
 ):
     """Create a task from a template using JSON request body."""
     task_service = TaskService(db)
@@ -364,7 +378,9 @@ async def create_task_tag(
 
 
 @router.get("/tags", response_model=list[TaskTagResponse])
-async def get_task_tags(db: Session = Depends(get_db_session)):
+async def get_task_tags(
+    db: Session = Depends(get_db_session), _: User = Depends(get_current_active_user)
+):
     """Get all task tags."""
     task_service = TaskService(db)
     tags = task_service.get_tags()
@@ -467,7 +483,9 @@ async def get_recurring_tasks(
 
 
 @router.post("/recurring/create", status_code=status.HTTP_200_OK)
-async def create_recurring_tasks(db: Session = Depends(get_db_session)):
+async def create_recurring_tasks(
+    db: Session = Depends(get_db_session), _: User = Depends(require_parent)
+):
     """Create recurring task instances based on patterns."""
     task_service = TaskService(db)
     created_count = task_service.create_recurring_tasks()

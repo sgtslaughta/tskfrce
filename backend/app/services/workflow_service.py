@@ -20,7 +20,12 @@ logger = get_logger(__name__)
 
 
 PARENTS_ONLY = "Only parents can do this."
-KID_STATUSES = {TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.SUBMITTED_FOR_APPROVAL}
+KID_STATUSES = {
+    TaskStatus.TODO,
+    TaskStatus.ASSIGNED,
+    TaskStatus.IN_PROGRESS,
+    TaskStatus.SUBMITTED_FOR_APPROVAL,
+}
 
 
 class WorkflowTransition(str, Enum):

@@ -302,3 +302,66 @@ def test_kid_cannot_approve_via_workflow(client, db, kid, kid_task, kid_headers,
     assert ok.status_code == 200, ok.text
     db.refresh(kid_task)
     assert kid_task.status == "done"
+
+
+def test_kid_cannot_create_points_task(client, parent, kid, kid_headers):
+    def create(**extra):
+        return client.post("/api/v1/tasks/", json={"title": "t", **extra}, headers=kid_headers)
+
+    for extra in ({"points": 5}, {"reward_value": 1}, {"assigned_to_id": parent.id}):
+        r = create(**extra)
+        assert r.status_code == 403, extra
+        assert r.json()["detail"] == "Only parents can do this."
+    assert create(assigned_to_id=kid.id).status_code == 201
+
+
+def test_parent_only_maintenance_routes(client, kid_headers, parent_headers):
+    for path in (
+        "/api/v1/tasks/recurring/create",
+        "/api/v1/presence/cleanup",
+        "/api/v1/notifications/demo",
+    ):
+        assert client.post(path).status_code == 401, path
+        assert client.post(path, headers=kid_headers).status_code == 403, path
+    assert client.post("/api/v1/tasks/recurring/create", headers=parent_headers).status_code == 200
+
+
+def test_read_routes_require_login(client, kid_headers):
+    for path in ("/api/v1/tasks/tags", "/api/v1/tasks/reward-types", "/ws/stats"):
+        assert client.get(path).status_code == 401, path
+        assert client.get(path, headers=kid_headers).status_code == 200, path
+
+
+def test_kid_cannot_change_own_username_or_email(client, kid, kid_headers):
+    for field in ({"username": "boss"}, {"email": "x@example.com"}, {"timezone": "UTC"}):
+        r = client.put(f"/api/v1/users/{kid.id}", json=field, headers=kid_headers)
+        assert r.status_code == 403, field
+
+
+def test_refresh_token_rejected_as_bearer(client, db, parent):
+    from app.core.auth import AuthService
+
+    token = AuthService(db).create_refresh_token({"sub": str(parent.id)})
+    r = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 401
+
+
+def test_invite_token_rejected_as_bearer(client, db, parent):
+    from app.core.auth import AuthService
+
+    token = AuthService(db).create_invite_token(str(parent.id), parent.id)
+    r = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 401
+
+
+def test_invite_reuse_rejected_even_if_user_removed(client, db, parent_headers):
+    from app.models.user import User
+
+    token = client.post(
+        "/api/v1/users/invite", json={"username": "dad"}, headers=parent_headers
+    ).json()["token"]
+    body = {"token": token, "password": "pw-123456"}
+    assert client.post("/api/v1/auth/register", json=body).status_code == 201
+    db.query(User).filter(User.username == "dad").delete()
+    db.commit()
+    assert client.post("/api/v1/auth/register", json=body).status_code == 403

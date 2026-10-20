@@ -5,6 +5,7 @@ This module provides JWT-based authentication, password hashing,
 and authorization utilities.
 """
 
+import secrets
 from datetime import datetime, timedelta
 
 import jwt
@@ -134,17 +135,25 @@ class AuthService:
         return encoded_jwt
 
     def create_invite_token(self, username: str, invited_by: int) -> str:
-        """One-time parent invite: single-use because the username can be claimed once."""
+        """One-time parent invite; its jti is recorded in used_invites on redemption."""
         exp = datetime.utcnow() + INVITE_TTL
-        data = {"sub": username, "by": invited_by, "exp": exp, "type": "invite"}
+        data = {
+            "sub": username,
+            "by": invited_by,
+            "exp": exp,
+            "type": "invite",
+            "jti": secrets.token_hex(16),
+        }
         return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
 
-    def read_invite(self, token: str | None) -> str | None:
-        """Username an unexpired invite token is for, or None."""
+    def read_invite(self, token: str | None) -> tuple[str, str] | None:
+        """(username, jti) of an unexpired invite token, or None."""
         payload = self.verify_token(token) if token else None
         if not payload or payload.get("type") != "invite":
             return None
-        return payload.get("sub")
+        if not payload.get("sub") or not payload.get("jti"):
+            return None
+        return payload["sub"], payload["jti"]
 
     def verify_token(self, token: str) -> dict | None:
         """

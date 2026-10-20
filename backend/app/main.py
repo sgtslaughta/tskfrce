@@ -91,7 +91,7 @@ async def log_requests(request: Request, call_next):
     logger.info(
         "Incoming request",
         method=request.method,
-        url=str(request.url),
+        path=request.url.path,  # no query string: may carry tokens
         client_ip=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
     )

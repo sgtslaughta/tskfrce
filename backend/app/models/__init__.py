@@ -41,10 +41,11 @@ from .task import (
     TaskTemplate,
 )
 from .task_comment import CommentMediaAttachment, CommentMention, CommentReaction, TaskComment
-from .user import User
+from .user import UsedInvite, User
 
 __all__ = [
     # Core models
+    "UsedInvite",
     "User",
     "FamilySettings",
     "get_family",

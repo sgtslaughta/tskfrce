@@ -7,7 +7,7 @@ This module contains FastAPI routes for user presence and activity tracking.
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_active_user, get_db
+from app.api.deps import get_current_active_user, get_db, require_parent
 from app.core.logging import get_logger
 from app.models.user import User
 from app.services.presence_service import ActivityType, PresenceService, PresenceStatus
@@ -341,7 +341,7 @@ async def get_typing_users(
 async def cleanup_stale_presence(
     max_age_minutes: int = Query(default=30, description="Maximum age in minutes"),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user),
+    current_user: User = Depends(require_parent),
 ):
     """
     Clean up stale presence data (admin only).

@@ -10,4 +10,5 @@ RELOAD=""
 if [ "$ENVIRONMENT" = "development" ]; then
   RELOAD="--reload"
 fi
-exec uvicorn app.main:app --host 0.0.0.0 --port 8000 $RELOAD
+# No access log: websocket URLs carry ?token=<JWT>; the app logs paths itself.
+exec uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-access-log $RELOAD
