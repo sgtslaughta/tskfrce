@@ -78,9 +78,7 @@ app.prepare()
         }
       },
       onProxyReqWs: (proxyReq, req, socket, options, head) => {
-        console.log('[WebSocket Proxy] Proxying WebSocket upgrade to:', options.target.href + req.url);
-        console.log('[WebSocket Proxy] Request headers:', req.headers);
-        console.log('[WebSocket Proxy] Proxy request headers:', proxyReq.headers);
+        // No URL/header logging: the URL carries ?token=<JWT>.
       },
       onOpen: (proxySocket) => {
         console.log('[WebSocket Proxy] Connection opened successfully to backend');
@@ -97,7 +95,7 @@ app.prepare()
     server.on('upgrade', (req, socket, head) => {
       try {
         if (req.url.startsWith('/ws/')) {
-          console.log('[WebSocket Proxy] Handling upgrade for:', req.url);
+          console.log('[WebSocket Proxy] Handling upgrade for:', req.url.split('?')[0]);
           
           // Try direct WebSocket proxy instead of middleware
           const http = require('http');
@@ -132,7 +130,7 @@ app.prepare()
           console.log('[HMR WebSocket] Next.js HMR connection attempt - allowing');
           // Don't destroy HMR connections, let them pass through
         } else {
-          console.log('[WebSocket] Unknown WebSocket connection, destroying:', req.url);
+          console.log('[WebSocket] Unknown WebSocket connection, destroying:', req.url.split('?')[0]);
           socket.destroy();
         }
       } catch (error) {

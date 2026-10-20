@@ -5,6 +5,8 @@
  * @version 1.0.0
  */
 
+import { tokenManager } from './tokenManager';
+
 /**
  * @description WebSocket message interface
  */
@@ -112,8 +114,8 @@ export class WebSocketService {
 
       this.notificationStatus = WebSocketStatus.CONNECTING;
       
-      const wsUrl = `ws://localhost:8000/ws/notifications?user_data=${encodeURIComponent(
-        JSON.stringify(this.userData)
+      const wsUrl = `ws://localhost:8000/ws/notifications?token=${encodeURIComponent(
+        tokenManager.getAccessToken() ?? ''
       )}`;
 
       this.notificationSocket = new WebSocket(wsUrl);
@@ -174,8 +176,8 @@ export class WebSocketService {
 
       this.messagingStatus = WebSocketStatus.CONNECTING;
       
-      const wsUrl = `ws://localhost:8000/ws/messaging?user_data=${encodeURIComponent(
-        JSON.stringify(this.userData)
+      const wsUrl = `ws://localhost:8000/ws/messaging?token=${encodeURIComponent(
+        tokenManager.getAccessToken() ?? ''
       )}`;
 
       this.messagingSocket = new WebSocket(wsUrl);

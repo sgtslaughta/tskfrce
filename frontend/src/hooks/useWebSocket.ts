@@ -7,6 +7,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getLoginState } from '../utils/cookies';
+import { tokenManager } from '../services/tokenManager';
 
 export interface WebSocketMessage {
   type: string;
@@ -72,14 +73,12 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
         return;
       }
 
-      // Format user data as expected by backend
-      const userData = {
-        user_id: parseInt(loginState.userId),
-        username: loginState.username,
-        role: loginState.role || 'user'
-      };
-      
-      const wsUrl = `${url}?user_data=${encodeURIComponent(JSON.stringify(userData))}`;
+      const token = tokenManager.getAccessToken();
+      if (!token) {
+        setIsConnecting(false);
+        return;
+      }
+      const wsUrl = `${url}?token=${encodeURIComponent(token)}`;
       
       // Create WebSocket with error handling to prevent browser console errors
       try {

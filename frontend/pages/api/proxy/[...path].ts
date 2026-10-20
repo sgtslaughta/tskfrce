@@ -40,15 +40,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     headers['User-Agent'] = req.headers['user-agent'];
   }
 
-  // Forward X-User-Data header for notifications API
-  if (req.headers['x-user-data']) {
-    const userData = req.headers['x-user-data'];
-    headers['X-User-Data'] = Array.isArray(userData) ? userData[0] : userData;
-  }
 
   try {
     console.log(`[API Proxy] ${req.method} ${targetUrl}`);
-    console.log(`[API Proxy] Headers:`, headers);
     
     const fetchOptions: RequestInit = {
       method: req.method,

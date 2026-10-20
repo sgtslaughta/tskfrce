@@ -46,20 +46,6 @@ export interface TaskHistoryUser {
 }
 
 /**
- * @description Create user data header for API requests
- */
-const createUserDataHeader = (user: TaskHistoryUser) => {
-  return {
-    'X-User-Data': JSON.stringify({
-      user_id: parseInt(user.id),
-      username: user.username,
-      email: user.email || '',
-      role: user.role || 'user'
-    })
-  };
-};
-
-/**
  * @description Task History Service
  */
 export class TaskHistoryService {
@@ -73,10 +59,8 @@ export class TaskHistoryService {
    */
   async getTaskHistory(taskId: number, user: TaskHistoryUser, skip: number = 0, limit: number = 100): Promise<TaskHistoryResponse> {
     try {
-      const headers = createUserDataHeader(user);
       const response = await api.get<TaskHistoryResponse>(
-        `/workflow/history/${taskId}?skip=${skip}&limit=${limit}`,
-        { headers }
+        `/workflow/history/${taskId}?skip=${skip}&limit=${limit}`
       );
       return response.data;
     } catch (error) {

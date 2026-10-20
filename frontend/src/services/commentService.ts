@@ -6,7 +6,6 @@
  */
 
 import { apiGet, apiPost, apiPut, apiDelete } from './api';
-import { getLoginState } from '../utils/cookies';
 
 export interface Comment {
   id: number;
@@ -73,12 +72,7 @@ class CommentService {
     }
 
     const url = `/comments/task/${taskId}${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
-    
-    // Add user data header
-    const userDataHeader = this.getUserDataHeader();
-    const response = await apiGet<CommentListResponse>(url, {
-      headers: userDataHeader
-    });
+    const response = await apiGet<CommentListResponse>(url);
     
     return response.data;
   }
@@ -87,10 +81,7 @@ class CommentService {
    * @description Create a new comment
    */
   async createComment(commentData: CommentCreate): Promise<Comment> {
-    const userDataHeader = this.getUserDataHeader();
-    const response = await apiPost<Comment>('/comments/', commentData, {
-      headers: userDataHeader
-    });
+    const response = await apiPost<Comment>('/comments/', commentData);
     
     return response.data;
   }
@@ -99,10 +90,7 @@ class CommentService {
    * @description Update an existing comment
    */
   async updateComment(commentId: number, updateData: CommentUpdate): Promise<Comment> {
-    const userDataHeader = this.getUserDataHeader();
-    const response = await apiPut<Comment>(`/comments/${commentId}`, updateData, {
-      headers: userDataHeader
-    });
+    const response = await apiPut<Comment>(`/comments/${commentId}`, updateData);
     
     return response.data;
   }
@@ -111,20 +99,14 @@ class CommentService {
    * @description Delete a comment
    */
   async deleteComment(commentId: number): Promise<void> {
-    const userDataHeader = this.getUserDataHeader();
-    await apiDelete(`/comments/${commentId}`, {
-      headers: userDataHeader
-    });
+    await apiDelete(`/comments/${commentId}`);
   }
 
   /**
    * @description Get a specific comment by ID
    */
   async getComment(commentId: number): Promise<Comment> {
-    const userDataHeader = this.getUserDataHeader();
-    const response = await apiGet<Comment>(`/comments/${commentId}`, {
-      headers: userDataHeader
-    });
+    const response = await apiGet<Comment>(`/comments/${commentId}`);
     
     return response.data;
   }
@@ -144,35 +126,9 @@ class CommentService {
     if (params.limit) queryParams.append('limit', params.limit.toString());
 
     const url = `/comments/search/${params.taskId}?${queryParams.toString()}`;
-    
-    const userDataHeader = this.getUserDataHeader();
-    const response = await apiGet<CommentListResponse>(url, {
-      headers: userDataHeader
-    });
+    const response = await apiGet<CommentListResponse>(url);
     
     return response.data;
-  }
-
-  /**
-   * @description Get user data header for API requests
-   * This matches the backend's expected X-User-Data header format
-   */
-  private getUserDataHeader(): Record<string, string> {
-    // Get current user from cookies (same as AuthContext uses)
-    const loginState = getLoginState();
-    if (!loginState) {
-      throw new Error('User not authenticated');
-    }
-
-    const userDataHeader = {
-      'X-User-Data': JSON.stringify({
-        user_id: parseInt(loginState.userId),
-        username: loginState.username,
-        role: 'user' // We'll get this from the user context later
-      })
-    };
-    
-    return userDataHeader;
   }
 }
 

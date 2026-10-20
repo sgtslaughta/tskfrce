@@ -63,19 +63,6 @@ export class WorkflowService {
   }
 
   /**
-   * @description Create X-User-Data header for workflow API
-   * @param user - Current user information
-   * @returns X-User-Data header value
-   */
-  private createUserDataHeader(user: WorkflowUser): string {
-    return JSON.stringify({
-      user_id: parseInt(user.id),
-      username: user.username,
-      role: user.role
-    });
-  }
-
-  /**
    * @description Transition a task to a new status with proper notifications
    * @param request - Transition request data
    * @param user - Current user information
@@ -83,11 +70,7 @@ export class WorkflowService {
    */
   async transitionTaskStatus(request: WorkflowTransitionRequest, user: WorkflowUser): Promise<WorkflowTransitionResponse> {
     try {
-      const response = await api.post<WorkflowTransitionResponse>('/workflow/transition', request, {
-        headers: {
-          'X-User-Data': this.createUserDataHeader(user)
-        }
-      });
+      const response = await api.post<WorkflowTransitionResponse>('/workflow/transition', request);
       return response.data;
     } catch (error: any) {
       if (error.response?.data?.detail) {
@@ -112,10 +95,6 @@ export class WorkflowService {
       const response = await api.post<WorkflowTransitionResponse>('/workflow/approve', {
         task_id: taskId,
         comment
-      }, {
-        headers: {
-          'X-User-Data': this.createUserDataHeader(user)
-        }
       });
       return response.data;
     } catch (error: any) {
@@ -143,10 +122,6 @@ export class WorkflowService {
         task_id: taskId,
         reason,
         comment
-      }, {
-        headers: {
-          'X-User-Data': this.createUserDataHeader(user)
-        }
       });
       return response.data;
     } catch (error: any) {
