@@ -17,15 +17,13 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Office/Business",
     "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.104.0",
     "uvicorn[standard]>=0.24.0",
@@ -48,11 +46,9 @@ dependencies = [
     "pytz>=2023.3",
     "pytest>=8.4.1",
     "platformdirs>=4.3.8",
-    "flake8>=7.3.0",
     "execnet>=2.1.1",
     "coverage>=7.10.5",
     "email-validator>=2.2.0",
-    "autoflake>=2.3.1",
     "python-jose[cryptography]>=3.5.0",
 ]
 
@@ -63,9 +59,7 @@ dev = [
     "pytest-cov>=4.1.0",
     "pytest-html>=4.1.0",
     "pytest-xdist>=3.3.0",
-    "black>=24.3.0",
-    "isort>=5.12.0",
-    "flake8>=7.3.0",
+    "ruff>=0.6.0",
     "mypy>=1.7.0",
     "bandit>=1.7.5",
     "responses>=0.23.0",
@@ -84,9 +78,6 @@ test = [
     "freezegun>=1.2.0",
 ]
 
-[project.scripts]
-taaskmaaster = "run_tests:main"
-
 [project.urls]
 Homepage = "https://github.com/taaskmaaster/taaskmaaster"
 Documentation = "https://taaskmaaster.readthedocs.io"
@@ -94,34 +85,10 @@ Repository = "https://github.com/taaskmaaster/taaskmaaster.git"
 Issues = "https://github.com/taaskmaaster/taaskmaaster/issues"
 
 [tool.hatch.build.targets.wheel]
-packages = ["backend/app", "tests"]
-
-[tool.black]
-line-length = 79
-target-version = ['py39']
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
-
-[tool.isort]
-profile = "black"
-multi_line_output = 3
-line_length = 79
-known_first_party = ["backend.app", "tests"]
+packages = ["backend/app"]
 
 [tool.mypy]
-python_version = "3.9"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
@@ -146,7 +113,7 @@ disallow_incomplete_defs = false
 [tool.pytest.ini_options]
 minversion = "7.0"
 addopts = "-ra -q --strict-markers"
-testpaths = ["tests", "backend/tests"]
+testpaths = ["backend/tests"]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
     "integration: marks tests as integration tests",
@@ -186,22 +153,12 @@ exclude_dirs = ["tests", "migrations"]
 skips = ["B101", "B601"]
 
 [tool.ruff]
-target-version = "py38"
-line-length = 79
-lint.select = [
-    "E",  # pycodestyle errors
-    "W",  # pycodestyle warnings
-    "F",  # pyflakes
-    "I",  # isort
-    "B",  # flake8-bugbear
-    "C4", # flake8-comprehensions
-    "UP", # pyupgrade
-]
-lint.ignore = [
-    "B008",  # do not perform function calls in argument defaults
-    "C901",  # too complex
-]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["B008"]  # FastAPI Depends() in argument defaults
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"tests/**/*" = ["B011"]
