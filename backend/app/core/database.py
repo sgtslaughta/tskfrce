@@ -7,7 +7,7 @@ and session management for the TaaskMaaster application.
 
 from collections.abc import Iterator
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -20,25 +20,35 @@ logger = get_logger(__name__)
 # Database URL configuration
 DATABASE_URL = settings.DATABASE_URL
 
-# Create SQLAlchemy engine
-if DATABASE_URL.startswith("sqlite"):
-    # SQLite configuration
-    engine = create_engine(
-        DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        echo=settings.DEBUG,
-    )
-else:
-    # PostgreSQL/MySQL configuration
-    engine = create_engine(
-        DATABASE_URL,
+
+def _sqlite_pragmas(dbapi_conn, _record) -> None:
+    cur = dbapi_conn.cursor()
+    cur.execute("PRAGMA journal_mode=WAL")
+    cur.execute("PRAGMA busy_timeout=5000")
+    cur.execute("PRAGMA foreign_keys=ON")
+    cur.close()
+
+
+def make_engine(url: str, echo: bool = False):
+    """Build an engine: shared connection only for in-memory SQLite, pooled otherwise."""
+    if url.startswith("sqlite"):
+        args = {"check_same_thread": False}
+        if url in ("sqlite://", "sqlite:///:memory:"):
+            return create_engine(url, connect_args=args, poolclass=StaticPool, echo=echo)
+        eng = create_engine(url, connect_args={**args, "timeout": 5}, echo=echo)
+        event.listen(eng, "connect", _sqlite_pragmas)
+        return eng
+    return create_engine(
+        url,
         pool_pre_ping=True,
         pool_recycle=300,
         pool_size=10,
         max_overflow=20,
-        echo=settings.DEBUG,
+        echo=echo,
     )
+
+
+engine = make_engine(DATABASE_URL, settings.DEBUG)
 
 # Create SessionLocal class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
