@@ -4,7 +4,8 @@ import { useDisclosure } from '@mantine/hooks'
 import { DeviceQuickMenu } from '@/v2/today/DeviceQuickMenu'
 import { useDeleteGroup, useGroups, useSaveGroup } from '@/v2/hooks/useDevices'
 import type { Device, Group } from '@/v2/types'
-import { ConfirmDelete, toastFail, toastOk } from './notify'
+import { ConfirmDelete } from './ConfirmDelete'
+import { toastFail, toastOk } from '../notify'
 
 function GroupForm({ group, devices }: { group?: Group; devices: Device[] }) {
   const save = useSaveGroup()

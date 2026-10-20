@@ -186,7 +186,7 @@ describe('kid lock screen', () => {
       'GET /kid/today': () => new ApiError(500, 'boom'),
     })
     renderKid()
-    expect(await screen.findByText("Can't reach the box. Check the Wi-Fi.")).toBeInTheDocument()
+    expect(await screen.findByText("Can't reach the home box. Check it's plugged in and on Wi-Fi.")).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 

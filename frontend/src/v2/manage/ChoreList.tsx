@@ -1,7 +1,7 @@
 import { Button, Text } from '@mantine/core'
 import { useChoreDefinitions, useChoresToday, useDeleteChore } from '@/v2/hooks/useChores'
 import { ChoreEditor } from './ChoreEditor'
-import { toastFail, toastOk } from './notify'
+import { toastFail, toastOk } from '../notify'
 
 /** Today's chores for one kid, their repeating chores, and the add form. */
 export function ChoreList({ kidId }: { kidId: number }) {

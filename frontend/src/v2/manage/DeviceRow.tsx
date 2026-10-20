@@ -4,7 +4,8 @@ import { useDisclosure } from '@mantine/hooks'
 import { DeviceQuickMenu } from '@/v2/today/DeviceQuickMenu'
 import { useDeleteDevice, usePatchDevice, type DevicePatch } from '@/v2/hooks/useDevices'
 import type { Device, Kid } from '@/v2/types'
-import { ConfirmDelete, toasts } from './notify'
+import { ConfirmDelete } from './ConfirmDelete'
+import { toasts } from '../notify'
 
 interface Props {
   device: Device

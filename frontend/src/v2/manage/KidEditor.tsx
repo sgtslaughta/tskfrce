@@ -3,7 +3,8 @@ import { Button, PasswordInput, TextInput } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useCreateKid, useDeleteKid, usePatchKid, type KidBody } from '@/v2/hooks/useKids'
 import type { Kid } from '@/v2/types'
-import { ConfirmDelete, toastFail, toastOk } from './notify'
+import { ConfirmDelete } from './ConfirmDelete'
+import { toastFail, toastOk } from '../notify'
 
 /** Edit a kid, or add one when `kid` is omitted. Only changed fields are sent. */
 export function KidEditor({ kid }: { kid?: Kid }) {

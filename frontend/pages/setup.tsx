@@ -6,6 +6,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api, ApiError } from '@/v2/api'
 import type { Kid, SetupStatus } from '@/v2/types'
+import { markSetupDone } from '@/v2/components/RequireParent'
 import { WizardFrame } from '@/v2/setup/WizardFrame'
 import { StepFamily, detectTz } from '@/v2/setup/StepFamily'
 import { StepParent, parentErrors, type ParentForm } from '@/v2/setup/StepParent'
@@ -55,7 +56,7 @@ export default function SetupPage() {
       // The account exists from here on. Never POST /setup again, even if logging in fails.
       justCreated.current = true
       setAccountDone(true)
-      qc.setQueryData(['setup'], { needed: false })
+      markSetupDone(qc)
       try {
         await loginWithToken(r.access_token, r.refresh_token, r.expires_in)
         return true

@@ -61,7 +61,7 @@ export function ChipRow({
           className="f-pill"
           style={{ minHeight: 44 }}
           aria-expanded
-          aria-label="Show fewer chores and devices"
+          aria-label="Show less: fewer chores and devices"
           onClick={() => setOpen(false)}
         >
           Show less

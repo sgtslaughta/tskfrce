@@ -9,7 +9,7 @@ import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 
 const replace = jest.fn()
 jest.mock('next/router', () => ({ useRouter: () => ({ replace, asPath: '/devices?x=1' }) }))
-jest.mock('@/v2/api', () => ({ api: jest.fn() }))
+jest.mock('@/v2/api', () => ({ api: jest.fn(), CANT_REACH: "Can't reach the home box. Check it's plugged in and on Wi-Fi." }))
 jest.mock('@/contexts/UnifiedAuthContext', () => ({ useUnifiedAuth: jest.fn() }))
 
 const apiMock = api as unknown as Mock<(p: string) => Promise<unknown>>
@@ -77,7 +77,7 @@ describe('RequireParent', () => {
     apiMock.mockRejectedValueOnce(new Error('down')).mockResolvedValue({ needed: false })
     auth({})
     renderGuard()
-    expect(await screen.findByText("Can't reach the box. Check it's plugged in.")).toBeTruthy()
+    expect(await screen.findByText("Can't reach the home box. Check it's plugged in and on Wi-Fi.")).toBeTruthy()
     expect(replace).not.toHaveBeenCalled()
     await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
     expect(await screen.findByText('secret')).toBeTruthy()

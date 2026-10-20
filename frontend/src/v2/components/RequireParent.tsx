@@ -2,7 +2,7 @@ import { useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/router'
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
-import { api } from '../api'
+import { api, CANT_REACH } from '../api'
 import type { SetupStatus } from '../types'
 
 const SETUP_KEY = ['setup']
@@ -16,6 +16,9 @@ export function markSetupDone(queryClient: QueryClient): void {
 let signingOut = false
 export function startSignOut(): void {
   signingOut = true
+}
+export function cancelSignOut(): void {
+  signingOut = false
 }
 
 /** Parent-only route guard: first-run setup → /setup, logged out → /login?next=, kid → /kid. */
@@ -55,7 +58,7 @@ export function RequireParent({ children }: { children: ReactNode }) {
   if (setup.isError) {
     return (
       <div className="f-shell" role="alert" style={{ display: 'grid', placeItems: 'center', gap: 12 }}>
-        <p>Can&apos;t reach the box. Check it&apos;s plugged in.</p>
+        <p>{CANT_REACH}</p>
         <button type="button" className="f-btn f-card" onClick={() => setup.refetch()}>
           Retry
         </button>

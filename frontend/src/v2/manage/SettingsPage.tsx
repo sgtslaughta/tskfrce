@@ -6,7 +6,7 @@ import { useGroups } from '@/v2/hooks/useDevices'
 import { useFamily, useInvite, usePatchFamily } from '@/v2/hooks/useFamily'
 import { useKids } from '@/v2/hooks/useKids'
 import type { Family } from '@/v2/types'
-import { toastFail, toastOk } from './notify'
+import { toastFail, toastOk } from '../notify'
 import { WindowEditor } from './WindowEditor'
 
 function zones(current: string): string[] {

@@ -3,7 +3,7 @@ import { ActionIcon, Button, Chip, Text, TextInput } from '@mantine/core'
 import { useAddWindow, useDeleteWindow, useWindows } from '@/v2/hooks/useWindows'
 import { DAYS } from '@/v2/days'
 import type { TimeWindow } from '@/v2/types'
-import { toastFail, toastOk } from './notify'
+import { toastFail, toastOk } from '../notify'
 
 type Kind = TimeWindow['kind']
 const KINDS: { kind: Kind; title: string; add: string }[] = [

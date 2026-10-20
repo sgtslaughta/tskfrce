@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ApiError, CANT_REACH } from "../api";
 import { FridgeShell } from "../components/FridgeShell";
 import { Sticker } from "../components/Sticker";
 import { StickerCard } from "../components/StickerCard";
@@ -24,7 +25,7 @@ export function TodayPage() {
   return (
     <FridgeShell title={dayName(data?.day)} actions={sticker || undefined}>
       {isError && (
-        <p role="alert">{`${(error as Error).message || "Could not load today."} Check your connection and try again.`}</p>
+        <p role="alert">{error instanceof ApiError ? error.message : CANT_REACH}</p>
       )}
       {data && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>

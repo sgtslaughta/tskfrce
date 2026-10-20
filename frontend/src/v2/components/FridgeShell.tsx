@@ -5,7 +5,7 @@ import { Box, Burger, Button, Drawer } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { ColorSchemeToggle } from './ColorSchemeToggle'
-import { startSignOut } from './RequireParent'
+import { cancelSignOut, startSignOut } from './RequireParent'
 
 export const NAV = [
   { href: '/', label: 'Today' },
@@ -46,7 +46,12 @@ export function FridgeShell({
 
   const logOut = async () => {
     startSignOut()
-    await logout()
+    try {
+      await logout()
+    } catch {
+      cancelSignOut()
+      return
+    }
     router.replace('/login')
   }
 
