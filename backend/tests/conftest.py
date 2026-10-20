@@ -1,13 +1,19 @@
 """Shared pytest fixtures: in-memory SQLite and an in-process API client."""
 
-import pytest
-from app.api.deps import get_db
-from app.core.database import Base, _import_all_models, get_db_session
-from app.main import app, fastapi_app
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
+import os
+import tempfile
+
+# Keep generated secrets/db out of the real ./data (must precede app imports)
+os.environ.setdefault("DATA_DIR", tempfile.mkdtemp(prefix="task4ce-test-"))
+
+import pytest  # noqa: E402
+from app.api.deps import get_db  # noqa: E402
+from app.core.database import Base, _import_all_models, get_db_session  # noqa: E402
+from app.main import app, fastapi_app  # noqa: E402
+from fastapi.testclient import TestClient  # noqa: E402
+from sqlalchemy import create_engine  # noqa: E402
+from sqlalchemy.orm import sessionmaker  # noqa: E402
+from sqlalchemy.pool import StaticPool  # noqa: E402
 
 
 @pytest.fixture

@@ -89,12 +89,9 @@ Once Docker containers are running:
 | **📚 API Docs** | http://localhost:8000/docs | Interactive API documentation |
 | **📊 Health Check** | http://localhost:8000/health | Service status |
 
-### 👤 Default Login
+### 👤 First Login
 
-```
-Email: admin@taaskmaaster.com
-Password: admin123
-```
+There are no default credentials. Create your account on first visit.
 
 ### 🔧 Service Status
 
@@ -386,12 +383,11 @@ docker-compose logs -f frontend
 Copy `.env.example` to `.env` and customize:
 
 ```bash
-# Security (CHANGE IN PRODUCTION!)
-SECRET_KEY=your-secret-key-here
-JWT_SECRET_KEY=your-jwt-secret-key-here
+# Secrets are generated on first boot into ./data/secrets.json.
+# Optional overrides: SECRET_KEY, JWT_SECRET_KEY, INTERNAL_TOKEN
 
-# Database
-DATABASE_URL=sqlite:///./taaskmaaster.db
+# Database (default: sqlite in ./data/task4ce.db)
+# DATABASE_URL=sqlite:///./data/task4ce.db
 # DATABASE_URL=postgresql://user:pass@postgres:5432/taaskmaaster
 
 

@@ -8,16 +8,10 @@ including database, authentication, and external service configurations.
 from pathlib import Path
 from typing import Any
 
-try:
-    from pydantic import ConfigDict, validator
-    from pydantic_settings import BaseSettings
+from pydantic import ConfigDict, model_validator, validator
+from pydantic_settings import BaseSettings
 
-    PYDANTIC_V2 = True
-except ImportError:
-    # Fallback for older pydantic versions
-    from pydantic import BaseSettings, validator
-
-    PYDANTIC_V2 = False
+from app.core.secrets import load_or_create_secrets
 
 
 class Settings(BaseSettings):
@@ -33,14 +27,16 @@ class Settings(BaseSettings):
 
     # API settings
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = "your-secret-key-here"
-    JWT_SECRET_KEY: str = "your-jwt-secret-key-here"  # Add missing JWT secret key
+    # Generated at first boot into DATA_DIR/secrets.json unless set via env
+    SECRET_KEY: str | None = None
+    JWT_SECRET_KEY: str | None = None
+    INTERNAL_TOKEN: str | None = None
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
     # Database settings
-    DATABASE_URL: str = "sqlite:///./taaskmaaster.db"
+    DATABASE_URL: str | None = None  # default: sqlite:///{DATA_DIR}/task4ce.db
     DATABASE_ECHO: bool = False
 
     # CORS settings
@@ -52,6 +48,18 @@ class Settings(BaseSettings):
         "http://127.0.0.1:3001",
         "http://127.0.0.1:8000",
     ]
+
+    @model_validator(mode="after")
+    def fill_data_dir_defaults(self) -> "Settings":
+        """Create DATA_DIR, derive DATABASE_URL, fill unset secrets."""
+        self.DATA_DIR.mkdir(parents=True, exist_ok=True)
+        if not self.DATABASE_URL:
+            self.DATABASE_URL = f"sqlite:///{self.DATA_DIR}/task4ce.db"
+        generated = load_or_create_secrets(self.DATA_DIR)
+        for name, value in generated.items():
+            if not getattr(self, name):
+                setattr(self, name, value)
+        return self
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: str | list[str]) -> list[str] | str:
@@ -167,18 +175,11 @@ class Settings(BaseSettings):
     SLACK_WEBHOOK_URL: str | None = None
     DISCORD_WEBHOOK_URL: str | None = None
 
-    if PYDANTIC_V2:
-        model_config = ConfigDict(
-            env_file=".env",
-            case_sensitive=True,
-            extra="ignore",  # Allow extra environment variables to be ignored
-        )
-    else:
-
-        class Config:
-            env_file = ".env"
-            case_sensitive = True
-            extra = "ignore"
+    model_config = ConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore",  # Allow extra environment variables to be ignored
+    )
 
 
 # Global settings instance
@@ -244,7 +245,7 @@ def validate_settings() -> dict[str, Any]:
     results = {"valid": True, "errors": [], "warnings": []}
 
     # Check required settings
-    if not settings.SECRET_KEY or settings.SECRET_KEY == "your-secret-key-here":
+    if not settings.SECRET_KEY:
         results["errors"].append("SECRET_KEY must be set to a secure value")
         results["valid"] = False
 

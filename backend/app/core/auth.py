@@ -5,7 +5,6 @@ This module provides JWT-based authentication, password hashing,
 and authorization utilities.
 """
 
-import os
 from datetime import datetime, timedelta
 
 import jwt
@@ -14,6 +13,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.database import get_db_session
 from app.core.logging import get_logger
 from app.models.user import User
@@ -22,7 +22,7 @@ from app.services.user_service import UserService
 logger = get_logger(__name__)
 
 # Security configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret-change-in-production")
+SECRET_KEY = settings.JWT_SECRET_KEY
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 REFRESH_TOKEN_EXPIRE_DAYS = 7

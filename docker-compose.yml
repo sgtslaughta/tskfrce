@@ -20,17 +20,14 @@ services:
       - "${BACKEND_PORT:-127.0.0.1:8000}:8000"
     environment:
       <<: *common-env
-      DATABASE_URL: ${DATABASE_URL:-sqlite:///./taaskmaaster.db}
-      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt-secret-change-in-production}
-      DATA_DIR: ${DATA_DIR:-/app/data}
+      DATA_DIR: /app/data
       DISABLE_RATE_LIMITING: ${DISABLE_RATE_LIMITING:-false}
       DISABLE_LOGIN_RATE_LIMIT: ${DISABLE_LOGIN_RATE_LIMIT:-true}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://192.168.1.95:3000}
       TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,192.168.1.95,backend,taaskmaaster-backend}
     volumes:
       - ./backend:/app
-      - backend_data:/app/data
+      - ./data:/app/data
     networks:
       - taaskmaaster-network
     restart: unless-stopped
@@ -101,7 +98,6 @@ services:
   #     - production
 
 volumes:
-  backend_data:
   frontend_next_cache:  # Named volume for Next.js build cache
   # postgres_data:  # Commented out since postgres is disabled
 

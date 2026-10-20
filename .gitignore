@@ -227,3 +227,6 @@ docs/task_workflow_enhancement_plan.md
 .env.development
 .env.no-rate-limit
 .superpowers/
+
+# Runtime data (db, uploads, secrets)
+data/
