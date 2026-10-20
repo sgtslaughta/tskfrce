@@ -13,6 +13,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
 
 # Import API routers
 from app.api import (
@@ -25,21 +26,26 @@ from app.api import (
     mentions_router,
     messaging_router,
     presence_router,
-    redis_router,
     tasks_router,
     users_router,
     websocket_router,
     workflow_router,
 )
+from app.api.chores import router as chores_router
+from app.api.devices import router as devices_router
+from app.api.family import router as family_router
+from app.api.internal import router as internal_router
+from app.api.kid import router as kid_router
+from app.api.kids import router as kids_router
 from app.api.notifications import router as notifications_router
+from app.api.setup import router as setup_router
+from app.api.windows import router as windows_router
 from app.core.logging import configure_logging, get_logger
 from app.core.monitoring import (
     MetricsMiddleware,
     get_health_status,
     get_metrics,
 )
-from app.core.rate_limiting import rate_limit_middleware
-from app.services.storage_service import MinIOStorageService
 
 # Configure logging
 configure_logging()
@@ -76,9 +82,6 @@ fastapi_app.add_middleware(
     allowed_hosts=[host.strip() for host in trusted_hosts],
 )
 
-# Add rate limiting middleware (temporarily disabled for debugging)
-# fastapi_app.middleware("http")(rate_limit_middleware)
-
 
 @fastapi_app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -89,7 +92,7 @@ async def log_requests(request: Request, call_next):
     logger.info(
         "Incoming request",
         method=request.method,
-        url=str(request.url),
+        path=request.url.path,  # no query string: may carry tokens
         client_ip=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
     )
@@ -121,13 +124,13 @@ async def log_requests(request: Request, call_next):
 
 # Include API routers
 fastapi_app.include_router(auth_router)
+fastapi_app.include_router(setup_router)
 fastapi_app.include_router(users_router)
 fastapi_app.include_router(tasks_router)
 fastapi_app.include_router(goals_router)
 fastapi_app.include_router(gamification_router)
 fastapi_app.include_router(lists_router)
 fastapi_app.include_router(media_router)
-fastapi_app.include_router(redis_router)
 
 # New workflow and messaging routers
 fastapi_app.include_router(comments_router, prefix="/api/v1/comments", tags=["comments"])
@@ -135,7 +138,16 @@ fastapi_app.include_router(workflow_router, prefix="/api/v1/workflow", tags=["wo
 fastapi_app.include_router(messaging_router, prefix="/api/v1/messages", tags=["messaging"])
 fastapi_app.include_router(mentions_router, prefix="/api/v1/mentions", tags=["mentions"])
 fastapi_app.include_router(presence_router, prefix="/api/v1/presence", tags=["presence"])
-fastapi_app.include_router(notifications_router, prefix="/api/v1/notifications", tags=["notifications"])
+fastapi_app.include_router(
+    notifications_router, prefix="/api/v1/notifications", tags=["notifications"]
+)
+fastapi_app.include_router(chores_router)
+fastapi_app.include_router(internal_router)
+fastapi_app.include_router(devices_router)
+fastapi_app.include_router(kids_router)
+fastapi_app.include_router(kid_router)
+fastapi_app.include_router(windows_router)
+fastapi_app.include_router(family_router)
 fastapi_app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
 
 # Create the final app with ASGI middleware
@@ -204,17 +216,24 @@ async def api_status() -> dict[str, Any]:
 
 @fastapi_app.exception_handler(404)
 async def not_found_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Handle 404 errors."""
+    """Handle 404s; keep explicit HTTPException details, generic text for unmatched routes."""
     logger.warning("404 error", path=request.url.path, method=request.method)
-    return JSONResponse(
-        status_code=404, content={"detail": "Endpoint not found"}
-    )
+    detail = getattr(exc, "detail", None)
+    if not detail or detail == "Not Found":
+        detail = "Endpoint not found"
+    return JSONResponse(status_code=404, content={"detail": detail})
+
+
+@fastapi_app.exception_handler(OperationalError)
+async def db_locked_handler(request: Request, exc: OperationalError) -> JSONResponse:
+    """Map SQLite lock contention to 503 so clients can retry."""
+    if "database is locked" in str(exc):
+        return JSONResponse(status_code=503, content={"detail": "Busy, try again."})
+    raise
 
 
 @fastapi_app.exception_handler(500)
-async def internal_error_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def internal_error_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle 500 errors."""
     logger.error(
         "Internal server error",
@@ -222,42 +241,7 @@ async def internal_error_handler(
         method=request.method,
         error=str(exc),
     )
-    return JSONResponse(
-        status_code=500, content={"detail": "Internal server error"}
-    )
-
-
-async def initialize_minio() -> None:
-    """Initialize MinIO storage service."""
-    try:
-        MinIOStorageService()
-        logger.info("MinIO storage service initialized successfully")
-    except Exception as e:
-        logger.warning(f"MinIO storage service not available: {e}")
-        logger.info("Continuing without MinIO storage service")
-
-
-async def initialize_redis() -> None:
-    """Initialize Redis service."""
-    try:
-        from app.services.redis_service import redis_service
-        if redis_service.available:
-            logger.info("Redis service initialized successfully")
-        else:
-            logger.warning("Redis service not available")
-    except Exception as e:
-        logger.warning(f"Redis service not available: {e}")
-        logger.info("Continuing without Redis service")
-
-
-async def cleanup_minio() -> None:
-    """Cleanup MinIO storage service."""
-    logger.info("MinIO storage service cleanup completed")
-
-
-async def cleanup_redis() -> None:
-    """Cleanup Redis service."""
-    logger.info("Redis service cleanup completed")
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 # Startup event
@@ -268,13 +252,18 @@ async def startup_event():
 
     # Initialize database
     from app.core.database import init_database
-    
-    init_database()
-    logger.info("Database tables created")
 
-    # Initialize services here
-    await initialize_redis()
-    await initialize_minio()
+    init_database()
+    logger.info("Database ready")
+
+    from app.core.config import settings
+
+    if settings.LOCK_LOOP_ENABLED:
+        import asyncio
+
+        from app.lock.loop import run_forever
+
+        fastapi_app.state.lock_task = asyncio.create_task(run_forever())
 
     logger.info("TaaskMaaster API startup complete")
 
@@ -285,10 +274,10 @@ async def shutdown_event():
     """Application shutdown event."""
     logger.info("TaaskMaaster API shutting down")
 
-    # Cleanup services here
+    task = getattr(fastapi_app.state, "lock_task", None)
+    if task:
+        task.cancel()
     # await cleanup_database()
-    await cleanup_redis()
-    await cleanup_minio()
 
     logger.info("TaaskMaaster API shutdown complete")
 

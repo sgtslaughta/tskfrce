@@ -5,22 +5,22 @@ This module defines the Conversation model for managing user conversations.
 """
 
 from datetime import datetime
-from typing import List
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table, Text
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
 # Association table for conversation participants
 conversation_participants = Table(
-    'conversation_participants',
+    "conversation_participants",
     Base.metadata,
-    Column('conversation_id', Integer, ForeignKey('conversations.id'), primary_key=True),
-    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
-    Column('joined_at', DateTime, default=datetime.utcnow, nullable=False),
-    Column('left_at', DateTime, nullable=True),
-    Column('is_muted', Boolean, default=False, nullable=False),
-    Column('muted_until', DateTime, nullable=True)
+    Column("conversation_id", Integer, ForeignKey("conversations.id"), primary_key=True),
+    Column("user_id", Integer, ForeignKey("users.id"), primary_key=True),
+    Column("joined_at", DateTime, default=datetime.utcnow, nullable=False),
+    Column("left_at", DateTime, nullable=True),
+    Column("is_muted", Boolean, default=False, nullable=False),
+    Column("muted_until", DateTime, nullable=True),
 )
 
 
@@ -28,6 +28,7 @@ class Conversation(Base):
     """
     Conversation model for managing user conversations.
     """
+
     __tablename__ = "conversations"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -39,13 +40,15 @@ class Conversation(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     # Relationships
-    creator = relationship("User", foreign_keys=[creator_id], back_populates="created_conversations")
-    participants = relationship(
-        "User", 
-        secondary=conversation_participants, 
-        back_populates="conversations"
+    creator = relationship(
+        "User", foreign_keys=[creator_id], back_populates="created_conversations"
     )
-    messages = relationship("DirectMessage", back_populates="conversation", cascade="all, delete-orphan")
+    participants = relationship(
+        "User", secondary=conversation_participants, back_populates="conversations"
+    )
+    messages = relationship(
+        "DirectMessage", back_populates="conversation", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<Conversation(id={self.id}, type={self.type}, creator_id={self.creator_id})>"
@@ -66,11 +69,11 @@ class Conversation(Base):
         """Get the number of unread messages for a specific user."""
         if not self.messages:
             return 0
-        
+
         # Find the last message the user has read
         user_messages = [m for m in self.messages if m.sender_id != user_id]
         unread_messages = [m for m in user_messages if not m.read_at]
-        
+
         return len(unread_messages)
 
     def is_participant(self, user_id: int) -> bool:
@@ -96,6 +99,7 @@ class ConversationSettings(Base):
     """
     User-specific conversation settings.
     """
+
     __tablename__ = "conversation_settings"
 
     id = Column(Integer, primary_key=True, index=True)

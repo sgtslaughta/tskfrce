@@ -6,9 +6,9 @@ in the database, enabling offline notification delivery.
 """
 
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any
 
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -17,11 +17,11 @@ from app.core.database import Base
 class Notification(Base):
     """
     Notification model for storing user notifications.
-    
+
     This model stores notifications that can be delivered to users
     both in real-time (via WebSocket) and when they return online.
     """
-    
+
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -34,7 +34,7 @@ class Notification(Base):
     is_read = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     read_at = Column(DateTime, nullable=True)
-    
+
     # Relationships
     user = relationship("User", back_populates="notifications")
 
@@ -42,10 +42,10 @@ class Notification(Base):
         """String representation of notification."""
         return f"<Notification(id={self.id}, user_id={self.user_id}, type='{self.type}', is_read={self.is_read})>"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert notification to dictionary format.
-        
+
         Returns:
             Dictionary representation of the notification
         """

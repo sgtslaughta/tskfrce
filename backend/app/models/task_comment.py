@@ -5,7 +5,7 @@ This module defines the TaskComment model for handling comments on tasks.
 """
 
 from datetime import datetime
-from typing import List, Optional
+
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
@@ -16,6 +16,7 @@ class TaskComment(Base):
     """
     Task comment model.
     """
+
     __tablename__ = "task_comments"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -36,20 +37,30 @@ class TaskComment(Base):
     task = relationship("Task", back_populates="comments")
     user = relationship("User", foreign_keys=[user_id], back_populates="comments")
     parent_comment = relationship("TaskComment", remote_side=[id], back_populates="replies")
-    replies = relationship("TaskComment", back_populates="parent_comment", cascade="all, delete-orphan")
+    replies = relationship(
+        "TaskComment", back_populates="parent_comment", cascade="all, delete-orphan"
+    )
     pinned_by_user = relationship("User", foreign_keys=[pinned_by_user_id])
-    
+
     # Media attachments relationship
-    media_attachments = relationship("CommentMediaAttachment", back_populates="comment", cascade="all, delete-orphan")
-    
+    media_attachments = relationship(
+        "CommentMediaAttachment", back_populates="comment", cascade="all, delete-orphan"
+    )
+
     # Reactions relationship
-    reactions = relationship("CommentReaction", back_populates="comment", cascade="all, delete-orphan")
-    
+    reactions = relationship(
+        "CommentReaction", back_populates="comment", cascade="all, delete-orphan"
+    )
+
     # Mentions relationship
-    mentions = relationship("CommentMention", back_populates="comment", cascade="all, delete-orphan")
-    
+    mentions = relationship(
+        "CommentMention", back_populates="comment", cascade="all, delete-orphan"
+    )
+
     # Audit trail relationship
-    audit_trail = relationship("CommentAuditTrail", back_populates="comment", cascade="all, delete-orphan")
+    audit_trail = relationship(
+        "CommentAuditTrail", back_populates="comment", cascade="all, delete-orphan"
+    )
 
     def __repr__(self):
         return f"<TaskComment(id={self.id}, task_id={self.task_id}, user_id={self.user_id})>"
@@ -60,7 +71,7 @@ class TaskComment(Base):
         return len(self.replies) if self.replies else 0
 
     @property
-    def mentioned_users(self) -> List["User"]:
+    def mentioned_users(self) -> list["User"]:  # noqa: F821 - string forward ref, fixed when models are rewritten
         """Get list of users mentioned in this comment."""
         return [mention.mentioned_user for mention in self.mentions] if self.mentions else []
 
@@ -75,14 +86,14 @@ class TaskComment(Base):
     def can_be_pinned_by(self, user_id: int) -> bool:
         """Check if a user can pin this comment."""
         # Only task creator or assignee can pin comments
-        return (self.task.created_by_id == user_id or 
-                self.task.assigned_to_id == user_id)
+        return self.task.created_by_id == user_id or self.task.assigned_to_id == user_id
 
 
 class CommentReaction(Base):
     """
     Comment reaction model.
     """
+
     __tablename__ = "comment_reactions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -103,6 +114,7 @@ class CommentMention(Base):
     """
     Comment mention model for @username functionality.
     """
+
     __tablename__ = "comment_mentions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -114,8 +126,12 @@ class CommentMention(Base):
 
     # Relationships
     comment = relationship("TaskComment", back_populates="mentions")
-    mentioned_user = relationship("User", foreign_keys=[mentioned_user_id], back_populates="comment_mentions_received")
-    mentioned_by_user = relationship("User", foreign_keys=[mentioned_by_user_id], back_populates="comment_mentions_made")
+    mentioned_user = relationship(
+        "User", foreign_keys=[mentioned_user_id], back_populates="comment_mentions_received"
+    )
+    mentioned_by_user = relationship(
+        "User", foreign_keys=[mentioned_by_user_id], back_populates="comment_mentions_made"
+    )
 
     def __repr__(self):
         return f"<CommentMention(id={self.id}, comment_id={self.comment_id}, mentioned_user_id={self.mentioned_user_id})>"
@@ -125,6 +141,7 @@ class CommentMediaAttachment(Base):
     """
     Comment media attachment model.
     """
+
     __tablename__ = "comment_media_attachments"
 
     id = Column(Integer, primary_key=True, index=True)

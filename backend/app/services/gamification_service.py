@@ -6,7 +6,7 @@ points, achievements, leaderboards, and streaks.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import and_, asc, desc, func
 from sqlalchemy.orm import Session
@@ -41,9 +41,9 @@ class GamificationService:
         user_id: int,
         amount: int,
         points_type: PointsType,
-        description: Optional[str] = None,
-        reference_id: Optional[int] = None,
-        reference_type: Optional[str] = None,
+        description: str | None = None,
+        reference_id: int | None = None,
+        reference_type: str | None = None,
     ) -> Points:
         """
         Award points to a user.
@@ -72,12 +72,10 @@ class GamificationService:
         self.db.commit()
         self.db.refresh(points)
 
-        logger.info(
-            f"Awarded {amount} points to user {user_id} for {points_type}"
-        )
+        logger.info(f"Awarded {amount} points to user {user_id} for {points_type}")
         return points
 
-    def get_user_points_summary(self, user_id: int) -> Dict[str, Any]:
+    def get_user_points_summary(self, user_id: int) -> dict[str, Any]:
         """
         Get points summary for a user.
 
@@ -89,19 +87,14 @@ class GamificationService:
         """
         # Total points
         total_points = (
-            self.db.query(func.sum(Points.amount))
-            .filter(Points.user_id == user_id)
-            .scalar()
-            or 0
+            self.db.query(func.sum(Points.amount)).filter(Points.user_id == user_id).scalar() or 0
         )
 
         # Points this week
         week_ago = datetime.utcnow() - timedelta(days=7)
         points_this_week = (
             self.db.query(func.sum(Points.amount))
-            .filter(
-                and_(Points.user_id == user_id, Points.created_at >= week_ago)
-            )
+            .filter(and_(Points.user_id == user_id, Points.created_at >= week_ago))
             .scalar()
             or 0
         )
@@ -110,9 +103,7 @@ class GamificationService:
         month_ago = datetime.utcnow() - timedelta(days=30)
         points_this_month = (
             self.db.query(func.sum(Points.amount))
-            .filter(
-                and_(Points.user_id == user_id, Points.created_at >= month_ago)
-            )
+            .filter(and_(Points.user_id == user_id, Points.created_at >= month_ago))
             .scalar()
             or 0
         )
@@ -121,17 +112,13 @@ class GamificationService:
         year_ago = datetime.utcnow() - timedelta(days=365)
         points_this_year = (
             self.db.query(func.sum(Points.amount))
-            .filter(
-                and_(Points.user_id == user_id, Points.created_at >= year_ago)
-            )
+            .filter(and_(Points.user_id == user_id, Points.created_at >= year_ago))
             .scalar()
             or 0
         )
 
         # User rank
-        total_users = self.db.query(
-            func.count(Points.user_id.distinct())
-        ).scalar()
+        total_users = self.db.query(func.count(Points.user_id.distinct())).scalar()
 
         # Calculate user rank using subquery
         if total_points > 0:
@@ -162,7 +149,7 @@ class GamificationService:
 
     def get_user_points_history(
         self, user_id: int, skip: int = 0, limit: int = 100
-    ) -> tuple[List[Points], int]:
+    ) -> tuple[list[Points], int]:
         """
         Get points history for a user.
 
@@ -176,16 +163,11 @@ class GamificationService:
         """
         query = self.db.query(Points).filter(Points.user_id == user_id)
         total = query.count()
-        points = (
-            query.order_by(desc(Points.created_at))
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+        points = query.order_by(desc(Points.created_at)).offset(skip).limit(limit).all()
 
         return points, total
 
-    def check_and_award_achievements(self, user_id: int) -> List[Achievement]:
+    def check_and_award_achievements(self, user_id: int) -> list[Achievement]:
         """
         Check and award achievements to a user.
 
@@ -196,11 +178,7 @@ class GamificationService:
             List of newly awarded achievements
         """
         # Get all active achievements
-        achievements = (
-            self.db.query(Achievement)
-            .filter(Achievement.is_active is True)
-            .all()
-        )
+        achievements = self.db.query(Achievement).filter(Achievement.is_active is True).all()
 
         newly_awarded = []
         for achievement in achievements:
@@ -224,9 +202,7 @@ class GamificationService:
                 user_achievement = UserAchievement(
                     user_id=user_id,
                     achievement_id=achievement.id,
-                    progress_value=self._get_achievement_progress(
-                        user_id, achievement
-                    ),
+                    progress_value=self._get_achievement_progress(user_id, achievement),
                 )
 
                 self.db.add(user_achievement)
@@ -247,15 +223,11 @@ class GamificationService:
         self.db.commit()
 
         if newly_awarded:
-            logger.info(
-                f"Awarded {len(newly_awarded)} achievements to user {user_id}"
-            )
+            logger.info(f"Awarded {len(newly_awarded)} achievements to user {user_id}")
 
         return newly_awarded
 
-    def _check_achievement_criteria(
-        self, user_id: int, achievement: Achievement
-    ) -> bool:
+    def _check_achievement_criteria(self, user_id: int, achievement: Achievement) -> bool:
         """Check if user meets achievement criteria."""
         if not achievement.criteria:
             return False
@@ -280,9 +252,7 @@ class GamificationService:
         elif achievement_type == AchievementType.POINTS_MILESTONE:
             required_points = criteria.get("points", 0)
             total_points = (
-                self.db.query(func.sum(Points.amount))
-                .filter(Points.user_id == user_id)
-                .scalar()
+                self.db.query(func.sum(Points.amount)).filter(Points.user_id == user_id).scalar()
                 or 0
             )
             return total_points >= required_points
@@ -318,9 +288,7 @@ class GamificationService:
 
         return False
 
-    def _get_achievement_progress(
-        self, user_id: int, achievement: Achievement
-    ) -> Optional[float]:
+    def _get_achievement_progress(self, user_id: int, achievement: Achievement) -> float | None:
         """Get progress value for an achievement."""
         achievement_type = achievement.achievement_type
 
@@ -338,16 +306,12 @@ class GamificationService:
 
         elif achievement_type == AchievementType.POINTS_MILESTONE:
             return (
-                self.db.query(func.sum(Points.amount))
-                .filter(Points.user_id == user_id)
-                .scalar()
+                self.db.query(func.sum(Points.amount)).filter(Points.user_id == user_id).scalar()
                 or 0
             )
 
         elif achievement_type == AchievementType.STREAK:
-            streak_type = achievement.criteria.get(
-                "streak_type", "daily_tasks"
-            )
+            streak_type = achievement.criteria.get("streak_type", "daily_tasks")
             streak = (
                 self.db.query(Streak)
                 .filter(
@@ -374,7 +338,7 @@ class GamificationService:
 
         return None
 
-    def get_user_achievements(self, user_id: int) -> List[UserAchievement]:
+    def get_user_achievements(self, user_id: int) -> list[UserAchievement]:
         """
         Get achievements for a user.
 
@@ -391,9 +355,7 @@ class GamificationService:
             .all()
         )
 
-    def create_leaderboard(
-        self, leaderboard_data: LeaderboardCreate
-    ) -> Leaderboard:
+    def create_leaderboard(self, leaderboard_data: LeaderboardCreate) -> Leaderboard:
         """
         Create a new leaderboard.
 
@@ -429,11 +391,7 @@ class GamificationService:
         Returns:
             Number of entries updated
         """
-        leaderboard = (
-            self.db.query(Leaderboard)
-            .filter(Leaderboard.id == leaderboard_id)
-            .first()
-        )
+        leaderboard = self.db.query(Leaderboard).filter(Leaderboard.id == leaderboard_id).first()
         if not leaderboard:
             return 0
 
@@ -466,19 +424,14 @@ class GamificationService:
         self.db.add_all(entries)
         self.db.commit()
 
-        logger.info(
-            f"Updated {len(entries)} leaderboard entries "
-            f"for leaderboard {leaderboard_id}"
-        )
+        logger.info(f"Updated {len(entries)} leaderboard entries for leaderboard {leaderboard_id}")
         return len(entries)
 
-    def _calculate_points_scores(
-        self, leaderboard: Leaderboard
-    ) -> List[tuple[int, float]]:
+    def _calculate_points_scores(self, leaderboard: Leaderboard) -> list[tuple[int, float]]:
         """Calculate points-based scores for leaderboard."""
-        query = self.db.query(
-            Points.user_id, func.sum(Points.amount).label("total_points")
-        ).filter(Points.amount > 0)
+        query = self.db.query(Points.user_id, func.sum(Points.amount).label("total_points")).filter(
+            Points.amount > 0
+        )
 
         # Apply time filter
         if leaderboard.time_period == "daily":
@@ -493,18 +446,14 @@ class GamificationService:
         if start_date:
             query = query.filter(Points.created_at >= start_date)
 
-        scores = (
-            query.group_by(Points.user_id).order_by(desc("total_points")).all()
-        )
+        scores = query.group_by(Points.user_id).order_by(desc("total_points")).all()
         return [(user_id, total_points) for user_id, total_points in scores]
 
-    def _calculate_task_scores(
-        self, leaderboard: Leaderboard
-    ) -> List[tuple[int, float]]:
+    def _calculate_task_scores(self, leaderboard: Leaderboard) -> list[tuple[int, float]]:
         """Calculate task-based scores for leaderboard."""
-        query = self.db.query(
-            Task.assigned_to_id, func.count(Task.id).label("task_count")
-        ).filter(Task.status == TaskStatus.DONE)
+        query = self.db.query(Task.assigned_to_id, func.count(Task.id).label("task_count")).filter(
+            Task.status == TaskStatus.DONE
+        )
 
         # Apply time filter
         if leaderboard.time_period == "daily":
@@ -519,18 +468,10 @@ class GamificationService:
         if start_date:
             query = query.filter(Task.completed_at >= start_date)
 
-        scores = (
-            query.group_by(Task.assigned_to_id)
-            .order_by(desc("task_count"))
-            .all()
-        )
-        return [
-            (user_id, task_count) for user_id, task_count in scores if user_id
-        ]
+        scores = query.group_by(Task.assigned_to_id).order_by(desc("task_count")).all()
+        return [(user_id, task_count) for user_id, task_count in scores if user_id]
 
-    def _calculate_streak_scores(
-        self, leaderboard: Leaderboard
-    ) -> List[tuple[int, float]]:
+    def _calculate_streak_scores(self, leaderboard: Leaderboard) -> list[tuple[int, float]]:
         """Calculate streak-based scores for leaderboard."""
         scores = (
             self.db.query(Streak.user_id, Streak.current_streak)
@@ -538,13 +479,11 @@ class GamificationService:
             .all()
         )
 
-        return [
-            (user_id, current_streak) for user_id, current_streak in scores
-        ]
+        return [(user_id, current_streak) for user_id, current_streak in scores]
 
     def get_leaderboard_entries(
         self, leaderboard_id: int, skip: int = 0, limit: int = 100
-    ) -> tuple[List[LeaderboardEntry], int]:
+    ) -> tuple[list[LeaderboardEntry], int]:
         """
         Get leaderboard entries.
 
@@ -560,18 +499,13 @@ class GamificationService:
             LeaderboardEntry.leaderboard_id == leaderboard_id
         )
         total = query.count()
-        entries = (
-            query.order_by(asc(LeaderboardEntry.rank))
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+        entries = query.order_by(asc(LeaderboardEntry.rank)).offset(skip).limit(limit).all()
 
         return entries, total
 
     def update_user_streak(
         self, user_id: int, streak_type: str, activity_date: datetime = None
-    ) -> Optional[Streak]:
+    ) -> Streak | None:
         """
         Update user streak based on activity.
 
@@ -610,9 +544,7 @@ class GamificationService:
         else:
             # Check if activity is consecutive
             if streak.last_activity:
-                days_diff = (
-                    activity_date.date() - streak.last_activity.date()
-                ).days
+                days_diff = (activity_date.date() - streak.last_activity.date()).days
 
                 if days_diff == 1:  # Consecutive day
                     streak.current_streak += 1
@@ -634,7 +566,7 @@ class GamificationService:
         )
         return streak
 
-    def get_user_streaks(self, user_id: int) -> List[Streak]:
+    def get_user_streaks(self, user_id: int) -> list[Streak]:
         """
         Get all streaks for a user.
 

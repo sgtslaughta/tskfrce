@@ -101,9 +101,7 @@ class Task(Base):
     title = Column(String(255), nullable=False, index=True)
     description = Column(Text, nullable=True)
     status = Column(SQLEnum(TaskStatus), default=TaskStatus.TODO, index=True)
-    priority = Column(
-        SQLEnum(TaskPriority), default=TaskPriority.MEDIUM, index=True
-    )
+    priority = Column(SQLEnum(TaskPriority), default=TaskPriority.MEDIUM, index=True)
     due_date = Column(DateTime, nullable=True, index=True)
     completed_at = Column(DateTime, nullable=True)
     estimated_hours = Column(Float, default=0.0)
@@ -114,38 +112,26 @@ class Task(Base):
     reward_description = Column(String(255), nullable=True)  # For custom rewards
     is_recurring = Column(Boolean, default=False)
     recurrence_pattern = Column(JSON, nullable=True)
-    template_id = Column(
-        Integer, ForeignKey("task_templates.id"), nullable=True
-    )
-    category_id = Column(
-        Integer, ForeignKey("task_categories.id"), nullable=True
-    )
+    template_id = Column(Integer, ForeignKey("task_templates.id"), nullable=True)
+    category_id = Column(Integer, ForeignKey("task_categories.id"), nullable=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     assigned_to_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     parent_task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True)
-    
+
     # New workflow fields
     submitted_for_approval_at = Column(DateTime, nullable=True)
     approved_at = Column(DateTime, nullable=True)
     approved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    
+
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    created_by = relationship(
-        "User", back_populates="created_tasks", foreign_keys=[created_by_id]
-    )
-    assigned_to = relationship(
-        "User", back_populates="tasks", foreign_keys=[assigned_to_id]
-    )
+    created_by = relationship("User", back_populates="created_tasks", foreign_keys=[created_by_id])
+    assigned_to = relationship("User", back_populates="tasks", foreign_keys=[assigned_to_id])
     template = relationship("TaskTemplate", back_populates="tasks")
     category = relationship("TaskCategory", back_populates="tasks")
-    tags = relationship(
-        "TaskTag", secondary="task_tag_associations", back_populates="tasks"
-    )
+    tags = relationship("TaskTag", secondary="task_tag_associations", back_populates="tasks")
     dependencies = relationship(
         "TaskDependency",
         back_populates="task",
@@ -163,24 +149,21 @@ class Task(Base):
         foreign_keys="Task.parent_task_id",
     )
     media_attachments = relationship("MediaAttachment", back_populates="task")
-    lists = relationship(
-        "TaskList",
-        secondary="task_list_associations",
-        back_populates="tasks"
-    )
-    
+    lists = relationship("TaskList", secondary="task_list_associations", back_populates="tasks")
+
     # New workflow and messaging relationships
     approved_by = relationship("User", foreign_keys=[approved_by_id])
     comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan")
-    status_history = relationship("TaskStatusHistory", back_populates="task", cascade="all, delete-orphan")
-    chat_messages = relationship("TaskChatMessage", back_populates="task", cascade="all, delete-orphan")
+    status_history = relationship(
+        "TaskStatusHistory", back_populates="task", cascade="all, delete-orphan"
+    )
+    chat_messages = relationship(
+        "TaskChatMessage", back_populates="task", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         """String representation of Task."""
-        return (
-            f"<Task(id={self.id}, title='{self.title}', "
-            f"status='{self.status}')>"
-        )
+        return f"<Task(id={self.id}, title='{self.title}', status='{self.status}')>"
 
 
 class TaskList(Base):
@@ -209,17 +192,11 @@ class TaskList(Base):
     is_archived = Column(Boolean, default=False)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     created_by = relationship("User", back_populates="created_lists")
-    tasks = relationship(
-        "Task",
-        secondary="task_list_associations",
-        back_populates="lists"
-    )
+    tasks = relationship("Task", secondary="task_list_associations", back_populates="lists")
 
     def __repr__(self) -> str:
         """String representation of TaskList."""
@@ -286,16 +263,12 @@ class TaskTemplate(Base):
     estimated_hours = Column(Float, default=0.0)
     points = Column(Integer, default=0)
     priority = Column(SQLEnum(TaskPriority), default=TaskPriority.MEDIUM)
-    category_id = Column(
-        Integer, ForeignKey("task_categories.id"), nullable=True
-    )
+    category_id = Column(Integer, ForeignKey("task_categories.id"), nullable=True)
     tags = Column(JSON, nullable=True)  # List of tag names
     is_public = Column(Boolean, default=False)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     tasks = relationship("Task", back_populates="template")
@@ -329,14 +302,10 @@ class TaskCategory(Base):
     description = Column(Text, nullable=True)
     color = Column(String(7), default="#3B82F6")  # Hex color
     icon = Column(String(50), nullable=True)
-    parent_id = Column(
-        Integer, ForeignKey("task_categories.id"), nullable=True
-    )
+    parent_id = Column(Integer, ForeignKey("task_categories.id"), nullable=True)
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     tasks = relationship("Task", back_populates="category")
@@ -379,9 +348,7 @@ class TaskTag(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    tasks = relationship(
-        "Task", secondary="task_tag_associations", back_populates="tags"
-    )
+    tasks = relationship("Task", secondary="task_tag_associations", back_populates="tags")
 
     def __repr__(self) -> str:
         """String representation of TaskTag."""
@@ -413,23 +380,16 @@ class TaskDependency(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
-    depends_on_task_id = Column(
-        Integer, ForeignKey("tasks.id"), nullable=False
-    )
+    depends_on_task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
     dependency_type = Column(
         String(50), default="finish_to_start"
     )  # finish_to_start, start_to_start, etc.
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    task = relationship(
-        "Task", back_populates="dependencies", foreign_keys=[task_id]
-    )
+    task = relationship("Task", back_populates="dependencies", foreign_keys=[task_id])
     depends_on_task = relationship("Task", foreign_keys=[depends_on_task_id])
 
     def __repr__(self) -> str:
         """String representation of TaskDependency."""
-        return (
-            f"<TaskDependency(task_id={self.task_id}, "
-            f"depends_on={self.depends_on_task_id})>"
-        )
+        return f"<TaskDependency(task_id={self.task_id}, depends_on={self.depends_on_task_id})>"

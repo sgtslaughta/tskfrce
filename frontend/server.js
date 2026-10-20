@@ -78,9 +78,7 @@ app.prepare()
         }
       },
       onProxyReqWs: (proxyReq, req, socket, options, head) => {
-        console.log('[WebSocket Proxy] Proxying WebSocket upgrade to:', options.target.href + req.url);
-        console.log('[WebSocket Proxy] Request headers:', req.headers);
-        console.log('[WebSocket Proxy] Proxy request headers:', proxyReq.headers);
+        // No URL/header logging: the URL carries ?token=<JWT>.
       },
       onOpen: (proxySocket) => {
         console.log('[WebSocket Proxy] Connection opened successfully to backend');
@@ -97,17 +95,23 @@ app.prepare()
     server.on('upgrade', (req, socket, head) => {
       try {
         if (req.url.startsWith('/ws/')) {
-          console.log('[WebSocket Proxy] Handling upgrade for:', req.url);
+          console.log('[WebSocket Proxy] Handling upgrade for:', req.url.split('?')[0]);
           
           // Try direct WebSocket proxy instead of middleware
           const http = require('http');
           const backendUrlObj = new URL(backendUrl);
+          // Never pass client-supplied IP headers; X-Real-IP comes from the socket.
+          const headers = { ...req.headers };
+          delete headers['x-real-ip'];
+          delete headers['x-forwarded-for'];
+          delete headers['forwarded'];
+          headers['x-real-ip'] = (req.socket.remoteAddress || '').replace(/^::ffff:/, '');
           const proxyReq = http.request({
             hostname: backendUrlObj.hostname,
             port: backendUrlObj.port,
             path: req.url,
             method: req.method,
-            headers: req.headers
+            headers
           });
           
           proxyReq.on('upgrade', (res, proxySocket, proxyHead) => {
@@ -132,7 +136,7 @@ app.prepare()
           console.log('[HMR WebSocket] Next.js HMR connection attempt - allowing');
           // Don't destroy HMR connections, let them pass through
         } else {
-          console.log('[WebSocket] Unknown WebSocket connection, destroying:', req.url);
+          console.log('[WebSocket] Unknown WebSocket connection, destroying:', req.url.split('?')[0]);
           socket.destroy();
         }
       } catch (error) {

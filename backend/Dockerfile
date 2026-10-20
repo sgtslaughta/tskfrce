@@ -34,8 +34,9 @@ COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 # Create non-root user
+# Code stays root-owned (not writable by appuser); only /app/data is writable
 RUN adduser --disabled-password --gecos '' appuser \
-    && chown -R appuser:appuser /app
+    && mkdir -p /app/data && chown appuser:appuser /app/data
 USER appuser
 
 # Expose port

@@ -5,34 +5,29 @@ This module provides JWT-based authentication, password hashing,
 and authorization utilities.
 """
 
-import os
+import secrets
 from datetime import datetime, timedelta
-from typing import Optional
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.logging import get_logger
-from app.db.session import get_db_session
 from app.models.user import User
 from app.services.user_service import UserService
 
 logger = get_logger(__name__)
 
 # Security configuration
-SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret-change-in-production")
+SECRET_KEY = settings.JWT_SECRET_KEY
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 REFRESH_TOKEN_EXPIRE_DAYS = 7
+INVITE_TTL = timedelta(hours=24)
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-# HTTP Bearer token scheme
-security = HTTPBearer()
 
 
 class AuthService:
@@ -43,9 +38,7 @@ class AuthService:
         self.db = db
         self.user_service = UserService(db)
 
-    def verify_password(
-        self, plain_password: str, hashed_password: str
-    ) -> bool:
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """
         Verify a plain password against its hash.
 
@@ -70,9 +63,7 @@ class AuthService:
         """
         return pwd_context.hash(password)
 
-    def authenticate_user(
-        self, username: str, password: str
-    ) -> Optional[User]:
+    def authenticate_user(self, username: str, password: str) -> User | None:
         """
         Authenticate a user with username/email and password.
 
@@ -101,9 +92,7 @@ class AuthService:
         logger.info(f"User {user.id} authenticated successfully")
         return user
 
-    def create_access_token(
-        self, data: dict, expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_access_token(self, data: dict, expires_delta: timedelta | None = None) -> str:
         """
         Create a JWT access token.
 
@@ -118,17 +107,13 @@ class AuthService:
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(
-                minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-            )
+            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
         to_encode.update({"exp": expire, "type": "access"})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
-    def create_refresh_token(
-        self, data: dict, expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_refresh_token(self, data: dict, expires_delta: timedelta | None = None) -> str:
         """
         Create a JWT refresh token.
 
@@ -143,15 +128,34 @@ class AuthService:
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(
-                days=REFRESH_TOKEN_EXPIRE_DAYS
-            )
+            expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
         to_encode.update({"exp": expire, "type": "refresh"})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
-    def verify_token(self, token: str) -> Optional[dict]:
+    def create_invite_token(self, username: str, invited_by: int) -> str:
+        """One-time parent invite; its jti is recorded in used_invites on redemption."""
+        exp = datetime.utcnow() + INVITE_TTL
+        data = {
+            "sub": username,
+            "by": invited_by,
+            "exp": exp,
+            "type": "invite",
+            "jti": secrets.token_hex(16),
+        }
+        return jwt.encode(data, SECRET_KEY, algorithm=ALGORITHM)
+
+    def read_invite(self, token: str | None) -> tuple[str, str] | None:
+        """(username, jti) of an unexpired invite token, or None."""
+        payload = self.verify_token(token) if token else None
+        if not payload or payload.get("type") != "invite":
+            return None
+        if not payload.get("sub") or not payload.get("jti"):
+            return None
+        return payload["sub"], payload["jti"]
+
+    def verify_token(self, token: str) -> dict | None:
         """
         Verify and decode a JWT token.
 
@@ -167,7 +171,7 @@ class AuthService:
         except jwt.InvalidTokenError:
             return None
 
-    def get_current_user(self, token: str) -> Optional[User]:
+    def get_current_user(self, token: str) -> User | None:
         """
         Get current user from JWT token.
 
@@ -178,13 +182,13 @@ class AuthService:
             User instance or None
         """
         payload = self.verify_token(token)
-        if payload is None:
+        if payload is None or payload.get("type") != "access":
             return None
 
         user_id = payload.get("sub")
         if user_id is None:
             return None
-        
+
         try:
             user_id = int(user_id)
         except (ValueError, TypeError):
@@ -195,78 +199,3 @@ class AuthService:
             return None
 
         return user
-
-
-def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db_session),
-) -> User:
-    """
-    Dependency to get current authenticated user.
-
-    Args:
-        credentials: HTTP Bearer token credentials
-        db: Database session
-
-    Returns:
-        Current authenticated user
-
-    Raises:
-        HTTPException: If authentication fails
-    """
-    auth_service = AuthService(db)
-    user = auth_service.get_current_user(credentials.credentials)
-
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not validate credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    return user
-
-
-def get_current_active_user(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    """
-    Dependency to get current active user.
-
-    Args:
-        current_user: Current authenticated user
-
-    Returns:
-        Current active user
-
-    Raises:
-        HTTPException: If user is inactive
-    """
-    if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
-        )
-    return current_user
-
-
-def get_current_superuser(
-    current_user: User = Depends(get_current_user),
-) -> User:
-    """
-    Dependency to get current superuser.
-
-    Args:
-        current_user: Current authenticated user
-
-    Returns:
-        Current superuser
-
-    Raises:
-        HTTPException: If user is not a superuser
-    """
-    if not current_user.is_superuser:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="The user doesn't have enough privileges",
-        )
-    return current_user

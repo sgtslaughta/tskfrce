@@ -74,11 +74,6 @@ This document outlines the phased implementation approach for the TaaskMaaster p
 - **Authentication**: JWT tokens with access/refresh token pattern, password hashing with bcrypt
 - **Containerization**: Docker Compose with health checks and proper service dependencies
 
-**Test User Created:**
-- Username: `admin`
-- Password: `admin123`
-- Email: `admin@taaskmaaster.com`
-- Role: Superuser with full privileges
 
 **Current Status Notes:**
 - ✅ Backend API fully functional with authentication and task management
@@ -461,11 +456,6 @@ This document outlines the phased implementation approach for the TaaskMaaster p
 - **Gamification**: Points, achievements, leaderboards, streaks
 - **Goals**: Goal management (endpoints available)
 - **Media**: File upload and storage (MinIO integration)
-
-**🔑 Default Test Credentials:**
-- **Username**: `admin`
-- **Email**: `admin@taaskmaaster.com`
-- **Password**: `admin123`
 
 **🔧 Backend Features Available:**
 - JWT authentication with refresh tokens

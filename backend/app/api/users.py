@@ -4,15 +4,20 @@ Users API router for TaaskMaaster.
 This module contains API endpoints for user management and authentication.
 """
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.auth import get_current_active_user, get_current_superuser
-from app.db.session import get_db_session
-from app.models.user import User
+from app.api.deps import (
+    get_current_active_user,
+    get_current_superuser,
+    require_parent,
+    require_self_or_parent,
+)
+from app.core.auth import INVITE_TTL, AuthService
+from app.core.database import get_db_session
+from app.models.user import User, UserRole
 from app.schemas.user import (
+    InviteIn,
     UserCreate,
     UserList,
     UserPasswordChange,
@@ -23,10 +28,10 @@ from app.services.user_service import UserService
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
+KID_EDITABLE = {"full_name", "profile_picture", "preferences"}
 
-@router.post(
-    "/", response_model=UserResponse, status_code=status.HTTP_201_CREATED
-)
+
+@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: UserCreate,
     db: Session = Depends(get_db_session),
@@ -58,36 +63,29 @@ async def create_user(
 @router.get("/", response_model=UserList)
 async def get_users(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of records to return"
-    ),
-    is_active: Optional[bool] = Query(
-        None, description="Filter by active status"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
+    is_active: bool | None = Query(None, description="Filter by active status"),
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_superuser),
 ):
     """Get users with filtering and pagination."""
     try:
         user_service = UserService(db)
-        users, total = user_service.get_users(
-            skip=skip, limit=limit, is_active=is_active
-        )
+        users, total = user_service.get_users(skip=skip, limit=limit, is_active=is_active)
 
         pages = (total + limit - 1) // limit
         page = (skip // limit) + 1
 
-        return UserList(
-            users=users, total=total, page=page, size=limit, pages=pages
-        )
+        return UserList(users=users, total=total, page=page, size=limit, pages=pages)
     except Exception as e:
         # Log the actual error instead of silently failing
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Error fetching users: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching users: {str(e)}"
+            detail=f"Error fetching users: {str(e)}",
         )
 
 
@@ -100,22 +98,35 @@ async def get_users_for_assignment(
     try:
         user_service = UserService(db)
         # Get only active users for assignment
-        users, total = user_service.get_users(
-            skip=0, limit=100, is_active=True
-        )
+        users, total = user_service.get_users(skip=0, limit=100, is_active=True)
 
-        return UserList(
-            users=users, total=total, page=1, size=100, pages=1
-        )
+        return UserList(users=users, total=total, page=1, size=100, pages=1)
     except Exception as e:
         # Log the actual error instead of silently failing
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Error fetching users for assignment: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching users for assignment: {str(e)}"
+            detail=f"Error fetching users for assignment: {str(e)}",
         )
+
+
+@router.post("/invite", status_code=status.HTTP_201_CREATED)
+async def invite_parent(
+    body: InviteIn,
+    db: Session = Depends(get_db_session),
+    current_user: User = Depends(require_parent),
+):
+    """Make a one-time sign-up link token (24 h) for a new parent with this username."""
+    if UserService(db).get_user_by_username(body.username):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="That username is taken. Pick another one.",
+        )
+    token = AuthService(db).create_invite_token(body.username, current_user.id)
+    return {"token": token, "expires_in": int(INVITE_TTL.total_seconds())}
 
 
 # Password change endpoint (must come before /{user_id} routes)
@@ -145,9 +156,7 @@ async def get_user(
     user = user_service.get_user(user_id)
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return user
 
@@ -159,14 +168,18 @@ async def update_user(
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Update a user account."""
+    """Update a user. Kids may edit only their own name, avatar and preferences."""
+    require_self_or_parent(user_id, current_user)
+    changed = user_data.model_dump(exclude_unset=True).keys()
+    if current_user.role != UserRole.PARENT and changed - KID_EDITABLE:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only parents can do this."
+        )
     user_service = UserService(db)
     user = user_service.update_user(user_id, user_data)
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return user
 
@@ -177,11 +190,14 @@ async def delete_user(
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_superuser),
 ):
-    """Delete a user account."""
+    """Delete a user account (kids go through /kids so their chores are cleaned up)."""
+    target = db.get(User, user_id)
+    if target is not None and target.role == UserRole.KID:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Use the kids screen to remove a kid."
+        )
     user_service = UserService(db)
     success = user_service.delete_user(user_id)
 
     if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

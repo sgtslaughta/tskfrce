@@ -15,6 +15,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!frontend/src/lib/
 lib64/
 parts/
 sdist/
@@ -216,9 +217,6 @@ frontend/.next/
 *.db
 docs/tasks_page_redesign_plan.md
 
-# Almebic version
-alembic.ini
-backend/alembic/versions/*
 taaskmaaster.db
 docs/task_workflow_enhancement_plan.md
 
@@ -229,3 +227,9 @@ docs/task_workflow_enhancement_plan.md
 # Development files
 .env.development
 .env.no-rate-limit
+.superpowers/
+
+# Runtime data (db, uploads, secrets)
+data/
+.claude/worktrees/
+*.tsbuildinfo

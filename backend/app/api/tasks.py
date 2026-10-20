@@ -46,51 +46,79 @@ Available Endpoints:
 - POST /tasks/tags - Create tag
 """
 
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
-from app.core.auth import get_current_active_user
-from app.db.session import get_db_session
-from app.models.task import TaskPriority, TaskStatus, RewardType
-from app.models.user import User
+from app.api.deps import get_current_active_user, require_parent
+from app.core.database import get_db_session
+from app.models.task import RewardType, Task, TaskPriority, TaskStatus
+from app.models.user import User, UserRole
 from app.schemas.task import (
+    CreateFromTemplateRequest,
+    TaskBulkUpdate,
     TaskCategoryCreate,
     TaskCategoryResponse,
+    TaskCompleteRequest,
     TaskCreate,
+    TaskDeleteRequest,
+    TaskExportRequest,
+    TaskGetRequest,
     TaskList,
     TaskResponse,
     TaskTagCreate,
     TaskTagResponse,
     TaskTemplateCreate,
     TaskTemplateResponse,
-    TaskUpdate,
-    TaskBulkUpdate,
-    TaskExportRequest,
-    TaskCompleteRequest,
-    TaskGetRequest,
     TaskUpdateRequest,
-    TaskDeleteRequest,
-    CreateFromTemplateRequest,
-    GetTemplateRequest,
-    UpdateTemplateRequest,
-    DeleteTemplateRequest,
-    GetListTasksRequest,
 )
 from app.services.task_service import TaskService
+from app.services.workflow_service import KID_STATUSES, PARENTS_ONLY
 
 router = APIRouter(prefix="/api/v1/tasks", tags=["tasks"])
 
+KID_FIELDS = {"status", "actual_hours"}
+KID_CREATE_FIELDS = {"title", "description", "priority", "due_date", "assigned_to_id"}
 
-@router.post(
-    "/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED
-)
+
+def _is_chore(task: Task | None) -> bool:
+    return task is not None and bool((task.recurrence_pattern or {}).get("chore"))
+
+
+def _guard_kid_update(db: Session, user: User, task_ids: list[int], updates: dict) -> None:
+    """Kids may only move their own task between todo/in_progress/submitted_for_approval."""
+    if user.role == UserRole.PARENT:
+        return
+    st = updates.get("status")
+    bad = set(updates) - KID_FIELDS or (
+        st is not None and st not in {s.value for s in KID_STATUSES}
+    )
+    for task in db.query(Task).filter(Task.id.in_(task_ids)).all():
+        own = user.id in (task.assigned_to_id, task.created_by_id)
+        bad = bad or not own or TaskStatus(task.status) not in KID_STATUSES
+    if bad:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=PARENTS_ONLY)
+
+
+def _guard_kid_create(user: User, data: TaskCreate) -> None:
+    """Kids may set only title/description/priority/due_date on tasks for themselves."""
+    if user.role == UserRole.PARENT:
+        return
+    if (
+        data.model_fields_set - KID_CREATE_FIELDS
+        or data.points > 0
+        or data.reward_value > 0
+        or data.template_id is not None
+        or data.assigned_to_id not in (None, user.id)
+    ):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=PARENTS_ONLY)
+
+
+@router.post("/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
 async def create_task(
     task_data: TaskCreate,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Create a new task with advanced features.
@@ -114,22 +142,29 @@ async def create_task(
     - is_recurring: Whether task repeats (default: false)
     - tag_names: List of tag names (optional)
     """
+    _guard_kid_create(current_user, task_data)
     task_service = TaskService(db)
     task = await task_service.create_task(task_data, current_user.id)
     return task_service.to_task_response(task)
 
 
-@router.post("/bulk-update", response_model=List[TaskResponse])
+@router.post("/bulk-update", response_model=list[TaskResponse])
 async def bulk_update_tasks(
     bulk_update_data: TaskBulkUpdate,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Bulk update multiple tasks.
 
     Allows updating multiple tasks with the same changes.
     """
+    _guard_kid_update(
+        db,
+        current_user,
+        bulk_update_data.task_ids,
+        bulk_update_data.updates.model_dump(exclude_unset=True),
+    )
     task_service = TaskService(db)
     updated_tasks = task_service.bulk_update_tasks(bulk_update_data, current_user.id)
     return [task_service.to_task_response(task) for task in updated_tasks]
@@ -139,7 +174,7 @@ async def bulk_update_tasks(
 async def export_tasks(
     export_request: TaskExportRequest,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Export tasks in various formats.
@@ -149,30 +184,29 @@ async def export_tasks(
     task_service = TaskService(db)
     try:
         exported_data = task_service.export_tasks(export_request, current_user.id)
-        
-        if export_request.format.lower() == 'csv':
+
+        if export_request.format.lower() == "csv":
             return PlainTextResponse(
                 content=exported_data,
                 media_type="text/csv",
-                headers={"Content-Disposition": "attachment; filename=tasks_export.csv"}
+                headers={"Content-Disposition": "attachment; filename=tasks_export.csv"},
             )
-        elif export_request.format.lower() == 'json':
+        elif export_request.format.lower() == "json":
             return PlainTextResponse(
                 content=exported_data,
                 media_type="application/json",
-                headers={"Content-Disposition": "attachment; filename=tasks_export.json"}
+                headers={"Content-Disposition": "attachment; filename=tasks_export.json"},
             )
         else:
             raise HTTPException(
-                status_code=400,
-                detail=f"Unsupported export format: {export_request.format}"
+                status_code=400, detail=f"Unsupported export format: {export_request.format}"
             )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.get("/reward-types")
-async def get_reward_types():
+async def get_reward_types(_: User = Depends(get_current_active_user)):
     """
     Get available reward types.
 
@@ -191,29 +225,15 @@ async def get_reward_types():
 @router.get("/", response_model=TaskList)
 async def get_tasks(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of records to return"
-    ),
-    status: Optional[TaskStatus] = Query(
-        None, description="Filter by task status"
-    ),
-    priority: Optional[TaskPriority] = Query(
-        None, description="Filter by task priority"
-    ),
-    category_id: Optional[int] = Query(
-        None, description="Filter by category ID"
-    ),
-    assigned_to_id: Optional[int] = Query(
-        None, description="Filter by assigned user ID"
-    ),
-    reward_type: Optional[RewardType] = Query(
-        None, description="Filter by reward type"
-    ),
-    search: Optional[str] = Query(
-        None, description="Search in title and description"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
+    status: TaskStatus | None = Query(None, description="Filter by task status"),
+    priority: TaskPriority | None = Query(None, description="Filter by task priority"),
+    category_id: int | None = Query(None, description="Filter by category ID"),
+    assigned_to_id: int | None = Query(None, description="Filter by assigned user ID"),
+    reward_type: RewardType | None = Query(None, description="Filter by reward type"),
+    search: str | None = Query(None, description="Search in title and description"),
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get tasks with filtering and pagination.
@@ -257,9 +277,7 @@ async def get_tasks(
     pages = (total + limit - 1) // limit
     page = (skip // limit) + 1
 
-    return TaskList(
-        tasks=task_responses, total=total, page=page, size=limit, pages=pages
-    )
+    return TaskList(tasks=task_responses, total=total, page=page, size=limit, pages=pages)
 
 
 # Task Templates
@@ -271,27 +289,23 @@ async def get_tasks(
 async def create_task_template(
     template_data: TaskTemplateCreate,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Create a new task template."""
     task_service = TaskService(db)
-    template = task_service.create_task_template(
-        template_data, current_user.id
-    )
+    template = task_service.create_task_template(template_data, current_user.id)
     return template
 
 
-@router.get("/templates", response_model=List[TaskTemplateResponse])
+@router.get("/templates", response_model=list[TaskTemplateResponse])
 async def get_task_templates(
     include_public: bool = Query(True, description="Include public templates"),
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get task templates available to the user."""
     task_service = TaskService(db)
-    templates = task_service.get_task_templates(
-        current_user.id, include_public
-    )
+    templates = task_service.get_task_templates(current_user.id, include_public)
     return templates
 
 
@@ -303,7 +317,7 @@ async def get_task_templates(
 async def create_task_from_template(
     request: CreateFromTemplateRequest,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(require_parent),
 ):
     """Create a task from a template using JSON request body."""
     task_service = TaskService(db)
@@ -316,13 +330,11 @@ async def create_task_from_template(
         due_date=request.due_date,
         priority=request.priority,
         estimated_hours=request.estimated_hours,
-        points=request.points
+        points=request.points,
     )
 
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Template not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
 
     return task_service.to_task_response(task)
 
@@ -336,7 +348,7 @@ async def create_task_from_template(
 async def create_task_category(
     category_data: TaskCategoryCreate,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Create a new task category."""
     task_service = TaskService(db)
@@ -344,10 +356,9 @@ async def create_task_category(
     return category
 
 
-@router.get("/categories", response_model=List[TaskCategoryResponse])
+@router.get("/categories", response_model=list[TaskCategoryResponse])
 async def get_task_categories(
-    db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    db: Session = Depends(get_db_session), current_user: User = Depends(get_current_active_user)
 ):
     """Get task categories for the user."""
     task_service = TaskService(db)
@@ -364,7 +375,7 @@ async def get_task_categories(
 async def create_task_tag(
     tag_data: TaskTagCreate,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Create a new task tag."""
     task_service = TaskService(db)
@@ -372,8 +383,10 @@ async def create_task_tag(
     return tag
 
 
-@router.get("/tags", response_model=List[TaskTagResponse])
-async def get_task_tags(db: Session = Depends(get_db_session)):
+@router.get("/tags", response_model=list[TaskTagResponse])
+async def get_task_tags(
+    db: Session = Depends(get_db_session), _: User = Depends(get_current_active_user)
+):
     """Get all task tags."""
     task_service = TaskService(db)
     tags = task_service.get_tags()
@@ -387,7 +400,7 @@ async def get_task_tags(db: Session = Depends(get_db_session)):
 async def complete_task_json(
     request: TaskCompleteRequest,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Mark a task as completed using JSON request body.
@@ -400,13 +413,13 @@ async def complete_task_json(
     Returns:
     - Updated task details with completed status
     """
+    if current_user.role != UserRole.PARENT:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=PARENTS_ONLY)
     task_service = TaskService(db)
     task = await task_service.complete_task(request.task_id, current_user.id, request.actual_hours)
 
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
 
     return task_service.to_task_response(task)
 
@@ -415,32 +428,35 @@ async def complete_task_json(
 async def delete_task_json(
     request: TaskDeleteRequest,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Delete a task using JSON request body."""
+    if current_user.role != UserRole.PARENT:
+        task = db.get(Task, request.task_id)
+        parent_task = db.get(Task, task.parent_task_id) if task and task.parent_task_id else None
+        if task and (
+            task.created_by_id != current_user.id or _is_chore(task) or _is_chore(parent_task)
+        ):
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=PARENTS_ONLY)
     task_service = TaskService(db)
     success = await task_service.delete_task(request.task_id, current_user.id)
 
     if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
 
 
 @router.post("/get", response_model=TaskResponse)
 async def get_task_json(
     request: TaskGetRequest,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get a specific task by ID using JSON request body."""
     task_service = TaskService(db)
     task = task_service.get_task(request.task_id, current_user.id)
 
     if not task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
 
     return task_service.to_task_response(task)
 
@@ -449,35 +465,29 @@ async def get_task_json(
 async def update_task_json(
     request: TaskUpdateRequest,
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Update a task using JSON request body."""
+    _guard_kid_update(db, current_user, [request.task_id], request.updates)
     task_service = TaskService(db)
     try:
         task = await task_service.update_task(request.task_id, request.updates, current_user.id)
 
         if not task:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task not found")
 
         return task_service.to_task_response(task)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 # Recurring Tasks
-@router.get("/recurring", response_model=List[TaskResponse])
+@router.get("/recurring", response_model=list[TaskResponse])
 async def get_recurring_tasks(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of records to return"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
     db: Session = Depends(get_db_session),
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get recurring tasks."""
     TaskService(db)
@@ -486,7 +496,9 @@ async def get_recurring_tasks(
 
 
 @router.post("/recurring/create", status_code=status.HTTP_200_OK)
-async def create_recurring_tasks(db: Session = Depends(get_db_session)):
+async def create_recurring_tasks(
+    db: Session = Depends(get_db_session), _: User = Depends(require_parent)
+):
     """Create recurring task instances based on patterns."""
     task_service = TaskService(db)
     created_count = task_service.create_recurring_tasks()
@@ -495,6 +507,3 @@ async def create_recurring_tasks(db: Session = Depends(get_db_session)):
         "message": f"Created {created_count} recurring task instances",
         "created_count": created_count,
     }
-
-
-

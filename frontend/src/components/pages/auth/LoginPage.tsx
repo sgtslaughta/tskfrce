@@ -56,8 +56,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({
 }) => {
   const { login, error, clearError } = useUnifiedAuth();
   const [formData, setFormData] = useState<LoginFormData>({
-    email: 'admin',
-    password: 'admin123',
+    email: '',
+    password: '',
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 

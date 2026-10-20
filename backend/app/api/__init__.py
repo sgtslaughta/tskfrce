@@ -13,7 +13,6 @@ from .media import router as media_router
 from .mentions import router as mentions_router
 from .messaging import router as messaging_router
 from .presence import router as presence_router
-from .redis import router as redis_router
 from .tasks import router as tasks_router
 from .users import router as users_router
 from .websocket import router as websocket_router

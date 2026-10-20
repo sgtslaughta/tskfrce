@@ -6,7 +6,7 @@ from the database.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 from sqlalchemy import and_, desc, func
 from sqlalchemy.orm import Session
@@ -31,8 +31,8 @@ class NotificationPersistenceService:
         notification_type: str,
         title: str,
         message: str,
-        action_url: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None
+        action_url: str | None = None,
+        data: dict[str, Any] | None = None,
     ) -> Notification:
         """
         Create and store a new notification in the database.
@@ -66,7 +66,7 @@ class NotificationPersistenceService:
                 action_url=action_url,
                 data=data,
                 is_read=False,
-                created_at=datetime.utcnow()
+                created_at=datetime.utcnow(),
             )
 
             self.db.add(notification)
@@ -87,8 +87,8 @@ class NotificationPersistenceService:
         skip: int = 0,
         limit: int = 50,
         unread_only: bool = False,
-        notification_types: Optional[List[str]] = None
-    ) -> Dict[str, Any]:
+        notification_types: list[str] | None = None,
+    ) -> dict[str, Any]:
         """
         Get notifications for a user with filtering and pagination.
 
@@ -118,10 +118,7 @@ class NotificationPersistenceService:
 
             # Get unread count
             unread_query = self.db.query(Notification).filter(
-                and_(
-                    Notification.user_id == user_id,
-                    Notification.is_read == False
-                )
+                and_(Notification.user_id == user_id, Notification.is_read == False)
             )
             if notification_types:
                 unread_query = unread_query.filter(Notification.type.in_(notification_types))
@@ -129,11 +126,7 @@ class NotificationPersistenceService:
 
             # Apply pagination and ordering
             notifications = (
-                query
-                .order_by(desc(Notification.created_at))
-                .offset(skip)
-                .limit(limit)
-                .all()
+                query.order_by(desc(Notification.created_at)).offset(skip).limit(limit).all()
             )
 
             # Check if there are more notifications
@@ -142,35 +135,33 @@ class NotificationPersistenceService:
             # Convert to response format
             notification_responses = []
             for notification in notifications:
-                notification_responses.append({
-                    "id": notification.id,
-                    "user_id": notification.user_id,
-                    "type": notification.type,
-                    "title": notification.title,
-                    "message": notification.message,
-                    "action_url": notification.action_url,
-                    "data": notification.data,
-                    "is_read": notification.is_read,
-                    "created_at": notification.created_at,
-                    "read_at": notification.read_at,
-                })
+                notification_responses.append(
+                    {
+                        "id": notification.id,
+                        "user_id": notification.user_id,
+                        "type": notification.type,
+                        "title": notification.title,
+                        "message": notification.message,
+                        "action_url": notification.action_url,
+                        "data": notification.data,
+                        "is_read": notification.is_read,
+                        "created_at": notification.created_at,
+                        "read_at": notification.read_at,
+                    }
+                )
 
             return {
                 "notifications": notification_responses,
                 "total": total_count,
                 "unread_count": unread_count,
-                "has_more": has_more
+                "has_more": has_more,
             }
 
         except Exception as e:
             logger.error(f"Error retrieving notifications for user {user_id}: {e}")
             raise
 
-    def mark_notifications_read(
-        self,
-        user_id: int,
-        notification_ids: List[int]
-    ) -> int:
+    def mark_notifications_read(self, user_id: int, notification_ids: list[int]) -> int:
         """
         Mark specific notifications as read.
 
@@ -195,16 +186,10 @@ class NotificationPersistenceService:
                     and_(
                         Notification.id.in_(notification_ids),
                         Notification.user_id == user_id,
-                        Notification.is_read == False
+                        Notification.is_read == False,
                     )
                 )
-                .update(
-                    {
-                        "is_read": True,
-                        "read_at": datetime.utcnow()
-                    },
-                    synchronize_session=False
-                )
+                .update({"is_read": True, "read_at": datetime.utcnow()}, synchronize_session=False)
             )
 
             self.db.commit()
@@ -230,19 +215,8 @@ class NotificationPersistenceService:
         try:
             updated_count = (
                 self.db.query(Notification)
-                .filter(
-                    and_(
-                        Notification.user_id == user_id,
-                        Notification.is_read == False
-                    )
-                )
-                .update(
-                    {
-                        "is_read": True,
-                        "read_at": datetime.utcnow()
-                    },
-                    synchronize_session=False
-                )
+                .filter(and_(Notification.user_id == user_id, Notification.is_read == False))
+                .update({"is_read": True, "read_at": datetime.utcnow()}, synchronize_session=False)
             )
 
             self.db.commit()
@@ -255,11 +229,7 @@ class NotificationPersistenceService:
             logger.error(f"Error marking all notifications read for user {user_id}: {e}")
             raise
 
-    def delete_notifications(
-        self,
-        user_id: int,
-        notification_ids: List[int]
-    ) -> int:
+    def delete_notifications(self, user_id: int, notification_ids: list[int]) -> int:
         """
         Delete specific notifications.
 
@@ -281,10 +251,7 @@ class NotificationPersistenceService:
             deleted_count = (
                 self.db.query(Notification)
                 .filter(
-                    and_(
-                        Notification.id.in_(notification_ids),
-                        Notification.user_id == user_id
-                    )
+                    and_(Notification.id.in_(notification_ids), Notification.user_id == user_id)
                 )
                 .delete(synchronize_session=False)
             )
@@ -299,7 +266,7 @@ class NotificationPersistenceService:
             logger.error(f"Error deleting notifications for user {user_id}: {e}")
             raise
 
-    def get_notification_stats(self, user_id: int) -> Dict[str, Any]:
+    def get_notification_stats(self, user_id: int) -> dict[str, Any]:
         """
         Get notification statistics for a user.
 
@@ -312,20 +279,13 @@ class NotificationPersistenceService:
         try:
             # Get total count
             total_count = (
-                self.db.query(Notification)
-                .filter(Notification.user_id == user_id)
-                .count()
+                self.db.query(Notification).filter(Notification.user_id == user_id).count()
             )
 
             # Get unread count
             unread_count = (
                 self.db.query(Notification)
-                .filter(
-                    and_(
-                        Notification.user_id == user_id,
-                        Notification.is_read == False
-                    )
-                )
+                .filter(and_(Notification.user_id == user_id, Notification.is_read == False))
                 .count()
             )
 
@@ -346,18 +306,14 @@ class NotificationPersistenceService:
                 "total_notifications": total_count,
                 "unread_count": unread_count,
                 "read_count": read_count,
-                "types": types_dict
+                "types": types_dict,
             }
 
         except Exception as e:
             logger.error(f"Error retrieving notification stats for user {user_id}: {e}")
             raise
 
-    def cleanup_old_notifications(
-        self,
-        user_id: int,
-        days_old: int = 30
-    ) -> int:
+    def cleanup_old_notifications(self, user_id: int, days_old: int = 30) -> int:
         """
         Clean up old notifications for a user.
 
@@ -378,7 +334,7 @@ class NotificationPersistenceService:
                     and_(
                         Notification.user_id == user_id,
                         Notification.created_at < cutoff_date,
-                        Notification.is_read == True  # Only delete read notifications
+                        Notification.is_read == True,  # Only delete read notifications
                     )
                 )
                 .delete(synchronize_session=False)

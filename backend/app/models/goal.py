@@ -81,9 +81,7 @@ class Goal(Base):
     recurrence_pattern = Column(JSON, nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     user = relationship("User", back_populates="goals")
@@ -105,10 +103,7 @@ class Goal(Base):
 
     def __repr__(self) -> str:
         """String representation of Goal."""
-        return (
-            f"<Goal(id={self.id}, title='{self.title}', "
-            f"status='{self.status}')>"
-        )
+        return f"<Goal(id={self.id}, title='{self.title}', status='{self.status}')>"
 
 
 class GoalProgress(Base):
@@ -138,7 +133,4 @@ class GoalProgress(Base):
 
     def __repr__(self) -> str:
         """String representation of GoalProgress."""
-        return (
-            f"<GoalProgress(id={self.id}, goal_id={self.goal_id}, "
-            f"value={self.value})>"
-        )
+        return f"<GoalProgress(id={self.id}, goal_id={self.goal_id}, value={self.value})>"

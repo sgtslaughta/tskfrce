@@ -7,9 +7,8 @@ broadcasting functionality for real-time features.
 
 import json
 from datetime import datetime
-from typing import Dict, List, Optional
 
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
@@ -25,15 +24,15 @@ class WebSocketManager:
     def __init__(self):
         """Initialize WebSocket manager."""
         # Separate connection pools for different types
-        self.notification_connections: Dict[int, List[WebSocket]] = {}
-        self.messaging_connections: Dict[int, List[WebSocket]] = {}
-        
+        self.notification_connections: dict[int, list[WebSocket]] = {}
+        self.messaging_connections: dict[int, list[WebSocket]] = {}
+
         # User status tracking
-        self.user_status: Dict[int, str] = {}  # user_id -> status
-        self.typing_status: Dict[str, Dict[int, datetime]] = {}  # context -> {user_id: last_typed}
-        
+        self.user_status: dict[int, str] = {}  # user_id -> status
+        self.typing_status: dict[str, dict[int, datetime]] = {}  # context -> {user_id: last_typed}
+
         # Connection metadata
-        self.connection_metadata: Dict[WebSocket, Dict] = {}
+        self.connection_metadata: dict[WebSocket, dict] = {}
 
     async def connect_notifications(self, websocket: WebSocket, user_id: int, db: Session):
         """
@@ -44,22 +43,22 @@ class WebSocketManager:
             user_id: User ID
             db: Database session
         """
-        
+
         # Add to connections pool
         if user_id not in self.notification_connections:
             self.notification_connections[user_id] = []
         self.notification_connections[user_id].append(websocket)
-        
+
         # Store connection metadata
         self.connection_metadata[websocket] = {
-            'user_id': user_id,
-            'type': 'notifications',
-            'connected_at': datetime.utcnow(),
+            "user_id": user_id,
+            "type": "notifications",
+            "connected_at": datetime.utcnow(),
         }
-        
+
         # Update user status to online
         await self.update_user_status(user_id, "online", db)
-        
+
         logger.info(f"User {user_id} connected to notifications WebSocket")
 
     async def connect_messaging(self, websocket: WebSocket, user_id: int, db: Session):
@@ -71,19 +70,19 @@ class WebSocketManager:
             user_id: User ID
             db: Database session
         """
-        
+
         # Add to connections pool
         if user_id not in self.messaging_connections:
             self.messaging_connections[user_id] = []
         self.messaging_connections[user_id].append(websocket)
-        
+
         # Store connection metadata
         self.connection_metadata[websocket] = {
-            'user_id': user_id,
-            'type': 'messaging',
-            'connected_at': datetime.utcnow(),
+            "user_id": user_id,
+            "type": "messaging",
+            "connected_at": datetime.utcnow(),
         }
-        
+
         logger.info(f"User {user_id} connected to messaging WebSocket")
 
     async def disconnect_notifications(self, websocket: WebSocket, user_id: int, db: Session):
@@ -102,17 +101,17 @@ class WebSocketManager:
                     del self.notification_connections[user_id]
             except ValueError:
                 pass
-        
+
         # Remove connection metadata
         self.connection_metadata.pop(websocket, None)
-        
+
         # Update status to offline if no connections remain
         if (
-            user_id not in self.notification_connections 
+            user_id not in self.notification_connections
             and user_id not in self.messaging_connections
         ):
             await self.update_user_status(user_id, "offline", db)
-        
+
         logger.info(f"User {user_id} disconnected from notifications WebSocket")
 
     async def disconnect_messaging(self, websocket: WebSocket, user_id: int, db: Session):
@@ -131,17 +130,17 @@ class WebSocketManager:
                     del self.messaging_connections[user_id]
             except ValueError:
                 pass
-        
+
         # Remove connection metadata
         self.connection_metadata.pop(websocket, None)
-        
+
         # Update status to offline if no connections remain
         if (
-            user_id not in self.notification_connections 
+            user_id not in self.notification_connections
             and user_id not in self.messaging_connections
         ):
             await self.update_user_status(user_id, "offline", db)
-        
+
         logger.info(f"User {user_id} disconnected from messaging WebSocket")
 
     async def send_notification(self, user_id: int, message: dict):
@@ -160,7 +159,7 @@ class WebSocketManager:
                 except Exception as e:
                     logger.warning(f"Failed to send notification to user {user_id}: {e}")
                     disconnected.append(connection)
-            
+
             # Remove disconnected connections
             for connection in disconnected:
                 try:
@@ -185,7 +184,7 @@ class WebSocketManager:
                 except Exception as e:
                     logger.warning(f"Failed to send message to user {user_id}: {e}")
                     disconnected.append(connection)
-            
+
             # Remove disconnected connections
             for connection in disconnected:
                 try:
@@ -194,7 +193,7 @@ class WebSocketManager:
                 except ValueError:
                     pass
 
-    async def broadcast_notifications(self, user_ids: List[int], message: dict):
+    async def broadcast_notifications(self, user_ids: list[int], message: dict):
         """
         Broadcast a notification to multiple users.
 
@@ -205,7 +204,7 @@ class WebSocketManager:
         for user_id in user_ids:
             await self.send_notification(user_id, message)
 
-    async def broadcast_messages(self, user_ids: List[int], message: dict):
+    async def broadcast_messages(self, user_ids: list[int], message: dict):
         """
         Broadcast a message to multiple users.
 
@@ -226,16 +225,16 @@ class WebSocketManager:
             db: Database session
         """
         self.user_status[user_id] = status
-        
+
         # Update in database
         status_service = UserStatusService(db)
         status_service.update_user_status(user_id, status)
-        
+
         # Get user info for broadcast
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             return
-        
+
         # Broadcast status change to relevant users
         status_message = {
             "type": "user_status_changed",
@@ -245,9 +244,9 @@ class WebSocketManager:
                 "username": user.username,
             },
             "status": status,
-            "last_seen": datetime.utcnow().isoformat()
+            "last_seen": datetime.utcnow().isoformat(),
         }
-        
+
         # Get users who should receive this status update
         # For now, broadcast to all connected users
         # In the future, this should be limited to task collaborators, contacts, etc.
@@ -255,12 +254,7 @@ class WebSocketManager:
         await self.broadcast_notifications(relevant_users, status_message)
 
     async def handle_typing_indicator(
-        self, 
-        user_id: int, 
-        context_type: str, 
-        context_id: int, 
-        is_typing: bool,
-        db: Session
+        self, user_id: int, context_type: str, context_id: int, is_typing: bool, db: Session
     ):
         """
         Handle typing indicator updates.
@@ -273,7 +267,7 @@ class WebSocketManager:
             db: Database session
         """
         context_key = f"{context_type}_{context_id}"
-        
+
         if is_typing:
             if context_key not in self.typing_status:
                 self.typing_status[context_key] = {}
@@ -281,12 +275,12 @@ class WebSocketManager:
         else:
             if context_key in self.typing_status and user_id in self.typing_status[context_key]:
                 del self.typing_status[context_key][user_id]
-        
+
         # Get user info
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
             return
-        
+
         # Broadcast typing indicator
         typing_message = {
             "type": "typing_indicator",
@@ -295,19 +289,16 @@ class WebSocketManager:
                 "id": user.id,
                 "username": user.username,
             },
-            "context": {
-                "type": context_type,
-                "context_id": context_id
-            },
-            "is_typing": is_typing
+            "context": {"type": context_type, "context_id": context_id},
+            "is_typing": is_typing,
         }
-        
+
         # Get other participants in this context
         participants = await self.get_context_participants(context_type, context_id, db)
         recipients = [p for p in participants if p != user_id]
         await self.broadcast_messages(recipients, typing_message)
 
-    async def get_relevant_users_for_status(self, user_id: int, db: Session) -> List[int]:
+    async def get_relevant_users_for_status(self, user_id: int, db: Session) -> list[int]:
         """
         Get users who should receive status updates for a user.
 
@@ -324,22 +315,19 @@ class WebSocketManager:
         # - Direct message contacts
         # - Team members
         # - Friends/contacts
-        
+
         connected_users = set()
         connected_users.update(self.notification_connections.keys())
         connected_users.update(self.messaging_connections.keys())
-        
+
         # Remove the user themselves
         connected_users.discard(user_id)
-        
+
         return list(connected_users)
 
     async def get_context_participants(
-        self, 
-        context_type: str, 
-        context_id: int, 
-        db: Session
-    ) -> List[int]:
+        self, context_type: str, context_id: int, db: Session
+    ) -> list[int]:
         """
         Get participants for a given context.
 
@@ -354,13 +342,14 @@ class WebSocketManager:
         if context_type == "task_chat":
             # Get task participants
             from app.services.task_service import TaskService
+
             task_service = TaskService(db)
             return task_service.get_task_participants(context_id)
-        
+
         elif context_type == "direct_message":
             # For direct messages, context_id is the other user's ID
             return [context_id]  # Will be expanded with current user by caller
-        
+
         return []
 
     def get_connection_stats(self) -> dict:
@@ -379,10 +368,12 @@ class WebSocketManager:
             "total_messaging_sockets": sum(
                 len(connections) for connections in self.messaging_connections.values()
             ),
-            "online_users": len(set(
-                list(self.notification_connections.keys()) + 
-                list(self.messaging_connections.keys())
-            )),
+            "online_users": len(
+                set(
+                    list(self.notification_connections.keys())
+                    + list(self.messaging_connections.keys())
+                )
+            ),
         }
 
 

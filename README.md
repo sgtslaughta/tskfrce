@@ -30,8 +30,8 @@
 ### 🔧 **Technical Excellence**
 - **Containerized Deployment**: Full Docker Compose setup for easy deployment
 - **Modern Frontend**: Next.js 14 with TypeScript, Tailwind CSS, and responsive design
-- **Robust Backend**: FastAPI with SQLAlchemy, Redis caching, and comprehensive API
-- **File Storage**: MinIO integration for photos and media attachments
+- **Robust Backend**: FastAPI with SQLAlchemy, and comprehensive API
+- **File Storage**: Local-disk storage for photos and media attachments
 - **Security**: JWT authentication, rate limiting, and security scanning
 - **Monitoring**: Health checks, metrics, and comprehensive logging
 
@@ -89,12 +89,9 @@ Once Docker containers are running:
 | **📚 API Docs** | http://localhost:8000/docs | Interactive API documentation |
 | **📊 Health Check** | http://localhost:8000/health | Service status |
 
-### 👤 Default Login
+### 👤 First Login
 
-```
-Email: admin@taaskmaaster.com
-Password: admin123
-```
+There are no default credentials. Create your account on first visit.
 
 ### 🔧 Service Status
 
@@ -152,9 +149,6 @@ uv run alembic upgrade head
 
 # Create new migration
 uv run alembic revision --autogenerate -m "Description"
-
-# Generate test data
-python scripts/create_test_data.py
 ```
 
 ## 📁 Project Structure
@@ -178,7 +172,6 @@ taaskMaaster/
 │   │   ├── core/                 # Configuration & security
 │   │   └── db/                   # Database configuration
 │   ├── alembic/                  # Database migrations
-│   ├── scripts/                  # Utility scripts
 │   └── tests/                    # Backend tests
 ├── ⚛️ frontend/                   # Next.js Frontend
 │   ├── src/
@@ -386,18 +379,13 @@ docker-compose logs -f frontend
 Copy `.env.example` to `.env` and customize:
 
 ```bash
-# Security (CHANGE IN PRODUCTION!)
-SECRET_KEY=your-secret-key-here
-JWT_SECRET_KEY=your-jwt-secret-key-here
+# Secrets are generated on first boot into ./data/secrets.json.
+# Optional overrides: SECRET_KEY, JWT_SECRET_KEY, INTERNAL_TOKEN
 
-# Database
-DATABASE_URL=sqlite:///./taaskmaaster.db
+# Database (default: sqlite in ./data/task4ce.db)
+# DATABASE_URL=sqlite:///./data/task4ce.db
 # DATABASE_URL=postgresql://user:pass@postgres:5432/taaskmaaster
 
-# Services (Internal - defaults are fine)
-REDIS_URL=redis://redis:6379
-MINIO_ACCESS_KEY=minioadmin
-MINIO_SECRET_KEY=minioadmin123
 
 # Application
 NEXT_PUBLIC_API_URL=http://localhost:8000

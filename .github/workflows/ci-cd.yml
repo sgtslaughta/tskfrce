@@ -27,15 +27,13 @@ jobs:
         cache-dependency-path: frontend/package-lock.json
     - name: Install dependencies
       run: |
-        pip install -r tests/requirements.txt
+        pip install -r backend/requirements.txt ruff
         cd frontend
         npm ci
     - name: Run linting
       run: |
-        flake8 backend/
-        black --check backend/
-        isort --check-only backend/
-        cd frontend
+        cd backend && ruff format --check . && ruff check .
+        cd ../frontend
         npm run lint
         npm run type-check
 
@@ -47,16 +45,10 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-    - name: Install test runner dependencies
-      run: pip install -r tests/requirements.txt
+    - name: Install dependencies
+      run: pip install -r backend/requirements.txt
     - name: Run test suite
-      run: python run_tests.py all
-    - name: Show logs on failure
-      if: failure()
-      run: docker compose logs
-    - name: Stop services
-      if: always()
-      run: docker compose down
+      run: cd backend && python -m pytest tests -q
 
   security-scan:
     runs-on: ubuntu-latest

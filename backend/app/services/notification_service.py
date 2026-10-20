@@ -7,25 +7,25 @@ real-time WebSocket broadcasting for various system events.
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-from app.models.task_comment import TaskComment
-from app.models.direct_message import DirectMessage
 from app.models.comment import TaskChatMessage
+from app.models.direct_message import DirectMessage
 from app.models.task import Task
+from app.models.task_comment import TaskComment
 from app.models.user import User
-from app.services.websocket_service import websocket_manager
 from app.services.notification_persistence_service import NotificationPersistenceService
+from app.services.websocket_service import websocket_manager
 
 logger = get_logger(__name__)
 
 
 class NotificationType(str, Enum):
     """Notification types for different system events."""
-    
+
     # Task-related notifications
     TASK_COMMENT = "task_comment"
     TASK_STATUS_CHANGED = "task_status_changed"
@@ -40,17 +40,17 @@ class NotificationType(str, Enum):
     TASK_DUE_SOON = "task_due_soon"
     TASK_OVERDUE = "task_overdue"
     TASK_COMPLETED = "task_completed"
-    
+
     # User interaction notifications
     USER_MENTIONED = "user_mentioned"
-    
+
     # Media notifications
     MEDIA_ATTACHED = "media_attached"
-    
+
     # Messaging notifications
     DIRECT_MESSAGE = "direct_message"
     TASK_CHAT_MESSAGE = "task_chat_message"
-    
+
     # System notifications
     SYSTEM_ANNOUNCEMENT = "system_announcement"
 
@@ -65,16 +65,16 @@ class NotificationService:
 
     async def _send_notification(
         self,
-        recipients: List[int],
+        recipients: list[int],
         notification_type: str,
         title: str,
         message: str,
-        action_url: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None
+        action_url: str | None = None,
+        data: dict[str, Any] | None = None,
     ) -> None:
         """
         Send notification via both WebSocket (real-time) and database (persistence).
-        
+
         Args:
             recipients: List of user IDs to notify
             notification_type: Type of notification
@@ -94,10 +94,10 @@ class NotificationService:
                 "action_url": action_url,
                 "data": data,
             }
-            
+
             # Send via WebSocket for real-time delivery
             await websocket_manager.broadcast_notifications(recipients, websocket_notification)
-            
+
             # Store in database for offline users
             for user_id in recipients:
                 try:
@@ -107,22 +107,22 @@ class NotificationService:
                         title=title,
                         message=message,
                         action_url=action_url,
-                        data=data
+                        data=data,
                     )
                 except Exception as e:
                     logger.error(f"Failed to store notification for user {user_id}: {e}")
                     # Continue with other users even if one fails
-                    
-            logger.info(f"Sent {notification_type} notification to {len(recipients)} users (WebSocket + DB)")
-            
+
+            logger.info(
+                f"Sent {notification_type} notification to {len(recipients)} users (WebSocket + DB)"
+            )
+
         except Exception as e:
             logger.error(f"Error in _send_notification: {e}")
             raise
 
     async def notify_task_comment(
-        self,
-        comment: TaskComment,
-        mentioned_users: Optional[List[str]] = None
+        self, comment: TaskComment, mentioned_users: list[str] | None = None
     ) -> None:
         """
         Send notification for new task comment.
@@ -135,13 +135,16 @@ class NotificationService:
             # Get task and user info
             task = self.db.query(Task).filter(Task.id == comment.task_id).first()
             user = self.db.query(User).filter(User.id == comment.user_id).first()
-            
+
             if not task or not user:
-                logger.warning(f"Missing task or user for comment notification: task_id={comment.task_id}, user_id={comment.user_id}")
+                logger.warning(
+                    f"Missing task or user for comment notification: task_id={comment.task_id}, user_id={comment.user_id}"
+                )
                 return
 
             # Get task participants (excluding the commenter)
             from app.services.task_service import TaskService
+
             task_service = TaskService(self.db)
             participants = task_service.get_task_participants(comment.task_id)
             recipients = [p for p in participants if p != comment.user_id]
@@ -164,14 +167,12 @@ class NotificationService:
                     },
                     "comment_content": comment.content,
                     "is_system_generated": comment.is_system_generated,
-                }
+                },
             )
 
             # Handle mentions separately
             if mentioned_users:
-                await self._notify_mentioned_users(
-                    mentioned_users, comment, task, user
-                )
+                await self._notify_mentioned_users(mentioned_users, comment, task, user)
 
         except Exception as e:
             logger.error(f"Error sending task comment notification: {e}")
@@ -182,7 +183,7 @@ class NotificationService:
         previous_status: str,
         new_status: str,
         changed_by_user_id: int,
-        comment: Optional[str] = None
+        comment: str | None = None,
     ) -> None:
         """
         Send notification for task status change.
@@ -198,11 +199,14 @@ class NotificationService:
             # Get user info
             user = self.db.query(User).filter(User.id == changed_by_user_id).first()
             if not user:
-                logger.warning(f"User not found for status change notification: {changed_by_user_id}")
+                logger.warning(
+                    f"User not found for status change notification: {changed_by_user_id}"
+                )
                 return
 
             # Get task participants (excluding the user who made the change)
             from app.services.task_service import TaskService
+
             task_service = TaskService(self.db)
             participants = task_service.get_task_participants(task.id)
             recipients = [p for p in participants if p != changed_by_user_id]
@@ -225,17 +229,13 @@ class NotificationService:
                         "full_name": user.full_name,
                     },
                     "comment": comment,
-                }
+                },
             )
 
         except Exception as e:
             logger.error(f"Error sending task status change notification: {e}")
 
-    async def notify_task_approval_request(
-        self,
-        task: Task,
-        submitted_by_user_id: int
-    ) -> None:
+    async def notify_task_approval_request(self, task: Task, submitted_by_user_id: int) -> None:
         """
         Send notification for task approval request.
 
@@ -247,7 +247,9 @@ class NotificationService:
             # Get user info
             user = self.db.query(User).filter(User.id == submitted_by_user_id).first()
             if not user:
-                logger.warning(f"User not found for approval request notification: {submitted_by_user_id}")
+                logger.warning(
+                    f"User not found for approval request notification: {submitted_by_user_id}"
+                )
                 return
 
             # Notify task creator (the approver)
@@ -272,17 +274,14 @@ class NotificationService:
                         "full_name": user.full_name,
                     },
                     "requires_action": True,
-                }
+                },
             )
 
         except Exception as e:
             logger.error(f"Error sending approval request notification: {e}")
 
     async def notify_task_approved(
-        self,
-        task: Task,
-        approved_by_user_id: int,
-        comment: Optional[str] = None
+        self, task: Task, approved_by_user_id: int, comment: str | None = None
     ) -> None:
         """
         Send notification for task approval.
@@ -300,7 +299,11 @@ class NotificationService:
                 return
 
             # Notify assigned user (if different from approver)
-            recipients = [task.assigned_to_id] if task.assigned_to_id and task.assigned_to_id != approved_by_user_id else []
+            recipients = (
+                [task.assigned_to_id]
+                if task.assigned_to_id and task.assigned_to_id != approved_by_user_id
+                else []
+            )
 
             if not recipients:
                 return
@@ -322,7 +325,7 @@ class NotificationService:
                         "full_name": user.full_name,
                     },
                     "comment": comment,
-                }
+                },
             }
 
             # Send to assigned user
@@ -333,12 +336,7 @@ class NotificationService:
         except Exception as e:
             logger.error(f"Error sending approval notification: {e}")
 
-    async def notify_task_rejected(
-        self,
-        task: Task,
-        rejected_by_user_id: int,
-        reason: str
-    ) -> None:
+    async def notify_task_rejected(self, task: Task, rejected_by_user_id: int, reason: str) -> None:
         """
         Send notification for task rejection.
 
@@ -355,7 +353,11 @@ class NotificationService:
                 return
 
             # Notify assigned user (if different from rejector)
-            recipients = [task.assigned_to_id] if task.assigned_to_id and task.assigned_to_id != rejected_by_user_id else []
+            recipients = (
+                [task.assigned_to_id]
+                if task.assigned_to_id and task.assigned_to_id != rejected_by_user_id
+                else []
+            )
 
             if not recipients:
                 return
@@ -378,7 +380,7 @@ class NotificationService:
                     },
                     "reason": reason,
                     "requires_action": True,
-                }
+                },
             }
 
             # Send to assigned user
@@ -389,10 +391,7 @@ class NotificationService:
         except Exception as e:
             logger.error(f"Error sending rejection notification: {e}")
 
-    async def notify_direct_message(
-        self,
-        message: DirectMessage
-    ) -> None:
+    async def notify_direct_message(self, message: DirectMessage) -> None:
         """
         Send notification for new direct message.
 
@@ -403,7 +402,9 @@ class NotificationService:
             # Get sender info
             sender = self.db.query(User).filter(User.id == message.from_user_id).first()
             if not sender:
-                logger.warning(f"Sender not found for direct message notification: {message.from_user_id}")
+                logger.warning(
+                    f"Sender not found for direct message notification: {message.from_user_id}"
+                )
                 return
 
             # Create notification message
@@ -425,21 +426,20 @@ class NotificationService:
                     "content_type": message.content_type,
                     "thread_id": message.thread_id,
                     "created_at": message.created_at.isoformat(),
-                }
+                },
             }
 
             # Send to recipient
             await websocket_manager.send_message(message.to_user_id, notification)
 
-            logger.info(f"Sent direct message notification {message.id} to user {message.to_user_id}")
+            logger.info(
+                f"Sent direct message notification {message.id} to user {message.to_user_id}"
+            )
 
         except Exception as e:
             logger.error(f"Error sending direct message notification: {e}")
 
-    async def notify_task_chat_message(
-        self,
-        message: TaskChatMessage
-    ) -> None:
+    async def notify_task_chat_message(self, message: TaskChatMessage) -> None:
         """
         Send notification for new task chat message.
 
@@ -450,11 +450,14 @@ class NotificationService:
             # Get sender info
             sender = self.db.query(User).filter(User.id == message.from_user_id).first()
             if not sender:
-                logger.warning(f"Sender not found for task chat message notification: {message.from_user_id}")
+                logger.warning(
+                    f"Sender not found for task chat message notification: {message.from_user_id}"
+                )
                 return
 
             # Get task participants (excluding the sender)
             from app.services.task_service import TaskService
+
             task_service = TaskService(self.db)
             participants = task_service.get_task_participants(message.task_id)
             recipients = [p for p in participants if p != message.from_user_id]
@@ -481,23 +484,21 @@ class NotificationService:
                     "content_type": message.content_type,
                     "parent_message_id": message.parent_message_id,
                     "created_at": message.created_at.isoformat(),
-                }
+                },
             }
 
             # Send to task participants
             await websocket_manager.broadcast_messages(recipients, notification)
 
-            logger.info(f"Sent task chat message notification {message.id} to {len(recipients)} users")
+            logger.info(
+                f"Sent task chat message notification {message.id} to {len(recipients)} users"
+            )
 
         except Exception as e:
             logger.error(f"Error sending task chat message notification: {e}")
 
     async def _notify_mentioned_users(
-        self,
-        mentioned_users: List[str],
-        comment: TaskComment,
-        task: Task,
-        mentioning_user: User
+        self, mentioned_users: list[str], comment: TaskComment, task: Task, mentioning_user: User
     ) -> None:
         """
         Send notifications to users mentioned in a comment.
@@ -510,9 +511,9 @@ class NotificationService:
         """
         try:
             # Get user IDs for mentioned usernames
-            mentioned_user_objects = self.db.query(User).filter(
-                User.username.in_(mentioned_users)
-            ).all()
+            mentioned_user_objects = (
+                self.db.query(User).filter(User.username.in_(mentioned_users)).all()
+            )
 
             for mentioned_user in mentioned_user_objects:
                 # Don't notify if user mentioned themselves
@@ -537,7 +538,7 @@ class NotificationService:
                             "full_name": mentioning_user.full_name,
                         },
                         "comment_content": comment.content,
-                    }
+                    },
                 }
 
                 # Send to mentioned user
@@ -554,7 +555,7 @@ class NotificationService:
         attached_by_user_id: int,
         context_type: str,  # "comment" or "message"
         context_id: int,
-        task_id: Optional[int] = None
+        task_id: int | None = None,
     ) -> None:
         """
         Send notification for media attachment.
@@ -570,13 +571,16 @@ class NotificationService:
             # Get user info
             user = self.db.query(User).filter(User.id == attached_by_user_id).first()
             if not user:
-                logger.warning(f"User not found for media attachment notification: {attached_by_user_id}")
+                logger.warning(
+                    f"User not found for media attachment notification: {attached_by_user_id}"
+                )
                 return
 
             # Determine recipients based on context
             recipients = []
             if context_type == "comment" and task_id:
                 from app.services.task_service import TaskService
+
                 task_service = TaskService(self.db)
                 participants = task_service.get_task_participants(task_id)
                 recipients = [p for p in participants if p != attached_by_user_id]
@@ -599,7 +603,7 @@ class NotificationService:
                         "username": user.username,
                         "full_name": user.full_name,
                     },
-                }
+                },
             }
 
             # Send to recipients
@@ -612,11 +616,7 @@ class NotificationService:
             logger.error(f"Error sending media attachment notification: {e}")
 
     async def notify_user_mentioned(
-        self,
-        mentioned_user: User,
-        mentioning_user: User,
-        task: Task,
-        comment: TaskComment
+        self, mentioned_user: User, mentioning_user: User, task: Task, comment: TaskComment
     ) -> None:
         """
         Send notification for user mention in task comment.
@@ -647,22 +647,21 @@ class NotificationService:
                     },
                     "comment_content": comment.content,
                     "mention_context": "task_comment",
-                }
+                },
             }
 
             # Send to mentioned user
             await websocket_manager.send_notification(mentioned_user.id, notification)
 
-            logger.info(f"Sent mention notification to user {mentioned_user.id} from comment {comment.id}")
+            logger.info(
+                f"Sent mention notification to user {mentioned_user.id} from comment {comment.id}"
+            )
 
         except Exception as e:
             logger.error(f"Error sending mention notification: {e}")
 
     async def notify_user_mentioned_in_message(
-        self,
-        mentioned_user: User,
-        mentioning_user: User,
-        message: DirectMessage
+        self, mentioned_user: User, mentioning_user: User, message: DirectMessage
     ) -> None:
         """
         Send notification for user mention in direct message.
@@ -690,23 +689,21 @@ class NotificationService:
                     },
                     "message_content": message.content,
                     "mention_context": "direct_message",
-                }
+                },
             }
 
             # Send to mentioned user
             await websocket_manager.send_notification(mentioned_user.id, notification)
 
-            logger.info(f"Sent mention notification to user {mentioned_user.id} from message {message.id}")
+            logger.info(
+                f"Sent mention notification to user {mentioned_user.id} from message {message.id}"
+            )
 
         except Exception as e:
             logger.error(f"Error sending message mention notification: {e}")
 
     async def notify_user_mentioned_in_task_chat(
-        self,
-        mentioned_user: User,
-        mentioning_user: User,
-        task: Task,
-        message: TaskChatMessage
+        self, mentioned_user: User, mentioning_user: User, task: Task, message: TaskChatMessage
     ) -> None:
         """
         Send notification for user mention in task chat message.
@@ -737,22 +734,21 @@ class NotificationService:
                     },
                     "message_content": message.content,
                     "mention_context": "task_chat",
-                }
+                },
             }
 
             # Send to mentioned user
             await websocket_manager.send_notification(mentioned_user.id, notification)
 
-            logger.info(f"Sent mention notification to user {mentioned_user.id} from task chat {message.id}")
+            logger.info(
+                f"Sent mention notification to user {mentioned_user.id} from task chat {message.id}"
+            )
 
         except Exception as e:
             logger.error(f"Error sending task chat mention notification: {e}")
 
     async def notify_task_assigned(
-        self,
-        task: Task,
-        assigned_to_user_id: int,
-        assigned_by_user_id: int
+        self, task: Task, assigned_to_user_id: int, assigned_by_user_id: int
     ) -> None:
         """
         Send notification for task assignment.
@@ -766,7 +762,9 @@ class NotificationService:
             # Get user info
             assigned_by_user = self.db.query(User).filter(User.id == assigned_by_user_id).first()
             if not assigned_by_user:
-                logger.warning(f"User not found for task assignment notification: {assigned_by_user_id}")
+                logger.warning(
+                    f"User not found for task assignment notification: {assigned_by_user_id}"
+                )
                 return
 
             # Don't notify if user assigned task to themselves
@@ -791,7 +789,7 @@ class NotificationService:
                         "full_name": assigned_by_user.full_name,
                     },
                     "requires_action": True,
-                }
+                },
             )
 
         except Exception as e:
@@ -802,7 +800,7 @@ class NotificationService:
         task: Task,
         old_assigned_to_id: int,
         new_assigned_to_id: int,
-        reassigned_by_user_id: int
+        reassigned_by_user_id: int,
     ) -> None:
         """
         Send notification for task reassignment.
@@ -815,9 +813,13 @@ class NotificationService:
         """
         try:
             # Get user info
-            reassigned_by_user = self.db.query(User).filter(User.id == reassigned_by_user_id).first()
+            reassigned_by_user = (
+                self.db.query(User).filter(User.id == reassigned_by_user_id).first()
+            )
             if not reassigned_by_user:
-                logger.warning(f"User not found for task reassignment notification: {reassigned_by_user_id}")
+                logger.warning(
+                    f"User not found for task reassignment notification: {reassigned_by_user_id}"
+                )
                 return
 
             # Notify old assignee (if different from reassigner)
@@ -837,7 +839,7 @@ class NotificationService:
                             "full_name": reassigned_by_user.full_name,
                         },
                         "context": "removed_assignment",
-                    }
+                    },
                 )
 
             # Notify new assignee (if different from reassigner)
@@ -860,17 +862,13 @@ class NotificationService:
                         },
                         "context": "reassignment",
                         "requires_action": True,
-                    }
+                    },
                 )
 
         except Exception as e:
             logger.error(f"Error sending task reassignment notification: {e}")
 
-    async def notify_task_created(
-        self,
-        task: Task,
-        created_by_user_id: int
-    ) -> None:
+    async def notify_task_created(self, task: Task, created_by_user_id: int) -> None:
         """
         Send notification for task creation (to assignee if different from creator).
 
@@ -886,7 +884,9 @@ class NotificationService:
             # Get creator info
             creator = self.db.query(User).filter(User.id == created_by_user_id).first()
             if not creator:
-                logger.warning(f"Creator not found for task creation notification: {created_by_user_id}")
+                logger.warning(
+                    f"Creator not found for task creation notification: {created_by_user_id}"
+                )
                 return
 
             # Send notification via both WebSocket and database
@@ -907,17 +907,14 @@ class NotificationService:
                         "full_name": creator.full_name,
                     },
                     "requires_action": True,
-                }
+                },
             )
 
         except Exception as e:
             logger.error(f"Error sending task creation notification: {e}")
 
     async def notify_task_updated(
-        self,
-        task: Task,
-        updated_by_user_id: int,
-        changed_fields: List[str]
+        self, task: Task, updated_by_user_id: int, changed_fields: list[str]
     ) -> None:
         """
         Send notification for task updates (to relevant participants).
@@ -931,11 +928,14 @@ class NotificationService:
             # Get updater info
             updater = self.db.query(User).filter(User.id == updated_by_user_id).first()
             if not updater:
-                logger.warning(f"Updater not found for task update notification: {updated_by_user_id}")
+                logger.warning(
+                    f"Updater not found for task update notification: {updated_by_user_id}"
+                )
                 return
 
             # Get task participants (excluding the updater)
             from app.services.task_service import TaskService
+
             task_service = TaskService(self.db)
             participants = task_service.get_task_participants(task.id)
             recipients = [p for p in participants if p != updated_by_user_id]
@@ -945,16 +945,18 @@ class NotificationService:
 
             # Create human-readable change summary
             field_names = {
-                'title': 'title',
-                'description': 'description',
-                'priority': 'priority',
-                'due_date': 'due date',
-                'estimated_hours': 'estimated hours',
-                'points': 'points',
+                "title": "title",
+                "description": "description",
+                "priority": "priority",
+                "due_date": "due date",
+                "estimated_hours": "estimated hours",
+                "points": "points",
             }
-            
-            changed_display = [field_names.get(field, field) for field in changed_fields if field in field_names]
-            change_summary = ', '.join(changed_display) if changed_display else 'task details'
+
+            changed_display = [
+                field_names.get(field, field) for field in changed_fields if field in field_names
+            ]
+            change_summary = ", ".join(changed_display) if changed_display else "task details"
 
             # Send notification via both WebSocket and database
             await self._send_notification(
@@ -973,17 +975,13 @@ class NotificationService:
                     },
                     "changed_fields": changed_fields,
                     "change_summary": change_summary,
-                }
+                },
             )
 
         except Exception as e:
             logger.error(f"Error sending task update notification: {e}")
 
-    async def notify_task_completed(
-        self,
-        task: Task,
-        completed_by_user_id: int
-    ) -> None:
+    async def notify_task_completed(self, task: Task, completed_by_user_id: int) -> None:
         """
         Send notification for task completion.
 
@@ -995,11 +993,14 @@ class NotificationService:
             # Get completer info
             completer = self.db.query(User).filter(User.id == completed_by_user_id).first()
             if not completer:
-                logger.warning(f"Completer not found for task completion notification: {completed_by_user_id}")
+                logger.warning(
+                    f"Completer not found for task completion notification: {completed_by_user_id}"
+                )
                 return
 
             # Get task participants (excluding the completer)
             from app.services.task_service import TaskService
+
             task_service = TaskService(self.db)
             participants = task_service.get_task_participants(task.id)
             recipients = [p for p in participants if p != completed_by_user_id]
@@ -1023,18 +1024,14 @@ class NotificationService:
                         "full_name": completer.full_name,
                     },
                     "completed_at": task.completed_at.isoformat() if task.completed_at else None,
-                }
+                },
             )
 
         except Exception as e:
             logger.error(f"Error sending task completion notification: {e}")
 
     async def notify_task_deleted(
-        self,
-        task_title: str,
-        task_id: int,
-        deleted_by_user_id: int,
-        participants: List[int]
+        self, task_title: str, task_id: int, deleted_by_user_id: int, participants: list[int]
     ) -> None:
         """
         Send notification for task deletion.
@@ -1049,7 +1046,9 @@ class NotificationService:
             # Get deleter info
             deleter = self.db.query(User).filter(User.id == deleted_by_user_id).first()
             if not deleter:
-                logger.warning(f"Deleter not found for task deletion notification: {deleted_by_user_id}")
+                logger.warning(
+                    f"Deleter not found for task deletion notification: {deleted_by_user_id}"
+                )
                 return
 
             # Notify participants (excluding the deleter)
@@ -1074,7 +1073,7 @@ class NotificationService:
                         "full_name": deleter.full_name,
                     },
                     "deleted_at": datetime.utcnow().isoformat(),
-                }
+                },
             )
 
         except Exception as e:

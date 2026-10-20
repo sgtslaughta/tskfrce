@@ -35,20 +35,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     headers.Cookie = req.headers.cookie;
   }
 
+  // Real client IP for the backend (kid device lookup, rate limits). Built from the
+  // socket only; client-sent x-real-ip / x-forwarded-for / forwarded are never copied.
+  const peer = (req.socket.remoteAddress || '').replace(/^::ffff:/, '');
+  if (peer) {
+    headers['X-Real-IP'] = peer;
+  }
+
   // Forward other important headers
   if (req.headers['user-agent']) {
     headers['User-Agent'] = req.headers['user-agent'];
   }
 
-  // Forward X-User-Data header for notifications API
-  if (req.headers['x-user-data']) {
-    const userData = req.headers['x-user-data'];
-    headers['X-User-Data'] = Array.isArray(userData) ? userData[0] : userData;
-  }
 
   try {
     console.log(`[API Proxy] ${req.method} ${targetUrl}`);
-    console.log(`[API Proxy] Headers:`, headers);
     
     const fetchOptions: RequestInit = {
       method: req.method,

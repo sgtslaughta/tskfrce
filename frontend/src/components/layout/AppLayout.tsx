@@ -59,12 +59,7 @@ export function AppLayout({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${tokenManager.getAccessToken()}`,
-          'X-User-Data': JSON.stringify({
-            user_id: user?.id || '1',
-            username: user?.username || 'demo',
-            email: user?.email || 'demo@example.com'
-          })
+          'Authorization': `Bearer ${tokenManager.getAccessToken()}`
         },
         body: JSON.stringify({ count: 3 })
       });

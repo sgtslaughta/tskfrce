@@ -7,39 +7,46 @@ status transitions, approvals, and status history tracking.
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
 
-from sqlalchemy import and_, desc
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.logging import get_logger
 from app.models.comment import TaskStatusHistory
 from app.models.task import Task, TaskStatus
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.services.comment_service import CommentService
 
 logger = get_logger(__name__)
 
 
+PARENTS_ONLY = "Only parents can do this."
+KID_STATUSES = {
+    TaskStatus.TODO,
+    TaskStatus.ASSIGNED,
+    TaskStatus.IN_PROGRESS,
+    TaskStatus.SUBMITTED_FOR_APPROVAL,
+}
+
+
 class WorkflowTransition(str, Enum):
     """Valid workflow transitions."""
-    
+
     # Assignment transitions
     TODO_TO_ASSIGNED = "todo_to_assigned"
     ASSIGNED_TO_IN_PROGRESS = "assigned_to_in_progress"
-    
+
     # Progress transitions
     IN_PROGRESS_TO_SUBMITTED = "in_progress_to_submitted_for_approval"
     SUBMITTED_TO_DONE = "submitted_for_approval_to_done"
-    
+
     # Rejection transitions
     SUBMITTED_TO_IN_PROGRESS = "submitted_for_approval_to_in_progress"
-    
+
     # Direct transitions (for admins)
     TODO_TO_IN_PROGRESS = "todo_to_in_progress"
     TODO_TO_DONE = "todo_to_done"
     IN_PROGRESS_TO_DONE = "in_progress_to_done"
-    
+
     # Cancel transitions
     ANY_TO_CANCELLED = "any_to_cancelled"
 
@@ -94,7 +101,7 @@ class WorkflowService:
         task_id: int,
         new_status: TaskStatus,
         user_id: int,
-        comment: Optional[str] = None,
+        comment: str | None = None,
         force: bool = False,
     ) -> Task:
         """
@@ -135,8 +142,8 @@ class WorkflowService:
             logger.info(f"Task {task_id} already in status {new_status}")
             return task
 
-        # Validate transition
-        if not force:
+        # Validate transition (only parents may force)
+        if not (force and self._is_parent(user_id)):
             self._validate_transition(task, new_status, user_id)
 
         # Perform the transition
@@ -166,7 +173,7 @@ class WorkflowService:
         system_comment = self._generate_status_change_comment(
             previous_status, new_status, user_id, comment
         )
-        
+
         self.comment_service.create_system_comment(
             task_id=task_id,
             content=system_comment,
@@ -179,17 +186,18 @@ class WorkflowService:
         # Send notifications (async, don't wait for completion)
         try:
             import asyncio
+
             from app.services.notification_service import NotificationService
-            
+
             notification_service = NotificationService(self.db)
-            
+
             # Create a new event loop if one doesn't exist
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-            
+
             # Send appropriate notification based on transition
             if new_status == TaskStatus.SUBMITTED_FOR_APPROVAL:
                 # Notify task creator about approval request
@@ -216,7 +224,7 @@ class WorkflowService:
         self,
         task_id: int,
         approver_id: int,
-        comment: Optional[str] = None,
+        comment: str | None = None,
     ) -> Task:
         """
         Approve a task that's submitted for approval.
@@ -239,13 +247,11 @@ class WorkflowService:
         if task.status != TaskStatus.SUBMITTED_FOR_APPROVAL:
             raise ValueError(f"Task {task_id} is not submitted for approval")
 
-        # Check if user can approve (task creator or admin)
-        if task.created_by_id != approver_id:
-            # TODO: Add admin role check
-            raise ValueError("Only task creator can approve completion")
+        if not self._is_parent(approver_id):
+            raise PermissionError(PARENTS_ONLY)
 
         approval_comment = comment or "Task approved"
-        
+
         # Perform the transition
         updated_task = self.transition_task_status(
             task_id=task_id,
@@ -257,17 +263,18 @@ class WorkflowService:
         # Send approval notification (async, don't wait for completion)
         try:
             import asyncio
+
             from app.services.notification_service import NotificationService
-            
+
             notification_service = NotificationService(self.db)
-            
+
             # Create a new event loop if one doesn't exist
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-            
+
             # Send approval notification
             asyncio.create_task(
                 notification_service.notify_task_approved(updated_task, approver_id, comment)
@@ -304,13 +311,11 @@ class WorkflowService:
         if task.status != TaskStatus.SUBMITTED_FOR_APPROVAL:
             raise ValueError(f"Task {task_id} is not submitted for approval")
 
-        # Check if user can reject (task creator or admin)
-        if task.created_by_id != rejector_id:
-            # TODO: Add admin role check
-            raise ValueError("Only task creator can reject submission")
+        if not self._is_parent(rejector_id):
+            raise PermissionError(PARENTS_ONLY)
 
         rejection_comment = f"Task rejected: {reason}"
-        
+
         # Perform the transition
         updated_task = self.transition_task_status(
             task_id=task_id,
@@ -322,17 +327,18 @@ class WorkflowService:
         # Send rejection notification (async, don't wait for completion)
         try:
             import asyncio
+
             from app.services.notification_service import NotificationService
-            
+
             notification_service = NotificationService(self.db)
-            
+
             # Create a new event loop if one doesn't exist
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-            
+
             # Send rejection notification
             asyncio.create_task(
                 notification_service.notify_task_rejected(updated_task, rejector_id, reason)
@@ -348,7 +354,7 @@ class WorkflowService:
         user_id: int,
         skip: int = 0,
         limit: int = 100,
-    ) -> Tuple[List[TaskStatusHistory], int]:
+    ) -> tuple[list[TaskStatusHistory], int]:
         """
         Get status change history for a task.
 
@@ -367,9 +373,7 @@ class WorkflowService:
 
         # Get total count
         total = (
-            self.db.query(TaskStatusHistory)
-            .filter(TaskStatusHistory.task_id == task_id)
-            .count()
+            self.db.query(TaskStatusHistory).filter(TaskStatusHistory.task_id == task_id).count()
         )
 
         # Get history with user information
@@ -389,7 +393,7 @@ class WorkflowService:
         self,
         task_id: int,
         user_id: int,
-    ) -> List[TaskStatus]:
+    ) -> list[TaskStatus]:
         """
         Get valid status transitions for a task based on current status and user permissions.
 
@@ -442,42 +446,18 @@ class WorkflowService:
         # Check if transition is valid in workflow
         valid_transitions = self._transitions.get(current_status, set())
         if new_status not in valid_transitions:
-            raise ValueError(
-                f"Invalid transition from {current_status} to {new_status}"
-            )
+            raise ValueError(f"Invalid transition from {current_status} to {new_status}")
 
-        # Check user permissions for specific transitions
-        if new_status == TaskStatus.ASSIGNED:
-            # Only task creator can assign
-            if task.created_by_id != user_id:
-                raise ValueError("Only task creator can assign tasks")
+        if self._is_parent(user_id):
+            return
+        # Kids: only their own task, only todo -> in_progress -> submitted (and back).
+        own = user_id in (task.assigned_to_id, task.created_by_id)
+        if not own or current_status not in KID_STATUSES or new_status not in KID_STATUSES:
+            raise PermissionError(PARENTS_ONLY)
 
-        elif new_status == TaskStatus.IN_PROGRESS:
-            # Only assigned user can start work (or creator/admin)
-            if (
-                task.assigned_to_id != user_id
-                and task.created_by_id != user_id
-                # TODO: Add admin check
-            ):
-                raise ValueError("Only assigned user can start task")
-
-        elif new_status == TaskStatus.SUBMITTED_FOR_APPROVAL:
-            # Only assigned user can submit for approval
-            if task.assigned_to_id != user_id:
-                raise ValueError("Only assigned user can submit for approval")
-
-        elif new_status == TaskStatus.DONE:
-            # From SUBMITTED_FOR_APPROVAL: only creator can approve
-            if current_status == TaskStatus.SUBMITTED_FOR_APPROVAL:
-                if task.created_by_id != user_id:
-                    raise ValueError("Only task creator can approve completion")
-            # From other statuses: creator or assignee can mark done
-            elif (
-                task.created_by_id != user_id
-                and task.assigned_to_id != user_id
-                # TODO: Add admin check
-            ):
-                raise ValueError("Insufficient permissions to mark task as done")
+    def _is_parent(self, user_id: int) -> bool:
+        user = self.db.get(User, user_id)
+        return user is not None and user.is_active and user.role == UserRole.PARENT
 
     def _record_status_change(
         self,
@@ -485,7 +465,7 @@ class WorkflowService:
         previous_status: TaskStatus,
         new_status: TaskStatus,
         user_id: int,
-        comment: Optional[str] = None,
+        comment: str | None = None,
     ) -> TaskStatusHistory:
         """
         Record a status change in the history table.
@@ -519,7 +499,7 @@ class WorkflowService:
         previous_status: TaskStatus,
         new_status: TaskStatus,
         user_id: int,
-        comment: Optional[str] = None,
+        comment: str | None = None,
     ) -> str:
         """
         Generate a system comment for status changes.
@@ -547,8 +527,7 @@ class WorkflowService:
         }
 
         base_message = status_messages.get(
-            new_status,
-            f"changed status from {previous_status.value} to {new_status.value}"
+            new_status, f"changed status from {previous_status.value} to {new_status.value}"
         )
 
         system_comment = f"**{username}** {base_message}"
@@ -576,7 +555,6 @@ class WorkflowService:
 
         # User has access if they are the creator, assignee, or admin
         return (
-            task.created_by_id == user_id
-            or task.assigned_to_id == user_id
+            task.created_by_id == user_id or task.assigned_to_id == user_id
             # TODO: Add admin role check
         )

@@ -5,11 +5,11 @@ This module contains business logic for advanced task management including
 templates, categories, tags, dependencies, and recurring tasks.
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-import io
 import csv
+import io
 import json
+from datetime import datetime, timedelta
+from typing import Any
 
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.orm import Session, selectinload
@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.logging import get_logger
 from app.models.task import (
     RecurrenceType,
+    RewardType,
     Task,
     TaskCategory,
     TaskPriority,
@@ -24,19 +25,16 @@ from app.models.task import (
     TaskTag,
     TaskTagAssociation,
     TaskTemplate,
-    RewardType,
 )
+from app.models.user import User, UserRole
 from app.schemas.task import (
+    TaskBulkUpdate,
     TaskCategoryCreate,
     TaskCreate,
+    TaskExportRequest,
     TaskTagCreate,
     TaskTemplateCreate,
-    TaskUpdate,
-    TaskBulkUpdate,
-    TaskExportRequest,
 )
-from app.services.redis_service import redis_service
-from app.models.user import User, UserRole
 
 logger = get_logger(__name__)
 
@@ -89,18 +87,18 @@ class TaskService:
         # Add task creation to history (before commit)
         try:
             from app.models.comment import TaskStatusHistory
-            
+
             # Get the creator's username
             creator = self.db.query(User).filter(User.id == created_by_id).first()
             creator_username = creator.username if creator else "Unknown"
-            
+
             # Create history entry for task creation
             history_entry = TaskStatusHistory(
                 task_id=task.id,
                 user_id=created_by_id,
                 previous_status=None,  # No previous status for creation
                 new_status=task.status.value,
-                comment=f"Task created by {creator_username}"
+                comment=f"Task created by {creator_username}",
             )
             self.db.add(history_entry)
         except Exception as e:
@@ -109,27 +107,23 @@ class TaskService:
         self.db.commit()
         self.db.refresh(task)
 
-        # Invalidate cache for the user
-        redis_service.invalidate_task_cache(created_by_id, task.id)
-        if task.assigned_to_id and task.assigned_to_id != created_by_id:
-            redis_service.invalidate_task_cache(task.assigned_to_id, task.id)
-
         logger.info(f"Created task {task.id} by user {created_by_id}")
-        
+
         # Send notifications for task creation
         try:
             from app.services.notification_service import NotificationService
+
             notification_service = NotificationService(self.db)
-            
+
             # Notify assignee if task is assigned to someone else
             if task.assigned_to_id and task.assigned_to_id != created_by_id:
                 await notification_service.notify_task_created(task, created_by_id)
         except Exception as e:
             logger.error(f"Error sending task creation notification: {e}")
-        
+
         return task
 
-    def bulk_update_tasks(self, bulk_update_data: TaskBulkUpdate, user_id: int) -> List[Task]:
+    def bulk_update_tasks(self, bulk_update_data: TaskBulkUpdate, user_id: int) -> list[Task]:
         """
         Bulk update multiple tasks.
 
@@ -141,13 +135,13 @@ class TaskService:
             List of updated task instances
         """
         updated_tasks = []
-        
+
         for task_id in bulk_update_data.task_ids:
             task = self.get_task(task_id, user_id)
             if not task:
                 logger.warning(f"Task {task_id} not found or access denied for user {user_id}")
                 continue
-                
+
             # Apply updates
             update_data = bulk_update_data.updates.dict(exclude_unset=True)
 
@@ -163,18 +157,12 @@ class TaskService:
             for field, value in update_data.items():
                 if hasattr(task, field):
                     setattr(task, field, value)
-            
+
             task.updated_at = datetime.utcnow()
             updated_tasks.append(task)
-        
+
         self.db.commit()
-        
-        # Invalidate cache for all updated tasks
-        for task in updated_tasks:
-            redis_service.invalidate_task_cache(task.created_by_id, task.id)
-            if task.assigned_to_id and task.assigned_to_id != task.created_by_id:
-                redis_service.invalidate_task_cache(task.assigned_to_id, task.id)
-        
+
         logger.info(f"Bulk updated {len(updated_tasks)} tasks by user {user_id}")
         return updated_tasks
 
@@ -191,39 +179,41 @@ class TaskService:
         """
         # Get tasks based on filters
         query = self.db.query(Task).filter(Task.created_by_id == user_id)
-        
+
         # Apply filters
         if export_request.filters:
-            if export_request.filters.get('status'):
-                query = query.filter(Task.status == TaskStatus(export_request.filters['status']))
-            if export_request.filters.get('priority'):
-                query = query.filter(Task.priority == TaskPriority(export_request.filters['priority']))
-            if export_request.filters.get('category_id'):
-                query = query.filter(Task.category_id == export_request.filters['category_id'])
-        
+            if export_request.filters.get("status"):
+                query = query.filter(Task.status == TaskStatus(export_request.filters["status"]))
+            if export_request.filters.get("priority"):
+                query = query.filter(
+                    Task.priority == TaskPriority(export_request.filters["priority"])
+                )
+            if export_request.filters.get("category_id"):
+                query = query.filter(Task.category_id == export_request.filters["category_id"])
+
         # Apply date range
         if export_request.date_range:
-            start_date = export_request.date_range.get('start')
-            end_date = export_request.date_range.get('end')
+            start_date = export_request.date_range.get("start")
+            end_date = export_request.date_range.get("end")
             if start_date:
                 query = query.filter(Task.created_at >= start_date)
             if end_date:
                 query = query.filter(Task.created_at <= end_date)
-        
+
         # Include/exclude completed tasks
         if not export_request.include_completed:
             query = query.filter(Task.status != TaskStatus.DONE)
-        
+
         tasks = query.all()
-        
-        if export_request.format.lower() == 'csv':
+
+        if export_request.format.lower() == "csv":
             return self._export_to_csv(tasks)
-        elif export_request.format.lower() == 'json':
+        elif export_request.format.lower() == "json":
             return self._export_to_json(tasks)
         else:
             raise ValueError(f"Unsupported export format: {export_request.format}")
 
-    def _export_to_csv(self, tasks: List[Task]) -> str:
+    def _export_to_csv(self, tasks: list[Task]) -> str:
         """
         Export tasks to CSV format.
 
@@ -235,40 +225,57 @@ class TaskService:
         """
         output = io.StringIO()
         writer = csv.writer(output)
-        
+
         # Write header
-        writer.writerow([
-            'ID', 'Title', 'Description', 'Status', 'Priority', 'Due Date',
-            'Completed At', 'Estimated Hours', 'Actual Hours', 'Points',
-            'Reward Type', 'Reward Value', 'Reward Description',
-            'Category', 'Assigned To', 'Created At', 'Updated At'
-        ])
-        
+        writer.writerow(
+            [
+                "ID",
+                "Title",
+                "Description",
+                "Status",
+                "Priority",
+                "Due Date",
+                "Completed At",
+                "Estimated Hours",
+                "Actual Hours",
+                "Points",
+                "Reward Type",
+                "Reward Value",
+                "Reward Description",
+                "Category",
+                "Assigned To",
+                "Created At",
+                "Updated At",
+            ]
+        )
+
         # Write data
         for task in tasks:
-            writer.writerow([
-                task.id,
-                task.title,
-                task.description or '',
-                task.status.value,
-                task.priority.value,
-                task.due_date.isoformat() if task.due_date else '',
-                task.completed_at.isoformat() if task.completed_at else '',
-                task.estimated_hours,
-                task.actual_hours,
-                task.points,
-                task.reward_type.value if task.reward_type else '',
-                task.reward_value,
-                task.reward_description or '',
-                task.category.name if task.category else '',
-                task.assigned_to.username if task.assigned_to else '',
-                task.created_at.isoformat(),
-                task.updated_at.isoformat(),
-            ])
-        
+            writer.writerow(
+                [
+                    task.id,
+                    task.title,
+                    task.description or "",
+                    task.status.value,
+                    task.priority.value,
+                    task.due_date.isoformat() if task.due_date else "",
+                    task.completed_at.isoformat() if task.completed_at else "",
+                    task.estimated_hours,
+                    task.actual_hours,
+                    task.points,
+                    task.reward_type.value if task.reward_type else "",
+                    task.reward_value,
+                    task.reward_description or "",
+                    task.category.name if task.category else "",
+                    task.assigned_to.username if task.assigned_to else "",
+                    task.created_at.isoformat(),
+                    task.updated_at.isoformat(),
+                ]
+            )
+
         return output.getvalue()
 
-    def _export_to_json(self, tasks: List[Task]) -> str:
+    def _export_to_json(self, tasks: list[Task]) -> str:
         """
         Export tasks to JSON format.
 
@@ -281,29 +288,29 @@ class TaskService:
         tasks_data = []
         for task in tasks:
             task_dict = {
-                'id': task.id,
-                'title': task.title,
-                'description': task.description,
-                'status': task.status.value,
-                'priority': task.priority.value,
-                'due_date': task.due_date.isoformat() if task.due_date else None,
-                'completed_at': task.completed_at.isoformat() if task.completed_at else None,
-                'estimated_hours': task.estimated_hours,
-                'actual_hours': task.actual_hours,
-                'points': task.points,
-                'reward_type': task.reward_type.value if task.reward_type else None,
-                'reward_value': task.reward_value,
-                'reward_description': task.reward_description,
-                'category': task.category.name if task.category else None,
-                'assigned_to': task.assigned_to.username if task.assigned_to else None,
-                'created_at': task.created_at.isoformat(),
-                'updated_at': task.updated_at.isoformat(),
+                "id": task.id,
+                "title": task.title,
+                "description": task.description,
+                "status": task.status.value,
+                "priority": task.priority.value,
+                "due_date": task.due_date.isoformat() if task.due_date else None,
+                "completed_at": task.completed_at.isoformat() if task.completed_at else None,
+                "estimated_hours": task.estimated_hours,
+                "actual_hours": task.actual_hours,
+                "points": task.points,
+                "reward_type": task.reward_type.value if task.reward_type else None,
+                "reward_value": task.reward_value,
+                "reward_description": task.reward_description,
+                "category": task.category.name if task.category else None,
+                "assigned_to": task.assigned_to.username if task.assigned_to else None,
+                "created_at": task.created_at.isoformat(),
+                "updated_at": task.updated_at.isoformat(),
             }
             tasks_data.append(task_dict)
-        
+
         return json.dumps(tasks_data, indent=2)
 
-    def get_task(self, task_id: int, user_id: int) -> Optional[Task]:
+    def get_task(self, task_id: int, user_id: int) -> Task | None:
         """
         Get a task by ID with full relationships.
 
@@ -314,13 +321,6 @@ class TaskService:
         Returns:
             Task instance or None
         """
-        # Try to get from cache first
-        cached_task = redis_service.get_task_details(task_id)
-        if cached_task and cached_task.get("user_id") == user_id:
-            logger.info(f"Task {task_id} retrieved from cache")
-            # Convert back to Task object if needed
-            return self._dict_to_task(cached_task)
-        
         # Get from database
         task = (
             self.db.query(Task)
@@ -331,7 +331,7 @@ class TaskService:
                 selectinload(Task.tags),
                 selectinload(Task.subtasks),
                 selectinload(Task.dependencies),
-                selectinload(Task.media_attachments)
+                selectinload(Task.media_attachments),
             )
             .filter(
                 Task.id == task_id,
@@ -342,12 +342,7 @@ class TaskService:
             )
             .first()
         )
-        
-        # Cache the task if found
-        if task:
-            task_dict = self._task_to_dict(task)
-            redis_service.cache_task_details(task_id, task_dict)
-        
+
         return task
 
     def get_tasks(
@@ -355,13 +350,13 @@ class TaskService:
         user_id: int,
         skip: int = 0,
         limit: int = 100,
-        status: Optional[TaskStatus] = None,
-        priority: Optional[TaskPriority] = None,
-        category_id: Optional[int] = None,
-        assigned_to_id: Optional[int] = None,
-        reward_type: Optional[RewardType] = None,
-        search: Optional[str] = None,
-    ) -> tuple[List[Task], int]:
+        status: TaskStatus | None = None,
+        priority: TaskPriority | None = None,
+        category_id: int | None = None,
+        assigned_to_id: int | None = None,
+        reward_type: RewardType | None = None,
+        search: str | None = None,
+    ) -> tuple[list[Task], int]:
         """
         Get tasks with filtering and pagination.
 
@@ -382,16 +377,7 @@ class TaskService:
         user = self.db.query(User).filter(User.id == user_id).first()
         if not user:
             return [], 0
-        
-        # Try to get from cache if no filters applied (most common case)
-        if not any([status, priority, category_id, assigned_to_id, reward_type, search]) and skip == 0:
-            cached_tasks = redis_service.get_user_tasks(user_id)
-            if cached_tasks:
-                logger.info(f"User {user_id} tasks retrieved from cache with relationships")
-                # Convert cached data back to Task objects with relationships
-                tasks = [self._dict_to_task(task_dict) for task_dict in cached_tasks[:limit]]
-                return tasks, len(cached_tasks)
-        
+
         # Build query based on user role
         query = self.db.query(Task).options(
             selectinload(Task.assigned_to),
@@ -400,18 +386,16 @@ class TaskService:
             selectinload(Task.tags),
             selectinload(Task.subtasks),
             selectinload(Task.dependencies),
-            selectinload(Task.media_attachments)
+            selectinload(Task.media_attachments),
         )
-        
+
         # RBAC: Admins and organizers can view all tasks, regular users only their own
         if user.role in [UserRole.ADMIN, UserRole.ORGANIZER]:
             # Admins and organizers can see all tasks
             pass
         else:
             # Regular users can only see tasks they created or are assigned to
-            query = query.filter(
-                or_(Task.created_by_id == user_id, Task.assigned_to_id == user_id)
-            )
+            query = query.filter(or_(Task.created_by_id == user_id, Task.assigned_to_id == user_id))
 
         # Apply filters
         if status:
@@ -432,23 +416,13 @@ class TaskService:
             query = query.filter(search_filter)
 
         total = query.count()
-        tasks = (
-            query.order_by(desc(Task.created_at))
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
-
-        # Cache the results if no filters applied
-        if not any([status, priority, category_id, assigned_to_id, reward_type, search]) and skip == 0:
-            task_dicts = [self._task_to_dict(task) for task in tasks]
-            redis_service.cache_user_tasks(user_id, task_dicts)
+        tasks = query.order_by(desc(Task.created_at)).offset(skip).limit(limit).all()
 
         return tasks, total
 
     async def update_task(
-        self, task_id: int, task_data: Dict[str, Any], user_id: int
-    ) -> Optional[Task]:
+        self, task_id: int, task_data: dict[str, Any], user_id: int
+    ) -> Task | None:
         """
         Update a task.
 
@@ -464,7 +438,7 @@ class TaskService:
         user = self.db.query(User).filter(User.id == user_id).first()
         if not user:
             return None
-            
+
         # Query task directly from database
         query = (
             self.db.query(Task)
@@ -475,11 +449,11 @@ class TaskService:
                 selectinload(Task.tags),
                 selectinload(Task.subtasks),
                 selectinload(Task.dependencies),
-                selectinload(Task.media_attachments)
+                selectinload(Task.media_attachments),
             )
             .filter(Task.id == task_id)
         )
-        
+
         # RBAC: Admins and organizers can update any task
         if user.role.value not in [UserRole.ADMIN.value, UserRole.ORGANIZER.value]:
             # Regular users can only update their own tasks or tasks assigned to them
@@ -489,20 +463,20 @@ class TaskService:
                     Task.assigned_to_id == user_id,
                 )
             )
-        
+
         task = query.first()
         if not task:
             return None
 
-        # Store the old assigned_to_id to invalidate cache later and for notifications
+        # Store the old assigned_to_id for notifications
         old_assigned_to_id = task.assigned_to_id
         old_task_data = {
-            'title': task.title,
-            'description': task.description,
-            'priority': task.priority.value if task.priority else None,
-            'due_date': task.due_date.isoformat() if task.due_date else None,
-            'estimated_hours': task.estimated_hours,
-            'points': task.points,
+            "title": task.title,
+            "description": task.description,
+            "priority": task.priority.value if task.priority else None,
+            "due_date": task.due_date.isoformat() if task.due_date else None,
+            "estimated_hours": task.estimated_hours,
+            "points": task.points,
         }
 
         # Handle tags separately
@@ -551,7 +525,10 @@ class TaskService:
             else:
                 # Find category by name
                 from app.models.task import TaskCategory
-                category = self.db.query(TaskCategory).filter(TaskCategory.name == category_name).first()
+
+                category = (
+                    self.db.query(TaskCategory).filter(TaskCategory.name == category_name).first()
+                )
                 if category:
                     task.category_id = category.id
                 else:
@@ -560,7 +537,7 @@ class TaskService:
                         name=category_name,
                         description=f"Auto-created category: {category_name}",
                         color="#6B7280",  # Default gray color
-                        created_by_id=user_id
+                        created_by_id=user_id,
                     )
                     self.db.add(new_category)
                     self.db.flush()  # Get the ID without committing
@@ -583,49 +560,47 @@ class TaskService:
             self.db.rollback()
             raise ValueError(f"Failed to update task: {e}")
 
-        # Invalidate cache for the user who made the update
-        redis_service.invalidate_task_cache(user_id, task_id)
-        
-        # Invalidate cache for the old assigned user (if different)
-        if old_assigned_to_id and old_assigned_to_id != user_id:
-            redis_service.invalidate_task_cache(old_assigned_to_id, task_id)
-            
-        # Invalidate cache for the new assigned user (if different from both user_id and old_assigned_to_id)
-        if task.assigned_to_id and task.assigned_to_id != user_id and task.assigned_to_id != old_assigned_to_id:
-            redis_service.invalidate_task_cache(task.assigned_to_id, task_id)
-
         logger.info(f"Updated task {task_id} by user {user_id}")
-        
+
         # Send notifications for task updates
         try:
             from app.services.notification_service import NotificationService
+
             notification_service = NotificationService(self.db)
-            
+
             # Detect changed fields
             changed_fields = []
             current_task_data = {
-                'title': task.title,
-                'description': task.description,
-                'priority': task.priority.value if task.priority else None,
-                'due_date': task.due_date.isoformat() if task.due_date else None,
-                'estimated_hours': task.estimated_hours,
-                'points': task.points,
+                "title": task.title,
+                "description": task.description,
+                "priority": task.priority.value if task.priority else None,
+                "due_date": task.due_date.isoformat() if task.due_date else None,
+                "estimated_hours": task.estimated_hours,
+                "points": task.points,
             }
-            
+
             for field, old_value in old_task_data.items():
                 if current_task_data[field] != old_value:
                     changed_fields.append(field)
-            
+
             # Handle assignment changes
             if old_assigned_to_id != task.assigned_to_id:
                 # Add assignment change to history
                 try:
                     from app.models.comment import TaskStatusHistory
-                    
-                    old_user = self.db.query(User).filter(User.id == old_assigned_to_id).first() if old_assigned_to_id else None
-                    new_user = self.db.query(User).filter(User.id == task.assigned_to_id).first() if task.assigned_to_id else None
+
+                    old_user = (
+                        self.db.query(User).filter(User.id == old_assigned_to_id).first()
+                        if old_assigned_to_id
+                        else None
+                    )
+                    new_user = (
+                        self.db.query(User).filter(User.id == task.assigned_to_id).first()
+                        if task.assigned_to_id
+                        else None
+                    )
                     updater = self.db.query(User).filter(User.id == user_id).first()
-                    
+
                     if old_assigned_to_id and task.assigned_to_id:
                         # Reassignment
                         comment = f"Task reassigned from {old_user.username} to {new_user.username} by {updater.username}"
@@ -637,19 +612,19 @@ class TaskService:
                         comment = f"Task unassigned from {old_user.username} by {updater.username}"
                     else:
                         comment = f"Assignment changed by {updater.username}"
-                    
+
                     history_entry = TaskStatusHistory(
                         task_id=task.id,
                         user_id=user_id,
                         previous_status=task.status.value,  # Status didn't change, just assignment
                         new_status=task.status.value,
-                        comment=comment
+                        comment=comment,
                     )
                     self.db.add(history_entry)
                     self.db.commit()
                 except Exception as e:
                     logger.error(f"Error creating assignment change history: {e}")
-                
+
                 # Send notifications
                 if old_assigned_to_id and task.assigned_to_id:
                     # Reassignment
@@ -663,14 +638,14 @@ class TaskService:
                     )
                 # Note: We don't notify for unassignment (old_assigned_to_id and not task.assigned_to_id)
                 # as it's usually part of a reassignment or intentional removal
-            
+
             # Notify about other field changes (if any)
             if changed_fields:
                 await notification_service.notify_task_updated(task, user_id, changed_fields)
-                
+
         except Exception as e:
             logger.error(f"Error sending task update notifications: {e}")
-        
+
         return task
 
     async def delete_task(self, task_id: int, user_id: int) -> bool:
@@ -691,7 +666,7 @@ class TaskService:
 
         # Query the task directly from the database
         query = self.db.query(Task).filter(Task.id == task_id)
-        
+
         # RBAC: Admins and organizers can delete any task
         if user.role.value not in [UserRole.ADMIN.value, UserRole.ORGANIZER.value]:
             # Regular users can only delete their own tasks or tasks assigned to them
@@ -701,9 +676,9 @@ class TaskService:
                     Task.assigned_to_id == user_id,
                 )
             )
-        
+
         task = query.first()
-        
+
         if not task:
             return False
 
@@ -712,22 +687,16 @@ class TaskService:
         participants = self.get_task_participants(task_id)
 
         # Delete task associations first
-        self.db.query(TaskTagAssociation).filter(
-            TaskTagAssociation.task_id == task_id
-        ).delete()
+        self.db.query(TaskTagAssociation).filter(TaskTagAssociation.task_id == task_id).delete()
 
         # Delete the task
         self.db.delete(task)
         self.db.commit()
 
-        # Invalidate cache for the user
-        redis_service.invalidate_task_cache(user_id, task_id)
-        if task.assigned_to_id and task.assigned_to_id != user_id:
-            redis_service.invalidate_task_cache(task.assigned_to_id, task_id)
-
         # Send deletion notifications
         try:
             from app.services.notification_service import NotificationService
+
             notification_service = NotificationService(self.db)
             await notification_service.notify_task_deleted(
                 task_title, task_id, user_id, participants
@@ -739,8 +708,8 @@ class TaskService:
         return True
 
     async def complete_task(
-        self, task_id: int, user_id: int, actual_hours: Optional[float] = None
-    ) -> Optional[Task]:
+        self, task_id: int, user_id: int, actual_hours: float | None = None
+    ) -> Task | None:
         """
         Mark a task as completed.
 
@@ -759,7 +728,7 @@ class TaskService:
 
         # Query task directly from database
         query = self.db.query(Task).filter(Task.id == task_id)
-        
+
         # RBAC: Admins and organizers can complete any task
         if user.role.value not in [UserRole.ADMIN.value, UserRole.ORGANIZER.value]:
             # Regular users can only complete their own tasks or tasks assigned to them
@@ -769,7 +738,7 @@ class TaskService:
                     Task.assigned_to_id == user_id,
                 )
             )
-        
+
         task = query.first()
         if not task:
             return None
@@ -779,11 +748,6 @@ class TaskService:
         if actual_hours is not None:
             task.actual_hours = actual_hours
 
-        # Invalidate cache before committing
-        redis_service.invalidate_task_cache(user_id, task_id)
-        if task.assigned_to_id and task.assigned_to_id != user_id:
-            redis_service.invalidate_task_cache(task.assigned_to_id, task_id)
-
         try:
             self.db.commit()
         except Exception as e:
@@ -791,15 +755,12 @@ class TaskService:
             raise ValueError(f"Failed to complete task: {e}")
 
         # Query the task again to get fresh data
-        task = (
-            self.db.query(Task)
-            .filter(Task.id == task_id)
-            .first()
-        )
+        task = self.db.query(Task).filter(Task.id == task_id).first()
 
         # Send completion notifications
         try:
             from app.services.notification_service import NotificationService
+
             notification_service = NotificationService(self.db)
             await notification_service.notify_task_completed(task, user_id)
         except Exception as e:
@@ -839,9 +800,7 @@ class TaskService:
         self.db.commit()
         self.db.refresh(template)
 
-        logger.info(
-            f"Created task template {template.id} by user {created_by_id}"
-        )
+        logger.info(f"Created task template {template.id} by user {created_by_id}")
         return template
 
     def to_task_template_response(self, template: TaskTemplate) -> dict:
@@ -855,40 +814,40 @@ class TaskService:
             Dictionary representation for API response
         """
         response = {
-            'id': template.id,
-            'name': template.name,
-            'description': template.description,
-            'title_pattern': template.title_pattern,
-            'description_template': template.description_template,
-            'estimated_hours': template.estimated_hours,
-            'points': template.points,
-            'priority': template.priority,
-            'category_id': template.category_id,
-            'tags': template.tags,
-            'is_public': template.is_public,
-            'created_by_id': template.created_by_id,
-            'created_at': template.created_at,
-            'updated_at': template.updated_at,
-            'category': None
+            "id": template.id,
+            "name": template.name,
+            "description": template.description,
+            "title_pattern": template.title_pattern,
+            "description_template": template.description_template,
+            "estimated_hours": template.estimated_hours,
+            "points": template.points,
+            "priority": template.priority,
+            "category_id": template.category_id,
+            "tags": template.tags,
+            "is_public": template.is_public,
+            "created_by_id": template.created_by_id,
+            "created_at": template.created_at,
+            "updated_at": template.updated_at,
+            "category": None,
         }
-        
+
         # Add category data if available
         if template.category_id:
-            category = self.db.query(TaskCategory).filter(TaskCategory.id == template.category_id).first()
+            category = (
+                self.db.query(TaskCategory).filter(TaskCategory.id == template.category_id).first()
+            )
             if category:
-                response['category'] = {
-                    'id': category.id,
-                    'name': category.name,
-                    'description': category.description,
-                    'color': category.color,
-                    'icon': category.icon
+                response["category"] = {
+                    "id": category.id,
+                    "name": category.name,
+                    "description": category.description,
+                    "color": category.color,
+                    "icon": category.icon,
                 }
-        
+
         return response
 
-    def get_task_templates(
-        self, user_id: int, include_public: bool = True
-    ) -> List[dict]:
+    def get_task_templates(self, user_id: int, include_public: bool = True) -> list[dict]:
         """
         Get task templates available to user.
 
@@ -903,7 +862,7 @@ class TaskService:
         user = self.db.query(User).filter(User.id == user_id).first()
         if not user:
             return []
-        
+
         # RBAC: Admins and organizers can view all templates
         if user.role in [UserRole.ADMIN, UserRole.ORGANIZER]:
             all_templates = self.db.query(TaskTemplate).all()
@@ -911,25 +870,23 @@ class TaskService:
         else:
             # Regular users can only see their own templates and public ones
             templates = []
-            
+
             # Get user's own templates
-            user_templates = self.db.query(TaskTemplate).filter(
-                TaskTemplate.created_by_id == user_id
-            ).all()
+            user_templates = (
+                self.db.query(TaskTemplate).filter(TaskTemplate.created_by_id == user_id).all()
+            )
             templates.extend(user_templates)
-            
+
             # Get public templates if requested
             if include_public:
-                public_templates = self.db.query(TaskTemplate).filter(
-                    TaskTemplate.is_public
-                ).all()
+                public_templates = self.db.query(TaskTemplate).filter(TaskTemplate.is_public).all()
                 templates.extend(public_templates)
-            
+
             return [self.to_task_template_response(template) for template in templates]
 
     async def create_task_from_template(
         self, template_id: int, user_id: int, **kwargs
-    ) -> Optional[Task]:
+    ) -> Task | None:
         """
         Create a task from a template.
 
@@ -941,11 +898,7 @@ class TaskService:
         Returns:
             Created task instance or None
         """
-        template = (
-            self.db.query(TaskTemplate)
-            .filter(TaskTemplate.id == template_id)
-            .first()
-        )
+        template = self.db.query(TaskTemplate).filter(TaskTemplate.id == template_id).first()
         if not template:
             return None
 
@@ -960,11 +913,16 @@ class TaskService:
             "category_id": kwargs.get("category_id") or template.category_id,
             "tag_names": kwargs.get("tag_names") or template.tags,
         }
-        
+
         # Add any additional kwargs that aren't already handled
         handled_keys = {
-            "title", "description", "priority", "estimated_hours", 
-            "points", "category_id", "tag_names"
+            "title",
+            "description",
+            "priority",
+            "estimated_hours",
+            "points",
+            "category_id",
+            "tag_names",
         }
         for key, value in kwargs.items():
             if key not in handled_keys:
@@ -1001,9 +959,7 @@ class TaskService:
         self.db.commit()
         self.db.refresh(category)
 
-        logger.info(
-            f"Created task category {category.id} by user {created_by_id}"
-        )
+        logger.info(f"Created task category {category.id} by user {created_by_id}")
         return category
 
     def to_task_category_response(self, category: TaskCategory) -> dict:
@@ -1017,19 +973,19 @@ class TaskService:
             Dictionary representation for API response
         """
         return {
-            'id': category.id,
-            'name': category.name,
-            'description': category.description,
-            'color': category.color,
-            'icon': category.icon,
-            'parent_id': category.parent_id,
-            'created_by_id': category.created_by_id,
-            'created_at': category.created_at,
-            'updated_at': category.updated_at,
-            'subcategories': []  # TODO: Implement subcategories if needed
+            "id": category.id,
+            "name": category.name,
+            "description": category.description,
+            "color": category.color,
+            "icon": category.icon,
+            "parent_id": category.parent_id,
+            "created_by_id": category.created_by_id,
+            "created_at": category.created_at,
+            "updated_at": category.updated_at,
+            "subcategories": [],  # TODO: Implement subcategories if needed
         }
 
-    def get_categories(self, user_id: int) -> List[dict]:
+    def get_categories(self, user_id: int) -> list[dict]:
         """
         Get task categories for user.
 
@@ -1043,7 +999,7 @@ class TaskService:
         user = self.db.query(User).filter(User.id == user_id).first()
         if not user:
             return []
-        
+
         # RBAC: Admins and organizers can view all categories
         if user.role in [UserRole.ADMIN, UserRole.ORGANIZER]:
             categories = self.db.query(TaskCategory).all()
@@ -1051,15 +1007,11 @@ class TaskService:
         else:
             # Regular users can only see their own categories
             categories = (
-                self.db.query(TaskCategory)
-                .filter(TaskCategory.created_by_id == user_id)
-                .all()
+                self.db.query(TaskCategory).filter(TaskCategory.created_by_id == user_id).all()
             )
             return [self.to_task_category_response(category) for category in categories]
 
-    def create_tag(
-        self, tag_data: TaskTagCreate, created_by_id: int
-    ) -> TaskTag:
+    def create_tag(self, tag_data: TaskTagCreate, created_by_id: int) -> TaskTag:
         """
         Create a new task tag.
 
@@ -1083,7 +1035,7 @@ class TaskService:
         logger.info(f"Created task tag {tag.id} by user {created_by_id}")
         return tag
 
-    def get_tags(self) -> List[TaskTag]:
+    def get_tags(self) -> list[TaskTag]:
         """
         Get all task tags.
 
@@ -1092,15 +1044,11 @@ class TaskService:
         """
         return self.db.query(TaskTag).all()
 
-    def _add_tags_to_task(
-        self, task_id: int, tag_names: List[str], user_id: int
-    ):
+    def _add_tags_to_task(self, task_id: int, tag_names: list[str], user_id: int):
         """Add tags to a task."""
         for tag_name in tag_names:
             # Get or create tag
-            tag = (
-                self.db.query(TaskTag).filter(TaskTag.name == tag_name).first()
-            )
+            tag = self.db.query(TaskTag).filter(TaskTag.name == tag_name).first()
             if not tag:
                 tag = TaskTag(name=tag_name, created_by_id=user_id)
                 self.db.add(tag)
@@ -1119,19 +1067,13 @@ class TaskService:
             )
 
             if not existing:
-                association = TaskTagAssociation(
-                    task_id=task_id, tag_id=tag.id
-                )
+                association = TaskTagAssociation(task_id=task_id, tag_id=tag.id)
                 self.db.add(association)
 
-    def _update_task_tags(
-        self, task_id: int, tag_names: List[str], user_id: int
-    ):
+    def _update_task_tags(self, task_id: int, tag_names: list[str], user_id: int):
         """Update tags for a task."""
         # Remove existing associations
-        self.db.query(TaskTagAssociation).filter(
-            TaskTagAssociation.task_id == task_id
-        ).delete()
+        self.db.query(TaskTagAssociation).filter(TaskTagAssociation.task_id == task_id).delete()
 
         # Add new tags
         self._add_tags_to_task(task_id, tag_names, user_id)
@@ -1200,7 +1142,7 @@ class TaskService:
 
         return False
 
-    def _create_recurring_instance(self, task: Task) -> Optional[Task]:
+    def _create_recurring_instance(self, task: Task) -> Task | None:
         """Create a new instance of a recurring task."""
         new_task = Task(
             title=task.title,
@@ -1226,7 +1168,7 @@ class TaskService:
         return new_task
 
     def _calculate_next_due_date(
-        self, current_due_date: datetime, pattern: Dict[str, Any]
+        self, current_due_date: datetime, pattern: dict[str, Any]
     ) -> datetime:
         """Calculate the next due date based on recurrence pattern."""
         recurrence_type = pattern.get("type")
@@ -1243,13 +1185,13 @@ class TaskService:
 
         return current_due_date
 
-    def to_task_response(self, task: Task) -> Dict[str, Any]:
+    def to_task_response(self, task: Task) -> dict[str, Any]:
         """
         Convert a Task model instance to a TaskResponse dictionary.
-        
+
         Args:
             task: Task model instance
-            
+
         Returns:
             Dictionary representation suitable for TaskResponse
         """
@@ -1260,10 +1202,10 @@ class TaskService:
                 "id": task.assigned_to.id,
                 "username": task.assigned_to.username,
                 "email": task.assigned_to.email,
-                "first_name": getattr(task.assigned_to, 'first_name', None),
-                "last_name": getattr(task.assigned_to, 'last_name', None),
+                "first_name": getattr(task.assigned_to, "first_name", None),
+                "last_name": getattr(task.assigned_to, "last_name", None),
             }
-        
+
         # Convert category to dictionary
         category_dict = None
         if task.category:
@@ -1274,7 +1216,7 @@ class TaskService:
                 "color": task.category.color,
                 "icon": task.category.icon,
             }
-        
+
         # Convert template to dictionary
         template_dict = None
         if task.template:
@@ -1289,46 +1231,54 @@ class TaskService:
                 "priority": task.template.priority.value,
                 "is_public": task.template.is_public,
             }
-        
+
         # Convert tags to list of dictionaries
         tags_list = []
         if task.tags:
             for tag in task.tags:
-                tags_list.append({
-                    "id": tag.id,
-                    "name": tag.name,
-                    "color": tag.color,
-                })
-        
+                tags_list.append(
+                    {
+                        "id": tag.id,
+                        "name": tag.name,
+                        "color": tag.color,
+                    }
+                )
+
         # Convert subtasks to list of dictionaries
         subtasks_list = []
         if task.subtasks:
             for subtask in task.subtasks:
                 subtasks_list.append(self.to_task_response(subtask))
-        
+
         # Convert dependencies to list of dictionaries
         dependencies_list = []
         if task.dependencies:
             for dep in task.dependencies:
-                dependencies_list.append({
-                    "id": dep.id,
-                    "dependent_task_id": dep.dependent_task_id,
-                    "dependency_type": dep.dependency_type.value if hasattr(dep.dependency_type, 'value') else dep.dependency_type,
-                })
-        
+                dependencies_list.append(
+                    {
+                        "id": dep.id,
+                        "dependent_task_id": dep.dependent_task_id,
+                        "dependency_type": dep.dependency_type.value
+                        if hasattr(dep.dependency_type, "value")
+                        else dep.dependency_type,
+                    }
+                )
+
         # Convert media attachments to list of dictionaries
         media_list = []
         if task.media_attachments:
             for media in task.media_attachments:
-                media_list.append({
-                    "id": media.id,
-                    "filename": media.filename,
-                    "file_path": media.file_path,
-                    "file_size": media.file_size,
-                    "mime_type": media.mime_type,
-                    "uploaded_at": media.uploaded_at.isoformat() if media.uploaded_at else None,
-                })
-        
+                media_list.append(
+                    {
+                        "id": media.id,
+                        "filename": media.filename,
+                        "file_path": media.file_path,
+                        "file_size": media.file_size,
+                        "mime_type": media.mime_type,
+                        "uploaded_at": media.uploaded_at.isoformat() if media.uploaded_at else None,
+                    }
+                )
+
         return {
             "id": task.id,
             "title": task.title,
@@ -1358,151 +1308,6 @@ class TaskService:
             "media_attachments": media_list,
         }
 
-    def _task_to_dict(self, task: Task) -> Dict[str, Any]:
-        """
-        Convert Task object to dictionary for caching.
-        
-        Args:
-            task: Task object
-            
-        Returns:
-            Dictionary representation of task
-        """
-        # Serialize assigned_to user
-        assigned_to_dict = None
-        if task.assigned_to:
-            assigned_to_dict = {
-                "id": task.assigned_to.id,
-                "username": task.assigned_to.username,
-                "email": task.assigned_to.email,
-                "first_name": getattr(task.assigned_to, 'first_name', None),
-                "last_name": getattr(task.assigned_to, 'last_name', None),
-                "role": task.assigned_to.role.value if task.assigned_to.role else None,
-            }
-        
-        # Serialize category
-        category_dict = None
-        if task.category:
-            category_dict = {
-                "id": task.category.id,
-                "name": task.category.name,
-                "description": task.category.description,
-                "color": task.category.color,
-            }
-        
-        # Serialize tags
-        tags_list = []
-        if task.tags:
-            tags_list = [
-                {
-                    "id": tag.id,
-                    "name": tag.name,
-                    "color": tag.color,
-                }
-                for tag in task.tags
-            ]
-        
-        return {
-            "id": task.id,
-            "title": task.title,
-            "description": task.description,
-            "status": task.status.value,
-            "priority": task.priority.value,
-            "due_date": task.due_date.isoformat() if task.due_date else None,
-            "completed_at": task.completed_at.isoformat() if task.completed_at else None,
-            "estimated_hours": task.estimated_hours,
-            "actual_hours": task.actual_hours,
-            "points": task.points,
-            "is_recurring": task.is_recurring,
-            "recurrence_pattern": task.recurrence_pattern,
-            "created_by_id": task.created_by_id,
-            "assigned_to_id": task.assigned_to_id,
-            "category_id": task.category_id,
-            "template_id": task.template_id,
-            "parent_task_id": task.parent_task_id,
-            "created_at": task.created_at.isoformat(),
-            "updated_at": task.updated_at.isoformat(),
-            "user_id": task.created_by_id,  # For cache key identification
-            # Relationship data
-            "assigned_to": assigned_to_dict,
-            "category": category_dict,
-            "tags": tags_list,
-        }
-
-    def _dict_to_task(self, task_dict: Dict[str, Any]) -> Task:
-        """
-        Convert dictionary back to Task object.
-        
-        Args:
-            task_dict: Dictionary representation of task
-            
-        Returns:
-            Task object
-        """
-        from app.models.user import User
-        from app.models.task import TaskCategory, TaskTag
-        
-        # Create a minimal Task object with cached data
-        task = Task()
-        task.id = task_dict["id"]
-        task.title = task_dict["title"]
-        task.description = task_dict["description"]
-        task.status = TaskStatus(task_dict["status"])
-        task.priority = TaskPriority(task_dict["priority"])
-        task.due_date = datetime.fromisoformat(task_dict["due_date"]) if task_dict["due_date"] else None
-        task.completed_at = datetime.fromisoformat(task_dict["completed_at"]) if task_dict["completed_at"] else None
-        task.estimated_hours = task_dict["estimated_hours"]
-        task.actual_hours = task_dict["actual_hours"]
-        task.points = task_dict["points"]
-        task.is_recurring = task_dict["is_recurring"]
-        task.recurrence_pattern = task_dict["recurrence_pattern"]
-        task.created_by_id = task_dict["created_by_id"]
-        task.assigned_to_id = task_dict["assigned_to_id"]
-        task.category_id = task_dict["category_id"]
-        task.template_id = task_dict["template_id"]
-        task.parent_task_id = task_dict["parent_task_id"]
-        task.created_at = datetime.fromisoformat(task_dict["created_at"])
-        task.updated_at = datetime.fromisoformat(task_dict["updated_at"])
-        
-        # Reconstruct relationships from cached data
-        # Assigned user
-        if task_dict.get("assigned_to"):
-            assigned_to_data = task_dict["assigned_to"]
-            user = User()
-            user.id = assigned_to_data["id"]
-            user.username = assigned_to_data["username"]
-            user.email = assigned_to_data["email"]
-            user.first_name = assigned_to_data.get("first_name")
-            user.last_name = assigned_to_data.get("last_name")
-            if assigned_to_data.get("role"):
-                from app.models.user import UserRole
-                user.role = UserRole(assigned_to_data["role"])
-            task.assigned_to = user
-        
-        # Category
-        if task_dict.get("category"):
-            category_data = task_dict["category"]
-            category = TaskCategory()
-            category.id = category_data["id"]
-            category.name = category_data["name"]
-            category.description = category_data.get("description")
-            category.color = category_data.get("color")
-            task.category = category
-        
-        # Tags
-        if task_dict.get("tags"):
-            tags = []
-            for tag_data in task_dict["tags"]:
-                tag = TaskTag()
-                tag.id = tag_data["id"]
-                tag.name = tag_data["name"]
-                tag.color = tag_data.get("color")
-                tags.append(tag)
-            task.tags = tags
-        
-        return task
-
-    # Workflow validation methods
     def validate_task_assignment(
         self,
         task_id: int,
@@ -1572,7 +1377,7 @@ class TaskService:
 
         return False
 
-    def get_task_participants(self, task_id: int) -> List[int]:
+    def get_task_participants(self, task_id: int) -> list[int]:
         """
         Get list of user IDs who are participants in a task.
 
@@ -1597,6 +1402,7 @@ class TaskService:
         # This will require importing TaskComment, but we'll do it here to avoid circular imports
         try:
             from app.models.task_comment import TaskComment
+
             commenters = (
                 self.db.query(TaskComment.user_id)
                 .filter(TaskComment.task_id == task_id)
@@ -1610,7 +1416,7 @@ class TaskService:
 
         return list(participants)
 
-    def get_task_stakeholders(self, task_id: int) -> List[int]:
+    def get_task_stakeholders(self, task_id: int) -> list[int]:
         """
         Get list of user IDs who are stakeholders in a task (for notifications).
 

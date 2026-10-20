@@ -5,11 +5,11 @@ This module handles SQLAlchemy database configuration, connection pooling,
 and session management for the TaaskMaaster application.
 """
 
-import os
-from typing import Any
-from sqlalchemy import create_engine, MetaData, text
+from collections.abc import Iterator
+
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings
@@ -20,50 +20,55 @@ logger = get_logger(__name__)
 # Database URL configuration
 DATABASE_URL = settings.DATABASE_URL
 
-# Create SQLAlchemy engine
-if DATABASE_URL.startswith("sqlite"):
-    # SQLite configuration
-    engine = create_engine(
-        DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        echo=settings.DEBUG
-    )
-else:
-    # PostgreSQL/MySQL configuration
-    engine = create_engine(
-        DATABASE_URL,
+
+BUSY_TIMEOUT_MS = 5000
+
+
+def _sqlite_pragmas(dbapi_conn, _record) -> None:
+    cur = dbapi_conn.cursor()
+    cur.execute("PRAGMA journal_mode=WAL")
+    cur.execute(f"PRAGMA busy_timeout={BUSY_TIMEOUT_MS}")
+    cur.execute("PRAGMA foreign_keys=ON")
+    cur.close()
+
+
+def make_engine(url: str, echo: bool = False):
+    """Build an engine: shared connection only for in-memory SQLite, pooled otherwise."""
+    if url.startswith("sqlite"):
+        args = {"check_same_thread": False}
+        if url in ("sqlite://", "sqlite:///:memory:"):
+            return create_engine(url, connect_args=args, poolclass=StaticPool, echo=echo)
+        eng = create_engine(
+            url, connect_args={**args, "timeout": BUSY_TIMEOUT_MS / 1000}, echo=echo
+        )
+        event.listen(eng, "connect", _sqlite_pragmas)
+        return eng
+    return create_engine(
+        url,
         pool_pre_ping=True,
         pool_recycle=300,
         pool_size=10,
         max_overflow=20,
-        echo=settings.DEBUG
+        echo=echo,
     )
 
+
+engine = make_engine(DATABASE_URL, settings.DEBUG)
+
 # Create SessionLocal class
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create declarative base
 Base = declarative_base()
 
-# Metadata for migrations
-metadata = MetaData()
 
-
-def create_database():
-    """
-    Create database tables.
-    """
+def get_db_session() -> Iterator[Session]:
+    """FastAPI dependency yielding a session that is always closed."""
+    db = SessionLocal()
     try:
-        Base.metadata.create_all(bind=engine)
-        logger.info("Database tables created successfully")
-    except Exception as e:
-        logger.error(f"Failed to create database tables: {e}")
-        raise
+        yield db
+    finally:
+        db.close()
 
 
 def drop_database():
@@ -86,8 +91,8 @@ def get_database_info():
         "url": DATABASE_URL,
         "driver": engine.driver,
         "dialect": engine.dialect.name,
-        "pool_size": engine.pool.size() if hasattr(engine.pool, 'size') else None,
-        "checked_out": engine.pool.checkedout() if hasattr(engine.pool, 'checkedout') else None,
+        "pool_size": engine.pool.size() if hasattr(engine.pool, "size") else None,
+        "checked_out": engine.pool.checkedout() if hasattr(engine.pool, "checkedout") else None,
     }
 
 
@@ -95,17 +100,17 @@ class DatabaseManager:
     """
     Database manager for handling connections and transactions.
     """
-    
+
     def __init__(self):
         self.engine = engine
         self.SessionLocal = SessionLocal
-    
+
     def get_session(self):
         """
         Get a database session.
         """
         return self.SessionLocal()
-    
+
     def health_check(self) -> bool:
         """
         Check if database is healthy and accessible.
@@ -117,7 +122,7 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Database health check failed: {e}")
             return False
-    
+
     def get_stats(self) -> dict:
         """
         Get database statistics.
@@ -145,20 +150,19 @@ def init_database():
     """
     try:
         logger.info("Initializing database...")
-        
+
         # Import all models to ensure they are registered with Base metadata
         # This is done here to avoid circular imports
         _import_all_models()
-        
+
         # Test connection
         if not db_manager.health_check():
             raise Exception("Database health check failed")
-        
-        # Create tables if they don't exist
-        create_database()
-        
+
+        # Schema is managed by Alembic (entrypoint.sh runs `alembic upgrade head`).
+
         logger.info("Database initialized successfully")
-        
+
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         raise
@@ -168,23 +172,47 @@ def _import_all_models():
     """Import all models to register them with SQLAlchemy metadata."""
     try:
         logger.info("Importing models...")
-        
+
         # Import all models here to register them
         from app.models import (
-            User, Task, TaskTemplate, TaskCategory, TaskTag, TaskDependency,
-            Goal, GoalProgress, Achievement, UserAchievement, Points, Leaderboard,
-            MediaAttachment, TaskComment, CommentReaction, CommentMention,
-            DirectMessage, MessageReaction, Conversation, ConversationSettings
+            Achievement,
+            CommentMention,
+            CommentReaction,
+            Conversation,
+            ConversationSettings,
+            Device,
+            DeviceGroup,
+            DirectMessage,
+            FamilySettings,
+            Goal,
+            GoalProgress,
+            Leaderboard,
+            MediaAttachment,
+            MessageReaction,
+            Override,
+            Points,
+            Task,
+            TaskCategory,
+            TaskComment,
+            TaskDependency,
+            TaskTag,
+            TaskTemplate,
+            TimeWindow,
+            UsedInvite,
+            User,
+            UserAchievement,
         )
-        
+
         # Import additional models that might exist
         try:
             from app.models import CommentAuditTrail, TaskStatusHistory, UserStatus
         except ImportError:
-            logger.info("Optional models (CommentAuditTrail, TaskStatusHistory, UserStatus) not found, skipping")
-            
+            logger.info(
+                "Optional models (CommentAuditTrail, TaskStatusHistory, UserStatus) not found, skipping"
+            )
+
         logger.info("All models imported successfully")
-        
+
     except ImportError as e:
         logger.warning(f"Some models could not be imported: {e}")
         raise

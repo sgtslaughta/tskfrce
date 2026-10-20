@@ -6,12 +6,17 @@ This module contains API endpoints for authentication and authorization.
 
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.auth import AuthService, get_current_user
-from app.db.session import get_db_session
-from app.models.user import User
+from app.api.deps import get_current_user
+from app.core.auth import AuthService
+from app.core.client_ip import client_ip
+from app.core.config import settings
+from app.core.database import get_db_session
+from app.core.ratelimit import limit
+from app.models.user import UsedInvite, User, UserRole
 from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
@@ -19,16 +24,13 @@ from app.schemas.auth import (
     RefreshTokenRequest,
     RefreshTokenResponse,
 )
+from app.schemas.user import RegisterIn
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 
 
-@router.post(
-    "/login", response_model=LoginResponse, status_code=status.HTTP_200_OK
-)
-async def login(
-    login_data: LoginRequest, db: Session = Depends(get_db_session)
-):
+@router.post("/login", response_model=LoginResponse, status_code=status.HTTP_200_OK)
+async def login(login_data: LoginRequest, request: Request, db: Session = Depends(get_db_session)):
     """
     Authenticate a user and return JWT tokens.
 
@@ -42,10 +44,9 @@ async def login(
     Raises:
         HTTPException: If authentication fails
     """
+    limit(f"login:{client_ip(request)}:{login_data.username.lower()}", 10, 60)
     auth_service = AuthService(db)
-    user = auth_service.authenticate_user(
-        login_data.username, login_data.password
-    )
+    user = auth_service.authenticate_user(login_data.username, login_data.password)
 
     if not user:
         raise HTTPException(
@@ -55,7 +56,7 @@ async def login(
         )
 
     # Create access token
-    access_token_expires = timedelta(minutes=30)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth_service.create_access_token(
         data={
             "sub": str(user.id),
@@ -66,7 +67,7 @@ async def login(
     )
 
     # Create refresh token
-    refresh_token_expires = timedelta(days=7)
+    refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     refresh_token = auth_service.create_refresh_token(
         data={
             "sub": str(user.id),
@@ -80,8 +81,8 @@ async def login(
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        expires_in=30 * 60,  # 30 minutes in seconds
-        refresh_expires_in=7 * 24 * 60 * 60,  # 7 days in seconds
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        refresh_expires_in=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         user_id=user.id,
         username=user.username,
         email=user.email,
@@ -97,9 +98,7 @@ async def login(
     response_model=RefreshTokenResponse,
     status_code=status.HTTP_200_OK,
 )
-async def refresh_token(
-    refresh_data: RefreshTokenRequest, db: Session = Depends(get_db_session)
-):
+async def refresh_token(refresh_data: RefreshTokenRequest, db: Session = Depends(get_db_session)):
     """
     Refresh an access token using a refresh token.
 
@@ -142,7 +141,7 @@ async def refresh_token(
         )
 
     # Create new access token
-    access_token_expires = timedelta(minutes=30)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth_service.create_access_token(
         data={
             "sub": str(user.id),
@@ -155,13 +154,11 @@ async def refresh_token(
     return RefreshTokenResponse(
         access_token=access_token,
         token_type="bearer",
-        expires_in=30 * 60,  # 30 minutes in seconds
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
 
-@router.post(
-    "/logout", response_model=LogoutResponse, status_code=status.HTTP_200_OK
-)
+@router.post("/logout", response_model=LogoutResponse, status_code=status.HTTP_200_OK)
 async def logout(current_user: User = Depends(get_current_user)):
     """
     Logout the current user.
@@ -206,14 +203,36 @@ async def get_current_user_info(
         "is_active": current_user.is_active,
         "is_superuser": current_user.is_superuser,
         "timezone": current_user.timezone,
-        "created_at": (
-            current_user.created_at.isoformat()
-            if current_user.created_at
-            else None
-        ),
-        "updated_at": (
-            current_user.updated_at.isoformat()
-            if current_user.updated_at
-            else None
-        ),
+        "created_at": (current_user.created_at.isoformat() if current_user.created_at else None),
+        "updated_at": (current_user.updated_at.isoformat() if current_user.updated_at else None),
     }
+
+
+ASK_PARENT = "Ask a parent to add you."
+
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register(body: RegisterIn, db: Session = Depends(get_db_session)):
+    """No public sign-up: only a parent's one-time invite token creates a new parent."""
+    auth = AuthService(db)
+    invite = auth.read_invite(body.token)
+    if invite is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ASK_PARENT)
+    username, jti = invite
+    if db.get(UsedInvite, jti) or auth.user_service.get_user_by_username(username):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ASK_PARENT)
+    user = User(
+        username=username,
+        email=f"{username}@family.local",
+        hashed_password=auth.get_password_hash(body.password),
+        full_name=body.full_name,
+        role=UserRole.PARENT,
+        is_superuser=True,  # same powers as the setup parent (manage kids)
+    )
+    db.add_all([user, UsedInvite(jti=jti)])
+    try:
+        db.commit()
+    except IntegrityError:  # same invite (or username) redeemed twice at once
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ASK_PARENT) from None
+    return {"user_id": user.id, "username": user.username}

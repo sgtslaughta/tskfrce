@@ -2,7 +2,7 @@
  * Notification service for TaaskMaaster frontend.
  * 
  * This service handles API calls for notification persistence,
- * following the X-User-Data header pattern used by other services.
+ * authenticated with the bearer token added by the API client.
  */
 
 import { api } from './api';
@@ -90,21 +90,6 @@ export class NotificationService {
   private baseUrl = '/notifications';
 
   /**
-   * Create user data header for API requests
-   */
-  private createUserDataHeader(user: any): Record<string, string> {
-    const userDataHeader = {
-      'X-User-Data': JSON.stringify({
-        user_id: user.id,
-        username: user.username,
-        role: user.role || 'user'
-      })
-    };
-    // console.log('📋 Creating X-User-Data header:', userDataHeader); // Debug log - can be removed in production
-    return userDataHeader;
-  }
-
-  /**
    * Get notifications for the current user
    */
   async getNotifications(
@@ -112,8 +97,6 @@ export class NotificationService {
     request: GetNotificationsRequest = {}
   ): Promise<NotificationListResponse> {
     try {
-      const headers = this.createUserDataHeader(user);
-      
       const requestData = {
         skip: request.skip || 0,
         limit: request.limit || 50,
@@ -123,8 +106,7 @@ export class NotificationService {
 
       const response = await api.post(
         this.baseUrl,
-        requestData,
-        { headers }
+        requestData
       );
 
       return response.data;
@@ -142,16 +124,13 @@ export class NotificationService {
     notificationIds: number[]
   ): Promise<MarkReadResponse> {
     try {
-      const headers = this.createUserDataHeader(user);
-      
       const requestData: MarkReadRequest = {
         notification_ids: notificationIds
       };
 
       const response = await api.post(
         `${this.baseUrl}/mark-read`,
-        requestData,
-        { headers }
+        requestData
       );
 
       return response.data;
@@ -166,12 +145,9 @@ export class NotificationService {
    */
   async markAllNotificationsRead(user: any): Promise<MarkReadResponse> {
     try {
-      const headers = this.createUserDataHeader(user);
-
       const response = await api.post(
         `${this.baseUrl}/mark-all-read`,
-        {},
-        { headers }
+        {}
       );
 
       return response.data;
@@ -189,16 +165,13 @@ export class NotificationService {
     notificationIds: number[]
   ): Promise<DeleteNotificationsResponse> {
     try {
-      const headers = this.createUserDataHeader(user);
-      
       const requestData: DeleteNotificationsRequest = {
         notification_ids: notificationIds
       };
 
       const response = await api.post(
         `${this.baseUrl}/delete`,
-        requestData,
-        { headers }
+        requestData
       );
 
       return response.data;
@@ -213,11 +186,8 @@ export class NotificationService {
    */
   async getNotificationStats(user: any): Promise<NotificationStats> {
     try {
-      const headers = this.createUserDataHeader(user);
-
       const response = await api.get(
-        `${this.baseUrl}/stats`,
-        { headers }
+        `${this.baseUrl}/stats`
       );
 
       return response.data;

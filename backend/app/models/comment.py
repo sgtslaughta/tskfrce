@@ -6,10 +6,8 @@ status history, and related functionality for the workflow enhancement system.
 """
 
 from datetime import datetime
-from enum import Enum
 
 from sqlalchemy import (
-    Boolean,
     Column,
     DateTime,
     ForeignKey,
@@ -22,11 +20,10 @@ from sqlalchemy.orm import relationship
 from app.core.database import Base
 
 
-
 class TaskStatusHistory(Base):
     """
     Task status change history for workflow tracking.
-    
+
     Attributes:
         id: Primary key
         task_id: Associated task
@@ -36,9 +33,9 @@ class TaskStatusHistory(Base):
         comment: Optional comment with status change
         created_at: When the change occurred
     """
-    
+
     __tablename__ = "task_status_history"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -46,11 +43,11 @@ class TaskStatusHistory(Base):
     new_status = Column(String(50), nullable=False)
     comment = Column(Text, nullable=True)  # Optional comment with status change
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
-    
+
     # Relationships
     task = relationship("Task", back_populates="status_history")
     user = relationship("User")
-    
+
     def __repr__(self) -> str:
         """String representation of TaskStatusHistory."""
         return (
@@ -59,14 +56,10 @@ class TaskStatusHistory(Base):
         )
 
 
-
-
-
-
 class TaskChatMessage(Base):
     """
     Chat messages for task-specific conversations.
-    
+
     Attributes:
         id: Primary key
         task_id: Associated task
@@ -77,9 +70,9 @@ class TaskChatMessage(Base):
         created_at: Creation timestamp
         updated_at: Last update timestamp
     """
-    
+
     __tablename__ = "task_chat_messages"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False, index=True)
     from_user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
@@ -88,15 +81,19 @@ class TaskChatMessage(Base):
     parent_message_id = Column(Integer, ForeignKey("task_chat_messages.id"), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationships
     task = relationship("Task", back_populates="chat_messages")
     from_user = relationship("User")
     parent_message = relationship("TaskChatMessage", remote_side=[id])
     replies = relationship("TaskChatMessage", back_populates="parent_message")
-    media_attachments = relationship("TaskChatMessageMedia", back_populates="message", cascade="all, delete-orphan")
-    read_receipts = relationship("MessageReadReceipt", back_populates="task_chat_message", cascade="all, delete-orphan")
-    
+    media_attachments = relationship(
+        "TaskChatMessageMedia", back_populates="message", cascade="all, delete-orphan"
+    )
+    read_receipts = relationship(
+        "MessageReadReceipt", back_populates="task_chat_message", cascade="all, delete-orphan"
+    )
+
     def __repr__(self) -> str:
         """String representation of TaskChatMessage."""
         return (
@@ -108,7 +105,7 @@ class TaskChatMessage(Base):
 class MessageReadReceipt(Base):
     """
     Read receipts for messages.
-    
+
     Attributes:
         id: Primary key
         direct_message_id: Associated direct message (nullable)
@@ -116,49 +113,47 @@ class MessageReadReceipt(Base):
         user_id: User who read the message
         read_at: When message was read
     """
-    
+
     __tablename__ = "message_read_receipts"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     direct_message_id = Column(Integer, ForeignKey("direct_messages.id"), nullable=True)
     task_chat_message_id = Column(Integer, ForeignKey("task_chat_messages.id"), nullable=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     read_at = Column(DateTime, default=datetime.utcnow, index=True)
-    
+
     # Relationships
     direct_message = relationship("DirectMessage", back_populates="read_receipts")
     task_chat_message = relationship("TaskChatMessage", back_populates="read_receipts")
     user = relationship("User")
-    
+
     def __repr__(self) -> str:
         """String representation of MessageReadReceipt."""
-        return (
-            f"<MessageReadReceipt(id={self.id}, user_id={self.user_id})>"
-        )
+        return f"<MessageReadReceipt(id={self.id}, user_id={self.user_id})>"
 
 
 class DirectMessageMedia(Base):
     """
     Junction table for direct message media attachments.
-    
+
     Attributes:
         id: Primary key
         message_id: Associated direct message
         media_attachment_id: Associated media attachment
         created_at: When attachment was added
     """
-    
+
     __tablename__ = "direct_message_media"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     message_id = Column(Integer, ForeignKey("direct_messages.id"), nullable=False)
     media_attachment_id = Column(Integer, ForeignKey("media_attachments.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     # Relationships
     message = relationship("DirectMessage", back_populates="media_attachments")
     media_attachment = relationship("MediaAttachment")
-    
+
     def __repr__(self) -> str:
         """String representation of DirectMessageMedia."""
         return (
@@ -170,25 +165,25 @@ class DirectMessageMedia(Base):
 class TaskChatMessageMedia(Base):
     """
     Junction table for task chat message media attachments.
-    
+
     Attributes:
         id: Primary key
         message_id: Associated task chat message
         media_attachment_id: Associated media attachment
         created_at: When attachment was added
     """
-    
+
     __tablename__ = "task_chat_message_media"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     message_id = Column(Integer, ForeignKey("task_chat_messages.id"), nullable=False)
     media_attachment_id = Column(Integer, ForeignKey("media_attachments.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    
+
     # Relationships
     message = relationship("TaskChatMessage", back_populates="media_attachments")
     media_attachment = relationship("MediaAttachment")
-    
+
     def __repr__(self) -> str:
         """String representation of TaskChatMessageMedia."""
         return (
@@ -200,7 +195,7 @@ class TaskChatMessageMedia(Base):
 class UserStatus(Base):
     """
     User online status and presence information.
-    
+
     Attributes:
         id: Primary key
         user_id: Associated user
@@ -209,33 +204,31 @@ class UserStatus(Base):
         custom_message: Optional custom status message
         updated_at: Last status update timestamp
     """
-    
+
     __tablename__ = "user_status"
-    
+
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False, unique=True, index=True)
     status = Column(String(20), default="offline", index=True)  # online, away, busy, offline
     last_seen = Column(DateTime, default=datetime.utcnow, index=True)
     custom_message = Column(String(255), nullable=True)  # Optional status message
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
+
     # Relationships
     user = relationship("User")
-    
+
     def __repr__(self) -> str:
         """String representation of UserStatus."""
-        return (
-            f"<UserStatus(user_id={self.user_id}, status='{self.status}')>"
-        )
+        return f"<UserStatus(user_id={self.user_id}, status='{self.status}')>"
 
 
 class CommentAuditTrail(Base):
     """
     Audit trail for comment changes.
-    
+
     Tracks all modifications to comments for accountability and history.
     """
-    
+
     __tablename__ = "comment_audit_trail"
 
     id = Column(Integer, primary_key=True, index=True)

@@ -23,23 +23,15 @@ REQUEST_DURATION = Histogram(
     ["method", "endpoint"],
 )
 
-ACTIVE_CONNECTIONS = Gauge(
-    "http_active_connections", "Number of active HTTP connections"
-)
+ACTIVE_CONNECTIONS = Gauge("http_active_connections", "Number of active HTTP connections")
 
-DATABASE_CONNECTIONS = Gauge(
-    "database_connections", "Number of active database connections"
-)
+DATABASE_CONNECTIONS = Gauge("database_connections", "Number of active database connections")
 
 TASK_CREATED = Counter("tasks_created_total", "Total number of tasks created")
 
-TASK_COMPLETED = Counter(
-    "tasks_completed_total", "Total number of tasks completed"
-)
+TASK_COMPLETED = Counter("tasks_completed_total", "Total number of tasks completed")
 
-USER_REGISTRATIONS = Counter(
-    "user_registrations_total", "Total number of user registrations"
-)
+USER_REGISTRATIONS = Counter("user_registrations_total", "Total number of user registrations")
 
 
 class MetricsMiddleware:
@@ -77,21 +69,15 @@ class MetricsMiddleware:
             method = scope.get("method", "UNKNOWN")
             path = scope.get("path", "/")
 
-            REQUEST_COUNT.labels(
-                method=method, endpoint=path, status=response_status[0]
-            ).inc()
+            REQUEST_COUNT.labels(method=method, endpoint=path, status=response_status[0]).inc()
 
-            REQUEST_DURATION.labels(method=method, endpoint=path).observe(
-                duration
-            )
+            REQUEST_DURATION.labels(method=method, endpoint=path).observe(duration)
 
         except Exception:
             # Record error metrics
             method = scope.get("method", "UNKNOWN")
             path = scope.get("path", "/")
-            REQUEST_COUNT.labels(
-                method=method, endpoint=path, status=500
-            ).inc()
+            REQUEST_COUNT.labels(method=method, endpoint=path, status=500).inc()
             raise
         finally:
             # Decrement active connections
@@ -115,45 +101,30 @@ def get_health_status() -> dict[str, Any]:
     Returns:
         Dictionary containing health status information
     """
-    # Check Redis health
-    try:
-        from app.services.redis_service import redis_service
-        redis_health = "healthy" if redis_service.health_check() else "unhealthy"
-    except Exception:
-        redis_health = "unavailable"
-    
     # Check database health (basic check)
     try:
-        from app.db.session import engine
         from sqlalchemy import text
+
+        from app.core.database import engine
+
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
             conn.commit()
         database_health = "healthy"
-    except Exception as e:
-        database_health = "unhealthy"
-    
-    # Check MinIO health (basic check)
-    try:
-        from app.services.storage_service import MinIOStorageService
-        MinIOStorageService()
-        minio_health = "healthy"
     except Exception:
-        minio_health = "unavailable"
-    
+        database_health = "unhealthy"
+
     # Overall health status
     overall_health = "healthy"
     if database_health != "healthy":
         overall_health = "unhealthy"
-    
+
     return {
         "status": overall_health,
         "timestamp": time.time(),
         "version": "0.1.0",
         "services": {
             "database": database_health,
-            "redis": redis_health,
-            "minio": minio_health,
         },
     }
 

@@ -7,7 +7,7 @@ A comprehensive task management system designed to help parents encourage childr
 - **Containerized Deployment**: Full Docker Compose setup for easy deployment
 - **Modern Web Frontend**: Next.js with TypeScript and Tailwind CSS
 - **Robust Backend**: FastAPI with SQLAlchemy and comprehensive API
-- **File Storage**: MinIO integration for media and file storage
+- **File Storage**: Local-disk storage for media and files
 - **Authentication**: JWT-based auth with optional OAuth/SSO support
 - **Gamification**: Points, achievements, leaderboards, and rewards
 - **Task Management**: Flexible task creation, lists, goals, and templates
@@ -57,8 +57,6 @@ cd taaskMaaster
    - Frontend: http://localhost:3000
    - Backend API: http://localhost:8000
    - API Documentation: http://localhost:8000/docs
-   - MinIO Console: http://localhost:9001
-   - Redis: localhost:6379
 
 ### Local Development
 

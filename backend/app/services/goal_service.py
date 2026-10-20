@@ -5,7 +5,7 @@ This module contains business logic for goal tracking and progress monitoring.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import and_, desc, func
 from sqlalchemy.orm import Session
@@ -55,7 +55,7 @@ class GoalService:
         logger.info(f"Created goal {goal.id} by user {user_id}")
         return goal
 
-    def get_goal(self, goal_id: int, user_id: int) -> Optional[Goal]:
+    def get_goal(self, goal_id: int, user_id: int) -> Goal | None:
         """
         Get a goal by ID.
 
@@ -66,21 +66,17 @@ class GoalService:
         Returns:
             Goal instance or None
         """
-        return (
-            self.db.query(Goal)
-            .filter(and_(Goal.id == goal_id, Goal.user_id == user_id))
-            .first()
-        )
+        return self.db.query(Goal).filter(and_(Goal.id == goal_id, Goal.user_id == user_id)).first()
 
     def get_goals(
         self,
         user_id: int,
         skip: int = 0,
         limit: int = 100,
-        status: Optional[GoalStatus] = None,
-        goal_type: Optional[GoalType] = None,
-        is_completed: Optional[bool] = None,
-    ) -> tuple[List[Goal], int]:
+        status: GoalStatus | None = None,
+        goal_type: GoalType | None = None,
+        is_completed: bool | None = None,
+    ) -> tuple[list[Goal], int]:
         """
         Get goals with filtering and pagination.
 
@@ -109,18 +105,11 @@ class GoalService:
                 query = query.filter(Goal.current_value < Goal.target_value)
 
         total = query.count()
-        goals = (
-            query.order_by(desc(Goal.created_at))
-            .offset(skip)
-            .limit(limit)
-            .all()
-        )
+        goals = query.order_by(desc(Goal.created_at)).offset(skip).limit(limit).all()
 
         return goals, total
 
-    def update_goal(
-        self, goal_id: int, goal_data: GoalUpdate, user_id: int
-    ) -> Optional[Goal]:
+    def update_goal(self, goal_id: int, goal_data: GoalUpdate, user_id: int) -> Goal | None:
         """
         Update a goal.
 
@@ -144,10 +133,7 @@ class GoalService:
         goal.updated_at = datetime.utcnow()
 
         # Check if goal is completed
-        if (
-            goal.current_value >= goal.target_value
-            and goal.status != GoalStatus.COMPLETED
-        ):
+        if goal.current_value >= goal.target_value and goal.status != GoalStatus.COMPLETED:
             goal.status = GoalStatus.COMPLETED
             goal.completed_at = datetime.utcnow()
 
@@ -180,7 +166,7 @@ class GoalService:
 
     def add_progress(
         self, goal_id: int, progress_data: GoalProgressCreate, user_id: int
-    ) -> Optional[GoalProgress]:
+    ) -> GoalProgress | None:
         """
         Add progress to a goal.
 
@@ -209,10 +195,7 @@ class GoalService:
         goal.current_value += progress_data.value
 
         # Check if goal is completed
-        if (
-            goal.current_value >= goal.target_value
-            and goal.status != GoalStatus.COMPLETED
-        ):
+        if goal.current_value >= goal.target_value and goal.status != GoalStatus.COMPLETED:
             goal.status = GoalStatus.COMPLETED
             goal.completed_at = datetime.utcnow()
 
@@ -221,15 +204,12 @@ class GoalService:
         self.db.commit()
         self.db.refresh(progress)
 
-        logger.info(
-            f"Added progress {progress.value} to goal {goal_id} "
-            f"by user {user_id}"
-        )
+        logger.info(f"Added progress {progress.value} to goal {goal_id} by user {user_id}")
         return progress
 
     def get_progress(
         self, goal_id: int, user_id: int, skip: int = 0, limit: int = 100
-    ) -> tuple[List[GoalProgress], int]:
+    ) -> tuple[list[GoalProgress], int]:
         """
         Get progress entries for a goal.
 
@@ -247,15 +227,10 @@ class GoalService:
         if not goal:
             return [], 0
 
-        query = self.db.query(GoalProgress).filter(
-            GoalProgress.goal_id == goal_id
-        )
+        query = self.db.query(GoalProgress).filter(GoalProgress.goal_id == goal_id)
         total = query.count()
         progress_entries = (
-            query.order_by(desc(GoalProgress.recorded_at))
-            .offset(skip)
-            .limit(limit)
-            .all()
+            query.order_by(desc(GoalProgress.recorded_at)).offset(skip).limit(limit).all()
         )
 
         return progress_entries, total
@@ -310,9 +285,7 @@ class GoalService:
                 updated_count += 1
 
         self.db.commit()
-        logger.info(
-            f"Updated {updated_count} task count goals for user {user_id}"
-        )
+        logger.info(f"Updated {updated_count} task count goals for user {user_id}")
         return updated_count
 
     def update_goal_progress_from_points(self, user_id: int) -> int:
@@ -369,7 +342,7 @@ class GoalService:
         logger.info(f"Updated {updated_count} points goals for user {user_id}")
         return updated_count
 
-    def get_goal_statistics(self, user_id: int) -> Dict[str, Any]:
+    def get_goal_statistics(self, user_id: int) -> dict[str, Any]:
         """
         Get goal statistics for a user.
 
@@ -379,9 +352,7 @@ class GoalService:
         Returns:
             Dictionary with goal statistics
         """
-        total_goals = (
-            self.db.query(Goal).filter(Goal.user_id == user_id).count()
-        )
+        total_goals = self.db.query(Goal).filter(Goal.user_id == user_id).count()
         completed_goals = (
             self.db.query(Goal)
             .filter(
@@ -394,16 +365,12 @@ class GoalService:
         )
         active_goals = (
             self.db.query(Goal)
-            .filter(
-                and_(Goal.user_id == user_id, Goal.status == GoalStatus.ACTIVE)
-            )
+            .filter(and_(Goal.user_id == user_id, Goal.status == GoalStatus.ACTIVE))
             .count()
         )
 
         # Average completion rate
-        completion_rate = (
-            (completed_goals / total_goals * 100) if total_goals > 0 else 0
-        )
+        completion_rate = (completed_goals / total_goals * 100) if total_goals > 0 else 0
 
         # Goals by type
         goals_by_type = (
@@ -473,7 +440,7 @@ class GoalService:
 
         return False
 
-    def _create_recurring_goal(self, goal: Goal) -> Optional[Goal]:
+    def _create_recurring_goal(self, goal: Goal) -> Goal | None:
         """Create a new instance of a recurring goal."""
         new_goal = Goal(
             title=goal.title,
@@ -495,7 +462,7 @@ class GoalService:
         return new_goal
 
     def _calculate_next_end_date(
-        self, current_end_date: datetime, pattern: Dict[str, Any]
+        self, current_end_date: datetime, pattern: dict[str, Any]
     ) -> datetime:
         """Calculate the next end date based on recurrence pattern."""
         recurrence_type = pattern.get("type")

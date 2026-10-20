@@ -6,28 +6,23 @@ task chat messages, and related functionality.
 """
 
 from datetime import datetime
-from typing import List, Optional, Tuple
 
-from sqlalchemy import and_, desc, or_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.logging import get_logger
-from app.models.task_comment import TaskComment, CommentMediaAttachment
-from app.models.direct_message import DirectMessage
 from app.models.comment import (
     MessageReadReceipt,
-    TaskChatMessage,
-    TaskStatusHistory,
-    UserStatus,
 )
+from app.models.direct_message import DirectMessage
 from app.models.media import MediaAttachment
 from app.models.task import Task
-from app.models.user import User
+from app.models.task_comment import CommentMediaAttachment, TaskComment
 from app.services.mention_service import MentionService
 from app.services.notification_service import NotificationService
-from app.services.permission_service import PermissionService, Permission
+from app.services.permission_service import Permission, PermissionService
 from app.utils.content_validator import ContentValidator
-from app.utils.pagination import QueryOptimizer, PaginationParams, FilterCriteria, SortCriteria
+from app.utils.pagination import FilterCriteria, PaginationParams, QueryOptimizer, SortCriteria
 
 logger = get_logger(__name__)
 
@@ -51,9 +46,9 @@ class CommentService:
         user_id: int,
         content: str,
         content_type: str = "markdown",
-        parent_comment_id: Optional[int] = None,
+        parent_comment_id: int | None = None,
         is_system_comment: bool = False,
-        media_attachment_ids: Optional[List[int]] = None,
+        media_attachment_ids: list[int] | None = None,
     ) -> TaskComment:
         """
         Create a new task comment.
@@ -77,7 +72,7 @@ class CommentService:
         task = self.db.query(Task).filter(Task.id == task_id).first()
         if not task:
             raise ValueError(f"Task {task_id} not found")
-        
+
         # Check permission for commenting on task
         if not self.permission_service.has_permission(
             user_id, Permission.COMMENT_CREATE, task_id, "task"
@@ -110,13 +105,12 @@ class CommentService:
         if media_attachment_ids:
             for media_id in media_attachment_ids:
                 # Verify media attachment exists
-                media = self.db.query(MediaAttachment).filter(
-                    MediaAttachment.id == media_id
-                ).first()
+                media = (
+                    self.db.query(MediaAttachment).filter(MediaAttachment.id == media_id).first()
+                )
                 if media:
                     attachment = CommentMediaAttachment(
-                        comment_id=comment.id,
-                        media_attachment_id=media_id
+                        comment_id=comment.id, media_attachment_id=media_id
                     )
                     self.db.add(attachment)
 
@@ -127,11 +121,11 @@ class CommentService:
         if not is_system_comment:
             try:
                 import asyncio
-                
+
                 # Extract and process mentions
                 mentioned_usernames = self.mention_service.extract_mentions(content)
                 mentioned_users = []
-                
+
                 if mentioned_usernames:
                     # Process mentions and send notifications
                     async def process_mentions():
@@ -140,192 +134,41 @@ class CommentService:
                             comment, mentioned_usernames
                         )
                         # Also send regular comment notification
-                        await self.notification_service.notify_task_comment(comment, mentioned_users)
-                    
+                        await self.notification_service.notify_task_comment(
+                            comment, mentioned_users
+                        )
+
                     # Create a new event loop if one doesn't exist
                     try:
                         loop = asyncio.get_event_loop()
                     except RuntimeError:
                         loop = asyncio.new_event_loop()
                         asyncio.set_event_loop(loop)
-                    
+
                     # Schedule processing (fire and forget)
                     asyncio.create_task(process_mentions())
                 else:
                     # No mentions, just send regular notification
                     async def send_notification():
                         await self.notification_service.notify_task_comment(comment, [])
-                    
+
                     try:
                         loop = asyncio.get_event_loop()
                     except RuntimeError:
                         loop = asyncio.new_event_loop()
                         asyncio.set_event_loop(loop)
-                    
+
                     asyncio.create_task(send_notification())
-                    
+
             except Exception as e:
                 logger.warning(f"Failed to process mentions or send notifications: {e}")
 
-        logger.info(
-            f"Created task comment {comment.id} for task {task_id} by user {user_id}"
-        )
+        logger.info(f"Created task comment {comment.id} for task {task_id} by user {user_id}")
         return comment
-
-    def update_task_comment(
-        self,
-        comment_id: int,
-        user_id: int,
-        content: str,
-        content_type: str = "markdown",
-        edit_reason: Optional[str] = None
-    ) -> TaskComment:
-        """
-        Update an existing task comment.
-
-        Args:
-            comment_id: ID of the comment to update
-            user_id: ID of the user updating the comment
-            content: New comment content
-            content_type: Content format (markdown, html, text)
-            edit_reason: Optional reason for the edit
-
-        Returns:
-            Updated TaskComment instance
-
-        Raises:
-            ValueError: If comment doesn't exist or user lacks permission
-        """
-        # Get existing comment
-        comment = self.db.query(TaskComment).filter(
-            TaskComment.id == comment_id
-        ).first()
-        
-        if not comment:
-            raise ValueError(f"Comment {comment_id} not found")
-        
-        # Check permissions using permission service
-        if not self.permission_service.can_user_edit_comment(user_id, comment_id):
-            raise ValueError("You don't have permission to edit this comment")
-        
-        # Validate and sanitize content
-        validated_content = self.content_validator.validate_and_sanitize(
-            content, content_type
-        )
-        
-        # Store original content for audit trail
-        original_content = comment.content
-        
-        # Update comment
-        comment.content = validated_content
-        comment.content_type = content_type
-        comment.is_edited = True
-        comment.edited_at = datetime.utcnow()
-        comment.edit_reason = edit_reason
-
-        self.db.commit()
-        self.db.refresh(comment)
-
-        # Create audit trail entry
-        self._create_comment_audit_trail(
-            comment_id=comment.id,
-            user_id=user_id,
-            action="updated",
-            original_content=original_content,
-            new_content=validated_content,
-            edit_reason=edit_reason
-        )
-
-        logger.info(f"Updated task comment {comment_id} by user {user_id}")
-        return comment
-
-    def delete_task_comment(
-        self,
-        comment_id: int,
-        user_id: int,
-        deletion_reason: Optional[str] = None,
-        soft_delete: bool = True
-    ) -> bool:
-        """
-        Delete a task comment.
-
-        Args:
-            comment_id: ID of the comment to delete
-            user_id: ID of the user deleting the comment
-            deletion_reason: Optional reason for deletion
-            soft_delete: Whether to soft delete (mark as deleted) or hard delete
-
-        Returns:
-            True if deletion was successful
-
-        Raises:
-            ValueError: If comment doesn't exist or user lacks permission
-        """
-        # Get existing comment
-        comment = self.db.query(TaskComment).filter(
-            TaskComment.id == comment_id
-        ).first()
-        
-        if not comment:
-            raise ValueError(f"Comment {comment_id} not found")
-        
-        # Check permissions using permission service
-        if not self.permission_service.can_user_delete_comment(user_id, comment_id):
-            raise ValueError("You don't have permission to delete this comment")
-        
-        # Store original content for audit trail
-        original_content = comment.content
-
-        if soft_delete:
-            # Soft delete - mark as deleted but keep in database
-            comment.is_deleted = True
-            comment.deleted_at = datetime.utcnow()
-            comment.deletion_reason = deletion_reason
-            comment.content = "[This comment has been deleted]"
-            
-            self.db.commit()
-            
-            # Create audit trail entry
-            self._create_comment_audit_trail(
-                comment_id=comment.id,
-                user_id=user_id,
-                action="soft_deleted",
-                original_content=original_content,
-                deletion_reason=deletion_reason
-            )
-            
-            logger.info(f"Soft deleted task comment {comment_id} by user {user_id}")
-        else:
-            # Hard delete - remove from database
-            # First create audit trail entry before deletion
-            self._create_comment_audit_trail(
-                comment_id=comment.id,
-                user_id=user_id,
-                action="hard_deleted",
-                original_content=original_content,
-                deletion_reason=deletion_reason
-            )
-            
-            # Delete media attachments
-            self.db.query(CommentMediaAttachment).filter(
-                CommentMediaAttachment.comment_id == comment_id
-            ).delete()
-            
-            # Delete the comment
-            self.db.delete(comment)
-            self.db.commit()
-            
-            logger.info(f"Hard deleted task comment {comment_id} by user {user_id}")
-
-        return True
 
     def get_comment_edit_history(
-        self,
-        comment_id: int,
-        user_id: int,
-        skip: int = 0,
-        limit: int = 20
-    ) -> List[dict]:
+        self, comment_id: int, user_id: int, skip: int = 0, limit: int = 20
+    ) -> list[dict]:
         """
         Get edit history for a comment.
 
@@ -342,28 +185,28 @@ class CommentService:
             ValueError: If comment doesn't exist or user lacks access
         """
         # Verify comment exists and user has access
-        comment = self.db.query(TaskComment).filter(
-            TaskComment.id == comment_id
-        ).first()
-        
+        comment = self.db.query(TaskComment).filter(TaskComment.id == comment_id).first()
+
         if not comment:
             raise ValueError(f"Comment {comment_id} not found")
-        
+
         # Check if user has access to the task
         task = self.db.query(Task).filter(Task.id == comment.task_id).first()
         if not task:
             raise ValueError(f"Task {comment.task_id} not found")
-        
+
         # TODO: Add proper access control check
         # For now, allow access if user is task creator, assignee, or comment author
-        if not (task.created_by_id == user_id or 
-                task.assigned_to_id == user_id or 
-                comment.user_id == user_id):
+        if not (
+            task.created_by_id == user_id
+            or task.assigned_to_id == user_id
+            or comment.user_id == user_id
+        ):
             raise ValueError("You don't have access to this comment's edit history")
 
         # Get audit trail records
         from app.models.comment import CommentAuditTrail
-        
+
         audit_records = (
             self.db.query(CommentAuditTrail)
             .filter(CommentAuditTrail.comment_id == comment_id)
@@ -375,16 +218,18 @@ class CommentService:
 
         history = []
         for record in audit_records:
-            history.append({
-                'id': record.id,
-                'action': record.action,
-                'user_id': record.user_id,
-                'created_at': record.created_at,
-                'original_content': record.original_content,
-                'new_content': record.new_content,
-                'edit_reason': record.edit_reason,
-                'deletion_reason': record.deletion_reason,
-            })
+            history.append(
+                {
+                    "id": record.id,
+                    "action": record.action,
+                    "user_id": record.user_id,
+                    "created_at": record.created_at,
+                    "original_content": record.original_content,
+                    "new_content": record.new_content,
+                    "edit_reason": record.edit_reason,
+                    "deletion_reason": record.deletion_reason,
+                }
+            )
 
         return history
 
@@ -393,10 +238,10 @@ class CommentService:
         comment_id: int,
         user_id: int,
         action: str,
-        original_content: Optional[str] = None,
-        new_content: Optional[str] = None,
-        edit_reason: Optional[str] = None,
-        deletion_reason: Optional[str] = None
+        original_content: str | None = None,
+        new_content: str | None = None,
+        edit_reason: str | None = None,
+        deletion_reason: str | None = None,
     ) -> None:
         """
         Create an audit trail entry for comment changes.
@@ -411,7 +256,7 @@ class CommentService:
             deletion_reason: Reason for deletion
         """
         from app.models.comment import CommentAuditTrail
-        
+
         audit_entry = CommentAuditTrail(
             comment_id=comment_id,
             user_id=user_id,
@@ -421,17 +266,17 @@ class CommentService:
             edit_reason=edit_reason,
             deletion_reason=deletion_reason,
         )
-        
+
         self.db.add(audit_entry)
         self.db.commit()
 
     # Bulk Operations
     def bulk_delete_comments(
         self,
-        comment_ids: List[int],
+        comment_ids: list[int],
         user_id: int,
-        deletion_reason: Optional[str] = None,
-        soft_delete: bool = True
+        deletion_reason: str | None = None,
+        soft_delete: bool = True,
     ) -> dict:
         """
         Bulk delete multiple comments.
@@ -446,18 +291,18 @@ class CommentService:
             Dictionary with success/failure counts and details
         """
         results = {
-            'total_requested': len(comment_ids),
-            'successful': [],
-            'failed': [],
-            'success_count': 0,
-            'failure_count': 0
+            "total_requested": len(comment_ids),
+            "successful": [],
+            "failed": [],
+            "success_count": 0,
+            "failure_count": 0,
         }
 
         # Pre-validate permissions for all comments
         permission_result = self.permission_service.validate_bulk_operation_permissions(
             user_id, "delete", comment_ids, "comment"
         )
-        
+
         # Process allowed deletions
         for comment_id in permission_result["allowed"]:
             try:
@@ -465,43 +310,31 @@ class CommentService:
                     comment_id=comment_id,
                     user_id=user_id,
                     deletion_reason=deletion_reason,
-                    soft_delete=soft_delete
+                    soft_delete=soft_delete,
                 )
                 if success:
-                    results['successful'].append({
-                        'comment_id': comment_id,
-                        'message': 'Successfully deleted'
-                    })
-                    results['success_count'] += 1
+                    results["successful"].append(
+                        {"comment_id": comment_id, "message": "Successfully deleted"}
+                    )
+                    results["success_count"] += 1
                 else:
-                    results['failed'].append({
-                        'comment_id': comment_id,
-                        'error': 'Deletion failed'
-                    })
-                    results['failure_count'] += 1
+                    results["failed"].append({"comment_id": comment_id, "error": "Deletion failed"})
+                    results["failure_count"] += 1
             except Exception as e:
-                results['failed'].append({
-                    'comment_id': comment_id,
-                    'error': str(e)
-                })
-                results['failure_count'] += 1
-        
+                results["failed"].append({"comment_id": comment_id, "error": str(e)})
+                results["failure_count"] += 1
+
         # Add denied comments to failed list
         for comment_id in permission_result["denied"]:
-            results['failed'].append({
-                'comment_id': comment_id,
-                'error': 'Permission denied'
-            })
-            results['failure_count'] += 1
+            results["failed"].append({"comment_id": comment_id, "error": "Permission denied"})
+            results["failure_count"] += 1
 
-        logger.info(f"Bulk delete: {results['success_count']}/{results['total_requested']} comments deleted by user {user_id}")
+        logger.info(
+            f"Bulk delete: {results['success_count']}/{results['total_requested']} comments deleted by user {user_id}"
+        )
         return results
 
-    def bulk_update_comments(
-        self,
-        updates: List[dict],
-        user_id: int
-    ) -> dict:
+    def bulk_update_comments(self, updates: list[dict], user_id: int) -> dict:
         """
         Bulk update multiple comments.
 
@@ -513,52 +346,46 @@ class CommentService:
             Dictionary with success/failure counts and details
         """
         results = {
-            'total_requested': len(updates),
-            'successful': [],
-            'failed': [],
-            'success_count': 0,
-            'failure_count': 0
+            "total_requested": len(updates),
+            "successful": [],
+            "failed": [],
+            "success_count": 0,
+            "failure_count": 0,
         }
 
         for update in updates:
-            comment_id = update.get('comment_id')
+            comment_id = update.get("comment_id")
             if not comment_id:
-                results['failed'].append({
-                    'comment_id': None,
-                    'error': 'Missing comment_id'
-                })
-                results['failure_count'] += 1
+                results["failed"].append({"comment_id": None, "error": "Missing comment_id"})
+                results["failure_count"] += 1
                 continue
 
             try:
                 comment = self.update_task_comment(
                     comment_id=comment_id,
                     user_id=user_id,
-                    content=update.get('content', ''),
-                    content_type=update.get('content_type', 'markdown'),
-                    edit_reason=update.get('edit_reason')
+                    content=update.get("content", ""),
+                    content_type=update.get("content_type", "markdown"),
+                    edit_reason=update.get("edit_reason"),
                 )
-                results['successful'].append({
-                    'comment_id': comment_id,
-                    'message': 'Successfully updated',
-                    'comment': comment
-                })
-                results['success_count'] += 1
+                results["successful"].append(
+                    {
+                        "comment_id": comment_id,
+                        "message": "Successfully updated",
+                        "comment": comment,
+                    }
+                )
+                results["success_count"] += 1
             except Exception as e:
-                results['failed'].append({
-                    'comment_id': comment_id,
-                    'error': str(e)
-                })
-                results['failure_count'] += 1
+                results["failed"].append({"comment_id": comment_id, "error": str(e)})
+                results["failure_count"] += 1
 
-        logger.info(f"Bulk update: {results['success_count']}/{results['total_requested']} comments updated by user {user_id}")
+        logger.info(
+            f"Bulk update: {results['success_count']}/{results['total_requested']} comments updated by user {user_id}"
+        )
         return results
 
-    def bulk_mark_messages_read(
-        self,
-        message_ids: List[int],
-        user_id: int
-    ) -> dict:
+    def bulk_mark_messages_read(self, message_ids: list[int], user_id: int) -> dict:
         """
         Bulk mark multiple messages as read.
 
@@ -570,59 +397,60 @@ class CommentService:
             Dictionary with success/failure counts and details
         """
         results = {
-            'total_requested': len(message_ids),
-            'successful': [],
-            'failed': [],
-            'success_count': 0,
-            'failure_count': 0
+            "total_requested": len(message_ids),
+            "successful": [],
+            "failed": [],
+            "success_count": 0,
+            "failure_count": 0,
         }
 
         for message_id in message_ids:
             try:
                 # Check if message exists and user has access
-                message = self.db.query(DirectMessage).filter(
-                    DirectMessage.id == message_id,
-                    or_(
-                        DirectMessage.from_user_id == user_id,
-                        DirectMessage.to_user_id == user_id
+                message = (
+                    self.db.query(DirectMessage)
+                    .filter(
+                        DirectMessage.id == message_id,
+                        or_(
+                            DirectMessage.from_user_id == user_id,
+                            DirectMessage.to_user_id == user_id,
+                        ),
                     )
-                ).first()
+                    .first()
+                )
 
                 if not message:
-                    results['failed'].append({
-                        'message_id': message_id,
-                        'error': 'Message not found or no access'
-                    })
-                    results['failure_count'] += 1
+                    results["failed"].append(
+                        {"message_id": message_id, "error": "Message not found or no access"}
+                    )
+                    results["failure_count"] += 1
                     continue
 
                 # Check if already marked as read
-                existing_receipt = self.db.query(MessageReadReceipt).filter(
-                    MessageReadReceipt.message_id == message_id,
-                    MessageReadReceipt.user_id == user_id
-                ).first()
+                existing_receipt = (
+                    self.db.query(MessageReadReceipt)
+                    .filter(
+                        MessageReadReceipt.message_id == message_id,
+                        MessageReadReceipt.user_id == user_id,
+                    )
+                    .first()
+                )
 
                 if not existing_receipt:
                     # Create read receipt
                     receipt = MessageReadReceipt(
-                        message_id=message_id,
-                        user_id=user_id,
-                        read_at=datetime.utcnow()
+                        message_id=message_id, user_id=user_id, read_at=datetime.utcnow()
                     )
                     self.db.add(receipt)
 
-                results['successful'].append({
-                    'message_id': message_id,
-                    'message': 'Successfully marked as read'
-                })
-                results['success_count'] += 1
+                results["successful"].append(
+                    {"message_id": message_id, "message": "Successfully marked as read"}
+                )
+                results["success_count"] += 1
 
             except Exception as e:
-                results['failed'].append({
-                    'message_id': message_id,
-                    'error': str(e)
-                })
-                results['failure_count'] += 1
+                results["failed"].append({"message_id": message_id, "error": str(e)})
+                results["failure_count"] += 1
 
         # Commit all read receipts at once
         try:
@@ -631,23 +459,21 @@ class CommentService:
             logger.error(f"Failed to commit bulk read receipts: {e}")
             self.db.rollback()
             # Mark all as failed
-            for i in range(results['success_count']):
-                if i < len(results['successful']):
-                    failed_item = results['successful'][i]
-                    failed_item['error'] = 'Database commit failed'
-                    results['failed'].append(failed_item)
-            results['successful'] = []
-            results['failure_count'] = results['total_requested']
-            results['success_count'] = 0
+            for i in range(results["success_count"]):
+                if i < len(results["successful"]):
+                    failed_item = results["successful"][i]
+                    failed_item["error"] = "Database commit failed"
+                    results["failed"].append(failed_item)
+            results["successful"] = []
+            results["failure_count"] = results["total_requested"]
+            results["success_count"] = 0
 
-        logger.info(f"Bulk mark read: {results['success_count']}/{results['total_requested']} messages marked as read by user {user_id}")
+        logger.info(
+            f"Bulk mark read: {results['success_count']}/{results['total_requested']} messages marked as read by user {user_id}"
+        )
         return results
 
-    def bulk_create_comments(
-        self,
-        comments_data: List[dict],
-        user_id: int
-    ) -> dict:
+    def bulk_create_comments(self, comments_data: list[dict], user_id: int) -> dict:
         """
         Bulk create multiple comments.
 
@@ -659,59 +485,57 @@ class CommentService:
             Dictionary with success/failure counts and details
         """
         results = {
-            'total_requested': len(comments_data),
-            'successful': [],
-            'failed': [],
-            'success_count': 0,
-            'failure_count': 0
+            "total_requested": len(comments_data),
+            "successful": [],
+            "failed": [],
+            "success_count": 0,
+            "failure_count": 0,
         }
 
         for comment_data in comments_data:
-            task_id = comment_data.get('task_id')
+            task_id = comment_data.get("task_id")
             if not task_id:
-                results['failed'].append({
-                    'task_id': None,
-                    'error': 'Missing task_id'
-                })
-                results['failure_count'] += 1
+                results["failed"].append({"task_id": None, "error": "Missing task_id"})
+                results["failure_count"] += 1
                 continue
 
             try:
                 comment = self.create_task_comment(
                     task_id=task_id,
                     user_id=user_id,
-                    content=comment_data.get('content', ''),
-                    content_type=comment_data.get('content_type', 'markdown'),
-                    parent_comment_id=comment_data.get('parent_comment_id'),
-                    is_system_comment=comment_data.get('is_system_comment', False),
-                    media_attachment_ids=comment_data.get('media_attachment_ids')
+                    content=comment_data.get("content", ""),
+                    content_type=comment_data.get("content_type", "markdown"),
+                    parent_comment_id=comment_data.get("parent_comment_id"),
+                    is_system_comment=comment_data.get("is_system_comment", False),
+                    media_attachment_ids=comment_data.get("media_attachment_ids"),
                 )
-                results['successful'].append({
-                    'task_id': task_id,
-                    'comment_id': comment.id,
-                    'message': 'Successfully created',
-                    'comment': comment
-                })
-                results['success_count'] += 1
+                results["successful"].append(
+                    {
+                        "task_id": task_id,
+                        "comment_id": comment.id,
+                        "message": "Successfully created",
+                        "comment": comment,
+                    }
+                )
+                results["success_count"] += 1
             except Exception as e:
-                results['failed'].append({
-                    'task_id': task_id,
-                    'error': str(e)
-                })
-                results['failure_count'] += 1
+                results["failed"].append({"task_id": task_id, "error": str(e)})
+                results["failure_count"] += 1
 
-        logger.info(f"Bulk create: {results['success_count']}/{results['total_requested']} comments created by user {user_id}")
+        logger.info(
+            f"Bulk create: {results['success_count']}/{results['total_requested']} comments created by user {user_id}"
+        )
         return results
 
     def get_task_comments(
         self,
         task_id: int,
         user_id: int,
-        pagination_params: Optional[PaginationParams] = None,
-        filters: Optional[List[FilterCriteria]] = None,
-        sorts: Optional[List[SortCriteria]] = None,
+        pagination_params: PaginationParams | None = None,
+        filters: list[FilterCriteria] | None = None,
+        sorts: list[SortCriteria] | None = None,
         include_system: bool = True,
-        include_deleted: bool = False
+        include_deleted: bool = False,
     ):
         """
         Get comments for a task with advanced filtering and pagination.
@@ -740,7 +564,7 @@ class CommentService:
         # Apply basic filters
         if not include_system:
             query = query.filter(TaskComment.is_system_generated == False)
-        
+
         # Note: TaskComment model doesn't have is_deleted field - using soft delete pattern would require adding it
 
         # Apply advanced filters
@@ -755,11 +579,9 @@ class CommentService:
         # Add relationships
         query = query.options(
             joinedload(TaskComment.user),
-            joinedload(TaskComment.media_attachments).joinedload(
-                CommentMediaAttachment.media
-            ),
+            joinedload(TaskComment.media_attachments).joinedload(CommentMediaAttachment.media),
             joinedload(TaskComment.parent_comment),
-            joinedload(TaskComment.replies)
+            joinedload(TaskComment.replies),
         )
 
         # Apply pagination
@@ -767,15 +589,13 @@ class CommentService:
             pagination_params = PaginationParams()
 
         result = self.query_optimizer.paginate(query, pagination_params)
-        
+
         # Filter comments based on permissions
-        visible_comments = self.permission_service.filter_visible_comments(
-            user_id, result.items
-        )
-        
+        visible_comments = self.permission_service.filter_visible_comments(user_id, result.items)
+
         # Update result with filtered comments
         result.items = visible_comments
-        
+
         return result
 
     def update_task_comment(
@@ -784,6 +604,7 @@ class CommentService:
         user_id: int,
         content: str,
         content_type: str = "markdown",
+        edit_reason: str | None = None,
     ) -> TaskComment:
         """
         Update a task comment.
@@ -800,9 +621,7 @@ class CommentService:
         Raises:
             ValueError: If comment not found or user lacks permission
         """
-        comment = self.db.query(TaskComment).filter(
-            TaskComment.id == comment_id
-        ).first()
+        comment = self.db.query(TaskComment).filter(TaskComment.id == comment_id).first()
 
         if not comment:
             raise ValueError(f"Comment {comment_id} not found")
@@ -810,9 +629,12 @@ class CommentService:
         if comment.user_id != user_id:
             raise ValueError("Only comment author can edit comment")
 
-        comment.content = content
-        comment.content_type = content_type
-        comment.updated_at = datetime.utcnow()
+        is_valid, errors = ContentValidator.validate_content(content, content_type)
+        if not is_valid:
+            raise ValueError(f"Invalid content: {'; '.join(errors)}")
+        comment.content = ContentValidator.sanitize_content(content, content_type)
+        comment.is_edited = True
+        comment.edited_at = datetime.utcnow()
 
         self.db.commit()
         self.db.refresh(comment)
@@ -824,6 +646,8 @@ class CommentService:
         self,
         comment_id: int,
         user_id: int,
+        deletion_reason: str | None = None,
+        soft_delete: bool = True,
     ) -> bool:
         """
         Delete a task comment.
@@ -862,7 +686,7 @@ class CommentService:
         self,
         comment_id: int,
         user_id: int,
-    ) -> Optional[TaskComment]:
+    ) -> TaskComment | None:
         """
         Get a comment by ID.
 
@@ -878,9 +702,7 @@ class CommentService:
             .options(
                 joinedload(TaskComment.user),
                 joinedload(TaskComment.task),
-                joinedload(TaskComment.media_attachments).joinedload(
-                    CommentMediaAttachment.media
-                ),
+                joinedload(TaskComment.media_attachments).joinedload(CommentMediaAttachment.media),
             )
             .filter(TaskComment.id == comment_id)
             .first()
@@ -915,9 +737,7 @@ class CommentService:
         Raises:
             ValueError: If comment not found or user lacks permission
         """
-        comment = self.db.query(TaskComment).filter(
-            TaskComment.id == comment_id
-        ).first()
+        comment = self.db.query(TaskComment).filter(TaskComment.id == comment_id).first()
 
         if not comment:
             raise ValueError(f"Comment {comment_id} not found")
@@ -926,19 +746,23 @@ class CommentService:
             raise ValueError("Only comment author can add attachments")
 
         # Verify media attachment exists
-        media = self.db.query(MediaAttachment).filter(
-            MediaAttachment.id == media_attachment_id
-        ).first()
+        media = (
+            self.db.query(MediaAttachment).filter(MediaAttachment.id == media_attachment_id).first()
+        )
         if not media:
             raise ValueError(f"Media attachment {media_attachment_id} not found")
 
         # Check if attachment already exists
-        existing = self.db.query(CommentMediaAttachment).filter(
-            and_(
-                CommentMediaAttachment.comment_id == comment_id,
-                CommentMediaAttachment.media_attachment_id == media_attachment_id,
+        existing = (
+            self.db.query(CommentMediaAttachment)
+            .filter(
+                and_(
+                    CommentMediaAttachment.comment_id == comment_id,
+                    CommentMediaAttachment.media_attachment_id == media_attachment_id,
+                )
             )
-        ).first()
+            .first()
+        )
 
         if existing:
             return existing
@@ -952,9 +776,7 @@ class CommentService:
         self.db.commit()
         self.db.refresh(attachment)
 
-        logger.info(
-            f"Added media attachment {media_attachment_id} to comment {comment_id}"
-        )
+        logger.info(f"Added media attachment {media_attachment_id} to comment {comment_id}")
         return attachment
 
     def remove_comment_media_attachment(
@@ -977,9 +799,7 @@ class CommentService:
         Raises:
             ValueError: If comment not found or user lacks permission
         """
-        comment = self.db.query(TaskComment).filter(
-            TaskComment.id == comment_id
-        ).first()
+        comment = self.db.query(TaskComment).filter(TaskComment.id == comment_id).first()
 
         if not comment:
             raise ValueError(f"Comment {comment_id} not found")
@@ -987,19 +807,21 @@ class CommentService:
         if comment.user_id != user_id:
             raise ValueError("Only comment author can remove attachments")
 
-        attachment = self.db.query(CommentMediaAttachment).filter(
-            and_(
-                CommentMediaAttachment.comment_id == comment_id,
-                CommentMediaAttachment.media_attachment_id == media_attachment_id,
+        attachment = (
+            self.db.query(CommentMediaAttachment)
+            .filter(
+                and_(
+                    CommentMediaAttachment.comment_id == comment_id,
+                    CommentMediaAttachment.media_attachment_id == media_attachment_id,
+                )
             )
-        ).first()
+            .first()
+        )
 
         if attachment:
             self.db.delete(attachment)
             self.db.commit()
-            logger.info(
-                f"Removed media attachment {media_attachment_id} from comment {comment_id}"
-            )
+            logger.info(f"Removed media attachment {media_attachment_id} from comment {comment_id}")
 
         return True
 
@@ -1020,8 +842,7 @@ class CommentService:
 
         # User has access if they are the creator, assignee, or admin
         return (
-            task.created_by_id == user_id
-            or task.assigned_to_id == user_id
+            task.created_by_id == user_id or task.assigned_to_id == user_id
             # TODO: Add admin role check
         )
 
@@ -1029,7 +850,7 @@ class CommentService:
         self,
         task_id: int,
         content: str,
-        user_id: Optional[int] = None,
+        user_id: int | None = None,
     ) -> TaskComment:
         """
         Create a system-generated comment for workflow changes.

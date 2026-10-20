@@ -5,7 +5,6 @@ This module contains business logic for user management and authentication.
 """
 
 from datetime import datetime
-from typing import List, Optional
 
 from sqlalchemy import asc
 from sqlalchemy.orm import Session
@@ -56,7 +55,7 @@ class UserService:
         logger.info(f"Created user {user.id} with username {user.username}")
         return user
 
-    def get_user(self, user_id: int) -> Optional[User]:
+    def get_user(self, user_id: int) -> User | None:
         """
         Get a user by ID.
 
@@ -68,7 +67,7 @@ class UserService:
         """
         return self.db.query(User).filter(User.id == user_id).first()
 
-    def get_user_by_username(self, username: str) -> Optional[User]:
+    def get_user_by_username(self, username: str) -> User | None:
         """
         Get a user by username.
 
@@ -80,7 +79,7 @@ class UserService:
         """
         return self.db.query(User).filter(User.username == username).first()
 
-    def get_user_by_email(self, email: str) -> Optional[User]:
+    def get_user_by_email(self, email: str) -> User | None:
         """
         Get a user by email.
 
@@ -93,8 +92,8 @@ class UserService:
         return self.db.query(User).filter(User.email == email).first()
 
     def get_users(
-        self, skip: int = 0, limit: int = 100, is_active: Optional[bool] = None
-    ) -> tuple[List[User], int]:
+        self, skip: int = 0, limit: int = 100, is_active: bool | None = None
+    ) -> tuple[list[User], int]:
         """
         Get users with filtering and pagination.
 
@@ -112,15 +111,11 @@ class UserService:
             query = query.filter(User.is_active == is_active)
 
         total = query.count()
-        users = (
-            query.order_by(asc(User.username)).offset(skip).limit(limit).all()
-        )
+        users = query.order_by(asc(User.username)).offset(skip).limit(limit).all()
 
         return users, total
 
-    def update_user(
-        self, user_id: int, user_data: UserUpdate
-    ) -> Optional[User]:
+    def update_user(self, user_id: int, user_data: UserUpdate) -> User | None:
         """
         Update a user.
 
@@ -168,9 +163,7 @@ class UserService:
         logger.info(f"Deleted user {user_id}")
         return True
 
-    def authenticate_user(
-        self, username: str, password: str
-    ) -> Optional[User]:
+    def authenticate_user(self, username: str, password: str) -> User | None:
         """
         Authenticate a user.
 

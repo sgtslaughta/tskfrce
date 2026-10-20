@@ -20,27 +20,16 @@ services:
       - "${BACKEND_PORT:-127.0.0.1:8000}:8000"
     environment:
       <<: *common-env
-      DATABASE_URL: ${DATABASE_URL:-sqlite:///./taaskmaaster.db}
-      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
-      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-dev-jwt-secret-change-in-production}
-      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
-      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio:9000}
-      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
-      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin123}
-      MINIO_BUCKET_NAME: ${MINIO_BUCKET_NAME:-taaskmaaster-media}
-      MINIO_SECURE: ${MINIO_SECURE:-false}
+      DATA_DIR: /app/data
       DISABLE_RATE_LIMITING: ${DISABLE_RATE_LIMITING:-false}
       DISABLE_LOGIN_RATE_LIMIT: ${DISABLE_LOGIN_RATE_LIMIT:-true}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://192.168.1.95:3000}
       TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,192.168.1.95,backend,taaskmaaster-backend}
+      # Only the frontend proxy (static IPs below) may set X-Real-IP
+      TRUSTED_PROXY_IPS: 127.0.0.1,::1,172.29.40.10,fd00:4ce::10
     volumes:
       - ./backend:/app
-      - backend_data:/app/data
-    depends_on:
-      minio:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - task4ce_data:/app/data
     networks:
       - taaskmaaster-network
     restart: unless-stopped
@@ -80,7 +69,9 @@ services:
       backend:
         condition: service_healthy
     networks:
-      - taaskmaaster-network
+      taaskmaaster-network:
+        ipv4_address: 172.29.40.10
+        ipv6_address: fd00:4ce::10
     restart: unless-stopped
     # Memory limits to prevent SIGBUS errors
     mem_limit: 2g
@@ -91,43 +82,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  # MinIO Object Storage
-  minio:
-    image: minio/minio:latest
-    container_name: taaskmaaster-minio
-    # MinIO ports not exposed externally - only accessible within the network
-    environment:
-      - MINIO_ROOT_USER=${MINIO_ACCESS_KEY:-minioadmin}
-      - MINIO_ROOT_PASSWORD=${MINIO_SECRET_KEY:-minioadmin123}
-    volumes:
-      - minio_data:/data
-    command: server /data --console-address ":9001"
-    networks:
-      - taaskmaaster-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-
-  # Redis for caching and job queue
-  redis:
-    image: redis:7-alpine
-    container_name: taaskmaaster-redis
-    # Redis port not exposed externally - only accessible within the network
-    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
-    volumes:
-      - redis_data:/data
-    networks:
-      - taaskmaaster-network
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # PostgreSQL (optional, for production)
   # postgres:
@@ -148,9 +102,7 @@ services:
   #     - production
 
 volumes:
-  backend_data:
-  minio_data:
-  redis_data:
+  task4ce_data:
   frontend_next_cache:  # Named volume for Next.js build cache
   # postgres_data:  # Commented out since postgres is disabled
 
@@ -161,3 +113,8 @@ networks:
     internal: false
     # Enable IPv6 support
     enable_ipv6: true
+    # Fixed subnets so the frontend proxy has a known IP (TRUSTED_PROXY_IPS)
+    ipam:
+      config:
+        - subnet: 172.29.40.0/24
+        - subnet: fd00:4ce::/64
