@@ -13,6 +13,7 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy.exc import OperationalError
 
 # Import API routers
 from app.api import (
@@ -213,9 +214,20 @@ async def api_status() -> dict[str, Any]:
 
 @fastapi_app.exception_handler(404)
 async def not_found_handler(request: Request, exc: Exception) -> JSONResponse:
-    """Handle 404 errors."""
+    """Handle 404s; keep explicit HTTPException details, generic text for unmatched routes."""
     logger.warning("404 error", path=request.url.path, method=request.method)
-    return JSONResponse(status_code=404, content={"detail": "Endpoint not found"})
+    detail = getattr(exc, "detail", None)
+    if not detail or detail == "Not Found":
+        detail = "Endpoint not found"
+    return JSONResponse(status_code=404, content={"detail": detail})
+
+
+@fastapi_app.exception_handler(OperationalError)
+async def db_locked_handler(request: Request, exc: OperationalError) -> JSONResponse:
+    """Map SQLite lock contention to 503 so clients can retry."""
+    if "database is locked" in str(exc):
+        return JSONResponse(status_code=503, content={"detail": "Busy, try again."})
+    raise exc
 
 
 @fastapi_app.exception_handler(500)
