@@ -37,6 +37,8 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
+    op.execute("UPDATE users SET role='KID' WHERE upper(role) IN ('USER', 'ORGANIZER')")
+    op.execute("UPDATE users SET role='PARENT' WHERE upper(role) = 'ADMIN'")
     with op.batch_alter_table("users", schema=None) as batch_op:
         batch_op.add_column(sa.Column("pin_hash", sa.String(length=255), nullable=True))
         batch_op.add_column(sa.Column("avatar", sa.String(length=255), nullable=True))
@@ -63,5 +65,7 @@ def downgrade() -> None:
         batch_op.drop_column("avatar")
         batch_op.drop_column("pin_hash")
 
+    op.execute("UPDATE users SET role='USER' WHERE role='KID'")
+    op.execute("UPDATE users SET role='ADMIN' WHERE role='PARENT'")
     op.drop_table("family_settings")
     # ### end Alembic commands ###

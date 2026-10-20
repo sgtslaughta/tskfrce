@@ -1,6 +1,6 @@
 import pytest
 from app.api.deps import require_parent
-from app.models.family import get_family
+from app.models.family import FamilySettings, get_family
 from app.models.user import User, UserRole
 from fastapi import HTTPException
 
@@ -38,3 +38,31 @@ def test_require_parent_rejects_kid(kid, parent):
         require_parent(kid)
     assert e.value.status_code == 403
     assert require_parent(parent) is parent
+
+
+def test_setup_loses_race_when_family_row_exists(client, db):
+    # simulates a concurrent setup that already claimed family id=1
+    db.add(FamilySettings(id=1, name="Other"))
+    db.commit()
+    r = client.post("/api/v1/setup", json=BODY)
+    assert r.status_code == 409
+    assert db.query(User).count() == 0
+
+
+def test_role_aliases_resolve_to_parent_kid():
+    assert UserRole.ADMIN is UserRole.PARENT
+    assert UserRole.ORGANIZER is UserRole.PARENT
+    assert UserRole.USER is UserRole.KID
+
+
+@pytest.mark.parametrize(
+    "patch",
+    [
+        {"timezone": "Mars/Base"},
+        {"parent": {**BODY["parent"], "password": "short"}},
+        {"parent": {**BODY["parent"], "username": "bad name!"}},
+        {"parent": {**BODY["parent"], "full_name": "x" * 101}},
+    ],
+)
+def test_setup_validates_input(client, patch):
+    assert client.post("/api/v1/setup", json={**BODY, **patch}).status_code == 422

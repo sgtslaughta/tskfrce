@@ -25,6 +25,5 @@ def get_family(db: Session) -> FamilySettings:
     if fam is None:
         fam = FamilySettings(id=1, name="My Family")
         db.add(fam)
-        db.commit()
-        db.refresh(fam)
+        db.flush()  # caller commits
     return fam
