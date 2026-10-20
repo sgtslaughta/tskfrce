@@ -74,6 +74,20 @@ def test_expired_override_ignored(db):
     assert desired_blocked(db, NOW) == []
 
 
+def test_newest_unexpired_override_wins(db):
+    d = mk_device(db)
+    exp = (NOW + timedelta(hours=1)).replace(tzinfo=None)
+    old = NOW.replace(tzinfo=None) - timedelta(minutes=10)
+    for action, created in (("unlock", old), ("lock", old + timedelta(minutes=5))):
+        db.add(
+            Override(
+                device_id=d.id, action=action, source="manual", expires_at=exp, created_at=created
+            )
+        )
+    db.commit()
+    assert desired_blocked(db, NOW) == [d.mac]
+
+
 def test_tick_deletes_expired_overrides_and_resets(db):
     d = mk_device(db)
     db.add(

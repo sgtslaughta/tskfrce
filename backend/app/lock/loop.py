@@ -10,23 +10,19 @@ from app.lock.blocker_client import push_blocked
 from app.lock.state import tick
 
 logger = get_logger(__name__)
+_loop: asyncio.AbstractEventLoop | None = None
 _event: asyncio.Event | None = None
 
 
-def _get_event() -> asyncio.Event:
-    global _event
-    if _event is None:
-        _event = asyncio.Event()
-    return _event
-
-
 def trigger() -> None:
-    """Ask for an immediate re-evaluation. Safe from sync code; no-op if no loop."""
-    if _event is not None:
-        try:
-            _event.get_loop().call_soon_threadsafe(_event.set)
-        except RuntimeError:  # loop closed
-            pass
+    """Ask for an immediate re-evaluation. Safe from any thread; no-op if no loop."""
+    loop, ev = _loop, _event
+    if loop is None or ev is None or loop.is_closed():
+        return
+    try:
+        loop.call_soon_threadsafe(ev.set)
+    except RuntimeError:  # loop closed between check and call
+        pass
 
 
 def _run_once() -> None:
@@ -40,11 +36,16 @@ def _run_once() -> None:
 
 
 async def run_forever() -> None:
-    ev = _get_event()
-    while True:
-        await asyncio.to_thread(_run_once)
-        try:
-            await asyncio.wait_for(ev.wait(), settings.LOCK_INTERVAL_SECONDS)
-        except TimeoutError:
-            pass
-        ev.clear()
+    global _loop, _event
+    _loop, _event = asyncio.get_running_loop(), asyncio.Event()
+    ev = _event
+    try:
+        while True:
+            ev.clear()
+            await asyncio.to_thread(_run_once)
+            try:
+                await asyncio.wait_for(ev.wait(), settings.LOCK_INTERVAL_SECONDS)
+            except TimeoutError:
+                pass
+    finally:
+        _loop = _event = None
