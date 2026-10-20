@@ -1,0 +1,16 @@
+[project]
+name = "task4ce-blocker"
+version = "0.1.0"
+description = "LAN device discovery and enforcement service for t@sk4ce"
+requires-python = ">=3.11"
+dependencies = ["scapy>=2.5"]
+
+[project.optional-dependencies]
+dev = ["pytest", "ruff==0.17.1"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
