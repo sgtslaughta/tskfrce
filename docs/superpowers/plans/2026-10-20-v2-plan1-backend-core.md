@@ -145,6 +145,17 @@ Rate limiting (replaces deleted Redis limiter): add `backend/app/core/ratelimit.
 - [ ] **Step 3–4:** FAIL → implement → PASS. Frontend: `npm run lint && npm run type-check` pass; frontend calls that relied on `X-User-Data` now send the bearer token.
 - [ ] **Step 5:** Commit `fix(security): remove spoofable header identity and enforce authz`.
 
+### Task 7B: Real SQLite connection handling
+
+`core/database.py` uses `StaticPool` (one shared connection) for every SQLite URL, so concurrent requests and the lock loop share one transaction.
+
+**Files:** Modify `backend/app/core/database.py`, `backend/app/main.py` (exception handler); Test `backend/tests/test_database.py`.
+
+- `StaticPool` only for in-memory `sqlite://`. File SQLite: default pool, `connect_args={"check_same_thread": False, "timeout": 5}`, and a `connect` event setting `PRAGMA journal_mode=WAL`, `PRAGMA busy_timeout=5000`, `PRAGMA foreign_keys=ON`.
+- Exception handler: `sqlalchemy.exc.OperationalError` containing `"database is locked"` → 503 `"Busy, try again."`.
+- Tests: `test_file_sqlite_has_wal_and_fk_on`; `test_two_sessions_setup_yields_one_owner` (tmp file DB, two `SessionLocal`-style sessions run the setup compare-and-set interleaved → exactly one owner, the loser 409s); full suite stays green with `foreign_keys=ON` (fix any v1 code that relied on orphan FKs, or report it).
+- Commit `fix(db): per-connection sqlite with WAL, busy timeout and foreign keys`.
+
 ### Task 8: Lock models
 
 **Files:**
