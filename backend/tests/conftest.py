@@ -6,6 +6,8 @@ import tempfile
 # Keep generated secrets/db out of the real ./data (must precede app imports)
 os.environ.setdefault("DATA_DIR", tempfile.mkdtemp(prefix="task4ce-test-"))
 
+os.environ.setdefault("LOCK_LOOP_ENABLED", "false")
+
 import pytest  # noqa: E402
 from app.api.deps import get_db  # noqa: E402
 from app.core.database import Base, _import_all_models, get_db_session  # noqa: E402

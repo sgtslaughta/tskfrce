@@ -31,6 +31,7 @@ from app.api import (
     workflow_router,
 )
 from app.api.chores import router as chores_router
+from app.api.internal import router as internal_router
 from app.api.notifications import router as notifications_router
 from app.api.setup import router as setup_router
 from app.core.logging import configure_logging, get_logger
@@ -135,6 +136,7 @@ fastapi_app.include_router(
     notifications_router, prefix="/api/v1/notifications", tags=["notifications"]
 )
 fastapi_app.include_router(chores_router)
+fastapi_app.include_router(internal_router)
 fastapi_app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
 
 # Create the final app with ASGI middleware
@@ -232,7 +234,14 @@ async def startup_event():
     init_database()
     logger.info("Database ready")
 
-    # Initialize services here
+    from app.core.config import settings
+
+    if settings.LOCK_LOOP_ENABLED:
+        import asyncio
+
+        from app.lock.loop import run_forever
+
+        fastapi_app.state.lock_task = asyncio.create_task(run_forever())
 
     logger.info("TaaskMaaster API startup complete")
 
@@ -243,7 +252,9 @@ async def shutdown_event():
     """Application shutdown event."""
     logger.info("TaaskMaaster API shutting down")
 
-    # Cleanup services here
+    task = getattr(fastapi_app.state, "lock_task", None)
+    if task:
+        task.cancel()
     # await cleanup_database()
 
     logger.info("TaaskMaaster API shutdown complete")

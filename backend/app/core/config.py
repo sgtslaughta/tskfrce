@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     SECRET_KEY: str | None = None
     JWT_SECRET_KEY: str | None = None
     INTERNAL_TOKEN: str | None = None
+    BLOCKER_URL: str = "http://127.0.0.1:7777"
+    LOCK_INTERVAL_SECONDS: int = 30
+    LOCK_LOOP_ENABLED: bool = True
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
