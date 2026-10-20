@@ -1,5 +1,6 @@
 import json
 import multiprocessing
+import os
 import stat
 
 from app.core.secrets import NAMES, load_or_create_secrets
@@ -60,3 +61,10 @@ def test_existing_loose_file_tightened_to_0600(tmp_path, monkeypatch):
     path.chmod(0o644)
     load_or_create_secrets(tmp_path)
     assert stat.S_IMODE(path.stat().st_mode) == 0o600
+
+
+def test_stale_tmp_file_does_not_block_boot(tmp_path, monkeypatch):
+    for n in NAMES:
+        monkeypatch.delenv(n, raising=False)
+    (tmp_path / f"secrets.json.{os.getpid()}.tmp").write_text("junk")
+    assert len(load_or_create_secrets(tmp_path)) == 3

@@ -10,10 +10,13 @@ NAMES = ("SECRET_KEY", "JWT_SECRET_KEY", "INTERNAL_TOKEN")
 
 
 def _read(path: Path) -> dict[str, str]:
-    if not path.exists():
+    try:
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW)
+    except FileNotFoundError:
         return {}
-    path.chmod(0o600)
-    return json.loads(path.read_text())
+    with os.fdopen(fd) as f:
+        os.fchmod(f.fileno(), 0o600)
+        return json.load(f)
 
 
 def load_or_create_secrets(data_dir: Path) -> dict[str, str]:
@@ -25,13 +28,15 @@ def load_or_create_secrets(data_dir: Path) -> dict[str, str]:
     data_dir = Path(data_dir)
     data_dir.mkdir(parents=True, exist_ok=True)
     path = data_dir / "secrets.json"
-    with open(data_dir / "secrets.lock", "w") as lock:
+    lock_fd = os.open(data_dir / "secrets.lock", os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+    with os.fdopen(lock_fd) as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
         stored = _read(path)  # re-read under the lock
         if any(not stored.get(n) for n in NAMES):
             for n in NAMES:
                 stored.setdefault(n, secrets.token_urlsafe(32))
             tmp = data_dir / f"secrets.json.{os.getpid()}.tmp"
+            tmp.unlink(missing_ok=True)  # stale file from a crashed run (lock held)
             fd = os.open(tmp, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
             with os.fdopen(fd, "w") as f:
                 json.dump(stored, f)

@@ -27,7 +27,7 @@ services:
       TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,192.168.1.95,backend,taaskmaaster-backend}
     volumes:
       - ./backend:/app
-      - ./data:/app/data
+      - task4ce_data:/app/data
     networks:
       - taaskmaaster-network
     restart: unless-stopped
@@ -98,6 +98,7 @@ services:
   #     - production
 
 volumes:
+  task4ce_data:
   frontend_next_cache:  # Named volume for Next.js build cache
   # postgres_data:  # Commented out since postgres is disabled
 
