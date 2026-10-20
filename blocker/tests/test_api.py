@@ -2,7 +2,10 @@ import http.client
 import json
 import threading
 
+import pytest
+
 from blocker.api import make_api
+from blocker.state_store import StateStore
 
 
 def test_health_ok():
@@ -21,3 +24,67 @@ def test_health_ok():
     finally:
         server.shutdown()
         server.server_close()
+
+
+def _call(server, path, body, token="t"):
+    conn = http.client.HTTPConnection("127.0.0.1", server.server_address[1], timeout=5)
+    headers = {"Content-Type": "application/json"}
+    if token is not None:
+        headers["X-Internal-Token"] = token
+    raw = body if isinstance(body, bytes) else json.dumps(body).encode()
+    conn.request("POST", path, body=raw, headers=headers)
+    resp = conn.getresponse()
+    return resp.status, json.loads(resp.read() or b"null")
+
+
+@pytest.fixture
+def api():
+    store = StateStore()
+    server = make_api(
+        state=store,
+        token="t",
+        tester=lambda mac: {"offline": True, "router_resisted": False, "message": mac},
+    )
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    yield server, store
+    server.shutdown()
+    server.server_close()
+
+
+@pytest.mark.parametrize("token", [None, "", "wrong"])
+def test_state_requires_token(api, token):
+    server, store = api
+    status, _ = _call(server, "/state", {"blocked": []}, token=token)
+    assert status == 403
+
+
+def test_state_rejects_non_list(api):
+    server, store = api
+    store.set_blocked(["aa:bb:cc:dd:ee:ff"])
+    status, body = _call(server, "/state", {"blocked": "nope"})
+    assert status == 400 and "error" in body
+    status, _ = _call(server, "/state", [1])
+    assert status == 400
+    assert store.current() == {"aa:bb:cc:dd:ee:ff"}
+
+
+def test_state_rejects_bad_mac(api):
+    server, store = api
+    store.set_blocked(["aa:bb:cc:dd:ee:ff"])
+    status, body = _call(server, "/state", {"blocked": ["aa:xx"]})
+    assert status == 400 and body["error"] == "'aa:xx' is not a valid MAC address."
+    assert store.current() == {"aa:bb:cc:dd:ee:ff"}
+
+
+def test_state_applies_and_reports_count(api):
+    server, store = api
+    status, body = _call(server, "/state", {"blocked": ["AA:BB:CC:DD:EE:FF", "11:22:33:44:55:66"]})
+    assert (status, body) == (200, {"ok": True, "count": 2})
+    assert len(store.current()) == 2
+
+
+def test_test_block_returns_tester_result(api):
+    server, _ = api
+    status, body = _call(server, "/test-block", {"mac": "aa:bb:cc:dd:ee:ff"})
+    assert status == 200 and body["offline"] is True
+    assert _call(server, "/test-block", {"mac": "x"}, token="bad")[0] == 403

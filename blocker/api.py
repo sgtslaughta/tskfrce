@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hmac
 import json
 from collections.abc import Callable
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -12,9 +13,49 @@ def _health(handler: _Handler) -> tuple[int, dict]:
     return 200, {"ok": True}
 
 
+def _authorized(h: _Handler) -> bool:
+    got = h.headers.get("X-Internal-Token") or ""
+    return bool(got) and hmac.compare_digest(got, h.server.token)  # type: ignore[attr-defined]
+
+
+def _json_body(h: _Handler) -> Any:
+    length = int(h.headers.get("Content-Length") or 0)
+    try:
+        return json.loads(h.rfile.read(length) or b"null")
+    except ValueError:
+        return None
+
+
+def _state(h: _Handler) -> tuple[int, dict]:
+    if not _authorized(h):
+        return 403, {"error": "forbidden"}
+    body = _json_body(h)
+    if not isinstance(body, dict):
+        return 400, {"error": "The request body must be a JSON object."}
+    macs = body.get("blocked")
+    if not isinstance(macs, list):
+        return 400, {"error": "'blocked' must be a list of MAC addresses."}
+    try:
+        result = h.server.state.set_blocked(macs)  # type: ignore[attr-defined]
+    except ValueError as e:
+        return 400, {"error": str(e)}
+    return 200, {"ok": True, "count": len(result)}
+
+
+def _test_block(h: _Handler) -> tuple[int, dict]:
+    if not _authorized(h):
+        return 403, {"error": "forbidden"}
+    body = _json_body(h)
+    if not isinstance(body, dict) or not isinstance(body.get("mac"), str):
+        return 400, {"error": "The request body must be a JSON object with a 'mac' text value."}
+    return 200, h.server.tester(body["mac"])  # type: ignore[attr-defined]
+
+
 # (method, path) -> handler(request_handler) -> (status, json body)
 ROUTES: dict[tuple[str, str], Callable[[_Handler], tuple[int, dict]]] = {
     ("GET", "/health"): _health,
+    ("POST", "/state"): _state,
+    ("POST", "/test-block"): _test_block,
 }
 
 
