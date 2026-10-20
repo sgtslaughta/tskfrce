@@ -231,5 +231,7 @@ docs/task_workflow_enhancement_plan.md
 
 # Runtime data (db, uploads, secrets)
 data/
+!blocker/data/
+!blocker/data/oui.csv
 .claude/worktrees/
 *.tsbuildinfo
