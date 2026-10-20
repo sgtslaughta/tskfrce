@@ -16,6 +16,7 @@ RUN apt-get update \
         g++ \
         curl \
         netcat-openbsd \
+        gosu \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir uv
 
@@ -36,7 +37,7 @@ RUN chmod +x entrypoint.sh
 # Create non-root user
 RUN adduser --disabled-password --gecos '' appuser \
     && chown -R appuser:appuser /app
-USER appuser
+# Entrypoint starts as root only to chown DATA_DIR, then drops to appuser
 
 # Expose port
 EXPOSE 8000

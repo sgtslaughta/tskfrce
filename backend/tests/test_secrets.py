@@ -1,4 +1,5 @@
 import json
+import multiprocessing
 import stat
 
 from app.core.secrets import NAMES, load_or_create_secrets
@@ -30,3 +31,32 @@ def test_env_overrides_file(tmp_path, monkeypatch):
     result = load_or_create_secrets(tmp_path)
     assert result["SECRET_KEY"] == "from-env"
     assert result["JWT_SECRET_KEY"] == stored["JWT_SECRET_KEY"]
+
+
+def _worker(path, q):
+    q.put(load_or_create_secrets(path))
+
+
+def test_concurrent_first_boot_same_secrets(tmp_path, monkeypatch):
+    for n in NAMES:
+        monkeypatch.delenv(n, raising=False)
+    ctx = multiprocessing.get_context("spawn")
+    q = ctx.Queue()
+    procs = [ctx.Process(target=_worker, args=(tmp_path, q)) for _ in range(4)]
+    for p in procs:
+        p.start()
+    results = [q.get(timeout=60) for _ in procs]
+    for p in procs:
+        p.join()
+    assert all(r == results[0] for r in results)
+    assert json.loads((tmp_path / "secrets.json").read_text()) == results[0]
+
+
+def test_existing_loose_file_tightened_to_0600(tmp_path, monkeypatch):
+    for n in NAMES:
+        monkeypatch.delenv(n, raising=False)
+    load_or_create_secrets(tmp_path)
+    path = tmp_path / "secrets.json"
+    path.chmod(0o644)
+    load_or_create_secrets(tmp_path)
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600

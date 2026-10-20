@@ -149,9 +149,6 @@ uv run alembic upgrade head
 
 # Create new migration
 uv run alembic revision --autogenerate -m "Description"
-
-# Generate test data
-python scripts/create_test_data.py
 ```
 
 ## 📁 Project Structure
@@ -175,7 +172,6 @@ taaskMaaster/
 │   │   ├── core/                 # Configuration & security
 │   │   └── db/                   # Database configuration
 │   ├── alembic/                  # Database migrations
-│   ├── scripts/                  # Utility scripts
 │   └── tests/                    # Backend tests
 ├── ⚛️ frontend/                   # Next.js Frontend
 │   ├── src/
