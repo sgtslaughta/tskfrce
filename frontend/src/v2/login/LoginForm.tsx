@@ -5,9 +5,16 @@ import { Button, PasswordInput, TextInput } from '@mantine/core'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { StickerCard } from '@/v2/components/StickerCard'
 
-/** Only same-site paths: "/devices" yes, "//evil.com" and "http://..." no. */
-export const safeNext = (next: unknown): string =>
-  typeof next === 'string' && /^\/(?![/\\])/.test(next) ? next : '/'
+/** Only same-site paths survive; anything a browser could reinterpret falls back to "/". */
+export const safeNext = (next: unknown): string => {
+  if (typeof next !== 'string' || /[\x00-\x1f\x7f\s\\]/.test(next)) return '/'
+  try {
+    const u = new URL(next, window.location.origin)
+    return u.origin === window.location.origin ? u.pathname + u.search + u.hash : '/'
+  } catch {
+    return '/'
+  }
+}
 
 /** Parent login. A wrong password shows inline and is never logged or thrown. */
 export function LoginForm() {

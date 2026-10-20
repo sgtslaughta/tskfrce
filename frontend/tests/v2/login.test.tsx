@@ -55,7 +55,9 @@ describe('LoginForm', () => {
 
   test('safeNext only allows same-site paths', () => {
     expect(safeNext('/kids')).toBe('/kids')
-    expect(safeNext('//evil.com')).toBe('/')
+    for (const bad of ['/\t/evil.com', '//evil.com', '/\\evil.com', 'https://evil.com', 'javascript:alert(1)'])
+      expect(safeNext(bad)).toBe('/')
+    expect(safeNext('/devices?focus=3')).toBe('/devices?focus=3')
     expect(safeNext('https://evil.com')).toBe('/')
     expect(safeNext(undefined)).toBe('/')
   })
