@@ -27,6 +27,7 @@ from .gamification import (
     UserAchievement,
 )
 from .goal import Goal, GoalProgress
+from .lock import Device, DeviceGroup, Override, TimeWindow
 from .media import MediaAttachment
 from .notification import Notification
 from .task import (
@@ -64,6 +65,10 @@ __all__ = [
     "TaskListAssociation",
     "TaskTagAssociation",
     "MediaAttachment",
+    "Device",
+    "DeviceGroup",
+    "TimeWindow",
+    "Override",
     "Notification",
     # Comment and messaging models
     "TaskComment",
