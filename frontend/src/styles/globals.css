@@ -1,0 +1,533 @@
+/**
+ * @fileoverview Global styles for TaaskMaaster
+ * @description Tailwind CSS imports and custom global styles
+ * @author TaaskMaaster Team
+ * @version 1.0.0
+ */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&display=swap');
+
+/* Base styles */
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+    color-scheme: dark light;
+  }
+  
+  body {
+    @apply bg-gray-50 text-gray-900;
+    color-scheme: dark light;
+  }
+  
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Focus styles */
+  *:focus {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
+  
+  /* Password manager compatibility - ensure overlays work properly */
+  *:focus:not([data-1p-ignore]):not([data-bitwarden-watching]) {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2;
+  }
+  
+  /* Allow password manager overlays to display properly */
+  [data-1p-ignore],
+  [data-bitwarden-watching],
+  .bitwarden-overlay,
+  ._1password-overlay {
+    z-index: var(--z-password-manager) !important;
+    position: relative !important;
+  }
+}
+
+/* Component styles */
+@layer components {
+  /* Custom button styles */
+  .btn-primary {
+    @apply bg-blue-600 text-white px-4 py-2 rounded-md font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-600 text-white px-4 py-2 rounded-md font-medium hover:bg-gray-700 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200;
+  }
+  
+  .btn-success {
+    @apply bg-green-600 text-white px-4 py-2 rounded-md font-medium hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors duration-200;
+  }
+  
+  .btn-danger {
+    @apply bg-red-600 text-white px-4 py-2 rounded-md font-medium hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200;
+  }
+  
+  /* Custom input styles */
+  .input-field {
+    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
+  }
+  
+  /* Card styles */
+  .card {
+    @apply bg-white shadow-sm rounded-lg border border-gray-200;
+  }
+  
+  .card-header {
+    @apply px-6 py-4 border-b border-gray-200;
+  }
+  
+  .card-body {
+    @apply px-6 py-4;
+  }
+  
+  .card-footer {
+    @apply px-6 py-4 border-t border-gray-200 bg-gray-50;
+  }
+}
+
+/* Utility styles */
+@layer utilities {
+  /* Custom animations */
+  .animate-fade-in {
+    animation: fadeIn 0.3s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  /* Custom shadows */
+  .shadow-soft {
+    box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+  }
+  
+  .shadow-medium {
+    box-shadow: 0 4px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  }
+  
+  .shadow-large {
+    box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.15), 0 2px 10px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Responsive table utilities */
+  .table-responsive {
+    @apply w-full overflow-hidden bg-white dark:bg-gray-900 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700;
+  }
+  
+  .table-scroll {
+    @apply overflow-x-auto;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+  }
+  
+  .table-scroll::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .table-scroll::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800 rounded;
+  }
+  
+  .table-scroll::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded;
+  }
+  
+  .table-scroll::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-500;
+  }
+}
+
+/* Keyframe animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Workflow step indicator animations */
+@keyframes fillAndReset {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+/* Z-Index Management System */
+/* Ensure proper layering with password managers having highest priority */
+:root {
+  --z-background: 0;
+  --z-base: 1;
+  --z-elevated: 2;
+  --z-dropdown: 10;
+  --z-sticky: 20;
+  --z-fixed: 30;
+  --z-modal-backdrop: 40;
+  --z-modal: 50;
+  --z-popover: 60;
+  --z-tooltip: 70;
+  --z-toast: 80;
+  --z-password-manager: 2147483647;
+}
+
+/* Password Manager Compatibility Fixes */
+/* Prevent backdrop-filter from interfering with password manager overlays */
+.mantine-Modal-root,
+.mantine-Drawer-root,
+.mantine-Popover-root {
+  backdrop-filter: none !important;
+}
+
+/* Disable backdrop-filter only for password manager elements, not globally */
+[data-bitwarden-watching="true"] *,
+[data-1p-ignore="true"] *,
+[class*="bitwarden"] *,
+[class*="1password"] *,
+[id*="bitwarden"] *,
+[id*="1password"] * {
+  backdrop-filter: none !important;
+}
+
+/* Additional Bitwarden specific fixes */
+*:has(+ [data-bitwarden-watching="true"]),
+*:has(+ [class*="bitwarden"]),
+[data-bitwarden-watching="true"] + *,
+[class*="bitwarden"] + * {
+  backdrop-filter: none !important;
+  isolation: auto !important;
+}
+
+/* Force password manager overlays above everything */
+[data-bitwarden-watching="true"],
+[data-1p-ignore="true"],
+[class*="bitwarden"],
+[class*="1password"],
+[id*="bitwarden"],
+[id*="1password"] {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+  isolation: isolate !important;
+  mix-blend-mode: normal !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  color-scheme: dark !important;
+}
+
+/* Override any white backgrounds that might interfere with Bitwarden */
+body:has([class*="bitwarden"]) {
+  --mantine-color-scheme: dark;
+}
+
+/* Remove overly broad styling that affects all elements */
+
+/* Ensure iframe contexts also inherit dark theme */
+[class*="bitwarden"] iframe,
+[data-bitwarden-watching="true"] + iframe {
+  color-scheme: dark !important;
+}
+
+/* Target specific Bitwarden notification bar iframe */
+#bit-notification-bar-iframe,
+iframe[id*="bit-notification"] {
+  color-scheme: dark !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 4px !important;
+}
+
+/* Force iframe content to use dark theme */
+html.dark body.antialiased div#bit-notification-bar iframe#bit-notification-bar-iframe {
+  color-scheme: dark !important;
+  background: transparent !important;
+}
+
+/* Prevent body.antialiased from interfering with Bitwarden iframe */
+body.antialiased:has(#bit-notification-bar) {
+  background-color: initial !important;
+}
+
+/* Target Bitwarden iframe content specifically */
+#bit-notification-bar iframe,
+div[id*="bit-notification"] iframe {
+  background: transparent !important;
+  color-scheme: dark !important;
+}
+
+/* Target Bitwarden notification bar container */
+#bit-notification-bar,
+div[id*="bit-notification"] {
+  background-color: var(--mantine-color-dark-7, #1A1B23) !important;
+  color: var(--mantine-color-gray-0, #ffffff) !important;
+}
+
+/* Force dark theme for html.dark context */
+html.dark #bit-notification-bar,
+html.dark div[id*="bit-notification"] {
+  background-color: var(--mantine-color-dark-7, #1A1B23) !important;
+  color-scheme: dark !important;
+}
+
+/* Temporarily hide white overlays when Bitwarden is active */
+body:has([class*="bitwarden"]) .mantine-Modal-overlay,
+body:has([class*="bitwarden"]) .mantine-Overlay-root {
+  opacity: 0.3 !important;
+  background-color: var(--mantine-color-dark-9, #0C0D21) !important;
+}
+
+/* Ensure password managers work in modal contexts */
+.mantine-Modal-root [data-bitwarden-watching="true"],
+.mantine-Modal-root [class*="bitwarden"],
+.mantine-Overlay-root [data-bitwarden-watching="true"],
+.mantine-Overlay-root [class*="bitwarden"] {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+}
+
+/* Specific fixes for Bitwarden notification bar iframe */
+html.dark body.antialiased div#bit-notification-bar iframe#bit-notification-bar-iframe,
+#bit-notification-bar iframe#bit-notification-bar-iframe,
+div#bit-notification-bar iframe#bit-notification-bar-iframe {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  transform: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  color-scheme: dark !important;
+  isolation: isolate !important;
+  mix-blend-mode: normal !important;
+}
+
+/* Target the Bitwarden notification bar container */
+html.dark body.antialiased div#bit-notification-bar,
+#bit-notification-bar,
+div#bit-notification-bar {
+  z-index: 2147483647 !important;
+  position: fixed !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  transform: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  color-scheme: dark !important;
+  isolation: isolate !important;
+  mix-blend-mode: normal !important;
+}
+
+/* Force transparency on all Bitwarden elements */
+[data-bitwarden-watching="true"],
+[class*="bitwarden"],
+[id*="bitwarden"],
+#bit-notification-bar,
+div#bit-notification-bar,
+iframe#bit-notification-bar-iframe {
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  transform: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Override any inline styles that might set white backgrounds */
+[data-bitwarden-watching="true"][style*="background"],
+[class*="bitwarden"][style*="background"],
+[id*="bitwarden"][style*="background"],
+#bit-notification-bar[style*="background"],
+div#bit-notification-bar[style*="background"],
+iframe#bit-notification-bar-iframe[style*="background"] {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Additional iframe content fixes */
+iframe#bit-notification-bar-iframe {
+  /* Force iframe to be transparent */
+  background: transparent !important;
+  background-color: transparent !important;
+  /* Remove any default iframe styling */
+  border: none !important;
+  outline: none !important;
+  /* Ensure proper positioning */
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  /* Remove any transforms or filters */
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  /* Force dark theme */
+  color-scheme: dark !important;
+}
+
+/* Target iframe content using CSS injection approach */
+iframe#bit-notification-bar-iframe::before,
+iframe#bit-notification-bar-iframe::after {
+  display: none !important;
+  content: none !important;
+}
+
+/* Force the iframe to inherit dark theme */
+html.dark iframe#bit-notification-bar-iframe {
+  color-scheme: dark !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Additional specificity for the exact selector you mentioned */
+html.dark body.antialiased div#bit-notification-bar iframe#bit-notification-bar-iframe {
+  /* Override any inherited styles */
+  all: unset !important;
+  /* Re-apply only necessary properties */
+  position: fixed !important;
+  z-index: 2147483647 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  transform: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  color-scheme: dark !important;
+  isolation: isolate !important;
+  mix-blend-mode: normal !important;
+}
+
+/* Ensure password manager overlays have highest z-index */
+div[data-bitwarden-watching="true"],
+div[data-1p-ignore="true"],
+.bitwarden-overlay,
+._1password-overlay,
+[class*="bitwarden"],
+[class*="1password"] {
+  z-index: var(--z-password-manager) !important;
+  position: fixed !important;
+  pointer-events: auto !important;
+}
+
+/* Prevent CSS transforms from interfering with password manager detection */
+input[type="password"],
+input[type="text"][name*="password"],
+input[type="text"][name*="username"],
+input[type="text"][name*="email"] {
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+/* Ensure form elements are properly accessible to password managers */
+form {
+  position: relative !important;
+  z-index: auto !important;
+}
+
+/* Fix for Mantine components that might interfere */
+.mantine-Input-root,
+.mantine-TextInput-root,
+.mantine-PasswordInput-root {
+  position: relative !important;
+  z-index: auto !important;
+  isolation: auto !important;
+}
+
+/* Mantine Component Z-Index Management */
+.mantine-Modal-root {
+  z-index: var(--z-modal) !important;
+}
+
+.mantine-Modal-overlay {
+  z-index: var(--z-modal-backdrop) !important;
+}
+
+.mantine-Drawer-root {
+  z-index: var(--z-modal) !important;
+}
+
+.mantine-Drawer-overlay {
+  z-index: var(--z-modal-backdrop) !important;
+}
+
+.mantine-Popover-root {
+  z-index: var(--z-popover) !important;
+}
+
+.mantine-Tooltip-root {
+  z-index: var(--z-tooltip) !important;
+}
+
+.mantine-Notification-root {
+  z-index: var(--z-toast) !important;
+}
+
+.mantine-Dropdown-root {
+  z-index: var(--z-dropdown) !important;
+}
+
+/* Ensure all app components stay below password managers */
+[class*="mantine-"]:not([data-bitwarden-watching]):not([data-1p-ignore]) {
+  z-index: auto !important;
+}
+
+/* Ensure login form maintains its background and styling */
+.form,
+.mantine-Paper-root.form,
+.login-form,
+[class*="login"] {
+  background-color: light-dark(rgba(255, 255, 255, 0.95), var(--mantine-color-dark-6, #2c2e33)) !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: light-dark(var(--mantine-shadow-xl), rgba(0, 0, 0, 0.3) 0px 25px 50px -12px) !important;
+  border: 1px solid light-dark(var(--mantine-color-gray-3), rgba(255, 255, 255, 0.1)) !important;
+  border-radius: var(--mantine-radius-lg) !important;
+}
+
+/* Override any password manager rules that might affect login form */
+body:has([data-bitwarden-watching="true"]) .form,
+body:has([data-1p-ignore="true"]) .form,
+body:has([class*="bitwarden"]) .form,
+body:has([class*="1password"]) .form,
+body:has([data-bitwarden-watching="true"]) .mantine-Paper-root.form,
+body:has([data-1p-ignore="true"]) .mantine-Paper-root.form,
+body:has([class*="bitwarden"]) .mantine-Paper-root.form,
+body:has([class*="1password"]) .mantine-Paper-root.form {
+  background-color: light-dark(rgba(255, 255, 255, 0.95), var(--mantine-color-dark-6, #2c2e33)) !important;
+  backdrop-filter: blur(20px) !important;
+  box-shadow: light-dark(var(--mantine-shadow-xl), rgba(0, 0, 0, 0.3) 0px 25px 50px -12px) !important;
+  border: 1px solid light-dark(var(--mantine-color-gray-3), rgba(255, 255, 255, 0.1)) !important;
+  border-radius: var(--mantine-radius-lg) !important;
+}
+
