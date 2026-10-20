@@ -5,7 +5,6 @@ This module contains all configuration settings for the TaaskMaaster application
 including database, authentication, and external service configurations.
 """
 
-import os
 from pathlib import Path
 from typing import Any
 
@@ -73,7 +72,6 @@ class Settings(BaseSettings):
 
     # File upload settings
     DATA_DIR: Path = Path("./data")
-    UPLOAD_DIR: str = "uploads"
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
     ALLOWED_EXTENSIONS: list[str] = [
         ".jpg",
@@ -230,15 +228,6 @@ def is_testing() -> bool:
     Check if running in testing environment.
     """
     return settings.ENVIRONMENT.lower() in ["testing", "test"]
-
-
-def get_upload_path() -> str:
-    """
-    Get the full path to upload directory.
-    """
-    upload_dir = os.path.abspath(settings.UPLOAD_DIR)
-    os.makedirs(upload_dir, exist_ok=True)
-    return upload_dir
 
 
 def get_cors_origins() -> list[str]:

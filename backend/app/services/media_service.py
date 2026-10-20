@@ -5,6 +5,7 @@ This module contains business logic for media attachment and file management.
 """
 
 import os
+import re
 import uuid
 from typing import Any, BinaryIO
 
@@ -53,7 +54,8 @@ class MediaService:
         media_type = self._get_media_type_from_mime(mime_type)
 
         # Generate unique storage key
-        file_extension = os.path.splitext(attachment_data.filename)[1]
+        raw_ext = os.path.splitext(attachment_data.filename)[1].lower().lstrip(".")
+        file_extension = f".{raw_ext}" if re.fullmatch(r"[a-z0-9]{1,8}", raw_ext) else ""
         object_name = f"{user_id}/{uuid.uuid4()}{file_extension}"
 
         # Save file

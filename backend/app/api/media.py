@@ -5,13 +5,27 @@ This module contains API endpoints for media attachment and file management.
 """
 
 import io
+import os
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    HTTPException,
+    Query,
+    Request,
+    UploadFile,
+    status,
+)
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_active_user
+from app.core.config import settings
 from app.core.database import get_db_session
 from app.models.media import MediaType
+from app.models.user import User
 from app.schemas.media import (
     FileUploadRequest,
     MediaAttachmentCreate,
@@ -178,9 +192,17 @@ async def get_download_url(
     return {"download_url": download_url, "attachment_id": attachment_id}
 
 
+INLINE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg",
+                ".gif": "image/gif", ".webp": "image/webp"}  # fmt: skip
+
+
 @router.get("/files/{key:path}")
-async def get_file(key: str, db: Session = Depends(get_db_session)):
-    """Serve an uploaded file."""
+async def get_file(
+    key: str,
+    db: Session = Depends(get_db_session),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Serve an uploaded file (images inline, everything else as a download)."""
     try:
         path = MediaService(db).storage.open(key)
     except (ValueError, FileNotFoundError):
@@ -188,11 +210,19 @@ async def get_file(key: str, db: Session = Depends(get_db_session)):
             status_code=status.HTTP_404_NOT_FOUND,
             detail="File not found. Check the link or upload it again.",
         )
-    return FileResponse(path)
+    inline = INLINE_TYPES.get(path.suffix.lower())
+    return FileResponse(
+        path,
+        filename=path.name,
+        media_type=inline or "application/octet-stream",
+        content_disposition_type="inline" if inline else "attachment",
+        headers={"X-Content-Type-Options": "nosniff"},
+    )
 
 
 @router.post("/upload", response_model=MediaAttachmentResponse, status_code=status.HTTP_201_CREATED)
 async def upload_file(
+    request: Request,
     file: UploadFile = File(...),
     task_id: int | None = Form(None),
     description: str | None = Form(None),
@@ -202,9 +232,29 @@ async def upload_file(
 ):
     """Upload a file (multipart form) and attach it to the current user."""
     media_service = MediaService(db)
-    data = await file.read()
+    max_size = settings.MAX_UPLOAD_SIZE
+    too_big = HTTPException(
+        status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+        detail=f"File is too large. The limit is {max_size // (1024 * 1024) or 1} MB; choose a smaller file.",
+    )
+    declared = request.headers.get("content-length")
+    if declared and declared.isdigit() and int(declared) > max_size + 1024 * 1024:
+        raise too_big
+    chunks, total = [], 0
+    while chunk := await file.read(64 * 1024):
+        total += len(chunk)
+        if total > max_size:
+            raise too_big
+        chunks.append(chunk)
+    data = b"".join(chunks)
     mime_type = file.content_type or "application/octet-stream"
     filename = file.filename or "upload"
+    ext = os.path.splitext(filename)[1].lower()
+    if ext not in settings.ALLOWED_EXTENSIONS or ext in (".svg", ".html", ".htm"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This file type is not allowed. Upload an image, document, audio, video or archive.",
+        )
 
     validation = media_service.validate_file_upload(
         FileUploadRequest(filename=filename, mime_type=mime_type, file_size=max(len(data), 1))
