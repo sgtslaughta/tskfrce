@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_parent
@@ -115,7 +115,7 @@ def approve(chore_id: int, db: Session = Depends(get_db), parent: User = Depends
     return _out(t)
 
 
-@router.delete("/{definition_id}", status_code=204)
+@router.delete("/{definition_id}", status_code=204, response_class=Response)
 def delete_chore(
     definition_id: int, db: Session = Depends(get_db), _: User = Depends(require_parent)
 ):
@@ -130,3 +130,4 @@ def delete_chore(
     ):
         t.status = TaskStatus.CANCELLED
     db.commit()
+    return Response(status_code=204)

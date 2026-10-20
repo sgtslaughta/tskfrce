@@ -77,23 +77,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       res.setHeader(key, value);
     });
 
-    // Get response data
-    const contentType = response.headers.get('content-type');
-    let data;
-    
-    if (contentType?.includes('application/json')) {
-      data = await response.json();
-    } else {
-      data = await response.text();
-    }
-
-    // Forward status and data
+    // Empty-bodied statuses and empty bodies must not be parsed
     res.status(response.status);
-    
-    if (contentType?.includes('application/json')) {
-      res.json(data);
-    } else {
-      res.send(data);
+    if ([204, 205, 304].includes(response.status)) {
+      res.end();
+      return;
+    }
+    const text = await response.text();
+    if (!text) {
+      res.end();
+      return;
+    }
+    try {
+      res.json(JSON.parse(text));
+    } catch {
+      res.send(text);
     }
 
   } catch (error) {
