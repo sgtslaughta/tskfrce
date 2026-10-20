@@ -1,0 +1,134 @@
+import { useEffect, useRef, useState } from 'react'
+import { Button } from '@mantine/core'
+import { LockBadge } from '../components/LockBadge'
+import { StickerCard } from '../components/StickerCard'
+import { useKidSession, useKidToday, useMarkDone, loginMessage } from '../hooks/useKid'
+import type { KidWhoami } from '../types'
+import { KidChecklist } from './KidChecklist'
+import { KidPicker } from './KidPicker'
+import { PinPad } from './PinPad'
+import { UnlockedView } from './UnlockedView'
+
+type K = KidWhoami['kids'][number]
+
+const Msg = ({ children }: { children: string }) => (
+  <StickerCard>
+    <p className="f-display" style={{ margin: 0, padding: 12, fontSize: 24, textAlign: 'center' }}>
+      {children}
+    </p>
+  </StickerCard>
+)
+
+const SwitchBtn = ({ onClick }: { onClick: () => void }) => (
+  <Button variant="default" size="lg" onClick={onClick}>
+    Not me
+  </Button>
+)
+
+function Session({ name, onExit, canSwitch }: { name?: string; onExit: () => void; canSwitch: boolean }) {
+  const today = useKidToday(onExit)
+  const done = useMarkDone()
+  const d = today.data
+  if (!d) return <Msg>Loading…</Msg>
+  const switcher = canSwitch && <SwitchBtn onClick={onExit} />
+  if (!d.locked)
+    return (
+      <>
+        <UnlockedView points={d.points_balance} done={d.chores.filter((c) => c.state === 'done').length} />
+        {switcher}
+      </>
+    )
+  return (
+    <>
+      <StickerCard tone="red">
+        <div style={{ display: 'grid', justifyItems: 'center', gap: 8, padding: 12, textAlign: 'center' }}>
+          <LockBadge online={false} size={120} />
+          <h1 style={{ margin: 0, fontSize: 36 }}>Internet is paused</h1>
+          <p style={{ margin: 0, fontSize: 20 }}>Finish your chores to unlock.</p>
+        </div>
+      </StickerCard>
+      <StickerCard>
+        {name && <h2 style={{ margin: '0 0 8px' }}>{name}</h2>}
+        <KidChecklist
+          chores={d.chores}
+          onDone={(id) => done.mutate(id)}
+          busyId={done.isPending ? done.variables : null}
+        />
+      </StickerCard>
+      {switcher}
+    </>
+  )
+}
+
+/** Kid screen: who is this, PIN if needed, then lock or unlocked view. Kid auth only. */
+export function KidPage() {
+  const { ready, authed, whoami, login, logout } = useKidSession()
+  const [picked, setPicked] = useState<K | null>(null)
+  const tried = useRef(false)
+  const kids = whoami.data?.kids ?? []
+  const solo = kids.length === 1 ? kids[0] : null
+  const who = picked ?? solo
+  const err = login.error ? loginMessage(login.error) : null
+
+  // exactly one kid, no PIN: log in without asking (once)
+  useEffect(() => {
+    if (ready && !authed && solo && !solo.has_pin && !tried.current) {
+      tried.current = true
+      login.mutate({ kid_id: solo.id })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, authed, solo])
+
+  const exit = () => {
+    tried.current = false
+    setPicked(null)
+    logout()
+  }
+  const pick = (k: K) => {
+    setPicked(k)
+    if (!k.has_pin) login.mutate({ kid_id: k.id })
+  }
+
+  let body
+  if (!ready || (!authed && whoami.isPending)) body = <Msg>Loading…</Msg>
+  else if (authed) body = <Session name={picked?.full_name ?? undefined} onExit={exit} canSwitch={kids.length > 1} />
+  else if (whoami.isError) body = <Msg>Can&apos;t reach the home box. Check Wi-Fi and try again.</Msg>
+  else if (!whoami.data?.device) body = <Msg>This device isn&apos;t set up yet. Ask a parent to add it.</Msg>
+  else if (!kids.length) body = <Msg>No kid is set up on this device. Ask a parent to add one.</Msg>
+  else if (who?.has_pin)
+    body = (
+      <>
+        <h1 style={{ textAlign: 'center', margin: 0 }}>
+          {who.avatar} {who.full_name}, enter your PIN
+        </h1>
+        <PinPad busy={login.isPending} error={err} onSubmit={(pin) => login.mutate({ kid_id: who.id, pin })} />
+        {kids.length > 1 && <SwitchBtn onClick={exit} />}
+      </>
+    )
+  else if (!who)
+    body = (
+      <>
+        <h1 style={{ textAlign: 'center', margin: 0 }}>Who is this?</h1>
+        <KidPicker kids={kids} onPick={pick} />
+      </>
+    )
+  else
+    body = err ? (
+      <>
+        <Msg>{err}</Msg>
+        <Button size="lg" onClick={exit}>
+          Try again
+        </Button>
+      </>
+    ) : (
+      <Msg>Loading…</Msg>
+    )
+
+  return (
+    <main className="f-shell" style={{ minHeight: '100vh' }}>
+      <div className="f-main" style={{ maxWidth: 520 }}>
+        {body}
+      </div>
+    </main>
+  )
+}
