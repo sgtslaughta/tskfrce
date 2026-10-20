@@ -1,0 +1,209 @@
+"""Parent API: devices and device groups."""
+
+from datetime import UTC, datetime
+
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import delete
+from sqlalchemy.orm import Session
+
+from app.api.deps import get_db, require_parent
+from app.lock.loop import trigger
+from app.lock.overrides import clear_override, set_override
+from app.lock.rules import is_online
+from app.lock.schedule import local_now
+from app.lock.state import device_facts
+from app.models.family import FamilySettings, get_family
+from app.models.lock import Device, DeviceGroup, Override, TimeWindow, device_group_members
+from app.models.user import User, UserRole
+from app.schemas.lock import DevicePatch, GroupIn, OverrideIn
+
+router = APIRouter(prefix="/api/v1", tags=["devices"], dependencies=[Depends(require_parent)])
+
+
+def device_out(db: Session, d: Device, fam: FamilySettings, now: datetime) -> dict:
+    """Device JSON; `now` is aware UTC."""
+    ov = (
+        db.query(Override)
+        .filter(Override.device_id == d.id, Override.source == "manual")
+        .order_by(Override.created_at.desc(), Override.id.desc())
+        .first()
+    )
+    if ov and ov.expires_at and ov.expires_at <= now.replace(tzinfo=None):
+        ov = None
+    online = is_online(device_facts(db, d, fam, now), local_now(fam.timezone, now))
+    return {
+        "id": d.id,
+        "name": d.name,
+        "mac": d.mac,
+        "vendor": d.vendor,
+        "status": d.status,
+        "owner_ids": sorted(o.id for o in d.owners),
+        "group_ids": sorted(g.id for g in d.groups),
+        "online": online,
+        "override": {"action": ov.action, "expires_at": ov.expires_at} if ov else None,
+        "last_seen": d.last_seen,
+    }
+
+
+def _device(db: Session, device_id: int) -> Device:
+    d = db.get(Device, device_id)
+    if d is None:
+        raise HTTPException(404, "That device doesn't exist. Refresh the list and try again.")
+    return d
+
+
+def _devices(db: Session, ids: list[int]) -> list[Device]:
+    rows = db.query(Device).filter(Device.id.in_(ids)).all() if ids else []
+    if len(rows) != len(set(ids)):
+        raise HTTPException(400, "One of the devices doesn't exist. Refresh and try again.")
+    return rows
+
+
+@router.get("/devices")
+def list_devices(db: Session = Depends(get_db)):
+    fam, now = get_family(db), datetime.now(UTC)
+    return [device_out(db, d, fam, now) for d in db.query(Device).order_by(Device.id)]
+
+
+@router.patch("/devices/{device_id}")
+def patch_device(device_id: int, body: DevicePatch, db: Session = Depends(get_db)):
+    d = _device(db, device_id)
+    if body.name is not None:
+        d.name = body.name
+    if body.status is not None:
+        d.status = body.status
+    if body.owner_ids is not None:
+        kids = db.query(User).filter(User.id.in_(body.owner_ids), User.role == UserRole.KID).all()
+        if len(kids) != len(set(body.owner_ids)):
+            raise HTTPException(400, "Owners must be existing kids. Pick from the kid list.")
+        d.owners = kids
+        if kids:
+            d.status = "assigned"
+    if body.group_ids is not None:
+        groups = db.query(DeviceGroup).filter(DeviceGroup.id.in_(body.group_ids)).all()
+        if len(groups) != len(set(body.group_ids)):
+            raise HTTPException(400, "One of the groups doesn't exist. Refresh and try again.")
+        d.groups = groups
+    db.commit()
+    trigger()
+    return device_out(db, d, get_family(db), datetime.now(UTC))
+
+
+@router.post("/devices/{device_id}/override")
+def device_override(
+    device_id: int,
+    body: OverrideIn,
+    db: Session = Depends(get_db),
+    parent: User = Depends(require_parent),
+):
+    _device(db, device_id)
+    set_override(db, [device_id], body.action, body.minutes, parent.id)
+    db.commit()
+    trigger()
+    return {"ok": True}
+
+
+@router.delete("/devices/{device_id}/override")
+def device_clear_override(device_id: int, db: Session = Depends(get_db)):
+    _device(db, device_id)
+    clear_override(db, [device_id])
+    db.commit()
+    trigger()
+    return {"ok": True}
+
+
+@router.delete("/devices/{device_id}")
+def delete_device(device_id: int, db: Session = Depends(get_db)):
+    d = _device(db, device_id)
+    d.owners = []
+    db.query(Override).filter(Override.device_id == d.id).delete()
+    db.execute(delete(device_group_members).where(device_group_members.c.device_id == d.id))
+    db.expire(d)
+    db.delete(d)
+    db.commit()
+    trigger()
+    return {"ok": True}
+
+
+# ---- groups ----
+
+
+def _group_out(g: DeviceGroup) -> dict:
+    return {"id": g.id, "name": g.name, "device_ids": sorted(d.id for d in g.devices)}
+
+
+def _group(db: Session, group_id: int) -> DeviceGroup:
+    g = db.get(DeviceGroup, group_id)
+    if g is None:
+        raise HTTPException(404, "That group doesn't exist. Refresh the list and try again.")
+    return g
+
+
+def _name_free(db: Session, name: str, own_id: int | None = None) -> None:
+    q = db.query(DeviceGroup).filter(DeviceGroup.name == name)
+    if own_id:
+        q = q.filter(DeviceGroup.id != own_id)
+    if q.first():
+        raise HTTPException(400, "A group with that name already exists. Pick another name.")
+
+
+@router.get("/groups")
+def list_groups(db: Session = Depends(get_db)):
+    return [_group_out(g) for g in db.query(DeviceGroup).order_by(DeviceGroup.id)]
+
+
+@router.post("/groups")
+def create_group(body: GroupIn, db: Session = Depends(get_db)):
+    _name_free(db, body.name)
+    g = DeviceGroup(name=body.name)
+    g.devices = _devices(db, body.device_ids)
+    db.add(g)
+    db.commit()
+    trigger()
+    return _group_out(g)
+
+
+@router.patch("/groups/{group_id}")
+def patch_group(group_id: int, body: GroupIn, db: Session = Depends(get_db)):
+    g = _group(db, group_id)
+    _name_free(db, body.name, g.id)
+    g.name = body.name
+    g.devices = _devices(db, body.device_ids)
+    db.commit()
+    trigger()
+    return _group_out(g)
+
+
+@router.delete("/groups/{group_id}")
+def delete_group(group_id: int, db: Session = Depends(get_db)):
+    g = _group(db, group_id)
+    db.query(TimeWindow).filter(TimeWindow.group_id == g.id).delete()
+    g.devices = []
+    db.flush()
+    db.delete(g)
+    db.commit()
+    trigger()
+    return {"ok": True}
+
+
+@router.post("/groups/{group_id}/override")
+def group_override(
+    group_id: int,
+    body: OverrideIn,
+    db: Session = Depends(get_db),
+    parent: User = Depends(require_parent),
+):
+    g = _group(db, group_id)
+    set_override(db, [d.id for d in g.devices], body.action, body.minutes, parent.id)
+    db.commit()
+    trigger()
+    return {"ok": True}
+
+
+@router.delete("/groups/{group_id}/override")
+def group_clear_override(group_id: int, db: Session = Depends(get_db)):
+    g = _group(db, group_id)
+    clear_override(db, [d.id for d in g.devices])
+    db.commit()
+    trigger()
+    return {"ok": True}
