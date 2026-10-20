@@ -98,4 +98,14 @@ def run_setup(body: SetupIn, db: Session = Depends(get_db)):
         data={"sub": str(user.id), "username": user.username, "email": user.email},
         expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
     )
-    return {"access_token": token}
+    refresh = auth.create_refresh_token(
+        data={"sub": str(user.id), "username": user.username, "email": user.email},
+        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+    )
+    return {
+        "access_token": token,
+        "refresh_token": refresh,
+        "token_type": "bearer",
+        "expires_in": settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        "refresh_expires_in": settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+    }
