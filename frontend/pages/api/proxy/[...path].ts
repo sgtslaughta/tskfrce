@@ -35,6 +35,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     headers.Cookie = req.headers.cookie;
   }
 
+  // Real client IP for the backend (kid device lookup, rate limits). Built from the
+  // socket only; client-sent x-real-ip / x-forwarded-for / forwarded are never copied.
+  const peer = (req.socket.remoteAddress || '').replace(/^::ffff:/, '');
+  if (peer) {
+    headers['X-Real-IP'] = peer;
+  }
+
   // Forward other important headers
   if (req.headers['user-agent']) {
     headers['User-Agent'] = req.headers['user-agent'];

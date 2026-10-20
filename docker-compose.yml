@@ -25,6 +25,8 @@ services:
       DISABLE_LOGIN_RATE_LIMIT: ${DISABLE_LOGIN_RATE_LIMIT:-true}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://192.168.1.95:3000}
       TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,192.168.1.95,backend,taaskmaaster-backend}
+      # Only the frontend proxy (static IPs below) may set X-Real-IP
+      TRUSTED_PROXY_IPS: 127.0.0.1,::1,172.29.40.10,fd00:4ce::10
     volumes:
       - ./backend:/app
       - task4ce_data:/app/data
@@ -67,7 +69,9 @@ services:
       backend:
         condition: service_healthy
     networks:
-      - taaskmaaster-network
+      taaskmaaster-network:
+        ipv4_address: 172.29.40.10
+        ipv6_address: fd00:4ce::10
     restart: unless-stopped
     # Memory limits to prevent SIGBUS errors
     mem_limit: 2g
@@ -109,3 +113,8 @@ networks:
     internal: false
     # Enable IPv6 support
     enable_ipv6: true
+    # Fixed subnets so the frontend proxy has a known IP (TRUSTED_PROXY_IPS)
+    ipam:
+      config:
+        - subnet: 172.29.40.0/24
+        - subnet: fd00:4ce::/64

@@ -34,6 +34,8 @@ class Settings(BaseSettings):
     BLOCKER_URL: str = "http://127.0.0.1:7777"
     LOCK_INTERVAL_SECONDS: int = 30
     LOCK_LOOP_ENABLED: bool = True
+    # Peers allowed to set X-Real-IP (our frontend proxy); comma list
+    TRUSTED_PROXY_IPS: str = "127.0.0.1,::1,::ffff:127.0.0.1"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7

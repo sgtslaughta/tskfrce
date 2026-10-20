@@ -1,6 +1,5 @@
 """Kid API: kids are identified by the device they use (no password)."""
 
-import ipaddress
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -10,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user, get_db
 from app.core.auth import AuthService
-from app.core.client_ip import client_ip
+from app.core.client_ip import client_ip, norm_ip
 from app.core.ratelimit import check, hit
 from app.lock.loop import trigger
 from app.lock.reset import chore_state, current_chore_day, is_chore_filter, midnight
@@ -37,15 +36,6 @@ def require_kid(user: User = Depends(get_current_active_user)) -> User:
     if user.role != UserRole.KID:
         raise HTTPException(status_code=403, detail="Only kids can do this.")
     return user
-
-
-def norm_ip(x: str | None) -> str | None:
-    """Canonical form (IPv4-mapped IPv6 -> IPv4, zone id dropped); None if not an IP."""
-    try:
-        a = ipaddress.ip_address(str(x).split("%")[0].strip())
-    except ValueError:
-        return None
-    return str(getattr(a, "ipv4_mapped", None) or a)
 
 
 def request_device(db: Session, ip: str) -> Device | None:

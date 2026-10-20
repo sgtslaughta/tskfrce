@@ -100,12 +100,18 @@ app.prepare()
           // Try direct WebSocket proxy instead of middleware
           const http = require('http');
           const backendUrlObj = new URL(backendUrl);
+          // Never pass client-supplied IP headers; X-Real-IP comes from the socket.
+          const headers = { ...req.headers };
+          delete headers['x-real-ip'];
+          delete headers['x-forwarded-for'];
+          delete headers['forwarded'];
+          headers['x-real-ip'] = (req.socket.remoteAddress || '').replace(/^::ffff:/, '');
           const proxyReq = http.request({
             hostname: backendUrlObj.hostname,
             port: backendUrlObj.port,
             path: req.url,
             method: req.method,
-            headers: req.headers
+            headers
           });
           
           proxyReq.on('upgrade', (res, proxySocket, proxyHead) => {
