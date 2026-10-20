@@ -27,7 +27,7 @@ if DATABASE_URL.startswith("sqlite"):
         DATABASE_URL,
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
-        echo=settings.DEBUG
+        echo=settings.DEBUG,
     )
 else:
     # PostgreSQL/MySQL configuration
@@ -37,15 +37,11 @@ else:
         pool_recycle=300,
         pool_size=10,
         max_overflow=20,
-        echo=settings.DEBUG
+        echo=settings.DEBUG,
     )
 
 # Create SessionLocal class
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create declarative base
 Base = declarative_base()
@@ -86,8 +82,8 @@ def get_database_info():
         "url": DATABASE_URL,
         "driver": engine.driver,
         "dialect": engine.dialect.name,
-        "pool_size": engine.pool.size() if hasattr(engine.pool, 'size') else None,
-        "checked_out": engine.pool.checkedout() if hasattr(engine.pool, 'checkedout') else None,
+        "pool_size": engine.pool.size() if hasattr(engine.pool, "size") else None,
+        "checked_out": engine.pool.checkedout() if hasattr(engine.pool, "checkedout") else None,
     }
 
 
@@ -95,17 +91,17 @@ class DatabaseManager:
     """
     Database manager for handling connections and transactions.
     """
-    
+
     def __init__(self):
         self.engine = engine
         self.SessionLocal = SessionLocal
-    
+
     def get_session(self):
         """
         Get a database session.
         """
         return self.SessionLocal()
-    
+
     def health_check(self) -> bool:
         """
         Check if database is healthy and accessible.
@@ -117,7 +113,7 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Database health check failed: {e}")
             return False
-    
+
     def get_stats(self) -> dict:
         """
         Get database statistics.
@@ -145,20 +141,20 @@ def init_database():
     """
     try:
         logger.info("Initializing database...")
-        
+
         # Import all models to ensure they are registered with Base metadata
         # This is done here to avoid circular imports
         _import_all_models()
-        
+
         # Test connection
         if not db_manager.health_check():
             raise Exception("Database health check failed")
-        
+
         # Create tables if they don't exist
         create_database()
-        
+
         logger.info("Database initialized successfully")
-        
+
     except Exception as e:
         logger.error(f"Database initialization failed: {e}")
         raise
@@ -168,23 +164,41 @@ def _import_all_models():
     """Import all models to register them with SQLAlchemy metadata."""
     try:
         logger.info("Importing models...")
-        
+
         # Import all models here to register them
         from app.models import (
-            User, Task, TaskTemplate, TaskCategory, TaskTag, TaskDependency,
-            Goal, GoalProgress, Achievement, UserAchievement, Points, Leaderboard,
-            MediaAttachment, TaskComment, CommentReaction, CommentMention,
-            DirectMessage, MessageReaction, Conversation, ConversationSettings
+            User,
+            Task,
+            TaskTemplate,
+            TaskCategory,
+            TaskTag,
+            TaskDependency,
+            Goal,
+            GoalProgress,
+            Achievement,
+            UserAchievement,
+            Points,
+            Leaderboard,
+            MediaAttachment,
+            TaskComment,
+            CommentReaction,
+            CommentMention,
+            DirectMessage,
+            MessageReaction,
+            Conversation,
+            ConversationSettings,
         )
-        
+
         # Import additional models that might exist
         try:
             from app.models import CommentAuditTrail, TaskStatusHistory, UserStatus
         except ImportError:
-            logger.info("Optional models (CommentAuditTrail, TaskStatusHistory, UserStatus) not found, skipping")
-            
+            logger.info(
+                "Optional models (CommentAuditTrail, TaskStatusHistory, UserStatus) not found, skipping"
+            )
+
         logger.info("All models imported successfully")
-        
+
     except ImportError as e:
         logger.warning(f"Some models could not be imported: {e}")
         raise

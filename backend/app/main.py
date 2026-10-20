@@ -135,7 +135,9 @@ fastapi_app.include_router(workflow_router, prefix="/api/v1/workflow", tags=["wo
 fastapi_app.include_router(messaging_router, prefix="/api/v1/messages", tags=["messaging"])
 fastapi_app.include_router(mentions_router, prefix="/api/v1/mentions", tags=["mentions"])
 fastapi_app.include_router(presence_router, prefix="/api/v1/presence", tags=["presence"])
-fastapi_app.include_router(notifications_router, prefix="/api/v1/notifications", tags=["notifications"])
+fastapi_app.include_router(
+    notifications_router, prefix="/api/v1/notifications", tags=["notifications"]
+)
 fastapi_app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
 
 # Create the final app with ASGI middleware
@@ -206,15 +208,11 @@ async def api_status() -> dict[str, Any]:
 async def not_found_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle 404 errors."""
     logger.warning("404 error", path=request.url.path, method=request.method)
-    return JSONResponse(
-        status_code=404, content={"detail": "Endpoint not found"}
-    )
+    return JSONResponse(status_code=404, content={"detail": "Endpoint not found"})
 
 
 @fastapi_app.exception_handler(500)
-async def internal_error_handler(
-    request: Request, exc: Exception
-) -> JSONResponse:
+async def internal_error_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handle 500 errors."""
     logger.error(
         "Internal server error",
@@ -222,9 +220,7 @@ async def internal_error_handler(
         method=request.method,
         error=str(exc),
     )
-    return JSONResponse(
-        status_code=500, content={"detail": "Internal server error"}
-    )
+    return JSONResponse(status_code=500, content={"detail": "Internal server error"})
 
 
 async def initialize_minio() -> None:
@@ -241,6 +237,7 @@ async def initialize_redis() -> None:
     """Initialize Redis service."""
     try:
         from app.services.redis_service import redis_service
+
         if redis_service.available:
             logger.info("Redis service initialized successfully")
         else:
@@ -268,7 +265,7 @@ async def startup_event():
 
     # Initialize database
     from app.core.database import init_database
-    
+
     init_database()
     logger.info("Database tables created")
 

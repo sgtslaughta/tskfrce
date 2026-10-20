@@ -24,12 +24,8 @@ router = APIRouter(prefix="/api/v1/media", tags=["media"])
 @router.get("/attachments", response_model=MediaAttachmentList)
 async def get_user_attachments(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of records to return"
-    ),
-    media_type: Optional[MediaType] = Query(
-        None, description="Filter by media type"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
+    media_type: Optional[MediaType] = Query(None, description="Filter by media type"),
     db: Session = Depends(get_db_session),
     # TODO: Add authentication dependency
     current_user_id: int = 1,  # Temporary for development
@@ -52,9 +48,7 @@ async def get_user_attachments(
     )
 
 
-@router.get(
-    "/attachments/{attachment_id}", response_model=MediaAttachmentResponse
-)
+@router.get("/attachments/{attachment_id}", response_model=MediaAttachmentResponse)
 async def get_media_attachment(
     attachment_id: int,
     db: Session = Depends(get_db_session),
@@ -63,9 +57,7 @@ async def get_media_attachment(
 ):
     """Get a specific media attachment by ID."""
     media_service = MediaService(db)
-    attachment = media_service.get_media_attachment(
-        attachment_id, current_user_id
-    )
+    attachment = media_service.get_media_attachment(attachment_id, current_user_id)
 
     if not attachment:
         raise HTTPException(
@@ -91,9 +83,7 @@ async def validate_file_upload(
     # Create a mock upload request for validation
     from app.schemas.media import FileUploadRequest
 
-    upload_request = FileUploadRequest(
-        filename=filename, file_size=file_size, mime_type=mime_type
-    )
+    upload_request = FileUploadRequest(filename=filename, file_size=file_size, mime_type=mime_type)
 
     validation_result = media_service.validate_file_upload(upload_request)
     return validation_result
@@ -103,9 +93,7 @@ async def validate_file_upload(
 async def get_task_attachments(
     task_id: int,
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of records to return"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
     db: Session = Depends(get_db_session),
     # TODO: Add authentication dependency
     current_user_id: int = 1,  # Temporary for development
@@ -128,9 +116,7 @@ async def get_task_attachments(
     )
 
 
-@router.delete(
-    "/attachments/{attachment_id}", status_code=status.HTTP_204_NO_CONTENT
-)
+@router.delete("/attachments/{attachment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_media_attachment(
     attachment_id: int,
     db: Session = Depends(get_db_session),
@@ -139,9 +125,7 @@ async def delete_media_attachment(
 ):
     """Delete a media attachment."""
     media_service = MediaService(db)
-    success = media_service.delete_media_attachment(
-        attachment_id, current_user_id
-    )
+    success = media_service.delete_media_attachment(attachment_id, current_user_id)
 
     if not success:
         raise HTTPException(
@@ -194,9 +178,7 @@ async def get_download_url(
 ):
     """Get presigned download URL for a media attachment."""
     media_service = MediaService(db)
-    download_url = media_service.get_download_url(
-        attachment_id, current_user_id, expires
-    )
+    download_url = media_service.get_download_url(attachment_id, current_user_id, expires)
 
     if not download_url:
         raise HTTPException(

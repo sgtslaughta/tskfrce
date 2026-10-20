@@ -11,8 +11,13 @@ from .conversation import Conversation, ConversationSettings
 
 # Import from existing comment.py - models that are unique to comment.py
 from .comment import (
-    CommentAuditTrail, TaskStatusHistory, UserStatus,
-    TaskChatMessage, MessageReadReceipt, DirectMessageMedia, TaskChatMessageMedia
+    CommentAuditTrail,
+    TaskStatusHistory,
+    UserStatus,
+    TaskChatMessage,
+    MessageReadReceipt,
+    DirectMessageMedia,
+    TaskChatMessageMedia,
 )
 from .gamification import Achievement, Leaderboard, Points, UserAchievement
 from .goal import Goal, GoalProgress
@@ -44,7 +49,6 @@ __all__ = [
     "CommentMediaAttachment",
     "DirectMessage",
     "MessageReaction",
-
     "Conversation",
     "ConversationSettings",
     # Additional comment models

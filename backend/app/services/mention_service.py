@@ -30,7 +30,7 @@ class MentionService:
         self.notification_service = NotificationService(db)
 
     # Mention pattern: @username (alphanumeric + underscore, 3-30 chars)
-    MENTION_PATTERN = re.compile(r'@([a-zA-Z0-9_]{3,30})')
+    MENTION_PATTERN = re.compile(r"@([a-zA-Z0-9_]{3,30})")
 
     def extract_mentions(self, content: str) -> List[str]:
         """
@@ -58,9 +58,7 @@ class MentionService:
         if not usernames:
             return []
 
-        valid_users = self.db.query(User).filter(
-            User.username.in_(usernames)
-        ).all()
+        valid_users = self.db.query(User).filter(User.username.in_(usernames)).all()
 
         return valid_users
 
@@ -70,7 +68,7 @@ class MentionService:
         context_type: str = "task",
         context_id: Optional[int] = None,
         search_query: Optional[str] = None,
-        limit: int = 10
+        limit: int = 10,
     ) -> List[dict]:
         """
         Get users that can be mentioned in a given context.
@@ -97,7 +95,7 @@ class MentionService:
                 relevant_user_ids = {task.created_by_id}
                 if task.assigned_to_id:
                     relevant_user_ids.add(task.assigned_to_id)
-                
+
                 # Also include users who have commented on the task
                 commenters = (
                     self.db.query(TaskComment.user_id)
@@ -106,7 +104,7 @@ class MentionService:
                     .all()
                 )
                 relevant_user_ids.update([c.user_id for c in commenters])
-                
+
                 # For now, include all users but prioritize relevant ones
                 # In a real system, you might want to filter more strictly
                 pass
@@ -116,16 +114,16 @@ class MentionService:
             search_terms = search_query.lower().split()
             search_conditions = []
             for term in search_terms:
-                search_conditions.extend([
-                    User.username.ilike(f"%{term}%"),
-                    User.first_name.ilike(f"%{term}%"),
-                    User.last_name.ilike(f"%{term}%"),
-                    User.email.ilike(f"%{term}%"),
-                ])
-            if search_conditions:
-                query = query.filter(
-                    db.or_(*search_conditions)
+                search_conditions.extend(
+                    [
+                        User.username.ilike(f"%{term}%"),
+                        User.first_name.ilike(f"%{term}%"),
+                        User.last_name.ilike(f"%{term}%"),
+                        User.email.ilike(f"%{term}%"),
+                    ]
                 )
+            if search_conditions:
+                query = query.filter(db.or_(*search_conditions))
 
         # Get users
         users = query.limit(limit).all()
@@ -139,21 +137,21 @@ class MentionService:
             elif user.first_name:
                 display_name = user.first_name
 
-            mentionable_users.append({
-                'id': user.id,
-                'username': user.username,
-                'display_name': display_name,
-                'email': user.email,
-                'mention_text': f"@{user.username}",
-                'avatar_url': None,  # TODO: Add avatar support
-            })
+            mentionable_users.append(
+                {
+                    "id": user.id,
+                    "username": user.username,
+                    "display_name": display_name,
+                    "email": user.email,
+                    "mention_text": f"@{user.username}",
+                    "avatar_url": None,  # TODO: Add avatar support
+                }
+            )
 
         return mentionable_users
 
     async def process_comment_mentions(
-        self,
-        comment: TaskComment,
-        mentioned_usernames: List[str]
+        self, comment: TaskComment, mentioned_usernames: List[str]
     ) -> List[User]:
         """
         Process mentions in a task comment and send notifications.
@@ -194,27 +192,26 @@ class MentionService:
 
             # Check if user has access to the task
             if not self._user_has_task_access(task.id, user.id):
-                logger.info(f"User {user.id} doesn't have access to task {task.id}, skipping mention")
+                logger.info(
+                    f"User {user.id} doesn't have access to task {task.id}, skipping mention"
+                )
                 continue
 
             try:
                 await self.notification_service.notify_user_mentioned(
-                    mentioned_user=user,
-                    mentioning_user=author,
-                    task=task,
-                    comment=comment
+                    mentioned_user=user, mentioning_user=author, task=task, comment=comment
                 )
                 notified_users.append(user)
             except Exception as e:
                 logger.error(f"Failed to send mention notification to user {user.id}: {e}")
 
-        logger.info(f"Processed {len(mentioned_usernames)} mentions, notified {len(notified_users)} users")
+        logger.info(
+            f"Processed {len(mentioned_usernames)} mentions, notified {len(notified_users)} users"
+        )
         return notified_users
 
     async def process_message_mentions(
-        self,
-        message: DirectMessage,
-        mentioned_usernames: List[str]
+        self, message: DirectMessage, mentioned_usernames: List[str]
     ) -> List[User]:
         """
         Process mentions in a direct message and send notifications.
@@ -246,9 +243,7 @@ class MentionService:
 
         try:
             await self.notification_service.notify_user_mentioned_in_message(
-                mentioned_user=recipient,
-                mentioning_user=sender,
-                message=message
+                mentioned_user=recipient, mentioning_user=sender, message=message
             )
             return [recipient]
         except Exception as e:
@@ -256,9 +251,7 @@ class MentionService:
             return []
 
     async def process_task_chat_mentions(
-        self,
-        message: TaskChatMessage,
-        mentioned_usernames: List[str]
+        self, message: TaskChatMessage, mentioned_usernames: List[str]
     ) -> List[User]:
         """
         Process mentions in a task chat message and send notifications.
@@ -299,21 +292,24 @@ class MentionService:
 
             # Check if user has access to the task
             if not self._user_has_task_access(task.id, user.id):
-                logger.info(f"User {user.id} doesn't have access to task {task.id}, skipping mention")
+                logger.info(
+                    f"User {user.id} doesn't have access to task {task.id}, skipping mention"
+                )
                 continue
 
             try:
                 await self.notification_service.notify_user_mentioned_in_task_chat(
-                    mentioned_user=user,
-                    mentioning_user=author,
-                    task=task,
-                    message=message
+                    mentioned_user=user, mentioning_user=author, task=task, message=message
                 )
                 notified_users.append(user)
             except Exception as e:
-                logger.error(f"Failed to send task chat mention notification to user {user.id}: {e}")
+                logger.error(
+                    f"Failed to send task chat mention notification to user {user.id}: {e}"
+                )
 
-        logger.info(f"Processed {len(mentioned_usernames)} task chat mentions, notified {len(notified_users)} users")
+        logger.info(
+            f"Processed {len(mentioned_usernames)} task chat mentions, notified {len(notified_users)} users"
+        )
         return notified_users
 
     def highlight_mentions_in_content(self, content: str, format_type: str = "html") -> str:
@@ -327,14 +323,15 @@ class MentionService:
         Returns:
             Content with highlighted mentions
         """
+
         def replace_mention(match):
             username = match.group(1)
             if format_type == "html":
                 return f'<span class="mention" data-username="{username}">@{username}</span>'
             elif format_type == "markdown":
-                return f'**@{username}**'
+                return f"**@{username}**"
             else:
-                return f'@{username}'
+                return f"@{username}"
 
         return self.MENTION_PATTERN.sub(replace_mention, content)
 
@@ -355,7 +352,6 @@ class MentionService:
 
         # User has access if they are the creator, assignee, or admin
         return (
-            task.created_by_id == user_id
-            or task.assigned_to_id == user_id
+            task.created_by_id == user_id or task.assigned_to_id == user_id
             # TODO: Add admin role check
         )

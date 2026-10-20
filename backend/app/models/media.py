@@ -68,15 +68,15 @@ class MediaAttachment(Base):
     metadata_json = Column(JSON, nullable=True)  # Additional file metadata
     is_public = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     task = relationship("Task", back_populates="media_attachments")
     user = relationship("User")
     comment_attachments = relationship("CommentMediaAttachment", back_populates="media")
-    direct_message_attachments = relationship("DirectMessageMedia", back_populates="media_attachment")
+    direct_message_attachments = relationship(
+        "DirectMessageMedia", back_populates="media_attachment"
+    )
     task_chat_attachments = relationship("TaskChatMessageMedia", back_populates="media_attachment")
 
     @property
@@ -107,6 +107,5 @@ class MediaAttachment(Base):
     def __repr__(self) -> str:
         """String representation of MediaAttachment."""
         return (
-            f"<MediaAttachment(id={self.id}, filename='{self.filename}', "
-            f"type='{self.media_type}')>"
+            f"<MediaAttachment(id={self.id}, filename='{self.filename}', type='{self.media_type}')>"
         )

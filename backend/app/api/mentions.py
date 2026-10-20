@@ -22,34 +22,32 @@ router = APIRouter()
 def get_user_data_from_header(x_user_data: Optional[str] = Header(None)) -> dict:
     """
     Extract user data from X-User-Data header.
-    
+
     Args:
         x_user_data: JSON string containing user data
-        
+
     Returns:
         Dictionary with user data
-        
+
     Raises:
         HTTPException: If header is missing or invalid
     """
     if not x_user_data:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="X-User-Data header is required"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="X-User-Data header is required"
         )
-    
+
     try:
         user_data = json.loads(x_user_data)
-        if 'user_id' not in user_data:
+        if "user_id" not in user_data:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="user_id is required in X-User-Data header"
+                detail="user_id is required in X-User-Data header",
             )
         return user_data
     except json.JSONDecodeError:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid JSON in X-User-Data header"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON in X-User-Data header"
         )
 
 
@@ -60,20 +58,20 @@ async def get_mention_suggestions(
     search: Optional[str] = Query(None, description="Search query to filter users"),
     limit: int = Query(default=10, le=50, description="Maximum number of suggestions"),
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None)
+    x_user_data: Optional[str] = Header(None),
 ):
     """
     Get mention suggestions for autocomplete.
-    
+
     **Headers:**
     - X-User-Data: JSON containing user information
-    
+
     **Query Parameters:**
     - context_type: Type of context (task, direct_message, general)
     - context_id: Optional context ID (e.g., task_id for task context)
     - search: Optional search query to filter users by name/username
     - limit: Maximum number of suggestions to return
-    
+
     **Response:**
     ```json
     {
@@ -92,7 +90,7 @@ async def get_mention_suggestions(
     """
     user_data = get_user_data_from_header(x_user_data)
     user_id = user_data["user_id"]
-    
+
     try:
         mention_service = MentionService(db)
         suggestions = mention_service.get_mentionable_users(
@@ -100,38 +98,35 @@ async def get_mention_suggestions(
             context_type=context_type,
             context_id=context_id,
             search_query=search,
-            limit=limit
+            limit=limit,
         )
-        
+
         return {"suggestions": suggestions}
-        
+
     except Exception as e:
         logger.error(f"Error getting mention suggestions: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error"
         )
 
 
 @router.post("/extract")
 async def extract_mentions(
-    content: str,
-    db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None)
+    content: str, db: Session = Depends(get_db), x_user_data: Optional[str] = Header(None)
 ):
     """
     Extract mentions from content.
-    
+
     **Headers:**
     - X-User-Data: JSON containing user information
-    
+
     **Request Body:**
     ```json
     {
       "content": "Hey @john_doe, can you check @jane_smith's work?"
     }
     ```
-    
+
     **Response:**
     ```json
     {
@@ -155,17 +150,17 @@ async def extract_mentions(
     ```
     """
     user_data = get_user_data_from_header(x_user_data)
-    
+
     try:
         mention_service = MentionService(db)
-        
+
         # Extract mentioned usernames
         mentioned_usernames = mention_service.extract_mentions(content)
-        
+
         # Validate mentions
         valid_users = mention_service.validate_mentions(mentioned_usernames)
         valid_usernames = {user.username: user for user in valid_users}
-        
+
         # Build response
         mentions = []
         for username in mentioned_usernames:
@@ -176,31 +171,28 @@ async def extract_mentions(
                     display_name = f"{user.first_name} {user.last_name}"
                 elif user.first_name:
                     display_name = user.first_name
-                
-                mentions.append({
-                    "username": username,
-                    "valid": True,
-                    "user": {
-                        "id": user.id,
-                        "username": user.username,
-                        "display_name": display_name,
-                        "email": user.email,
+
+                mentions.append(
+                    {
+                        "username": username,
+                        "valid": True,
+                        "user": {
+                            "id": user.id,
+                            "username": user.username,
+                            "display_name": display_name,
+                            "email": user.email,
+                        },
                     }
-                })
+                )
             else:
-                mentions.append({
-                    "username": username,
-                    "valid": False,
-                    "user": None
-                })
-        
+                mentions.append({"username": username, "valid": False, "user": None})
+
         return {"mentions": mentions}
-        
+
     except Exception as e:
         logger.error(f"Error extracting mentions: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error"
         )
 
 
@@ -209,14 +201,14 @@ async def highlight_mentions(
     content: str,
     format_type: str = "html",
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None)
+    x_user_data: Optional[str] = Header(None),
 ):
     """
     Highlight mentions in content for display.
-    
+
     **Headers:**
     - X-User-Data: JSON containing user information
-    
+
     **Request Body:**
     ```json
     {
@@ -224,7 +216,7 @@ async def highlight_mentions(
       "format_type": "html"
     }
     ```
-    
+
     **Response:**
     ```json
     {
@@ -233,18 +225,15 @@ async def highlight_mentions(
     ```
     """
     user_data = get_user_data_from_header(x_user_data)
-    
+
     try:
         mention_service = MentionService(db)
-        highlighted_content = mention_service.highlight_mentions_in_content(
-            content, format_type
-        )
-        
+        highlighted_content = mention_service.highlight_mentions_in_content(content, format_type)
+
         return {"highlighted_content": highlighted_content}
-        
+
     except Exception as e:
         logger.error(f"Error highlighting mentions: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error"
         )

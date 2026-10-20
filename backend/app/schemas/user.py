@@ -14,13 +14,9 @@ from app.models.user import UserRole
 class UserBase(BaseModel):
     """Base user schema with common fields."""
 
-    username: str = Field(
-        ..., min_length=3, max_length=50, description="Unique username"
-    )
+    username: str = Field(..., min_length=3, max_length=50, description="Unique username")
     email: EmailStr = Field(..., description="User email address")
-    full_name: Optional[str] = Field(
-        None, max_length=255, description="User's full name"
-    )
+    full_name: Optional[str] = Field(None, max_length=255, description="User's full name")
     timezone: str = Field(default="UTC", description="User's timezone")
 
 

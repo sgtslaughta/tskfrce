@@ -78,9 +78,7 @@ class MinIOStorageService:
                 metadata=metadata,
             )
 
-            logger.info(
-                f"Uploaded file to MinIO: {object_name} ({file_size} bytes)"
-            )
+            logger.info(f"Uploaded file to MinIO: {object_name} ({file_size} bytes)")
             return object_name
 
         except S3Error as e:
@@ -107,9 +105,7 @@ class MinIOStorageService:
             Object name/key
         """
         file_stream = io.BytesIO(file_data)
-        return self.upload_file(
-            file_stream, object_name, content_type, metadata
-        )
+        return self.upload_file(file_stream, object_name, content_type, metadata)
 
     def download_file(self, object_name: str) -> bytes:
         """
@@ -127,10 +123,7 @@ class MinIOStorageService:
             response.close()
             response.release_conn()
 
-            logger.info(
-                f"Downloaded file from MinIO: {object_name} "
-                f"({len(file_data)} bytes)"
-            )
+            logger.info(f"Downloaded file from MinIO: {object_name} ({len(file_data)} bytes)")
             return file_data
 
         except S3Error as e:
@@ -156,9 +149,7 @@ class MinIOStorageService:
             logger.error(f"Error deleting file from MinIO: {e}")
             return False
 
-    def get_presigned_url(
-        self, object_name: str, method: str = "GET", expires: int = 3600
-    ) -> str:
+    def get_presigned_url(self, object_name: str, method: str = "GET", expires: int = 3600) -> str:
         """
         Generate presigned URL for file access.
 
@@ -178,10 +169,7 @@ class MinIOStorageService:
                 expires=timedelta(seconds=expires),
             )
 
-            logger.info(
-                f"Generated presigned URL for {object_name} "
-                f"(expires in {expires}s)"
-            )
+            logger.info(f"Generated presigned URL for {object_name} (expires in {expires}s)")
             return url
 
         except S3Error as e:
@@ -212,10 +200,7 @@ class MinIOStorageService:
                 expires=timedelta(seconds=expires),
             )
 
-            logger.info(
-                f"Generated upload URL for {object_name} "
-                f"(expires in {expires}s)"
-            )
+            logger.info(f"Generated upload URL for {object_name} (expires in {expires}s)")
             return url
 
         except S3Error as e:
@@ -269,9 +254,7 @@ class MinIOStorageService:
             Storage statistics dictionary
         """
         try:
-            objects = list(
-                self.client.list_objects(self.bucket_name, recursive=True)
-            )
+            objects = list(self.client.list_objects(self.bucket_name, recursive=True))
 
             total_files = len(objects)
             total_size = sum(obj.size for obj in objects)

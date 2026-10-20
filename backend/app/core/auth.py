@@ -43,9 +43,7 @@ class AuthService:
         self.db = db
         self.user_service = UserService(db)
 
-    def verify_password(
-        self, plain_password: str, hashed_password: str
-    ) -> bool:
+    def verify_password(self, plain_password: str, hashed_password: str) -> bool:
         """
         Verify a plain password against its hash.
 
@@ -70,9 +68,7 @@ class AuthService:
         """
         return pwd_context.hash(password)
 
-    def authenticate_user(
-        self, username: str, password: str
-    ) -> Optional[User]:
+    def authenticate_user(self, username: str, password: str) -> Optional[User]:
         """
         Authenticate a user with username/email and password.
 
@@ -101,9 +97,7 @@ class AuthService:
         logger.info(f"User {user.id} authenticated successfully")
         return user
 
-    def create_access_token(
-        self, data: dict, expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
         """
         Create a JWT access token.
 
@@ -118,17 +112,13 @@ class AuthService:
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(
-                minutes=ACCESS_TOKEN_EXPIRE_MINUTES
-            )
+            expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
 
         to_encode.update({"exp": expire, "type": "access"})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
-    def create_refresh_token(
-        self, data: dict, expires_delta: Optional[timedelta] = None
-    ) -> str:
+    def create_refresh_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
         """
         Create a JWT refresh token.
 
@@ -143,9 +133,7 @@ class AuthService:
         if expires_delta:
             expire = datetime.utcnow() + expires_delta
         else:
-            expire = datetime.utcnow() + timedelta(
-                days=REFRESH_TOKEN_EXPIRE_DAYS
-            )
+            expire = datetime.utcnow() + timedelta(days=REFRESH_TOKEN_EXPIRE_DAYS)
 
         to_encode.update({"exp": expire, "type": "refresh"})
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
@@ -184,7 +172,7 @@ class AuthService:
         user_id = payload.get("sub")
         if user_id is None:
             return None
-        
+
         try:
             user_id = int(user_id)
         except (ValueError, TypeError):
@@ -243,9 +231,7 @@ def get_current_active_user(
         HTTPException: If user is inactive
     """
     if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
     return current_user
 
 

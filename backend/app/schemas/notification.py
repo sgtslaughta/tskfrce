@@ -16,7 +16,9 @@ class NotificationBase(BaseModel):
     type: str = Field(..., description="Notification type")
     title: str = Field(..., max_length=255, description="Notification title")
     message: str = Field(..., description="Notification message")
-    action_url: Optional[str] = Field(None, max_length=500, description="URL for notification action")
+    action_url: Optional[str] = Field(
+        None, max_length=500, description="URL for notification action"
+    )
     data: Optional[Dict[str, Any]] = Field(None, description="Additional notification data")
 
 
@@ -65,9 +67,13 @@ class NotificationGetRequest(BaseModel):
     """Schema for getting notifications."""
 
     skip: int = Field(default=0, ge=0, description="Number of notifications to skip")
-    limit: int = Field(default=50, ge=1, le=100, description="Maximum number of notifications to return")
+    limit: int = Field(
+        default=50, ge=1, le=100, description="Maximum number of notifications to return"
+    )
     unread_only: bool = Field(default=False, description="Only return unread notifications")
-    notification_types: Optional[List[str]] = Field(None, description="Filter by notification types")
+    notification_types: Optional[List[str]] = Field(
+        None, description="Filter by notification types"
+    )
 
 
 class NotificationDeleteRequest(BaseModel):

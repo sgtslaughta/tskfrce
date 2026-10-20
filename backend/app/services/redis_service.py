@@ -23,7 +23,7 @@ logger = get_logger(__name__)
 class RedisService:
     """
     Redis service for caching, sessions, and performance optimizations.
-    
+
     This service provides:
     - Database query caching
     - User session management
@@ -77,17 +77,17 @@ class RedisService:
     def cache_get(self, key: str, default: Any = None) -> Any:
         """
         Get cached data by key.
-        
+
         Args:
             key: Cache key
             default: Default value if key not found
-            
+
         Returns:
             Cached data or default value
         """
         if not self.available:
             return default
-        
+
         try:
             data = self.client.get(key)
             return self._deserialize(data) if data else default
@@ -95,26 +95,21 @@ class RedisService:
             logger.error(f"Redis cache get error: {e}")
             return default
 
-    def cache_set(
-        self, 
-        key: str, 
-        value: Any, 
-        expire: Optional[int] = 3600
-    ) -> bool:
+    def cache_set(self, key: str, value: Any, expire: Optional[int] = 3600) -> bool:
         """
         Set cached data with optional expiration.
-        
+
         Args:
             key: Cache key
             value: Data to cache
             expire: Expiration time in seconds (default: 1 hour)
-            
+
         Returns:
             True if successful, False otherwise
         """
         if not self.available:
             return False
-        
+
         try:
             serialized = self._serialize(value)
             if expire:
@@ -129,7 +124,7 @@ class RedisService:
         """Delete cached data by key."""
         if not self.available:
             return False
-        
+
         try:
             return bool(self.client.delete(key))
         except RedisError as e:
@@ -140,7 +135,7 @@ class RedisService:
         """Delete all keys matching pattern."""
         if not self.available:
             return 0
-        
+
         try:
             keys = self.client.keys(pattern)
             if keys:
@@ -152,20 +147,15 @@ class RedisService:
 
     # ==================== SESSION MANAGEMENT ====================
 
-    def set_session(
-        self, 
-        session_id: str, 
-        user_data: Dict[str, Any], 
-        expire: int = 3600
-    ) -> bool:
+    def set_session(self, session_id: str, user_data: Dict[str, Any], expire: int = 3600) -> bool:
         """
         Store user session data.
-        
+
         Args:
             session_id: Unique session identifier
             user_data: User session data
             expire: Session expiration time in seconds
-            
+
         Returns:
             True if successful, False otherwise
         """
@@ -186,7 +176,7 @@ class RedisService:
         """Refresh session expiration time."""
         if not self.available:
             return False
-        
+
         try:
             key = f"session:{session_id}"
             return bool(self.client.expire(key, expire))
@@ -196,57 +186,48 @@ class RedisService:
 
     # ==================== RATE LIMITING ====================
 
-    def check_rate_limit(
-        self, 
-        identifier: str, 
-        max_requests: int, 
-        window: int
-    ) -> Dict[str, Any]:
+    def check_rate_limit(self, identifier: str, max_requests: int, window: int) -> Dict[str, Any]:
         """
         Check and update rate limit for an identifier.
-        
+
         Args:
             identifier: Rate limit identifier (IP, user_id, etc.)
             max_requests: Maximum requests allowed in window
             window: Time window in seconds
-            
+
         Returns:
             Rate limit status dictionary
         """
         if not self.available:
             return {"allowed": True, "remaining": max_requests, "reset": 0}
-        
+
         try:
             key = f"rate_limit:{identifier}"
             current = self.client.get(key)
-            
+
             if current is None:
                 # First request in window
                 self.client.setex(key, window, 1)
                 return {
                     "allowed": True,
                     "remaining": max_requests - 1,
-                    "reset": int(time.time()) + window
+                    "reset": int(time.time()) + window,
                 }
-            
+
             current_count = int(current)
             if current_count >= max_requests:
                 # Rate limit exceeded
                 ttl = self.client.ttl(key)
-                return {
-                    "allowed": False,
-                    "remaining": 0,
-                    "reset": int(time.time()) + ttl
-                }
-            
+                return {"allowed": False, "remaining": 0, "reset": int(time.time()) + ttl}
+
             # Increment counter
             self.client.incr(key)
             return {
                 "allowed": True,
                 "remaining": max_requests - current_count - 1,
-                "reset": int(time.time()) + self.client.ttl(key)
+                "reset": int(time.time()) + self.client.ttl(key),
             }
-            
+
         except RedisError as e:
             logger.error(f"Redis rate limit error: {e}")
             return {"allowed": True, "remaining": max_requests, "reset": 0}
@@ -309,15 +290,15 @@ class RedisService:
         """Invalidate task-related cache."""
         if not self.available:
             return False
-        
+
         try:
             # Delete user tasks cache
             self.cache_delete(f"user_tasks:{user_id}")
-            
+
             # Delete specific task cache if provided
             if task_id:
                 self.cache_delete(f"task:{task_id}")
-            
+
             return True
         except RedisError as e:
             logger.error(f"Redis task cache invalidation error: {e}")
@@ -329,7 +310,7 @@ class RedisService:
         """Publish event to Redis channel for real-time updates."""
         if not self.available:
             return False
-        
+
         try:
             serialized = self._serialize(message)
             return bool(self.client.publish(channel, serialized))
@@ -341,7 +322,7 @@ class RedisService:
         """Subscribe to Redis channel for real-time updates."""
         if not self.available:
             return None
-        
+
         try:
             pubsub = self.client.pubsub()
             pubsub.subscribe(channel)
@@ -356,7 +337,7 @@ class RedisService:
         """Get Redis statistics."""
         if not self.available:
             return {"available": False, "error": "Redis not available"}
-        
+
         try:
             info = self.client.info()
             return {
@@ -375,7 +356,7 @@ class RedisService:
         """Clear all Redis data (use with caution)."""
         if not self.available:
             return False
-        
+
         try:
             self.client.flushdb()
             logger.info("Redis database cleared")
@@ -388,7 +369,7 @@ class RedisService:
         """Check Redis health."""
         if not self.available:
             return False
-        
+
         try:
             return self.client.ping()
         except RedisError:

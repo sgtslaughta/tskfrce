@@ -111,9 +111,7 @@ def get_database_url() -> str:
         )
 
     else:
-        raise ValueError(
-            f"Unsupported database type: {settings.database_type}"
-        )
+        raise ValueError(f"Unsupported database type: {settings.database_type}")
 
 
 def get_database_settings() -> DatabaseSettings:

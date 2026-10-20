@@ -91,7 +91,7 @@ attachment = media_service.create_media_attachment(
     user_id=user_id,
     file_data=file_stream,
     file_size=file_size,
-    mime_type="application/pdf"
+    mime_type="application/pdf",
 )
 ```
 
@@ -99,9 +99,7 @@ attachment = media_service.create_media_attachment(
 ```python
 # Get presigned download URL
 download_url = media_service.get_download_url(
-    attachment_id=attachment.id,
-    user_id=user_id,
-    expires=3600
+    attachment_id=attachment.id, user_id=user_id, expires=3600
 )
 ```
 
@@ -109,9 +107,7 @@ download_url = media_service.get_download_url(
 ```python
 # Generate upload URL for client-side upload
 upload_url = media_service.get_upload_url(
-    filename="image.jpg",
-    mime_type="image/jpeg",
-    user_id=user_id
+    filename="image.jpg", mime_type="image/jpeg", user_id=user_id
 )
 ```
 

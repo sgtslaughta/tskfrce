@@ -134,7 +134,6 @@ class TestSecurity:
             assert header in headers, f"Missing security header: {header}"
 
 
-
 if __name__ == "__main__":
     pytest.main([__file__])
 

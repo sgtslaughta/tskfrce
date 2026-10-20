@@ -17,18 +17,14 @@ class MediaAttachmentBase(BaseModel):
 
     filename: str = Field(..., max_length=255, description="Original filename")
     description: Optional[str] = Field(None, description="File description")
-    is_public: bool = Field(
-        default=False, description="Whether file is publicly accessible"
-    )
+    is_public: bool = Field(default=False, description="Whether file is publicly accessible")
 
 
 class MediaAttachmentCreate(MediaAttachmentBase):
     """Schema for creating a media attachment."""
 
     task_id: Optional[int] = Field(None, description="Associated task ID")
-    metadata_json: Optional[Dict[str, Any]] = Field(
-        None, description="Additional metadata"
-    )
+    metadata_json: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
 
 
 class MediaAttachmentUpdate(BaseModel):
@@ -79,12 +75,8 @@ class FileUploadResponse(BaseModel):
     """Schema for file upload response."""
 
     attachment: MediaAttachmentResponse
-    upload_url: Optional[str] = Field(
-        None, description="URL for direct upload"
-    )
-    presigned_url: Optional[str] = Field(
-        None, description="Presigned URL for upload"
-    )
+    upload_url: Optional[str] = Field(None, description="URL for direct upload")
+    presigned_url: Optional[str] = Field(None, description="Presigned URL for upload")
 
 
 class FileUploadRequest(BaseModel):
@@ -95,6 +87,4 @@ class FileUploadRequest(BaseModel):
     file_size: int = Field(..., gt=0, description="File size in bytes")
     task_id: Optional[int] = Field(None, description="Associated task ID")
     description: Optional[str] = Field(None, description="File description")
-    is_public: bool = Field(
-        default=False, description="Whether file is publicly accessible"
-    )
+    is_public: bool = Field(default=False, description="Whether file is publicly accessible")

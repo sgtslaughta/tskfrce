@@ -94,13 +94,12 @@ class MessagingService:
         if media_attachment_ids:
             for media_id in media_attachment_ids:
                 # Verify media attachment exists
-                media = self.db.query(MediaAttachment).filter(
-                    MediaAttachment.id == media_id
-                ).first()
+                media = (
+                    self.db.query(MediaAttachment).filter(MediaAttachment.id == media_id).first()
+                )
                 if media:
                     attachment = DirectMessageMedia(
-                        message_id=message.id,
-                        media_attachment_id=media_id
+                        message_id=message.id, media_attachment_id=media_id
                     )
                     self.db.add(attachment)
 
@@ -111,20 +110,18 @@ class MessagingService:
         try:
             import asyncio
             from app.services.notification_service import NotificationService
-            
+
             notification_service = NotificationService(self.db)
-            
+
             # Create a new event loop if one doesn't exist
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-            
+
             # Send direct message notification
-            asyncio.create_task(
-                notification_service.notify_direct_message(message)
-            )
+            asyncio.create_task(notification_service.notify_direct_message(message))
         except Exception as e:
             logger.warning(f"Failed to send direct message notification: {e}")
 
@@ -210,27 +207,27 @@ class MessagingService:
         """
         # Get unique conversation partners with their latest messages
         # This is a complex query, so we'll do it in parts
-        
+
         # Get all users this user has messaged with
         sent_to = (
-            self.db.query(DirectMessage.to_user_id.label('other_user_id'))
+            self.db.query(DirectMessage.to_user_id.label("other_user_id"))
             .filter(DirectMessage.from_user_id == user_id)
             .distinct()
         )
-        
+
         received_from = (
-            self.db.query(DirectMessage.from_user_id.label('other_user_id'))
+            self.db.query(DirectMessage.from_user_id.label("other_user_id"))
             .filter(DirectMessage.to_user_id == user_id)
             .distinct()
         )
-        
+
         # Union the results
         conversation_partners = sent_to.union(received_from).all()
-        
+
         conversations = []
         for partner in conversation_partners:
             other_user_id = partner.other_user_id
-            
+
             # Get latest message between these users
             latest_message = (
                 self.db.query(DirectMessage)
@@ -249,11 +246,11 @@ class MessagingService:
                 .order_by(DirectMessage.created_at.desc())
                 .first()
             )
-            
+
             if latest_message:
                 # Get other user info
                 other_user = self.db.query(User).filter(User.id == other_user_id).first()
-                
+
                 # Count unread messages
                 unread_count = (
                     self.db.query(DirectMessage)
@@ -264,29 +261,30 @@ class MessagingService:
                     )
                     .count()
                 )
-                
-                conversations.append({
-                    'other_user': {
-                        'id': other_user.id,
-                        'username': other_user.username,
-                        'email': other_user.email,
-                    } if other_user else None,
-                    'latest_message': {
-                        'id': latest_message.id,
-                        'content': latest_message.content,
-                        'from_user_id': latest_message.from_user_id,
-                        'created_at': latest_message.created_at,
-                    },
-                    'unread_count': unread_count,
-                })
-        
+
+                conversations.append(
+                    {
+                        "other_user": {
+                            "id": other_user.id,
+                            "username": other_user.username,
+                            "email": other_user.email,
+                        }
+                        if other_user
+                        else None,
+                        "latest_message": {
+                            "id": latest_message.id,
+                            "content": latest_message.content,
+                            "from_user_id": latest_message.from_user_id,
+                            "created_at": latest_message.created_at,
+                        },
+                        "unread_count": unread_count,
+                    }
+                )
+
         # Sort by latest message timestamp
-        conversations.sort(
-            key=lambda x: x['latest_message']['created_at'],
-            reverse=True
-        )
-        
-        return conversations[skip:skip + limit]
+        conversations.sort(key=lambda x: x["latest_message"]["created_at"], reverse=True)
+
+        return conversations[skip : skip + limit]
 
     def mark_direct_message_as_read(
         self,
@@ -306,9 +304,7 @@ class MessagingService:
         Raises:
             ValueError: If message not found or user not recipient
         """
-        message = self.db.query(DirectMessage).filter(
-            DirectMessage.id == message_id
-        ).first()
+        message = self.db.query(DirectMessage).filter(DirectMessage.id == message_id).first()
 
         if not message:
             raise ValueError(f"Message {message_id} not found")
@@ -391,13 +387,12 @@ class MessagingService:
         if media_attachment_ids:
             for media_id in media_attachment_ids:
                 # Verify media attachment exists
-                media = self.db.query(MediaAttachment).filter(
-                    MediaAttachment.id == media_id
-                ).first()
+                media = (
+                    self.db.query(MediaAttachment).filter(MediaAttachment.id == media_id).first()
+                )
                 if media:
                     attachment = TaskChatMessageMedia(
-                        message_id=message.id,
-                        media_attachment_id=media_id
+                        message_id=message.id, media_attachment_id=media_id
                     )
                     self.db.add(attachment)
 
@@ -408,26 +403,22 @@ class MessagingService:
         try:
             import asyncio
             from app.services.notification_service import NotificationService
-            
+
             notification_service = NotificationService(self.db)
-            
+
             # Create a new event loop if one doesn't exist
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-            
+
             # Send task chat message notification
-            asyncio.create_task(
-                notification_service.notify_task_chat_message(message)
-            )
+            asyncio.create_task(notification_service.notify_task_chat_message(message))
         except Exception as e:
             logger.warning(f"Failed to send task chat message notification: {e}")
 
-        logger.info(
-            f"Task chat message {message.id} sent to task {task_id} by user {from_user_id}"
-        )
+        logger.info(f"Task chat message {message.id} sent to task {task_id} by user {from_user_id}")
         return message
 
     def get_task_chat_messages(
@@ -456,9 +447,7 @@ class MessagingService:
             raise ValueError("Insufficient permissions to view task messages")
 
         # Build query
-        query = self.db.query(TaskChatMessage).filter(
-            TaskChatMessage.task_id == task_id
-        )
+        query = self.db.query(TaskChatMessage).filter(TaskChatMessage.task_id == task_id)
 
         if before_timestamp:
             query = query.filter(TaskChatMessage.created_at < before_timestamp)
@@ -497,9 +486,7 @@ class MessagingService:
         Returns:
             True if marked as read
         """
-        message = self.db.query(TaskChatMessage).filter(
-            TaskChatMessage.id == message_id
-        ).first()
+        message = self.db.query(TaskChatMessage).filter(TaskChatMessage.id == message_id).first()
 
         if not message:
             raise ValueError(f"Message {message_id} not found")
@@ -509,12 +496,16 @@ class MessagingService:
             raise ValueError("Insufficient permissions")
 
         # Check if already marked as read by this user
-        existing_receipt = self.db.query(MessageReadReceipt).filter(
-            and_(
-                MessageReadReceipt.task_chat_message_id == message_id,
-                MessageReadReceipt.user_id == user_id,
+        existing_receipt = (
+            self.db.query(MessageReadReceipt)
+            .filter(
+                and_(
+                    MessageReadReceipt.task_chat_message_id == message_id,
+                    MessageReadReceipt.user_id == user_id,
+                )
             )
-        ).first()
+            .first()
+        )
 
         if existing_receipt:
             return True
@@ -547,8 +538,7 @@ class MessagingService:
 
         # User has access if they are the creator, assignee, or admin
         return (
-            task.created_by_id == user_id
-            or task.assigned_to_id == user_id
+            task.created_by_id == user_id or task.assigned_to_id == user_id
             # TODO: Add admin role check
         )
 
@@ -578,9 +568,7 @@ class UserStatusService:
             Updated or created UserStatus instance
         """
         # Get or create user status
-        user_status = self.db.query(UserStatus).filter(
-            UserStatus.user_id == user_id
-        ).first()
+        user_status = self.db.query(UserStatus).filter(UserStatus.user_id == user_id).first()
 
         if user_status:
             user_status.status = status
@@ -612,9 +600,7 @@ class UserStatusService:
         Returns:
             UserStatus instance or None
         """
-        return self.db.query(UserStatus).filter(
-            UserStatus.user_id == user_id
-        ).first()
+        return self.db.query(UserStatus).filter(UserStatus.user_id == user_id).first()
 
     def get_online_users(self, limit: int = 100) -> List[UserStatus]:
         """
@@ -645,9 +631,7 @@ class UserStatusService:
         Returns:
             True if updated successfully
         """
-        user_status = self.db.query(UserStatus).filter(
-            UserStatus.user_id == user_id
-        ).first()
+        user_status = self.db.query(UserStatus).filter(UserStatus.user_id == user_id).first()
 
         if user_status:
             user_status.status = "offline"
@@ -659,11 +643,7 @@ class UserStatusService:
 
     # Message Threading methods
     def get_conversation_threads(
-        self,
-        user1_id: int,
-        user2_id: int,
-        skip: int = 0,
-        limit: int = 20
+        self, user1_id: int, user2_id: int, skip: int = 0, limit: int = 20
     ) -> List[dict]:
         """
         Get conversation threads between two users.
@@ -683,21 +663,19 @@ class UserStatusService:
         subquery = (
             self.db.query(
                 DirectMessage.thread_id,
-                func.max(DirectMessage.created_at).label('latest_message_at'),
-                func.count(DirectMessage.id).label('message_count')
+                func.max(DirectMessage.created_at).label("latest_message_at"),
+                func.count(DirectMessage.id).label("message_count"),
             )
             .filter(
                 or_(
                     and_(
-                        DirectMessage.from_user_id == user1_id,
-                        DirectMessage.to_user_id == user2_id
+                        DirectMessage.from_user_id == user1_id, DirectMessage.to_user_id == user2_id
                     ),
                     and_(
-                        DirectMessage.from_user_id == user2_id,
-                        DirectMessage.to_user_id == user1_id
-                    )
+                        DirectMessage.from_user_id == user2_id, DirectMessage.to_user_id == user1_id
+                    ),
                 ),
-                DirectMessage.thread_id.isnot(None)
+                DirectMessage.thread_id.isnot(None),
             )
             .group_by(DirectMessage.thread_id)
             .subquery()
@@ -709,16 +687,16 @@ class UserStatusService:
                 subquery.c.thread_id,
                 subquery.c.latest_message_at,
                 subquery.c.message_count,
-                DirectMessage.content.label('latest_content'),
-                DirectMessage.from_user_id.label('latest_from_user_id'),
-                User.username.label('latest_from_username')
+                DirectMessage.content.label("latest_content"),
+                DirectMessage.from_user_id.label("latest_from_user_id"),
+                User.username.label("latest_from_username"),
             )
             .join(
                 DirectMessage,
                 and_(
                     DirectMessage.thread_id == subquery.c.thread_id,
-                    DirectMessage.created_at == subquery.c.latest_message_at
-                )
+                    DirectMessage.created_at == subquery.c.latest_message_at,
+                ),
             )
             .join(User, User.id == DirectMessage.from_user_id)
             .order_by(desc(subquery.c.latest_message_at))
@@ -730,16 +708,18 @@ class UserStatusService:
 
         threads = []
         for thread_result in thread_results:
-            threads.append({
-                'thread_id': thread_result.thread_id,
-                'message_count': thread_result.message_count,
-                'latest_message_at': thread_result.latest_message_at,
-                'latest_message': {
-                    'content': thread_result.latest_content,
-                    'from_user_id': thread_result.latest_from_user_id,
-                    'from_username': thread_result.latest_from_username
+            threads.append(
+                {
+                    "thread_id": thread_result.thread_id,
+                    "message_count": thread_result.message_count,
+                    "latest_message_at": thread_result.latest_message_at,
+                    "latest_message": {
+                        "content": thread_result.latest_content,
+                        "from_user_id": thread_result.latest_from_user_id,
+                        "from_username": thread_result.latest_from_username,
+                    },
                 }
-            })
+            )
 
         return threads
 
@@ -749,7 +729,7 @@ class UserStatusService:
         to_user_id: int,
         initial_message: str,
         content_type: str = "markdown",
-        media_attachment_ids: Optional[List[int]] = None
+        media_attachment_ids: Optional[List[int]] = None,
     ) -> dict:
         """
         Create a new message thread between two users.
@@ -776,14 +756,14 @@ class UserStatusService:
             content=initial_message,
             content_type=content_type,
             thread_id=thread_id,
-            media_attachment_ids=media_attachment_ids
+            media_attachment_ids=media_attachment_ids,
         )
 
         return {
-            'thread_id': thread_id,
-            'created_at': message.created_at,
-            'initial_message': message,
-            'participant_ids': [from_user_id, to_user_id]
+            "thread_id": thread_id,
+            "created_at": message.created_at,
+            "initial_message": message,
+            "participant_ids": [from_user_id, to_user_id],
         }
 
     def get_thread_messages(
@@ -792,7 +772,7 @@ class UserStatusService:
         user_id: int,
         skip: int = 0,
         limit: int = 50,
-        include_media: bool = True
+        include_media: bool = True,
     ) -> List[DirectMessage]:
         """
         Get messages in a specific thread.
@@ -842,23 +822,18 @@ class UserStatusService:
             self.db.query(DirectMessage.from_user_id)
             .filter(DirectMessage.thread_id == thread_id)
             .union(
-                self.db.query(DirectMessage.to_user_id)
-                .filter(DirectMessage.thread_id == thread_id)
+                self.db.query(DirectMessage.to_user_id).filter(DirectMessage.thread_id == thread_id)
             )
             .distinct()
             .all()
         )
 
         user_ids = [pid[0] for pid in participant_ids]
-        
+
         if not user_ids:
             return []
 
-        return (
-            self.db.query(User)
-            .filter(User.id.in_(user_ids))
-            .all()
-        )
+        return self.db.query(User).filter(User.id.in_(user_ids)).all()
 
     def _user_has_thread_access(self, thread_id: str, user_id: int) -> bool:
         """
@@ -876,10 +851,7 @@ class UserStatusService:
             self.db.query(DirectMessage)
             .filter(
                 DirectMessage.thread_id == thread_id,
-                or_(
-                    DirectMessage.from_user_id == user_id,
-                    DirectMessage.to_user_id == user_id
-                )
+                or_(DirectMessage.from_user_id == user_id, DirectMessage.to_user_id == user_id),
             )
             .first()
         )

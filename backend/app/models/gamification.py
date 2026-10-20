@@ -82,9 +82,7 @@ class Achievement(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(255), nullable=False, unique=True, index=True)
     description = Column(Text, nullable=True)
-    achievement_type = Column(
-        SQLEnum(AchievementType), nullable=False, index=True
-    )
+    achievement_type = Column(SQLEnum(AchievementType), nullable=False, index=True)
     rarity = Column(
         SQLEnum(AchievementRarity),
         default=AchievementRarity.COMMON,
@@ -95,21 +93,14 @@ class Achievement(Base):
     criteria = Column(JSON, nullable=True)  # Achievement criteria
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
-    user_achievements = relationship(
-        "UserAchievement", back_populates="achievement"
-    )
+    user_achievements = relationship("UserAchievement", back_populates="achievement")
 
     def __repr__(self) -> str:
         """String representation of Achievement."""
-        return (
-            f"<Achievement(id={self.id}, name='{self.name}', "
-            f"rarity='{self.rarity}')>"
-        )
+        return f"<Achievement(id={self.id}, name='{self.name}', rarity='{self.rarity}')>"
 
 
 class UserAchievement(Base):
@@ -129,27 +120,18 @@ class UserAchievement(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    achievement_id = Column(
-        Integer, ForeignKey("achievements.id"), nullable=False
-    )
+    achievement_id = Column(Integer, ForeignKey("achievements.id"), nullable=False)
     earned_at = Column(DateTime, default=datetime.utcnow)
-    progress_value = Column(
-        Float, nullable=True
-    )  # Value when achievement was earned
+    progress_value = Column(Float, nullable=True)  # Value when achievement was earned
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
     user = relationship("User", back_populates="achievements")
-    achievement = relationship(
-        "Achievement", back_populates="user_achievements"
-    )
+    achievement = relationship("Achievement", back_populates="user_achievements")
 
     def __repr__(self) -> str:
         """String representation of UserAchievement."""
-        return (
-            f"<UserAchievement(user_id={self.user_id}, "
-            f"achievement_id={self.achievement_id})>"
-        )
+        return f"<UserAchievement(user_id={self.user_id}, achievement_id={self.achievement_id})>"
 
 
 class Points(Base):
@@ -175,9 +157,7 @@ class Points(Base):
     amount = Column(Integer, nullable=False)
     description = Column(String(255), nullable=True)
     reference_id = Column(Integer, nullable=True)  # ID of related entity
-    reference_type = Column(
-        String(50), nullable=True
-    )  # Type of related entity
+    reference_type = Column(String(50), nullable=True)  # Type of related entity
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -185,10 +165,7 @@ class Points(Base):
 
     def __repr__(self) -> str:
         """String representation of Points."""
-        return (
-            f"<Points(user_id={self.user_id}, amount={self.amount}, "
-            f"type='{self.points_type}')>"
-        )
+        return f"<Points(user_id={self.user_id}, amount={self.amount}, type='{self.points_type}')>"
 
 
 class Leaderboard(Base):
@@ -217,16 +194,12 @@ class Leaderboard(Base):
     leaderboard_type = Column(
         String(50), nullable=False, index=True
     )  # points, tasks, streaks, etc.
-    time_period = Column(
-        String(20), nullable=False, index=True
-    )  # daily, weekly, monthly, all_time
+    time_period = Column(String(20), nullable=False, index=True)  # daily, weekly, monthly, all_time
     start_date = Column(DateTime, nullable=False)
     end_date = Column(DateTime, nullable=True)
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     entries = relationship(
@@ -237,10 +210,7 @@ class Leaderboard(Base):
 
     def __repr__(self) -> str:
         """String representation of Leaderboard."""
-        return (
-            f"<Leaderboard(id={self.id}, name='{self.name}', "
-            f"type='{self.leaderboard_type}')>"
-        )
+        return f"<Leaderboard(id={self.id}, name='{self.name}', type='{self.leaderboard_type}')>"
 
 
 class LeaderboardEntry(Base):
@@ -261,17 +231,13 @@ class LeaderboardEntry(Base):
     __tablename__ = "leaderboard_entries"
 
     id = Column(Integer, primary_key=True, index=True)
-    leaderboard_id = Column(
-        Integer, ForeignKey("leaderboards.id"), nullable=False
-    )
+    leaderboard_id = Column(Integer, ForeignKey("leaderboards.id"), nullable=False)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     score = Column(Float, nullable=False, index=True)
     rank = Column(Integer, nullable=True, index=True)
     metadata_json = Column(JSON, nullable=True)  # Additional data
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     leaderboard = relationship("Leaderboard", back_populates="entries")
@@ -279,10 +245,7 @@ class LeaderboardEntry(Base):
 
     def __repr__(self) -> str:
         """String representation of LeaderboardEntry."""
-        return (
-            f"<LeaderboardEntry(user_id={self.user_id}, score={self.score}, "
-            f"rank={self.rank})>"
-        )
+        return f"<LeaderboardEntry(user_id={self.user_id}, score={self.score}, rank={self.rank})>"
 
 
 class Streak(Base):
@@ -305,17 +268,13 @@ class Streak(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    streak_type = Column(
-        String(50), nullable=False, index=True
-    )  # daily_tasks, weekly_goals, etc.
+    streak_type = Column(String(50), nullable=False, index=True)  # daily_tasks, weekly_goals, etc.
     current_streak = Column(Integer, default=0)
     longest_streak = Column(Integer, default=0)
     last_activity = Column(DateTime, nullable=True)
     start_date = Column(DateTime, default=datetime.utcnow)
     created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(
-        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
-    )
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     # Relationships
     user = relationship("User")

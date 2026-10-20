@@ -17,11 +17,11 @@ from app.core.database import Base
 class Notification(Base):
     """
     Notification model for storing user notifications.
-    
+
     This model stores notifications that can be delivered to users
     both in real-time (via WebSocket) and when they return online.
     """
-    
+
     __tablename__ = "notifications"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -34,7 +34,7 @@ class Notification(Base):
     is_read = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False, index=True)
     read_at = Column(DateTime, nullable=True)
-    
+
     # Relationships
     user = relationship("User", back_populates="notifications")
 
@@ -45,7 +45,7 @@ class Notification(Base):
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert notification to dictionary format.
-        
+
         Returns:
             Dictionary representation of the notification
         """

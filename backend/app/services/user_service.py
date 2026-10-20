@@ -112,15 +112,11 @@ class UserService:
             query = query.filter(User.is_active == is_active)
 
         total = query.count()
-        users = (
-            query.order_by(asc(User.username)).offset(skip).limit(limit).all()
-        )
+        users = query.order_by(asc(User.username)).offset(skip).limit(limit).all()
 
         return users, total
 
-    def update_user(
-        self, user_id: int, user_data: UserUpdate
-    ) -> Optional[User]:
+    def update_user(self, user_id: int, user_data: UserUpdate) -> Optional[User]:
         """
         Update a user.
 
@@ -168,9 +164,7 @@ class UserService:
         logger.info(f"Deleted user {user_id}")
         return True
 
-    def authenticate_user(
-        self, username: str, password: str
-    ) -> Optional[User]:
+    def authenticate_user(self, username: str, password: str) -> Optional[User]:
         """
         Authenticate a user.
 

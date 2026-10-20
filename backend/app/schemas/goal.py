@@ -15,26 +15,18 @@ from app.models.goal import GoalStatus, GoalType
 class GoalBase(BaseModel):
     """Base goal schema with common fields."""
 
-    title: str = Field(
-        ..., min_length=1, max_length=255, description="Goal title"
-    )
+    title: str = Field(..., min_length=1, max_length=255, description="Goal title")
     description: Optional[str] = Field(None, description="Goal description")
     goal_type: GoalType = Field(..., description="Type of goal")
-    target_value: float = Field(
-        ..., gt=0, description="Target value to achieve"
-    )
+    target_value: float = Field(..., gt=0, description="Target value to achieve")
     end_date: Optional[datetime] = Field(None, description="Goal end date")
-    is_recurring: bool = Field(
-        default=False, description="Whether goal repeats"
-    )
+    is_recurring: bool = Field(default=False, description="Whether goal repeats")
 
 
 class GoalCreate(GoalBase):
     """Schema for creating a new goal."""
 
-    recurrence_pattern: Optional[Dict[str, Any]] = Field(
-        None, description="Recurrence pattern"
-    )
+    recurrence_pattern: Optional[Dict[str, Any]] = Field(None, description="Recurrence pattern")
 
 
 class GoalUpdate(BaseModel):
@@ -62,9 +54,7 @@ class GoalProgressBase(BaseModel):
 class GoalProgressCreate(GoalProgressBase):
     """Schema for creating goal progress."""
 
-    recorded_at: Optional[datetime] = Field(
-        None, description="When progress was recorded"
-    )
+    recorded_at: Optional[datetime] = Field(None, description="When progress was recorded")
 
 
 class GoalProgressResponse(GoalProgressBase):

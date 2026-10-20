@@ -34,7 +34,7 @@ def create_test_users():
             ),
             "is_superuser": True,
             "is_active": True,
-            "description": "Admin user with full privileges"
+            "description": "Admin user with full privileges",
         },
         {
             "user_data": UserCreate(
@@ -47,12 +47,12 @@ def create_test_users():
             ),
             "is_superuser": False,
             "is_active": True,
-            "description": "Organizer test user for messaging and notifications"
-        }
+            "description": "Organizer test user for messaging and notifications",
+        },
     ]
 
     created_users = []
-    
+
     try:
         # Get database session
         db = next(get_db_session())
@@ -63,7 +63,7 @@ def create_test_users():
 
         for user_info in test_users_data:
             user_data = user_info["user_data"]
-            
+
             # Check if user already exists
             existing_user = user_service.get_user_by_username(user_data.username)
             if existing_user:
@@ -85,7 +85,7 @@ def create_test_users():
             db.commit()
 
             created_users.append(user)
-            
+
             print(f"✅ Created {user_info['description']}")
             print(f"   Username: {user.username}")
             print(f"   Email: {user.email}")

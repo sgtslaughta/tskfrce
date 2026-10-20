@@ -19,24 +19,14 @@ from app.models.gamification import (
 class AchievementBase(BaseModel):
     """Base achievement schema."""
 
-    name: str = Field(
-        ..., min_length=1, max_length=255, description="Achievement name"
-    )
-    description: Optional[str] = Field(
-        None, description="Achievement description"
-    )
-    achievement_type: AchievementType = Field(
-        ..., description="Type of achievement"
-    )
+    name: str = Field(..., min_length=1, max_length=255, description="Achievement name")
+    description: Optional[str] = Field(None, description="Achievement description")
+    achievement_type: AchievementType = Field(..., description="Type of achievement")
     rarity: AchievementRarity = Field(
         default=AchievementRarity.COMMON, description="Achievement rarity"
     )
-    points_reward: int = Field(
-        default=0, ge=0, description="Points awarded for achievement"
-    )
-    icon: Optional[str] = Field(
-        None, max_length=100, description="Achievement icon"
-    )
+    points_reward: int = Field(default=0, ge=0, description="Points awarded for achievement")
+    icon: Optional[str] = Field(None, max_length=100, description="Achievement icon")
 
 
 class AchievementResponse(AchievementBase):
@@ -55,9 +45,7 @@ class AchievementResponse(AchievementBase):
 class UserAchievementBase(BaseModel):
     """Base user achievement schema."""
 
-    progress_value: Optional[float] = Field(
-        None, description="Progress value when earned"
-    )
+    progress_value: Optional[float] = Field(None, description="Progress value when earned")
 
 
 class UserAchievementResponse(UserAchievementBase):
@@ -79,18 +67,10 @@ class UserAchievementResponse(UserAchievementBase):
 class PointsBase(BaseModel):
     """Base points schema."""
 
-    points_type: PointsType = Field(
-        ..., description="Type of points transaction"
-    )
-    amount: int = Field(
-        ..., description="Points amount (positive or negative)"
-    )
-    description: Optional[str] = Field(
-        None, max_length=255, description="Transaction description"
-    )
-    reference_id: Optional[int] = Field(
-        None, description="Reference to related entity"
-    )
+    points_type: PointsType = Field(..., description="Type of points transaction")
+    amount: int = Field(..., description="Points amount (positive or negative)")
+    description: Optional[str] = Field(None, max_length=255, description="Transaction description")
+    reference_id: Optional[int] = Field(None, description="Reference to related entity")
     reference_type: Optional[str] = Field(
         None, max_length=50, description="Type of reference entity"
     )
@@ -132,27 +112,17 @@ class UserPointsSummary(BaseModel):
 class LeaderboardBase(BaseModel):
     """Base leaderboard schema."""
 
-    name: str = Field(
-        ..., min_length=1, max_length=255, description="Leaderboard name"
-    )
-    description: Optional[str] = Field(
-        None, description="Leaderboard description"
-    )
-    leaderboard_type: str = Field(
-        ..., max_length=50, description="Type of leaderboard"
-    )
-    time_period: str = Field(
-        ..., max_length=20, description="Time period for leaderboard"
-    )
+    name: str = Field(..., min_length=1, max_length=255, description="Leaderboard name")
+    description: Optional[str] = Field(None, description="Leaderboard description")
+    leaderboard_type: str = Field(..., max_length=50, description="Type of leaderboard")
+    time_period: str = Field(..., max_length=20, description="Time period for leaderboard")
 
 
 class LeaderboardCreate(LeaderboardBase):
     """Schema for creating a leaderboard."""
 
     start_date: datetime = Field(..., description="Leaderboard start date")
-    end_date: Optional[datetime] = Field(
-        None, description="Leaderboard end date"
-    )
+    end_date: Optional[datetime] = Field(None, description="Leaderboard end date")
 
 
 class LeaderboardUpdate(BaseModel):
@@ -199,9 +169,7 @@ class LeaderboardEntryBase(BaseModel):
 
     score: float = Field(..., description="User's score")
     rank: Optional[int] = Field(None, description="User's rank")
-    metadata_json: Optional[Dict[str, Any]] = Field(
-        None, description="Additional metadata"
-    )
+    metadata_json: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
 
 
 class LeaderboardEntryResponse(LeaderboardEntryBase):
@@ -234,12 +202,8 @@ class StreakBase(BaseModel):
     """Base streak schema."""
 
     streak_type: str = Field(..., max_length=50, description="Type of streak")
-    current_streak: int = Field(
-        default=0, ge=0, description="Current streak count"
-    )
-    longest_streak: int = Field(
-        default=0, ge=0, description="Longest streak achieved"
-    )
+    current_streak: int = Field(default=0, ge=0, description="Current streak count")
+    longest_streak: int = Field(default=0, ge=0, description="Longest streak achieved")
 
 
 class StreakResponse(StreakBase):

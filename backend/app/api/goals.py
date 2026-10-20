@@ -25,9 +25,7 @@ from app.services.goal_service import GoalService
 router = APIRouter(prefix="/api/v1/goals", tags=["goals"])
 
 
-@router.post(
-    "/", response_model=GoalResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/", response_model=GoalResponse, status_code=status.HTTP_201_CREATED)
 async def create_goal(
     goal_data: GoalCreate,
     db: Session = Depends(get_db_session),
@@ -48,18 +46,10 @@ async def create_goal(
 @router.get("/", response_model=GoalList)
 async def get_goals(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of records to return"
-    ),
-    status: Optional[GoalStatus] = Query(
-        None, description="Filter by goal status"
-    ),
-    goal_type: Optional[GoalType] = Query(
-        None, description="Filter by goal type"
-    ),
-    is_completed: Optional[bool] = Query(
-        None, description="Filter by completion status"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
+    status: Optional[GoalStatus] = Query(None, description="Filter by goal status"),
+    goal_type: Optional[GoalType] = Query(None, description="Filter by goal type"),
+    is_completed: Optional[bool] = Query(None, description="Filter by completion status"),
     db: Session = Depends(get_db_session),
     # TODO: Add authentication dependency
     current_user_id: int = 1,  # Temporary for development
@@ -82,17 +72,13 @@ async def get_goals(
     pages = (total + limit - 1) // limit
     page = (skip // limit) + 1
 
-    return GoalList(
-        goals=goals, total=total, page=page, size=limit, pages=pages
-    )
+    return GoalList(goals=goals, total=total, page=page, size=limit, pages=pages)
 
 
 @router.get("/progress", response_model=GoalProgressList)
 async def get_all_goal_progress(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of records to return"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
     db: Session = Depends(get_db_session),
     # TODO: Add authentication dependency
     current_user_id: int = 1,  # Temporary for development
@@ -100,9 +86,7 @@ async def get_all_goal_progress(
     """Get all goal progress entries."""
     GoalService(db)
     # For now, return empty list - in a real app, you would get all progress entries
-    return GoalProgressList(
-        progress_entries=[], total=0, page=1, size=limit, pages=0
-    )
+    return GoalProgressList(progress_entries=[], total=0, page=1, size=limit, pages=0)
 
 
 @router.get("/statistics", response_model=dict)
@@ -125,9 +109,7 @@ async def get_goal_statistics(
 @router.get("/recurring", response_model=GoalList)
 async def get_recurring_goals(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of records to return"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
     db: Session = Depends(get_db_session),
     # TODO: Add authentication dependency
     current_user_id: int = 1,  # Temporary for development
@@ -150,9 +132,7 @@ async def get_goal(
     goal = goal_service.get_goal(goal_id, current_user_id)
 
     if not goal:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Goal not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Goal not found")
 
     return goal
 
@@ -170,9 +150,7 @@ async def update_goal(
     goal = goal_service.update_goal(goal_id, goal_data, current_user_id)
 
     if not goal:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Goal not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Goal not found")
 
     return goal
 
@@ -189,9 +167,7 @@ async def delete_goal(
     success = goal_service.delete_goal(goal_id, current_user_id)
 
     if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Goal not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Goal not found")
 
 
 # Goal Progress
@@ -209,14 +185,10 @@ async def add_goal_progress(
 ):
     """Add progress to a goal."""
     goal_service = GoalService(db)
-    progress = goal_service.add_progress(
-        goal_id, progress_data, current_user_id
-    )
+    progress = goal_service.add_progress(goal_id, progress_data, current_user_id)
 
     if not progress:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Goal not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Goal not found")
 
     return progress
 
@@ -225,18 +197,14 @@ async def add_goal_progress(
 async def get_goal_progress(
     goal_id: int,
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of records to return"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
     db: Session = Depends(get_db_session),
     # TODO: Add authentication dependency
     current_user_id: int = 1,  # Temporary for development
 ):
     """Get progress entries for a goal."""
     goal_service = GoalService(db)
-    progress_entries, total = goal_service.get_progress(
-        goal_id, current_user_id, skip, limit
-    )
+    progress_entries, total = goal_service.get_progress(goal_id, current_user_id, skip, limit)
 
     pages = (total + limit - 1) // limit
     page = (skip // limit) + 1
@@ -272,9 +240,7 @@ async def update_goal_progress_from_tasks(
 ):
     """Update goal progress based on completed tasks."""
     goal_service = GoalService(db)
-    updated_count = goal_service.update_goal_progress_from_tasks(
-        current_user_id
-    )
+    updated_count = goal_service.update_goal_progress_from_tasks(current_user_id)
 
     return {
         "message": f"Updated {updated_count} task count goals",
@@ -290,9 +256,7 @@ async def update_goal_progress_from_points(
 ):
     """Update goal progress based on points earned."""
     goal_service = GoalService(db)
-    updated_count = goal_service.update_goal_progress_from_points(
-        current_user_id
-    )
+    updated_count = goal_service.update_goal_progress_from_points(current_user_id)
 
     return {
         "message": f"Updated {updated_count} points goals",

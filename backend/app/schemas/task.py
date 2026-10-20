@@ -15,26 +15,16 @@ from app.models.task import TaskPriority, TaskStatus, RewardType
 class TaskBase(BaseModel):
     """Base task schema with common fields."""
 
-    title: str = Field(
-        ..., min_length=1, max_length=255, description="Task title"
-    )
+    title: str = Field(..., min_length=1, max_length=255, description="Task title")
     description: Optional[str] = Field(None, description="Task description")
-    priority: TaskPriority = Field(
-        default=TaskPriority.MEDIUM, description="Task priority"
-    )
+    priority: TaskPriority = Field(default=TaskPriority.MEDIUM, description="Task priority")
     due_date: Optional[datetime] = Field(None, description="Task due date")
-    estimated_hours: float = Field(
-        default=0.0, ge=0, description="Estimated hours to complete"
-    )
-    points: int = Field(
-        default=0, ge=0, description="Points awarded for completion (legacy)"
-    )
+    estimated_hours: float = Field(default=0.0, ge=0, description="Estimated hours to complete")
+    points: int = Field(default=0, ge=0, description="Points awarded for completion (legacy)")
     reward_type: RewardType = Field(
         default=RewardType.POINTS, description="Type of reward for completion"
     )
-    reward_value: float = Field(
-        default=0.0, ge=0, description="Value of the reward"
-    )
+    reward_value: float = Field(default=0.0, ge=0, description="Value of the reward")
     reward_description: Optional[str] = Field(
         None, max_length=255, description="Description for custom rewards"
     )
@@ -43,23 +33,13 @@ class TaskBase(BaseModel):
 class TaskCreate(TaskBase):
     """Schema for creating a new task."""
 
-    assigned_to_id: Optional[int] = Field(
-        None, description="User ID to assign task to"
-    )
+    assigned_to_id: Optional[int] = Field(None, description="User ID to assign task to")
     category_id: Optional[int] = Field(None, description="Task category ID")
     template_id: Optional[int] = Field(None, description="Task template ID")
-    parent_task_id: Optional[int] = Field(
-        None, description="Parent task ID for subtasks"
-    )
-    is_recurring: bool = Field(
-        default=False, description="Whether task repeats"
-    )
-    recurrence_pattern: Optional[Dict[str, Any]] = Field(
-        None, description="Recurrence pattern"
-    )
-    tag_names: Optional[List[str]] = Field(
-        None, description="List of tag names"
-    )
+    parent_task_id: Optional[int] = Field(None, description="Parent task ID for subtasks")
+    is_recurring: bool = Field(default=False, description="Whether task repeats")
+    recurrence_pattern: Optional[Dict[str, Any]] = Field(None, description="Recurrence pattern")
+    tag_names: Optional[List[str]] = Field(None, description="List of tag names")
 
 
 class TaskUpdate(BaseModel):
@@ -174,24 +154,14 @@ class TaskList(BaseModel):
 class TaskTemplateBase(BaseModel):
     """Base task template schema."""
 
-    name: str = Field(
-        ..., min_length=1, max_length=255, description="Template name"
-    )
-    description: Optional[str] = Field(
-        None, description="Template description"
-    )
-    title_pattern: str = Field(
-        ..., min_length=1, max_length=255, description="Title pattern"
-    )
-    description_template: Optional[str] = Field(
-        None, description="Description template"
-    )
+    name: str = Field(..., min_length=1, max_length=255, description="Template name")
+    description: Optional[str] = Field(None, description="Template description")
+    title_pattern: str = Field(..., min_length=1, max_length=255, description="Title pattern")
+    description_template: Optional[str] = Field(None, description="Description template")
     estimated_hours: float = Field(default=0.0, ge=0)
     points: int = Field(default=0, ge=0)
     priority: TaskPriority = Field(default=TaskPriority.MEDIUM)
-    is_public: bool = Field(
-        default=False, description="Whether template is public"
-    )
+    is_public: bool = Field(default=False, description="Whether template is public")
 
 
 class TaskTemplateCreate(TaskTemplateBase):
@@ -236,16 +206,10 @@ class TaskTemplateResponse(TaskTemplateBase):
 class TaskCategoryBase(BaseModel):
     """Base task category schema."""
 
-    name: str = Field(
-        ..., min_length=1, max_length=100, description="Category name"
-    )
-    description: Optional[str] = Field(
-        None, description="Category description"
-    )
+    name: str = Field(..., min_length=1, max_length=100, description="Category name")
+    description: Optional[str] = Field(None, description="Category description")
     color: str = Field(default="#3B82F6", description="Category color (hex)")
-    icon: Optional[str] = Field(
-        None, max_length=50, description="Category icon"
-    )
+    icon: Optional[str] = Field(None, max_length=50, description="Category icon")
 
 
 class TaskCategoryCreate(TaskCategoryBase):
@@ -306,9 +270,7 @@ class TaskDependencyBase(BaseModel):
     """Base task dependency schema."""
 
     depends_on_task_id: int = Field(..., description="Task ID this depends on")
-    dependency_type: str = Field(
-        default="finish_to_start", description="Dependency type"
-    )
+    dependency_type: str = Field(default="finish_to_start", description="Dependency type")
 
 
 class TaskDependencyCreate(TaskDependencyBase):
@@ -329,7 +291,7 @@ class TaskDependencyResponse(TaskDependencyBase):
 # Task List Schemas
 class TaskListBase(BaseModel):
     """Base schema for task list data."""
-    
+
     name: str
     description: Optional[str] = None
     color: str = "#3B82F6"
@@ -339,12 +301,13 @@ class TaskListBase(BaseModel):
 
 class TaskListCreate(TaskListBase):
     """Schema for creating a new task list."""
+
     pass
 
 
 class TaskListUpdate(BaseModel):
     """Schema for updating a task list."""
-    
+
     name: Optional[str] = None
     description: Optional[str] = None
     color: Optional[str] = None
@@ -354,59 +317,59 @@ class TaskListUpdate(BaseModel):
 
 class TaskListResponse(TaskListBase):
     """Schema for task list response."""
-    
+
     id: int
     created_by_id: int
     created_at: datetime
     updated_at: datetime
     task_count: int = 0
     completed_task_count: int = 0
-    
+
     class Config:
         from_attributes = True
 
 
 class TaskListWithTasks(TaskListResponse):
     """Schema for task list with associated tasks."""
-    
+
     tasks: List[TaskResponse] = []
 
 
 class TaskListAssociationCreate(BaseModel):
     """Schema for adding a task to a list."""
-    
+
     task_id: int
     position: Optional[int] = None
 
 
 class TaskListAssociationUpdate(BaseModel):
     """Schema for updating task position in list."""
-    
+
     position: int
 
 
 class TaskListAssociationResponse(BaseModel):
     """Schema for task list association response."""
-    
+
     id: int
     task_id: int
     list_id: int
     position: int
     added_at: datetime
-    
+
     class Config:
         from_attributes = True
 
 
 class TaskListBulkUpdate(BaseModel):
     """Schema for bulk updating task positions in a list."""
-    
+
     task_positions: List[Dict[str, int]]  # [{"task_id": 1, "position": 0}, ...]
 
 
 class TaskListStats(BaseModel):
     """Schema for task list statistics."""
-    
+
     total_lists: int
     total_tasks: int
     completed_tasks: int
@@ -418,7 +381,7 @@ class TaskListStats(BaseModel):
 # Template Operation Request Schemas
 class CreateFromTemplateRequest(BaseModel):
     """Schema for creating a task from a template."""
-    
+
     template_id: int = Field(..., description="Template ID to use")
     title: Optional[str] = Field(None, description="Override template title")
     description: Optional[str] = Field(None, description="Override template description")
@@ -431,27 +394,27 @@ class CreateFromTemplateRequest(BaseModel):
 
 class GetTemplateRequest(BaseModel):
     """Schema for getting a template."""
-    
+
     template_id: int = Field(..., description="Template ID to retrieve")
 
 
 class UpdateTemplateRequest(BaseModel):
     """Schema for updating a template."""
-    
+
     template_id: int = Field(..., description="Template ID to update")
     updates: TaskTemplateUpdate = Field(..., description="Updates to apply")
 
 
 class DeleteTemplateRequest(BaseModel):
     """Schema for deleting a template."""
-    
+
     template_id: int = Field(..., description="Template ID to delete")
 
 
 # List Operation Request Schemas
 class GetListTasksRequest(BaseModel):
     """Schema for getting tasks in a list."""
-    
+
     list_id: int = Field(..., description="List ID to get tasks from")
     include_completed: bool = Field(default=True, description="Include completed tasks")
     limit: int = Field(default=50, ge=1, le=1000, description="Maximum number of tasks to return")

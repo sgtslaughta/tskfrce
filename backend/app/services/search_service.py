@@ -27,7 +27,7 @@ logger = get_logger(__name__)
 
 class SearchType(str, Enum):
     """Search types for different content."""
-    
+
     COMMENTS = "comments"
     DIRECT_MESSAGES = "direct_messages"
     TASK_CHAT_MESSAGES = "task_chat_messages"
@@ -37,14 +37,14 @@ class SearchType(str, Enum):
 
 class SortOrder(str, Enum):
     """Sort order options."""
-    
+
     ASC = "asc"
     DESC = "desc"
 
 
 class SortBy(str, Enum):
     """Sort by options."""
-    
+
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
     RELEVANCE = "relevance"
@@ -108,9 +108,7 @@ class SearchService:
             search_terms = query.strip().split()
             search_conditions = []
             for term in search_terms:
-                search_conditions.append(
-                    TaskComment.content.ilike(f"%{term}%")
-                )
+                search_conditions.append(TaskComment.content.ilike(f"%{term}%"))
             if search_conditions:
                 filters.append(or_(*search_conditions))
 
@@ -201,14 +199,18 @@ class SearchService:
             Tuple of (messages list, total count)
         """
         # Build base query - only messages involving the user
-        base_query = self.db.query(DirectMessage).options(
-            joinedload(DirectMessage.from_user),
-            joinedload(DirectMessage.to_user),
-            joinedload(DirectMessage.media_attachments),
-        ).filter(
-            or_(
-                DirectMessage.from_user_id == user_id,
-                DirectMessage.to_user_id == user_id,
+        base_query = (
+            self.db.query(DirectMessage)
+            .options(
+                joinedload(DirectMessage.from_user),
+                joinedload(DirectMessage.to_user),
+                joinedload(DirectMessage.media_attachments),
+            )
+            .filter(
+                or_(
+                    DirectMessage.from_user_id == user_id,
+                    DirectMessage.to_user_id == user_id,
+                )
             )
         )
 
@@ -220,9 +222,7 @@ class SearchService:
             search_terms = query.strip().split()
             search_conditions = []
             for term in search_terms:
-                search_conditions.append(
-                    DirectMessage.content.ilike(f"%{term}%")
-                )
+                search_conditions.append(DirectMessage.content.ilike(f"%{term}%"))
             if search_conditions:
                 filters.append(or_(*search_conditions))
 
@@ -318,9 +318,7 @@ class SearchService:
             search_terms = query.strip().split()
             search_conditions = []
             for term in search_terms:
-                search_conditions.append(
-                    TaskChatMessage.content.ilike(f"%{term}%")
-                )
+                search_conditions.append(TaskChatMessage.content.ilike(f"%{term}%"))
             if search_conditions:
                 filters.append(or_(*search_conditions))
 
@@ -582,7 +580,7 @@ class SearchService:
                 or_(
                     Task.created_by_id == user_id,
                     Task.assigned_to_id == user_id,
-                )
+                ),
             )
             .first()
         )

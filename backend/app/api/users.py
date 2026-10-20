@@ -24,9 +24,7 @@ from app.services.user_service import UserService
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
 
 
-@router.post(
-    "/", response_model=UserResponse, status_code=status.HTTP_201_CREATED
-)
+@router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(
     user_data: UserCreate,
     db: Session = Depends(get_db_session),
@@ -58,36 +56,29 @@ async def create_user(
 @router.get("/", response_model=UserList)
 async def get_users(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of records to return"
-    ),
-    is_active: Optional[bool] = Query(
-        None, description="Filter by active status"
-    ),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
+    is_active: Optional[bool] = Query(None, description="Filter by active status"),
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_superuser),
 ):
     """Get users with filtering and pagination."""
     try:
         user_service = UserService(db)
-        users, total = user_service.get_users(
-            skip=skip, limit=limit, is_active=is_active
-        )
+        users, total = user_service.get_users(skip=skip, limit=limit, is_active=is_active)
 
         pages = (total + limit - 1) // limit
         page = (skip // limit) + 1
 
-        return UserList(
-            users=users, total=total, page=page, size=limit, pages=pages
-        )
+        return UserList(users=users, total=total, page=page, size=limit, pages=pages)
     except Exception as e:
         # Log the actual error instead of silently failing
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Error fetching users: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching users: {str(e)}"
+            detail=f"Error fetching users: {str(e)}",
         )
 
 
@@ -100,21 +91,18 @@ async def get_users_for_assignment(
     try:
         user_service = UserService(db)
         # Get only active users for assignment
-        users, total = user_service.get_users(
-            skip=0, limit=100, is_active=True
-        )
+        users, total = user_service.get_users(skip=0, limit=100, is_active=True)
 
-        return UserList(
-            users=users, total=total, page=1, size=100, pages=1
-        )
+        return UserList(users=users, total=total, page=1, size=100, pages=1)
     except Exception as e:
         # Log the actual error instead of silently failing
         import logging
+
         logger = logging.getLogger(__name__)
         logger.error(f"Error fetching users for assignment: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching users for assignment: {str(e)}"
+            detail=f"Error fetching users for assignment: {str(e)}",
         )
 
 
@@ -145,9 +133,7 @@ async def get_user(
     user = user_service.get_user(user_id)
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return user
 
@@ -164,9 +150,7 @@ async def update_user(
     user = user_service.update_user(user_id, user_data)
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     return user
 
@@ -182,6 +166,4 @@ async def delete_user(
     success = user_service.delete_user(user_id)
 
     if not success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

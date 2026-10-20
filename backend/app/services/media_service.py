@@ -71,9 +71,7 @@ class MediaService:
                         "user_id": str(user_id),
                         "filename": attachment_data.filename,
                         "task_id": (
-                            str(attachment_data.task_id)
-                            if attachment_data.task_id
-                            else ""
+                            str(attachment_data.task_id) if attachment_data.task_id else ""
                         ),
                         "is_public": str(attachment_data.is_public),
                     },
@@ -82,10 +80,7 @@ class MediaService:
                 logger.error(f"Failed to upload file to MinIO: {e}")
                 raise
         else:
-            logger.warning(
-                "MinIO storage service not available - "
-                "file not uploaded to storage"
-            )
+            logger.warning("MinIO storage service not available - file not uploaded to storage")
 
         attachment = MediaAttachment(
             filename=attachment_data.filename,
@@ -104,14 +99,10 @@ class MediaService:
         self.db.commit()
         self.db.refresh(attachment)
 
-        logger.info(
-            f"Created media attachment {attachment.id} for user {user_id}"
-        )
+        logger.info(f"Created media attachment {attachment.id} for user {user_id}")
         return attachment
 
-    def get_media_attachment(
-        self, attachment_id: int, user_id: int
-    ) -> Optional[MediaAttachment]:
+    def get_media_attachment(self, attachment_id: int, user_id: int) -> Optional[MediaAttachment]:
         """
         Get a media attachment by ID.
 
@@ -163,10 +154,7 @@ class MediaService:
 
         total = query.count()
         attachments = (
-            query.order_by(desc(MediaAttachment.created_at))
-            .offset(skip)
-            .limit(limit)
-            .all()
+            query.order_by(desc(MediaAttachment.created_at)).offset(skip).limit(limit).all()
         )
 
         return attachments, total
@@ -190,19 +178,14 @@ class MediaService:
         Returns:
             Tuple of (attachments, total_count)
         """
-        query = self.db.query(MediaAttachment).filter(
-            MediaAttachment.user_id == user_id
-        )
+        query = self.db.query(MediaAttachment).filter(MediaAttachment.user_id == user_id)
 
         if media_type:
             query = query.filter(MediaAttachment.media_type == media_type)
 
         total = query.count()
         attachments = (
-            query.order_by(desc(MediaAttachment.created_at))
-            .offset(skip)
-            .limit(limit)
-            .all()
+            query.order_by(desc(MediaAttachment.created_at)).offset(skip).limit(limit).all()
         )
 
         return attachments, total
@@ -254,9 +237,7 @@ class MediaService:
             Dictionary with storage statistics
         """
         attachments = (
-            self.db.query(MediaAttachment)
-            .filter(MediaAttachment.user_id == user_id)
-            .all()
+            self.db.query(MediaAttachment).filter(MediaAttachment.user_id == user_id).all()
         )
 
         total_files = len(attachments)
@@ -266,9 +247,7 @@ class MediaService:
         # Count by media type
         type_counts = {}
         for media_type in MediaType:
-            count = len(
-                [att for att in attachments if att.media_type == media_type]
-            )
+            count = len([att for att in attachments if att.media_type == media_type])
             if count > 0:
                 type_counts[media_type.value] = count
 
@@ -279,9 +258,7 @@ class MediaService:
             "files_by_type": type_counts,
         }
 
-    def validate_file_upload(
-        self, upload_request: FileUploadRequest
-    ) -> Dict[str, Any]:
+    def validate_file_upload(self, upload_request: FileUploadRequest) -> Dict[str, Any]:
         """
         Validate a file upload request.
 
@@ -298,8 +275,7 @@ class MediaService:
         max_size = 100 * 1024 * 1024  # 100MB
         if upload_request.file_size > max_size:
             errors.append(
-                f"File size {upload_request.file_size} exceeds "
-                f"maximum allowed size of {max_size}"
+                f"File size {upload_request.file_size} exceeds maximum allowed size of {max_size}"
             )
 
         # Check file size (warning for files > 10MB)
@@ -311,14 +287,9 @@ class MediaService:
             errors.append("MIME type is required")
         else:
             # Check if MIME type is supported
-            media_type = self._get_media_type_from_mime(
-                upload_request.mime_type
-            )
+            media_type = self._get_media_type_from_mime(upload_request.mime_type)
             if media_type == MediaType.OTHER:
-                warnings.append(
-                    f"MIME type '{upload_request.mime_type}' "
-                    f"may not be supported"
-                )
+                warnings.append(f"MIME type '{upload_request.mime_type}' may not be supported")
 
         # Validate filename
         if not upload_request.filename:
@@ -395,9 +366,7 @@ class MediaService:
             logger.error(f"Error generating upload URL: {e}")
             return None
 
-    def delete_media_attachment(
-        self, attachment_id: int, user_id: int
-    ) -> bool:
+    def delete_media_attachment(self, attachment_id: int, user_id: int) -> bool:
         """
         Delete a media attachment and its file from MinIO.
 
@@ -419,24 +388,17 @@ class MediaService:
                     # Delete from database
                     self.db.delete(attachment)
                     self.db.commit()
-                    logger.info(
-                        f"Deleted media attachment {attachment_id} "
-                        f"for user {user_id}"
-                    )
+                    logger.info(f"Deleted media attachment {attachment_id} for user {user_id}")
                     return True
                 else:
-                    logger.error(
-                        f"Failed to delete file from MinIO: "
-                        f"{attachment.file_path}"
-                    )
+                    logger.error(f"Failed to delete file from MinIO: {attachment.file_path}")
                     return False
             else:
                 # MinIO not available, just delete from database
                 self.db.delete(attachment)
                 self.db.commit()
                 logger.info(
-                    f"Deleted media attachment {attachment_id} "
-                    f"from database (MinIO not available)"
+                    f"Deleted media attachment {attachment_id} from database (MinIO not available)"
                 )
                 return True
         except Exception as e:

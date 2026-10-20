@@ -23,23 +23,23 @@ logger = get_logger(__name__)
 
 class WorkflowTransition(str, Enum):
     """Valid workflow transitions."""
-    
+
     # Assignment transitions
     TODO_TO_ASSIGNED = "todo_to_assigned"
     ASSIGNED_TO_IN_PROGRESS = "assigned_to_in_progress"
-    
+
     # Progress transitions
     IN_PROGRESS_TO_SUBMITTED = "in_progress_to_submitted_for_approval"
     SUBMITTED_TO_DONE = "submitted_for_approval_to_done"
-    
+
     # Rejection transitions
     SUBMITTED_TO_IN_PROGRESS = "submitted_for_approval_to_in_progress"
-    
+
     # Direct transitions (for admins)
     TODO_TO_IN_PROGRESS = "todo_to_in_progress"
     TODO_TO_DONE = "todo_to_done"
     IN_PROGRESS_TO_DONE = "in_progress_to_done"
-    
+
     # Cancel transitions
     ANY_TO_CANCELLED = "any_to_cancelled"
 
@@ -166,7 +166,7 @@ class WorkflowService:
         system_comment = self._generate_status_change_comment(
             previous_status, new_status, user_id, comment
         )
-        
+
         self.comment_service.create_system_comment(
             task_id=task_id,
             content=system_comment,
@@ -180,16 +180,16 @@ class WorkflowService:
         try:
             import asyncio
             from app.services.notification_service import NotificationService
-            
+
             notification_service = NotificationService(self.db)
-            
+
             # Create a new event loop if one doesn't exist
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-            
+
             # Send appropriate notification based on transition
             if new_status == TaskStatus.SUBMITTED_FOR_APPROVAL:
                 # Notify task creator about approval request
@@ -245,7 +245,7 @@ class WorkflowService:
             raise ValueError("Only task creator can approve completion")
 
         approval_comment = comment or "Task approved"
-        
+
         # Perform the transition
         updated_task = self.transition_task_status(
             task_id=task_id,
@@ -258,16 +258,16 @@ class WorkflowService:
         try:
             import asyncio
             from app.services.notification_service import NotificationService
-            
+
             notification_service = NotificationService(self.db)
-            
+
             # Create a new event loop if one doesn't exist
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-            
+
             # Send approval notification
             asyncio.create_task(
                 notification_service.notify_task_approved(updated_task, approver_id, comment)
@@ -310,7 +310,7 @@ class WorkflowService:
             raise ValueError("Only task creator can reject submission")
 
         rejection_comment = f"Task rejected: {reason}"
-        
+
         # Perform the transition
         updated_task = self.transition_task_status(
             task_id=task_id,
@@ -323,16 +323,16 @@ class WorkflowService:
         try:
             import asyncio
             from app.services.notification_service import NotificationService
-            
+
             notification_service = NotificationService(self.db)
-            
+
             # Create a new event loop if one doesn't exist
             try:
                 loop = asyncio.get_event_loop()
             except RuntimeError:
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
-            
+
             # Send rejection notification
             asyncio.create_task(
                 notification_service.notify_task_rejected(updated_task, rejector_id, reason)
@@ -367,9 +367,7 @@ class WorkflowService:
 
         # Get total count
         total = (
-            self.db.query(TaskStatusHistory)
-            .filter(TaskStatusHistory.task_id == task_id)
-            .count()
+            self.db.query(TaskStatusHistory).filter(TaskStatusHistory.task_id == task_id).count()
         )
 
         # Get history with user information
@@ -442,9 +440,7 @@ class WorkflowService:
         # Check if transition is valid in workflow
         valid_transitions = self._transitions.get(current_status, set())
         if new_status not in valid_transitions:
-            raise ValueError(
-                f"Invalid transition from {current_status} to {new_status}"
-            )
+            raise ValueError(f"Invalid transition from {current_status} to {new_status}")
 
         # Check user permissions for specific transitions
         if new_status == TaskStatus.ASSIGNED:
@@ -455,8 +451,7 @@ class WorkflowService:
         elif new_status == TaskStatus.IN_PROGRESS:
             # Only assigned user can start work (or creator/admin)
             if (
-                task.assigned_to_id != user_id
-                and task.created_by_id != user_id
+                task.assigned_to_id != user_id and task.created_by_id != user_id
                 # TODO: Add admin check
             ):
                 raise ValueError("Only assigned user can start task")
@@ -473,8 +468,7 @@ class WorkflowService:
                     raise ValueError("Only task creator can approve completion")
             # From other statuses: creator or assignee can mark done
             elif (
-                task.created_by_id != user_id
-                and task.assigned_to_id != user_id
+                task.created_by_id != user_id and task.assigned_to_id != user_id
                 # TODO: Add admin check
             ):
                 raise ValueError("Insufficient permissions to mark task as done")
@@ -547,8 +541,7 @@ class WorkflowService:
         }
 
         base_message = status_messages.get(
-            new_status,
-            f"changed status from {previous_status.value} to {new_status.value}"
+            new_status, f"changed status from {previous_status.value} to {new_status.value}"
         )
 
         system_comment = f"**{username}** {base_message}"
@@ -576,7 +569,6 @@ class WorkflowService:
 
         # User has access if they are the creator, assignee, or admin
         return (
-            task.created_by_id == user_id
-            or task.assigned_to_id == user_id
+            task.created_by_id == user_id or task.assigned_to_id == user_id
             # TODO: Add admin role check
         )

@@ -103,10 +103,7 @@ media_service = MediaService(db_session)
 
 # Create attachment data
 attachment_data = MediaAttachmentCreate(
-    filename="document.pdf",
-    description="Important document",
-    task_id=123,
-    is_public=False
+    filename="document.pdf", description="Important document", task_id=123, is_public=False
 )
 
 # Upload file
@@ -116,7 +113,7 @@ with open("document.pdf", "rb") as file:
         user_id=1,
         file_data=file,
         file_size=file_size,
-        mime_type="application/pdf"
+        mime_type="application/pdf",
     )
 ```
 
@@ -127,7 +124,7 @@ with open("document.pdf", "rb") as file:
 download_url = media_service.get_download_url(
     attachment_id=attachment.id,
     user_id=1,
-    expires=3600  # 1 hour
+    expires=3600,  # 1 hour
 )
 ```
 
@@ -136,10 +133,7 @@ download_url = media_service.get_download_url(
 ```python
 # Generate presigned upload URL for direct client upload
 upload_url = media_service.get_upload_url(
-    filename="image.jpg",
-    mime_type="image/jpeg",
-    user_id=1,
-    expires=3600
+    filename="image.jpg", mime_type="image/jpeg", user_id=1, expires=3600
 )
 ```
 
@@ -157,7 +151,7 @@ with open("file.txt", "rb") as file:
         file_data=file,
         object_name="uploads/user1/file.txt",
         content_type="text/plain",
-        metadata={"user_id": "1"}
+        metadata={"user_id": "1"},
     )
 
 # Download file
