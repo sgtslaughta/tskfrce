@@ -17,7 +17,10 @@ export function KidEditor({ kid }: { kid?: Kid }) {
   const [confirm, { open, close }] = useDisclosure(false)
   const label = kid?.full_name ?? kid?.username ?? 'this kid'
 
+  const pinBad = pin !== '' && pin.length !== 4
+
   const save = () => {
+    if (pinBad) return
     const body: KidBody = {}
     if (name.trim() !== (kid?.full_name ?? '')) body.full_name = name.trim()
     if (avatar !== (kid?.avatar ?? '')) body.avatar = avatar
@@ -48,8 +51,9 @@ export function KidEditor({ kid }: { kid?: Kid }) {
         maxLength={4}
         onChange={(e) => setPin(e.currentTarget.value.replace(/\D/g, ''))}
         description={kid?.has_pin ? 'A PIN is set. Enter a new one to change it.' : undefined}
+        error={pinBad ? 'Use exactly 4 digits.' : undefined}
       />
-      <Button onClick={save} disabled={!name.trim()} loading={create.isPending || patch.isPending}>
+      <Button onClick={save} disabled={!name.trim() || pinBad} loading={create.isPending || patch.isPending}>
         {kid ? 'Save kid' : 'Add kid'}
       </Button>
       {kid?.has_pin && (

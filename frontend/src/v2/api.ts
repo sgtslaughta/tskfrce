@@ -44,8 +44,9 @@ function kidToken(): string | null {
 
 function detailOf(data: unknown, status: number): string {
   const d = (data as { detail?: unknown } | null)?.detail
-  if (typeof d === 'string') return d
-  if (Array.isArray(d) && typeof d[0]?.msg === 'string') return d[0].msg
+  const clean = (m: string) => m.replace(/^Value error, /, '')
+  if (typeof d === 'string') return clean(d)
+  if (Array.isArray(d) && typeof d[0]?.msg === 'string') return clean(d[0].msg)
   return status === 401 ? 'Please log in again.' : GENERIC
 }
 

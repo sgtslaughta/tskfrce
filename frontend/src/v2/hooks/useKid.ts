@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { notifications } from '@mantine/notifications'
 import { api, ApiError, AuthError, KID_TOKEN_KEY } from '../api'
+import { toastFail, toastOk } from '../notify'
 import type { KidToday, KidWhoami } from '../types'
 
 const readToken = (): string | null => {
@@ -11,10 +11,24 @@ const readToken = (): string | null => {
     return null
   }
 }
-const writeToken = (t: string | null) => {
+const KID_ID_KEY = 'task4ce-kid-id'
+const readId = (): number | null => {
   try {
-    if (t) localStorage.setItem(KID_TOKEN_KEY, t)
-    else localStorage.removeItem(KID_TOKEN_KEY)
+    const v = Number(localStorage.getItem(KID_ID_KEY))
+    return v > 0 ? v : null
+  } catch {
+    return null
+  }
+}
+const writeToken = (t: string | null, kidId?: number) => {
+  try {
+    if (t) {
+      localStorage.setItem(KID_TOKEN_KEY, t)
+      if (kidId) localStorage.setItem(KID_ID_KEY, String(kidId))
+    } else {
+      localStorage.removeItem(KID_TOKEN_KEY)
+      localStorage.removeItem(KID_ID_KEY)
+    }
   } catch {
     /* storage blocked: the session just won't survive a reload */
   }
@@ -32,8 +46,10 @@ export function useKidSession() {
   const qc = useQueryClient()
   const [authed, setAuthed] = useState(false)
   const [ready, setReady] = useState(false)
+  const [kidId, setKidId] = useState<number | null>(null)
   useEffect(() => {
     setAuthed(!!readToken())
+    setKidId(readId())
     setReady(true)
   }, [])
 
@@ -44,20 +60,22 @@ export function useKidSession() {
   const login = useMutation({
     mutationFn: (v: { kid_id: number; pin?: string }) =>
       api<{ access_token: string }>('/kid/login', { method: 'POST', body: v, kid: true }),
-    onSuccess: (r) => {
-      writeToken(r.access_token)
+    onSuccess: (r, v) => {
+      writeToken(r.access_token, v.kid_id)
+      setKidId(v.kid_id)
       setAuthed(true)
     },
   })
   /** Clear the token and start again at whoami. */
   const logout = () => {
     writeToken(null)
+    setKidId(null)
     setAuthed(false)
     login.reset()
     qc.removeQueries({ queryKey: ['kid', 'today'] })
     qc.invalidateQueries({ queryKey: ['kid', 'whoami'] })
   }
-  return { ready, authed, whoami, login, logout }
+  return { ready, authed, kidId, whoami, login, logout }
 }
 
 /** Kid's chores and lock state, refetched every 10 s. A 401 calls onExpired. */
@@ -79,10 +97,10 @@ export function useMarkDone(onExpired: () => void) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => api(`/kid/chores/${id}/done`, { method: 'POST', kid: true }),
-    onSuccess: () => notifications.show({ message: 'Marked done', color: 'green' }),
+    onSuccess: () => toastOk('Marked done'),
     onError: (e: Error) => {
       if (e instanceof AuthError) onExpired()
-      else notifications.show({ message: e.message, color: 'red' })
+      else toastFail(e)
     },
     onSettled: () => qc.invalidateQueries({ queryKey: ['kid', 'today'] }),
   })

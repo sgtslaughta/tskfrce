@@ -72,12 +72,12 @@ function Session({ name, onExit, canSwitch }: { name?: string; onExit: () => voi
 
 /** Kid screen: who is this, PIN if needed, then lock or unlocked view. Kid auth only. */
 export function KidPage() {
-  const { ready, authed, whoami, login, logout } = useKidSession()
+  const { ready, authed, kidId, whoami, login, logout } = useKidSession()
   const [picked, setPicked] = useState<K | null>(null)
   const tried = useRef(false)
   const kids = whoami.data?.kids ?? []
   const solo = kids.length === 1 ? kids[0] : null
-  const who = picked ?? solo
+  const who = picked ?? solo ?? (authed ? kids.find((k) => k.id === kidId) ?? null : null)
   const err = login.error ? loginMessage(login.error) : null
 
   // exactly one kid, no PIN: log in without asking (once)

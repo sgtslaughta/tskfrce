@@ -1,7 +1,7 @@
 import { Button, Menu } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
+import { toastFail, toastOk } from "../notify";
 import { LockBadge } from "../components/LockBadge";
 import { StickerCard } from "../components/StickerCard";
 import type { TodayKid } from "../types";
@@ -14,11 +14,11 @@ function ApproveButton({ pending }: { pending: TodayKid["chores"] }) {
     mutationFn: (id: number) =>
       api(`/chores/${id}/approve`, { method: "POST" }),
     onSuccess: () => {
-      notifications.show({ message: "Approved", color: "green" });
+      toastOk("Approved");
       qc.invalidateQueries({ queryKey: ["today"] });
+      qc.invalidateQueries({ queryKey: ["chores-today"] });
     },
-    onError: (e: Error) =>
-      notifications.show({ message: e.message, color: "red" }),
+    onError: toastFail,
   });
   const first = (
     <Button
@@ -80,7 +80,7 @@ export function KidCard({ kid }: { kid: TodayKid }) {
               minHeight: 48,
             }}
           >
-            <LockBadge online={kid.online_all} />
+            <LockBadge online={kid.devices.length === 0 ? null : kid.online_all} />
           </button>
         </DeviceQuickMenu>
         <span

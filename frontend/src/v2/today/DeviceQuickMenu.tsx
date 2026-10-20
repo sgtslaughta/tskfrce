@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { Menu } from "@mantine/core";
-import { notifications } from "@mantine/notifications";
+import { toastFail, toastOk } from "../notify";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api";
 import type { OverrideAction } from "../types";
@@ -43,12 +43,11 @@ export function DeviceQuickMenu({
             body: { action: c.action, minutes: c.minutes },
           }),
     onSuccess: (_d, c) => {
-      notifications.show({ message: TOAST[c.action], color: "green" });
+      toastOk(TOAST[c.action]);
       qc.invalidateQueries({ queryKey: ["today"] });
       qc.invalidateQueries({ queryKey: ["devices"] });
     },
-    onError: (e: Error) =>
-      notifications.show({ message: e.message, color: "red" }),
+    onError: toastFail,
   });
 
   return (

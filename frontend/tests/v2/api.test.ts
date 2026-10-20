@@ -106,4 +106,9 @@ describe('api', () => {
     fetchMock.mockResolvedValue(res(204))
     await expect(api('/chores/1', { method: 'DELETE' })).resolves.toBeUndefined()
   })
+
+  test('strips the pydantic "Value error, " prefix', async () => {
+    fetchMock.mockResolvedValue(res(422, { detail: [{ msg: 'Value error, PIN must be 4 digits' }] }))
+    await expect(api('/kids')).rejects.toMatchObject({ detail: 'PIN must be 4 digits' })
+  })
 })

@@ -110,6 +110,7 @@
   background: var(--f-red);
 }
 .f-lock[data-online='true'] { background: var(--f-green); }
+.f-lock[data-online='none'] { background: var(--f-mute); }
 
 /* chip row */
 .f-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
@@ -162,3 +163,6 @@ button.f-pill { cursor: pointer; min-height: 44px; padding-inline: 10px 12px; }
   [data-focused='true'] { animation: f-pulse 1.2s ease-in-out 3; }
 }
 @keyframes f-pulse { 50% { outline-offset: 6px; } }
+
+/* setup device chips: 44px touch target */
+.f-row .mantine-Chip-label { min-height: 44px; }

@@ -29,7 +29,8 @@ export default function SetupPage() {
   const [loginFailed, setLoginFailed] = useState(false)
   const [kidDraft, setKidDraft] = useState('')
   const justCreated = useRef(false)
-  const [family, setFamily] = useState({ name: '', tz: detectTz() })
+  const [family, setFamily] = useState({ name: '', tz: 'UTC' })
+  useEffect(() => setFamily((f) => ({ ...f, tz: detectTz() })), []) // after mount: server renders UTC
   const [parent, setParent] = useState<ParentForm>({ username: '', password: '', fullName: '' })
   const [kids, setKids] = useState<Kid[]>([])
   const [chores, setChores] = useState<string[]>([])

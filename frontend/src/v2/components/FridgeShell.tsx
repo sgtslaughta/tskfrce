@@ -12,7 +12,7 @@ export const NAV = [
   { href: '/devices', label: 'Devices' },
   { href: '/kids', label: 'Kids & chores' },
   { href: '/settings', label: 'Settings' },
-  { href: '/hub', label: 'Classic' },
+  { href: '/hub', label: 'Old version' },
 ] as const
 
 function Nav({ current, drawer }: { current: string; drawer?: boolean }) {

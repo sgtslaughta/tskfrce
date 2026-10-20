@@ -1,11 +1,11 @@
-/** Round lock: green 🔓 when online, red 🔒 when offline. */
-export function LockBadge({ online, size = 48 }: { online: boolean; size?: number }) {
+/** Round lock: green 🔓 when online, red 🔒 when offline, grey when `online` is null (no devices). */
+export function LockBadge({ online, size = 48 }: { online: boolean | null; size?: number }) {
   return (
     <span
       className="f-lock"
-      data-online={online}
+      data-online={online === null ? 'none' : online}
       role="img"
-      aria-label={online ? 'Online' : 'Offline'}
+      aria-label={online === null ? 'No devices yet' : online ? 'Online' : 'Offline'}
       style={{ width: size, height: size, fontSize: Math.round(size / 2) }}
     >
       {online ? '🔓' : '🔒'}
