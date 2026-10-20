@@ -51,6 +51,14 @@ export function KidEditor({ kid }: { kid?: Kid }) {
       <Button onClick={save} disabled={!name.trim()} loading={create.isPending || patch.isPending}>
         {kid ? 'Save kid' : 'Add kid'}
       </Button>
+      {kid?.has_pin && (
+        <Button
+          variant="default"
+          onClick={() => patch.mutate({ id: kid.id, body: { clear_pin: true } }, { onError: toastFail, onSuccess: () => toastOk('PIN removed') })}
+        >
+          Remove PIN
+        </Button>
+      )}
       {kid && (
         <>
           <Button color="fridgeRed" variant="light" onClick={open}>

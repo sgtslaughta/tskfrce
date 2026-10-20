@@ -7,6 +7,7 @@ export interface KidBody {
   full_name?: string
   avatar?: string
   pin?: string
+  clear_pin?: boolean
 }
 
 export const useKids = () => useQuery({ queryKey: ['kids'], queryFn: () => api<Kid[]>('/kids') })

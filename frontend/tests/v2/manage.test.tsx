@@ -11,6 +11,8 @@ import { api } from '@/v2/api'
 import { DeviceRow } from '@/v2/manage/DeviceRow'
 import { GroupsPanel } from '@/v2/manage/GroupsPanel'
 import { ChoreEditor } from '@/v2/manage/ChoreEditor'
+import { ChoreList } from '@/v2/manage/ChoreList'
+import { KidEditor } from '@/v2/manage/KidEditor'
 import { WindowEditor } from '@/v2/manage/WindowEditor'
 import { SettingsPage } from '@/v2/manage/SettingsPage'
 import type { Device, Family, Kid } from '@/v2/types'
@@ -143,6 +145,32 @@ describe('chores', () => {
           },
         },
       ]),
+    )
+  })
+})
+
+describe('repeating chores and PIN', () => {
+  test('ChoreList offers Stop repeating for each definition', async () => {
+    apiMock.mockImplementation(async (p) =>
+      p.startsWith('/chores/definitions')
+        ? [{ id: 5, title: 'Dishes', points: 10, kid_id: 7, repeat: { type: 'daily', days: [] }, needs_photo: false }]
+        : {},
+    )
+    render(wrap(<ChoreList kidId={7} />))
+    expect(apiMock).toHaveBeenCalledWith('/chores/definitions?kid_id=7')
+    await userEvent.click(await screen.findByRole('button', { name: 'Stop repeating' }))
+    await waitFor(() => expect(calls('DELETE')[0]).toEqual(['/chores/5', { method: 'DELETE' }]))
+  })
+
+  test('Remove PIN sends clear_pin, and only shows when a PIN is set', async () => {
+    apiMock.mockResolvedValue({})
+    const { unmount } = render(wrap(<KidEditor kid={kids[0]} />))
+    expect(screen.queryByRole('button', { name: 'Remove PIN' })).toBeNull()
+    unmount()
+    render(wrap(<KidEditor kid={kids[1]} />))
+    await userEvent.click(screen.getByRole('button', { name: 'Remove PIN' }))
+    await waitFor(() =>
+      expect(calls('PATCH')[0]).toEqual(['/kids/8', { method: 'PATCH', body: { clear_pin: true } }]),
     )
   })
 })

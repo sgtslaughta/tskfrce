@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button, Checkbox, Chip, NativeSelect, NumberInput, TextInput } from '@mantine/core'
-import { useCreateChore, type ChoreCreated, type Repeat } from '@/v2/hooks/useChores'
+import { useCreateChore, type Repeat } from '@/v2/hooks/useChores'
 import { DAYS } from '@/v2/days'
 import { toastFail, toastOk } from './notify'
 
@@ -13,7 +13,7 @@ function repeatOf(choice: string, picked: string[]): Repeat {
   return { type: 'once', days: [] }
 }
 
-export function ChoreEditor({ kidId, onCreated }: { kidId: number; onCreated?: (c: ChoreCreated) => void }) {
+export function ChoreEditor({ kidId }: { kidId: number }) {
   const create = useCreateChore()
   const [title, setTitle] = useState('')
   const [points, setPoints] = useState<number | string>(10)
@@ -34,10 +34,9 @@ export function ChoreEditor({ kidId, onCreated }: { kidId: number; onCreated?: (
       },
       {
         onError: toastFail,
-        onSuccess: (res) => {
+        onSuccess: () => {
           toastOk('Added')
           setTitle('')
-          onCreated?.(res)
         },
       },
     )

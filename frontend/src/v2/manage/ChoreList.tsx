@@ -1,28 +1,19 @@
-import { useState } from 'react'
 import { Button, Text } from '@mantine/core'
-import { useChoresToday, useDeleteChore } from '@/v2/hooks/useChores'
-import type { Chore } from '@/v2/types'
+import { useChoreDefinitions, useChoresToday, useDeleteChore } from '@/v2/hooks/useChores'
 import { ChoreEditor } from './ChoreEditor'
 import { toastFail, toastOk } from './notify'
 
-/**
- * Today's chores for one kid plus the add form.
- * The backend can't list repeating definitions, so "Stop repeating" is offered for the
- * ones added in this session (the create answer carries the definition id).
- */
+/** Today's chores for one kid, their repeating chores, and the add form. */
 export function ChoreList({ kidId }: { kidId: number }) {
   const today = useChoresToday()
   const stop = useDeleteChore()
-  const [defs, setDefs] = useState<Chore[]>([])
+  const defs = useChoreDefinitions(kidId).data ?? []
   const chores = today.data?.[String(kidId)] ?? []
 
   const stopOne = (id: number) =>
     stop.mutate(id, {
       onError: toastFail,
-      onSuccess: () => {
-        toastOk('Stopped')
-        setDefs((x) => x.filter((y) => y.id !== id))
-      },
+      onSuccess: () => toastOk('Stopped'),
     })
 
   return (
@@ -44,7 +35,7 @@ export function ChoreList({ kidId }: { kidId: number }) {
           </Button>
         </div>
       ))}
-      <ChoreEditor kidId={kidId} onCreated={(r) => r.definition && setDefs((x) => [...x, r.definition as Chore])} />
+      <ChoreEditor kidId={kidId} />
     </section>
   )
 }

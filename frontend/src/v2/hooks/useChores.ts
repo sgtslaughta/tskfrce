@@ -25,11 +25,26 @@ export interface ChoreCreated {
 export const useChoresToday = () =>
   useQuery({ queryKey: ['chores-today'], queryFn: () => api<Record<string, Chore[]>>('/chores/today') })
 
+/** GET /chores/definitions: a kid's repeating chores. */
+export interface ChoreDefinition {
+  id: number
+  title: string
+  points: number
+  kid_id: number
+  repeat: Repeat
+  needs_photo: boolean
+}
+export const useChoreDefinitions = (kidId: number) =>
+  useQuery({
+    queryKey: ['chore-defs', kidId],
+    queryFn: () => api<ChoreDefinition[]>(`/chores/definitions?kid_id=${kidId}`),
+  })
+
 function useChoreMutation<V, R>(fn: (v: V) => Promise<R>) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: fn,
-    onSuccess: () => Promise.all(['chores-today', 'today'].map((k) => qc.invalidateQueries({ queryKey: [k] }))),
+    onSuccess: () => Promise.all(['chores-today', 'chore-defs', 'today'].map((k) => qc.invalidateQueries({ queryKey: [k] }))),
   })
 }
 
