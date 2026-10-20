@@ -4,14 +4,12 @@ Debug script for JWT token validation
 """
 
 import sys
-import os
 
 sys.path.append("/app")
 
-from app.core.auth import AuthService, SECRET_KEY
-from app.db.session import get_db_session
-from jose import JWTError
 import jwt
+from app.core.auth import SECRET_KEY, AuthService
+from app.db.session import get_db_session
 
 # Test token
 token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQHRhYXNrbWFhc3Rlci5jb20iLCJleHAiOjE3NTYyMzk2ODQsInR5cGUiOiJhY2Nlc3MifQ.cCCOkY5gLSr60rWv33Wrg3dvzWoGkcU8eSjweVClNyw"

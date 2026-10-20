@@ -9,7 +9,7 @@ import json
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 import redis
 from redis import Redis
@@ -95,7 +95,7 @@ class RedisService:
             logger.error(f"Redis cache get error: {e}")
             return default
 
-    def cache_set(self, key: str, value: Any, expire: Optional[int] = 3600) -> bool:
+    def cache_set(self, key: str, value: Any, expire: int | None = 3600) -> bool:
         """
         Set cached data with optional expiration.
 
@@ -147,7 +147,7 @@ class RedisService:
 
     # ==================== SESSION MANAGEMENT ====================
 
-    def set_session(self, session_id: str, user_data: Dict[str, Any], expire: int = 3600) -> bool:
+    def set_session(self, session_id: str, user_data: dict[str, Any], expire: int = 3600) -> bool:
         """
         Store user session data.
 
@@ -162,7 +162,7 @@ class RedisService:
         key = f"session:{session_id}"
         return self.cache_set(key, user_data, expire)
 
-    def get_session(self, session_id: str) -> Optional[Dict[str, Any]]:
+    def get_session(self, session_id: str) -> dict[str, Any] | None:
         """Get user session data."""
         key = f"session:{session_id}"
         return self.cache_get(key)
@@ -186,7 +186,7 @@ class RedisService:
 
     # ==================== RATE LIMITING ====================
 
-    def check_rate_limit(self, identifier: str, max_requests: int, window: int) -> Dict[str, Any]:
+    def check_rate_limit(self, identifier: str, max_requests: int, window: int) -> dict[str, Any]:
         """
         Check and update rate limit for an identifier.
 
@@ -239,54 +239,54 @@ class RedisService:
         key = f"user_points:{user_id}"
         return self.cache_set(key, points, expire=1800)  # 30 minutes
 
-    def get_user_points(self, user_id: int) -> Optional[int]:
+    def get_user_points(self, user_id: int) -> int | None:
         """Get cached user points."""
         key = f"user_points:{user_id}"
         return self.cache_get(key)
 
-    def cache_leaderboard(self, leaderboard_data: List[Dict[str, Any]]) -> bool:
+    def cache_leaderboard(self, leaderboard_data: list[dict[str, Any]]) -> bool:
         """Cache leaderboard data."""
         key = "leaderboard:global"
         return self.cache_set(key, leaderboard_data, expire=300)  # 5 minutes
 
-    def get_leaderboard(self) -> Optional[List[Dict[str, Any]]]:
+    def get_leaderboard(self) -> list[dict[str, Any]] | None:
         """Get cached leaderboard data."""
         key = "leaderboard:global"
         return self.cache_get(key)
 
-    def cache_achievements(self, user_id: int, achievements: List[Dict[str, Any]]) -> bool:
+    def cache_achievements(self, user_id: int, achievements: list[dict[str, Any]]) -> bool:
         """Cache user achievements."""
         key = f"user_achievements:{user_id}"
         return self.cache_set(key, achievements, expire=3600)  # 1 hour
 
-    def get_achievements(self, user_id: int) -> Optional[List[Dict[str, Any]]]:
+    def get_achievements(self, user_id: int) -> list[dict[str, Any]] | None:
         """Get cached user achievements."""
         key = f"user_achievements:{user_id}"
         return self.cache_get(key)
 
     # ==================== TASK CACHING ====================
 
-    def cache_user_tasks(self, user_id: int, tasks: List[Dict[str, Any]]) -> bool:
+    def cache_user_tasks(self, user_id: int, tasks: list[dict[str, Any]]) -> bool:
         """Cache user tasks."""
         key = f"user_tasks:{user_id}"
         return self.cache_set(key, tasks, expire=600)  # 10 minutes
 
-    def get_user_tasks(self, user_id: int) -> Optional[List[Dict[str, Any]]]:
+    def get_user_tasks(self, user_id: int) -> list[dict[str, Any]] | None:
         """Get cached user tasks."""
         key = f"user_tasks:{user_id}"
         return self.cache_get(key)
 
-    def cache_task_details(self, task_id: int, task_data: Dict[str, Any]) -> bool:
+    def cache_task_details(self, task_id: int, task_data: dict[str, Any]) -> bool:
         """Cache individual task details."""
         key = f"task:{task_id}"
         return self.cache_set(key, task_data, expire=1800)  # 30 minutes
 
-    def get_task_details(self, task_id: int) -> Optional[Dict[str, Any]]:
+    def get_task_details(self, task_id: int) -> dict[str, Any] | None:
         """Get cached task details."""
         key = f"task:{task_id}"
         return self.cache_get(key)
 
-    def invalidate_task_cache(self, user_id: int, task_id: Optional[int] = None) -> bool:
+    def invalidate_task_cache(self, user_id: int, task_id: int | None = None) -> bool:
         """Invalidate task-related cache."""
         if not self.available:
             return False
@@ -306,7 +306,7 @@ class RedisService:
 
     # ==================== REAL-TIME FEATURES ====================
 
-    def publish_event(self, channel: str, message: Dict[str, Any]) -> bool:
+    def publish_event(self, channel: str, message: dict[str, Any]) -> bool:
         """Publish event to Redis channel for real-time updates."""
         if not self.available:
             return False
@@ -318,7 +318,7 @@ class RedisService:
             logger.error(f"Redis publish error: {e}")
             return False
 
-    def subscribe_to_channel(self, channel: str) -> Optional[redis.client.PubSub]:
+    def subscribe_to_channel(self, channel: str) -> redis.client.PubSub | None:
         """Subscribe to Redis channel for real-time updates."""
         if not self.available:
             return None
@@ -333,7 +333,7 @@ class RedisService:
 
     # ==================== UTILITY METHODS ====================
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get Redis statistics."""
         if not self.available:
             return {"available": False, "error": "Redis not available"}

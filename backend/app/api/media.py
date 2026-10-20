@@ -4,8 +4,6 @@ Media API router for TaaskMaaster.
 This module contains API endpoints for media attachment and file management.
 """
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -25,7 +23,7 @@ router = APIRouter(prefix="/api/v1/media", tags=["media"])
 async def get_user_attachments(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
-    media_type: Optional[MediaType] = Query(None, description="Filter by media type"),
+    media_type: MediaType | None = Query(None, description="Filter by media type"),
     db: Session = Depends(get_db_session),
     # TODO: Add authentication dependency
     current_user_id: int = 1,  # Temporary for development
@@ -135,7 +133,7 @@ async def delete_media_attachment(
 
 
 @router.post("/upload/validate", status_code=status.HTTP_200_OK)
-async def validate_file_upload(
+async def validate_file_upload(  # noqa: F811 - legacy duplicate def
     upload_request: FileUploadRequest, db: Session = Depends(get_db_session)
 ):
     """Validate a file upload request."""

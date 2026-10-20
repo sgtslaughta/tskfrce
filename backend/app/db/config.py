@@ -4,8 +4,6 @@ Database configuration for TaaskMaaster.
 This module handles database connection configuration and URL generation.
 """
 
-from typing import Optional
-
 from pydantic_settings import BaseSettings
 
 
@@ -19,18 +17,18 @@ class DatabaseSettings(BaseSettings):
     sqlite_path: str = "taaskmaaster.db"
 
     # PostgreSQL configuration
-    postgres_host: Optional[str] = None
+    postgres_host: str | None = None
     postgres_port: int = 5432
-    postgres_user: Optional[str] = None
-    postgres_password: Optional[str] = None
-    postgres_database: Optional[str] = None
+    postgres_user: str | None = None
+    postgres_password: str | None = None
+    postgres_database: str | None = None
 
     # MySQL configuration
-    mysql_host: Optional[str] = None
+    mysql_host: str | None = None
     mysql_port: int = 3306
-    mysql_user: Optional[str] = None
-    mysql_password: Optional[str] = None
-    mysql_database: Optional[str] = None
+    mysql_user: str | None = None
+    mysql_password: str | None = None
+    mysql_database: str | None = None
 
     # Connection settings
     pool_size: int = 10

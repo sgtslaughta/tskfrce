@@ -6,13 +6,11 @@ and real-time messaging functionality.
 """
 
 from datetime import datetime
-from typing import List, Optional, Tuple
 
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.logging import get_logger
-from app.models.direct_message import DirectMessage
 from app.models.comment import (
     DirectMessageMedia,
     MessageReadReceipt,
@@ -20,6 +18,7 @@ from app.models.comment import (
     TaskChatMessageMedia,
     UserStatus,
 )
+from app.models.direct_message import DirectMessage
 from app.models.media import MediaAttachment
 from app.models.task import Task
 from app.models.user import User
@@ -42,8 +41,8 @@ class MessagingService:
         to_user_id: int,
         content: str,
         content_type: str = "text",
-        thread_id: Optional[str] = None,
-        media_attachment_ids: Optional[List[int]] = None,
+        thread_id: str | None = None,
+        media_attachment_ids: list[int] | None = None,
     ) -> DirectMessage:
         """
         Send a direct message between two users.
@@ -109,6 +108,7 @@ class MessagingService:
         # Send notification (async, don't wait for completion)
         try:
             import asyncio
+
             from app.services.notification_service import NotificationService
 
             notification_service = NotificationService(self.db)
@@ -136,8 +136,8 @@ class MessagingService:
         other_user_id: int,
         skip: int = 0,
         limit: int = 50,
-        before_timestamp: Optional[datetime] = None,
-    ) -> Tuple[List[DirectMessage], int]:
+        before_timestamp: datetime | None = None,
+    ) -> tuple[list[DirectMessage], int]:
         """
         Get direct messages between two users.
 
@@ -193,7 +193,7 @@ class MessagingService:
         user_id: int,
         skip: int = 0,
         limit: int = 20,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Get list of conversations for a user with latest message info.
 
@@ -335,8 +335,8 @@ class MessagingService:
         from_user_id: int,
         content: str,
         content_type: str = "text",
-        parent_message_id: Optional[int] = None,
-        media_attachment_ids: Optional[List[int]] = None,
+        parent_message_id: int | None = None,
+        media_attachment_ids: list[int] | None = None,
     ) -> TaskChatMessage:
         """
         Send a message to a task's chat channel.
@@ -402,6 +402,7 @@ class MessagingService:
         # Send notification (async, don't wait for completion)
         try:
             import asyncio
+
             from app.services.notification_service import NotificationService
 
             notification_service = NotificationService(self.db)
@@ -427,8 +428,8 @@ class MessagingService:
         user_id: int,
         skip: int = 0,
         limit: int = 50,
-        before_timestamp: Optional[datetime] = None,
-    ) -> Tuple[List[TaskChatMessage], int]:
+        before_timestamp: datetime | None = None,
+    ) -> tuple[list[TaskChatMessage], int]:
         """
         Get chat messages for a task.
 
@@ -554,7 +555,7 @@ class UserStatusService:
         self,
         user_id: int,
         status: str,
-        custom_message: Optional[str] = None,
+        custom_message: str | None = None,
     ) -> UserStatus:
         """
         Update user's online status.
@@ -590,7 +591,7 @@ class UserStatusService:
         logger.info(f"Updated status for user {user_id} to {status}")
         return user_status
 
-    def get_user_status(self, user_id: int) -> Optional[UserStatus]:
+    def get_user_status(self, user_id: int) -> UserStatus | None:
         """
         Get user's current status.
 
@@ -602,7 +603,7 @@ class UserStatusService:
         """
         return self.db.query(UserStatus).filter(UserStatus.user_id == user_id).first()
 
-    def get_online_users(self, limit: int = 100) -> List[UserStatus]:
+    def get_online_users(self, limit: int = 100) -> list[UserStatus]:
         """
         Get list of online users.
 
@@ -644,7 +645,7 @@ class UserStatusService:
     # Message Threading methods
     def get_conversation_threads(
         self, user1_id: int, user2_id: int, skip: int = 0, limit: int = 20
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Get conversation threads between two users.
 
@@ -729,7 +730,7 @@ class UserStatusService:
         to_user_id: int,
         initial_message: str,
         content_type: str = "markdown",
-        media_attachment_ids: Optional[List[int]] = None,
+        media_attachment_ids: list[int] | None = None,
     ) -> dict:
         """
         Create a new message thread between two users.
@@ -773,7 +774,7 @@ class UserStatusService:
         skip: int = 0,
         limit: int = 50,
         include_media: bool = True,
-    ) -> List[DirectMessage]:
+    ) -> list[DirectMessage]:
         """
         Get messages in a specific thread.
 
@@ -807,7 +808,7 @@ class UserStatusService:
 
         return query.all()
 
-    def get_thread_participants(self, thread_id: str) -> List[User]:
+    def get_thread_participants(self, thread_id: str) -> list[User]:
         """
         Get participants in a message thread.
 

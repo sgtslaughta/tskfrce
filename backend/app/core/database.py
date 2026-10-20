@@ -5,9 +5,7 @@ This module handles SQLAlchemy database configuration, connection pooling,
 and session management for the TaaskMaaster application.
 """
 
-import os
-from typing import Any
-from sqlalchemy import create_engine, MetaData, text
+from sqlalchemy import MetaData, create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -167,26 +165,26 @@ def _import_all_models():
 
         # Import all models here to register them
         from app.models import (
-            User,
-            Task,
-            TaskTemplate,
-            TaskCategory,
-            TaskTag,
-            TaskDependency,
-            Goal,
-            GoalProgress,
             Achievement,
-            UserAchievement,
-            Points,
-            Leaderboard,
-            MediaAttachment,
-            TaskComment,
-            CommentReaction,
             CommentMention,
-            DirectMessage,
-            MessageReaction,
+            CommentReaction,
             Conversation,
             ConversationSettings,
+            DirectMessage,
+            Goal,
+            GoalProgress,
+            Leaderboard,
+            MediaAttachment,
+            MessageReaction,
+            Points,
+            Task,
+            TaskCategory,
+            TaskComment,
+            TaskDependency,
+            TaskTag,
+            TaskTemplate,
+            User,
+            UserAchievement,
         )
 
         # Import additional models that might exist

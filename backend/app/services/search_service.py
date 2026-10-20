@@ -7,20 +7,17 @@ comments, messages, and other content.
 
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Tuple, Union
 
-from sqlalchemy import and_, desc, func, or_, text
+from sqlalchemy import and_, desc, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.logging import get_logger
-from app.models.task_comment import TaskComment
-from app.models.direct_message import DirectMessage
 from app.models.comment import (
     TaskChatMessage,
-    TaskStatusHistory,
 )
+from app.models.direct_message import DirectMessage
 from app.models.task import Task
-from app.models.user import User
+from app.models.task_comment import TaskComment
 
 logger = get_logger(__name__)
 
@@ -62,17 +59,17 @@ class SearchService:
         self,
         query: str,
         user_id: int,
-        task_id: Optional[int] = None,
-        user_filter: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
-        content_type: Optional[str] = None,
+        task_id: int | None = None,
+        user_filter: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
+        content_type: str | None = None,
         include_system: bool = True,
         sort_by: SortBy = SortBy.CREATED_AT,
         sort_order: SortOrder = SortOrder.DESC,
         skip: int = 0,
         limit: int = 50,
-    ) -> Tuple[List[TaskComment], int]:
+    ) -> tuple[list[TaskComment], int]:
         """
         Search task comments.
 
@@ -173,14 +170,14 @@ class SearchService:
         self,
         query: str,
         user_id: int,
-        other_user_id: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
+        other_user_id: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
         sort_by: SortBy = SortBy.CREATED_AT,
         sort_order: SortOrder = SortOrder.DESC,
         skip: int = 0,
         limit: int = 50,
-    ) -> Tuple[List[DirectMessage], int]:
+    ) -> tuple[list[DirectMessage], int]:
         """
         Search direct messages.
 
@@ -276,15 +273,15 @@ class SearchService:
         self,
         query: str,
         user_id: int,
-        task_id: Optional[int] = None,
-        user_filter: Optional[int] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
+        task_id: int | None = None,
+        user_filter: int | None = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
         sort_by: SortBy = SortBy.CREATED_AT,
         sort_order: SortOrder = SortOrder.DESC,
         skip: int = 0,
         limit: int = 50,
-    ) -> Tuple[List[TaskChatMessage], int]:
+    ) -> tuple[list[TaskChatMessage], int]:
         """
         Search task chat messages.
 
@@ -378,14 +375,14 @@ class SearchService:
         self,
         query: str,
         user_id: int,
-        search_types: List[SearchType] = None,
-        date_from: Optional[datetime] = None,
-        date_to: Optional[datetime] = None,
+        search_types: list[SearchType] = None,
+        date_from: datetime | None = None,
+        date_to: datetime | None = None,
         sort_by: SortBy = SortBy.CREATED_AT,
         sort_order: SortOrder = SortOrder.DESC,
         skip: int = 0,
         limit: int = 50,
-    ) -> Dict[str, Tuple[List, int]]:
+    ) -> dict[str, tuple[list, int]]:
         """
         Search across all content types.
 
@@ -461,7 +458,7 @@ class SearchService:
         user_id: int,
         days: int = 7,
         limit: int = 50,
-    ) -> Dict[str, List]:
+    ) -> dict[str, list]:
         """
         Get recent activity for a user.
 
@@ -538,7 +535,7 @@ class SearchService:
 
         return results
 
-    def _get_accessible_task_ids(self, user_id: int) -> List[int]:
+    def _get_accessible_task_ids(self, user_id: int) -> list[int]:
         """
         Get task IDs that a user has access to.
 

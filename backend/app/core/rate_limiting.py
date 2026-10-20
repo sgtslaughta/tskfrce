@@ -6,12 +6,9 @@ with special focus on comment creation, messaging, and bulk operations.
 """
 
 import time
-from datetime import datetime, timedelta
-from typing import Dict, Optional, Tuple
 from enum import Enum
 
 from fastapi import HTTPException, Request, status
-from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
 from app.services.redis_service import redis_service
@@ -94,7 +91,7 @@ class RateLimiter:
     def __init__(self):
         """Initialize rate limiter."""
         self.redis_available = redis_service.available if redis_service else False
-        self.memory_cache: Dict[str, Dict] = {}
+        self.memory_cache: dict[str, dict] = {}
 
         if not self.redis_available:
             logger.warning("Redis not available, using in-memory rate limiting")
@@ -110,7 +107,7 @@ class RateLimiter:
 
     async def check_rate_limit(
         self, rate_limit_type: RateLimitType, identifier: str, cost: int = 1
-    ) -> Tuple[bool, Dict[str, int]]:
+    ) -> tuple[bool, dict[str, int]]:
         """
         Check if request is within rate limit.
 
@@ -141,8 +138,8 @@ class RateLimiter:
             return True, {}
 
     async def _check_redis_rate_limit(
-        self, key: str, config: Dict, window_start: int, cost: int
-    ) -> Tuple[bool, Dict[str, int]]:
+        self, key: str, config: dict, window_start: int, cost: int
+    ) -> tuple[bool, dict[str, int]]:
         """Check rate limit using Redis."""
         redis = redis_service.get_client()
 
@@ -188,8 +185,8 @@ class RateLimiter:
         return allowed, rate_limit_info
 
     async def _check_memory_rate_limit(
-        self, key: str, config: Dict, window_start: int, cost: int
-    ) -> Tuple[bool, Dict[str, int]]:
+        self, key: str, config: dict, window_start: int, cost: int
+    ) -> tuple[bool, dict[str, int]]:
         """Check rate limit using in-memory cache."""
         now = int(time.time())
 
@@ -242,7 +239,7 @@ class RateLimiter:
 
     async def get_rate_limit_status(
         self, rate_limit_type: RateLimitType, identifier: str
-    ) -> Dict[str, int]:
+    ) -> dict[str, int]:
         """
         Get current rate limit status without consuming quota.
 

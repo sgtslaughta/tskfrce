@@ -7,9 +7,8 @@ broadcasting functionality for real-time features.
 
 import json
 from datetime import datetime
-from typing import Dict, List, Optional
 
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
@@ -25,15 +24,15 @@ class WebSocketManager:
     def __init__(self):
         """Initialize WebSocket manager."""
         # Separate connection pools for different types
-        self.notification_connections: Dict[int, List[WebSocket]] = {}
-        self.messaging_connections: Dict[int, List[WebSocket]] = {}
+        self.notification_connections: dict[int, list[WebSocket]] = {}
+        self.messaging_connections: dict[int, list[WebSocket]] = {}
 
         # User status tracking
-        self.user_status: Dict[int, str] = {}  # user_id -> status
-        self.typing_status: Dict[str, Dict[int, datetime]] = {}  # context -> {user_id: last_typed}
+        self.user_status: dict[int, str] = {}  # user_id -> status
+        self.typing_status: dict[str, dict[int, datetime]] = {}  # context -> {user_id: last_typed}
 
         # Connection metadata
-        self.connection_metadata: Dict[WebSocket, Dict] = {}
+        self.connection_metadata: dict[WebSocket, dict] = {}
 
     async def connect_notifications(self, websocket: WebSocket, user_id: int, db: Session):
         """
@@ -194,7 +193,7 @@ class WebSocketManager:
                 except ValueError:
                     pass
 
-    async def broadcast_notifications(self, user_ids: List[int], message: dict):
+    async def broadcast_notifications(self, user_ids: list[int], message: dict):
         """
         Broadcast a notification to multiple users.
 
@@ -205,7 +204,7 @@ class WebSocketManager:
         for user_id in user_ids:
             await self.send_notification(user_id, message)
 
-    async def broadcast_messages(self, user_ids: List[int], message: dict):
+    async def broadcast_messages(self, user_ids: list[int], message: dict):
         """
         Broadcast a message to multiple users.
 
@@ -299,7 +298,7 @@ class WebSocketManager:
         recipients = [p for p in participants if p != user_id]
         await self.broadcast_messages(recipients, typing_message)
 
-    async def get_relevant_users_for_status(self, user_id: int, db: Session) -> List[int]:
+    async def get_relevant_users_for_status(self, user_id: int, db: Session) -> list[int]:
         """
         Get users who should receive status updates for a user.
 
@@ -328,7 +327,7 @@ class WebSocketManager:
 
     async def get_context_participants(
         self, context_type: str, context_id: int, db: Session
-    ) -> List[int]:
+    ) -> list[int]:
         """
         Get participants for a given context.
 

@@ -5,20 +5,18 @@ This module contains FastAPI routes for messaging-related operations.
 """
 
 import json
-from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.core.logging import get_logger
-from app.core.rate_limiting import MessageRateLimit, BulkOperationRateLimit
+from app.core.rate_limiting import MessageRateLimit
 from app.schemas.messaging import (
     ConversationListResponse,
     DirectMessageCreate,
     DirectMessageListResponse,
     DirectMessageResponse,
-    MessageHistoryRequest,
     MessageReadRequest,
     OnlineUsersResponse,
     TaskChatMessageCreate,
@@ -36,7 +34,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-def get_user_data_from_header(x_user_data: Optional[str] = Header(None)) -> dict:
+def get_user_data_from_header(x_user_data: str | None = Header(None)) -> dict:
     """
     Extract user data from X-User-Data header.
 
@@ -73,7 +71,7 @@ def get_user_data_from_header(x_user_data: Optional[str] = Header(None)) -> dict
 async def send_direct_message(
     message_data: DirectMessageCreate,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
     _rate_limit: bool = Depends(MessageRateLimit),
 ):
     """
@@ -148,7 +146,7 @@ async def get_direct_messages(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Get direct messages between current user and another user.
@@ -186,7 +184,7 @@ async def get_conversations(
     skip: int = 0,
     limit: int = 20,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Get list of conversations for the current user.
@@ -225,7 +223,7 @@ async def get_conversations(
 async def send_task_chat_message(
     message_data: TaskChatMessageCreate,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Send a message to a task's chat channel.
@@ -302,7 +300,7 @@ async def get_task_chat_messages(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Get chat messages for a specific task.
@@ -343,7 +341,7 @@ async def get_task_chat_messages(
 async def mark_messages_as_read(
     read_request: MessageReadRequest,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Mark messages as read.
@@ -398,7 +396,7 @@ async def mark_messages_as_read(
 async def update_user_status(
     status_update: UserStatusUpdate,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Update user's online status.
@@ -440,7 +438,7 @@ async def update_user_status(
 
 @router.get("/users/status/{user_id}", response_model=UserStatusResponse)
 async def get_user_status(
-    user_id: int, db: Session = Depends(get_db), x_user_data: Optional[str] = Header(None)
+    user_id: int, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
 ):
     """
     Get a user's current status.
@@ -472,7 +470,7 @@ async def get_user_status(
 
 @router.get("/users/online", response_model=OnlineUsersResponse)
 async def get_online_users(
-    limit: int = 100, db: Session = Depends(get_db), x_user_data: Optional[str] = Header(None)
+    limit: int = 100, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
 ):
     """
     Get list of currently online users.
@@ -503,7 +501,7 @@ async def get_online_users(
 async def send_typing_indicator(
     typing_request: TypingIndicatorRequest,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Send typing indicator for real-time messaging.
@@ -548,7 +546,7 @@ async def get_conversation_threads(
     skip: int = Query(default=0, ge=0, description="Number of threads to skip"),
     limit: int = Query(default=20, ge=1, le=100, description="Maximum number of threads"),
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Get conversation threads between current user and specified user.
@@ -598,9 +596,9 @@ async def create_message_thread(
     to_user_id: int,
     initial_message: str,
     content_type: str = "markdown",
-    media_attachment_ids: Optional[List[int]] = None,
+    media_attachment_ids: list[int] | None = None,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Create a new message thread.
@@ -665,7 +663,7 @@ async def get_thread_messages(
     limit: int = Query(default=50, ge=1, le=100, description="Maximum number of messages"),
     include_media: bool = Query(default=True, description="Include media attachments"),
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Get messages in a specific thread.
@@ -744,7 +742,7 @@ async def get_thread_messages(
 
 @router.get("/threads/{thread_id}/participants")
 async def get_thread_participants(
-    thread_id: str, db: Session = Depends(get_db), x_user_data: Optional[str] = Header(None)
+    thread_id: str, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
 ):
     """
     Get participants in a message thread.

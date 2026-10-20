@@ -5,17 +5,16 @@ This module provides comprehensive pagination, sorting, and filtering
 capabilities for API responses.
 """
 
-from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple, Type, Union
-from enum import Enum
 from dataclasses import dataclass
-
-from sqlalchemy import asc, desc, func, and_, or_
-from sqlalchemy.orm import Query, Session
-from sqlalchemy.sql import ClauseElement
-from fastapi import Query as FastAPIQuery
+from datetime import datetime
+from enum import Enum
+from typing import Any
 
 from app.core.logging import get_logger
+from fastapi import Query as FastAPIQuery
+from sqlalchemy import asc, desc, func
+from sqlalchemy.orm import Query, Session
+from sqlalchemy.sql import ClauseElement
 
 logger = get_logger(__name__)
 
@@ -53,7 +52,7 @@ class FilterCriteria:
     field: str
     operator: FilterOperator
     value: Any
-    value2: Optional[Any] = None  # For BETWEEN operator
+    value2: Any | None = None  # For BETWEEN operator
 
 
 @dataclass
@@ -77,7 +76,7 @@ class PaginationParams:
 class PaginationResult:
     """Pagination result with metadata."""
 
-    items: List[Any]
+    items: list[Any]
     total: int
     skip: int
     limit: int
@@ -103,7 +102,7 @@ class QueryOptimizer:
         """Initialize query optimizer."""
         self.db = db
 
-    def apply_filters(self, query: Query, model: Type, filters: List[FilterCriteria]) -> Query:
+    def apply_filters(self, query: Query, model: type, filters: list[FilterCriteria]) -> Query:
         """
         Apply filters to a SQLAlchemy query.
 
@@ -133,8 +132,8 @@ class QueryOptimizer:
         return query
 
     def _build_filter_condition(
-        self, column, operator: FilterOperator, value: Any, value2: Optional[Any] = None
-    ) -> Optional[ClauseElement]:
+        self, column, operator: FilterOperator, value: Any, value2: Any | None = None
+    ) -> ClauseElement | None:
         """Build filter condition based on operator."""
         try:
             if operator == FilterOperator.EQUALS:
@@ -182,7 +181,7 @@ class QueryOptimizer:
             logger.error(f"Error building filter condition: {e}")
             return None
 
-    def apply_sorting(self, query: Query, model: Type, sort_criteria: List[SortCriteria]) -> Query:
+    def apply_sorting(self, query: Query, model: type, sort_criteria: list[SortCriteria]) -> Query:
         """
         Apply sorting to a SQLAlchemy query.
 
@@ -261,11 +260,11 @@ class QueryOptimizer:
     def optimize_query_for_large_dataset(
         self,
         query: Query,
-        model: Type,
+        model: type,
         cursor_field: str = "id",
-        cursor_value: Optional[Any] = None,
+        cursor_value: Any | None = None,
         limit: int = 50,
-    ) -> Tuple[List[Any], Optional[Any]]:
+    ) -> tuple[list[Any], Any | None]:
         """
         Optimize query for large datasets using cursor-based pagination.
 
@@ -302,7 +301,7 @@ class QueryOptimizer:
             return [], None
 
 
-def parse_filter_params(filter_params: Optional[str] = None) -> List[FilterCriteria]:
+def parse_filter_params(filter_params: str | None = None) -> list[FilterCriteria]:
     """
     Parse filter parameters from query string.
 
@@ -342,7 +341,7 @@ def parse_filter_params(filter_params: Optional[str] = None) -> List[FilterCrite
     return filters
 
 
-def parse_sort_params(sort_params: Optional[str] = None) -> List[SortCriteria]:
+def parse_sort_params(sort_params: str | None = None) -> list[SortCriteria]:
     """
     Parse sort parameters from query string.
 
@@ -443,11 +442,11 @@ def create_filter_dependency():
     """Create a FastAPI dependency for filter parameters."""
 
     def filter_dependency(
-        filters: Optional[str] = FastAPIQuery(
+        filters: str | None = FastAPIQuery(
             None,
             description="Filter parameters (format: field:operator:value,field2:operator2:value2)",
         ),
-    ) -> List[FilterCriteria]:
+    ) -> list[FilterCriteria]:
         return parse_filter_params(filters)
 
     return filter_dependency
@@ -457,10 +456,10 @@ def create_sort_dependency():
     """Create a FastAPI dependency for sort parameters."""
 
     def sort_dependency(
-        sort: Optional[str] = FastAPIQuery(
+        sort: str | None = FastAPIQuery(
             None, description="Sort parameters (format: field:order,field2:order2)"
         ),
-    ) -> List[SortCriteria]:
+    ) -> list[SortCriteria]:
         return parse_sort_params(sort)
 
     return sort_dependency

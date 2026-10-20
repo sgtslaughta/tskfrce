@@ -5,8 +5,6 @@ This module provides API endpoints for managing task lists, including
 creating, updating, deleting lists, and managing task associations.
 """
 
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -16,21 +14,20 @@ from app.db.session import get_db_session
 from app.models.task import Task, TaskList, TaskListAssociation
 from app.models.user import User
 from app.schemas.task import (
+    TaskListAssociationCreate,
+    TaskListAssociationResponse,
     TaskListBulkUpdate,
     TaskListCreate,
     TaskListResponse,
     TaskListStats,
     TaskListUpdate,
     TaskListWithTasks,
-    TaskListAssociationCreate,
-    TaskListAssociationResponse,
 )
-from app.services.task_service import TaskService
 
 router = APIRouter(prefix="/api/v1/lists", tags=["lists"])
 
 
-@router.get("/", response_model=List[TaskListResponse])
+@router.get("/", response_model=list[TaskListResponse])
 async def get_task_lists(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -390,7 +387,7 @@ async def remove_task_from_list(
     db.commit()
 
 
-@router.put("/{list_id}/tasks/reorder", response_model=List[TaskListAssociationResponse])
+@router.put("/{list_id}/tasks/reorder", response_model=list[TaskListAssociationResponse])
 async def reorder_tasks_in_list(
     list_id: int,
     bulk_update: TaskListBulkUpdate,

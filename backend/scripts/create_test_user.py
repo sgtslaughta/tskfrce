@@ -13,9 +13,9 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 from app.db.session import get_db_session
+from app.models.user import UserRole
 from app.schemas.user import UserCreate
 from app.services.user_service import UserService
-from app.models.user import UserRole
 
 
 def create_test_users():

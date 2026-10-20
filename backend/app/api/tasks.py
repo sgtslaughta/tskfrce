@@ -46,38 +46,31 @@ Available Endpoints:
 - POST /tasks/tags - Create tag
 """
 
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
 from app.core.auth import get_current_active_user
 from app.db.session import get_db_session
-from app.models.task import TaskPriority, TaskStatus, RewardType
+from app.models.task import RewardType, TaskPriority, TaskStatus
 from app.models.user import User
 from app.schemas.task import (
+    CreateFromTemplateRequest,
+    TaskBulkUpdate,
     TaskCategoryCreate,
     TaskCategoryResponse,
+    TaskCompleteRequest,
     TaskCreate,
+    TaskDeleteRequest,
+    TaskExportRequest,
+    TaskGetRequest,
     TaskList,
     TaskResponse,
     TaskTagCreate,
     TaskTagResponse,
     TaskTemplateCreate,
     TaskTemplateResponse,
-    TaskUpdate,
-    TaskBulkUpdate,
-    TaskExportRequest,
-    TaskCompleteRequest,
-    TaskGetRequest,
     TaskUpdateRequest,
-    TaskDeleteRequest,
-    CreateFromTemplateRequest,
-    GetTemplateRequest,
-    UpdateTemplateRequest,
-    DeleteTemplateRequest,
-    GetListTasksRequest,
 )
 from app.services.task_service import TaskService
 
@@ -117,7 +110,7 @@ async def create_task(
     return task_service.to_task_response(task)
 
 
-@router.post("/bulk-update", response_model=List[TaskResponse])
+@router.post("/bulk-update", response_model=list[TaskResponse])
 async def bulk_update_tasks(
     bulk_update_data: TaskBulkUpdate,
     db: Session = Depends(get_db_session),
@@ -189,12 +182,12 @@ async def get_reward_types():
 async def get_tasks(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
-    status: Optional[TaskStatus] = Query(None, description="Filter by task status"),
-    priority: Optional[TaskPriority] = Query(None, description="Filter by task priority"),
-    category_id: Optional[int] = Query(None, description="Filter by category ID"),
-    assigned_to_id: Optional[int] = Query(None, description="Filter by assigned user ID"),
-    reward_type: Optional[RewardType] = Query(None, description="Filter by reward type"),
-    search: Optional[str] = Query(None, description="Search in title and description"),
+    status: TaskStatus | None = Query(None, description="Filter by task status"),
+    priority: TaskPriority | None = Query(None, description="Filter by task priority"),
+    category_id: int | None = Query(None, description="Filter by category ID"),
+    assigned_to_id: int | None = Query(None, description="Filter by assigned user ID"),
+    reward_type: RewardType | None = Query(None, description="Filter by reward type"),
+    search: str | None = Query(None, description="Search in title and description"),
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user),
 ):
@@ -260,7 +253,7 @@ async def create_task_template(
     return template
 
 
-@router.get("/templates", response_model=List[TaskTemplateResponse])
+@router.get("/templates", response_model=list[TaskTemplateResponse])
 async def get_task_templates(
     include_public: bool = Query(True, description="Include public templates"),
     db: Session = Depends(get_db_session),
@@ -319,7 +312,7 @@ async def create_task_category(
     return category
 
 
-@router.get("/categories", response_model=List[TaskCategoryResponse])
+@router.get("/categories", response_model=list[TaskCategoryResponse])
 async def get_task_categories(
     db: Session = Depends(get_db_session), current_user: User = Depends(get_current_active_user)
 ):
@@ -346,7 +339,7 @@ async def create_task_tag(
     return tag
 
 
-@router.get("/tags", response_model=List[TaskTagResponse])
+@router.get("/tags", response_model=list[TaskTagResponse])
 async def get_task_tags(db: Session = Depends(get_db_session)):
     """Get all task tags."""
     task_service = TaskService(db)
@@ -433,7 +426,7 @@ async def update_task_json(
 
 
 # Recurring Tasks
-@router.get("/recurring", response_model=List[TaskResponse])
+@router.get("/recurring", response_model=list[TaskResponse])
 async def get_recurring_tasks(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),

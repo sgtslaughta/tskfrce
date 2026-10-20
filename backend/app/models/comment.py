@@ -6,10 +6,8 @@ status history, and related functionality for the workflow enhancement system.
 """
 
 from datetime import datetime
-from enum import Enum
 
 from sqlalchemy import (
-    Boolean,
     Column,
     DateTime,
     ForeignKey,

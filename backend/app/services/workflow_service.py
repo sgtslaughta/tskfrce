@@ -7,9 +7,7 @@ status transitions, approvals, and status history tracking.
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Set, Tuple
 
-from sqlalchemy import and_, desc
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.logging import get_logger
@@ -94,7 +92,7 @@ class WorkflowService:
         task_id: int,
         new_status: TaskStatus,
         user_id: int,
-        comment: Optional[str] = None,
+        comment: str | None = None,
         force: bool = False,
     ) -> Task:
         """
@@ -179,6 +177,7 @@ class WorkflowService:
         # Send notifications (async, don't wait for completion)
         try:
             import asyncio
+
             from app.services.notification_service import NotificationService
 
             notification_service = NotificationService(self.db)
@@ -216,7 +215,7 @@ class WorkflowService:
         self,
         task_id: int,
         approver_id: int,
-        comment: Optional[str] = None,
+        comment: str | None = None,
     ) -> Task:
         """
         Approve a task that's submitted for approval.
@@ -257,6 +256,7 @@ class WorkflowService:
         # Send approval notification (async, don't wait for completion)
         try:
             import asyncio
+
             from app.services.notification_service import NotificationService
 
             notification_service = NotificationService(self.db)
@@ -322,6 +322,7 @@ class WorkflowService:
         # Send rejection notification (async, don't wait for completion)
         try:
             import asyncio
+
             from app.services.notification_service import NotificationService
 
             notification_service = NotificationService(self.db)
@@ -348,7 +349,7 @@ class WorkflowService:
         user_id: int,
         skip: int = 0,
         limit: int = 100,
-    ) -> Tuple[List[TaskStatusHistory], int]:
+    ) -> tuple[list[TaskStatusHistory], int]:
         """
         Get status change history for a task.
 
@@ -387,7 +388,7 @@ class WorkflowService:
         self,
         task_id: int,
         user_id: int,
-    ) -> List[TaskStatus]:
+    ) -> list[TaskStatus]:
         """
         Get valid status transitions for a task based on current status and user permissions.
 
@@ -479,7 +480,7 @@ class WorkflowService:
         previous_status: TaskStatus,
         new_status: TaskStatus,
         user_id: int,
-        comment: Optional[str] = None,
+        comment: str | None = None,
     ) -> TaskStatusHistory:
         """
         Record a status change in the history table.
@@ -513,7 +514,7 @@ class WorkflowService:
         previous_status: TaskStatus,
         new_status: TaskStatus,
         user_id: int,
-        comment: Optional[str] = None,
+        comment: str | None = None,
     ) -> str:
         """
         Generate a system comment for status changes.

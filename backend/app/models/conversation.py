@@ -5,8 +5,8 @@ This module defines the Conversation model for managing user conversations.
 """
 
 from datetime import datetime
-from typing import List
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table, Text
+
+from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base

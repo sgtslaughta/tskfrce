@@ -7,11 +7,10 @@ and authorization utilities.
 
 import os
 from datetime import datetime, timedelta
-from typing import Optional
 
+import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-import jwt
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
@@ -68,7 +67,7 @@ class AuthService:
         """
         return pwd_context.hash(password)
 
-    def authenticate_user(self, username: str, password: str) -> Optional[User]:
+    def authenticate_user(self, username: str, password: str) -> User | None:
         """
         Authenticate a user with username/email and password.
 
@@ -97,7 +96,7 @@ class AuthService:
         logger.info(f"User {user.id} authenticated successfully")
         return user
 
-    def create_access_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    def create_access_token(self, data: dict, expires_delta: timedelta | None = None) -> str:
         """
         Create a JWT access token.
 
@@ -118,7 +117,7 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
-    def create_refresh_token(self, data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    def create_refresh_token(self, data: dict, expires_delta: timedelta | None = None) -> str:
         """
         Create a JWT refresh token.
 
@@ -139,7 +138,7 @@ class AuthService:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
         return encoded_jwt
 
-    def verify_token(self, token: str) -> Optional[dict]:
+    def verify_token(self, token: str) -> dict | None:
         """
         Verify and decode a JWT token.
 
@@ -155,7 +154,7 @@ class AuthService:
         except jwt.InvalidTokenError:
             return None
 
-    def get_current_user(self, token: str) -> Optional[User]:
+    def get_current_user(self, token: str) -> User | None:
         """
         Get current user from JWT token.
 

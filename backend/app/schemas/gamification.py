@@ -5,7 +5,7 @@ This module contains Pydantic schemas for gamification-related API operations.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -20,20 +20,20 @@ class AchievementBase(BaseModel):
     """Base achievement schema."""
 
     name: str = Field(..., min_length=1, max_length=255, description="Achievement name")
-    description: Optional[str] = Field(None, description="Achievement description")
+    description: str | None = Field(None, description="Achievement description")
     achievement_type: AchievementType = Field(..., description="Type of achievement")
     rarity: AchievementRarity = Field(
         default=AchievementRarity.COMMON, description="Achievement rarity"
     )
     points_reward: int = Field(default=0, ge=0, description="Points awarded for achievement")
-    icon: Optional[str] = Field(None, max_length=100, description="Achievement icon")
+    icon: str | None = Field(None, max_length=100, description="Achievement icon")
 
 
 class AchievementResponse(AchievementBase):
     """Schema for achievement response data."""
 
     id: int
-    criteria: Optional[Dict[str, Any]] = None
+    criteria: dict[str, Any] | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -45,7 +45,7 @@ class AchievementResponse(AchievementBase):
 class UserAchievementBase(BaseModel):
     """Base user achievement schema."""
 
-    progress_value: Optional[float] = Field(None, description="Progress value when earned")
+    progress_value: float | None = Field(None, description="Progress value when earned")
 
 
 class UserAchievementResponse(UserAchievementBase):
@@ -69,11 +69,9 @@ class PointsBase(BaseModel):
 
     points_type: PointsType = Field(..., description="Type of points transaction")
     amount: int = Field(..., description="Points amount (positive or negative)")
-    description: Optional[str] = Field(None, max_length=255, description="Transaction description")
-    reference_id: Optional[int] = Field(None, description="Reference to related entity")
-    reference_type: Optional[str] = Field(
-        None, max_length=50, description="Type of reference entity"
-    )
+    description: str | None = Field(None, max_length=255, description="Transaction description")
+    reference_id: int | None = Field(None, description="Reference to related entity")
+    reference_type: str | None = Field(None, max_length=50, description="Type of reference entity")
 
 
 class PointsResponse(PointsBase):
@@ -90,7 +88,7 @@ class PointsResponse(PointsBase):
 class PointsList(BaseModel):
     """Schema for points list response."""
 
-    points: List[PointsResponse]
+    points: list[PointsResponse]
     total: int
     page: int
     size: int
@@ -105,7 +103,7 @@ class UserPointsSummary(BaseModel):
     points_this_week: int
     points_this_month: int
     points_this_year: int
-    rank: Optional[int] = None
+    rank: int | None = None
     total_users: int
 
 
@@ -113,7 +111,7 @@ class LeaderboardBase(BaseModel):
     """Base leaderboard schema."""
 
     name: str = Field(..., min_length=1, max_length=255, description="Leaderboard name")
-    description: Optional[str] = Field(None, description="Leaderboard description")
+    description: str | None = Field(None, description="Leaderboard description")
     leaderboard_type: str = Field(..., max_length=50, description="Type of leaderboard")
     time_period: str = Field(..., max_length=20, description="Time period for leaderboard")
 
@@ -122,19 +120,19 @@ class LeaderboardCreate(LeaderboardBase):
     """Schema for creating a leaderboard."""
 
     start_date: datetime = Field(..., description="Leaderboard start date")
-    end_date: Optional[datetime] = Field(None, description="Leaderboard end date")
+    end_date: datetime | None = Field(None, description="Leaderboard end date")
 
 
 class LeaderboardUpdate(BaseModel):
     """Schema for updating a leaderboard."""
 
-    name: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    leaderboard_type: Optional[str] = Field(None, max_length=50)
-    time_period: Optional[str] = Field(None, max_length=20)
-    start_date: Optional[datetime] = None
-    end_date: Optional[datetime] = None
-    is_active: Optional[bool] = None
+    name: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    leaderboard_type: str | None = Field(None, max_length=50)
+    time_period: str | None = Field(None, max_length=20)
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    is_active: bool | None = None
 
 
 class LeaderboardResponse(LeaderboardBase):
@@ -142,13 +140,13 @@ class LeaderboardResponse(LeaderboardBase):
 
     id: int
     start_date: datetime
-    end_date: Optional[datetime] = None
+    end_date: datetime | None = None
     is_active: bool
     created_at: datetime
     updated_at: datetime
 
     # Related data
-    entries: List[dict] = []  # Will be populated by service layer
+    entries: list[dict] = []  # Will be populated by service layer
 
     class Config:
         from_attributes = True
@@ -157,7 +155,7 @@ class LeaderboardResponse(LeaderboardBase):
 class LeaderboardList(BaseModel):
     """Schema for leaderboard list response."""
 
-    leaderboards: List[LeaderboardResponse]
+    leaderboards: list[LeaderboardResponse]
     total: int
     page: int
     size: int
@@ -168,8 +166,8 @@ class LeaderboardEntryBase(BaseModel):
     """Base leaderboard entry schema."""
 
     score: float = Field(..., description="User's score")
-    rank: Optional[int] = Field(None, description="User's rank")
-    metadata_json: Optional[Dict[str, Any]] = Field(None, description="Additional metadata")
+    rank: int | None = Field(None, description="User's rank")
+    metadata_json: dict[str, Any] | None = Field(None, description="Additional metadata")
 
 
 class LeaderboardEntryResponse(LeaderboardEntryBase):
@@ -182,7 +180,7 @@ class LeaderboardEntryResponse(LeaderboardEntryBase):
     updated_at: datetime
 
     # Related data
-    user: Optional[dict] = None  # Will be populated by service layer
+    user: dict | None = None  # Will be populated by service layer
 
     class Config:
         from_attributes = True
@@ -191,7 +189,7 @@ class LeaderboardEntryResponse(LeaderboardEntryBase):
 class LeaderboardEntryList(BaseModel):
     """Schema for leaderboard entry list response."""
 
-    entries: List[LeaderboardEntryResponse]
+    entries: list[LeaderboardEntryResponse]
     total: int
     page: int
     size: int
@@ -211,7 +209,7 @@ class StreakResponse(StreakBase):
 
     id: int
     user_id: int
-    last_activity: Optional[datetime] = None
+    last_activity: datetime | None = None
     start_date: datetime
     created_at: datetime
     updated_at: datetime
@@ -223,7 +221,7 @@ class StreakResponse(StreakBase):
 class StreakList(BaseModel):
     """Schema for streak list response."""
 
-    streaks: List[StreakResponse]
+    streaks: list[StreakResponse]
     total: int
     page: int
     size: int

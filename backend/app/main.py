@@ -38,7 +38,6 @@ from app.core.monitoring import (
     get_health_status,
     get_metrics,
 )
-from app.core.rate_limiting import rate_limit_middleware
 from app.services.storage_service import MinIOStorageService
 
 # Configure logging

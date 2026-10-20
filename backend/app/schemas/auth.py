@@ -5,9 +5,9 @@ This module contains Pydantic schemas for authentication-related API operations.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, Field
+
 from app.models.user import UserRole
 
 
@@ -23,9 +23,9 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     """Schema for JWT token payload data."""
 
-    user_id: Optional[int] = None
-    username: Optional[str] = None
-    email: Optional[str] = None
+    user_id: int | None = None
+    username: str | None = None
+    email: str | None = None
 
 
 class LoginRequest(BaseModel):
@@ -46,7 +46,7 @@ class LoginResponse(BaseModel):
     user_id: int = Field(..., description="User ID")
     username: str = Field(..., description="Username")
     email: str = Field(..., description="Email")
-    full_name: Optional[str] = Field(None, description="Full name")
+    full_name: str | None = Field(None, description="Full name")
     role: UserRole = Field(..., description="User role")
     is_active: bool = Field(..., description="User active status")
     is_superuser: bool = Field(..., description="Superuser status")

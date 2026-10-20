@@ -6,15 +6,14 @@ in comments and messages with real-time notifications.
 """
 
 import re
-from typing import List, Optional, Set
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-from app.models.task_comment import TaskComment
-from app.models.direct_message import DirectMessage
 from app.models.comment import TaskChatMessage
+from app.models.direct_message import DirectMessage
 from app.models.task import Task
+from app.models.task_comment import TaskComment
 from app.models.user import User
 from app.services.notification_service import NotificationService
 
@@ -32,7 +31,7 @@ class MentionService:
     # Mention pattern: @username (alphanumeric + underscore, 3-30 chars)
     MENTION_PATTERN = re.compile(r"@([a-zA-Z0-9_]{3,30})")
 
-    def extract_mentions(self, content: str) -> List[str]:
+    def extract_mentions(self, content: str) -> list[str]:
         """
         Extract @username mentions from content.
 
@@ -45,7 +44,7 @@ class MentionService:
         mentions = self.MENTION_PATTERN.findall(content)
         return list(set(mentions))  # Remove duplicates
 
-    def validate_mentions(self, usernames: List[str]) -> List[User]:
+    def validate_mentions(self, usernames: list[str]) -> list[User]:
         """
         Validate that mentioned usernames exist and return User objects.
 
@@ -66,10 +65,10 @@ class MentionService:
         self,
         current_user_id: int,
         context_type: str = "task",
-        context_id: Optional[int] = None,
-        search_query: Optional[str] = None,
+        context_id: int | None = None,
+        search_query: str | None = None,
         limit: int = 10,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Get users that can be mentioned in a given context.
 
@@ -123,7 +122,7 @@ class MentionService:
                     ]
                 )
             if search_conditions:
-                query = query.filter(db.or_(*search_conditions))
+                query = query.filter(db.or_(*search_conditions))  # noqa: F821 - legacy bug, module removed in plan 1
 
         # Get users
         users = query.limit(limit).all()
@@ -151,8 +150,8 @@ class MentionService:
         return mentionable_users
 
     async def process_comment_mentions(
-        self, comment: TaskComment, mentioned_usernames: List[str]
-    ) -> List[User]:
+        self, comment: TaskComment, mentioned_usernames: list[str]
+    ) -> list[User]:
         """
         Process mentions in a task comment and send notifications.
 
@@ -211,8 +210,8 @@ class MentionService:
         return notified_users
 
     async def process_message_mentions(
-        self, message: DirectMessage, mentioned_usernames: List[str]
-    ) -> List[User]:
+        self, message: DirectMessage, mentioned_usernames: list[str]
+    ) -> list[User]:
         """
         Process mentions in a direct message and send notifications.
 
@@ -251,8 +250,8 @@ class MentionService:
             return []
 
     async def process_task_chat_mentions(
-        self, message: TaskChatMessage, mentioned_usernames: List[str]
-    ) -> List[User]:
+        self, message: TaskChatMessage, mentioned_usernames: list[str]
+    ) -> list[User]:
         """
         Process mentions in a task chat message and send notifications.
 

@@ -13,46 +13,40 @@ Usage:
     python create_test_data.py
 """
 
-import sys
 import os
-from datetime import datetime, timedelta
 import random
-from typing import List, Dict, Any
+import sys
+from datetime import datetime, timedelta
 
 # Add the backend directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy.orm import Session
 from app.db.session import get_db_session
-from app.models.user import User
+from app.models.comment import (
+    TaskStatusHistory,
+    UserStatus,
+)
+from app.models.conversation import Conversation
+from app.models.direct_message import DirectMessage
+from app.models.gamification import Points, PointsType
+from app.models.media import MediaAttachment
 from app.models.task import (
+    RewardType,
     Task,
     TaskCategory,
-    TaskTemplate,
     TaskList,
     TaskListAssociation,
     TaskPriority,
     TaskStatus,
-    RewardType,
+    TaskTemplate,
 )
-from app.models.gamification import Points, PointsType
-from app.models.task_comment import TaskComment, CommentMediaAttachment
-from app.models.direct_message import DirectMessage
-from app.models.conversation import Conversation
-from app.models.comment import (
-    CommentAuditTrail,
-    TaskStatusHistory,
-    UserStatus,
-    TaskChatMessage,
-    MessageReadReceipt,
-    DirectMessageMedia,
-    TaskChatMessageMedia,
-)
-from app.models.media import MediaAttachment
+from app.models.task_comment import TaskComment
+from app.models.user import User
+from app.schemas.task import TaskCategoryCreate, TaskCreate, TaskTemplateCreate
 from app.schemas.user import UserCreate
-from app.schemas.task import TaskCreate, TaskCategoryCreate, TaskTemplateCreate, TaskListCreate
-from app.services.user_service import UserService
 from app.services.task_service import TaskService
+from app.services.user_service import UserService
+from sqlalchemy.orm import Session
 
 
 class TestDataGenerator:
@@ -62,15 +56,15 @@ class TestDataGenerator:
         self.db = db
         self.user_service = UserService(db)
         self.task_service = TaskService(db)
-        self.users: List[User] = []
-        self.categories: List[TaskCategory] = []
-        self.templates: List[TaskTemplate] = []
-        self.tasks: List[Task] = []
-        self.lists: List[TaskList] = []
-        self.conversations: List[Conversation] = []
-        self.task_comments: List[TaskComment] = []
-        self.direct_messages: List[DirectMessage] = []
-        self.media_attachments: List[MediaAttachment] = []
+        self.users: list[User] = []
+        self.categories: list[TaskCategory] = []
+        self.templates: list[TaskTemplate] = []
+        self.tasks: list[Task] = []
+        self.lists: list[TaskList] = []
+        self.conversations: list[Conversation] = []
+        self.task_comments: list[TaskComment] = []
+        self.direct_messages: list[DirectMessage] = []
+        self.media_attachments: list[MediaAttachment] = []
 
     def create_users(self) -> None:
         """Create test users with different roles"""
@@ -1048,7 +1042,7 @@ class TestDataGenerator:
 
             print("=" * 50)
             print("Test data generation completed successfully!")
-            print(f"Summary:")
+            print("Summary:")
             print(f"  - Users: {len(self.users)}")
             print(f"  - Categories: {len(self.categories)}")
             print(f"  - Templates: {len(self.templates)}")

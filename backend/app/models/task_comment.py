@@ -5,7 +5,7 @@ This module defines the TaskComment model for handling comments on tasks.
 """
 
 from datetime import datetime
-from typing import List, Optional
+
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
@@ -71,7 +71,7 @@ class TaskComment(Base):
         return len(self.replies) if self.replies else 0
 
     @property
-    def mentioned_users(self) -> List["User"]:
+    def mentioned_users(self) -> list["User"]:  # noqa: F821 - string forward ref, fixed when models are rewritten
         """Get list of users mentioned in this comment."""
         return [mention.mentioned_user for mention in self.mentions] if self.mentions else []
 

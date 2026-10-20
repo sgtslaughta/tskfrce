@@ -7,7 +7,7 @@ This module contains MinIO storage operations for file management.
 import io
 import os
 from datetime import timedelta
-from typing import Any, BinaryIO, Dict, Optional
+from typing import Any, BinaryIO
 
 from minio import Minio
 from minio.error import S3Error
@@ -47,8 +47,8 @@ class MinIOStorageService:
         self,
         file_data: BinaryIO,
         object_name: str,
-        content_type: Optional[str] = None,
-        metadata: Optional[Dict[str, str]] = None,
+        content_type: str | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> str:
         """
         Upload file to MinIO.
@@ -89,8 +89,8 @@ class MinIOStorageService:
         self,
         file_data: bytes,
         object_name: str,
-        content_type: Optional[str] = None,
-        metadata: Optional[Dict[str, str]] = None,
+        content_type: str | None = None,
+        metadata: dict[str, str] | None = None,
     ) -> str:
         """
         Upload file from bytes to MinIO.
@@ -179,7 +179,7 @@ class MinIOStorageService:
     def get_upload_url(
         self,
         object_name: str,
-        content_type: Optional[str] = None,
+        content_type: str | None = None,
         expires: int = 3600,
     ) -> str:
         """
@@ -223,7 +223,7 @@ class MinIOStorageService:
         except S3Error:
             return False
 
-    def get_file_info(self, object_name: str) -> Optional[Dict[str, Any]]:
+    def get_file_info(self, object_name: str) -> dict[str, Any] | None:
         """
         Get file information from MinIO.
 
@@ -246,7 +246,7 @@ class MinIOStorageService:
             logger.error(f"Error getting file info: {e}")
             return None
 
-    def get_storage_statistics(self) -> Dict[str, Any]:
+    def get_storage_statistics(self) -> dict[str, Any]:
         """
         Get storage statistics.
 

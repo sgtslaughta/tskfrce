@@ -12,15 +12,12 @@ from pathlib import Path
 backend_dir = Path(__file__).parent
 sys.path.insert(0, str(backend_dir))
 
-from sqlalchemy import create_engine, text
 from app.db.config import get_database_url
-from app.db.session import Base
-from app.models.user import User, UserRole
-from app.models.task import Task, TaskCategory, TaskTemplate, TaskList, TaskListAssociation
-from app.models.gamification import Points, PointsType
+from app.db.session import Base, get_db_session
+from app.models.user import UserRole
 from app.schemas.user import UserCreate
 from app.services.user_service import UserService
-from app.db.session import get_db_session
+from sqlalchemy import create_engine, text
 
 
 def setup_database():

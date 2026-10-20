@@ -5,17 +5,18 @@ Common dependencies used across API endpoints including database sessions,
 authentication, and user context management.
 """
 
-from typing import Generator, Optional
-from fastapi import Depends, HTTPException, status, Header
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
 import json
-from jose import JWTError, jwt
+from collections.abc import Generator
 
-from app.core.database import SessionLocal
+from fastapi import Depends, Header, HTTPException, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
+from sqlalchemy.orm import Session
+
 from app.core.config import settings
-from app.models.user import User
+from app.core.database import SessionLocal
 from app.core.logging import get_logger
+from app.models.user import User
 
 logger = get_logger(__name__)
 
@@ -64,8 +65,8 @@ def get_current_user_from_token(
 
 
 def get_current_user_from_header(
-    x_user_data: Optional[str] = Header(None), db: Session = Depends(get_db)
-) -> Optional[User]:
+    x_user_data: str | None = Header(None), db: Session = Depends(get_db)
+) -> User | None:
     """
     Get current user from X-User-Data header.
     This is used for API endpoints that expect user data in headers.
@@ -89,8 +90,8 @@ def get_current_user_from_header(
 
 
 def get_current_user(
-    token: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    x_user_data: Optional[str] = Header(None),
+    token: HTTPAuthorizationCredentials | None = Depends(security),
+    x_user_data: str | None = Header(None),
     db: Session = Depends(get_db),
 ) -> User:
     """
@@ -136,10 +137,10 @@ def get_current_superuser(current_user: User = Depends(get_current_user)) -> Use
 
 
 def get_optional_user(
-    token: Optional[HTTPAuthorizationCredentials] = Depends(security),
-    x_user_data: Optional[str] = Header(None),
+    token: HTTPAuthorizationCredentials | None = Depends(security),
+    x_user_data: str | None = Header(None),
     db: Session = Depends(get_db),
-) -> Optional[User]:
+) -> User | None:
     """
     Get current user optionally - returns None if not authenticated.
     Useful for endpoints that work with or without authentication.
@@ -159,7 +160,7 @@ class CommonQueryParams:
         self,
         limit: int = 50,
         offset: int = 0,
-        sort_by: Optional[str] = None,
+        sort_by: str | None = None,
         sort_order: str = "desc",
     ):
         self.limit = min(limit, 100)  # Cap at 100
@@ -169,7 +170,7 @@ class CommonQueryParams:
 
 
 def get_pagination_params(
-    limit: int = 50, offset: int = 0, sort_by: Optional[str] = None, sort_order: str = "desc"
+    limit: int = 50, offset: int = 0, sort_by: str | None = None, sort_order: str = "desc"
 ) -> CommonQueryParams:
     """
     Dependency for common pagination parameters.
@@ -231,8 +232,8 @@ def verify_message_access(
     """
     Verify that the current user has access to a specific message.
     """
-    from app.models.direct_message import DirectMessage
     from app.models.conversation import Conversation
+    from app.models.direct_message import DirectMessage
 
     message = db.query(DirectMessage).filter(DirectMessage.id == message_id).first()
     if not message:
@@ -256,9 +257,9 @@ def verify_message_access(
 
 
 def get_request_metadata(
-    user_agent: Optional[str] = Header(None),
-    x_forwarded_for: Optional[str] = Header(None),
-    x_real_ip: Optional[str] = Header(None),
+    user_agent: str | None = Header(None),
+    x_forwarded_for: str | None = Header(None),
+    x_real_ip: str | None = Header(None),
 ) -> dict:
     """
     Extract request metadata for logging and analytics.

@@ -8,6 +8,7 @@ rate limits that might be blocking legitimate requests.
 
 import os
 import sys
+
 import redis
 from redis import Redis
 
@@ -29,7 +30,7 @@ def clear_redis_cache():
 
         # Show some stats
         info = client.info()
-        print(f"📊 Redis Stats:")
+        print("📊 Redis Stats:")
         print(f"   - Connected clients: {info.get('connected_clients', 0)}")
         print(f"   - Used memory: {info.get('used_memory_human', '0B')}")
         print(f"   - Total commands: {info.get('total_commands_processed', 0)}")
@@ -80,7 +81,7 @@ def show_redis_status():
 
         # Show stats
         info = client.info()
-        print(f"📊 Redis Status:")
+        print("📊 Redis Status:")
         print(f"   - Version: {info.get('redis_version', 'Unknown')}")
         print(f"   - Connected clients: {info.get('connected_clients', 0)}")
         print(f"   - Used memory: {info.get('used_memory_human', '0B')}")

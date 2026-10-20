@@ -5,9 +5,8 @@ This module provides utilities for validating and sanitizing rich text content,
 including markdown and HTML, to prevent XSS attacks and ensure content quality.
 """
 
-import re
 import html
-from typing import Dict, List, Optional, Tuple
+import re
 from urllib.parse import urlparse
 
 from app.core.logging import get_logger
@@ -87,8 +86,8 @@ class ContentValidator:
 
     @classmethod
     def validate_content(
-        cls, content: str, content_type: str = "markdown", max_length: Optional[int] = None
-    ) -> Tuple[bool, List[str]]:
+        cls, content: str, content_type: str = "markdown", max_length: int | None = None
+    ) -> tuple[bool, list[str]]:
         """
         Validate content for safety and quality.
 
@@ -157,7 +156,7 @@ class ContentValidator:
         return content.strip()
 
     @classmethod
-    def _validate_markdown(cls, content: str) -> List[str]:
+    def _validate_markdown(cls, content: str) -> list[str]:
         """
         Validate markdown-specific content.
 
@@ -190,7 +189,7 @@ class ContentValidator:
         return errors
 
     @classmethod
-    def _validate_html(cls, content: str) -> List[str]:
+    def _validate_html(cls, content: str) -> list[str]:
         """
         Validate HTML content.
 
@@ -218,7 +217,7 @@ class ContentValidator:
         return errors
 
     @classmethod
-    def _check_suspicious_patterns(cls, content: str) -> List[str]:
+    def _check_suspicious_patterns(cls, content: str) -> list[str]:
         """
         Check for suspicious patterns that might indicate malicious content.
 
@@ -355,7 +354,7 @@ class ContentValidator:
             return False
 
     @classmethod
-    def extract_mentions(cls, content: str) -> List[str]:
+    def extract_mentions(cls, content: str) -> list[str]:
         """
         Extract @username mentions from content.
 
@@ -371,7 +370,7 @@ class ContentValidator:
         return list(set(mentions))  # Remove duplicates
 
     @classmethod
-    def extract_links(cls, content: str, content_type: str = "markdown") -> List[Dict[str, str]]:
+    def extract_links(cls, content: str, content_type: str = "markdown") -> list[dict[str, str]]:
         """
         Extract links from content.
 

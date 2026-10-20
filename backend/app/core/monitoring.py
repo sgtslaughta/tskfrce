@@ -111,14 +111,15 @@ def get_health_status() -> dict[str, Any]:
 
     # Check database health (basic check)
     try:
-        from app.db.session import engine
         from sqlalchemy import text
+
+        from app.db.session import engine
 
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))
             conn.commit()
         database_health = "healthy"
-    except Exception as e:
+    except Exception:
         database_health = "unhealthy"
 
     # Check MinIO health (basic check)

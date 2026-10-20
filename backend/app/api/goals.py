@@ -4,8 +4,6 @@ Goals API router for TaaskMaaster.
 This module contains API endpoints for goal tracking and progress monitoring.
 """
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -47,9 +45,9 @@ async def create_goal(
 async def get_goals(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
-    status: Optional[GoalStatus] = Query(None, description="Filter by goal status"),
-    goal_type: Optional[GoalType] = Query(None, description="Filter by goal type"),
-    is_completed: Optional[bool] = Query(None, description="Filter by completion status"),
+    status: GoalStatus | None = Query(None, description="Filter by goal status"),
+    goal_type: GoalType | None = Query(None, description="Filter by goal type"),
+    is_completed: bool | None = Query(None, description="Filter by completion status"),
     db: Session = Depends(get_db_session),
     # TODO: Add authentication dependency
     current_user_id: int = 1,  # Temporary for development
@@ -220,7 +218,7 @@ async def get_goal_progress(
 
 # Goal Statistics
 @router.get("/statistics")
-async def get_goal_statistics(
+async def get_goal_statistics(  # noqa: F811 - legacy duplicate def
     db: Session = Depends(get_db_session),
     # TODO: Add authentication dependency
     current_user_id: int = 1,  # Temporary for development

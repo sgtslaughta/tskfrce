@@ -6,11 +6,11 @@ including database, authentication, and external service configurations.
 """
 
 import os
-from typing import Any, Dict, List, Optional, Union
+from typing import Any
 
 try:
+    from pydantic import ConfigDict, validator
     from pydantic_settings import BaseSettings
-    from pydantic import validator, ConfigDict
 
     PYDANTIC_V2 = True
 except ImportError:
@@ -45,11 +45,11 @@ class Settings(BaseSettings):
 
     # Redis settings
     REDIS_URL: str = "redis://localhost:6379"
-    REDIS_PASSWORD: Optional[str] = None
+    REDIS_PASSWORD: str | None = None
     REDIS_DB: int = 0
 
     # CORS settings
-    BACKEND_CORS_ORIGINS: List[str] = [
+    BACKEND_CORS_ORIGINS: list[str] = [
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:8000",
@@ -59,7 +59,7 @@ class Settings(BaseSettings):
     ]
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
+    def assemble_cors_origins(cls, v: str | list[str]) -> list[str] | str:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
         elif isinstance(v, (list, str)):
@@ -68,17 +68,17 @@ class Settings(BaseSettings):
 
     # Email settings
     SMTP_TLS: bool = True
-    SMTP_PORT: Optional[int] = None
-    SMTP_HOST: Optional[str] = None
-    SMTP_USER: Optional[str] = None
-    SMTP_PASSWORD: Optional[str] = None
-    EMAILS_FROM_EMAIL: Optional[str] = None
-    EMAILS_FROM_NAME: Optional[str] = None
+    SMTP_PORT: int | None = None
+    SMTP_HOST: str | None = None
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: str | None = None
+    EMAILS_FROM_EMAIL: str | None = None
+    EMAILS_FROM_NAME: str | None = None
 
     # File upload settings
     UPLOAD_DIR: str = "uploads"
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
-    ALLOWED_EXTENSIONS: List[str] = [
+    ALLOWED_EXTENSIONS: list[str] = [
         ".jpg",
         ".jpeg",
         ".png",
@@ -106,9 +106,9 @@ class Settings(BaseSettings):
     ]
 
     # MinIO/S3 settings
-    MINIO_ENDPOINT: Optional[str] = None
-    MINIO_ACCESS_KEY: Optional[str] = None
-    MINIO_SECRET_KEY: Optional[str] = None
+    MINIO_ENDPOINT: str | None = None
+    MINIO_ACCESS_KEY: str | None = None
+    MINIO_SECRET_KEY: str | None = None
     MINIO_BUCKET: str = "taaskmaaster"
     MINIO_SECURE: bool = False
 
@@ -118,12 +118,12 @@ class Settings(BaseSettings):
 
     # Rate limiting settings
     RATE_LIMIT_ENABLED: bool = True
-    RATE_LIMIT_REDIS_URL: Optional[str] = None
+    RATE_LIMIT_REDIS_URL: str | None = None
 
     # Logging settings
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    LOG_FILE: Optional[str] = None
+    LOG_FILE: str | None = None
 
     # Security settings
     PASSWORD_MIN_LENGTH: int = 8
@@ -176,9 +176,9 @@ class Settings(BaseSettings):
     HEALTH_CHECK_INTERVAL: int = 60
 
     # External service settings
-    OPENAI_API_KEY: Optional[str] = None
-    SLACK_WEBHOOK_URL: Optional[str] = None
-    DISCORD_WEBHOOK_URL: Optional[str] = None
+    OPENAI_API_KEY: str | None = None
+    SLACK_WEBHOOK_URL: str | None = None
+    DISCORD_WEBHOOK_URL: str | None = None
 
     if PYDANTIC_V2:
         model_config = ConfigDict(
@@ -261,14 +261,14 @@ def get_upload_path() -> str:
     return upload_dir
 
 
-def get_cors_origins() -> List[str]:
+def get_cors_origins() -> list[str]:
     """
     Get CORS origins list.
     """
     return settings.BACKEND_CORS_ORIGINS
 
 
-def validate_settings() -> Dict[str, Any]:
+def validate_settings() -> dict[str, Any]:
     """
     Validate all settings and return validation results.
     """

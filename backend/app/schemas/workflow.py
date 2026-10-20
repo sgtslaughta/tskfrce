@@ -4,8 +4,6 @@ Workflow schemas for TaaskMaaster API.
 This module contains Pydantic models for workflow-related API operations.
 """
 
-from typing import List, Optional
-
 from pydantic import BaseModel, Field
 
 from app.models.task import TaskStatus
@@ -16,7 +14,7 @@ class WorkflowTransitionRequest(BaseModel):
 
     task_id: int = Field(..., description="Task ID")
     new_status: TaskStatus = Field(..., description="New status to transition to")
-    comment: Optional[str] = Field(
+    comment: str | None = Field(
         None, max_length=1000, description="Optional comment for the transition"
     )
     force: bool = Field(default=False, description="Force transition (admin only)")
@@ -26,7 +24,7 @@ class WorkflowApprovalRequest(BaseModel):
     """Schema for task approval request."""
 
     task_id: int = Field(..., description="Task ID")
-    comment: Optional[str] = Field(None, max_length=1000, description="Optional approval comment")
+    comment: str | None = Field(None, max_length=1000, description="Optional approval comment")
 
 
 class WorkflowRejectionRequest(BaseModel):
@@ -45,7 +43,7 @@ class WorkflowTransitionResponse(BaseModel):
     previous_status: str
     new_status: str
     transitioned_by: int
-    comment: Optional[str] = None
+    comment: str | None = None
 
 
 class ValidTransitionsResponse(BaseModel):
@@ -53,5 +51,5 @@ class ValidTransitionsResponse(BaseModel):
 
     task_id: int
     current_status: TaskStatus
-    valid_transitions: List[TaskStatus]
+    valid_transitions: list[TaskStatus]
     user_id: int

@@ -5,7 +5,6 @@ This module contains WebSocket routes for real-time notifications and messaging.
 """
 
 import json
-from typing import Optional
 
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
 from sqlalchemy.orm import Session
@@ -19,7 +18,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-def get_user_from_websocket_query(websocket: WebSocket) -> Optional[dict]:
+def get_user_from_websocket_query(websocket: WebSocket) -> dict | None:
     """
     Extract user data from WebSocket query parameters.
 

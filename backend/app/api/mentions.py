@@ -5,9 +5,8 @@ This module contains FastAPI routes for mention-related operations.
 """
 
 import json
-from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
@@ -19,7 +18,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-def get_user_data_from_header(x_user_data: Optional[str] = Header(None)) -> dict:
+def get_user_data_from_header(x_user_data: str | None = Header(None)) -> dict:
     """
     Extract user data from X-User-Data header.
 
@@ -54,11 +53,11 @@ def get_user_data_from_header(x_user_data: Optional[str] = Header(None)) -> dict
 @router.get("/suggestions")
 async def get_mention_suggestions(
     context_type: str = Query(..., description="Context type (task, direct_message, general)"),
-    context_id: Optional[int] = Query(None, description="Context ID (e.g., task_id)"),
-    search: Optional[str] = Query(None, description="Search query to filter users"),
+    context_id: int | None = Query(None, description="Context ID (e.g., task_id)"),
+    search: str | None = Query(None, description="Search query to filter users"),
     limit: int = Query(default=10, le=50, description="Maximum number of suggestions"),
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Get mention suggestions for autocomplete.
@@ -112,7 +111,7 @@ async def get_mention_suggestions(
 
 @router.post("/extract")
 async def extract_mentions(
-    content: str, db: Session = Depends(get_db), x_user_data: Optional[str] = Header(None)
+    content: str, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
 ):
     """
     Extract mentions from content.
@@ -201,7 +200,7 @@ async def highlight_mentions(
     content: str,
     format_type: str = "html",
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Highlight mentions in content for display.

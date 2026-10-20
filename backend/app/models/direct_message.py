@@ -5,7 +5,7 @@ This module defines the DirectMessage model for user-to-user messaging.
 """
 
 from datetime import datetime
-from typing import List, Optional
+
 from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 

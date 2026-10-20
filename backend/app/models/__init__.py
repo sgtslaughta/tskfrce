@@ -5,25 +5,24 @@ This package contains all SQLAlchemy models for the application.
 """
 
 # Import from new model files
-from .task_comment import TaskComment, CommentReaction, CommentMention, CommentMediaAttachment
-from .direct_message import DirectMessage, MessageReaction
-from .conversation import Conversation, ConversationSettings
-
 # Import from existing comment.py - models that are unique to comment.py
 from .comment import (
     CommentAuditTrail,
+    DirectMessageMedia,
+    MessageReadReceipt,
+    TaskChatMessage,
+    TaskChatMessageMedia,
     TaskStatusHistory,
     UserStatus,
-    TaskChatMessage,
-    MessageReadReceipt,
-    DirectMessageMedia,
-    TaskChatMessageMedia,
 )
+from .conversation import Conversation, ConversationSettings
+from .direct_message import DirectMessage, MessageReaction
 from .gamification import Achievement, Leaderboard, Points, UserAchievement
 from .goal import Goal, GoalProgress
 from .media import MediaAttachment
 from .notification import Notification
 from .task import Task, TaskCategory, TaskDependency, TaskTag, TaskTemplate
+from .task_comment import CommentMediaAttachment, CommentMention, CommentReaction, TaskComment
 from .user import User
 
 __all__ = [

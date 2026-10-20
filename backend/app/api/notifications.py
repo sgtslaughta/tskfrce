@@ -5,22 +5,20 @@ This module contains FastAPI routes for notification-related operations.
 """
 
 import json
-from typing import List, Optional
-from datetime import datetime, timedelta
 import random
 
-from fastapi import APIRouter, Depends, HTTPException, Header, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.core.logging import get_logger
 from app.schemas.notification import (
+    NotificationDeleteRequest,
+    NotificationDeleteResponse,
     NotificationGetRequest,
     NotificationListResponse,
     NotificationMarkReadRequest,
     NotificationMarkReadResponse,
-    NotificationDeleteRequest,
-    NotificationDeleteResponse,
     NotificationStatsResponse,
 )
 from app.services.notification_persistence_service import NotificationPersistenceService
@@ -31,7 +29,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-def get_user_data_from_header(x_user_data: Optional[str] = Header(None)) -> dict:
+def get_user_data_from_header(x_user_data: str | None = Header(None)) -> dict:
     """
     Extract user data from X-User-Data header.
 
@@ -67,7 +65,7 @@ def get_user_data_from_header(x_user_data: Optional[str] = Header(None)) -> dict
 async def get_notifications(
     request_data: NotificationGetRequest,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Get notifications for the current user.
@@ -119,7 +117,7 @@ async def get_notifications(
 async def mark_notifications_read(
     request_data: NotificationMarkReadRequest,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Mark notifications as read.
@@ -160,7 +158,7 @@ async def mark_notifications_read(
 async def delete_notifications(
     request_data: NotificationDeleteRequest,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Delete notifications.
@@ -199,7 +197,7 @@ async def delete_notifications(
 
 @router.get("/stats", response_model=NotificationStatsResponse)
 async def get_notification_stats(
-    db: Session = Depends(get_db), x_user_data: Optional[str] = Header(None)
+    db: Session = Depends(get_db), x_user_data: str | None = Header(None)
 ):
     """
     Get notification statistics for the current user.
@@ -226,7 +224,7 @@ async def get_notification_stats(
 
 @router.post("/mark-all-read", response_model=NotificationMarkReadResponse)
 async def mark_all_notifications_read(
-    db: Session = Depends(get_db), x_user_data: Optional[str] = Header(None)
+    db: Session = Depends(get_db), x_user_data: str | None = Header(None)
 ):
     """
     Mark all notifications as read for the current user.
@@ -253,7 +251,7 @@ async def mark_all_notifications_read(
 
 @router.post("/demo")
 async def generate_demo_notifications(
-    db: Session = Depends(get_db), x_user_data: Optional[str] = Header(None)
+    db: Session = Depends(get_db), x_user_data: str | None = Header(None)
 ):
     """
     Generate demo notifications for testing purposes.

@@ -5,7 +5,7 @@ This module contains business logic for goal tracking and progress monitoring.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import and_, desc, func
 from sqlalchemy.orm import Session
@@ -55,7 +55,7 @@ class GoalService:
         logger.info(f"Created goal {goal.id} by user {user_id}")
         return goal
 
-    def get_goal(self, goal_id: int, user_id: int) -> Optional[Goal]:
+    def get_goal(self, goal_id: int, user_id: int) -> Goal | None:
         """
         Get a goal by ID.
 
@@ -73,10 +73,10 @@ class GoalService:
         user_id: int,
         skip: int = 0,
         limit: int = 100,
-        status: Optional[GoalStatus] = None,
-        goal_type: Optional[GoalType] = None,
-        is_completed: Optional[bool] = None,
-    ) -> tuple[List[Goal], int]:
+        status: GoalStatus | None = None,
+        goal_type: GoalType | None = None,
+        is_completed: bool | None = None,
+    ) -> tuple[list[Goal], int]:
         """
         Get goals with filtering and pagination.
 
@@ -109,7 +109,7 @@ class GoalService:
 
         return goals, total
 
-    def update_goal(self, goal_id: int, goal_data: GoalUpdate, user_id: int) -> Optional[Goal]:
+    def update_goal(self, goal_id: int, goal_data: GoalUpdate, user_id: int) -> Goal | None:
         """
         Update a goal.
 
@@ -166,7 +166,7 @@ class GoalService:
 
     def add_progress(
         self, goal_id: int, progress_data: GoalProgressCreate, user_id: int
-    ) -> Optional[GoalProgress]:
+    ) -> GoalProgress | None:
         """
         Add progress to a goal.
 
@@ -209,7 +209,7 @@ class GoalService:
 
     def get_progress(
         self, goal_id: int, user_id: int, skip: int = 0, limit: int = 100
-    ) -> tuple[List[GoalProgress], int]:
+    ) -> tuple[list[GoalProgress], int]:
         """
         Get progress entries for a goal.
 
@@ -342,7 +342,7 @@ class GoalService:
         logger.info(f"Updated {updated_count} points goals for user {user_id}")
         return updated_count
 
-    def get_goal_statistics(self, user_id: int) -> Dict[str, Any]:
+    def get_goal_statistics(self, user_id: int) -> dict[str, Any]:
         """
         Get goal statistics for a user.
 
@@ -440,7 +440,7 @@ class GoalService:
 
         return False
 
-    def _create_recurring_goal(self, goal: Goal) -> Optional[Goal]:
+    def _create_recurring_goal(self, goal: Goal) -> Goal | None:
         """Create a new instance of a recurring goal."""
         new_goal = Goal(
             title=goal.title,
@@ -462,7 +462,7 @@ class GoalService:
         return new_goal
 
     def _calculate_next_end_date(
-        self, current_end_date: datetime, pattern: Dict[str, Any]
+        self, current_end_date: datetime, pattern: dict[str, Any]
     ) -> datetime:
         """Calculate the next end date based on recurrence pattern."""
         recurrence_type = pattern.get("type")

@@ -6,7 +6,7 @@ points, achievements, leaderboards, and streaks.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from sqlalchemy import and_, asc, desc, func
 from sqlalchemy.orm import Session
@@ -41,9 +41,9 @@ class GamificationService:
         user_id: int,
         amount: int,
         points_type: PointsType,
-        description: Optional[str] = None,
-        reference_id: Optional[int] = None,
-        reference_type: Optional[str] = None,
+        description: str | None = None,
+        reference_id: int | None = None,
+        reference_type: str | None = None,
     ) -> Points:
         """
         Award points to a user.
@@ -75,7 +75,7 @@ class GamificationService:
         logger.info(f"Awarded {amount} points to user {user_id} for {points_type}")
         return points
 
-    def get_user_points_summary(self, user_id: int) -> Dict[str, Any]:
+    def get_user_points_summary(self, user_id: int) -> dict[str, Any]:
         """
         Get points summary for a user.
 
@@ -149,7 +149,7 @@ class GamificationService:
 
     def get_user_points_history(
         self, user_id: int, skip: int = 0, limit: int = 100
-    ) -> tuple[List[Points], int]:
+    ) -> tuple[list[Points], int]:
         """
         Get points history for a user.
 
@@ -167,7 +167,7 @@ class GamificationService:
 
         return points, total
 
-    def check_and_award_achievements(self, user_id: int) -> List[Achievement]:
+    def check_and_award_achievements(self, user_id: int) -> list[Achievement]:
         """
         Check and award achievements to a user.
 
@@ -288,7 +288,7 @@ class GamificationService:
 
         return False
 
-    def _get_achievement_progress(self, user_id: int, achievement: Achievement) -> Optional[float]:
+    def _get_achievement_progress(self, user_id: int, achievement: Achievement) -> float | None:
         """Get progress value for an achievement."""
         achievement_type = achievement.achievement_type
 
@@ -338,7 +338,7 @@ class GamificationService:
 
         return None
 
-    def get_user_achievements(self, user_id: int) -> List[UserAchievement]:
+    def get_user_achievements(self, user_id: int) -> list[UserAchievement]:
         """
         Get achievements for a user.
 
@@ -427,7 +427,7 @@ class GamificationService:
         logger.info(f"Updated {len(entries)} leaderboard entries for leaderboard {leaderboard_id}")
         return len(entries)
 
-    def _calculate_points_scores(self, leaderboard: Leaderboard) -> List[tuple[int, float]]:
+    def _calculate_points_scores(self, leaderboard: Leaderboard) -> list[tuple[int, float]]:
         """Calculate points-based scores for leaderboard."""
         query = self.db.query(Points.user_id, func.sum(Points.amount).label("total_points")).filter(
             Points.amount > 0
@@ -449,7 +449,7 @@ class GamificationService:
         scores = query.group_by(Points.user_id).order_by(desc("total_points")).all()
         return [(user_id, total_points) for user_id, total_points in scores]
 
-    def _calculate_task_scores(self, leaderboard: Leaderboard) -> List[tuple[int, float]]:
+    def _calculate_task_scores(self, leaderboard: Leaderboard) -> list[tuple[int, float]]:
         """Calculate task-based scores for leaderboard."""
         query = self.db.query(Task.assigned_to_id, func.count(Task.id).label("task_count")).filter(
             Task.status == TaskStatus.DONE
@@ -471,7 +471,7 @@ class GamificationService:
         scores = query.group_by(Task.assigned_to_id).order_by(desc("task_count")).all()
         return [(user_id, task_count) for user_id, task_count in scores if user_id]
 
-    def _calculate_streak_scores(self, leaderboard: Leaderboard) -> List[tuple[int, float]]:
+    def _calculate_streak_scores(self, leaderboard: Leaderboard) -> list[tuple[int, float]]:
         """Calculate streak-based scores for leaderboard."""
         scores = (
             self.db.query(Streak.user_id, Streak.current_streak)
@@ -483,7 +483,7 @@ class GamificationService:
 
     def get_leaderboard_entries(
         self, leaderboard_id: int, skip: int = 0, limit: int = 100
-    ) -> tuple[List[LeaderboardEntry], int]:
+    ) -> tuple[list[LeaderboardEntry], int]:
         """
         Get leaderboard entries.
 
@@ -505,7 +505,7 @@ class GamificationService:
 
     def update_user_streak(
         self, user_id: int, streak_type: str, activity_date: datetime = None
-    ) -> Optional[Streak]:
+    ) -> Streak | None:
         """
         Update user streak based on activity.
 
@@ -566,7 +566,7 @@ class GamificationService:
         )
         return streak
 
-    def get_user_streaks(self, user_id: int) -> List[Streak]:
+    def get_user_streaks(self, user_id: int) -> list[Streak]:
         """
         Get all streaks for a user.
 

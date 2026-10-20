@@ -4,8 +4,6 @@ Gamification API router for TaaskMaaster.
 This module contains API endpoints for gamification features.
 """
 
-from typing import List, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -30,7 +28,7 @@ router = APIRouter(prefix="/api/v1/gamification", tags=["gamification"])
 
 
 # Points
-@router.get("/points", response_model=List[PointsResponse])
+@router.get("/points", response_model=list[PointsResponse])
 async def get_all_points(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
@@ -52,9 +50,9 @@ async def award_points(
     user_id: int,
     amount: int,
     points_type: PointsType,
-    description: Optional[str] = Query(None, description="Transaction description"),
-    reference_id: Optional[int] = Query(None, description="Reference to related entity"),
-    reference_type: Optional[str] = Query(None, description="Type of reference entity"),
+    description: str | None = Query(None, description="Transaction description"),
+    reference_id: int | None = Query(None, description="Reference to related entity"),
+    reference_type: str | None = Query(None, description="Type of reference entity"),
     db: Session = Depends(get_db_session),
 ):
     """Award points to a user."""
@@ -96,7 +94,7 @@ async def get_user_points_history(
 
 
 # Achievements
-@router.get("/achievements", response_model=List[AchievementResponse])
+@router.get("/achievements", response_model=list[AchievementResponse])
 async def get_achievements(db: Session = Depends(get_db_session)):
     """Get all available achievements."""
     GamificationService(db)
@@ -106,7 +104,7 @@ async def get_achievements(db: Session = Depends(get_db_session)):
 
 @router.get(
     "/achievements/user/{user_id}",
-    response_model=List[UserAchievementResponse],
+    response_model=list[UserAchievementResponse],
 )
 async def get_user_achievements(user_id: int, db: Session = Depends(get_db_session)):
     """Get achievements for a user."""
@@ -186,7 +184,7 @@ async def get_leaderboard_entries(
 
 
 # Streaks
-@router.get("/streaks", response_model=List[StreakResponse])
+@router.get("/streaks", response_model=list[StreakResponse])
 async def get_all_streaks(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),

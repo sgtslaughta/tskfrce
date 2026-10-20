@@ -6,7 +6,7 @@ from the database.
 """
 
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 from sqlalchemy import and_, desc, func
 from sqlalchemy.orm import Session
@@ -31,8 +31,8 @@ class NotificationPersistenceService:
         notification_type: str,
         title: str,
         message: str,
-        action_url: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
+        action_url: str | None = None,
+        data: dict[str, Any] | None = None,
     ) -> Notification:
         """
         Create and store a new notification in the database.
@@ -87,8 +87,8 @@ class NotificationPersistenceService:
         skip: int = 0,
         limit: int = 50,
         unread_only: bool = False,
-        notification_types: Optional[List[str]] = None,
-    ) -> Dict[str, Any]:
+        notification_types: list[str] | None = None,
+    ) -> dict[str, Any]:
         """
         Get notifications for a user with filtering and pagination.
 
@@ -161,7 +161,7 @@ class NotificationPersistenceService:
             logger.error(f"Error retrieving notifications for user {user_id}: {e}")
             raise
 
-    def mark_notifications_read(self, user_id: int, notification_ids: List[int]) -> int:
+    def mark_notifications_read(self, user_id: int, notification_ids: list[int]) -> int:
         """
         Mark specific notifications as read.
 
@@ -229,7 +229,7 @@ class NotificationPersistenceService:
             logger.error(f"Error marking all notifications read for user {user_id}: {e}")
             raise
 
-    def delete_notifications(self, user_id: int, notification_ids: List[int]) -> int:
+    def delete_notifications(self, user_id: int, notification_ids: list[int]) -> int:
         """
         Delete specific notifications.
 
@@ -266,7 +266,7 @@ class NotificationPersistenceService:
             logger.error(f"Error deleting notifications for user {user_id}: {e}")
             raise
 
-    def get_notification_stats(self, user_id: int) -> Dict[str, Any]:
+    def get_notification_stats(self, user_id: int) -> dict[str, Any]:
         """
         Get notification statistics for a user.
 

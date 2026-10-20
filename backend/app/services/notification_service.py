@@ -7,18 +7,18 @@ real-time WebSocket broadcasting for various system events.
 
 from datetime import datetime
 from enum import Enum
-from typing import Dict, List, Optional, Any
+from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-from app.models.task_comment import TaskComment
-from app.models.direct_message import DirectMessage
 from app.models.comment import TaskChatMessage
+from app.models.direct_message import DirectMessage
 from app.models.task import Task
+from app.models.task_comment import TaskComment
 from app.models.user import User
-from app.services.websocket_service import websocket_manager
 from app.services.notification_persistence_service import NotificationPersistenceService
+from app.services.websocket_service import websocket_manager
 
 logger = get_logger(__name__)
 
@@ -65,12 +65,12 @@ class NotificationService:
 
     async def _send_notification(
         self,
-        recipients: List[int],
+        recipients: list[int],
         notification_type: str,
         title: str,
         message: str,
-        action_url: Optional[str] = None,
-        data: Optional[Dict[str, Any]] = None,
+        action_url: str | None = None,
+        data: dict[str, Any] | None = None,
     ) -> None:
         """
         Send notification via both WebSocket (real-time) and database (persistence).
@@ -122,7 +122,7 @@ class NotificationService:
             raise
 
     async def notify_task_comment(
-        self, comment: TaskComment, mentioned_users: Optional[List[str]] = None
+        self, comment: TaskComment, mentioned_users: list[str] | None = None
     ) -> None:
         """
         Send notification for new task comment.
@@ -183,7 +183,7 @@ class NotificationService:
         previous_status: str,
         new_status: str,
         changed_by_user_id: int,
-        comment: Optional[str] = None,
+        comment: str | None = None,
     ) -> None:
         """
         Send notification for task status change.
@@ -281,7 +281,7 @@ class NotificationService:
             logger.error(f"Error sending approval request notification: {e}")
 
     async def notify_task_approved(
-        self, task: Task, approved_by_user_id: int, comment: Optional[str] = None
+        self, task: Task, approved_by_user_id: int, comment: str | None = None
     ) -> None:
         """
         Send notification for task approval.
@@ -498,7 +498,7 @@ class NotificationService:
             logger.error(f"Error sending task chat message notification: {e}")
 
     async def _notify_mentioned_users(
-        self, mentioned_users: List[str], comment: TaskComment, task: Task, mentioning_user: User
+        self, mentioned_users: list[str], comment: TaskComment, task: Task, mentioning_user: User
     ) -> None:
         """
         Send notifications to users mentioned in a comment.
@@ -555,7 +555,7 @@ class NotificationService:
         attached_by_user_id: int,
         context_type: str,  # "comment" or "message"
         context_id: int,
-        task_id: Optional[int] = None,
+        task_id: int | None = None,
     ) -> None:
         """
         Send notification for media attachment.
@@ -914,7 +914,7 @@ class NotificationService:
             logger.error(f"Error sending task creation notification: {e}")
 
     async def notify_task_updated(
-        self, task: Task, updated_by_user_id: int, changed_fields: List[str]
+        self, task: Task, updated_by_user_id: int, changed_fields: list[str]
     ) -> None:
         """
         Send notification for task updates (to relevant participants).
@@ -1031,7 +1031,7 @@ class NotificationService:
             logger.error(f"Error sending task completion notification: {e}")
 
     async def notify_task_deleted(
-        self, task_title: str, task_id: int, deleted_by_user_id: int, participants: List[int]
+        self, task_title: str, task_id: int, deleted_by_user_id: int, participants: list[int]
     ) -> None:
         """
         Send notification for task deletion.

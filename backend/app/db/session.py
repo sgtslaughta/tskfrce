@@ -5,7 +5,7 @@ This module handles SQLAlchemy session creation, configuration,
 and dependency injection for FastAPI.
 """
 
-from typing import Generator
+from collections.abc import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base

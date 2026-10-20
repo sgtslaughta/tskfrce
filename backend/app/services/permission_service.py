@@ -6,16 +6,13 @@ for comments, messages, and other resources.
 """
 
 from enum import Enum
-from typing import Dict, List, Optional, Set
-from datetime import datetime
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-from app.models.task_comment import TaskComment
 from app.models.direct_message import DirectMessage
-from app.models.comment import TaskChatMessage
 from app.models.task import Task
+from app.models.task_comment import TaskComment
 from app.models.user import User, UserRole
 
 logger = get_logger(__name__)
@@ -134,8 +131,8 @@ class PermissionService:
         self,
         user_id: int,
         permission: Permission,
-        resource_id: Optional[int] = None,
-        resource_type: Optional[str] = None,
+        resource_id: int | None = None,
+        resource_type: str | None = None,
     ) -> bool:
         """
         Check if user has a specific permission.
@@ -176,8 +173,8 @@ class PermissionService:
         self,
         user_id: int,
         permission: Permission,
-        resource_id: Optional[int],
-        resource_type: Optional[str],
+        resource_id: int | None,
+        resource_type: str | None,
     ) -> bool:
         """
         Check context-specific permissions.
@@ -272,7 +269,7 @@ class PermissionService:
 
         return False
 
-    def filter_visible_tasks(self, user_id: int, tasks: List[Task]) -> List[Task]:
+    def filter_visible_tasks(self, user_id: int, tasks: list[Task]) -> list[Task]:
         """
         Filter tasks based on user permissions.
 
@@ -292,8 +289,8 @@ class PermissionService:
         return visible_tasks
 
     def filter_visible_comments(
-        self, user_id: int, comments: List[TaskComment]
-    ) -> List[TaskComment]:
+        self, user_id: int, comments: list[TaskComment]
+    ) -> list[TaskComment]:
         """
         Filter comments based on user permissions.
 
@@ -351,7 +348,7 @@ class PermissionService:
         """
         return self.has_permission(user_id, Permission.TASK_APPROVE, task_id, "task")
 
-    def get_user_permissions(self, user_id: int) -> Set[Permission]:
+    def get_user_permissions(self, user_id: int) -> set[Permission]:
         """
         Get all permissions for a user.
 
@@ -364,7 +361,7 @@ class PermissionService:
         user_role = self.get_user_role(user_id)
         return self.role_permissions.get(user_role, set())
 
-    def get_accessible_task_ids(self, user_id: int) -> List[int]:
+    def get_accessible_task_ids(self, user_id: int) -> list[int]:
         """
         Get list of task IDs user can access.
 
@@ -391,8 +388,8 @@ class PermissionService:
         return [task.id for task in tasks]
 
     def validate_bulk_operation_permissions(
-        self, user_id: int, operation: str, resource_ids: List[int], resource_type: str
-    ) -> Dict[str, List[int]]:
+        self, user_id: int, operation: str, resource_ids: list[int], resource_type: str
+    ) -> dict[str, list[int]]:
         """
         Validate permissions for bulk operations.
 

@@ -1,15 +1,14 @@
 """Shared pytest fixtures: in-memory SQLite and an in-process API client."""
 
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
-
 from app.api.deps import get_db
 from app.core.database import Base, _import_all_models
 from app.db.session import get_db_session
 from app.main import app, fastapi_app
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 
 @pytest.fixture

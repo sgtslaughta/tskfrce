@@ -7,9 +7,8 @@ status, and real-time activity tracking.
 
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Set
 
-from sqlalchemy import and_, desc, func, or_
+from sqlalchemy import desc
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.logging import get_logger
@@ -47,17 +46,17 @@ class PresenceService:
         self.db = db
 
         # In-memory tracking for real-time presence
-        self.active_users: Dict[int, Dict] = {}  # user_id -> presence_data
-        self.typing_users: Dict[str, Set[int]] = {}  # context -> set of user_ids
-        self.viewing_users: Dict[int, Set[int]] = {}  # task_id -> set of user_ids
+        self.active_users: dict[int, dict] = {}  # user_id -> presence_data
+        self.typing_users: dict[str, set[int]] = {}  # context -> set of user_ids
+        self.viewing_users: dict[int, set[int]] = {}  # task_id -> set of user_ids
 
     async def update_user_presence(
         self,
         user_id: int,
         status: PresenceStatus,
-        custom_message: Optional[str] = None,
-        activity_type: Optional[ActivityType] = None,
-        context_id: Optional[int] = None,
+        custom_message: str | None = None,
+        activity_type: ActivityType | None = None,
+        context_id: int | None = None,
     ) -> UserStatus:
         """
         Update user's presence status and activity.
@@ -111,8 +110,8 @@ class PresenceService:
         self,
         user_id: int,
         activity_type: ActivityType,
-        context_id: Optional[int] = None,
-        metadata: Optional[Dict] = None,
+        context_id: int | None = None,
+        metadata: dict | None = None,
     ) -> None:
         """
         Set user's current activity.
@@ -155,8 +154,8 @@ class PresenceService:
     async def clear_user_activity(
         self,
         user_id: int,
-        activity_type: Optional[ActivityType] = None,
-        context_id: Optional[int] = None,
+        activity_type: ActivityType | None = None,
+        context_id: int | None = None,
     ) -> None:
         """
         Clear user's current activity.
@@ -194,7 +193,7 @@ class PresenceService:
         elif activity_type == ActivityType.TYPING_MESSAGE and context_id:
             await self._remove_typing_user(f"task_{context_id}", user_id)
 
-    async def get_user_presence(self, user_id: int) -> Optional[Dict]:
+    async def get_user_presence(self, user_id: int) -> dict | None:
         """
         Get user's current presence information.
 
@@ -252,7 +251,7 @@ class PresenceService:
 
     async def get_online_users(
         self, limit: int = 100, include_activity: bool = False
-    ) -> List[Dict]:
+    ) -> list[dict]:
         """
         Get list of currently online users.
 
@@ -326,7 +325,7 @@ class PresenceService:
 
         return online_users[:limit]
 
-    async def get_task_viewers(self, task_id: int) -> List[Dict]:
+    async def get_task_viewers(self, task_id: int) -> list[dict]:
         """
         Get users currently viewing a specific task.
 
@@ -346,7 +345,7 @@ class PresenceService:
 
         return viewers
 
-    async def get_typing_users(self, context: str) -> List[Dict]:
+    async def get_typing_users(self, context: str) -> list[dict]:
         """
         Get users currently typing in a specific context.
 

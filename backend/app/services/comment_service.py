@@ -6,28 +6,23 @@ task chat messages, and related functionality.
 """
 
 from datetime import datetime
-from typing import List, Optional, Tuple
 
-from sqlalchemy import and_, desc, or_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.core.logging import get_logger
-from app.models.task_comment import TaskComment, CommentMediaAttachment
-from app.models.direct_message import DirectMessage
 from app.models.comment import (
     MessageReadReceipt,
-    TaskChatMessage,
-    TaskStatusHistory,
-    UserStatus,
 )
+from app.models.direct_message import DirectMessage
 from app.models.media import MediaAttachment
 from app.models.task import Task
-from app.models.user import User
+from app.models.task_comment import CommentMediaAttachment, TaskComment
 from app.services.mention_service import MentionService
 from app.services.notification_service import NotificationService
-from app.services.permission_service import PermissionService, Permission
+from app.services.permission_service import Permission, PermissionService
 from app.utils.content_validator import ContentValidator
-from app.utils.pagination import QueryOptimizer, PaginationParams, FilterCriteria, SortCriteria
+from app.utils.pagination import FilterCriteria, PaginationParams, QueryOptimizer, SortCriteria
 
 logger = get_logger(__name__)
 
@@ -51,9 +46,9 @@ class CommentService:
         user_id: int,
         content: str,
         content_type: str = "markdown",
-        parent_comment_id: Optional[int] = None,
+        parent_comment_id: int | None = None,
         is_system_comment: bool = False,
-        media_attachment_ids: Optional[List[int]] = None,
+        media_attachment_ids: list[int] | None = None,
     ) -> TaskComment:
         """
         Create a new task comment.
@@ -177,7 +172,7 @@ class CommentService:
         user_id: int,
         content: str,
         content_type: str = "markdown",
-        edit_reason: Optional[str] = None,
+        edit_reason: str | None = None,
     ) -> TaskComment:
         """
         Update an existing task comment.
@@ -238,7 +233,7 @@ class CommentService:
         self,
         comment_id: int,
         user_id: int,
-        deletion_reason: Optional[str] = None,
+        deletion_reason: str | None = None,
         soft_delete: bool = True,
     ) -> bool:
         """
@@ -314,7 +309,7 @@ class CommentService:
 
     def get_comment_edit_history(
         self, comment_id: int, user_id: int, skip: int = 0, limit: int = 20
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Get edit history for a comment.
 
@@ -384,10 +379,10 @@ class CommentService:
         comment_id: int,
         user_id: int,
         action: str,
-        original_content: Optional[str] = None,
-        new_content: Optional[str] = None,
-        edit_reason: Optional[str] = None,
-        deletion_reason: Optional[str] = None,
+        original_content: str | None = None,
+        new_content: str | None = None,
+        edit_reason: str | None = None,
+        deletion_reason: str | None = None,
     ) -> None:
         """
         Create an audit trail entry for comment changes.
@@ -419,9 +414,9 @@ class CommentService:
     # Bulk Operations
     def bulk_delete_comments(
         self,
-        comment_ids: List[int],
+        comment_ids: list[int],
         user_id: int,
-        deletion_reason: Optional[str] = None,
+        deletion_reason: str | None = None,
         soft_delete: bool = True,
     ) -> dict:
         """
@@ -480,7 +475,7 @@ class CommentService:
         )
         return results
 
-    def bulk_update_comments(self, updates: List[dict], user_id: int) -> dict:
+    def bulk_update_comments(self, updates: list[dict], user_id: int) -> dict:
         """
         Bulk update multiple comments.
 
@@ -531,7 +526,7 @@ class CommentService:
         )
         return results
 
-    def bulk_mark_messages_read(self, message_ids: List[int], user_id: int) -> dict:
+    def bulk_mark_messages_read(self, message_ids: list[int], user_id: int) -> dict:
         """
         Bulk mark multiple messages as read.
 
@@ -619,7 +614,7 @@ class CommentService:
         )
         return results
 
-    def bulk_create_comments(self, comments_data: List[dict], user_id: int) -> dict:
+    def bulk_create_comments(self, comments_data: list[dict], user_id: int) -> dict:
         """
         Bulk create multiple comments.
 
@@ -677,9 +672,9 @@ class CommentService:
         self,
         task_id: int,
         user_id: int,
-        pagination_params: Optional[PaginationParams] = None,
-        filters: Optional[List[FilterCriteria]] = None,
-        sorts: Optional[List[SortCriteria]] = None,
+        pagination_params: PaginationParams | None = None,
+        filters: list[FilterCriteria] | None = None,
+        sorts: list[SortCriteria] | None = None,
         include_system: bool = True,
         include_deleted: bool = False,
     ):
@@ -744,7 +739,7 @@ class CommentService:
 
         return result
 
-    def update_task_comment(
+    def update_task_comment(  # noqa: F811 - legacy duplicate def
         self,
         comment_id: int,
         user_id: int,
@@ -784,7 +779,7 @@ class CommentService:
         logger.info(f"Updated comment {comment_id} by user {user_id}")
         return comment
 
-    def delete_task_comment(
+    def delete_task_comment(  # noqa: F811 - legacy duplicate def
         self,
         comment_id: int,
         user_id: int,
@@ -826,7 +821,7 @@ class CommentService:
         self,
         comment_id: int,
         user_id: int,
-    ) -> Optional[TaskComment]:
+    ) -> TaskComment | None:
         """
         Get a comment by ID.
 
@@ -990,7 +985,7 @@ class CommentService:
         self,
         task_id: int,
         content: str,
-        user_id: Optional[int] = None,
+        user_id: int | None = None,
     ) -> TaskComment:
         """
         Create a system-generated comment for workflow changes.

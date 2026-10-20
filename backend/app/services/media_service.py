@@ -6,7 +6,7 @@ This module contains business logic for media attachment and file management.
 
 import os
 import uuid
-from typing import Any, BinaryIO, Dict, List, Optional
+from typing import Any, BinaryIO
 
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.orm import Session
@@ -102,7 +102,7 @@ class MediaService:
         logger.info(f"Created media attachment {attachment.id} for user {user_id}")
         return attachment
 
-    def get_media_attachment(self, attachment_id: int, user_id: int) -> Optional[MediaAttachment]:
+    def get_media_attachment(self, attachment_id: int, user_id: int) -> MediaAttachment | None:
         """
         Get a media attachment by ID.
 
@@ -129,7 +129,7 @@ class MediaService:
 
     def get_task_attachments(
         self, task_id: int, user_id: int, skip: int = 0, limit: int = 100
-    ) -> tuple[List[MediaAttachment], int]:
+    ) -> tuple[list[MediaAttachment], int]:
         """
         Get media attachments for a task.
 
@@ -164,8 +164,8 @@ class MediaService:
         user_id: int,
         skip: int = 0,
         limit: int = 100,
-        media_type: Optional[MediaType] = None,
-    ) -> tuple[List[MediaAttachment], int]:
+        media_type: MediaType | None = None,
+    ) -> tuple[list[MediaAttachment], int]:
         """
         Get media attachments for a user.
 
@@ -226,7 +226,7 @@ class MediaService:
         else:
             return MediaType.OTHER
 
-    def get_storage_statistics(self, user_id: int) -> Dict[str, Any]:
+    def get_storage_statistics(self, user_id: int) -> dict[str, Any]:
         """
         Get storage statistics for a user.
 
@@ -258,7 +258,7 @@ class MediaService:
             "files_by_type": type_counts,
         }
 
-    def validate_file_upload(self, upload_request: FileUploadRequest) -> Dict[str, Any]:
+    def validate_file_upload(self, upload_request: FileUploadRequest) -> dict[str, Any]:
         """
         Validate a file upload request.
 
@@ -303,9 +303,7 @@ class MediaService:
             "warnings": warnings,
         }
 
-    def get_download_url(
-        self, attachment_id: int, user_id: int, expires: int = 3600
-    ) -> Optional[str]:
+    def get_download_url(self, attachment_id: int, user_id: int, expires: int = 3600) -> str | None:
         """
         Generate a presigned download URL for a media attachment.
 
@@ -335,7 +333,7 @@ class MediaService:
 
     def get_upload_url(
         self, filename: str, mime_type: str, user_id: int, expires: int = 3600
-    ) -> Optional[str]:
+    ) -> str | None:
         """
         Generate a presigned upload URL for direct file upload to MinIO.
 
@@ -405,7 +403,7 @@ class MediaService:
             logger.error(f"Error deleting media attachment: {e}")
             return False
 
-    def get_minio_statistics(self) -> Dict[str, Any]:
+    def get_minio_statistics(self) -> dict[str, Any]:
         """
         Get MinIO storage statistics.
 

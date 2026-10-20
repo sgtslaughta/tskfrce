@@ -5,15 +5,13 @@ This module contains FastAPI routes for workflow-related operations.
 """
 
 import json
-from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Header, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.core.logging import get_logger
 from app.schemas.comment import TaskStatusHistoryListResponse
-from app.schemas.task import TaskResponse
 from app.schemas.workflow import (
     ValidTransitionsResponse,
     WorkflowApprovalRequest,
@@ -28,7 +26,7 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-def get_user_data_from_header(x_user_data: Optional[str] = Header(None)) -> dict:
+def get_user_data_from_header(x_user_data: str | None = Header(None)) -> dict:
     """
     Extract user data from X-User-Data header.
 
@@ -64,7 +62,7 @@ def get_user_data_from_header(x_user_data: Optional[str] = Header(None)) -> dict
 async def transition_task_status(
     transition_request: WorkflowTransitionRequest,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Transition a task to a new status.
@@ -145,7 +143,7 @@ async def transition_task_status(
 async def approve_task(
     approval_request: WorkflowApprovalRequest,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Approve a task that's submitted for approval.
@@ -212,7 +210,7 @@ async def approve_task(
 async def reject_task(
     rejection_request: WorkflowRejectionRequest,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Reject a task that's submitted for approval.
@@ -277,7 +275,7 @@ async def reject_task(
 
 @router.get("/transitions/{task_id}", response_model=ValidTransitionsResponse)
 async def get_valid_transitions(
-    task_id: int, db: Session = Depends(get_db), x_user_data: Optional[str] = Header(None)
+    task_id: int, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
 ):
     """
     Get valid status transitions for a task based on current status and user permissions.
@@ -323,7 +321,7 @@ async def get_task_status_history(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Get status change history for a task.

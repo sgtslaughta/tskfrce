@@ -5,7 +5,7 @@ This module contains Pydantic schemas for goal-related API operations.
 """
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -16,45 +16,45 @@ class GoalBase(BaseModel):
     """Base goal schema with common fields."""
 
     title: str = Field(..., min_length=1, max_length=255, description="Goal title")
-    description: Optional[str] = Field(None, description="Goal description")
+    description: str | None = Field(None, description="Goal description")
     goal_type: GoalType = Field(..., description="Type of goal")
     target_value: float = Field(..., gt=0, description="Target value to achieve")
-    end_date: Optional[datetime] = Field(None, description="Goal end date")
+    end_date: datetime | None = Field(None, description="Goal end date")
     is_recurring: bool = Field(default=False, description="Whether goal repeats")
 
 
 class GoalCreate(GoalBase):
     """Schema for creating a new goal."""
 
-    recurrence_pattern: Optional[Dict[str, Any]] = Field(None, description="Recurrence pattern")
+    recurrence_pattern: dict[str, Any] | None = Field(None, description="Recurrence pattern")
 
 
 class GoalUpdate(BaseModel):
     """Schema for updating goal information."""
 
-    title: Optional[str] = Field(None, min_length=1, max_length=255)
-    description: Optional[str] = None
-    goal_type: Optional[GoalType] = None
-    target_value: Optional[float] = Field(None, gt=0)
-    current_value: Optional[float] = Field(None, ge=0)
-    status: Optional[GoalStatus] = None
-    end_date: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    is_recurring: Optional[bool] = None
-    recurrence_pattern: Optional[Dict[str, Any]] = None
+    title: str | None = Field(None, min_length=1, max_length=255)
+    description: str | None = None
+    goal_type: GoalType | None = None
+    target_value: float | None = Field(None, gt=0)
+    current_value: float | None = Field(None, ge=0)
+    status: GoalStatus | None = None
+    end_date: datetime | None = None
+    completed_at: datetime | None = None
+    is_recurring: bool | None = None
+    recurrence_pattern: dict[str, Any] | None = None
 
 
 class GoalProgressBase(BaseModel):
     """Base goal progress schema."""
 
     value: float = Field(..., description="Progress value")
-    notes: Optional[str] = Field(None, description="Progress notes")
+    notes: str | None = Field(None, description="Progress notes")
 
 
 class GoalProgressCreate(GoalProgressBase):
     """Schema for creating goal progress."""
 
-    recorded_at: Optional[datetime] = Field(None, description="When progress was recorded")
+    recorded_at: datetime | None = Field(None, description="When progress was recorded")
 
 
 class GoalProgressResponse(GoalProgressBase):
@@ -76,8 +76,8 @@ class GoalResponse(GoalBase):
     current_value: float = 0.0
     status: GoalStatus
     start_date: datetime
-    completed_at: Optional[datetime] = None
-    recurrence_pattern: Optional[Dict[str, Any]] = None
+    completed_at: datetime | None = None
+    recurrence_pattern: dict[str, Any] | None = None
     user_id: int
     created_at: datetime
     updated_at: datetime
@@ -87,7 +87,7 @@ class GoalResponse(GoalBase):
     is_completed: bool
 
     # Related data
-    progress_entries: List[GoalProgressResponse] = []
+    progress_entries: list[GoalProgressResponse] = []
 
     class Config:
         from_attributes = True
@@ -96,7 +96,7 @@ class GoalResponse(GoalBase):
 class GoalList(BaseModel):
     """Schema for goal list response."""
 
-    goals: List[GoalResponse]
+    goals: list[GoalResponse]
     total: int
     page: int
     size: int
@@ -106,7 +106,7 @@ class GoalList(BaseModel):
 class GoalProgressList(BaseModel):
     """Schema for goal progress list response."""
 
-    progress_entries: List[GoalProgressResponse]
+    progress_entries: list[GoalProgressResponse]
     total: int
     page: int
     size: int

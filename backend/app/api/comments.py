@@ -5,30 +5,28 @@ This module contains FastAPI routes for comment-related operations.
 """
 
 import json
-from typing import List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.core.rate_limiting import CommentRateLimit, BulkOperationRateLimit
 from app.core.logging import get_logger
+from app.core.rate_limiting import BulkOperationRateLimit, CommentRateLimit
 from app.schemas.comment import (
     CommentCreate,
     CommentListResponse,
     CommentResponse,
     CommentUpdate,
-    TaskStatusHistoryListResponse,
 )
-from app.utils.pagination import PaginationParams
 from app.services.comment_service import CommentService
+from app.utils.pagination import PaginationParams
 
 logger = get_logger(__name__)
 
 router = APIRouter()
 
 
-def get_user_data_from_header(x_user_data: Optional[str] = Header(None)) -> dict:
+def get_user_data_from_header(x_user_data: str | None = Header(None)) -> dict:
     """
     Extract user data from X-User-Data header.
 
@@ -64,7 +62,7 @@ def get_user_data_from_header(x_user_data: Optional[str] = Header(None)) -> dict
 async def create_comment(
     comment_data: CommentCreate,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
     _rate_limit: bool = Depends(CommentRateLimit),
 ):
     """
@@ -116,7 +114,7 @@ async def get_task_comments(
     limit: int = 100,
     include_system: bool = True,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Get comments for a specific task.
@@ -164,7 +162,7 @@ async def get_task_comments(
 
 @router.get("/{comment_id}", response_model=CommentResponse)
 async def get_comment(
-    comment_id: int, db: Session = Depends(get_db), x_user_data: Optional[str] = Header(None)
+    comment_id: int, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
 ):
     """
     Get a specific comment by ID.
@@ -200,7 +198,7 @@ async def update_comment(
     comment_id: int,
     comment_update: CommentUpdate,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Update a comment (only by the comment author).
@@ -236,7 +234,7 @@ async def update_comment(
 
 @router.delete("/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_comment(
-    comment_id: int, db: Session = Depends(get_db), x_user_data: Optional[str] = Header(None)
+    comment_id: int, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
 ):
     """
     Delete a comment (only by the comment author or task owner).
@@ -273,7 +271,7 @@ async def add_comment_media(
     comment_id: int,
     media_id: int,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Add media attachment to a comment.
@@ -310,7 +308,7 @@ async def remove_comment_media(
     comment_id: int,
     media_id: int,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Remove media attachment from a comment.
@@ -347,7 +345,7 @@ async def get_comment_edit_history(
     skip: int = Query(default=0, ge=0, description="Number of records to skip"),
     limit: int = Query(default=20, ge=1, le=100, description="Maximum number of records"),
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
 ):
     """
     Get edit history for a comment.
@@ -398,11 +396,11 @@ async def get_comment_edit_history(
 # Bulk Operations
 @router.post("/bulk/delete")
 async def bulk_delete_comments(
-    comment_ids: List[int],
-    deletion_reason: Optional[str] = None,
+    comment_ids: list[int],
+    deletion_reason: str | None = None,
     soft_delete: bool = True,
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
     _rate_limit: bool = Depends(BulkOperationRateLimit),
 ):
     """
@@ -462,9 +460,9 @@ async def bulk_delete_comments(
 
 @router.post("/bulk/update")
 async def bulk_update_comments(
-    updates: List[dict],
+    updates: list[dict],
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
     _rate_limit: bool = Depends(BulkOperationRateLimit),
 ):
     """
@@ -528,9 +526,9 @@ async def bulk_update_comments(
 
 @router.post("/bulk/create")
 async def bulk_create_comments(
-    comments_data: List[dict],
+    comments_data: list[dict],
     db: Session = Depends(get_db),
-    x_user_data: Optional[str] = Header(None),
+    x_user_data: str | None = Header(None),
     _rate_limit: bool = Depends(BulkOperationRateLimit),
 ):
     """

@@ -5,9 +5,9 @@ This module contains Pydantic schemas for user-related API operations.
 """
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel, EmailStr, Field
+
 from app.models.user import UserRole
 
 
@@ -16,7 +16,7 @@ class UserBase(BaseModel):
 
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
     email: EmailStr = Field(..., description="User email address")
-    full_name: Optional[str] = Field(None, max_length=255, description="User's full name")
+    full_name: str | None = Field(None, max_length=255, description="User's full name")
     timezone: str = Field(default="UTC", description="User's timezone")
 
 
@@ -24,19 +24,19 @@ class UserCreate(UserBase):
     """Schema for creating a new user."""
 
     password: str = Field(..., min_length=8, description="User password")
-    role: Optional[UserRole] = Field(default=UserRole.USER, description="User role")
+    role: UserRole | None = Field(default=UserRole.USER, description="User role")
 
 
 class UserUpdate(BaseModel):
     """Schema for updating user information."""
 
-    username: Optional[str] = Field(None, min_length=3, max_length=50)
-    email: Optional[EmailStr] = None
-    full_name: Optional[str] = Field(None, max_length=255)
-    timezone: Optional[str] = None
-    profile_picture: Optional[str] = Field(None, max_length=500)
-    preferences: Optional[str] = None
-    is_active: Optional[bool] = None
+    username: str | None = Field(None, min_length=3, max_length=50)
+    email: EmailStr | None = None
+    full_name: str | None = Field(None, max_length=255)
+    timezone: str | None = None
+    profile_picture: str | None = Field(None, max_length=500)
+    preferences: str | None = None
+    is_active: bool | None = None
 
 
 class UserResponse(UserBase):
@@ -46,8 +46,8 @@ class UserResponse(UserBase):
     role: UserRole
     is_active: bool
     is_superuser: bool
-    profile_picture: Optional[str] = None
-    preferences: Optional[str] = None
+    profile_picture: str | None = None
+    preferences: str | None = None
     created_at: datetime
     updated_at: datetime
 

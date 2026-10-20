@@ -5,11 +5,11 @@ This module contains business logic for advanced task management including
 templates, categories, tags, dependencies, and recurring tasks.
 """
 
-from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
-import io
 import csv
+import io
 import json
+from datetime import datetime, timedelta
+from typing import Any
 
 from sqlalchemy import and_, desc, or_
 from sqlalchemy.orm import Session, selectinload
@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.logging import get_logger
 from app.models.task import (
     RecurrenceType,
+    RewardType,
     Task,
     TaskCategory,
     TaskPriority,
@@ -24,19 +25,17 @@ from app.models.task import (
     TaskTag,
     TaskTagAssociation,
     TaskTemplate,
-    RewardType,
 )
+from app.models.user import User, UserRole
 from app.schemas.task import (
+    TaskBulkUpdate,
     TaskCategoryCreate,
     TaskCreate,
+    TaskExportRequest,
     TaskTagCreate,
     TaskTemplateCreate,
-    TaskUpdate,
-    TaskBulkUpdate,
-    TaskExportRequest,
 )
 from app.services.redis_service import redis_service
-from app.models.user import User, UserRole
 
 logger = get_logger(__name__)
 
@@ -130,7 +129,7 @@ class TaskService:
 
         return task
 
-    def bulk_update_tasks(self, bulk_update_data: TaskBulkUpdate, user_id: int) -> List[Task]:
+    def bulk_update_tasks(self, bulk_update_data: TaskBulkUpdate, user_id: int) -> list[Task]:
         """
         Bulk update multiple tasks.
 
@@ -226,7 +225,7 @@ class TaskService:
         else:
             raise ValueError(f"Unsupported export format: {export_request.format}")
 
-    def _export_to_csv(self, tasks: List[Task]) -> str:
+    def _export_to_csv(self, tasks: list[Task]) -> str:
         """
         Export tasks to CSV format.
 
@@ -288,7 +287,7 @@ class TaskService:
 
         return output.getvalue()
 
-    def _export_to_json(self, tasks: List[Task]) -> str:
+    def _export_to_json(self, tasks: list[Task]) -> str:
         """
         Export tasks to JSON format.
 
@@ -323,7 +322,7 @@ class TaskService:
 
         return json.dumps(tasks_data, indent=2)
 
-    def get_task(self, task_id: int, user_id: int) -> Optional[Task]:
+    def get_task(self, task_id: int, user_id: int) -> Task | None:
         """
         Get a task by ID with full relationships.
 
@@ -375,13 +374,13 @@ class TaskService:
         user_id: int,
         skip: int = 0,
         limit: int = 100,
-        status: Optional[TaskStatus] = None,
-        priority: Optional[TaskPriority] = None,
-        category_id: Optional[int] = None,
-        assigned_to_id: Optional[int] = None,
-        reward_type: Optional[RewardType] = None,
-        search: Optional[str] = None,
-    ) -> tuple[List[Task], int]:
+        status: TaskStatus | None = None,
+        priority: TaskPriority | None = None,
+        category_id: int | None = None,
+        assigned_to_id: int | None = None,
+        reward_type: RewardType | None = None,
+        search: str | None = None,
+    ) -> tuple[list[Task], int]:
         """
         Get tasks with filtering and pagination.
 
@@ -466,8 +465,8 @@ class TaskService:
         return tasks, total
 
     async def update_task(
-        self, task_id: int, task_data: Dict[str, Any], user_id: int
-    ) -> Optional[Task]:
+        self, task_id: int, task_data: dict[str, Any], user_id: int
+    ) -> Task | None:
         """
         Update a task.
 
@@ -773,8 +772,8 @@ class TaskService:
         return True
 
     async def complete_task(
-        self, task_id: int, user_id: int, actual_hours: Optional[float] = None
-    ) -> Optional[Task]:
+        self, task_id: int, user_id: int, actual_hours: float | None = None
+    ) -> Task | None:
         """
         Mark a task as completed.
 
@@ -917,7 +916,7 @@ class TaskService:
 
         return response
 
-    def get_task_templates(self, user_id: int, include_public: bool = True) -> List[dict]:
+    def get_task_templates(self, user_id: int, include_public: bool = True) -> list[dict]:
         """
         Get task templates available to user.
 
@@ -956,7 +955,7 @@ class TaskService:
 
     async def create_task_from_template(
         self, template_id: int, user_id: int, **kwargs
-    ) -> Optional[Task]:
+    ) -> Task | None:
         """
         Create a task from a template.
 
@@ -1055,7 +1054,7 @@ class TaskService:
             "subcategories": [],  # TODO: Implement subcategories if needed
         }
 
-    def get_categories(self, user_id: int) -> List[dict]:
+    def get_categories(self, user_id: int) -> list[dict]:
         """
         Get task categories for user.
 
@@ -1105,7 +1104,7 @@ class TaskService:
         logger.info(f"Created task tag {tag.id} by user {created_by_id}")
         return tag
 
-    def get_tags(self) -> List[TaskTag]:
+    def get_tags(self) -> list[TaskTag]:
         """
         Get all task tags.
 
@@ -1114,7 +1113,7 @@ class TaskService:
         """
         return self.db.query(TaskTag).all()
 
-    def _add_tags_to_task(self, task_id: int, tag_names: List[str], user_id: int):
+    def _add_tags_to_task(self, task_id: int, tag_names: list[str], user_id: int):
         """Add tags to a task."""
         for tag_name in tag_names:
             # Get or create tag
@@ -1140,7 +1139,7 @@ class TaskService:
                 association = TaskTagAssociation(task_id=task_id, tag_id=tag.id)
                 self.db.add(association)
 
-    def _update_task_tags(self, task_id: int, tag_names: List[str], user_id: int):
+    def _update_task_tags(self, task_id: int, tag_names: list[str], user_id: int):
         """Update tags for a task."""
         # Remove existing associations
         self.db.query(TaskTagAssociation).filter(TaskTagAssociation.task_id == task_id).delete()
@@ -1212,7 +1211,7 @@ class TaskService:
 
         return False
 
-    def _create_recurring_instance(self, task: Task) -> Optional[Task]:
+    def _create_recurring_instance(self, task: Task) -> Task | None:
         """Create a new instance of a recurring task."""
         new_task = Task(
             title=task.title,
@@ -1238,7 +1237,7 @@ class TaskService:
         return new_task
 
     def _calculate_next_due_date(
-        self, current_due_date: datetime, pattern: Dict[str, Any]
+        self, current_due_date: datetime, pattern: dict[str, Any]
     ) -> datetime:
         """Calculate the next due date based on recurrence pattern."""
         recurrence_type = pattern.get("type")
@@ -1255,7 +1254,7 @@ class TaskService:
 
         return current_due_date
 
-    def to_task_response(self, task: Task) -> Dict[str, Any]:
+    def to_task_response(self, task: Task) -> dict[str, Any]:
         """
         Convert a Task model instance to a TaskResponse dictionary.
 
@@ -1378,7 +1377,7 @@ class TaskService:
             "media_attachments": media_list,
         }
 
-    def _task_to_dict(self, task: Task) -> Dict[str, Any]:
+    def _task_to_dict(self, task: Task) -> dict[str, Any]:
         """
         Convert Task object to dictionary for caching.
 
@@ -1449,7 +1448,7 @@ class TaskService:
             "tags": tags_list,
         }
 
-    def _dict_to_task(self, task_dict: Dict[str, Any]) -> Task:
+    def _dict_to_task(self, task_dict: dict[str, Any]) -> Task:
         """
         Convert dictionary back to Task object.
 
@@ -1459,8 +1458,8 @@ class TaskService:
         Returns:
             Task object
         """
-        from app.models.user import User
         from app.models.task import TaskCategory, TaskTag
+        from app.models.user import User
 
         # Create a minimal Task object with cached data
         task = Task()
@@ -1597,7 +1596,7 @@ class TaskService:
 
         return False
 
-    def get_task_participants(self, task_id: int) -> List[int]:
+    def get_task_participants(self, task_id: int) -> list[int]:
         """
         Get list of user IDs who are participants in a task.
 
@@ -1636,7 +1635,7 @@ class TaskService:
 
         return list(participants)
 
-    def get_task_stakeholders(self, task_id: int) -> List[int]:
+    def get_task_stakeholders(self, task_id: int) -> list[int]:
         """
         Get list of user IDs who are stakeholders in a task (for notifications).
 

@@ -6,9 +6,9 @@ in the database, enabling offline notification delivery.
 """
 
 from datetime import datetime
-from typing import Dict, Any
+from typing import Any
 
-from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, ForeignKey, JSON
+from sqlalchemy import JSON, Boolean, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
@@ -42,7 +42,7 @@ class Notification(Base):
         """String representation of notification."""
         return f"<Notification(id={self.id}, user_id={self.user_id}, type='{self.type}', is_read={self.is_read})>"
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """
         Convert notification to dictionary format.
 

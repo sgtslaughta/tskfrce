@@ -4,8 +4,6 @@ Users API router for TaaskMaaster.
 This module contains API endpoints for user management and authentication.
 """
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
@@ -57,7 +55,7 @@ async def create_user(
 async def get_users(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
-    is_active: Optional[bool] = Query(None, description="Filter by active status"),
+    is_active: bool | None = Query(None, description="Filter by active status"),
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_superuser),
 ):
