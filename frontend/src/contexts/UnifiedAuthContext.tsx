@@ -56,6 +56,8 @@ interface AuthState {
 interface UnifiedAuthContextType extends AuthState {
   /** Login function */
   login: (credentials: { username: string; password: string }) => Promise<void>;
+  /** Log in with an access token already issued by the backend (first-run setup) */
+  loginWithToken: (accessToken: string) => Promise<void>;
   /** Logout function */
   logout: () => Promise<void>;
   /** Refresh authentication state */
@@ -314,6 +316,20 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, [syncAuthSystems, updateAuthState]);
 
   /**
+   * @description Log in with an already-issued access token (no refresh token)
+   */
+  const loginWithToken = useCallback(async (accessToken: string) => {
+    tokenManager.setTokens({ access_token: accessToken, refresh_token: '', expires_in: 3600 });
+    const me = await authService.getCurrentUser();
+    await syncAuthSystems({
+      id: me.user_id.toString(),
+      username: me.username,
+      email: me.email,
+      role: toRole(me.role, me.is_superuser),
+    });
+  }, [syncAuthSystems]);
+
+  /**
    * @description Logout function
    */
   const logout = useCallback(async () => {
@@ -446,6 +462,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const contextValue: UnifiedAuthContextType = {
     ...state,
     login,
+    loginWithToken,
     logout,
     refreshAuth,
     clearError,

@@ -1,0 +1,51 @@
+import { useState } from 'react'
+import { Button, Group, TextInput } from '@mantine/core'
+import { useMutation } from '@tanstack/react-query'
+import { api } from '../api'
+import type { Kid } from '../types'
+import { AVATARS } from './starterChores'
+
+interface Props {
+  kids: Kid[]
+  onAdd: (k: Kid) => void
+}
+
+export function StepKids({ kids, onAdd }: Props) {
+  const [name, setName] = useState('')
+  const [avatar, setAvatar] = useState(AVATARS[0])
+  const [pin, setPin] = useState('')
+  const pinBad = pin !== '' && !/^\d{4}$/.test(pin)
+  const add = useMutation({
+    mutationFn: () =>
+      api<Kid>('/kids', { method: 'POST', body: { full_name: name.trim(), avatar, pin: pin || null } }),
+    onSuccess: (k) => {
+      onAdd(k)
+      setName('')
+      setPin('')
+    },
+  })
+  return (
+    <>
+      <p>Add each child. You can add more later from Kids &amp; chores.</p>
+      {kids.length > 0 && (
+        <ul aria-label="Kids added" style={{ paddingLeft: 20 }}>
+          {kids.map((k) => <li key={k.id}>{k.avatar} {k.full_name}{k.has_pin ? ' (has a PIN)' : ''}</li>)}
+        </ul>
+      )}
+      <TextInput label="Name" value={name} onChange={(e) => setName(e.currentTarget.value)} />
+      <div role="group" aria-label="Pick an avatar" className="f-row" style={{ marginTop: 12 }}>
+        {AVATARS.map((a) => (
+          <Button key={a} variant={a === avatar ? 'filled' : 'default'} aria-pressed={a === avatar}
+            aria-label={`Avatar ${a}`} onClick={() => setAvatar(a)} px={0} w={44}>{a}</Button>
+        ))}
+      </div>
+      <TextInput mt="md" label="PIN (optional)" description="4 digits. Lets a kid prove it's them on a shared device."
+        inputMode="numeric" maxLength={4} value={pin} onChange={(e) => setPin(e.currentTarget.value)}
+        error={pinBad ? 'Use exactly 4 digits.' : undefined} />
+      {add.error && <p role="alert">{add.error.message}</p>}
+      <Group mt="md">
+        <Button disabled={!name.trim() || pinBad} loading={add.isPending} onClick={() => add.mutate()}>Add kid</Button>
+      </Group>
+    </>
+  )
+}
