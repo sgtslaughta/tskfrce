@@ -49,7 +49,23 @@ A **network intercept** service on the always-on box sits between chosen devices
 - **LAN access to the box stays open while blocked**, so a locked iPad can still open the kid screen and mark chores done.
 - **Fails open:** if the box is off or unplugged, devices go back online. Accepted. Mitigation: parent alert "Home box went offline" when the box is unreachable for >2 min (needs an external heartbeat; see §10). Docs tell parents to place the box out of kids' reach.
 - **"Test block" button:** blocks one device, verifies it's actually offline, and tells the parent plainly if their router resists (some mesh systems, e.g. certain Eero/Google Wifi models). The docs keep a known-router compatibility list.
+- **"Internet is paused" captive portal** (owner-approved 2026-10-20): for blocked devices, the box answers DNS queries itself (any name → the box's LAN IP) and serves plain-HTTP requests on port 80 with a redirect to the kid screen (`http://task4ce.local/kid`). The OS captive-portal checks (Apple `captive.apple.com`, Android `connectivitycheck.gstatic.com`, Windows `msftconnecttest.com`, Xbox) then pop up the kid screen automatically. HTTPS can't be redirected without certificate errors, so it is simply dropped. Encrypted DNS (DoH/DoT) skips the redirect, but the device stays blocked either way. Comfort only, not enforcement.
 - Runs as a **separate container with host networking** and the needed capabilities (NET_RAW/NET_ADMIN). The app talks to it over a small local API.
+
+### 4.1a Bypass matrix (goes into beginner docs too)
+
+The block drops packets, not DNS answers, so DNS changes and VPNs don't bypass it.
+
+| Bypass | Handled by |
+|---|---|
+| Change DNS / VPN | Doesn't work: all internet-bound traffic dropped |
+| Forget network / rotating private MAC | New MAC = new device = quarantined (blocked) |
+| Static IP | Blocker keys on MAC and re-learns IPs from ARP/NDP |
+| IPv6 | Blocked from v2.0 |
+| Cellular / hotspot / other Wi-Fi | Out of scope (home Wi-Fi only); v3 native apps |
+| Unplug box | Fails open; parent alert; docs: place box out of reach |
+| Router anti-spoofing / client isolation | "Test block" + router compatibility list |
+| Laptop admin pins static ARP for router | Not covered; documented |
 
 ### 4.2 Device discovery & identity
 - The box discovers devices on the LAN and shows friendly names (MAC vendor lookup plus DHCP/mDNS hostname, e.g. "Microsoft Xbox", "Emma's iPad").
