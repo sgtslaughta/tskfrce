@@ -43,7 +43,7 @@ export function useKidSession() {
   })
   const login = useMutation({
     mutationFn: (v: { kid_id: number; pin?: string }) =>
-      api<{ access_token: string }>('/kid/login', { method: 'POST', body: v }),
+      api<{ access_token: string }>('/kid/login', { method: 'POST', body: v, kid: true }),
     onSuccess: (r) => {
       writeToken(r.access_token)
       setAuthed(true)
@@ -75,12 +75,15 @@ export function useKidToday(onExpired: () => void) {
   return q
 }
 
-export function useMarkDone() {
+export function useMarkDone(onExpired: () => void) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: (id: number) => api(`/kid/chores/${id}/done`, { method: 'POST', kid: true }),
     onSuccess: () => notifications.show({ message: 'Marked done', color: 'green' }),
-    onError: (e: Error) => notifications.show({ message: e.message, color: 'red' }),
+    onError: (e: Error) => {
+      if (e instanceof AuthError) onExpired()
+      else notifications.show({ message: e.message, color: 'red' })
+    },
     onSettled: () => qc.invalidateQueries({ queryKey: ['kid', 'today'] }),
   })
 }

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
@@ -79,7 +79,7 @@ describe('kid lock screen', () => {
     })
     renderKid()
     expect(await screen.findByText('Internet is paused')).toBeInTheDocument()
-    expect(apiMock).toHaveBeenCalledWith('/kid/login', { method: 'POST', body: { kid_id: 1 } })
+    expect(apiMock).toHaveBeenCalledWith('/kid/login', { method: 'POST', body: { kid_id: 1 }, kid: true })
     expect(localStorage.getItem(KID_TOKEN_KEY)).toBe('tok')
     expect(screen.getByText('Waiting for Mom or Dad')).toBeInTheDocument()
     expect(screen.getByText('+5')).toBeInTheDocument()
@@ -122,7 +122,7 @@ describe('kid lock screen', () => {
     renderKid()
     for (const d of '1234') await userEvent.click(await screen.findByRole('button', { name: d }))
     expect(await screen.findByText('Wrong PIN. Try again.')).toBeInTheDocument()
-    expect(apiMock).toHaveBeenCalledWith('/kid/login', { method: 'POST', body: { kid_id: 2, pin: '1234' } })
+    expect(apiMock).toHaveBeenCalledWith('/kid/login', { method: 'POST', body: { kid_id: 2, pin: '1234' }, kid: true })
     await userEvent.keyboard('5678')
     expect(await screen.findByText('Too many tries. Wait a minute and try again.')).toBeInTheDocument()
   })
@@ -154,7 +154,7 @@ describe('kid lock screen', () => {
     locked = false
     await userEvent.click(screen.getByRole('button', { name: 'Mark done' }))
     expect(await screen.findByText("You're online")).toBeInTheDocument()
-    expect(screen.getByText('1 chores done today')).toBeInTheDocument()
+    expect(screen.getByText('1 chore done today')).toBeInTheDocument()
   })
 
   test('kid 401 clears the token and restarts at whoami', async () => {
@@ -166,5 +166,64 @@ describe('kid lock screen', () => {
     renderKid()
     expect(await screen.findByRole('button', { name: /Ben/ })).toBeInTheDocument()
     expect(localStorage.getItem(KID_TOKEN_KEY)).toBeNull()
+  })
+
+  test('wrong PIN 401 stays on the kid auth path', async () => {
+    route({
+      'GET /kid/whoami': () => whoami([ben]),
+      'POST /kid/login': () => new AuthError('Wrong PIN. Try again.', true),
+    })
+    renderKid()
+    for (const d of '1234') await userEvent.click(await screen.findByRole('button', { name: d }))
+    expect(await screen.findByText('Wrong PIN. Try again.')).toBeInTheDocument()
+    expect(apiMock).toHaveBeenCalledWith('/kid/login', expect.objectContaining({ kid: true }))
+  })
+
+  test('today failure shows retry, not endless loading', async () => {
+    localStorage.setItem(KID_TOKEN_KEY, 'tok')
+    route({
+      'GET /kid/whoami': () => whoami([ana]),
+      'GET /kid/today': () => new ApiError(500, 'boom'),
+    })
+    renderKid()
+    expect(await screen.findByText("Can't reach the box. Check the Wi-Fi.")).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+  })
+
+  test('shows the solo kid name on a stored-token reload', async () => {
+    localStorage.setItem(KID_TOKEN_KEY, 'tok')
+    route({ 'GET /kid/whoami': () => whoami([ana]), 'GET /kid/today': () => today() })
+    renderKid()
+    expect(await screen.findByRole('heading', { name: 'Ana' })).toBeInTheDocument()
+  })
+
+  test('mark-done 401 restarts at whoami', async () => {
+    localStorage.setItem(KID_TOKEN_KEY, 'tok')
+    route({
+      'GET /kid/whoami': () => whoami([ana, ben]),
+      'GET /kid/today': () => today(),
+      'POST /kid/chores/7/done': () => new AuthError('Please log in again.', true),
+    })
+    renderKid()
+    await userEvent.click(await screen.findByRole('button', { name: 'Mark done' }))
+    expect(await screen.findByRole('button', { name: /Ben/ })).toBeInTheDocument()
+    expect(localStorage.getItem(KID_TOKEN_KEY)).toBeNull()
+  })
+
+  test('refetches /kid/today every 10 s', async () => {
+    localStorage.setItem(KID_TOKEN_KEY, 'tok')
+    route({ 'GET /kid/whoami': () => whoami([ana]), 'GET /kid/today': () => today() })
+    jest.useFakeTimers({ advanceTimers: true })
+    try {
+      renderKid()
+      await screen.findByText('Internet is paused')
+      const n = calls('/kid/today').length
+      await act(async () => {
+        jest.advanceTimersByTime(10_500)
+      })
+      await waitFor(() => expect(calls('/kid/today').length).toBeGreaterThan(n))
+    } finally {
+      jest.useRealTimers()
+    }
   })
 })

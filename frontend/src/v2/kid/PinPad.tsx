@@ -24,6 +24,7 @@ export function PinPad({
   // keyboard support
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return
       if (/^\d$/.test(e.key)) press(e.key)
       else if (e.key === 'Backspace') press('⌫')
     }
@@ -45,6 +46,9 @@ export function PinPad({
           <span key={i}>{i < pin.length ? '●' : '○'}</span>
         ))}
       </div>
+      <span aria-live="polite" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+        {pin.length ? `${pin.length} of 4 digits` : ''}
+      </span>
       <p role="alert" style={{ margin: 0, minHeight: 24, fontWeight: 700 }}>
         {error ?? ''}
       </p>

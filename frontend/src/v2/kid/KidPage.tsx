@@ -27,8 +27,17 @@ const SwitchBtn = ({ onClick }: { onClick: () => void }) => (
 
 function Session({ name, onExit, canSwitch }: { name?: string; onExit: () => void; canSwitch: boolean }) {
   const today = useKidToday(onExit)
-  const done = useMarkDone()
+  const done = useMarkDone(onExit)
   const d = today.data
+  if (!d && today.isError)
+    return (
+      <>
+        <Msg>Can&apos;t reach the box. Check the Wi-Fi.</Msg>
+        <Button size="lg" onClick={() => today.refetch()}>
+          Retry
+        </Button>
+      </>
+    )
   if (!d) return <Msg>Loading…</Msg>
   const switcher = canSwitch && <SwitchBtn onClick={onExit} />
   if (!d.locked)
@@ -91,7 +100,7 @@ export function KidPage() {
 
   let body
   if (!ready || (!authed && whoami.isPending)) body = <Msg>Loading…</Msg>
-  else if (authed) body = <Session name={picked?.full_name ?? undefined} onExit={exit} canSwitch={kids.length > 1} />
+  else if (authed) body = <Session name={who?.full_name ?? undefined} onExit={exit} canSwitch={kids.length > 1} />
   else if (whoami.isError) body = <Msg>Can&apos;t reach the home box. Check Wi-Fi and try again.</Msg>
   else if (!whoami.data?.device) body = <Msg>This device isn&apos;t set up yet. Ask a parent to add it.</Msg>
   else if (!kids.length) body = <Msg>No kid is set up on this device. Ask a parent to add one.</Msg>

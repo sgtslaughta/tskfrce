@@ -8,7 +8,7 @@ export function UnlockedView({ points, done }: { points: number; done: number })
         <LockBadge online size={120} />
         <h1 style={{ margin: 0, fontSize: 36 }}>You&apos;re online</h1>
         <p style={{ margin: 0, fontSize: 22, fontWeight: 700 }}>⭐ {points} points</p>
-        <p style={{ margin: 0, fontSize: 18 }}>{done} chores done today</p>
+        <p style={{ margin: 0, fontSize: 18 }}>{done === 1 ? '1 chore' : `${done} chores`} done today</p>
       </div>
     </StickerCard>
   )
