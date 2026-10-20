@@ -6,12 +6,16 @@ This module contains API endpoints for authentication and authorization.
 
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.core.auth import AuthService, get_current_user
+from app.api.deps import get_current_user
+from app.core.auth import AuthService
+from app.core.config import settings
 from app.core.database import get_db_session
-from app.models.user import User
+from app.core.ratelimit import client_ip, limit
+from app.models.user import User, UserRole
 from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
@@ -19,12 +23,13 @@ from app.schemas.auth import (
     RefreshTokenRequest,
     RefreshTokenResponse,
 )
+from app.schemas.user import RegisterIn
 
 router = APIRouter(prefix="/api/v1/auth", tags=["authentication"])
 
 
 @router.post("/login", response_model=LoginResponse, status_code=status.HTTP_200_OK)
-async def login(login_data: LoginRequest, db: Session = Depends(get_db_session)):
+async def login(login_data: LoginRequest, request: Request, db: Session = Depends(get_db_session)):
     """
     Authenticate a user and return JWT tokens.
 
@@ -38,6 +43,7 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db_session))
     Raises:
         HTTPException: If authentication fails
     """
+    limit(f"login:{client_ip(request)}:{login_data.username.lower()}", 10, 60)
     auth_service = AuthService(db)
     user = auth_service.authenticate_user(login_data.username, login_data.password)
 
@@ -49,7 +55,7 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db_session))
         )
 
     # Create access token
-    access_token_expires = timedelta(minutes=30)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth_service.create_access_token(
         data={
             "sub": str(user.id),
@@ -60,7 +66,7 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db_session))
     )
 
     # Create refresh token
-    refresh_token_expires = timedelta(days=7)
+    refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     refresh_token = auth_service.create_refresh_token(
         data={
             "sub": str(user.id),
@@ -74,8 +80,8 @@ async def login(login_data: LoginRequest, db: Session = Depends(get_db_session))
         access_token=access_token,
         refresh_token=refresh_token,
         token_type="bearer",
-        expires_in=30 * 60,  # 30 minutes in seconds
-        refresh_expires_in=7 * 24 * 60 * 60,  # 7 days in seconds
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        refresh_expires_in=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
         user_id=user.id,
         username=user.username,
         email=user.email,
@@ -134,7 +140,7 @@ async def refresh_token(refresh_data: RefreshTokenRequest, db: Session = Depends
         )
 
     # Create new access token
-    access_token_expires = timedelta(minutes=30)
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = auth_service.create_access_token(
         data={
             "sub": str(user.id),
@@ -147,7 +153,7 @@ async def refresh_token(refresh_data: RefreshTokenRequest, db: Session = Depends
     return RefreshTokenResponse(
         access_token=access_token,
         token_type="bearer",
-        expires_in=30 * 60,  # 30 minutes in seconds
+        expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     )
 
 
@@ -199,3 +205,30 @@ async def get_current_user_info(
         "created_at": (current_user.created_at.isoformat() if current_user.created_at else None),
         "updated_at": (current_user.updated_at.isoformat() if current_user.updated_at else None),
     }
+
+
+ASK_PARENT = "Ask a parent to add you."
+
+
+@router.post("/register", status_code=status.HTTP_201_CREATED)
+async def register(body: RegisterIn, db: Session = Depends(get_db_session)):
+    """No public sign-up: only a parent's one-time invite token creates a new parent."""
+    auth = AuthService(db)
+    username = auth.read_invite(body.token)
+    if not username or auth.user_service.get_user_by_username(username):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ASK_PARENT)
+    user = User(
+        username=username,
+        email=f"{username}@family.local",
+        hashed_password=auth.get_password_hash(body.password),
+        full_name=body.full_name,
+        role=UserRole.PARENT,
+        is_superuser=True,  # same powers as the setup parent (manage kids)
+    )
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError:  # same invite redeemed twice at once
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ASK_PARENT) from None
+    return {"user_id": user.id, "username": user.username}

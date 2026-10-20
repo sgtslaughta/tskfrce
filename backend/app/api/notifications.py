@@ -4,14 +4,14 @@ Notification API endpoints for TaaskMaaster.
 This module contains FastAPI routes for notification-related operations.
 """
 
-import json
 import random
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
+from app.api.deps import get_current_active_user, get_db
 from app.core.logging import get_logger
+from app.models.user import User
 from app.schemas.notification import (
     NotificationDeleteRequest,
     NotificationDeleteResponse,
@@ -29,56 +29,14 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-def get_user_data_from_header(x_user_data: str | None = Header(None)) -> dict:
-    """
-    Extract user data from X-User-Data header.
-
-    Args:
-        x_user_data: JSON string containing user data
-
-    Returns:
-        Dictionary with user data
-
-    Raises:
-        HTTPException: If header is missing or invalid
-    """
-    if not x_user_data:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="X-User-Data header is required"
-        )
-
-    try:
-        user_data = json.loads(x_user_data)
-        if "user_id" not in user_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="user_id is required in X-User-Data header",
-            )
-        return user_data
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON in X-User-Data header"
-        )
-
-
 @router.post("/", response_model=NotificationListResponse)
 async def get_notifications(
     request_data: NotificationGetRequest,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get notifications for the current user.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
-      ```json
-      {
-        "user_id": 123,
-        "username": "john_doe",
-        "role": "user"
-      }
-      ```
 
     **Request Body:**
     ```json
@@ -90,8 +48,7 @@ async def get_notifications(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         notification_service = NotificationPersistenceService(db)
@@ -117,13 +74,10 @@ async def get_notifications(
 async def mark_notifications_read(
     request_data: NotificationMarkReadRequest,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Mark notifications as read.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -132,8 +86,7 @@ async def mark_notifications_read(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         notification_service = NotificationPersistenceService(db)
@@ -158,13 +111,10 @@ async def mark_notifications_read(
 async def delete_notifications(
     request_data: NotificationDeleteRequest,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Delete notifications.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -173,8 +123,7 @@ async def delete_notifications(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         notification_service = NotificationPersistenceService(db)
@@ -197,16 +146,13 @@ async def delete_notifications(
 
 @router.get("/stats", response_model=NotificationStatsResponse)
 async def get_notification_stats(
-    db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)
 ):
     """
     Get notification statistics for the current user.
 
-    **Headers:**
-    - X-User-Data: JSON containing user information
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         notification_service = NotificationPersistenceService(db)
@@ -224,16 +170,13 @@ async def get_notification_stats(
 
 @router.post("/mark-all-read", response_model=NotificationMarkReadResponse)
 async def mark_all_notifications_read(
-    db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)
 ):
     """
     Mark all notifications as read for the current user.
 
-    **Headers:**
-    - X-User-Data: JSON containing user information
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         notification_service = NotificationPersistenceService(db)
@@ -251,16 +194,13 @@ async def mark_all_notifications_read(
 
 @router.post("/demo")
 async def generate_demo_notifications(
-    db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    db: Session = Depends(get_db), current_user: User = Depends(get_current_active_user)
 ):
     """
     Generate demo notifications for testing purposes.
 
-    **Headers:**
-    - X-User-Data: JSON containing user information
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = int(user_data["user_id"])
+    user_id = current_user.id
 
     try:
         notification_service = NotificationService(db)

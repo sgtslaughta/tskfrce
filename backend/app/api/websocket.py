@@ -6,10 +6,10 @@ This module contains WebSocket routes for real-time notifications and messaging.
 
 import json
 
-from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, status
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
+from app.api.deps import get_db, user_from_token
 from app.core.logging import get_logger
 from app.services.websocket_service import websocket_manager
 
@@ -18,35 +18,13 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-def get_user_from_websocket_query(websocket: WebSocket) -> dict | None:
-    """
-    Extract user data from WebSocket query parameters.
-
-    Args:
-        websocket: WebSocket connection
-
-    Returns:
-        Dictionary with user data or None if invalid
-    """
-    try:
-        # Get user_data from query parameters
-        user_data_param = websocket.query_params.get("user_data")
-        if not user_data_param:
-            logger.warning("WebSocket connection missing user_data query parameter")
-            return None
-
-        user_data = json.loads(user_data_param)
-        if "user_id" not in user_data:
-            logger.warning("WebSocket connection missing user_id in user_data")
-            return None
-
-        return user_data
-    except json.JSONDecodeError:
-        logger.warning("WebSocket connection has invalid JSON in user_data parameter")
+async def authenticate(websocket: WebSocket, db: Session) -> int | None:
+    """Verify ?token=<JWT> before accept(); close with 4401 and return None if invalid."""
+    user = user_from_token(websocket.query_params.get("token"), db)
+    if user is None:
+        await websocket.close(code=4401, reason="Log in again to connect.")
         return None
-    except Exception as e:
-        logger.error(f"Error parsing WebSocket user data: {e}")
-        return None
+    return user.id
 
 
 @router.websocket("/notifications")
@@ -56,7 +34,7 @@ async def websocket_notifications_endpoint(websocket: WebSocket, db: Session = D
 
     **Connection URL:**
     ```
-    ws://localhost:8000/ws/notifications?user_data={"user_id":123,"username":"john_doe","role":"user"}
+    ws://localhost:8000/ws/notifications?token=<JWT access token>
     ```
 
     **Message Types Received:**
@@ -68,18 +46,12 @@ async def websocket_notifications_endpoint(websocket: WebSocket, db: Session = D
     - `user_mentioned`: User mentioned in a comment
     - `media_attached`: Media attached to task/comment
     """
-    # Authenticate user from query parameters BEFORE accepting connection
-    user_data = get_user_from_websocket_query(websocket)
-    if not user_data:
-        await websocket.close(
-            code=status.WS_1008_POLICY_VIOLATION, reason="Invalid authentication data"
-        )
+    user_id = await authenticate(websocket, db)
+    if user_id is None:
         return
 
     # Accept WebSocket connection only after authentication passes
     await websocket.accept()
-
-    user_id = user_data["user_id"]
 
     try:
         # Add user to notifications pool (websocket already accepted)
@@ -137,7 +109,7 @@ async def websocket_messaging_endpoint(websocket: WebSocket, db: Session = Depen
 
     **Connection URL:**
     ```
-    ws://localhost:8000/ws/messaging?user_data={"user_id":123,"username":"john_doe","role":"user"}
+    ws://localhost:8000/ws/messaging?token=<JWT access token>
     ```
 
     **Message Types Received:**
@@ -147,15 +119,9 @@ async def websocket_messaging_endpoint(websocket: WebSocket, db: Session = Depen
     - `message_read`: Message read receipt
     - `user_status_changed`: User online status changed
     """
-    # Authenticate user from query parameters BEFORE accepting connection
-    user_data = get_user_from_websocket_query(websocket)
-    if not user_data:
-        await websocket.close(
-            code=status.WS_1008_POLICY_VIOLATION, reason="Invalid authentication data"
-        )
+    user_id = await authenticate(websocket, db)
+    if user_id is None:
         return
-
-    user_id = user_data["user_id"]
 
     try:
         # Accept WebSocket connection only after authentication passes

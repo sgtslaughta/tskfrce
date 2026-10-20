@@ -7,10 +7,17 @@ This module contains API endpoints for user management and authentication.
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.core.auth import get_current_active_user, get_current_superuser
+from app.api.deps import (
+    get_current_active_user,
+    get_current_superuser,
+    require_parent,
+    require_self_or_parent,
+)
+from app.core.auth import INVITE_TTL, AuthService
 from app.core.database import get_db_session
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.user import (
+    InviteIn,
     UserCreate,
     UserList,
     UserPasswordChange,
@@ -20,6 +27,8 @@ from app.schemas.user import (
 from app.services.user_service import UserService
 
 router = APIRouter(prefix="/api/v1/users", tags=["users"])
+
+PARENT_ONLY_FIELDS = {"role", "is_active", "is_superuser"}
 
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -104,6 +113,22 @@ async def get_users_for_assignment(
         )
 
 
+@router.post("/invite", status_code=status.HTTP_201_CREATED)
+async def invite_parent(
+    body: InviteIn,
+    db: Session = Depends(get_db_session),
+    current_user: User = Depends(require_parent),
+):
+    """Make a one-time sign-up link token (24 h) for a new parent with this username."""
+    if UserService(db).get_user_by_username(body.username):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="That username is taken. Pick another one.",
+        )
+    token = AuthService(db).create_invite_token(body.username, current_user.id)
+    return {"token": token, "expires_in": int(INVITE_TTL.total_seconds())}
+
+
 # Password change endpoint (must come before /{user_id} routes)
 @router.post("/password", status_code=status.HTTP_200_OK)
 async def change_password(
@@ -143,7 +168,13 @@ async def update_user(
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Update a user account."""
+    """Update a user account. Kids may edit only themselves; only parents change access."""
+    require_self_or_parent(user_id, current_user)
+    privileged = user_data.model_dump(exclude_unset=True).keys() & PARENT_ONLY_FIELDS
+    if privileged and current_user.role != UserRole.PARENT:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only parents can do this."
+        )
     user_service = UserService(db)
     user = user_service.update_user(user_id, user_data)
 

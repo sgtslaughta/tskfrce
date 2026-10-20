@@ -140,13 +140,11 @@ class PermissionService:
             if user_role == UserRole.ADMIN:
                 return True
 
-            # Check context-specific permissions first (task creator/assignee access)
+            # With a resource, context decides alone (no role-based fallback)
             if resource_id and resource_type:
-                context_permission = self._check_context_permission(
+                return self._check_context_permission(
                     user_id, permission, resource_id, resource_type
                 )
-                if context_permission:
-                    return True
 
             # Check role-based permissions as fallback
             role_perms = self.role_permissions.get(user_role, set())
@@ -186,7 +184,7 @@ class PermissionService:
             elif resource_type == "message":
                 return self._check_message_permission(user_id, permission, resource_id)
 
-            return True
+            return False  # unknown resource type
 
         except Exception as e:
             logger.error(f"Error checking context permission: {e}")
@@ -210,11 +208,6 @@ class PermissionService:
                 Permission.COMMENT_VIEW,
                 Permission.COMMENT_CREATE,
             }
-
-        # Public tasks can be viewed by anyone
-        # TODO: Add visibility field to Task model
-        if permission == Permission.TASK_VIEW:
-            return True
 
         return False
 

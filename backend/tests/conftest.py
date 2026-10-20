@@ -16,6 +16,13 @@ from sqlalchemy.orm import sessionmaker  # noqa: E402
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limits():
+    from app.core.ratelimit import reset
+
+    reset()
+
+
 @pytest.fixture
 def db():
     """Fresh in-memory SQLite session per test."""

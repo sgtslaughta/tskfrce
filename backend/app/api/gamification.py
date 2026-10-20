@@ -7,8 +7,10 @@ This module contains API endpoints for gamification features.
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
+from app.api.deps import get_current_active_user, require_parent, require_self_or_parent
 from app.core.database import get_db_session
 from app.models.gamification import PointsType
+from app.models.user import User
 from app.schemas.gamification import (
     AchievementResponse,
     LeaderboardCreate,
@@ -24,7 +26,11 @@ from app.schemas.gamification import (
 )
 from app.services.gamification_service import GamificationService
 
-router = APIRouter(prefix="/api/v1/gamification", tags=["gamification"])
+router = APIRouter(
+    prefix="/api/v1/gamification",
+    tags=["gamification"],
+    dependencies=[Depends(get_current_active_user)],
+)
 
 
 # Points
@@ -54,6 +60,7 @@ async def award_points(
     reference_id: int | None = Query(None, description="Reference to related entity"),
     reference_type: str | None = Query(None, description="Type of reference entity"),
     db: Session = Depends(get_db_session),
+    _: User = Depends(require_parent),
 ):
     """Award points to a user."""
     gamification_service = GamificationService(db)
@@ -69,8 +76,13 @@ async def award_points(
 
 
 @router.get("/points/summary/{user_id}", response_model=UserPointsSummary)
-async def get_user_points_summary(user_id: int, db: Session = Depends(get_db_session)):
+async def get_user_points_summary(
+    user_id: int,
+    db: Session = Depends(get_db_session),
+    me: User = Depends(get_current_active_user),
+):
     """Get points summary for a user."""
+    require_self_or_parent(user_id, me)
     gamification_service = GamificationService(db)
     summary = gamification_service.get_user_points_summary(user_id)
     return summary
@@ -82,8 +94,10 @@ async def get_user_points_history(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
     db: Session = Depends(get_db_session),
+    me: User = Depends(get_current_active_user),
 ):
     """Get points history for a user."""
+    require_self_or_parent(user_id, me)
     gamification_service = GamificationService(db)
     points, total = gamification_service.get_user_points_history(user_id, skip, limit)
 
@@ -106,15 +120,24 @@ async def get_achievements(db: Session = Depends(get_db_session)):
     "/achievements/user/{user_id}",
     response_model=list[UserAchievementResponse],
 )
-async def get_user_achievements(user_id: int, db: Session = Depends(get_db_session)):
+async def get_user_achievements(
+    user_id: int,
+    db: Session = Depends(get_db_session),
+    me: User = Depends(get_current_active_user),
+):
     """Get achievements for a user."""
+    require_self_or_parent(user_id, me)
     gamification_service = GamificationService(db)
     achievements = gamification_service.get_user_achievements(user_id)
     return achievements
 
 
 @router.post("/achievements/check/{user_id}", status_code=status.HTTP_200_OK)
-async def check_and_award_achievements(user_id: int, db: Session = Depends(get_db_session)):
+async def check_and_award_achievements(
+    user_id: int,
+    db: Session = Depends(get_db_session),
+    _: User = Depends(require_parent),
+):
     """Check and award achievements to a user."""
     gamification_service = GamificationService(db)
     newly_awarded = gamification_service.check_and_award_achievements(user_id)
@@ -132,7 +155,9 @@ async def check_and_award_achievements(user_id: int, db: Session = Depends(get_d
     status_code=status.HTTP_201_CREATED,
 )
 async def create_leaderboard(
-    leaderboard_data: LeaderboardCreate, db: Session = Depends(get_db_session)
+    leaderboard_data: LeaderboardCreate,
+    db: Session = Depends(get_db_session),
+    _: User = Depends(require_parent),
 ):
     """Create a new leaderboard."""
     gamification_service = GamificationService(db)
@@ -152,7 +177,11 @@ async def get_leaderboards(
 
 
 @router.post("/leaderboards/{leaderboard_id}/update", status_code=status.HTTP_200_OK)
-async def update_leaderboard_scores(leaderboard_id: int, db: Session = Depends(get_db_session)):
+async def update_leaderboard_scores(
+    leaderboard_id: int,
+    db: Session = Depends(get_db_session),
+    _: User = Depends(require_parent),
+):
     """Update scores for a leaderboard."""
     gamification_service = GamificationService(db)
     updated_count = gamification_service.update_leaderboard_scores(leaderboard_id)
@@ -206,6 +235,7 @@ async def update_user_streak(
     user_id: int,
     streak_type: str = Query(..., description="Type of streak"),
     db: Session = Depends(get_db_session),
+    _: User = Depends(require_parent),
 ):
     """Update user streak based on activity."""
     gamification_service = GamificationService(db)
@@ -226,8 +256,10 @@ async def get_user_streaks(
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
     db: Session = Depends(get_db_session),
+    me: User = Depends(get_current_active_user),
 ):
     """Get all streaks for a user."""
+    require_self_or_parent(user_id, me)
     gamification_service = GamificationService(db)
     streaks = gamification_service.get_user_streaks(user_id)
 

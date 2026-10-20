@@ -4,18 +4,15 @@ Messaging API endpoints for TaaskMaaster.
 This module contains FastAPI routes for messaging-related operations.
 """
 
-import json
-
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
+from app.api.deps import get_current_active_user, get_db
 from app.core.logging import get_logger
+from app.models.user import User
 from app.schemas.messaging import (
     ConversationListResponse,
-    DirectMessageCreate,
     DirectMessageListResponse,
-    DirectMessageResponse,
     MessageReadRequest,
     OnlineUsersResponse,
     TaskChatMessageCreate,
@@ -33,131 +30,22 @@ logger = get_logger(__name__)
 router = APIRouter()
 
 
-def get_user_data_from_header(x_user_data: str | None = Header(None)) -> dict:
-    """
-    Extract user data from X-User-Data header.
-
-    Args:
-        x_user_data: JSON string containing user data
-
-    Returns:
-        Dictionary with user data
-
-    Raises:
-        HTTPException: If header is missing or invalid
-    """
-    if not x_user_data:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="X-User-Data header is required"
-        )
-
-    try:
-        user_data = json.loads(x_user_data)
-        if "user_id" not in user_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="user_id is required in X-User-Data header",
-            )
-        return user_data
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON in X-User-Data header"
-        )
-
-
-# Direct Message endpoints
-@router.post("/direct", response_model=DirectMessageResponse, status_code=status.HTTP_201_CREATED)
-async def send_direct_message(
-    message_data: DirectMessageCreate,
-    db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
-):
-    """
-    Send a direct message to another user.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
-      ```json
-      {
-        "user_id": 123,
-        "username": "john_doe",
-        "role": "user"
-      }
-      ```
-
-    **Request Body:**
-    ```json
-    {
-      "to_user_id": 456,
-      "content": "Hey, can you review this task?",
-      "content_type": "text",
-      "thread_id": "optional-thread-id",
-      "media_attachment_ids": [789, 790]
-    }
-    ```
-    """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
-
-    try:
-        messaging_service = MessagingService(db)
-        message = messaging_service.send_direct_message(
-            from_user_id=user_id,
-            to_user_id=message_data.to_user_id,
-            content=message_data.content,
-            content_type=message_data.content_type,
-            thread_id=message_data.thread_id,
-            media_attachment_ids=message_data.media_attachment_ids,
-        )
-
-        # Send real-time notification
-        await websocket_manager.send_message(
-            message_data.to_user_id,
-            {
-                "type": "direct_message",
-                "message_id": message.id,
-                "from_user_id": user_id,
-                "from_username": user_data.get("username", "Unknown"),
-                "content": message.content,
-                "timestamp": message.created_at.isoformat(),
-            },
-        )
-
-        logger.info(
-            f"Sent direct message {message.id} from user {user_id} to user {message_data.to_user_id}"
-        )
-        return message
-
-    except ValueError as e:
-        logger.warning(f"Failed to send direct message: {e}")
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-    except Exception as e:
-        logger.error(f"Unexpected error sending direct message: {e}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error"
-        )
-
-
 @router.get("/direct/{other_user_id}", response_model=DirectMessageListResponse)
 async def get_direct_messages(
     other_user_id: int,
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get direct messages between current user and another user.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Query Parameters:**
     - skip: Number of messages to skip (pagination)
     - limit: Maximum number of messages to return
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         messaging_service = MessagingService(db)
@@ -182,20 +70,16 @@ async def get_conversations(
     skip: int = 0,
     limit: int = 20,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get list of conversations for the current user.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Query Parameters:**
     - skip: Number of conversations to skip (pagination)
     - limit: Maximum number of conversations to return
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         messaging_service = MessagingService(db)
@@ -221,13 +105,10 @@ async def get_conversations(
 async def send_task_chat_message(
     message_data: TaskChatMessageCreate,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Send a message to a task's chat channel.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -240,8 +121,7 @@ async def send_task_chat_message(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         messaging_service = MessagingService(db)
@@ -271,7 +151,7 @@ async def send_task_chat_message(
                 "message_id": message.id,
                 "task_id": message_data.task_id,
                 "from_user_id": user_id,
-                "from_username": user_data.get("username", "Unknown"),
+                "from_username": current_user.username,
                 "content": message.content,
                 "timestamp": message.created_at.isoformat(),
             },
@@ -298,20 +178,16 @@ async def get_task_chat_messages(
     skip: int = 0,
     limit: int = 50,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get chat messages for a specific task.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Query Parameters:**
     - skip: Number of messages to skip (pagination)
     - limit: Maximum number of messages to return
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         messaging_service = MessagingService(db)
@@ -339,13 +215,10 @@ async def get_task_chat_messages(
 async def mark_messages_as_read(
     read_request: MessageReadRequest,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Mark messages as read.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -354,8 +227,7 @@ async def mark_messages_as_read(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         messaging_service = MessagingService(db)
@@ -394,13 +266,10 @@ async def mark_messages_as_read(
 async def update_user_status(
     status_update: UserStatusUpdate,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Update user's online status.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -410,8 +279,7 @@ async def update_user_status(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         status_service = UserStatusService(db)
@@ -436,15 +304,14 @@ async def update_user_status(
 
 @router.get("/users/status/{user_id}", response_model=UserStatusResponse)
 async def get_user_status(
-    user_id: int, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a user's current status.
 
-    **Headers:**
-    - X-User-Data: JSON containing user information
     """
-    user_data = get_user_data_from_header(x_user_data)
 
     try:
         status_service = UserStatusService(db)
@@ -468,18 +335,16 @@ async def get_user_status(
 
 @router.get("/users/online", response_model=OnlineUsersResponse)
 async def get_online_users(
-    limit: int = 100, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    limit: int = 100,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get list of currently online users.
 
-    **Headers:**
-    - X-User-Data: JSON containing user information
-
     **Query Parameters:**
     - limit: Maximum number of users to return
     """
-    user_data = get_user_data_from_header(x_user_data)
 
     try:
         status_service = UserStatusService(db)
@@ -499,13 +364,10 @@ async def get_online_users(
 async def send_typing_indicator(
     typing_request: TypingIndicatorRequest,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Send typing indicator for real-time messaging.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -516,8 +378,7 @@ async def send_typing_indicator(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         await websocket_manager.handle_typing_indicator(
@@ -544,13 +405,10 @@ async def get_conversation_threads(
     skip: int = Query(default=0, ge=0, description="Number of threads to skip"),
     limit: int = Query(default=20, ge=1, le=100, description="Maximum number of threads"),
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get conversation threads between current user and specified user.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Response:**
     ```json
@@ -571,8 +429,7 @@ async def get_conversation_threads(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    current_user_id = user_data["user_id"]
+    current_user_id = current_user.id
 
     try:
         messaging_service = MessagingService(db)
@@ -596,13 +453,10 @@ async def create_message_thread(
     content_type: str = "markdown",
     media_attachment_ids: list[int] | None = None,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Create a new message thread.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -630,8 +484,7 @@ async def create_message_thread(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    from_user_id = user_data["user_id"]
+    from_user_id = current_user.id
 
     try:
         messaging_service = MessagingService(db)
@@ -661,13 +514,10 @@ async def get_thread_messages(
     limit: int = Query(default=50, ge=1, le=100, description="Maximum number of messages"),
     include_media: bool = Query(default=True, description="Include media attachments"),
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get messages in a specific thread.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Response:**
     ```json
@@ -687,8 +537,7 @@ async def get_thread_messages(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         messaging_service = MessagingService(db)
@@ -740,13 +589,12 @@ async def get_thread_messages(
 
 @router.get("/threads/{thread_id}/participants")
 async def get_thread_participants(
-    thread_id: str, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    thread_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get participants in a message thread.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Response:**
     ```json
@@ -765,7 +613,6 @@ async def get_thread_participants(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
 
     try:
         messaging_service = MessagingService(db)

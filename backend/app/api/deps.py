@@ -5,107 +5,47 @@ Common dependencies used across API endpoints including database sessions,
 authentication, and user context management.
 """
 
-import json
-
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
-from app.core.config import settings
+from app.core.auth import AuthService
 from app.core.database import get_db_session
 from app.core.logging import get_logger
 from app.models.user import User, UserRole
 
 logger = get_logger(__name__)
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 get_db = get_db_session  # alias kept for existing routes
 
 
-def get_current_user_from_token(
-    token: HTTPAuthorizationCredentials = Depends(security), db: Session = Depends(get_db)
-) -> User:
-    """
-    Get current user from JWT token.
-    """
-    credentials_exception = HTTPException(
+def _unauthorized() -> HTTPException:
+    return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
+        detail="You are not logged in. Log in and try again.",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
-    try:
-        payload = jwt.decode(
-            token.credentials, settings.JWT_SECRET_KEY, algorithms=[settings.ALGORITHM]
-        )
-        user_id: int = payload.get("sub")
-        if user_id is None:
-            raise credentials_exception
-    except JWTError:
-        raise credentials_exception
 
-    user = db.query(User).filter(User.id == user_id).first()
+def user_from_token(token: str | None, db: Session) -> User | None:
+    """Decode a bearer JWT (PyJWT) and load its active user, or None."""
+    return AuthService(db).get_current_user(token) if token else None
+
+
+def get_current_user_from_token(
+    token: HTTPAuthorizationCredentials | None = Depends(security), db: Session = Depends(get_db)
+) -> User:
+    """Get current user from the Authorization: Bearer JWT. The only identity source."""
+    user = user_from_token(token.credentials if token else None, db)
     if user is None:
-        raise credentials_exception
-
+        raise _unauthorized()
     return user
 
 
-def get_current_user_from_header(
-    x_user_data: str | None = Header(None), db: Session = Depends(get_db)
-) -> User | None:
-    """
-    Get current user from X-User-Data header.
-    This is used for API endpoints that expect user data in headers.
-    """
-    if not x_user_data:
-        return None
-
-    try:
-        user_data = json.loads(x_user_data)
-        user_id = user_data.get("id")
-
-        if not user_id:
-            return None
-
-        user = db.query(User).filter(User.id == user_id).first()
-        return user
-
-    except (json.JSONDecodeError, KeyError, ValueError) as e:
-        logger.warning(f"Invalid user data in header: {e}")
-        return None
-
-
-def get_current_user(
-    token: HTTPAuthorizationCredentials | None = Depends(security),
-    x_user_data: str | None = Header(None),
-    db: Session = Depends(get_db),
-) -> User:
-    """
-    Get current user from either JWT token or header data.
-    Tries token first, then falls back to header data.
-    """
-    # Try to get user from JWT token first
-    if token:
-        try:
-            return get_current_user_from_token(token, db)
-        except HTTPException:
-            pass
-
-    # Fall back to header data
-    user = get_current_user_from_header(x_user_data, db)
-    if user:
-        return user
-
-    # If neither method works, raise authentication error
-    raise HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+get_current_user = get_current_user_from_token
 
 
 def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
@@ -126,6 +66,14 @@ def require_parent(user: User = Depends(get_current_active_user)) -> User:
     return user
 
 
+def require_self_or_parent(user_id: int, user: User) -> None:
+    """Kids may only touch their own records; parents may touch anyone's."""
+    if user.id != user_id and user.role != UserRole.PARENT:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You can only do this for yourself."
+        )
+
+
 def get_current_superuser(current_user: User = Depends(get_current_user)) -> User:
     """
     Get current superuser (must be superuser/admin).
@@ -137,17 +85,10 @@ def get_current_superuser(current_user: User = Depends(get_current_user)) -> Use
 
 def get_optional_user(
     token: HTTPAuthorizationCredentials | None = Depends(security),
-    x_user_data: str | None = Header(None),
     db: Session = Depends(get_db),
 ) -> User | None:
-    """
-    Get current user optionally - returns None if not authenticated.
-    Useful for endpoints that work with or without authentication.
-    """
-    try:
-        return get_current_user(token, x_user_data, db)
-    except HTTPException:
-        return None
+    """Current user if a valid bearer token is sent, else None."""
+    return user_from_token(token.credentials if token else None, db)
 
 
 class CommonQueryParams:

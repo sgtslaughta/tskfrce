@@ -83,72 +83,24 @@ class MentionService:
         Returns:
             List of user dictionaries with mention info
         """
-        query = self.db.query(User).filter(User.id != current_user_id)
-
-        # Filter based on context
-        if context_type == "task" and context_id:
-            # For task context, include task participants and all users
-            # (in a real system, you might want to limit to team members)
-            task = self.db.query(Task).filter(Task.id == context_id).first()
-            if task:
-                # Include task creator and assignee
-                relevant_user_ids = {task.created_by_id}
-                if task.assigned_to_id:
-                    relevant_user_ids.add(task.assigned_to_id)
-
-                # Also include users who have commented on the task
-                commenters = (
-                    self.db.query(TaskComment.user_id)
-                    .filter(TaskComment.task_id == context_id)
-                    .distinct()
-                    .all()
-                )
-                relevant_user_ids.update([c.user_id for c in commenters])
-
-                # For now, include all users but prioritize relevant ones
-                # In a real system, you might want to filter more strictly
-                pass
-
-        # Apply search filter if provided
-        if search_query:
-            search_terms = search_query.lower().split()
-            search_conditions = []
-            for term in search_terms:
-                search_conditions.extend(
-                    [
-                        User.username.ilike(f"%{term}%"),
-                        User.first_name.ilike(f"%{term}%"),
-                        User.last_name.ilike(f"%{term}%"),
-                        User.email.ilike(f"%{term}%"),
-                    ]
-                )
-            if search_conditions:
-                query = query.filter(or_(*search_conditions))
-
-        # Get users
-        users = query.limit(limit).all()
-
-        # Format for mention suggestions
-        mentionable_users = []
-        for user in users:
-            display_name = user.username
-            if user.first_name and user.last_name:
-                display_name = f"{user.first_name} {user.last_name}"
-            elif user.first_name:
-                display_name = user.first_name
-
-            mentionable_users.append(
-                {
-                    "id": user.id,
-                    "username": user.username,
-                    "display_name": display_name,
-                    "email": user.email,
-                    "mention_text": f"@{user.username}",
-                    "avatar_url": None,  # TODO: Add avatar support
-                }
+        query = self.db.query(User).filter(User.id != current_user_id, User.is_active.is_(True))
+        for term in (search_query or "").split():
+            esc = term.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            pat = f"%{esc}%"
+            query = query.filter(
+                or_(User.username.ilike(pat, escape="\\"), User.full_name.ilike(pat, escape="\\"))
             )
-
-        return mentionable_users
+        # Never expose email: family members only see names.
+        return [
+            {
+                "id": u.id,
+                "username": u.username,
+                "display_name": u.full_name or u.username,
+                "mention_text": f"@{u.username}",
+                "avatar_url": None,
+            }
+            for u in query.order_by(User.username).limit(limit).all()
+        ]
 
     async def process_comment_mentions(
         self, comment: TaskComment, mentioned_usernames: list[str]

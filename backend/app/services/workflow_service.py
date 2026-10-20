@@ -13,10 +13,14 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.logging import get_logger
 from app.models.comment import TaskStatusHistory
 from app.models.task import Task, TaskStatus
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.services.comment_service import CommentService
 
 logger = get_logger(__name__)
+
+
+PARENTS_ONLY = "Only parents can do this."
+KID_STATUSES = {TaskStatus.TODO, TaskStatus.IN_PROGRESS, TaskStatus.SUBMITTED_FOR_APPROVAL}
 
 
 class WorkflowTransition(str, Enum):
@@ -133,8 +137,8 @@ class WorkflowService:
             logger.info(f"Task {task_id} already in status {new_status}")
             return task
 
-        # Validate transition
-        if not force:
+        # Validate transition (only parents may force)
+        if not (force and self._is_parent(user_id)):
             self._validate_transition(task, new_status, user_id)
 
         # Perform the transition
@@ -238,10 +242,8 @@ class WorkflowService:
         if task.status != TaskStatus.SUBMITTED_FOR_APPROVAL:
             raise ValueError(f"Task {task_id} is not submitted for approval")
 
-        # Check if user can approve (task creator or admin)
-        if task.created_by_id != approver_id:
-            # TODO: Add admin role check
-            raise ValueError("Only task creator can approve completion")
+        if not self._is_parent(approver_id):
+            raise PermissionError(PARENTS_ONLY)
 
         approval_comment = comment or "Task approved"
 
@@ -304,10 +306,8 @@ class WorkflowService:
         if task.status != TaskStatus.SUBMITTED_FOR_APPROVAL:
             raise ValueError(f"Task {task_id} is not submitted for approval")
 
-        # Check if user can reject (task creator or admin)
-        if task.created_by_id != rejector_id:
-            # TODO: Add admin role check
-            raise ValueError("Only task creator can reject submission")
+        if not self._is_parent(rejector_id):
+            raise PermissionError(PARENTS_ONLY)
 
         rejection_comment = f"Task rejected: {reason}"
 
@@ -443,36 +443,16 @@ class WorkflowService:
         if new_status not in valid_transitions:
             raise ValueError(f"Invalid transition from {current_status} to {new_status}")
 
-        # Check user permissions for specific transitions
-        if new_status == TaskStatus.ASSIGNED:
-            # Only task creator can assign
-            if task.created_by_id != user_id:
-                raise ValueError("Only task creator can assign tasks")
+        if self._is_parent(user_id):
+            return
+        # Kids: only their own task, only todo -> in_progress -> submitted (and back).
+        own = user_id in (task.assigned_to_id, task.created_by_id)
+        if not own or current_status not in KID_STATUSES or new_status not in KID_STATUSES:
+            raise PermissionError(PARENTS_ONLY)
 
-        elif new_status == TaskStatus.IN_PROGRESS:
-            # Only assigned user can start work (or creator/admin)
-            if (
-                task.assigned_to_id != user_id and task.created_by_id != user_id
-                # TODO: Add admin check
-            ):
-                raise ValueError("Only assigned user can start task")
-
-        elif new_status == TaskStatus.SUBMITTED_FOR_APPROVAL:
-            # Only assigned user can submit for approval
-            if task.assigned_to_id != user_id:
-                raise ValueError("Only assigned user can submit for approval")
-
-        elif new_status == TaskStatus.DONE:
-            # From SUBMITTED_FOR_APPROVAL: only creator can approve
-            if current_status == TaskStatus.SUBMITTED_FOR_APPROVAL:
-                if task.created_by_id != user_id:
-                    raise ValueError("Only task creator can approve completion")
-            # From other statuses: creator or assignee can mark done
-            elif (
-                task.created_by_id != user_id and task.assigned_to_id != user_id
-                # TODO: Add admin check
-            ):
-                raise ValueError("Insufficient permissions to mark task as done")
+    def _is_parent(self, user_id: int) -> bool:
+        user = self.db.get(User, user_id)
+        return user is not None and user.is_active and user.role == UserRole.PARENT
 
     def _record_status_change(
         self,

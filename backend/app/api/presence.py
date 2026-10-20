@@ -4,50 +4,17 @@ Presence API endpoints for TaaskMaaster.
 This module contains FastAPI routes for user presence and activity tracking.
 """
 
-import json
-
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
+from app.api.deps import get_current_active_user, get_db
 from app.core.logging import get_logger
+from app.models.user import User
 from app.services.presence_service import ActivityType, PresenceService, PresenceStatus
 
 logger = get_logger(__name__)
 
 router = APIRouter()
-
-
-def get_user_data_from_header(x_user_data: str | None = Header(None)) -> dict:
-    """
-    Extract user data from X-User-Data header.
-
-    Args:
-        x_user_data: JSON string containing user data
-
-    Returns:
-        Dictionary with user data
-
-    Raises:
-        HTTPException: If header is missing or invalid
-    """
-    if not x_user_data:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="X-User-Data header is required"
-        )
-
-    try:
-        user_data = json.loads(x_user_data)
-        if "user_id" not in user_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="user_id is required in X-User-Data header",
-            )
-        return user_data
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON in X-User-Data header"
-        )
 
 
 @router.post("/status")
@@ -57,13 +24,10 @@ async def update_presence_status(
     activity_type: ActivityType | None = None,
     context_id: int | None = None,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Update user's presence status.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -86,8 +50,7 @@ async def update_presence_status(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         presence_service = PresenceService(db)
@@ -120,13 +83,10 @@ async def set_user_activity(
     context_id: int | None = None,
     metadata: dict | None = None,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Set user's current activity.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -137,8 +97,7 @@ async def set_user_activity(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         presence_service = PresenceService(db)
@@ -160,20 +119,16 @@ async def clear_user_activity(
     activity_type: ActivityType | None = None,
     context_id: int | None = None,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Clear user's current activity.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Query Parameters:**
     - activity_type: Optional specific activity type to clear
     - context_id: Optional context ID
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         presence_service = PresenceService(db)
@@ -192,13 +147,12 @@ async def clear_user_activity(
 
 @router.get("/status/{user_id}")
 async def get_user_presence(
-    user_id: int, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a user's current presence information.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Response:**
     ```json
@@ -218,7 +172,6 @@ async def get_user_presence(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
 
     try:
         presence_service = PresenceService(db)
@@ -246,13 +199,10 @@ async def get_online_users(
     limit: int = Query(default=50, le=100, description="Maximum number of users"),
     include_activity: bool = Query(default=False, description="Include activity information"),
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get list of currently online users.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Query Parameters:**
     - limit: Maximum number of users to return
@@ -281,7 +231,6 @@ async def get_online_users(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
 
     try:
         presence_service = PresenceService(db)
@@ -300,13 +249,12 @@ async def get_online_users(
 
 @router.get("/task/{task_id}/viewers")
 async def get_task_viewers(
-    task_id: int, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get users currently viewing a specific task.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Response:**
     ```json
@@ -330,7 +278,6 @@ async def get_task_viewers(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
 
     try:
         presence_service = PresenceService(db)
@@ -347,13 +294,12 @@ async def get_task_viewers(
 
 @router.get("/typing/{context}")
 async def get_typing_users(
-    context: str, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    context: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get users currently typing in a specific context.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Path Parameters:**
     - context: Context identifier (e.g., "task_123", "direct_456")
@@ -377,7 +323,6 @@ async def get_typing_users(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
 
     try:
         presence_service = PresenceService(db)
@@ -396,13 +341,10 @@ async def get_typing_users(
 async def cleanup_stale_presence(
     max_age_minutes: int = Query(default=30, description="Maximum age in minutes"),
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Clean up stale presence data (admin only).
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Query Parameters:**
     - max_age_minutes: Maximum age in minutes before considering presence stale
@@ -415,7 +357,6 @@ async def cleanup_stale_presence(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
     # TODO: Add admin role check
 
     try:

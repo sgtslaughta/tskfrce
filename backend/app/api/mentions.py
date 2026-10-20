@@ -4,50 +4,17 @@ Mentions API endpoints for TaaskMaaster.
 This module contains FastAPI routes for mention-related operations.
 """
 
-import json
-
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
+from app.api.deps import get_current_active_user, get_db
 from app.core.logging import get_logger
+from app.models.user import User
 from app.services.mention_service import MentionService
 
 logger = get_logger(__name__)
 
 router = APIRouter()
-
-
-def get_user_data_from_header(x_user_data: str | None = Header(None)) -> dict:
-    """
-    Extract user data from X-User-Data header.
-
-    Args:
-        x_user_data: JSON string containing user data
-
-    Returns:
-        Dictionary with user data
-
-    Raises:
-        HTTPException: If header is missing or invalid
-    """
-    if not x_user_data:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="X-User-Data header is required"
-        )
-
-    try:
-        user_data = json.loads(x_user_data)
-        if "user_id" not in user_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="user_id is required in X-User-Data header",
-            )
-        return user_data
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON in X-User-Data header"
-        )
 
 
 @router.get("/suggestions")
@@ -57,13 +24,10 @@ async def get_mention_suggestions(
     search: str | None = Query(None, description="Search query to filter users"),
     limit: int = Query(default=10, le=50, description="Maximum number of suggestions"),
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get mention suggestions for autocomplete.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Query Parameters:**
     - context_type: Type of context (task, direct_message, general)
@@ -79,7 +43,6 @@ async def get_mention_suggestions(
           "id": 123,
           "username": "john_doe",
           "display_name": "John Doe",
-          "email": "john@example.com",
           "mention_text": "@john_doe",
           "avatar_url": null
         }
@@ -87,8 +50,7 @@ async def get_mention_suggestions(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         mention_service = MentionService(db)
@@ -111,13 +73,12 @@ async def get_mention_suggestions(
 
 @router.post("/extract")
 async def extract_mentions(
-    content: str, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    content: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Extract mentions from content.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -148,7 +109,6 @@ async def extract_mentions(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
 
     try:
         mention_service = MentionService(db)
@@ -165,12 +125,6 @@ async def extract_mentions(
         for username in mentioned_usernames:
             if username in valid_usernames:
                 user = valid_usernames[username]
-                display_name = user.username
-                if user.first_name and user.last_name:
-                    display_name = f"{user.first_name} {user.last_name}"
-                elif user.first_name:
-                    display_name = user.first_name
-
                 mentions.append(
                     {
                         "username": username,
@@ -178,8 +132,7 @@ async def extract_mentions(
                         "user": {
                             "id": user.id,
                             "username": user.username,
-                            "display_name": display_name,
-                            "email": user.email,
+                            "display_name": user.full_name or user.username,
                         },
                     }
                 )
@@ -200,13 +153,10 @@ async def highlight_mentions(
     content: str,
     format_type: str = "html",
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Highlight mentions in content for display.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -223,7 +173,6 @@ async def highlight_mentions(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
 
     try:
         mention_service = MentionService(db)

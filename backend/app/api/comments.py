@@ -4,13 +4,12 @@ Comment API endpoints for TaaskMaaster.
 This module contains FastAPI routes for comment-related operations.
 """
 
-import json
-
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
+from app.api.deps import get_current_active_user, get_db
 from app.core.logging import get_logger
+from app.models.user import User
 from app.schemas.comment import (
     CommentCreate,
     CommentListResponse,
@@ -24,60 +23,20 @@ logger = get_logger(__name__)
 
 router = APIRouter()
 
-
-def get_user_data_from_header(x_user_data: str | None = Header(None)) -> dict:
-    """
-    Extract user data from X-User-Data header.
-
-    Args:
-        x_user_data: JSON string containing user data
-
-    Returns:
-        Dictionary with user data
-
-    Raises:
-        HTTPException: If header is missing or invalid
-    """
-    if not x_user_data:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, detail="X-User-Data header is required"
-        )
-
-    try:
-        user_data = json.loads(x_user_data)
-        if "user_id" not in user_data:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="user_id is required in X-User-Data header",
-            )
-        return user_data
-    except json.JSONDecodeError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid JSON in X-User-Data header"
-        )
+MAX_BULK = 50
 
 
 @router.post("/", response_model=CommentResponse, status_code=status.HTTP_201_CREATED)
 async def create_comment(
     comment_data: CommentCreate,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Create a new task comment.
 
-    **Headers:**
-    - X-User-Data: JSON containing user information
-      ```json
-      {
-        "user_id": 123,
-        "username": "john_doe",
-        "role": "user"
-      }
-      ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         comment_service = CommentService(db)
@@ -112,21 +71,17 @@ async def get_task_comments(
     limit: int = 100,
     include_system: bool = True,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get comments for a specific task.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Query Parameters:**
     - skip: Number of comments to skip (pagination)
     - limit: Maximum number of comments to return
     - include_system: Whether to include system-generated comments
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         comment_service = CommentService(db)
@@ -160,16 +115,15 @@ async def get_task_comments(
 
 @router.get("/{comment_id}", response_model=CommentResponse)
 async def get_comment(
-    comment_id: int, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get a specific comment by ID.
 
-    **Headers:**
-    - X-User-Data: JSON containing user information
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         comment_service = CommentService(db)
@@ -196,16 +150,13 @@ async def update_comment(
     comment_id: int,
     comment_update: CommentUpdate,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Update a comment (only by the comment author).
 
-    **Headers:**
-    - X-User-Data: JSON containing user information
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         comment_service = CommentService(db)
@@ -232,16 +183,15 @@ async def update_comment(
 
 @router.delete("/{comment_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_comment(
-    comment_id: int, db: Session = Depends(get_db), x_user_data: str | None = Header(None)
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Delete a comment (only by the comment author or task owner).
 
-    **Headers:**
-    - X-User-Data: JSON containing user information
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         comment_service = CommentService(db)
@@ -269,16 +219,13 @@ async def add_comment_media(
     comment_id: int,
     media_id: int,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Add media attachment to a comment.
 
-    **Headers:**
-    - X-User-Data: JSON containing user information
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         comment_service = CommentService(db)
@@ -306,16 +253,13 @@ async def remove_comment_media(
     comment_id: int,
     media_id: int,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Remove media attachment from a comment.
 
-    **Headers:**
-    - X-User-Data: JSON containing user information
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         comment_service = CommentService(db)
@@ -343,13 +287,10 @@ async def get_comment_edit_history(
     skip: int = Query(default=0, ge=0, description="Number of records to skip"),
     limit: int = Query(default=20, ge=1, le=100, description="Maximum number of records"),
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get edit history for a comment.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Response:**
     ```json
@@ -370,8 +311,7 @@ async def get_comment_edit_history(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         comment_service = CommentService(db)
@@ -398,13 +338,10 @@ async def bulk_delete_comments(
     deletion_reason: str | None = None,
     soft_delete: bool = True,
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Bulk delete multiple comments.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -431,8 +368,7 @@ async def bulk_delete_comments(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         comment_service = CommentService(db)
@@ -459,13 +395,10 @@ async def bulk_delete_comments(
 async def bulk_update_comments(
     updates: list[dict],
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Bulk update multiple comments.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -501,8 +434,7 @@ async def bulk_update_comments(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    user_id = current_user.id
 
     try:
         comment_service = CommentService(db)
@@ -524,13 +456,10 @@ async def bulk_update_comments(
 async def bulk_create_comments(
     comments_data: list[dict],
     db: Session = Depends(get_db),
-    x_user_data: str | None = Header(None),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Bulk create multiple comments.
-
-    **Headers:**
-    - X-User-Data: JSON containing user information
 
     **Request Body:**
     ```json
@@ -564,8 +493,12 @@ async def bulk_create_comments(
     }
     ```
     """
-    user_data = get_user_data_from_header(x_user_data)
-    user_id = user_data["user_id"]
+    if len(comments_data) > MAX_BULK:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Too many comments at once. Send at most {MAX_BULK}.",
+        )
+    user_id = current_user.id
 
     try:
         comment_service = CommentService(db)

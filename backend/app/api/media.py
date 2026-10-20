@@ -24,8 +24,8 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_active_user
 from app.core.config import settings
 from app.core.database import get_db_session
-from app.models.media import MediaType
-from app.models.user import User
+from app.models.media import MediaAttachment, MediaType
+from app.models.user import User, UserRole
 from app.schemas.media import (
     FileUploadRequest,
     MediaAttachmentCreate,
@@ -33,6 +33,7 @@ from app.schemas.media import (
     MediaAttachmentResponse,
 )
 from app.services.media_service import MediaService
+from app.services.permission_service import Permission, PermissionService
 
 router = APIRouter(prefix="/api/v1/media", tags=["media"])
 
@@ -43,13 +44,12 @@ async def get_user_attachments(
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
     media_type: MediaType | None = Query(None, description="Filter by media type"),
     db: Session = Depends(get_db_session),
-    # TODO: Add authentication dependency
-    current_user_id: int = 1,  # Temporary for development
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get media attachments for the current user."""
     media_service = MediaService(db)
     attachments, total = media_service.get_user_attachments(
-        user_id=current_user_id, skip=skip, limit=limit, media_type=media_type
+        user_id=current_user.id, skip=skip, limit=limit, media_type=media_type
     )
 
     pages = (total + limit - 1) // limit
@@ -68,12 +68,11 @@ async def get_user_attachments(
 async def get_media_attachment(
     attachment_id: int,
     db: Session = Depends(get_db_session),
-    # TODO: Add authentication dependency
-    current_user_id: int = 1,  # Temporary for development
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get a specific media attachment by ID."""
     media_service = MediaService(db)
-    attachment = media_service.get_media_attachment(attachment_id, current_user_id)
+    attachment = media_service.get_media_attachment(attachment_id, current_user.id)
 
     if not attachment:
         raise HTTPException(
@@ -84,40 +83,18 @@ async def get_media_attachment(
     return attachment
 
 
-@router.get("/upload/validate")
-async def validate_file_upload(
-    filename: str = Query("test.jpg", description="File name"),
-    file_size: int = Query(1024, ge=1, description="File size in bytes"),
-    mime_type: str = Query("image/jpeg", description="MIME type"),
-    db: Session = Depends(get_db_session),
-    # TODO: Add authentication dependency
-    current_user_id: int = 1,  # Temporary for development
-):
-    """Validate a file upload request."""
-    media_service = MediaService(db)
-
-    # Create a mock upload request for validation
-    from app.schemas.media import FileUploadRequest
-
-    upload_request = FileUploadRequest(filename=filename, file_size=file_size, mime_type=mime_type)
-
-    validation_result = media_service.validate_file_upload(upload_request)
-    return validation_result
-
-
 @router.get("/tasks/{task_id}/attachments", response_model=MediaAttachmentList)
 async def get_task_attachments(
     task_id: int,
     skip: int = Query(0, ge=0, description="Number of records to skip"),
     limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
     db: Session = Depends(get_db_session),
-    # TODO: Add authentication dependency
-    current_user_id: int = 1,  # Temporary for development
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get media attachments for a specific task."""
     media_service = MediaService(db)
     attachments, total = media_service.get_task_attachments(
-        task_id=task_id, user_id=current_user_id, skip=skip, limit=limit
+        task_id=task_id, user_id=current_user.id, skip=skip, limit=limit
     )
 
     pages = (total + limit - 1) // limit
@@ -136,12 +113,11 @@ async def get_task_attachments(
 async def delete_media_attachment(
     attachment_id: int,
     db: Session = Depends(get_db_session),
-    # TODO: Add authentication dependency
-    current_user_id: int = 1,  # Temporary for development
+    current_user: User = Depends(get_current_active_user),
 ):
     """Delete a media attachment."""
     media_service = MediaService(db)
-    success = media_service.delete_media_attachment(attachment_id, current_user_id)
+    success = media_service.delete_media_attachment(attachment_id, current_user.id)
 
     if not success:
         raise HTTPException(
@@ -151,8 +127,10 @@ async def delete_media_attachment(
 
 
 @router.post("/upload/validate", status_code=status.HTTP_200_OK)
-async def validate_file_upload(  # noqa: F811 - legacy duplicate def
-    upload_request: FileUploadRequest, db: Session = Depends(get_db_session)
+async def validate_file_upload(
+    upload_request: FileUploadRequest,
+    db: Session = Depends(get_db_session),
+    current_user: User = Depends(get_current_active_user),
 ):
     """Validate a file upload request."""
     media_service = MediaService(db)
@@ -163,12 +141,11 @@ async def validate_file_upload(  # noqa: F811 - legacy duplicate def
 @router.get("/statistics")
 async def get_storage_statistics(
     db: Session = Depends(get_db_session),
-    # TODO: Add authentication dependency
-    current_user_id: int = 1,  # Temporary for development
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get storage statistics for the current user."""
     media_service = MediaService(db)
-    statistics = media_service.get_storage_statistics(current_user_id)
+    statistics = media_service.get_storage_statistics(current_user.id)
     return statistics
 
 
@@ -176,12 +153,11 @@ async def get_storage_statistics(
 async def get_download_url(
     attachment_id: int,
     db: Session = Depends(get_db_session),
-    # TODO: Add authentication dependency
-    current_user_id: int = 1,  # Temporary for development
+    current_user: User = Depends(get_current_active_user),
 ):
     """Get the download URL for a media attachment."""
     media_service = MediaService(db)
-    download_url = media_service.get_download_url(attachment_id, current_user_id)
+    download_url = media_service.get_download_url(attachment_id, current_user.id)
 
     if not download_url:
         raise HTTPException(
@@ -196,6 +172,15 @@ INLINE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg"
                 ".gif": "image/gif", ".webp": "image/webp"}  # fmt: skip
 
 
+def _can_see(db: Session, user: User, att: MediaAttachment) -> bool:
+    """Owner, public, parent, or someone who can see the attachment's task."""
+    if att.user_id == user.id or att.is_public or user.role == UserRole.PARENT:
+        return True
+    return att.task_id is not None and PermissionService(db).has_permission(
+        user.id, Permission.TASK_VIEW, att.task_id, "task"
+    )
+
+
 @router.get("/files/{key:path}")
 async def get_file(
     key: str,
@@ -203,13 +188,17 @@ async def get_file(
     current_user: User = Depends(get_current_active_user),
 ):
     """Serve an uploaded file (images inline, everything else as a download)."""
+    not_found = HTTPException(
+        status_code=status.HTTP_404_NOT_FOUND,
+        detail="File not found. Check the link or upload it again.",
+    )
+    att = db.query(MediaAttachment).filter(MediaAttachment.file_path == key).first()
+    if att is None or not _can_see(db, current_user, att):
+        raise not_found
     try:
         path = MediaService(db).storage.open(key)
     except (ValueError, FileNotFoundError):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found. Check the link or upload it again.",
-        )
+        raise not_found from None
     inline = INLINE_TYPES.get(path.suffix.lower())
     return FileResponse(
         path,
@@ -227,10 +216,19 @@ async def upload_file(
     task_id: int | None = Form(None),
     description: str | None = Form(None),
     db: Session = Depends(get_db_session),
-    # TODO: Add authentication dependency
-    current_user_id: int = 1,  # Temporary for development
+    current_user: User = Depends(get_current_active_user),
 ):
     """Upload a file (multipart form) and attach it to the current user."""
+    if task_id is not None and not (
+        current_user.role == UserRole.PARENT
+        or PermissionService(db).has_permission(
+            current_user.id, Permission.TASK_VIEW, task_id, "task"
+        )
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task not found. Check the task and try again.",
+        )
     media_service = MediaService(db)
     max_size = settings.MAX_UPLOAD_SIZE
     too_big = HTTPException(
@@ -267,7 +265,7 @@ async def upload_file(
 
     return media_service.create_media_attachment(
         MediaAttachmentCreate(filename=filename, task_id=task_id, description=description),
-        current_user_id,
+        current_user.id,
         io.BytesIO(data),
         len(data),
         mime_type,

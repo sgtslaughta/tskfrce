@@ -50,10 +50,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import PlainTextResponse
 from sqlalchemy.orm import Session
 
-from app.core.auth import get_current_active_user
+from app.api.deps import get_current_active_user
 from app.core.database import get_db_session
-from app.models.task import RewardType, TaskPriority, TaskStatus
-from app.models.user import User
+from app.models.task import RewardType, Task, TaskPriority, TaskStatus
+from app.models.user import User, UserRole
 from app.schemas.task import (
     CreateFromTemplateRequest,
     TaskBulkUpdate,
@@ -73,8 +73,26 @@ from app.schemas.task import (
     TaskUpdateRequest,
 )
 from app.services.task_service import TaskService
+from app.services.workflow_service import KID_STATUSES, PARENTS_ONLY
 
 router = APIRouter(prefix="/api/v1/tasks", tags=["tasks"])
+
+KID_FIELDS = {"status", "actual_hours"}
+
+
+def _guard_kid_update(db: Session, user: User, task_ids: list[int], updates: dict) -> None:
+    """Kids may only move their own task between todo/in_progress/submitted_for_approval."""
+    if user.role == UserRole.PARENT:
+        return
+    st = updates.get("status")
+    bad = set(updates) - KID_FIELDS or (
+        st is not None and st not in {s.value for s in KID_STATUSES}
+    )
+    for task in db.query(Task).filter(Task.id.in_(task_ids)).all():
+        own = user.id in (task.assigned_to_id, task.created_by_id)
+        bad = bad or not own or TaskStatus(task.status) not in KID_STATUSES
+    if bad:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=PARENTS_ONLY)
 
 
 @router.post("/", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
@@ -121,6 +139,12 @@ async def bulk_update_tasks(
 
     Allows updating multiple tasks with the same changes.
     """
+    _guard_kid_update(
+        db,
+        current_user,
+        bulk_update_data.task_ids,
+        bulk_update_data.updates.model_dump(exclude_unset=True),
+    )
     task_service = TaskService(db)
     updated_tasks = task_service.bulk_update_tasks(bulk_update_data, current_user.id)
     return [task_service.to_task_response(task) for task in updated_tasks]
@@ -367,6 +391,8 @@ async def complete_task_json(
     Returns:
     - Updated task details with completed status
     """
+    if current_user.role != UserRole.PARENT:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=PARENTS_ONLY)
     task_service = TaskService(db)
     task = await task_service.complete_task(request.task_id, current_user.id, request.actual_hours)
 
@@ -413,6 +439,7 @@ async def update_task_json(
     current_user: User = Depends(get_current_active_user),
 ):
     """Update a task using JSON request body."""
+    _guard_kid_update(db, current_user, [request.task_id], request.updates)
     task_service = TaskService(db)
     try:
         task = await task_service.update_task(request.task_id, request.updates, current_user.id)

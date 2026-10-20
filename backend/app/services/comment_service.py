@@ -166,147 +166,6 @@ class CommentService:
         logger.info(f"Created task comment {comment.id} for task {task_id} by user {user_id}")
         return comment
 
-    def update_task_comment(
-        self,
-        comment_id: int,
-        user_id: int,
-        content: str,
-        content_type: str = "markdown",
-        edit_reason: str | None = None,
-    ) -> TaskComment:
-        """
-        Update an existing task comment.
-
-        Args:
-            comment_id: ID of the comment to update
-            user_id: ID of the user updating the comment
-            content: New comment content
-            content_type: Content format (markdown, html, text)
-            edit_reason: Optional reason for the edit
-
-        Returns:
-            Updated TaskComment instance
-
-        Raises:
-            ValueError: If comment doesn't exist or user lacks permission
-        """
-        # Get existing comment
-        comment = self.db.query(TaskComment).filter(TaskComment.id == comment_id).first()
-
-        if not comment:
-            raise ValueError(f"Comment {comment_id} not found")
-
-        # Check permissions using permission service
-        if not self.permission_service.can_user_edit_comment(user_id, comment_id):
-            raise ValueError("You don't have permission to edit this comment")
-
-        # Validate and sanitize content
-        validated_content = self.content_validator.validate_and_sanitize(content, content_type)
-
-        # Store original content for audit trail
-        original_content = comment.content
-
-        # Update comment
-        comment.content = validated_content
-        comment.content_type = content_type
-        comment.is_edited = True
-        comment.edited_at = datetime.utcnow()
-        comment.edit_reason = edit_reason
-
-        self.db.commit()
-        self.db.refresh(comment)
-
-        # Create audit trail entry
-        self._create_comment_audit_trail(
-            comment_id=comment.id,
-            user_id=user_id,
-            action="updated",
-            original_content=original_content,
-            new_content=validated_content,
-            edit_reason=edit_reason,
-        )
-
-        logger.info(f"Updated task comment {comment_id} by user {user_id}")
-        return comment
-
-    def delete_task_comment(
-        self,
-        comment_id: int,
-        user_id: int,
-        deletion_reason: str | None = None,
-        soft_delete: bool = True,
-    ) -> bool:
-        """
-        Delete a task comment.
-
-        Args:
-            comment_id: ID of the comment to delete
-            user_id: ID of the user deleting the comment
-            deletion_reason: Optional reason for deletion
-            soft_delete: Whether to soft delete (mark as deleted) or hard delete
-
-        Returns:
-            True if deletion was successful
-
-        Raises:
-            ValueError: If comment doesn't exist or user lacks permission
-        """
-        # Get existing comment
-        comment = self.db.query(TaskComment).filter(TaskComment.id == comment_id).first()
-
-        if not comment:
-            raise ValueError(f"Comment {comment_id} not found")
-
-        # Check permissions using permission service
-        if not self.permission_service.can_user_delete_comment(user_id, comment_id):
-            raise ValueError("You don't have permission to delete this comment")
-
-        # Store original content for audit trail
-        original_content = comment.content
-
-        if soft_delete:
-            # Soft delete - mark as deleted but keep in database
-            comment.is_deleted = True
-            comment.deleted_at = datetime.utcnow()
-            comment.deletion_reason = deletion_reason
-            comment.content = "[This comment has been deleted]"
-
-            self.db.commit()
-
-            # Create audit trail entry
-            self._create_comment_audit_trail(
-                comment_id=comment.id,
-                user_id=user_id,
-                action="soft_deleted",
-                original_content=original_content,
-                deletion_reason=deletion_reason,
-            )
-
-            logger.info(f"Soft deleted task comment {comment_id} by user {user_id}")
-        else:
-            # Hard delete - remove from database
-            # First create audit trail entry before deletion
-            self._create_comment_audit_trail(
-                comment_id=comment.id,
-                user_id=user_id,
-                action="hard_deleted",
-                original_content=original_content,
-                deletion_reason=deletion_reason,
-            )
-
-            # Delete media attachments
-            self.db.query(CommentMediaAttachment).filter(
-                CommentMediaAttachment.comment_id == comment_id
-            ).delete()
-
-            # Delete the comment
-            self.db.delete(comment)
-            self.db.commit()
-
-            logger.info(f"Hard deleted task comment {comment_id} by user {user_id}")
-
-        return True
-
     def get_comment_edit_history(
         self, comment_id: int, user_id: int, skip: int = 0, limit: int = 20
     ) -> list[dict]:
@@ -739,12 +598,13 @@ class CommentService:
 
         return result
 
-    def update_task_comment(  # noqa: F811 - legacy duplicate def
+    def update_task_comment(
         self,
         comment_id: int,
         user_id: int,
         content: str,
         content_type: str = "markdown",
+        edit_reason: str | None = None,
     ) -> TaskComment:
         """
         Update a task comment.
@@ -769,9 +629,12 @@ class CommentService:
         if comment.user_id != user_id:
             raise ValueError("Only comment author can edit comment")
 
-        comment.content = content
-        comment.content_type = content_type
-        comment.updated_at = datetime.utcnow()
+        is_valid, errors = ContentValidator.validate_content(content, content_type)
+        if not is_valid:
+            raise ValueError(f"Invalid content: {'; '.join(errors)}")
+        comment.content = ContentValidator.sanitize_content(content, content_type)
+        comment.is_edited = True
+        comment.edited_at = datetime.utcnow()
 
         self.db.commit()
         self.db.refresh(comment)
@@ -779,10 +642,12 @@ class CommentService:
         logger.info(f"Updated comment {comment_id} by user {user_id}")
         return comment
 
-    def delete_task_comment(  # noqa: F811 - legacy duplicate def
+    def delete_task_comment(
         self,
         comment_id: int,
         user_id: int,
+        deletion_reason: str | None = None,
+        soft_delete: bool = True,
     ) -> bool:
         """
         Delete a task comment.

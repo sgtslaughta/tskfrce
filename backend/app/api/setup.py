@@ -3,7 +3,7 @@
 from datetime import timedelta
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.core.auth import AuthService
 from app.core.config import settings
+from app.core.ratelimit import client_ip, limit
 from app.models.family import FamilySettings, get_family
 from app.models.user import User, UserRole
 
@@ -51,7 +52,11 @@ def setup_needed(db: Session = Depends(get_db)):
     return {"needed": db.query(User.id).first() is None and not _owner_set(db)}
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+def _limit_setup(request: Request) -> None:
+    limit(f"setup:{client_ip(request)}", 5, 60)
+
+
+@router.post("", status_code=status.HTTP_201_CREATED, dependencies=[Depends(_limit_setup)])
 def run_setup(body: SetupIn, db: Session = Depends(get_db)):
     if db.query(User.id).first() is not None or _owner_set(db):
         raise HTTPException(status.HTTP_409_CONFLICT, DONE)

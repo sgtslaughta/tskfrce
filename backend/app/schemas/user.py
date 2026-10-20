@@ -37,10 +37,14 @@ class UserUpdate(BaseModel):
     profile_picture: str | None = Field(None, max_length=500)
     preferences: str | None = None
     is_active: bool | None = None
+    role: UserRole | None = None
+    is_superuser: bool | None = None
 
 
 class UserResponse(UserBase):
     """Schema for user response data."""
+
+    email: str  # generated `@family.local` addresses aren't deliverable; don't re-validate
 
     id: int
     role: UserRole
@@ -77,3 +81,20 @@ class UserPasswordChange(BaseModel):
 
     current_password: str = Field(..., description="Current password")
     new_password: str = Field(..., min_length=8, description="New password")
+
+
+USERNAME = r"^[a-zA-Z0-9_.-]+$"
+
+
+class InviteIn(BaseModel):
+    """A parent invites another parent by choosing their username."""
+
+    username: str = Field(..., min_length=3, max_length=50, pattern=USERNAME)
+
+
+class RegisterIn(BaseModel):
+    """Redeem an invite token: the invitee sets their own password."""
+
+    token: str | None = None
+    password: str = Field(..., min_length=8)
+    full_name: str | None = Field(None, max_length=100)
