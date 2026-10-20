@@ -73,7 +73,7 @@ export const hasRequiredRole = (userRole: string, requiredRoles: string[]): bool
   }
 
   // Admin has access to everything
-  if (userRole === 'admin') {
+  if (userRole === 'admin' || userRole === 'parent') {
     return true;
   }
 

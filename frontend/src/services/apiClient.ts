@@ -15,7 +15,6 @@ import {
   apiUpload,
   apiRequest,
   checkApiHealth,
-  invalidateUserCache,
   type ApiResponse,
   type ApiError
 } from './api';
@@ -39,7 +38,6 @@ export {
   apiUpload,
   apiRequest,
   checkApiHealth,
-  invalidateUserCache,
   type ApiResponse,
   type ApiError
 };

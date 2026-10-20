@@ -1,0 +1,155 @@
+/* t@sk4ce "fridge chart" look. Tokens follow Mantine's color scheme attribute. */
+:root,
+[data-mantine-color-scheme='light'] {
+  --f-bg: #e6eff1;
+  --f-card: #ffffff;
+  --f-ink: #1d2b53;
+  --f-line: #1d2b53;
+  --f-sun: #ffc93c;
+  --f-red: #ff6b4a;
+  --f-green: #7bd389;
+  --f-sub: #4a5a80;
+  --f-mute: #dce4f2;
+}
+[data-mantine-color-scheme='dark'] {
+  --f-bg: #18213f;
+  --f-card: #232f57;
+  --f-ink: #f1f5ff;
+  --f-line: #0c1229;
+  --f-sun: #ffc93c;
+  --f-red: #ff7a5c;
+  --f-green: #6fd08a;
+  --f-sub: #b4c2e6;
+  --f-mute: #34416b;
+}
+/* text on sun/red/green stays dark navy in both schemes */
+:root { --f-on-color: var(--f-on-color); }
+
+.f-shell {
+  min-height: 100vh;
+  background: var(--f-bg);
+  color: var(--f-ink);
+  font-family: var(--font-body), Nunito, system-ui, sans-serif;
+}
+.f-display,
+.f-shell h1,
+.f-shell h2,
+.f-shell h3 { font-family: var(--font-display), Fredoka, system-ui, sans-serif; }
+.f-btn { font-family: var(--font-display), Fredoka, system-ui, sans-serif; font-weight: 600; min-height: 44px; }
+
+.f-shell :focus-visible,
+.f-card :focus-visible {
+  outline: 3px solid var(--f-sun);
+  outline-offset: 2px;
+}
+
+/* top bar */
+.f-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--f-card);
+  border-bottom: 3px solid var(--f-line);
+}
+.f-wordmark { font-family: var(--font-display), Fredoka, sans-serif; font-weight: 700; font-size: 22px; color: var(--f-ink); text-decoration: none; }
+.f-day { color: var(--f-sub); font-weight: 700; }
+.f-nav { display: flex; gap: 4px; flex-wrap: wrap; }
+.f-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  color: var(--f-ink);
+  text-decoration: none;
+  font-family: var(--font-display), Fredoka, sans-serif;
+  font-weight: 600;
+}
+.f-nav a[aria-current='page'] { background: var(--f-sun); color: var(--f-on-color); border: 3px solid var(--f-line); }
+.f-nav-drawer { flex-direction: column; }
+.f-main { max-width: 960px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.f-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.f-title-row h1 { margin: 0; font-size: 28px; }
+
+/* card */
+.f-card {
+  background: var(--f-card);
+  color: var(--f-ink);
+  border: 3px solid var(--f-line);
+  border-radius: 18px;
+  box-shadow: 4px 4px 0 var(--f-line);
+  padding: 12px;
+}
+.f-card[data-tone='sun'] { background: var(--f-sun); color: var(--f-on-color); }
+.f-card[data-tone='red'] { background: var(--f-red); color: var(--f-on-color); }
+.f-card[data-tone='green'] { background: var(--f-green); color: var(--f-on-color); }
+.f-card[data-tone='mute'] { background: var(--f-mute); }
+
+/* sticker label */
+.f-sticker {
+  display: inline-block;
+  align-self: flex-start;
+  background: var(--f-sun);
+  color: var(--f-on-color);
+  border: 3px solid var(--f-line);
+  border-radius: 10px;
+  padding: 3px 10px;
+  font-family: var(--font-display), Fredoka, sans-serif;
+  font-weight: 600;
+  transform: rotate(-2deg);
+}
+
+/* lock badge */
+.f-lock {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  border: 3px solid var(--f-line);
+  background: var(--f-red);
+}
+.f-lock[data-online='true'] { background: var(--f-green); }
+
+/* chip row */
+.f-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.f-chip {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 7px;
+  border: 2.5px solid var(--f-line);
+  background: var(--f-mute);
+  color: var(--f-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+.f-chip[data-state='done'] { background: var(--f-green); color: var(--f-on-color); }
+.f-chip[data-state='needs_you'] { background: var(--f-sun); color: var(--f-on-color); }
+
+.f-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 2px 8px 2px 4px;
+  border-radius: 999px;
+  border: 2.5px solid var(--f-line);
+  background: var(--f-red);
+  color: var(--f-on-color);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.f-pill[data-online='true'] { background: var(--f-green); }
+button.f-pill { cursor: pointer; min-height: 44px; padding-inline: 10px 12px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .f-shell *,
+  .f-shell *::before,
+  .f-shell *::after { transition: none !important; animation: none !important; }
+}

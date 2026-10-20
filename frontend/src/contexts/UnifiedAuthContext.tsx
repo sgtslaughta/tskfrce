@@ -24,10 +24,19 @@ interface User {
   username: string;
   email: string;
   avatar?: string;
-  role?: string;
+  role: 'parent' | 'kid';
   points?: number;
   level?: number;
 }
+
+/**
+ * @description v2 role from /auth/me or login. Legacy admin/organizer → parent, user → kid.
+ */
+export const toRole = (role?: string | null, isSuperuser?: boolean): 'parent' | 'kid' => {
+  if (role === 'parent' || role === 'admin' || role === 'organizer') return 'parent';
+  if (role === 'kid' || role === 'user') return 'kid';
+  return isSuperuser ? 'parent' : 'kid';
+};
 
 /**
  * @description Authentication state
@@ -125,7 +134,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
             userId: user.id,
             username: user.username,
             email: user.email,
-            role: user.role || 'user',
+            role: user.role,
             token: accessToken,
             lastLogin: Date.now(),
           });
@@ -188,7 +197,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
               id: currentUser.user_id.toString(),
               username: currentUser.username,
               email: currentUser.email,
-              role: currentUser.role || (currentUser.is_superuser ? 'admin' : 'user'),
+              role: toRole(currentUser.role, currentUser.is_superuser),
             };
             
             updateAuthState({
@@ -249,7 +258,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
           id: currentUser.user_id.toString(),
           username: currentUser.username,
           email: currentUser.email,
-          role: currentUser.role || (currentUser.is_superuser ? 'admin' : 'user'),
+          role: toRole(currentUser.role, currentUser.is_superuser),
         };
         
         await syncAuthSystems(user);
@@ -287,7 +296,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         id: loginResponse.user_id.toString(),
         username: loginResponse.username,
         email: loginResponse.email || credentials.username, // Fallback to username if no email
-        role: loginResponse.role || (loginResponse.is_superuser ? 'admin' : 'user'),
+        role: toRole(loginResponse.role, loginResponse.is_superuser),
       };
 
       await syncAuthSystems(user);
