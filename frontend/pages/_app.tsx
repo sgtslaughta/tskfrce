@@ -10,6 +10,7 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@mantine/dates/styles.css';
 import '../src/styles/mantine-fixes.css';
+import '../src/v2/fridge.css';
 
 // Suppress WebSocket connection errors in console since HTTP notifications work as fallback
 if (typeof window !== 'undefined') {
@@ -67,11 +68,14 @@ if (typeof window !== 'undefined') {
   });
 }
 
-import { MantineProvider, ColorSchemeScript } from '@mantine/core';
+import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
-import { mantineTheme } from '../src/lib/mantine-theme';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { fridgeTheme, colorSchemeManager } from '../src/v2/theme';
+import { fredoka, nunito } from '../src/v2/fonts';
+import { makeQueryClient } from '../src/v2/queryClient';
 import { UnifiedAuthProvider } from '../src/contexts/UnifiedAuthContext'
-import { ThemeProvider, useTheme } from '../src/contexts/ThemeContext'
+import { ThemeProvider } from '../src/contexts/ThemeContext'
 import { NotificationProvider } from '../src/contexts/NotificationContext'
 import { initBitwardenThemeFix, setBitwardenThemePreference } from '../src/utils/bitwarden-theme-fix'
 import { FaviconManager } from '../src/components/ui/FaviconManager'
@@ -97,36 +101,44 @@ if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
 }
 
 /**
- * @description Inner app component that uses theme context
+ * @description Inner app component. Legacy ThemeProvider stays for brand colors only; it no longer forces the scheme.
  */
 function AppContent({ Component, pageProps }: { Component: any; pageProps: any }) {
-  const { mantineTheme: dynamicTheme, isDarkMode } = useTheme();
-  
+  const [queryClient] = React.useState(makeQueryClient);
+
   // Initialize Bitwarden theme fix
   React.useEffect(() => {
     setBitwardenThemePreference();
     initBitwardenThemeFix();
   }, []);
-  
+
   return (
-    <MantineProvider theme={dynamicTheme} forceColorScheme={isDarkMode ? 'dark' : 'light'}>
-      <FaviconManager />
-      <Notifications />
-      <UnifiedAuthProvider>
-        <NotificationProvider>
-          <Component {...pageProps} />
-        </NotificationProvider>
-      </UnifiedAuthProvider>
-    </MantineProvider>
+    <QueryClientProvider client={queryClient}>
+      <style jsx global>{`
+        :root {
+          --font-display: ${fredoka.style.fontFamily};
+          --font-body: ${nunito.style.fontFamily};
+        }
+      `}</style>
+      <MantineProvider
+        theme={fridgeTheme}
+        defaultColorScheme="auto"
+        colorSchemeManager={colorSchemeManager}
+      >
+        <FaviconManager />
+        <Notifications />
+        <UnifiedAuthProvider>
+          <NotificationProvider>
+            <Component {...pageProps} />
+          </NotificationProvider>
+        </UnifiedAuthProvider>
+      </MantineProvider>
+    </QueryClientProvider>
   );
 }
 
 /**
  * @description Main App component
- * @param {Object} props - Component props
- * @param {React.Component} props.Component - The page component
- * @param {Object} props.pageProps - The page props
- * @returns App component
  */
 export default function App({ Component, pageProps }: { Component: any; pageProps: any }) {
   return (

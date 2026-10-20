@@ -6,7 +6,7 @@
  */
 
 import { Html, Head, Main, NextScript } from 'next/document'
-import { ColorSchemeScript } from '@mantine/core';
+import { ColorSchemeScript, mantineHtmlProps } from '@mantine/core';
 
 /**
  * @description Custom Document component
@@ -14,12 +14,9 @@ import { ColorSchemeScript } from '@mantine/core';
  */
 export default function Document() {
   return (
-    <Html lang="en">
+    <Html lang="en" {...mantineHtmlProps}>
       <Head>
-        <ColorSchemeScript />
-        {/* Preconnect to Google Fonts */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <ColorSchemeScript defaultColorScheme="auto" localStorageKey="task4ce-color-scheme" />
         
         {/* Meta tags */}
         <meta charSet="utf-8" />
@@ -33,7 +30,8 @@ export default function Document() {
         <link rel="apple-touch-icon" sizes="180x180" href="/favicon_dark.ico" />
         
         {/* Theme color */}
-        <meta name="theme-color" content="#2563eb" />
+        <meta name="theme-color" content="#E6EFF1" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#18213F" media="(prefers-color-scheme: dark)" />
         
         {/* Suppress WebSocket connection errors */}
         <script

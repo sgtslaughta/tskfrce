@@ -80,6 +80,8 @@ def patch_kid(kid_id: int, body: KidPatch, db: Session = Depends(get_db)):
         kid.avatar = body.avatar
     if body.pin is not None:
         kid.pin_hash = AuthService(db).get_password_hash(body.pin)
+    if body.clear_pin:
+        kid.pin_hash = None
     db.commit()
     return _out(kid)
 

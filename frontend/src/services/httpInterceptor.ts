@@ -342,7 +342,10 @@ export class HttpInterceptor {
    */
   private logError(error: AxiosError): void {
     const { config, response } = error;
-    
+
+    // a wrong password is an expected 4xx, not an error worth an overlay
+    if (this.isAuthEndpoint(config?.url) && response && response.status < 500) return;
+
     console.error('❌ HTTP Error:', {
       url: config?.url,
       method: config?.method?.toUpperCase(),

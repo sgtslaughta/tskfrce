@@ -19,6 +19,9 @@ def test_setup_creates_owner_parent_and_family(client, db):
     r = client.post("/api/v1/setup", json=BODY)
     assert r.status_code == 201
     assert r.json()["access_token"]
+    assert r.json()["refresh_token"]
+    assert r.json()["token_type"] == "bearer"
+    assert r.json()["expires_in"] > 0
     u = db.query(User).one()
     assert u.role == UserRole.PARENT
     fam = get_family(db)

@@ -249,7 +249,7 @@ export function TaskDrawer({
     if (task.created_by_id === currentUser.id) return true;
     
     // Admins can edit any task
-    if (currentUser.role === 'admin') return true;
+    if (currentUser.role === 'admin' || (currentUser.role as string) === 'parent') return true;
     
     // Organizers can edit any task
     if (currentUser.role === 'organizer') return true;

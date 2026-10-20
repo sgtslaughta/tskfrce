@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_parent
@@ -63,6 +63,29 @@ def create_chore(
     }
 
 
+@router.get("/definitions")
+def definitions(
+    kid_id: int | None = None, db: Session = Depends(get_db), _: User = Depends(require_parent)
+):
+    q = db.query(Task).filter(is_chore_filter(), Task.is_recurring.is_(True))
+    if kid_id is not None:
+        q = q.filter(Task.assigned_to_id == kid_id)
+    return [
+        {
+            "id": t.id,
+            "title": t.title,
+            "points": t.points or 0,
+            "kid_id": t.assigned_to_id,
+            "repeat": {
+                "type": t.recurrence_pattern.get("type"),
+                "days": t.recurrence_pattern.get("days", []),
+            },
+            "needs_photo": bool(t.recurrence_pattern.get("needs_photo")),
+        }
+        for t in q.order_by(Task.id)
+    ]
+
+
 @router.get("/today")
 def today(db: Session = Depends(get_db), _: User = Depends(require_parent)):
     day = current_chore_day(get_family(db), datetime.utcnow())
@@ -92,7 +115,7 @@ def approve(chore_id: int, db: Session = Depends(get_db), parent: User = Depends
     return _out(t)
 
 
-@router.delete("/{definition_id}", status_code=204)
+@router.delete("/{definition_id}", status_code=204, response_class=Response)
 def delete_chore(
     definition_id: int, db: Session = Depends(get_db), _: User = Depends(require_parent)
 ):
@@ -107,3 +130,4 @@ def delete_chore(
     ):
         t.status = TaskStatus.CANCELLED
     db.commit()
+    return Response(status_code=204)

@@ -67,18 +67,21 @@ export interface NavigationUser {
  * @param requiredRoles - Required roles for access
  * @returns True if user has access
  */
+/** v2 roles satisfy their legacy equivalents: kid → user; parent → everything (like admin). */
+const LEGACY_ROLES: Record<string, string[]> = { kid: ['kid', 'user'] };
+
 export const hasRequiredRole = (userRole: string, requiredRoles: string[]): boolean => {
   if (!requiredRoles || requiredRoles.length === 0) {
     return true; // No role requirement
   }
 
-  // Admin has access to everything
-  if (userRole === 'admin') {
+  // Parent (legacy admin) has access to everything
+  if (userRole === 'admin' || userRole === 'parent') {
     return true;
   }
 
-  // Check if user's role is in required roles
-  return requiredRoles.includes(userRole);
+  const roles = LEGACY_ROLES[userRole] ?? [userRole];
+  return requiredRoles.some((r) => roles.includes(r));
 };
 
 /**

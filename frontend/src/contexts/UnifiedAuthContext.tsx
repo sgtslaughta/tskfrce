@@ -24,10 +24,19 @@ interface User {
   username: string;
   email: string;
   avatar?: string;
-  role?: string;
+  role: 'parent' | 'kid';
   points?: number;
   level?: number;
 }
+
+/**
+ * @description v2 role from /auth/me or login. Legacy admin/organizer → parent, user → kid.
+ */
+export const toRole = (role?: string | null, isSuperuser?: boolean): 'parent' | 'kid' => {
+  if (role === 'parent' || role === 'admin' || role === 'organizer') return 'parent';
+  if (role === 'kid' || role === 'user') return 'kid';
+  return isSuperuser ? 'parent' : 'kid';
+};
 
 /**
  * @description Authentication state
@@ -47,6 +56,8 @@ interface AuthState {
 interface UnifiedAuthContextType extends AuthState {
   /** Login function */
   login: (credentials: { username: string; password: string }) => Promise<void>;
+  /** Log in with an access token already issued by the backend (first-run setup) */
+  loginWithToken: (accessToken: string, refreshToken: string, expiresIn: number) => Promise<void>;
   /** Logout function */
   logout: () => Promise<void>;
   /** Refresh authentication state */
@@ -125,7 +136,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
             userId: user.id,
             username: user.username,
             email: user.email,
-            role: user.role || 'user',
+            role: user.role,
             token: accessToken,
             lastLogin: Date.now(),
           });
@@ -188,7 +199,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
               id: currentUser.user_id.toString(),
               username: currentUser.username,
               email: currentUser.email,
-              role: currentUser.role || (currentUser.is_superuser ? 'admin' : 'user'),
+              role: toRole(currentUser.role, currentUser.is_superuser),
             };
             
             updateAuthState({
@@ -249,7 +260,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
           id: currentUser.user_id.toString(),
           username: currentUser.username,
           email: currentUser.email,
-          role: currentUser.role || (currentUser.is_superuser ? 'admin' : 'user'),
+          role: toRole(currentUser.role, currentUser.is_superuser),
         };
         
         await syncAuthSystems(user);
@@ -287,7 +298,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         id: loginResponse.user_id.toString(),
         username: loginResponse.username,
         email: loginResponse.email || credentials.username, // Fallback to username if no email
-        role: loginResponse.role || (loginResponse.is_superuser ? 'admin' : 'user'),
+        role: toRole(loginResponse.role, loginResponse.is_superuser),
       };
 
       await syncAuthSystems(user);
@@ -295,7 +306,6 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       updateAuthState({ isLoading: false });
       
     } catch (error: any) {
-      console.error('Login error:', error);
       updateAuthState({
         error: error.message || 'Login failed. Please check your credentials.',
         isLoading: false,
@@ -303,6 +313,20 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       throw error;
     }
   }, [syncAuthSystems, updateAuthState]);
+
+  /**
+   * @description Log in with tokens already issued by the backend (first-run setup)
+   */
+  const loginWithToken = useCallback(async (accessToken: string, refreshToken: string, expiresIn: number) => {
+    tokenManager.setTokens({ access_token: accessToken, refresh_token: refreshToken, expires_in: expiresIn });
+    const me = await authService.getCurrentUser();
+    await syncAuthSystems({
+      id: me.user_id.toString(),
+      username: me.username,
+      email: me.email,
+      role: toRole(me.role, me.is_superuser),
+    });
+  }, [syncAuthSystems]);
 
   /**
    * @description Logout function
@@ -437,6 +461,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   const contextValue: UnifiedAuthContextType = {
     ...state,
     login,
+    loginWithToken,
     logout,
     refreshAuth,
     clearError,
