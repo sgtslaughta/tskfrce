@@ -21,10 +21,13 @@ logger = get_logger(__name__)
 DATABASE_URL = settings.DATABASE_URL
 
 
+BUSY_TIMEOUT_MS = 5000
+
+
 def _sqlite_pragmas(dbapi_conn, _record) -> None:
     cur = dbapi_conn.cursor()
     cur.execute("PRAGMA journal_mode=WAL")
-    cur.execute("PRAGMA busy_timeout=5000")
+    cur.execute(f"PRAGMA busy_timeout={BUSY_TIMEOUT_MS}")
     cur.execute("PRAGMA foreign_keys=ON")
     cur.close()
 
@@ -35,7 +38,9 @@ def make_engine(url: str, echo: bool = False):
         args = {"check_same_thread": False}
         if url in ("sqlite://", "sqlite:///:memory:"):
             return create_engine(url, connect_args=args, poolclass=StaticPool, echo=echo)
-        eng = create_engine(url, connect_args={**args, "timeout": 5}, echo=echo)
+        eng = create_engine(
+            url, connect_args={**args, "timeout": BUSY_TIMEOUT_MS / 1000}, echo=echo
+        )
         event.listen(eng, "connect", _sqlite_pragmas)
         return eng
     return create_engine(

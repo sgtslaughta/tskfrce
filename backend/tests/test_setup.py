@@ -49,11 +49,14 @@ def test_setup_works_when_family_row_pre_exists(client, db):
 
 
 def test_setup_409_when_owner_already_set(client, db):
-    get_family(db).owner_id = 999
+    owner = User(username="own", email="o@x.local", hashed_password="x", role=UserRole.PARENT)
+    db.add(owner)
+    db.flush()
+    get_family(db).owner_id = owner.id
     db.commit()
     assert client.get("/api/v1/setup").json() == {"needed": False}
     assert client.post("/api/v1/setup", json=BODY).status_code == 409
-    assert db.query(User).count() == 0
+    assert db.query(User).count() == 1
 
 
 def test_role_aliases_resolve_to_parent_kid():

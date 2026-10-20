@@ -13,7 +13,7 @@ from app.api.deps import get_db  # noqa: E402
 from app.core.database import Base, _import_all_models, get_db_session  # noqa: E402
 from app.main import app, fastapi_app  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
-from sqlalchemy import create_engine  # noqa: E402
+from sqlalchemy import create_engine, event  # noqa: E402
 from sqlalchemy.orm import sessionmaker  # noqa: E402
 from sqlalchemy.pool import StaticPool  # noqa: E402
 
@@ -32,6 +32,7 @@ def db():
     engine = create_engine(
         "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
     )
+    event.listen(engine, "connect", lambda c, r: c.execute("PRAGMA foreign_keys=ON"))
     Base.metadata.create_all(engine)
     session = sessionmaker(bind=engine, autoflush=False)()
     try:

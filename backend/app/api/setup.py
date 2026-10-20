@@ -48,6 +48,15 @@ def _owner_set(db: Session) -> bool:
     return fam is not None and fam.owner_id is not None
 
 
+def claim_owner(db: Session, user_id: int, name: str, tz: str) -> int:
+    """Compare-and-set on owner_id is the lock: only one setup can win (returns 1)."""
+    return db.execute(
+        update(FamilySettings)
+        .where(FamilySettings.id == 1, FamilySettings.owner_id.is_(None))
+        .values(owner_id=user_id, name=name, timezone=tz)
+    ).rowcount
+
+
 @router.get("")
 def setup_needed(db: Session = Depends(get_db)):
     return {"needed": db.query(User.id).first() is None and not _owner_set(db)}
@@ -77,12 +86,7 @@ def run_setup(body: SetupIn, db: Session = Depends(get_db)):
         )
         db.add(user)
         db.flush()
-        # Compare-and-set on owner_id is the lock: only one setup can win.
-        won = db.execute(
-            update(FamilySettings)
-            .where(FamilySettings.id == 1, FamilySettings.owner_id.is_(None))
-            .values(owner_id=user.id, name=body.family_name, timezone=body.timezone)
-        ).rowcount
+        won = claim_owner(db, user.id, body.family_name, body.timezone)
         if won != 1:
             db.rollback()
             raise HTTPException(status.HTTP_409_CONFLICT, DONE)

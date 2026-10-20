@@ -18,6 +18,7 @@ from app.core.config import settings
 from app.core.database import Base, _import_all_models
 
 _import_all_models()
+# NOTE: migrations must NOT use the app engine: its foreign_keys=ON breaks batch table recreate.
 config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 target_metadata = Base.metadata
 

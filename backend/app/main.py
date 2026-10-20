@@ -229,7 +229,7 @@ async def db_locked_handler(request: Request, exc: OperationalError) -> JSONResp
     """Map SQLite lock contention to 503 so clients can retry."""
     if "database is locked" in str(exc):
         return JSONResponse(status_code=503, content={"detail": "Busy, try again."})
-    raise exc
+    raise
 
 
 @fastapi_app.exception_handler(500)
