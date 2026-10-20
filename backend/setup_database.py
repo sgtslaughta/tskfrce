@@ -12,8 +12,8 @@ from pathlib import Path
 backend_dir = Path(__file__).parent
 sys.path.insert(0, str(backend_dir))
 
-from app.db.config import get_database_url
-from app.db.session import Base, get_db_session
+from app.core.config import settings
+from app.core.database import Base, get_db_session
 from app.models.user import UserRole
 from app.schemas.user import UserCreate
 from app.services.user_service import UserService
@@ -24,7 +24,7 @@ def setup_database():
     """Set up the database with all tables."""
 
     # Create database engine
-    database_url = get_database_url()
+    database_url = settings.DATABASE_URL
     engine = create_engine(database_url)
 
     print("Creating database tables...")

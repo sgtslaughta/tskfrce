@@ -7,7 +7,7 @@ This module contains API endpoints for gamification features.
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db_session
+from app.core.database import get_db_session
 from app.models.gamification import PointsType
 from app.schemas.gamification import (
     AchievementResponse,

@@ -113,7 +113,7 @@ def get_health_status() -> dict[str, Any]:
     try:
         from sqlalchemy import text
 
-        from app.db.session import engine
+        from app.core.database import engine
 
         with engine.connect() as conn:
             conn.execute(text("SELECT 1"))

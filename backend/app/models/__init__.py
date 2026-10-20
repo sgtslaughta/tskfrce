@@ -17,11 +17,27 @@ from .comment import (
 )
 from .conversation import Conversation, ConversationSettings
 from .direct_message import DirectMessage, MessageReaction
-from .gamification import Achievement, Leaderboard, Points, UserAchievement
+from .gamification import (
+    Achievement,
+    Leaderboard,
+    LeaderboardEntry,
+    Points,
+    Streak,
+    UserAchievement,
+)
 from .goal import Goal, GoalProgress
 from .media import MediaAttachment
 from .notification import Notification
-from .task import Task, TaskCategory, TaskDependency, TaskTag, TaskTemplate
+from .task import (
+    Task,
+    TaskCategory,
+    TaskDependency,
+    TaskList,
+    TaskListAssociation,
+    TaskTag,
+    TaskTagAssociation,
+    TaskTemplate,
+)
 from .task_comment import CommentMediaAttachment, CommentMention, CommentReaction, TaskComment
 from .user import User
 
@@ -39,6 +55,11 @@ __all__ = [
     "UserAchievement",
     "Points",
     "Leaderboard",
+    "LeaderboardEntry",
+    "Streak",
+    "TaskList",
+    "TaskListAssociation",
+    "TaskTagAssociation",
     "MediaAttachment",
     "Notification",
     # Comment and messaging models

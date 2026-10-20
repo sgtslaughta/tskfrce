@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 # Add the backend directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from app.db.session import get_db_session
+from app.core.database import get_db_session
 from app.models.comment import (
     TaskStatusHistory,
     UserStatus,

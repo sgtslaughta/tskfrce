@@ -10,7 +10,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.auth import get_current_user
-from app.db.session import get_db_session
+from app.core.database import get_db_session
 from app.models.task import Task, TaskList, TaskListAssociation
 from app.models.user import User
 from app.schemas.task import (

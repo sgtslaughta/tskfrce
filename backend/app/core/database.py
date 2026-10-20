@@ -5,9 +5,11 @@ This module handles SQLAlchemy database configuration, connection pooling,
 and session management for the TaaskMaaster application.
 """
 
+from collections.abc import Iterator
+
 from sqlalchemy import MetaData, create_engine, text
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.core.config import settings
@@ -46,6 +48,15 @@ Base = declarative_base()
 
 # Metadata for migrations
 metadata = MetaData()
+
+
+def get_db_session() -> Iterator[Session]:
+    """FastAPI dependency yielding a session that is always closed."""
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 
 def create_database():
@@ -148,8 +159,7 @@ def init_database():
         if not db_manager.health_check():
             raise Exception("Database health check failed")
 
-        # Create tables if they don't exist
-        create_database()
+        # Schema is managed by Alembic (entrypoint.sh runs `alembic upgrade head`).
 
         logger.info("Database initialized successfully")
 

@@ -7,7 +7,7 @@ This module contains API endpoints for media attachment and file management.
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
-from app.db.session import get_db_session
+from app.core.database import get_db_session
 from app.models.media import MediaType
 from app.schemas.media import (
     FileUploadRequest,

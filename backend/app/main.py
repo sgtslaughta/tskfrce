@@ -266,7 +266,7 @@ async def startup_event():
     from app.core.database import init_database
 
     init_database()
-    logger.info("Database tables created")
+    logger.info("Database ready")
 
     # Initialize services here
     await initialize_redis()

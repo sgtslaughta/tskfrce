@@ -6,7 +6,6 @@ authentication, and user context management.
 """
 
 import json
-from collections.abc import Generator
 
 from fastapi import Depends, Header, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -14,7 +13,7 @@ from jose import JWTError, jwt
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.core.database import SessionLocal
+from app.core.database import get_db_session
 from app.core.logging import get_logger
 from app.models.user import User
 
@@ -23,16 +22,7 @@ logger = get_logger(__name__)
 security = HTTPBearer()
 
 
-def get_db() -> Generator[Session, None, None]:
-    """
-    Database dependency that provides a database session.
-    Automatically handles session cleanup.
-    """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+get_db = get_db_session  # alias kept for existing routes
 
 
 def get_current_user_from_token(
