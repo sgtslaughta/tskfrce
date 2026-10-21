@@ -1,6 +1,6 @@
 # t@sk4ce v2: Today, Kids & chores overhaul, chore proof and chat
 
-Date: 2026-10-21. Status: draft, pending owner approval.
+Date: 2026-10-21. Status: approved by owner 2026-10-21.
 Extends: `2026-10-21-v2-teen-redesign-gamification-design.md` (same look, same economy/progression). This is Project 5, in two parts.
 Mockups (open in a browser): `2026-10-21-v2-teen-redesign-mockups/` — `kids-chores.html`, `today-tabs.html`, `today-dense.html` (photo lightbox, bottom), `needs-types.html`.
 

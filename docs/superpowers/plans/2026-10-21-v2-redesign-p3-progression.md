@@ -10,14 +10,14 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-21-v2-teen-redesign-gamification-design.md` (section "3. Progression"). Mockup: `docs/superpowers/specs/2026-10-21-v2-teen-redesign-mockups/levels-flair.html` (ladder + title tags), `theme-final.html` (kid card header with level, XP bar, streak).
 
-Prerequisite: Projects 1 and 2 merged into `feat/v2-teen-redesign`. Same commands as the Project 2 plan.
+Prerequisite: Projects 1, 2 and 5a merged into `feat/v2-teen-redesign` (5a rebuilt Today into kid tabs and Kids & chores into a sidebar layout). Same commands as the Project 2 plan.
 
 ## Global Constraints
 
 - **XP = lifetime points earned** = sum of `Points.amount` where `amount > 0` and `points_type` not in (`REDEMPTION`, `TRANSFER`). Spending and penalties never lower XP or level.
 - **Level curve** (Claude's call): XP needed to reach level `n` = `round(50 * (n - 1) ** 1.6)` (Lv1 = 0, Lv2 = 50, Lv8 ≈ 1126, Lv25 ≈ 8100 ≈ 9–10 months of ~30 points/day). No level cap.
 - **Titles** (owner-approved): Lv1 Rookie, Lv3 Regular, Lv5 Grinder, Lv8 Clutch, Lv12 Elite, Lv16 Veteran, Lv20 Legend, Lv25 Mythic. A level's title = highest entry ≤ level.
-- **Streak day** = a chore day (instance `due_date`) where every non-cancelled instance assigned to the kid is `DONE` or `SUBMITTED_FOR_APPROVAL` (a late approval must not break a streak). Days with **no** instances are skipped (pause, don't break). Today counts if already complete and never breaks the streak while still open. Look back at most 400 chore days.
+- **Streak day** = a chore day (instance `due_date`) where every non-cancelled instance in 5a's `kid_chores_filter(kid)` (own + shared Race/Team) is `DONE` or `SUBMITTED_FOR_APPROVAL` (a late approval must not break a streak). Days with **no** instances are skipped (pause, don't break). Today counts if already complete and never breaks the streak while still open. Look back at most 400 chore days.
 - **Badge tiers:** `copper → silver → gold → platinum → mega-diamond` (tier 1–5). A badge's tier = number of its thresholds met. Single-threshold badges have only tier 1.
 - **Built-in catalog** (key, name, metric, thresholds). Merges the spec allows/implies are applied (Centurion → Task Master tiers; Clean Sweep, Unstoppable, Iron Will → On Fire tiers):
 
@@ -46,7 +46,7 @@ Prerequisite: Projects 1 and 2 merged into `feat/v2-teen-redesign`. Same command
 - **Leaderboard:** weekly, Monday 00:00 → next Monday in family timezone; score = sum of positive non-`REDEMPTION`/`TRANSFER` points created that week. Ties share a rank. All kids listed, including 0.
 - **Visibility:** kids see siblings' name, avatar, level, title, current streak, badges, leaderboard. Never siblings' balance, chores, devices or requests.
 - **Celebrations:** level-up and each new badge tier create a celebration; reward/screen-time from Project 2 join the same feed. Bigger moments = bigger animation (level-up and gold+ tiers big; copper/silver small). Reduced motion respected.
-- New migration revises Project 2's last migration (`f6a7b8c9d0e1`).
+- New migration revises Project 5a's last migration (`d4e5f6a7b8ca`); verify with `alembic heads` before writing it.
 - Files < 500 lines; split the badge catalog/metrics into `app/services/badges.py` if `progression.py` grows past that.
 
 ## Review Focus
@@ -139,7 +139,7 @@ Prerequisite: Projects 1 and 2 merged into `feat/v2-teen-redesign`. Same command
 - Create: `frontend/src/v2/components/ProgressHeader.tsx` (name, `Lv N · Title` tag, XP bar `aria-valuenow`, streak "N day streak"; used inside `.f-card-head`)
 - Create: `frontend/src/v2/components/Leaderboard.tsx`, `frontend/src/v2/components/ProfileModal.tsx`, `frontend/src/v2/components/BadgeGrid.tsx` (tier color ring per tier: copper `#b87333`, silver `#c0c7d1`, gold `#ffc93c`, platinum `#9fe3e0`, mega-diamond animated gradient `#7bd3ff → #c58bff → #ff9ad5`)
 - Create: `frontend/src/v2/hooks/useCommunity.ts` (`useLeaderboard`, `useProfiles`, `useProfile`; kid variant passes `kid: true`)
-- Modify: `frontend/src/v2/today/KidCard.tsx` (ProgressHeader), `frontend/src/v2/today/TodayPage.tsx` (Leaderboard below the cards), `frontend/src/v2/kid/KidPage.tsx` (ProgressHeader on top; "Family" section: leaderboard + sibling cards opening ProfileModal)
+- Modify: `frontend/src/v2/today/KidCard.tsx` (5a's kid tab panel: ProgressHeader in its header; add the side-column **Recent** box: latest badge tiers and approved redemptions), `frontend/src/v2/today/TodayPage.tsx` (Leaderboard below the kid tabs), `frontend/src/v2/kid/KidPage.tsx` (ProgressHeader on top; "Family" section: leaderboard + sibling cards opening ProfileModal)
 - Test: `frontend/tests/v2/progression.test.tsx`
 
 - [ ] **Step 1: Failing tests:** ProgressHeader shows "Lv 8 · Clutch", XP bar `aria-valuenow` = `round((xp-floor)/(next-floor)*100)`, "12 day streak"; Leaderboard renders rows in rank order and marks ties; ProfileModal lists badges with tier names; kid page shows siblings and opens a profile.
@@ -153,7 +153,7 @@ Prerequisite: Projects 1 and 2 merged into `feat/v2-teen-redesign`. Same command
 ### Task 5: Frontend — custom badges and celebrations
 
 **Files:**
-- Create: `frontend/src/v2/manage/CustomBadgesPanel.tsx` (create/edit/delete; "Award" picks a kid; mount on `KidsPage.tsx`)
+- Create: `frontend/src/v2/manage/CustomBadgesPanel.tsx` (create/edit/delete; "Award" picks a kid; mount as the **Badges** section of 5a's `ManageLayout` and un-hide its sidebar entry)
 - Modify: Project 2's `frontend/src/v2/kid/AwardOverlay.tsx`, `award.css`, `frontend/src/v2/hooks/useKidRewards.ts` → consume `/kid/celebrations` (big vs small by `size`; level-up shows new title; badge shows tier color ring from `BadgeGrid`)
 - Test: `frontend/tests/v2/customBadges.test.tsx`, update `frontend/tests/v2/kidRewards.test.tsx`
 

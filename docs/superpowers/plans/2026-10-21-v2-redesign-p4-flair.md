@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-21-v2-teen-redesign-gamification-design.md` (section "4. Flair"). Mockup: `docs/superpowers/specs/2026-10-21-v2-teen-redesign-mockups/levels-flair.html` (Rookie → Clutch → Legend progression, sheen animation CSS).
 
-Prerequisite: Projects 1–3 merged into `feat/v2-teen-redesign`. Same commands as the Project 2 plan.
+Prerequisite: Projects 1, 2, 5a and 3 merged into `feat/v2-teen-redesign`. Same commands as the Project 2 plan.
 
 ## Global Constraints
 
