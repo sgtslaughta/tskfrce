@@ -54,11 +54,12 @@ async function send(path: string, init: ApiInit): Promise<Response> {
   const token = init.kid ? kidToken() : tokenManager.getAccessToken()
   const headers: Record<string, string> = {}
   if (token) headers.Authorization = `Bearer ${token}`
-  if (init.body !== undefined) headers['Content-Type'] = 'application/json'
+  const form = init.body instanceof FormData
+  if (init.body !== undefined && !form) headers['Content-Type'] = 'application/json'
   return fetch(`/api/proxy${path}`, {
     method: init.method ?? 'GET',
     headers,
-    body: init.body === undefined ? undefined : JSON.stringify(init.body),
+    body: init.body === undefined ? undefined : form ? (init.body as FormData) : JSON.stringify(init.body),
   })
 }
 

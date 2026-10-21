@@ -154,9 +154,18 @@ export interface KidWhoami {
 }
 
 /** GET /kid/today */
+export interface KidChore extends TodayChore {
+  mode?: 'each' | 'race' | 'team'
+  needs_photo?: boolean
+  photo_count_current?: number
+  last_note?: string | null
+  subtasks?: { id: number; title: string; done: boolean }[]
+  taken_by?: string | null
+}
+
 export interface KidToday {
   locked: boolean
-  chores: TodayChore[]
+  chores: KidChore[]
   points_balance: number
 }
 

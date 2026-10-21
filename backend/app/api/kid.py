@@ -103,6 +103,23 @@ def _locked(db: Session, kid: User, ip: str, now: datetime) -> bool:
     return any(not is_online(device_facts(db, d, fam, now), local) for d in devs)
 
 
+def _kid_extras(db: Session, t: Task, kid: User) -> dict:
+    """Fields the kid screen needs beyond the basics."""
+    p = t.recurrence_pattern or {}
+    mode = p.get("mode", "each")
+    taker = db.get(User, t.submitted_by_id) if t.submitted_by_id not in (None, kid.id) else None
+    return {
+        "mode": mode,
+        "needs_photo": bool(p.get("needs_photo")),
+        "photo_count_current": sum(1 for x in t.chore_photos if x.attempt == t.attempt),
+        "last_note": t.last_note,
+        "subtasks": [
+            {"id": s.id, "title": s.title, "done": s.done_at is not None} for s in t.chore_subtasks
+        ],
+        "taken_by": (taker.full_name or taker.username) if taker and mode == "race" else None,
+    }
+
+
 @router.get("/today")
 def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(require_kid)):
     now = datetime.now(UTC)
@@ -128,6 +145,7 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(r
                 "points": t.points or 0,
                 "state": chore_state(t),
                 "due_time": (t.recurrence_pattern or {}).get("due_time"),
+                **_kid_extras(db, t, kid),
             }
             for t in tasks
         ],

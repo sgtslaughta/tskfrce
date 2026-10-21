@@ -144,3 +144,17 @@ def test_create_rejects_non_kid(client, db, parent, parent_headers):
         headers=parent_headers,
     )
     assert r.status_code == 404
+
+
+def test_kid_today_extras_and_taken_by(client, db, parent_headers):
+    a, b, ha, hb = _setup(db)
+    _create(client, parent_headers, [a, b], "race", subtasks=["x"], needs_photo=True)
+    c = _chores(client, ha)[0]
+    assert (c["mode"], c["needs_photo"], c["photo_count_current"]) == ("race", True, 0)
+    assert c["subtasks"] == [{"id": c["subtasks"][0]["id"], "title": "x", "done": False}]
+    assert c["taken_by"] is None and c["last_note"] is None
+    t = db.get(Task, c["id"])
+    t.submitted_by_id = b.id
+    db.commit()
+    assert _chores(client, ha)[0]["taken_by"] == "Maya"
+    assert _chores(client, hb)[0]["taken_by"] is None

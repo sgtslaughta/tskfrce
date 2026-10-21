@@ -105,3 +105,29 @@ export function useMarkDone(onExpired: () => void) {
     onSettled: () => qc.invalidateQueries({ queryKey: ['kid', 'today'] }),
   })
 }
+
+const refetch = (qc: ReturnType<typeof useQueryClient>) => qc.invalidateQueries({ queryKey: ['kid', 'today'] })
+
+export function useTickSubtask() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (v: { chore: number; sub: number; done: boolean }) =>
+      api(`/kid/chores/${v.chore}/subtasks/${v.sub}`, { method: 'POST', body: { done: v.done }, kid: true }),
+    onError: (e: Error) => toastFail(e),
+    onSettled: () => refetch(qc),
+  })
+}
+
+export function useUploadPhoto() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (v: { chore: number; file: File }) => {
+      const body = new FormData()
+      body.append('file', v.file)
+      return api(`/kid/chores/${v.chore}/photos`, { method: 'POST', body, kid: true })
+    },
+    onSuccess: () => toastOk('Photo added'),
+    onError: (e: Error) => toastFail(e),
+    onSettled: () => refetch(qc),
+  })
+}
