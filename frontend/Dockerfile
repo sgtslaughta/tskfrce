@@ -54,7 +54,7 @@ RUN chmod +x entrypoint.sh
 
 # Ensure prerender-manifest.json exists in runtime (Next.js 15.x fix)
 # This must be done before switching to node user to avoid permission issues
-RUN if [ ! -f ".next/prerender-manifest.json" ]; then \
+RUN mkdir -p .next && if [ ! -f ".next/prerender-manifest.json" ]; then \
       echo '{"version":3,"routes":{},"dynamicRoutes":{},"notFoundRoutes":[],"preview":{"previewModeId":"development-id","previewModeSigningKey":"development-key","previewModeEncryptionKey":"development-key"}}' > .next/prerender-manifest.json; \
     fi
 

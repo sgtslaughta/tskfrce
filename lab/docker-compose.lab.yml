@@ -44,11 +44,41 @@ services:
       TRUSTED_HOSTS: "*"
       DISABLE_RATE_LIMITING: "true"
       DISABLE_LOGIN_RATE_LIMIT: "true"
+      TRUSTED_PROXY_IPS: 10.99.0.5
     volumes: !override
       - ../backend:/app
       - /app/data
     networks: !override
       lab: {ipv4_address: 10.99.0.3}
+
+  # Browser e2e only: the Next dev server, proxying to the lab backend
+  frontend:
+    build:
+      context: ../frontend
+      args: {NODE_ENV: development}
+    profiles: [e2e]
+    depends_on: [backend]
+    environment:
+      NODE_ENV: development
+      BACKEND_INTERNAL_URL: http://10.99.0.3:8000
+      NEXT_TELEMETRY_DISABLED: "1"
+      NODE_OPTIONS: --max-old-space-size=2048
+    networks:
+      lab: {ipv4_address: 10.99.0.5}
+
+  # Playwright runner; keep the image tag equal to @playwright/test in frontend/package.json
+  e2e:
+    image: mcr.microsoft.com/playwright:v1.64.1-jammy
+    profiles: [e2e]
+    depends_on: [frontend]
+    working_dir: /work
+    volumes:
+      - ../frontend:/work
+    environment:
+      E2E_BASE_URL: http://10.99.0.5:3000
+    command: npx playwright test
+    networks:
+      lab: {ipv4_address: 10.99.0.6}
 
   blocker:
     build: ../blocker

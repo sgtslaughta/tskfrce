@@ -87,10 +87,18 @@ _portal() {
   [ "$out" = "302 http://task4ce.local/kid" ]
 }
 
+# Browser e2e: needs `up` first. Screenshots land in frontend/e2e-artifacts.
+_e2e() {
+  $COMPOSE up -d --build frontend
+  _wait_http "http://10.99.0.5:3000/api/health"
+  python3 lab/e2e_run.py $COMPOSE --profile e2e run --rm e2e
+}
+
 cmd=${1:-}; shift || true
 case "$cmd" in
   up) _up ;;
   down) rm -f "$TOKEN_FILE"; $COMPOSE down -v ;;
+  e2e) _e2e ;;
   token) _token ;;
   device-id) _need_id "$1" ;;
   block) _post "/api/v1/devices/$(_need_id "$1")/override" '{"action":"lock"}' >/dev/null ;;
@@ -108,5 +116,5 @@ case "$cmd" in
     mac=$(_mac_of "$1")
     _devices | jq -r --arg m "$mac" '[.[] | select((.mac|ascii_downcase)==$m)][0].resisting // false' ;;
   test-block) _post "/api/v1/devices/$(_need_id "$1")/test-block" '{}' ;;
-  *) echo "usage: $0 {up|down|token|device-id|block|unblock|check|check6|portal|resist|reset|resisting|test-block} [host]" >&2; exit 2 ;;
+  *) echo "usage: $0 {up|down|e2e|token|device-id|block|unblock|check|check6|portal|resist|reset|resisting|test-block} [host]" >&2; exit 2 ;;
 esac

@@ -235,3 +235,6 @@ data/
 !blocker/data/oui.csv
 .claude/worktrees/
 *.tsbuildinfo
+
+# Playwright
+frontend/e2e-artifacts/
