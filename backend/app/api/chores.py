@@ -1,6 +1,8 @@
 from datetime import datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Response
+from pydantic import BaseModel, StringConstraints
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_parent
@@ -193,6 +195,30 @@ def approve(chore_id: int, db: Session = Depends(get_db), parent: User = Depends
     t.approved_at = t.completed_at = datetime.utcnow()
     t.approved_by_id = parent.id
     award_chore(db, t, get_family(db))
+    db.commit()
+    return _out(t)
+
+
+class SendBack(BaseModel):
+    note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+
+
+@router.post("/{chore_id}/send-back")
+def send_back(
+    chore_id: int,
+    body: SendBack,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_parent),
+):
+    t = db.get(Task, chore_id)
+    if t is None or not (t.recurrence_pattern or {}).get("chore"):
+        raise HTTPException(404, "That chore doesn't exist.")
+    if t.status != TaskStatus.SUBMITTED_FOR_APPROVAL:
+        raise HTTPException(409, "This chore isn't waiting for approval.")
+    t.status = TaskStatus.TODO
+    t.attempt = (t.attempt or 1) + 1
+    t.last_note = body.note
+    t.submitted_for_approval_at = t.submitted_by_id = None
     db.commit()
     return _out(t)
 

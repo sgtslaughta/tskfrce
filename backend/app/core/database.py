@@ -176,6 +176,8 @@ def _import_all_models():
         # Import all models here to register them
         from app.models import (
             Achievement,
+            ChorePhoto,
+            ChoreSubtask,
             CommentMention,
             CommentReaction,
             Conversation,

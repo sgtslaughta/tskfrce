@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session, object_session
 
 from app.lock.rules import OwnerChores
 from app.lock.schedule import local_now, occurs_on
+from app.models.chore_extra import ChoreSubtask
 from app.models.family import FamilySettings
 from app.models.task import Task, TaskStatus, chore_participants
 from app.models.user import User, UserRole
@@ -78,7 +79,7 @@ def make_instances(defn: Task, day: date) -> list[Task]:
     pattern = defn.recurrence_pattern or {}
 
     def new(owner: int | None) -> Task:
-        return Task(
+        t = Task(
             title=defn.title,
             is_recurring=False,
             parent_task_id=defn.id,
@@ -89,6 +90,10 @@ def make_instances(defn: Task, day: date) -> list[Task]:
             points=defn.points,
             recurrence_pattern=dict(pattern),
         )
+        t.chore_subtasks = [
+            ChoreSubtask(position=i, title=s) for i, s in enumerate(pattern.get("subtasks") or [])
+        ]
+        return t
 
     if pattern.get("mode", "each") == "each" or len(ids) == 1:
         return [new(i) for i in ids]

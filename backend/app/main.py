@@ -31,6 +31,7 @@ from app.api import (
     websocket_router,
     workflow_router,
 )
+from app.api.chore_photos import router as chore_photos_router
 from app.api.chores import router as chores_router
 from app.api.devices import router as devices_router
 from app.api.family import router as family_router
@@ -144,6 +145,7 @@ fastapi_app.include_router(
     notifications_router, prefix="/api/v1/notifications", tags=["notifications"]
 )
 fastapi_app.include_router(chores_router)
+fastapi_app.include_router(chore_photos_router)
 fastapi_app.include_router(internal_router)
 fastapi_app.include_router(devices_router)
 fastapi_app.include_router(kids_router)

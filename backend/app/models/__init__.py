@@ -6,6 +6,7 @@ This package contains all SQLAlchemy models for the application.
 
 # Import from new model files
 # Import from existing comment.py - models that are unique to comment.py
+from .chore_extra import ChorePhoto, ChoreSubtask
 from .comment import (
     CommentAuditTrail,
     DirectMessageMedia,
@@ -45,6 +46,8 @@ from .task_comment import CommentMediaAttachment, CommentMention, CommentReactio
 from .user import UsedInvite, User
 
 __all__ = [
+    "ChorePhoto",
+    "ChoreSubtask",
     # Core models
     "UsedInvite",
     "User",

@@ -2,7 +2,7 @@
 
 from datetime import UTC, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -29,6 +29,7 @@ from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
 from app.services import economy
+from app.services.photos import save_photo
 
 router = APIRouter(prefix="/api/v1/kid", tags=["kid"])
 
@@ -39,6 +40,10 @@ class RedeemIn(BaseModel):
     kind: str
     reward_id: int | None = None
     minutes: int | None = None
+
+
+class SubtaskIn(BaseModel):
+    done: bool
 
 
 class KidLogin(BaseModel):
@@ -130,6 +135,58 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(r
     }
 
 
+def _open_instance(db: Session, kid: User, chore_id: int) -> Task:
+    """A chore instance this kid takes part in that can still be worked on."""
+    t = (
+        db.query(Task)
+        .filter(
+            Task.id == chore_id,
+            is_chore_filter(),
+            Task.is_recurring.is_(False),
+            kid_chores_filter(kid.id),
+        )
+        .first()
+    )
+    if t is None:
+        raise HTTPException(404, "We couldn't find that chore.")
+    if t.status not in (TaskStatus.TODO, TaskStatus.IN_PROGRESS):
+        raise HTTPException(409, "This chore is already with a parent.")
+    return t
+
+
+@router.post("/chores/{chore_id}/subtasks/{sub_id}")
+def tick_subtask(
+    chore_id: int,
+    sub_id: int,
+    body: SubtaskIn,
+    db: Session = Depends(get_db),
+    kid: User = Depends(require_kid),
+):
+    t = _open_instance(db, kid, chore_id)
+    s = next((s for s in t.chore_subtasks if s.id == sub_id), None)
+    if s is None:
+        raise HTTPException(404, "We couldn't find that step.")
+    s.done_by_id, s.done_at = (
+        (kid.id, datetime.now(UTC).replace(tzinfo=None)) if body.done else (None, None)
+    )
+    db.commit()
+    return {"id": s.id, "done": body.done}
+
+
+@router.post("/chores/{chore_id}/photos")
+def add_photo(
+    chore_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    kid: User = Depends(require_kid),
+):
+    t = _open_instance(db, kid, chore_id)
+    p = save_photo(file, t, kid)
+    db.add(p)
+    db.commit()
+    return {"id": p.id, "attempt": p.attempt}
+
+
 @router.post("/chores/{chore_id}/done")
 def done(chore_id: int, db: Session = Depends(get_db), kid: User = Depends(require_kid)):
     t = (
@@ -143,6 +200,12 @@ def done(chore_id: int, db: Session = Depends(get_db), kid: User = Depends(requi
     day = current_chore_day(get_family(db), now.replace(tzinfo=UTC))
     if t.due_date != midnight(day):
         raise HTTPException(status_code=409, detail="That chore is from another day.")
+    if any(s.done_at is None for s in t.chore_subtasks):
+        raise HTTPException(status_code=409, detail="Tick every step first.")
+    if (t.recurrence_pattern or {}).get("needs_photo") and not any(
+        p.attempt == t.attempt for p in t.chore_photos
+    ):
+        raise HTTPException(status_code=409, detail="Add a photo first.")
     t.status = TaskStatus.SUBMITTED_FOR_APPROVAL
     t.submitted_for_approval_at = now
     t.submitted_by_id = kid.id
