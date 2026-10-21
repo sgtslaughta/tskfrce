@@ -1,3 +1,3 @@
-import { ChatPage } from '@/v2/manage/ChatPage'
+import { ChatRedirect } from '@/v2/chat/ChatRedirect'
 
-export default ChatPage
+export default ChatRedirect

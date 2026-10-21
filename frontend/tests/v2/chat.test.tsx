@@ -93,12 +93,6 @@ describe("ThreadView", () => {
   });
 });
 
-test("nav shows the unread total", async () => {
-  threads = { total: 4, threads: [] };
-  wrap(<FridgeShell title="Chat">x</FridgeShell>);
-  expect((await screen.findAllByTestId("nav-unread"))[0]).toHaveTextContent("4");
-});
-
 test("Today chat box shows the last 2 messages", async () => {
   page.messages = [msg(1), msg(2), msg(3)];
   const kid = { id: 3, name: "Maya", chores: [], devices: [], progress: undefined } as unknown as TodayKid;
@@ -106,5 +100,5 @@ test("Today chat box shows the last 2 messages", async () => {
   expect(await screen.findByText(/m3/)).toBeInTheDocument();
   expect(screen.getByText(/m2/)).toBeInTheDocument();
   expect(screen.queryByText(/m1/)).toBeNull();
-  expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", "/chat?kid=3");
+  expect(screen.getByRole("button", { name: "Open" })).toBeInTheDocument();
 });

@@ -4,14 +4,13 @@ import { useRouter } from 'next/router'
 import { Box, Burger, Button, Drawer } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
-import { useThreads } from '@/v2/hooks/useChat'
+import { ChatDock } from '@/v2/chat/ChatDock'
 import { BlockerBanner } from './BlockerBanner'
 import { ColorSchemeToggle } from './ColorSchemeToggle'
 import { cancelSignOut, startSignOut } from './RequireParent'
 
 export const NAV = [
   { href: '/', label: 'Today' },
-  { href: '/chat', label: 'Chat' },
   { href: '/devices', label: 'Devices' },
   { href: '/kids', label: 'Kids & chores' },
   { href: '/settings', label: 'Settings' },
@@ -19,17 +18,11 @@ export const NAV = [
 ] as const
 
 function Nav({ current, drawer }: { current: string; drawer?: boolean }) {
-  const unread = useThreads().data?.total ?? 0
   return (
     <nav aria-label="Main" className={drawer ? 'f-nav f-nav-drawer' : 'f-nav'}>
       {NAV.map((n) => (
         <Link key={n.href} href={n.href} aria-current={current === n.href ? 'page' : undefined}>
           {n.label}
-          {n.href === '/chat' && unread > 0 && (
-            <span className="f-pill" data-testid="nav-unread" aria-label={`${unread} unread`} style={{ marginLeft: 6 }}>
-              {unread}
-            </span>
-          )}
         </Link>
       ))}
     </nav>
@@ -47,7 +40,7 @@ export function FridgeShell({
   actions?: ReactNode
 }) {
   const router = useRouter()
-  const { logout } = useUnifiedAuth()
+  const { logout, user } = useUnifiedAuth()
   const [open, { toggle, close }] = useDisclosure(false)
   // set after mount: server and browser time zones can differ
   const [day, setDay] = useState('')
@@ -95,6 +88,7 @@ export function FridgeShell({
         <BlockerBanner />
         {children}
       </main>
+      <ChatDock meId={user ? Number(user.id) : null} />
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react";
-import Link from "next/link";
+import { openChat } from "@/v2/chat/dock";
 import { Button } from "@mantine/core";
 import {
   IconCamera,
@@ -146,14 +146,14 @@ export function NeedsYou({ items }: { items: NeedsItem[] }) {
                 )}
               </div>
               {chore && (
-                <Link href={`/chat?chore=${i.id}`} aria-label={`Chat about ${i.title}`} className="f-row" style={{ gap: 2 }}>
+                <button type="button" onClick={() => openChat("chore", String(i.id))} aria-label={`Chat about ${i.title}`} className="f-row" style={{ gap: 2, background: "none", border: 0, padding: 0, color: "inherit", cursor: "pointer" }}>
                   <IconMessage size={16} />
                   {(threads.find((t) => t.kind === "chore" && t.task_id === i.id)?.unread ?? 0) > 0 && (
                     <span className="f-pill" data-testid={`chore-unread-${i.id}`}>
                       {threads.find((t) => t.kind === "chore" && t.task_id === i.id)?.unread}
                     </span>
                   )}
-                </Link>
+                </button>
               )}
               <Button size="xs" onClick={() => run(approveOne(i), "Approved")}>
                 Approve

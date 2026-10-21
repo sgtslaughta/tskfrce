@@ -51,10 +51,10 @@ const renderKid = () =>
   )
 
 describe('kid chat', () => {
-  test('lists only what the API returns, with a summed unread badge', async () => {
+  test('dock lists only what the API returns, with a summed unread badge', async () => {
     renderKid()
-    expect(await screen.findByTestId('chat-unread')).toHaveTextContent('5')
-    await userEvent.click(screen.getByTestId('chat-unread').closest('button')!)
+    expect(await screen.findByTestId('dock-unread')).toHaveTextContent('5')
+    await userEvent.click(screen.getByRole('button', { name: /^Chat, 5 unread/ }))
     const list = await screen.findByRole('list', { name: 'Conversations' })
     expect(list).toHaveTextContent('Family')
     expect(list).toHaveTextContent('Mom & Dad')

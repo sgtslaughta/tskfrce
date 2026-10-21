@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { Button } from "@mantine/core";
+import { openChat } from "@/v2/chat/dock";
 import { useThread } from "../hooks/useChat";
 import { DevicePill, deviceKind } from "../components/DevicePill";
 import { BadgeGrid } from "../components/BadgeGrid";
@@ -71,7 +72,9 @@ function ChatBox({ kidId, name }: { kidId: number; name: string }) {
           {m.body ?? "Photo"}
         </p>
       ))}
-      <Link href={`/chat?kid=${kidId}`}>Open</Link>
+      <Button variant="subtle" size="compact-md" onClick={() => openChat("private", String(kidId))}>
+        Open
+      </Button>
     </div>
   );
 }

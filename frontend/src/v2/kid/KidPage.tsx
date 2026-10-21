@@ -4,11 +4,12 @@ import { CANT_REACH } from '../api'
 import { ProgressHeader } from '../components/ProgressHeader'
 import { LockBadge } from '../components/LockBadge'
 import { StickerCard } from '../components/StickerCard'
+import { ChatDock } from '../chat/ChatDock'
+import { openChat } from '../chat/dock'
 import { useThreads } from '../hooks/useChat'
 import { useKidSession, useKidToday, useMarkDone, loginMessage } from '../hooks/useKid'
 import type { KidWhoami } from '../types'
 import { AwardOverlay } from './AwardOverlay'
-import { KidChat, type ChatPick } from './KidChat'
 import { KidChecklist } from './KidChecklist'
 import { FamilySection } from './FamilySection'
 import { KidPicker } from './KidPicker'
@@ -35,7 +36,6 @@ const SwitchBtn = ({ onClick }: { onClick: () => void }) => (
 
 function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; avatar?: string | null; kidId?: number | null; onExit: () => void; canSwitch: boolean }) {
   const [lockerOpen, setLockerOpen] = useState(false)
-  const [chat, setChat] = useState<ChatPick | 'list' | null>(null)
   const threads = useThreads(true)
   const today = useKidToday(onExit)
   const done = useMarkDone(onExit)
@@ -53,8 +53,6 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
       </>
     )
   if (!d) return <Msg>Loading…</Msg>
-  if (chat)
-    return <KidChat meId={kidId ?? null} start={chat === 'list' ? null : chat} onClose={() => setChat(null)} />
   if (lockerOpen && d.progress)
     return (
       <Locker
@@ -73,22 +71,11 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
       </Button>
     </StickerCard>
   )
-  const chatBtn = (
-    <Button variant="default" size="md" onClick={() => setChat('list')}>
-      Chat
-      {!!threads.data?.total && (
-        <span className="f-pill" data-testid="chat-unread" aria-label={`${threads.data.total} unread`} style={{ marginLeft: 6 }}>
-          {threads.data.total}
-        </span>
-      )}
-    </Button>
-  )
   const switcher = canSwitch && <SwitchBtn onClick={onExit} />
   if (!d.locked)
     return (
       <>
         {head}
-        {chatBtn}
         <UnlockedView points={d.points_balance} done={d.chores.filter((c) => c.state === 'done').length} />
         <RewardsSection onExpired={onExit} />
         <FamilySection meId={kidId} />
@@ -99,7 +86,6 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
   return (
     <>
       {head}
-      {chatBtn}
       <StickerCard tone="red">
         <div style={{ display: 'grid', justifyItems: 'center', gap: 8, padding: 12, textAlign: 'center' }}>
           <LockBadge online={false} size={120} />
@@ -114,7 +100,7 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
           onDone={(id) => done.mutate(id)}
           busyId={done.isPending ? done.variables : null}
           unread={unread}
-          onChat={(id) => setChat({ kind: 'chore', ref: String(id) })}
+          onChat={(id) => openChat('chore', String(id))}
         />
       </StickerCard>
       <RewardsSection onExpired={onExit} />
@@ -194,6 +180,7 @@ export function KidPage() {
       <div className="f-main" style={{ maxWidth: 520 }}>
         {body}
       </div>
+      {authed && <ChatDock kid meId={who?.id ?? kidId ?? null} />}
     </main>
   )
 }
