@@ -264,3 +264,18 @@ export interface Profile {
   streak: number
   badges: Badge[]
 }
+
+export type FlairSlot = 'card' | 'ring' | 'name' | 'emblem' | 'title'
+
+/** Equipped flair ids by slot (null = default look). */
+export type Flair = Record<FlairSlot, string | null>
+
+/** GET /kid/flair item */
+export interface FlairItem {
+  id: string
+  slot: FlairSlot
+  name: string
+  unlock_level: number
+  emblem: string | null
+  unlocked: boolean
+}
