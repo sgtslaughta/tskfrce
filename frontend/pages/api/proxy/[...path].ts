@@ -1,114 +1,56 @@
 /**
- * @fileoverview API Proxy Routes
- * @description Proxies all API calls to backend, handling authentication and CORS
- * @author TaaskMaaster Team
- * @version 1.0.0
+ * Proxies /api/proxy/* to the backend's /api/v1/*, passing bodies (JSON or
+ * multipart) and responses (JSON or binary images) through byte for byte.
  */
 
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextApiRequest, NextApiResponse } from 'next'
 
-/**
- * Dynamic API proxy handler
- * Forwards all /api/proxy/* requests to the backend
- */
+const PASS_REQ = ['authorization', 'cookie', 'content-type', 'user-agent', 'accept']
+const DROP_RES = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
+
+async function rawBody(req: NextApiRequest): Promise<Buffer> {
+  const chunks: Buffer[] = []
+  for await (const c of req) chunks.push(typeof c === 'string' ? Buffer.from(c) : c)
+  return Buffer.concat(chunks)
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { path } = req.query;
-  
-  // Build the backend URL
-  const backendUrl = process.env.BACKEND_INTERNAL_URL || 'http://backend:8000';
-  const apiPath = Array.isArray(path) ? path.join('/') : path;
-  const targetUrl = `${backendUrl}/api/v1/${apiPath}`;
+  const backendUrl = process.env.BACKEND_INTERNAL_URL || 'http://backend:8000'
+  // keep the query string (?before=, ?kid=…); strip the /api/proxy prefix
+  const rest = (req.url || '').replace(/^\/api\/proxy\/?/, '')
+  const targetUrl = `${backendUrl}/api/v1/${rest}`
 
-  // Prepare headers
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    // Don't set Host header - let fetch use the URL's host automatically
-  };
-
-  // Forward authorization header if present
-  if (req.headers.authorization) {
-    headers.Authorization = req.headers.authorization;
+  const headers: Record<string, string> = {}
+  for (const h of PASS_REQ) {
+    const v = req.headers[h]
+    if (typeof v === 'string') headers[h] = v
   }
-
-  // Forward cookies for session management
-  if (req.headers.cookie) {
-    headers.Cookie = req.headers.cookie;
-  }
-
   // Real client IP for the backend (kid device lookup, rate limits). Built from the
   // socket only; client-sent x-real-ip / x-forwarded-for / forwarded are never copied.
-  const peer = (req.socket.remoteAddress || '').replace(/^::ffff:/, '');
-  if (peer) {
-    headers['X-Real-IP'] = peer;
-  }
-
-  // Forward other important headers
-  if (req.headers['user-agent']) {
-    headers['User-Agent'] = req.headers['user-agent'];
-  }
-
+  const peer = (req.socket.remoteAddress || '').replace(/^::ffff:/, '')
+  if (peer) headers['X-Real-IP'] = peer
 
   try {
-    console.log(`[API Proxy] ${req.method} ${targetUrl}`);
-    
-    const fetchOptions: RequestInit = {
+    const body = req.method === 'GET' || req.method === 'HEAD' ? undefined : await rawBody(req)
+    const response = await fetch(targetUrl, {
       method: req.method,
       headers,
-    };
-
-    // Add body for POST/PUT/PATCH requests
-    if (req.method !== 'GET' && req.method !== 'HEAD' && req.body) {
-      fetchOptions.body = JSON.stringify(req.body);
-    }
-
-    const response = await fetch(targetUrl, fetchOptions);
-    
-    // Forward response headers
-    const responseHeaders: Record<string, string> = {};
+      body: body && body.length ? new Uint8Array(body) : undefined,
+    })
     response.headers.forEach((value, key) => {
-      // Don't forward these headers as they can cause issues
-      if (!['content-encoding', 'content-length', 'transfer-encoding'].includes(key.toLowerCase())) {
-        responseHeaders[key] = value;
-      }
-    });
-
-    // Set response headers
-    Object.entries(responseHeaders).forEach(([key, value]) => {
-      res.setHeader(key, value);
-    });
-
-    // Empty-bodied statuses and empty bodies must not be parsed
-    res.status(response.status);
+      if (!DROP_RES.includes(key.toLowerCase())) res.setHeader(key, value)
+    })
+    res.status(response.status)
     if ([204, 205, 304].includes(response.status)) {
-      res.end();
-      return;
+      res.end()
+      return
     }
-    const text = await response.text();
-    if (!text) {
-      res.end();
-      return;
-    }
-    try {
-      res.json(JSON.parse(text));
-    } catch {
-      res.send(text);
-    }
-
+    res.end(Buffer.from(await response.arrayBuffer()))
   } catch (error) {
-    console.error('[API Proxy] Error:', error);
-    res.status(500).json({ 
-      error: 'Proxy error', 
-      message: error instanceof Error ? error.message : 'Unknown error',
-      target: targetUrl
-    });
+    console.error('[API Proxy] Error:', error)
+    res.status(502).json({ detail: "Can't reach the home box. Check it's plugged in and on Wi-Fi." })
   }
 }
 
-// Enable body parsing for POST requests
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb',
-    },
-  },
-}
+// raw bodies: multipart uploads must not be parsed or re-encoded
+export const config = { api: { bodyParser: false } }
