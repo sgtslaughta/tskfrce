@@ -70,6 +70,12 @@ def test_fake_internet(cfg):
 def test_blocker(cfg):
     b = cfg["services"]["blocker"]
     assert "network_mode" not in b
+    assert not b.get("privileged", False)
+    env = b["environment"]
+    for k in ("SCAN_INTERVAL", "RECONCILE_INTERVAL", "RESIST_INTERVAL"):
+        assert env[k] == "5"
+    assert env["LAN_IFACE"] == "eth0"
+    assert env["PORTAL_REDIRECT_URL"] == "http://task4ce.local/kid"
     assert b["mac_address"] == "02:99:00:00:00:04"
     assert b["networks"]["lab"]["ipv4_address"] == "10.99.0.4"
     assert b["networks"]["lab"]["ipv6_address"] == "fd00:99::4"
@@ -82,7 +88,11 @@ def test_blocker(cfg):
 
 def test_backend(cfg):
     b = cfg["services"]["backend"]
-    assert not b.get("ports")
+    assert "ports" in b and b["ports"] == []
+    assert "volumes" in b and "/app/data" in b["volumes"]
+    assert list(b["networks"]) == ["lab"]
+    assert b["environment"]["TRUSTED_HOSTS"] == "*"
+    assert b["environment"]["DISABLE_RATE_LIMITING"] == "true"
     assert b["networks"]["lab"]["ipv4_address"] == "10.99.0.3"
     assert b["environment"]["INTERNAL_TOKEN"] == "labtoken"
     assert b["environment"]["BLOCKER_URL"] == "http://10.99.0.4:7777"
@@ -96,3 +106,12 @@ def test_hosts(cfg, name):
     assert h["networks"]["lab"]["ipv4_address"] == v4
     assert h["networks"]["lab"]["ipv6_address"] == v6
     assert "NET_ADMIN" in h["cap_add"]
+    assert h["dns"] == ["203.0.113.1"]
+
+
+def test_subnets(cfg):
+    def subnets(n):
+        return [c["subnet"] for c in cfg["networks"][n]["ipam"]["config"]]
+
+    assert subnets("lab") == ["10.99.0.0/24", "fd00:99::/64"]
+    assert subnets("wan") == ["203.0.113.0/24", "2001:db8:1::/64"]

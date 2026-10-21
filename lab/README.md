@@ -21,7 +21,11 @@ Both networks are `internal: true`; nothing reaches the real internet.
     docker compose -f lab/docker-compose.lab.yml exec kid1 curl -s -m 3 http://203.0.113.1/
     docker compose -f lab/docker-compose.lab.yml down -v
 
+Docker takes the first address of each subnet as gateway; on `wan` the gateway is moved to
+203.0.113.254 / 2001:db8:1::ffff so `fake-internet` can own .1.
+
 ## IPv6 caveat
 
-Needs Linux Docker. For the v6 tests, enable bridge IPv6 in `/etc/docker/daemon.json`
-(`{"ipv6": true, "fixed-cidr-v6": "fd00:d0c::/64"}`) and restart the daemon.
+Needs Linux Docker. IPv6 on user-defined bridges may need `"ipv6": true` in `/etc/docker/daemon.json`
+(with a restart), depending on Docker version. On the dev host a v6 curl from kid1 to
+`[2001:db8:1::1]` failed, so v6 behaviour is unverified.

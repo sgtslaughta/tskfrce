@@ -2,7 +2,7 @@ FROM python:3.11-slim
 
 # nftables: firewall rules. libpcap: packet capture/injection for scapy.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends nftables libpcap0.8 libpcap-dev \
+    && apt-get install -y --no-install-recommends nftables iproute2 libpcap0.8 libpcap-dev \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt
