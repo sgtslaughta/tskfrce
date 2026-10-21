@@ -2,17 +2,30 @@
 
 from __future__ import annotations
 
+import logging
 import socket
-from http.server import BaseHTTPRequestHandler, HTTPServer
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+log = logging.getLogger(__name__)
 
 
-def dns_response(query_wire: bytes, answer_ip: str) -> bytes:
-    """Answer any A query with answer_ip; AAAA/others get NOERROR with no answer."""
+def dns_response(query_wire: bytes, answer_ip: str) -> bytes | None:
+    """Answer a genuine A query with answer_ip; AAAA/others get NOERROR with no answer.
+
+    Returns None (drop) for responses, non-zero opcodes, qdcount != 1 or unparsable input.
+    """
     from scapy.layers.dns import DNS, DNSRR
 
-    q = DNS(query_wire)
+    try:
+        q = DNS(query_wire)
+        if q.qr != 0 or q.opcode != 0 or q.qdcount != 1 or q.qd is None:
+            return None
+    except Exception:
+        log.debug("dropping unparsable DNS packet", exc_info=True)
+        return None
     answer = None
-    if q.qd is not None and q.qd.qtype == 1:
+    if q.qd.qtype == 1:
         answer = DNSRR(rrname=q.qd.qname, type="A", ttl=30, rdata=answer_ip)
     resp = DNS(id=q.id, qr=1, aa=1, rd=q.rd, ra=1, rcode=0, qd=q.qd, an=answer)
     return bytes(resp)
@@ -29,10 +42,14 @@ def run_dns(cfg, box_ip: str, stop) -> None:
                 data, addr = sock.recvfrom(512)
             except TimeoutError:
                 continue
-            try:
-                sock.sendto(dns_response(data, box_ip), addr)
-            except Exception:
+            if addr[1] == 53:
                 continue
+            try:
+                out = dns_response(data, box_ip)
+                if out is not None:
+                    sock.sendto(out, addr)
+            except Exception:
+                log.debug("DNS handling failed", exc_info=True)
     finally:
         sock.close()
 
@@ -41,6 +58,7 @@ class PortalHTTP(BaseHTTPRequestHandler):
     """Redirect every request (including OS captive-check hosts) to the kid screen."""
 
     config = None
+    timeout = 5
 
     def _redirect(self):
         self.send_response(302)
@@ -57,10 +75,10 @@ class PortalHTTP(BaseHTTPRequestHandler):
 def run_http(cfg, stop) -> None:
     """Serve PortalHTTP on :80 until stop (threading.Event) is set."""
     handler = type("Handler", (PortalHTTP,), {"config": cfg})
-    srv = HTTPServer(("0.0.0.0", 80), handler)
-    srv.timeout = 0.5
+    srv = ThreadingHTTPServer(("0.0.0.0", 80), handler)
+    srv.daemon_threads = True
+    threading.Thread(target=lambda: (stop.wait(), srv.shutdown()), daemon=True).start()
     try:
-        while not stop.is_set():
-            srv.handle_request()
+        srv.serve_forever()
     finally:
         srv.server_close()

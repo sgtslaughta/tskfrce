@@ -80,3 +80,37 @@ def test_portal_http_redirects_to_kid_screen(portal, path, host):
     assert r.status == 302
     assert r.getheader("Location") == cfg.portal_redirect_url
     c.close()
+
+
+def test_portal_http_has_connection_timeout():
+    assert PortalHTTP.timeout == 5
+
+
+def test_dns_response_drops_response_packet():
+    pytest.importorskip("scapy")
+    from scapy.layers.dns import DNS, DNSQR
+
+    wire = bytes(DNS(id=1, qr=1, qd=DNSQR(qname="example.com.")))
+    assert dns_response(wire, "192.168.1.5") is None
+
+
+def test_dns_response_drops_nonzero_opcode():
+    pytest.importorskip("scapy")
+    from scapy.layers.dns import DNS, DNSQR
+
+    wire = bytes(DNS(id=1, opcode=2, qd=DNSQR(qname="example.com.")))
+    assert dns_response(wire, "192.168.1.5") is None
+
+
+def test_dns_response_drops_qdcount_not_one():
+    pytest.importorskip("scapy")
+    from scapy.layers.dns import DNS, DNSQR
+
+    wire = bytes(DNS(id=1, qd=DNSQR(qname="a.com.") / DNSQR(qname="b.com.")))
+    assert dns_response(wire, "192.168.1.5") is None
+    assert dns_response(bytes(DNS(id=1, qdcount=0)), "192.168.1.5") is None
+
+
+def test_dns_response_drops_garbage():
+    pytest.importorskip("scapy")
+    assert dns_response(b"\xff\x00garbage", "192.168.1.5") is None
