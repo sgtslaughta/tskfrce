@@ -83,6 +83,27 @@ services:
       retries: 3
       start_period: 40s
 
+  # LAN blocker: pauses chosen devices' internet (see docs/blocker.md)
+  blocker:
+    build:
+      context: ./blocker
+      dockerfile: Dockerfile
+    container_name: taaskmaaster-blocker
+    # Host networking + only the two caps needed for L2 work; never privileged
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      # Host network: reach the app over loopback
+      BACKEND_URL: ${BLOCKER_BACKEND_URL:-http://127.0.0.1:8000}
+      DATA_DIR: /data
+      LAN_IFACE: ${LAN_IFACE:-eth0}
+    volumes:
+      # Read-only: blocker only reads secrets.json for INTERNAL_TOKEN
+      - task4ce_data:/data:ro
+    restart: unless-stopped
+
   # PostgreSQL (optional, for production)
   # postgres:
   #   image: postgres:15-alpine
