@@ -152,3 +152,20 @@ def test_tick_when_submitted_conflicts(client, db, parent_headers):
     k, h, cid = _setup(db, client, parent_headers)
     _done(client, h, cid)
     assert _up(client, h, cid).status_code == 409
+
+
+def test_pixel_bomb_rejected_before_decoding(client, db, parent_headers):
+    # 48 MP of 1-bit pixels compresses to a few KB but would decode to ~150 MB RGB
+    k, h, cid = _setup(db, client, parent_headers)
+    out = io.BytesIO()
+    Image.new("1", (8000, 6000)).save(out, "PNG")
+    assert len(out.getvalue()) < 1024 * 1024
+    assert _up(client, h, cid, out.getvalue(), "image/png").status_code == 413
+
+
+def test_large_normal_photo_is_shrunk(client, db, parent_headers):
+    k, h, cid = _setup(db, client, parent_headers)
+    assert _up(client, h, cid, _jpeg(size=(4000, 3000))).status_code in (200, 201)
+    p = db.query(ChorePhoto).one()
+    full = Image.open(storage().open(p.path))
+    assert max(full.size) <= 1600

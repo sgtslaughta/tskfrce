@@ -14,6 +14,9 @@ from app.services.local_storage import LocalStorage
 
 TYPES = {"image/jpeg", "image/png", "image/webp"}
 FULL, THUMB = 1600, 320
+# Byte caps don't bound decoded size: a tiny PNG can expand to gigabytes.
+# 40 MP covers any phone camera (12-48 MP sensors bin to <= ~24 MP output).
+MAX_PIXELS = 40_000_000
 
 
 def storage() -> LocalStorage:
@@ -21,8 +24,9 @@ def storage() -> LocalStorage:
 
 
 def _jpeg(img: Image.Image, size: int) -> bytes:
-    img = img.copy()
-    img.thumbnail((size, size))
+    if max(img.size) > size:
+        img = img.copy()
+        img.thumbnail((size, size))
     out = io.BytesIO()
     img.save(out, "JPEG", quality=85)  # no exif= argument: metadata is dropped
     return out.getvalue()
@@ -35,8 +39,14 @@ def save_photo(upload: UploadFile, task: Task, user: User) -> ChorePhoto:
     if len(data) > settings.MAX_UPLOAD_SIZE:
         raise HTTPException(413, "That photo is too big. The limit is 10 MB.")
     try:
-        img = ImageOps.exif_transpose(Image.open(io.BytesIO(data))).convert("RGB")
-    except (UnidentifiedImageError, OSError):
+        img = Image.open(io.BytesIO(data))  # lazy: reads the header only
+        w, h = img.size
+        if w * h > MAX_PIXELS:
+            raise HTTPException(413, "That photo is too large. Try a smaller one.")
+        img.draft("RGB", (FULL, FULL))  # JPEG: decode at reduced scale
+        img.thumbnail((FULL, FULL))  # shrink before any full-size copy
+        img = ImageOps.exif_transpose(img).convert("RGB")
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
         raise HTTPException(415, "We couldn't read that photo. Try another one.") from None
     key = f"chore/{task.id}/{uuid.uuid4().hex}"
     store = storage()
