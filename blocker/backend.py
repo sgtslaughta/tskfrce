@@ -53,3 +53,12 @@ def fetch_blocked(cfg: Config) -> list[str] | None:
     except Exception as e:
         log.warning("fetch_blocked failed: %s", e)
         return None
+
+
+def report_resisting(cfg: Config, macs: set[str]) -> bool:
+    try:
+        _request(cfg, "/devices/resisting", {"resisting": sorted(macs)})
+        return True
+    except Exception as e:
+        log.warning("report_resisting failed: %s", e)
+        return False

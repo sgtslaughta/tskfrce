@@ -1,5 +1,7 @@
+from types import SimpleNamespace
+
 from blocker.arp import LanFacts
-from blocker.resist import ResistanceCounter
+from blocker.resist import ResistanceCounter, ResistanceWatch
 
 LAN = LanFacts(gateway_ip="10.0.0.1", gateway_mac="aa:aa:aa:aa:aa:01", box_mac="bb:bb:bb:bb:bb:02")
 KID = "cc:cc:cc:cc:cc:03"
@@ -64,3 +66,39 @@ def test_mac_case_insensitive():
     for _ in range(3):
         c.observe(KID.upper(), LAN.gateway_mac.upper())
     assert c.resisting() == {KID}
+
+
+def test_watch_restarts_sniffer_with_mac_filter():
+    calls = []
+
+    class FakeSniffer:
+        def __init__(self, **kw):
+            calls.append(kw)
+
+        def stop(self):
+            pass
+
+    counter = ResistanceCounter(LAN)
+    w = ResistanceWatch(
+        SimpleNamespace(lan_iface="eth0"), counter, sniffer_factory=lambda **kw: FakeSniffer(**kw)
+    )
+    w.set_watched({KID, "dd:dd:dd:dd:dd:04"})
+    assert calls[-1]["iface"] == "eth0"
+    assert calls[-1]["filter"] == f"ether src {KID} or ether src dd:dd:dd:dd:dd:04"
+    w.set_watched(set())
+    assert w._sniffer is None
+
+
+def test_watch_prn_feeds_counter():
+    from scapy.layers.l2 import Ether
+
+    captured = {}
+    counter = ResistanceCounter(LAN, threshold=1)
+    w = ResistanceWatch(
+        SimpleNamespace(lan_iface=""),
+        counter,
+        sniffer_factory=lambda **kw: captured.update(kw) or SimpleNamespace(stop=lambda: None),
+    )
+    w.set_watched({KID})
+    captured["prn"](Ether(src=KID, dst=LAN.gateway_mac))
+    assert counter.resisting() == {KID}

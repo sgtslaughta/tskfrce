@@ -18,6 +18,7 @@ class Config:
     blocker_port: int = 7777
     scan_interval: float = 20
     reconcile_interval: float = 30
+    resist_interval: float = 15
     portal_redirect_url: str = "http://task4ce.local/kid"
 
     @classmethod
@@ -35,6 +36,7 @@ class Config:
             blocker_port=int(environ.get("BLOCKER_PORT", 7777)),
             scan_interval=float(environ.get("SCAN_INTERVAL", 20)),
             reconcile_interval=float(environ.get("RECONCILE_INTERVAL", 30)),
+            resist_interval=float(environ.get("RESIST_INTERVAL", 15)),
             portal_redirect_url=environ.get("PORTAL_REDIRECT_URL", "http://task4ce.local/kid"),
         )
 

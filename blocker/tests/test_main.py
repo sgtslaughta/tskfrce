@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 from blocker import service as svc_mod
 from blocker.config import Config
@@ -52,7 +53,10 @@ def test_start_binds_control_api_to_loopback(monkeypatch):
     monkeypatch.setattr(svc_mod, "run_dns", lambda *a, **k: None)
     monkeypatch.setattr(svc_mod, "run_http", lambda *a, **k: None)
 
-    svc = Service(CFG, firewall=_FakeFw(), redirection=_FakeRedir(), portal_ip="192.168.1.2")
+    watch = SimpleNamespace(set_watched=lambda m: None, stop=lambda: None)
+    svc = Service(
+        CFG, firewall=_FakeFw(), redirection=_FakeRedir(), portal_ip="192.168.1.2", watch=watch
+    )
     svc.start()
     svc.stop()
     assert seen["host"] == "127.0.0.1"

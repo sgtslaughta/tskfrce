@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import Mock
 
 from blocker.backend import Seen
 from blocker.config import Config
@@ -129,3 +131,20 @@ def test_stop_restores_and_flushes_even_on_error():
     redir.stop_all = boom
     svc.stop()
     assert fw.flushed is True  # flush runs despite the redirection error
+
+
+def test_apply_updates_watch_and_loop_reports_full_set():
+    watch = SimpleNamespace(
+        set_watched=Mock(),
+        stop=Mock(),
+        counter=Mock(resisting=Mock(return_value={MAC})),
+    )
+    reports = []
+    svc, _, _ = _svc(watch=watch, report=lambda c, m: reports.append(m) or True)
+    svc.store.set_blocked([MAC])
+    watch.set_watched.assert_called_with({MAC})
+    svc._resist_once()
+    assert reports == [{MAC}]
+    watch.counter.resisting.return_value = set()
+    svc._resist_once()
+    assert reports[-1] == set()

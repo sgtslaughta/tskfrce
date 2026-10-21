@@ -15,10 +15,11 @@ from collections.abc import Callable
 from blocker import firewall as fw
 from blocker.api import make_api
 from blocker.arp import RedirectionManager, TargetAddrs
-from blocker.backend import Seen, fetch_blocked
+from blocker.backend import Seen, fetch_blocked, report_resisting
 from blocker.config import Config
 from blocker.discovery import run_discovery
 from blocker.portal import run_dns, run_http
+from blocker.resist import ResistanceCounter, ResistanceWatch
 from blocker.state_store import StateStore
 
 log = logging.getLogger(__name__)
@@ -69,6 +70,8 @@ class Service:
         sleep: Callable[[float], None] = time.sleep,
         lan_cidrs: list[str] | None = None,
         portal_ip: str | None = None,
+        watch: ResistanceWatch | None = None,
+        report: Callable[[Config, set[str]], bool] = report_resisting,
     ) -> None:
         self.cfg = cfg
         self._fw = firewall
@@ -78,6 +81,8 @@ class Service:
         self._sleep = sleep
         self._lan_cidrs = lan_cidrs or DEFAULT_LAN_CIDRS
         self._portal_ip = portal_ip
+        self._watch = watch
+        self._report = report
         self.store = StateStore()
         self._devices: dict[str, TargetAddrs] = {}
         self._lock = threading.Lock()
@@ -105,6 +110,8 @@ class Service:
             except Exception:
                 log.exception("firewall apply failed")
             self._redir.set_targets(devs)
+            if self._watch is not None:
+                self._watch.set_watched(macs)
 
     def _on_seen(self, seen: Seen) -> None:
         with self._lock:
@@ -125,6 +132,19 @@ class Service:
                 self._reconcile_once()
             except Exception:
                 log.exception("reconcile failed")
+
+    # --- resistance report --------------------------------------------------
+
+    def _resist_once(self) -> None:
+        # Always report the full set (even empty) so the backend can clear.
+        self._report(self.cfg, self._watch.counter.resisting())
+
+    def _resist_loop(self) -> None:
+        while not self._stop.wait(self.cfg.resist_interval):
+            try:
+                self._resist_once()
+            except Exception:
+                log.exception("resist report failed")
 
     # --- diagnostics --------------------------------------------------------
 
@@ -160,7 +180,10 @@ class Service:
             self._fw.enable_forwarding()
         except Exception:
             log.exception("enable_forwarding failed")
+        if self._watch is None:
+            self._watch = ResistanceWatch(self.cfg, ResistanceCounter(self._redir._lanfacts()))
         self._spawn(self._reconcile_loop)
+        self._spawn(self._resist_loop)
         self._spawn(lambda: run_discovery(self.cfg, self._stop, self._on_seen))
         self._spawn(lambda: run_dns(self.cfg, self._portal_ip or "", self._stop))
         self._spawn(lambda: run_http(self.cfg, self._stop))
@@ -182,6 +205,11 @@ class Service:
 
     def stop(self) -> None:
         self._stop.set()
+        if self._watch is not None:
+            try:
+                self._watch.stop()
+            except Exception:
+                log.exception("resistance watch stop failed")
         try:
             self._redir.stop_all()
         except Exception:

@@ -36,3 +36,9 @@ def test_from_env_env_overrides_file(tmp_path):
 def test_missing_token_raises(tmp_path):
     with pytest.raises(RuntimeError):
         Config.from_env(_env(tmp_path))
+
+
+def test_resist_interval_default_15_and_env(tmp_path):
+    base = _env(tmp_path, INTERNAL_TOKEN="t")
+    assert Config.from_env(base).resist_interval == 15
+    assert Config.from_env({**base, "RESIST_INTERVAL": "5"}).resist_interval == 5

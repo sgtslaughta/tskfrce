@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from blocker import backend
-from blocker.backend import Seen, fetch_blocked, report_seen
+from blocker.backend import Seen, fetch_blocked, report_resisting, report_seen
 from blocker.config import Config
 
 
@@ -115,3 +115,17 @@ def test_fetch_blocked_none_on_timeout(make_stub, monkeypatch):
     monkeypatch.setattr(backend, "TIMEOUT", 0.3)
     s = make_stub(delay=1.5)
     assert fetch_blocked(_cfg(s.url)) is None
+
+
+def test_report_resisting_posts_sorted_list(make_stub):
+    s = make_stub(body=b"{}")
+    assert report_resisting(_cfg(s.url), {"bb:bb:bb:bb:bb:02", "aa:aa:aa:aa:aa:01"}) is True
+    method, path, headers, raw = s.requests[0]
+    assert method == "POST"
+    assert path == "/api/v1/internal/devices/resisting"
+    assert headers["X-Internal-Token"] == "tok"
+    assert json.loads(raw) == {"resisting": ["aa:aa:aa:aa:aa:01", "bb:bb:bb:bb:bb:02"]}
+
+
+def test_report_resisting_false_on_unreachable():
+    assert report_resisting(_cfg("http://127.0.0.1:1"), set()) is False

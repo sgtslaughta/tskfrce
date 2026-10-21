@@ -11,6 +11,7 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, replace
+from typing import Any
 
 from blocker.arp import LanFacts
 
@@ -90,3 +91,57 @@ class ResistanceCounter:
         if entry is None or now - entry[0] >= self._window:
             return Tally()
         return replace(entry[1])
+
+
+def _real_sniffer(*, iface: str | None, filter: str, prn: Callable) -> Any:
+    from scapy.all import AsyncSniffer
+
+    sniffer = AsyncSniffer(iface=iface or None, filter=filter, prn=prn, store=False)
+    sniffer.start()
+    return sniffer
+
+
+class ResistanceWatch:
+    """Runs a scapy AsyncSniffer on cfg.lan_iface feeding a ResistanceCounter."""
+
+    def __init__(
+        self,
+        cfg: Any,
+        counter: ResistanceCounter,
+        *,
+        sniffer_factory: Callable[..., Any] = _real_sniffer,
+    ) -> None:
+        self._cfg = cfg
+        self.counter = counter
+        self._factory = sniffer_factory
+        self._sniffer: Any = None
+        self._lock = threading.Lock()
+
+    def set_watched(self, macs: set[str]) -> None:
+        """Watch exactly macs: restart the sniffer with a matching filter, stop it if empty."""
+        self.counter.set_watched(macs)
+        with self._lock:
+            self._stop_sniffer()
+            if macs:
+                flt = " or ".join(f"ether src {m}" for m in sorted(macs))
+                self._sniffer = self._factory(
+                    iface=self._cfg.lan_iface or None, filter=flt, prn=self._on_packet
+                )
+
+    def stop(self) -> None:
+        with self._lock:
+            self._stop_sniffer()
+
+    def _stop_sniffer(self) -> None:
+        if self._sniffer is not None:
+            try:
+                self._sniffer.stop()
+            except Exception:
+                pass
+            self._sniffer = None
+
+    def _on_packet(self, pkt: Any) -> None:
+        from scapy.layers.l2 import Ether
+
+        if pkt.haslayer(Ether):
+            self.counter.observe(pkt[Ether].src, pkt[Ether].dst)
