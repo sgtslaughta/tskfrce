@@ -1,28 +1,43 @@
 import { Text } from '@mantine/core'
+import { useRouter } from 'next/router'
 import { FridgeShell } from '@/v2/components/FridgeShell'
 import { RequireParent } from '@/v2/components/RequireParent'
+import { useChoreDefinitions, useChoresToday } from '@/v2/hooks/useChores'
 import { useKids } from '@/v2/hooks/useKids'
-import { ChoreList } from './ChoreList'
-import { KidEditor } from './KidEditor'
-import { RewardsPanel } from './RewardsPanel'
+import { ChoresSection } from './ChoresSection'
+import { KidsSection } from './KidsSection'
+import { ManageLayout, SECTIONS, type KidProgress, type Section } from './ManageLayout'
+import { RewardsSection } from './RewardsSection'
+
+const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
 
 function KidsBody() {
+  const { query } = useRouter()
   const kids = useKids()
+  const defs = useChoreDefinitions().data ?? []
+  const today = useChoresToday().data ?? {}
+  const want = first(query.section)
+  const section: Section = SECTIONS.some((s) => s.id === want) ? (want as Section) : 'chores'
+  const list = kids.data ?? []
+  const progress: KidProgress[] = list.map((k) => {
+    const mine = today[String(k.id)] ?? []
+    return {
+      id: k.id,
+      name: k.full_name ?? k.username,
+      done: mine.filter((c) => c.status === 'done').length,
+      total: mine.length,
+    }
+  })
   return (
     <FridgeShell title="Kids & chores">
       {kids.isError && <Text role="alert">{kids.error.message}</Text>}
-      {kids.data?.map((k) => (
-        <section key={k.id} className="f-card" aria-label={k.full_name ?? k.username}>
-          <h2 className="f-display">
-            {k.avatar} {k.full_name ?? k.username}
-          </h2>
-          <KidEditor kid={k} />
-          <ChoreList kidId={k.id} />
-        </section>
-      ))}
-      <RewardsPanel />
-      <h2 className="f-display">Add a kid</h2>
-      <KidEditor />
+      <ManageLayout section={section} counts={{ chores: defs.length, kids: list.length }} kids={progress}>
+        {section === 'chores' && (
+          <ChoresSection key={first(query.kid)} kids={list} chores={defs} progress={progress} initialKid={first(query.kid)} />
+        )}
+        {section === 'kids' && <KidsSection kids={list} />}
+        {section === 'rewards' && <RewardsSection />}
+      </ManageLayout>
     </FridgeShell>
   )
 }

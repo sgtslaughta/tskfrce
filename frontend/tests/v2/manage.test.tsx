@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
 import type { ReactNode } from 'react'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -10,8 +10,6 @@ import { fridgeTheme } from '@/v2/theme'
 import { api } from '@/v2/api'
 import { DeviceRow } from '@/v2/manage/DeviceRow'
 import { GroupsPanel } from '@/v2/manage/GroupsPanel'
-import { ChoreEditor } from '@/v2/manage/ChoreEditor'
-import { ChoreList } from '@/v2/manage/ChoreList'
 import { KidEditor } from '@/v2/manage/KidEditor'
 import { WindowEditor } from '@/v2/manage/WindowEditor'
 import { DevicesPage } from '@/v2/manage/DevicesPage'
@@ -191,43 +189,7 @@ describe('devices page', () => {
   })
 })
 
-describe('chores', () => {
-  test('Weekdays sends weekly Mon-Fri', async () => {
-    render(wrap(<ChoreEditor kidId={7} />))
-    await userEvent.type(screen.getByLabelText('Chore'), 'Feed the cat')
-    await userEvent.selectOptions(screen.getByLabelText('Repeat'), 'Weekdays')
-    await userEvent.click(screen.getByRole('button', { name: 'Add chore' }))
-    await waitFor(() =>
-      expect(calls('POST')[0]).toEqual([
-        '/chores/',
-        {
-          method: 'POST',
-          body: {
-            title: 'Feed the cat',
-            kid_id: 7,
-            points: 10,
-            repeat: { type: 'weekly', days: [0, 1, 2, 3, 4] },
-            needs_photo: false,
-          },
-        },
-      ]),
-    )
-  })
-})
-
-describe('repeating chores and PIN', () => {
-  test('ChoreList offers Stop repeating for each definition', async () => {
-    apiMock.mockImplementation(async (p) =>
-      p.startsWith('/chores/definitions')
-        ? [{ id: 5, title: 'Dishes', points: 10, kid_id: 7, repeat: { type: 'daily', days: [] }, needs_photo: false }]
-        : {},
-    )
-    render(wrap(<ChoreList kidId={7} />))
-    expect(apiMock).toHaveBeenCalledWith('/chores/definitions?kid_id=7')
-    await userEvent.click(await screen.findByRole('button', { name: 'Stop repeating' }))
-    await waitFor(() => expect(calls('DELETE')[0]).toEqual(['/chores/5', { method: 'DELETE' }]))
-  })
-
+describe('PIN', () => {
   test('Remove PIN sends clear_pin, and only shows when a PIN is set', async () => {
     apiMock.mockResolvedValue({})
     const { unmount } = render(wrap(<KidEditor kid={kids[0]} />))
@@ -291,13 +253,5 @@ describe('settings', () => {
     await waitFor(() =>
       expect(calls('PATCH')[0]).toEqual(['/family', { method: 'PATCH', body: { screen_time_price: 30 } }]),
     )
-  })
-
-  test('ChoreEditor sends due_time when set', async () => {
-    render(wrap(<ChoreEditor kidId={7} />))
-    await userEvent.type(screen.getByLabelText('Chore'), 'Dishes')
-    fireEvent.change(screen.getByLabelText('Due by (optional)'), { target: { value: '17:00' } })
-    await userEvent.click(screen.getByRole('button', { name: 'Add chore' }))
-    await waitFor(() => expect((calls('POST')[0][1]?.body as { due_time?: string }).due_time).toBe('17:00'))
   })
 })

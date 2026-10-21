@@ -7,7 +7,7 @@ import { ConfirmDelete } from './ConfirmDelete'
 import { toastFail, toastOk } from '../notify'
 
 /** Edit a kid, or add one when `kid` is omitted. Only changed fields are sent. */
-export function KidEditor({ kid }: { kid?: Kid }) {
+export function KidEditor({ kid, onDone }: { kid?: Kid; onDone?: () => void }) {
   const create = useCreateKid()
   const patch = usePatchKid()
   const del = useDeleteKid()
@@ -73,7 +73,7 @@ export function KidEditor({ kid }: { kid?: Kid }) {
             opened={confirm}
             title={`Delete ${label}?`}
             body={`Deleting ${label} removes their chores and frees their devices.`}
-            onConfirm={() => del.mutate(kid.id)}
+            onConfirm={() => del.mutate(kid.id, { onSuccess: onDone })}
             onClose={close}
           />
         </>
