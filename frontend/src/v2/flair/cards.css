@@ -1,7 +1,11 @@
-/* Name-card backgrounds. Always dark with light text so contrast holds in light and dark mode. */
+/* Name-card backgrounds. The default (and Slate) card follows the approved kid-card header:
+   light = navy with white text; dark = pale #e8eeff with navy text, yellow top stripe and a
+   yellow XP bar. Themed cards (Lv12+) are always-dark designs with their own light ink. */
 .flair-card {
-  --fc-ink: #ffffff;
-  --fc-sub: #c6d0ee;
+  --fc-ink: var(--f-head-ink);
+  --fc-sub: var(--f-head-sub);
+  --fc-track: rgba(255, 255, 255, 0.16);
+  --fc-tag: rgba(255, 255, 255, 0.14);
   position: relative;
   overflow: hidden;
   display: flex;
@@ -10,9 +14,28 @@
   min-width: 0;
   padding: 12px 14px;
   border-radius: 8px;
-  background: #1d2b53;
+  background: var(--f-head-bg);
+  border-top: 4px solid var(--f-head-stripe);
   color: var(--fc-ink);
 }
+[data-mantine-color-scheme='dark'] .flair-card {
+  --fc-track: #c9d3ee;
+  --fc-tag: rgba(29, 43, 83, 0.1);
+}
+.flair-card.flair-card-grid,
+.flair-card.flair-card-waves,
+.flair-card.flair-card-stripes,
+.flair-card.flair-card-aurora,
+.flair-card.flair-card-sheen,
+.flair-card.flair-card-starfield,
+.flair-card.flair-card-unicorn {
+  --fc-ink: #ffffff;
+  --fc-sub: #c6d0ee;
+  --fc-track: rgba(255, 255, 255, 0.16);
+  --fc-tag: rgba(255, 255, 255, 0.14);
+}
+.flair-card .xp-bar { background: var(--fc-track); height: 6px; border-radius: 99px; }
+.flair-card .xp-bar > span { background: linear-gradient(90deg, #ffc93c, #ffb020); border-radius: 99px; }
 .flair-card > * { position: relative; z-index: 1; }
 /* numbers and labels inside a name card follow the card's ink, not the page's */
 [data-mantine-color-scheme] .flair-card .f-num,
@@ -24,7 +47,7 @@
 .flair-card-row { display: flex; gap: 8px; align-items: center; min-width: 0; flex-wrap: wrap; }
 .flair-card-sm .flair-card-row { flex-wrap: nowrap; }
 
-.flair-card-slate { background: #1d2b53; }
+.flair-card-slate { background: var(--f-head-bg); } /* the default look */
 .flair-card-grid {
   background-color: #1d2b53;
   background-image:

@@ -15,8 +15,8 @@
   max-width: 420px;
   padding: 28px;
   text-align: center;
-  background: var(--mantine-color-body);
-  border-radius: 20px;
+  background: var(--f-card);
+  border-radius: 8px;
   box-shadow: 0 0 40px 8px rgba(255, 200, 0, 0.55);
   animation: award-in 0.4s cubic-bezier(0.2, 1.4, 0.4, 1);
 }
@@ -69,5 +69,5 @@
   padding: 4px 14px;
   border-radius: 999px;
   border: 4px solid transparent;
-  background: var(--mantine-color-body) padding-box, var(--ring) border-box;
+  background: var(--f-card) padding-box, var(--ring) border-box;
 }

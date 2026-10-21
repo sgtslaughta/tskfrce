@@ -14,7 +14,7 @@
 .tier-mega-diamond {
   border-color: transparent;
   background:
-    linear-gradient(var(--mantine-color-body), var(--mantine-color-body)) padding-box,
+    linear-gradient(var(--f-card), var(--f-card)) padding-box,
     linear-gradient(120deg, #7bd3ff, #c58bff, #ff9ad5, #7bd3ff) border-box;
   background-size: auto, 300% 300%;
 }
@@ -30,4 +30,4 @@
   background: var(--f-line, rgba(0, 0, 0, 0.12));
   overflow: hidden;
 }
-.xp-bar > span { display: block; height: 100%; background: var(--f-accent, #ffc93c); }
+.xp-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #ffc93c, #ffb020); }
