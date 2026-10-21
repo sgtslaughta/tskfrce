@@ -28,7 +28,7 @@ def test_render_drops_by_mac_the_authoritative_key():
 
 def test_render_redirects_dns_and_http_drops_https():
     r = render_ruleset({"192.168.1.50"}, set(), MAC, LAN, "192.168.1.2", 8080)
-    assert "udp dport 53 dnat ip to 192.168.1.2:8080" in r
+    assert "udp dport 53 dnat ip to 192.168.1.2:53" in r
     assert "tcp dport 80 dnat ip to 192.168.1.2:8080" in r
     assert "tcp dport 443 drop" in r
 
@@ -45,5 +45,13 @@ def test_render_omits_dnat_when_no_portal_ip():
 def test_render_empty_set_is_noop_safe():
     r = render_ruleset(set(), set(), set(), LAN, "192.168.1.2", 8080)
     assert "elements" not in r  # no elements emitted when empty
-    assert r.startswith("table inet task4ce {")
+    assert r.startswith("add table inet task4ce\nflush table inet task4ce\ntable inet task4ce {")
     assert r.rstrip().endswith("}")
+
+
+def test_render_dns_to_port_53_http_to_portal_port():
+    r = render_ruleset({"192.168.1.50"}, set(), MAC, LAN, "192.168.1.2", 8080)
+    dns = [ln for ln in r.splitlines() if "dport 53 dnat" in ln]
+    http = [ln for ln in r.splitlines() if "dport 80 dnat" in ln]
+    assert len(dns) == 2 and all(ln.endswith(":53") for ln in dns)
+    assert len(http) == 1 and http[0].endswith(":8080")

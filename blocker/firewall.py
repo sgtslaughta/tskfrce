@@ -14,6 +14,7 @@ import subprocess
 log = logging.getLogger(__name__)
 
 TABLE = "task4ce"
+DNS_PORT = 53
 
 
 def _set_decl(name: str, typ: str, elements: set[str]) -> str:
@@ -40,7 +41,7 @@ def render_ruleset(
     """
     v4_lan = [c for c in lan_cidrs if ":" not in c]
     v6_lan = [c for c in lan_cidrs if ":" in c]
-    lines = [f"table inet {TABLE} {{"]
+    lines = [f"add table inet {TABLE}", f"flush table inet {TABLE}", f"table inet {TABLE} {{"]
     lines.append(_set_decl("blocked_v4", "ipv4_addr", blocked_v4))
     lines.append(_set_decl("blocked_v6", "ipv6_addr", blocked_v6))
     lines.append(_set_decl("blocked_mac", "ether_addr", blocked_mac))
@@ -52,8 +53,8 @@ def render_ruleset(
     lines.append("  chain prerouting {")
     lines.append("    type nat hook prerouting priority -100; policy accept;")
     if portal_ip:
-        lines.append(f"    ip saddr @blocked_v4 udp dport 53 dnat ip to {portal_ip}:{portal_port}")
-        lines.append(f"    ip saddr @blocked_v4 tcp dport 53 dnat ip to {portal_ip}:{portal_port}")
+        lines.append(f"    ip saddr @blocked_v4 udp dport 53 dnat ip to {portal_ip}:{DNS_PORT}")
+        lines.append(f"    ip saddr @blocked_v4 tcp dport 53 dnat ip to {portal_ip}:{DNS_PORT}")
         lines.append(f"    ip saddr @blocked_v4 tcp dport 80 dnat ip to {portal_ip}:{portal_port}")
     lines.append("  }")
     lines.append("  chain forward {")
