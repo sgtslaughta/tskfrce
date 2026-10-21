@@ -163,13 +163,24 @@ def test_today_shape(client, db, parent, kid, parent_headers):
     mkchore(db, parent, kid, TaskStatus.DONE, approved=False, title="c")  # not approved
     mkchore(db, parent, kid, TaskStatus.TODO, title="d")
     j = client.get("/api/v1/today", headers=parent_headers).json()
-    assert set(j) == {"day", "pending_approvals", "new_devices", "kids"}
+    assert set(j) == {"day", "pending_approvals", "new_devices", "needs_you", "kids"}
     assert j["day"] == "2026-10-20" and j["pending_approvals"] == 1
     assert len(j["new_devices"]) == 1
     k = j["kids"][0]
-    assert set(k) == {"id", "name", "avatar", "online_all", "chores", "devices"}
+    assert set(k) == {
+        "id",
+        "name",
+        "avatar",
+        "online_all",
+        "done",
+        "total",
+        "needs_you_count",
+        "last_active",
+        "chores",
+        "devices",
+    }
     assert [c["state"] for c in k["chores"]] == ["done", "needs_you", "todo", "todo"]
-    assert set(k["chores"][0]) == {"id", "title", "points", "state"}
+    assert {"id", "title", "points", "state", "mode", "taken_by"} <= set(k["chores"][0])
     assert k["devices"][0].keys() == {"id", "name", "vendor", "online"}
     assert k["online_all"] is False
 
