@@ -51,7 +51,7 @@ Things we got wrong during evaluation and corrected:
 3. **Bidirectional ARP/NDP redirect, then detection for what's left.** The
    box spoofs both sides: it tells the device the gateway is at the box, and
    tells the gateway the device is at the box. A kid-side static ARP entry or
-   static gateway is now *prevented*: even if the device talks straight to the
+   static gateway is now *usually stopped*: even if the device talks straight to the
    router, the router still hands the device's return traffic to the box,
    which drops it. The box flags a blocked device `resisting` when it keeps
    receiving router→device traffic for it, meaning a bypass the gateway side
@@ -80,6 +80,15 @@ Things we got wrong during evaluation and corrected:
    families whose router defeats ARP redirection. Only if the router
    compatibility list shows real demand, and only as an explicit "Advanced"
    opt-in with the fail-closed warning in the UI.
+
+## Known limits
+
+- A device that changes its address without announcing it can slip past until
+  the box rediscovers it.
+- A device can sometimes undo the box's redirect by answering the router
+  directly.
+- Unblocking can take up to about a minute to fully restore a device (being
+  worked on).
 
 ## Consequences
 

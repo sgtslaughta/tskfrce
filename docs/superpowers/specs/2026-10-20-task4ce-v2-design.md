@@ -65,7 +65,7 @@ The block drops packets, not DNS answers, so DNS changes and VPNs don't bypass i
 | Cellular / hotspot / other Wi-Fi | Out of scope (home Wi-Fi only); v3 native apps |
 | Unplug box | Fails open; parent alert; docs: place box out of reach |
 | Router anti-spoofing | Test block says 'router'; see docs/routers.md |
-| Laptop admin pins static ARP for router | Prevented: the box also redirects the router's view of the device; if traffic still gets through, device flagged and parents notified (Plan 5) |
+| Laptop admin pins static ARP for router | Usually stopped (box redirects both sides); if traffic still gets through, the device is flagged and parents are notified (Plan 5) |
 
 ### 4.2 Device discovery & identity
 - The box discovers devices on the LAN and shows friendly names (MAC vendor lookup plus DHCP/mDNS hostname, e.g. "Microsoft Xbox", "Emma's iPad").
