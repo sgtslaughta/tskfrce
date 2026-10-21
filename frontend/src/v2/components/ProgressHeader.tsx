@@ -2,7 +2,6 @@ import { NameCard } from '../flair/NameCard'
 import { useEmblems } from '../hooks/useEmblems'
 import { NO_FLAIR } from '../flair/none'
 import type { Progress } from '../types'
-import './progression.css'
 
 /** Flair name card with XP bar and streak for a kid card header. */
 export function ProgressHeader({

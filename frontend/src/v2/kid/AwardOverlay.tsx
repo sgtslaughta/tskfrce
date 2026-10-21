@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react'
 import { Button } from '@mantine/core'
 import { useCelebrations, useMarkCelebrationSeen } from '../hooks/useKidRewards'
 import { TIER_COLORS, TIER_NAMES } from '../tiers'
-import './award.css'
 
 export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; onLocker?: () => void }) {
   const award = useCelebrations(onExpired).data?.[0]

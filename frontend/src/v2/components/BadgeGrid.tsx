@@ -1,5 +1,4 @@
 import type { Badge } from '../types'
-import './progression.css'
 
 const tierCls = (b: Badge) => `tier-${b.tier_name.toLowerCase().replace(/[\s_]+/g, '-')}`
 

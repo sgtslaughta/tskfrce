@@ -1,9 +1,5 @@
 import type { ReactNode } from 'react'
 import type { Flair } from '../types'
-import './cards.css'
-import './rings.css'
-import './names.css'
-import './titles.css'
 
 interface Props {
   name: string
