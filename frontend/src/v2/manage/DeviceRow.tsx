@@ -12,11 +12,12 @@ interface Props {
   device: Device
   kids: Kid[]
   focused?: boolean
+  onDone?: () => void
 }
 
 const seen = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : 'never')
 
-export function DeviceRow({ device, kids, focused }: Props) {
+export function DeviceRow({ device, kids, focused, onDone }: Props) {
   const patch = usePatchDevice()
   const del = useDeleteDevice()
   const test = useTestBlock()
@@ -33,7 +34,7 @@ export function DeviceRow({ device, kids, focused }: Props) {
   const guest = device.status === 'guest'
 
   return (
-    <div ref={ref} id={`device-${device.id}`} className="f-card" data-focused={focused || undefined}>
+    <div ref={ref} id={`device-${device.id}`} className="m-form" data-focused={focused || undefined}>
       <TextInput
         aria-label="Device name"
         value={name}
@@ -44,7 +45,7 @@ export function DeviceRow({ device, kids, focused }: Props) {
           else if (n !== device.name) save({ name: n }, 'Renamed')
         }}
       />
-      <p>
+      <p className="m-meta">
         {device.vendor ?? 'Unknown maker'} · last seen {seen(device.last_seen)} ·{' '}
         <span className="f-pill" data-online={device.online}>
           {device.online ? 'online' : 'offline'}
@@ -73,31 +74,33 @@ export function DeviceRow({ device, kids, focused }: Props) {
           save({ status: e.currentTarget.checked ? 'guest' : device.owner_ids.length ? 'assigned' : 'unassigned' }, 'Saved')
         }
       />
-      <DeviceQuickMenu targets={{ kind: 'device', id: device.id }} label={device.name}>
-        <Button variant="default">Lock options</Button>
-      </DeviceQuickMenu>
-      <Button
-        variant="default"
-        aria-label={`Test block on ${device.name}`}
-        disabled={test.isPending}
-        onClick={() =>
-          test.mutate(device.id, {
-            onSuccess: (r) =>
-              r.reason === 'ok' ? toastOk(r.message) : notifications.show({ message: r.message, color: 'fridgeRed' }),
-            onError: toastFail,
-          })
-        }
-      >
-        {test.isPending ? 'Testing…' : 'Test block'}
-      </Button>
-      <Button color="fridgeRed" variant="light" onClick={open}>
-        Delete
-      </Button>
+      <div className="m-actions">
+        <DeviceQuickMenu targets={{ kind: 'device', id: device.id }} label={device.name}>
+          <Button variant="default">Lock options</Button>
+        </DeviceQuickMenu>
+        <Button
+          variant="default"
+          aria-label={`Test block on ${device.name}`}
+          disabled={test.isPending}
+          onClick={() =>
+            test.mutate(device.id, {
+              onSuccess: (r) =>
+                r.reason === 'ok' ? toastOk(r.message) : notifications.show({ message: r.message, color: 'fridgeRed' }),
+              onError: toastFail,
+            })
+          }
+        >
+          {test.isPending ? 'Testing…' : 'Test block'}
+        </Button>
+        <Button className="m-push" color="fridgeRed" variant="subtle" onClick={open}>
+          Delete
+        </Button>
+      </div>
       <ConfirmDelete
         opened={confirm}
         title={`Delete ${device.name}?`}
         body="It will show up as a new device if it connects again."
-        onConfirm={() => del.mutate(device.id)}
+        onConfirm={() => del.mutate(device.id, { onSuccess: onDone })}
         onClose={close}
       />
     </div>

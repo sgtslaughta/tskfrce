@@ -5,21 +5,34 @@ import { useMediaQuery } from '@mantine/hooks'
 import { useRouter } from 'next/router'
 
 export type Section = 'chores' | 'kids' | 'rewards' | 'badges'
-export const SECTIONS: { id: Section; label: string }[] = [
+export interface SectionDef<S extends string = string> {
+  id: S
+  label: string
+}
+export const SECTIONS: SectionDef<Section>[] = [
   { id: 'chores', label: 'Chores' },
   { id: 'kids', label: 'Kids' },
   { id: 'rewards', label: 'Rewards' },
   { id: 'badges', label: 'Badges' },
 ]
 
-interface Props {
-  section: Section
-  counts: Partial<Record<Section, number>>
+interface Props<S extends string> {
+  section: S
+  counts: Partial<Record<S, number>>
   children: ReactNode
+  /** Page path the sections live on (default the Kids page). */
+  path?: string
+  sections?: SectionDef<S>[]
 }
 
 /** Sidebar (top menu under 768 px) with the sections. */
-export function ManageLayout({ section, counts, children }: Props) {
+export function ManageLayout<S extends string = Section>({
+  section,
+  counts,
+  children,
+  path = '/kids',
+  sections = SECTIONS as unknown as SectionDef<S>[],
+}: Props<S>) {
   const small = useMediaQuery('(max-width: 767px)')
   const router = useRouter()
   return (
@@ -28,14 +41,14 @@ export function ManageLayout({ section, counts, children }: Props) {
         <SegmentedControl
           fullWidth
           aria-label="Section"
-          data={SECTIONS.map((s) => ({ value: s.id, label: s.label }))}
+          data={sections.map((s) => ({ value: s.id, label: s.label }))}
           value={section}
-          onChange={(v) => router.replace({ pathname: '/kids', query: { section: v } })}
+          onChange={(v) => router.replace({ pathname: path, query: { section: v } })}
         />
       ) : (
         <nav className="m-side" aria-label="Sections">
-          {SECTIONS.map((s) => (
-            <Link key={s.id} href={`/kids?section=${s.id}`} aria-current={section === s.id ? 'page' : undefined}>
+          {sections.map((s) => (
+            <Link key={s.id} href={`${path}?section=${s.id}`} aria-current={section === s.id ? 'page' : undefined}>
               {s.label}
               {counts[s.id] !== undefined && <span className="m-n">{counts[s.id]}</span>}
             </Link>

@@ -2,46 +2,36 @@ import { useRouter } from 'next/router'
 import { Text } from '@mantine/core'
 import { FridgeShell } from '@/v2/components/FridgeShell'
 import { RequireParent } from '@/v2/components/RequireParent'
-import { useDevices } from '@/v2/hooks/useDevices'
+import { useDevices, useGroups } from '@/v2/hooks/useDevices'
 import { useKids } from '@/v2/hooks/useKids'
-import type { Device } from '@/v2/types'
-import { DeviceRow } from './DeviceRow'
+import { DevicesSection } from './DevicesSection'
 import { GroupsPanel } from './GroupsPanel'
+import { ManageLayout, type SectionDef } from './ManageLayout'
 
-const SECTIONS: { status: Device['status']; title: string }[] = [
-  { status: 'unassigned', title: 'New (blocked until you assign them)' },
-  { status: 'assigned', title: 'Assigned' },
-  { status: 'guest', title: 'Guests (always online)' },
+type S = 'devices' | 'groups'
+const DEVICE_SECTIONS: SectionDef<S>[] = [
+  { id: 'devices', label: 'Devices' },
+  { id: 'groups', label: 'Groups' },
 ]
 
+const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
+
 function DevicesBody() {
-  const router = useRouter()
-  const focus = Number(router.query.focus)
+  const { query } = useRouter()
   const devices = useDevices()
   const kids = useKids()
+  const groups = useGroups()
   const all = devices.data ?? []
+  const want = first(query.section)
+  const section: S = DEVICE_SECTIONS.some((s) => s.id === want) ? (want as S) : 'devices'
 
   return (
     <FridgeShell title="Devices">
-      <Text className="f-note">
-        The home box pauses internet for normal use on your Wi‑Fi. It can&apos;t stop a determined kid who changes network
-        settings, uses a phone hotspot, or swaps devices — but it will tell you when a paused device is getting around
-        the block.
-      </Text>
       {devices.isError && <Text role="alert">{devices.error.message}</Text>}
-      {SECTIONS.map(({ status, title }) => {
-        const rows = all.filter((d) => d.status === status)
-        return (
-          <section key={status} aria-label={title}>
-            <h2 className="f-display">{title}</h2>
-            {rows.length === 0 && <Text>None.</Text>}
-            {rows.map((d) => (
-              <DeviceRow key={d.id} device={d} kids={kids.data ?? []} focused={d.id === focus} />
-            ))}
-          </section>
-        )
-      })}
-      <GroupsPanel devices={all} />
+      <ManageLayout path="/devices" sections={DEVICE_SECTIONS} section={section} counts={{ devices: all.length, groups: groups.data?.length }}>
+        {section === 'devices' && <DevicesSection devices={all} kids={kids.data ?? []} focus={Number(first(query.focus))} />}
+        {section === 'groups' && <GroupsPanel devices={all} />}
+      </ManageLayout>
     </FridgeShell>
   )
 }

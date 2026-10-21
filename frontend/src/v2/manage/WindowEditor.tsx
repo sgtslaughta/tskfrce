@@ -1,14 +1,15 @@
 import { useState } from 'react'
-import { ActionIcon, Button, Chip, Text, TextInput } from '@mantine/core'
+import { ActionIcon, Button, Chip, Drawer, Text, TextInput } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { useAddWindow, useDeleteWindow, useWindows } from '@/v2/hooks/useWindows'
 import { DAYS } from '@/v2/days'
 import type { TimeWindow } from '@/v2/types'
 import { toastFail, toastOk } from '../notify'
 
 type Kind = TimeWindow['kind']
-const KINDS: { kind: Kind; title: string; add: string }[] = [
-  { kind: 'allowed', title: 'Allowed hours', add: 'Add allowed hours' },
-  { kind: 'free', title: 'Free time', add: 'Add free time' },
+const KINDS: { kind: Kind; title: string; add: string; empty: string }[] = [
+  { kind: 'allowed', title: 'Allowed hours', add: 'Add allowed hours', empty: 'No allowed hours yet. Add when they can be online.' },
+  { kind: 'free', title: 'Free time', add: 'Add free time', empty: 'No free time yet. Add times that need no chores.' },
 ]
 
 const describe = (w: TimeWindow) =>
@@ -19,10 +20,12 @@ interface Props {
   label: string
 }
 
+/** Two cards (Allowed hours, Free time) for one kid or group; adding opens a drawer. */
 export function WindowEditor({ target, label }: Props) {
   const windows = useWindows()
   const add = useAddWindow()
   const del = useDeleteWindow()
+  const small = useMediaQuery('(max-width: 767px)')
   const [adding, setAdding] = useState<Kind | null>(null)
   const [days, setDays] = useState(['0', '1', '2', '3', '4', '5', '6'])
   const [start, setStart] = useState('15:00')
@@ -33,6 +36,7 @@ export function WindowEditor({ target, label }: Props) {
   )
   const overnight = end < start
   const same = start === end && start !== ''
+  const kindTitle = KINDS.find((k) => k.kind === adding)?.title
 
   const save = () =>
     adding &&
@@ -48,16 +52,32 @@ export function WindowEditor({ target, label }: Props) {
     )
 
   return (
-    <section aria-label={`${label} hours`}>
-      <h3 className="f-display">{label}</h3>
-      {KINDS.map(({ kind, title, add: addLabel }) => (
-        <div key={kind}>
-          <Text fw={700}>{title}</Text>
-          {mine
-            .filter((w) => w.kind === kind)
-            .map((w) => (
-              <div key={w.id} className="f-row">
-                <Text>{describe(w)}</Text>
+    <section aria-label={`${label} hours`} className="m-grid2">
+      {KINDS.map(({ kind, title, add: addLabel, empty }) => {
+        const rows = mine.filter((w) => w.kind === kind)
+        return (
+          <div key={kind} className="f-card m-list" aria-label={title} role="group">
+            <div className="f-title-row" style={{ padding: 16 }}>
+              <h3 className="f-display">{title}</h3>
+              <Button size="xs" variant="default" aria-label={addLabel} onClick={() => setAdding(kind)}>
+                Add
+              </Button>
+            </div>
+            {rows.length === 0 && <p className="m-empty">{empty}</p>}
+            {rows.map((w) => (
+              <div key={w.id} className="m-rr">
+                <div className="m-grow">
+                  <div className="m-days">
+                    {DAYS.map((d, i) => (
+                      <span key={d} className="m-d" data-on={w.days.includes(String(i)) || undefined}>
+                        {d}
+                      </span>
+                    ))}
+                  </div>
+                  <b className="m-num">
+                    {w.start}-{w.end}
+                  </b>
+                </div>
                 <ActionIcon
                   variant="subtle"
                   color="fridgeRed"
@@ -69,15 +89,17 @@ export function WindowEditor({ target, label }: Props) {
                 </ActionIcon>
               </div>
             ))}
-          {adding !== kind && (
-            <Button variant="default" onClick={() => setAdding(kind)}>
-              {addLabel}
-            </Button>
-          )}
-        </div>
-      ))}
-      {adding && (
-        <div className="f-card">
+          </div>
+        )
+      })}
+      <Drawer
+        opened={adding !== null}
+        onClose={() => setAdding(null)}
+        position="right"
+        size={small ? '100%' : 'md'}
+        title={`${kindTitle ?? ''}: ${label}`}
+      >
+        <div className="m-form">
           <Chip.Group multiple value={days} onChange={setDays}>
             <div className="f-row">
               {DAYS.map((d, i) => (
@@ -93,14 +115,16 @@ export function WindowEditor({ target, label }: Props) {
             {overnight && <Text size="sm">Ends the next morning</Text>}
             {same && <Text size="sm">Start and end can&apos;t be the same.</Text>}
           </div>
-          <Button onClick={save} disabled={!days.length || !start || !end || same} loading={add.isPending}>
-            Add
-          </Button>
-          <Button variant="default" onClick={() => setAdding(null)}>
-            Cancel
-          </Button>
+          <div className="m-actions">
+            <Button onClick={save} disabled={!days.length || !start || !end || same} loading={add.isPending}>
+              Add
+            </Button>
+            <Button variant="default" onClick={() => setAdding(null)}>
+              Cancel
+            </Button>
+          </div>
         </div>
-      )}
+      </Drawer>
     </section>
   )
 }

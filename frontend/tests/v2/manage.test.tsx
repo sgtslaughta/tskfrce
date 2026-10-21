@@ -17,7 +17,8 @@ import { SettingsPage } from '@/v2/manage/SettingsPage'
 import type { Device, Family, Kid } from '@/v2/types'
 
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
-jest.mock('next/router', () => ({ useRouter: () => ({ query: {} }) }))
+const mockRouter: { query: Record<string, string> } = { query: {} }
+jest.mock('next/router', () => ({ useRouter: () => mockRouter }))
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
 jest.mock('@/v2/today/DeviceQuickMenu', () => ({
   DeviceQuickMenu: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -77,6 +78,7 @@ beforeAll(() => {
 })
 
 beforeEach(() => {
+  mockRouter.query = {}
   jest.mocked(notifications.show).mockClear()
   apiMock.mockReset().mockImplementation(async (path) => {
     if (path === '/family') return family
@@ -173,7 +175,8 @@ describe('devices', () => {
 
   test('group create POSTs name and members', async () => {
     render(wrap(<GroupsPanel devices={[device]} />))
-    await userEvent.type(screen.getByLabelText('New group name'), 'Tablets')
+    await userEvent.click(screen.getByRole('button', { name: 'New group' }))
+    await userEvent.type(await screen.findByLabelText('Group name'), 'Tablets')
     await userEvent.click(screen.getByRole('button', { name: 'Create group' }))
     await waitFor(() =>
       expect(calls('POST')[0]).toEqual(['/groups', { method: 'POST', body: { name: 'Tablets', device_ids: [] } }]),
@@ -182,10 +185,43 @@ describe('devices', () => {
 })
 
 describe('devices page', () => {
+  const serve = (devices: Device[]) =>
+    apiMock.mockImplementation(async (path) => (path === '/devices' ? devices : path === '/kids' ? kids : path === '/groups' ? [] : {}))
+
   test('renders the honest promise note', async () => {
-    apiMock.mockImplementation(async (path) => (path === '/devices' || path === '/kids' ? [] : {}))
+    serve([])
     render(wrap(<DevicesPage />))
     expect(await screen.findByText(/The home box pauses internet/)).toBeInTheDocument()
+  })
+
+  test('empty state points at the next step', async () => {
+    serve([])
+    render(wrap(<DevicesPage />))
+    expect(await screen.findByText(/No new devices\. When a phone or laptop joins your Wi-Fi/)).toBeInTheDocument()
+  })
+
+  test('filter chips show counts and switch the list', async () => {
+    serve([device, { ...device, id: 2, name: 'Leo tablet', status: 'assigned', owner_ids: [8] }])
+    render(wrap(<DevicesPage />))
+    expect(await screen.findByText('Maya laptop')).toBeInTheDocument()
+    expect(screen.queryByText('Leo tablet')).toBeNull()
+    await userEvent.click(screen.getByRole('radio', { name: /Assigned/ }))
+    expect(await screen.findByText('Leo tablet')).toBeInTheDocument()
+    expect(screen.queryByText('Maya laptop')).toBeNull()
+  })
+
+  test('clicking a row opens the device drawer', async () => {
+    serve([device])
+    render(wrap(<DevicesPage />))
+    await userEvent.click(await screen.findByRole('button', { name: /Maya laptop/ }))
+    expect(await screen.findByRole('textbox', { name: 'Device name' })).toHaveValue('Maya laptop')
+  })
+
+  test('?focus opens that device', async () => {
+    mockRouter.query = { focus: '2' }
+    serve([device, { ...device, id: 2, name: 'Leo tablet', status: 'assigned', owner_ids: [8] }])
+    render(wrap(<DevicesPage />))
+    expect(await screen.findByRole('textbox', { name: 'Device name' })).toHaveValue('Leo tablet')
   })
 })
 
@@ -207,8 +243,8 @@ describe('windows', () => {
   test('overnight hint shows when end is before start', async () => {
     render(wrap(<WindowEditor target={{ kid_id: 7 }} label="Maya" />))
     expect(screen.queryByText('Ends the next morning')).toBeNull()
-    await userEvent.click(screen.getAllByRole('button', { name: 'Add allowed hours' })[0])
-    const start = screen.getByLabelText('Start')
+    await userEvent.click(screen.getByRole('button', { name: 'Add allowed hours' }))
+    const start = await screen.findByLabelText('Start')
     const end = screen.getByLabelText('End')
     await userEvent.clear(start)
     await userEvent.type(start, '21:00')
@@ -226,8 +262,8 @@ describe('windows', () => {
 
   test('same start and end is rejected', async () => {
     render(wrap(<WindowEditor target={{ kid_id: 7 }} label="Maya" />))
-    await userEvent.click(screen.getAllByRole('button', { name: 'Add free time' })[0])
-    await userEvent.clear(screen.getByLabelText('End'))
+    await userEvent.click(screen.getByRole('button', { name: 'Add free time' }))
+    await userEvent.clear(await screen.findByLabelText('End'))
     await userEvent.type(screen.getByLabelText('End'), '15:00')
     expect(await screen.findByText("Start and end can't be the same.")).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled()
@@ -235,7 +271,32 @@ describe('windows', () => {
 })
 
 describe('settings', () => {
+  test('Save is disabled until something changes', async () => {
+    render(wrap(<SettingsPage />))
+    const save = await screen.findByRole('button', { name: 'Save settings' })
+    expect(save).toBeDisabled()
+    await userEvent.type(screen.getByLabelText('Family name'), 'x')
+    expect(save).toBeEnabled()
+  })
+
+  test('Hours kid chips switch the kid', async () => {
+    mockRouter.query = { section: 'hours' }
+    apiMock.mockImplementation(async (path) =>
+      path === '/kids'
+        ? kids
+        : path === '/windows'
+          ? [{ id: 1, kind: 'allowed', days: '01', start: '08:00', end: '09:00', kid_id: 8, group_id: null }]
+          : [],
+    )
+    render(wrap(<SettingsPage />))
+    expect(await screen.findByRole('region', { name: 'Maya hours' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('radio', { name: 'Leo' }))
+    expect(await screen.findByRole('region', { name: 'Leo hours' })).toBeInTheDocument()
+    expect(screen.getByText('08:00-09:00')).toBeInTheDocument()
+  })
+
   test('PATCH sends only changed fields', async () => {
+    mockRouter.query = { section: 'screen' }
     render(wrap(<SettingsPage />))
     await userEvent.click(await screen.findByRole('switch', { name: 'Kids can spend points on screen time' }))
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
@@ -245,6 +306,7 @@ describe('settings', () => {
   })
 
   test('saves screen_time_price', async () => {
+    mockRouter.query = { section: 'screen' }
     render(wrap(<SettingsPage />))
     const price = await screen.findByLabelText('Screen time price (points per 15 min)')
     await userEvent.clear(price)

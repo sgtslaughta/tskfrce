@@ -32,3 +32,15 @@
 .m-sub span { flex: 1; }
 @media (max-width: 767px) { .m-row { grid-template-columns: 1fr auto; } .m-row .m-avs { display: none; } }
 .m-rr .m-meta { display: block; }
+/* Settings and Devices */
+.m-card { padding: 16px; display: grid; gap: 16px; }
+.m-help { color: var(--f-sub); font-size: 12px; margin: 0; }
+.m-info { padding: 12px 16px; color: var(--f-sub); font-size: 13px; }
+.m-empty { padding: 24px 16px; text-align: center; color: var(--f-sub); }
+.m-days { display: flex; gap: 3px; flex-wrap: wrap; }
+.m-d { font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 3px; border: 1px solid var(--f-line); color: var(--f-sub); text-transform: uppercase; }
+.m-d[data-on] { background: var(--f-ink); border-color: var(--f-ink); color: var(--f-card); }
+.m-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--f-line); margin-right: 6px; }
+.m-dot[data-on] { background: var(--f-green); }
+.m-grid2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 767px) { .m-grid2 { grid-template-columns: 1fr; } }
