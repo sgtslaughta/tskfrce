@@ -32,6 +32,7 @@ LAN = LanFacts(
     gateway_mac="aa:aa:aa:aa:aa:aa",
     box_mac="bb:bb:bb:bb:bb:bb",
     gateway_ip6="fe80::1",
+    gateway_mac6="cc:cc:cc:cc:cc:cc",  # v6 gateway MAC, distinct from v4
 )
 DEV = "de:ad:be:ef:00:01"
 
@@ -67,12 +68,24 @@ def test_ndp_advert_fields():
 
 
 def test_restore_sends_truth():
-    from scapy.all import ARP
+    from scapy.all import ARP, ICMPv6NDOptDstLLAddr
 
     t = TargetAddrs(mac=DEV, ip="192.168.1.50", ip6=("fe80::50",))
     pkts = restore(t, LAN)
     arp = [p for p in pkts if p.haslayer(ARP)][0]
-    assert arp[ARP].hwsrc == LAN.gateway_mac  # truthful gateway MAC, not the box
+    assert arp[ARP].hwsrc == LAN.gateway_mac  # truthful v4 gateway MAC, not the box
+    na = [p for p in pkts if p.haslayer(ICMPv6NDOptDstLLAddr)][0]
+    assert na[ICMPv6NDOptDstLLAddr].lladdr == LAN.gateway_mac6  # v6 MAC, not v4's
+
+
+def test_restore_skips_heal_when_gateway_mac_unknown():
+    # Unresolved gateway MACs must never be spoofed with a guess on restore,
+    # or unblocking would itself poison the device's cache.
+    from dataclasses import replace
+
+    lan = replace(LAN, gateway_mac=None, gateway_mac6=None)
+    t = TargetAddrs(mac=DEV, ip="192.168.1.50", ip6=("fe80::50",))
+    assert restore(t, lan) == []
 
 
 def test_set_targets_starts_and_stops_loops():

@@ -29,12 +29,19 @@ class TargetAddrs:
 
 @dataclass(frozen=True)
 class LanFacts:
-    """Facts about the LAN, gathered by injectable helpers (tests don't touch the kernel)."""
+    """Facts about the LAN, gathered by injectable helpers (tests don't touch the kernel).
+
+    gateway_mac / gateway_mac6 are the gateway's *real* MACs, used only to heal a
+    device's cache on restore. None means we could not resolve it truthfully, so
+    that family's heal is skipped (never spoofed with a guess) — natural cache
+    expiry recovers it instead.
+    """
 
     gateway_ip: str
-    gateway_mac: str
+    gateway_mac: str | None
     box_mac: str
     gateway_ip6: str | None = None
+    gateway_mac6: str | None = None
 
 
 def _active(t: TargetAddrs | None) -> bool:
@@ -70,11 +77,17 @@ def redirect_packets(target: TargetAddrs, lan: LanFacts) -> list:
 
 
 def restore(target: TargetAddrs, lan: LanFacts) -> list:
-    """Truthful mappings so the device relearns the real gateway MAC (lladdr = gateway_mac)."""
+    """Truthful mappings so the device relearns the real gateway MAC.
+
+    A family is healed only when the gateway's real MAC for it is known; otherwise
+    the heal is skipped (never sent with a guessed/broadcast MAC, which would itself
+    poison the cache and break the device after unblock). The device's own cache
+    timeout recovers the truth in that case.
+    """
     from scapy.all import ARP, Ether
 
     pkts = []
-    if target.ip:
+    if target.ip and lan.gateway_mac:
         pkts.append(
             Ether(dst=target.mac)
             / ARP(
@@ -85,10 +98,10 @@ def restore(target: TargetAddrs, lan: LanFacts) -> list:
                 hwdst=target.mac,
             )
         )
-    if lan.gateway_ip6:
+    if lan.gateway_ip6 and lan.gateway_mac6:
         for ip6 in target.ip6:
-            # truth: advertise the gateway's real MAC
-            pkts.append(ndp_advert(ip6, target.mac, lan.gateway_ip6, lan.gateway_mac))
+            # truth: advertise the v6 gateway's real MAC, resolved separately from v4
+            pkts.append(ndp_advert(ip6, target.mac, lan.gateway_ip6, lan.gateway_mac6))
     return pkts
 
 
@@ -100,17 +113,21 @@ def _real_sendp(pkts: list, iface: str | None) -> None:
     sendp(pkts, iface=iface, verbose=0)
 
 
-def _detect_gateway_ip6() -> str | None:
-    """The v6 default-route next hop (the router address a device points at).
+def _detect_gateway_ip6(cfg) -> str | None:
+    """The v6 default-route next hop (the router address a device points at), on
+    the LAN interface only.
 
     Returning it lets NDP redirection run so a blocked device cannot simply use
-    IPv6 to route around the v4-only ARP block. None when the box has no v6
-    uplink — then v6 can't be intercepted from a spoofing sidecar at all (see
-    docs/blocker.md: disable IPv6 at the router for airtight blocking)."""
+    IPv6 to route around the v4-only ARP block. None when the box has no v6 uplink
+    on the LAN side — then v6 can't be intercepted from a spoofing sidecar at all
+    (see docs/blocker.md: disable IPv6 at the router for airtight blocking). We pin
+    to cfg.lan_iface so we never pick up a gateway on the container's WAN side."""
     try:
         from scapy.all import conf
 
-        nh = conf.route6.route("2000::")[2]
+        iface, _src, nh = conf.route6.route("2000::")
+        if cfg.lan_iface and iface != cfg.lan_iface:
+            return None
         if isinstance(nh, list):
             nh = nh[0] if nh else None
         return nh if nh and nh != "::" else None
@@ -121,16 +138,27 @@ def _detect_gateway_ip6() -> str | None:
 def detect_lan(cfg) -> LanFacts:
     """Best-effort LAN facts from scapy. Production only; tests inject LanFacts."""
     from scapy.all import conf, get_if_hwaddr, getmacbyip
+    from scapy.layers.inet6 import getmacbyip6
 
     iface = cfg.lan_iface or conf.iface
     gw = conf.route.route("0.0.0.0")[2]
     box_mac = get_if_hwaddr(iface)
-    gw_mac = getmacbyip(gw) or "ff:ff:ff:ff:ff:ff"
+    # Real gateway MACs for healing. None (unresolved) => that family's heal is
+    # skipped; never substitute a broadcast/guess, which would poison the cache.
+    gw_mac = getmacbyip(gw) or None
+    gw_ip6 = _detect_gateway_ip6(cfg)
+    gw_mac6 = None
+    if gw_ip6:
+        try:
+            gw_mac6 = getmacbyip6(gw_ip6) or None
+        except Exception:
+            gw_mac6 = None
     return LanFacts(
         gateway_ip=gw,
         gateway_mac=gw_mac,
         box_mac=box_mac,
-        gateway_ip6=_detect_gateway_ip6(),
+        gateway_ip6=gw_ip6,
+        gateway_mac6=gw_mac6,
     )
 
 
