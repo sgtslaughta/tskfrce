@@ -4,9 +4,9 @@ import { FridgeShell } from "../components/FridgeShell";
 import { Sticker } from "../components/Sticker";
 import { StickerCard } from "../components/StickerCard";
 import { useToday } from "../hooks/useToday";
-import { KidCard } from "./KidCard";
+import { KidTabs } from "./KidTabs";
 import { NewDevicesBanner } from "./NewDevicesBanner";
-import { RequestsPanel } from "./RequestsPanel";
+import { NeedsYou } from "./NeedsYou";
 
 const dayName = (iso?: string) =>
   iso
@@ -15,7 +15,7 @@ const dayName = (iso?: string) =>
       })
     : "Today";
 
-/** Parent home: day, pending approvals, new devices, one card per kid. */
+/** Parent home: day, needs-you feed, new devices, one tab per kid. */
 export function TodayPage() {
   const { data, isError, error } = useToday();
   const n = data?.pending_approvals ?? 0;
@@ -30,7 +30,7 @@ export function TodayPage() {
       )}
       {data && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <RequestsPanel />
+          <NeedsYou items={data.needs_you ?? []} />
           <NewDevicesBanner devices={data.new_devices} />
           {data.kids.length === 0 ? (
             <StickerCard>
@@ -38,7 +38,7 @@ export function TodayPage() {
               <Link href="/kids">Add a kid</Link>
             </StickerCard>
           ) : (
-            data.kids.map((k) => <KidCard key={k.id} kid={k} />)
+            <KidTabs kids={data.kids} />
           )}
         </div>
       )}

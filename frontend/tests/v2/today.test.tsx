@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "@jest/globals";
 import type { Mock } from "jest-mock";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MantineProvider } from "@mantine/core";
@@ -45,14 +45,23 @@ const chore = (id: number, state: TodayChore["state"]): TodayChore => ({
 });
 const base: Today = {
   day: "2026-10-20",
-  pending_approvals: 1,
+  pending_approvals: 2,
   new_devices: [],
+  needs_you: [
+    { type: "chore", id: 12, kid_id: 1, kid_name: "Emma", title: "Clean room", attempt: 1, thumb_url: "/chore-photos/5/thumb", subtasks_done: 3, subtasks_total: 3, submitted_at: "2026-10-20T16:12:00Z" },
+    { type: "redo", id: 13, kid_id: 2, kid_name: "Leo", title: "Make bed", attempt: 2, thumb_url: null, submitted_at: "2026-10-20T16:40:00Z" },
+    { type: "screen_time", id: 7, kid_id: 2, kid_name: "Leo", title: "30 min", cost: 40, kid_balance: 95, submitted_at: "2026-10-20T17:00:00Z" },
+    { type: "reward", id: 8, kid_id: 1, kid_name: "Emma", title: "Movie night", cost: 300, kid_balance: 610, submitted_at: "2026-10-20T17:10:00Z" },
+  ],
   kids: [
     {
       id: 1,
       name: "Emma",
       avatar: null,
       online_all: false,
+      done: 3,
+      total: 7,
+      needs_you_count: 1,
       chores: [chore(11, "done"), chore(12, "needs_you")],
       devices: [{ id: 21, name: "iPad", vendor: "Apple", online: false }],
     },
@@ -61,7 +70,10 @@ const base: Today = {
       name: "Leo",
       avatar: null,
       online_all: true,
-      chores: [],
+      done: 0,
+      total: 1,
+      needs_you_count: 0,
+      chores: [chore(31, "todo")],
       devices: [],
     },
   ],
@@ -84,23 +96,19 @@ function renderPage(data: Today) {
 
 beforeEach(() => {
   apiMock.mockReset();
+  localStorage.clear();
+  global.fetch = jest.fn(async () => ({ ok: false })) as never;
 });
 
 describe("TodayPage", () => {
-  test("kid name sits in the card header", async () => {
-    renderPage(base);
-    const name = await screen.findByText("Emma");
-    expect(name.closest(".f-card-head")).not.toBeNull();
-  });
-
   test("renders kids, day name and sticker", async () => {
     renderPage(base);
-    expect(await screen.findByText("Emma")).toBeInTheDocument();
-    expect(screen.getByText("Leo")).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: /Emma/ })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: /Leo/ })).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { name: "Tuesday" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("1 chore needs you")).toBeInTheDocument();
+    expect(screen.getByText("2 chores need you")).toBeInTheDocument();
   });
 
   test("shows new device banner", async () => {
@@ -110,44 +118,88 @@ describe("TodayPage", () => {
     expect(screen.getByText(/New device joined: Xbox/)).toBeInTheDocument();
   });
 
-  test("Approve posts and invalidates today", async () => {
+  test("Needs you shows one item per type with chip label and icon", async () => {
+    renderPage(base);
+    await screen.findByText("Needs you · 4");
+    for (const t of ["chore", "redo", "screen_time", "reward"])
+      expect(screen.getAllByTestId(`type-${t}`).length).toBeGreaterThan(0);
+    expect(screen.getByText("Redo")).toBeInTheDocument();
+    expect(screen.getByText("Reward")).toBeInTheDocument();
+    expect(screen.getByText(/2nd try/)).toBeInTheDocument();
+  });
+
+  test("filter chip shows only that type", async () => {
+    renderPage(base);
+    await userEvent.click(await screen.findByRole("button", { name: "Screen time 1" }));
+    expect(screen.getByText(/30 min/)).toBeInTheDocument();
+    expect(screen.queryByText(/Clean room/)).toBeNull();
+  });
+
+  test("Approve on a chore posts and invalidates today", async () => {
     renderPage(base);
     const spy = jest.spyOn(client, "invalidateQueries");
-    await userEvent.click(
-      await screen.findByRole("button", { name: "Approve" }),
-    );
+    await screen.findByText("Needs you · 4");
+    await userEvent.click(screen.getAllByRole("button", { name: "Approve" })[0]);
     await waitFor(() =>
-      expect(apiMock).toHaveBeenCalledWith("/chores/12/approve", {
+      expect(apiMock).toHaveBeenCalledWith("/chores/12/approve", { method: "POST" }),
+    );
+    await waitFor(() => expect(spy).toHaveBeenCalledWith({ queryKey: ["today"] }));
+  });
+
+  test("Send back needs a note", async () => {
+    renderPage(base);
+    await screen.findByText("Needs you · 4");
+    await userEvent.click(screen.getAllByRole("button", { name: "Send back" })[0]);
+    expect(screen.getAllByRole("button", { name: "Send back" })[0]).toBeDisabled();
+    await userEvent.type(screen.getByLabelText("Note"), "Under the bed too");
+    await userEvent.click(screen.getAllByRole("button", { name: "Send back" })[0]);
+    await waitFor(() =>
+      expect(apiMock).toHaveBeenCalledWith("/chores/12/send-back", {
         method: "POST",
+        body: { note: "Under the bed too" },
       }),
-    );
-    await waitFor(() =>
-      expect(spy).toHaveBeenCalledWith({ queryKey: ["today"] }),
     );
   });
 
-  test("many chips collapse and expand", async () => {
-    const kid = {
-      ...base.kids[0],
-      chores: Array.from({ length: 9 }, (_, i) =>
-        chore(i + 1, i < 4 ? "done" : "todo"),
-      ),
-      devices: Array.from({ length: 6 }, (_, i) => ({
-        id: 30 + i,
-        name: `Dev${i}`,
-        vendor: null,
-        online: true,
-      })),
-    };
-    renderPage({ ...base, pending_approvals: 0, kids: [kid] });
-    const btn = await screen.findByRole("button", {
-      name: /✓ 4\/9 · \+6 devices/,
+  test("tapping a thumbnail opens the viewer", async () => {
+    renderPage(base);
+    await userEvent.click(await screen.findByRole("button", { name: "Open photo for Clean room" }));
+    expect(await screen.findByRole("dialog")).toBeInTheDocument();
+    expect(screen.getByLabelText("Note for sending back")).toBeInTheDocument();
+  });
+
+  test("Approve all approves every visible item", async () => {
+    renderPage(base);
+    await userEvent.click(await screen.findByRole("button", { name: "Approve all" }));
+    await waitFor(() => {
+      const paths = apiMock.mock.calls.map(([p]) => p);
+      expect(paths).toEqual(
+        expect.arrayContaining([
+          "/chores/12/approve",
+          "/chores/13/approve",
+          "/redemptions/7/approve",
+          "/redemptions/8/approve",
+        ]),
+      );
     });
-    expect(screen.queryByRole("button", { name: /Dev0/ })).toBeNull();
-    await userEvent.click(btn);
-    expect(
-      await screen.findByRole("button", { name: /Dev0/ }),
-    ).toBeInTheDocument();
+  });
+
+  test("kid tabs show done/total and a dot; only the open tab renders chores", async () => {
+    renderPage(base);
+    const tab = await screen.findByRole("tab", { name: /Emma 3\/7/ });
+    expect(within(tab).getByTestId("dot-1")).toBeInTheDocument();
+    expect(screen.queryByTestId("dot-2")).toBeNull();
+    expect(screen.getByText("Chore 12")).toBeInTheDocument();
+    expect(screen.queryByText("Chore 31")).toBeNull();
+    await userEvent.click(screen.getByRole("tab", { name: /Leo/ }));
+    expect(await screen.findByText("Chore 31")).toBeInTheDocument();
+    expect(screen.queryByText("Chore 12")).toBeNull();
+  });
+
+  test("Done is collapsed by default", async () => {
+    renderPage(base);
+    await screen.findByText("Chore 12");
+    expect(screen.getByText("Done · 1").closest("details")).not.toHaveAttribute("open");
   });
 
   test("device menu Unlock for 1 hour posts override", async () => {
@@ -212,7 +264,7 @@ describe("TodayPage", () => {
   });
 
   test("empty state", async () => {
-    renderPage({ ...base, pending_approvals: 0, kids: [] });
+    renderPage({ ...base, pending_approvals: 0, needs_you: [], kids: [] });
     expect(
       await screen.findByText("Add your first kid to get started."),
     ).toBeInTheDocument();

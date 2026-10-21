@@ -7,7 +7,6 @@ import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fridgeTheme } from '@/v2/theme'
 import { api } from '@/v2/api'
-import { RequestsPanel } from '@/v2/today/RequestsPanel'
 import { RewardsPanel } from '@/v2/manage/RewardsPanel'
 import type { PendingRedemption } from '@/v2/types'
 
@@ -43,28 +42,6 @@ function serve(redemptions: PendingRedemption[]) {
 }
 
 beforeEach(() => serve([pending]))
-
-describe('RequestsPanel', () => {
-  test('Approve posts to approve', async () => {
-    render(wrap(<RequestsPanel />))
-    expect(await screen.findByText(/Maya wants Movie night \(150\)/)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Approve' }))
-    await waitFor(() => expect(calls('POST')[0][0]).toBe('/redemptions/7/approve'))
-  })
-
-  test('Deny posts to deny', async () => {
-    render(wrap(<RequestsPanel />))
-    await userEvent.click(await screen.findByRole('button', { name: 'Deny' }))
-    await waitFor(() => expect(calls('POST')[0][0]).toBe('/redemptions/7/deny'))
-  })
-
-  test('absent when empty', async () => {
-    serve([])
-    render(wrap(<RequestsPanel />))
-    await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/redemptions'))
-    expect(screen.queryByText('Requests')).not.toBeInTheDocument()
-  })
-})
 
 describe('RewardsPanel', () => {
   test('add posts name, price, icon', async () => {

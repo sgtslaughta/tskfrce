@@ -80,6 +80,13 @@ export interface TodayChore {
   title: string
   points: number
   state: ChoreState
+  due_time?: string | null
+  mode?: 'each' | 'race' | 'team'
+  subtasks_done?: number
+  subtasks_total?: number
+  attempt?: number
+  last_note?: string | null
+  taken_by?: string | null
 }
 
 export interface TodayDevice {
@@ -94,8 +101,29 @@ export interface TodayKid {
   name: string | null
   avatar: string | null
   online_all: boolean
+  done?: number
+  total?: number
+  needs_you_count?: number
+  last_active?: string | null
   chores: TodayChore[]
   devices: TodayDevice[]
+}
+
+/** Item in GET /today needs_you. */
+export interface NeedsItem {
+  type: 'chore' | 'redo' | 'screen_time' | 'reward'
+  id: number
+  kid_id: number | null
+  kid_name: string | null
+  title: string
+  attempt?: number
+  thumb_url?: string | null
+  subtasks_done?: number
+  subtasks_total?: number
+  submitted_at?: string | null
+  cost?: number
+  kid_balance?: number
+  mode?: string
 }
 
 /** GET /today */
@@ -103,6 +131,7 @@ export interface Today {
   day: string
   pending_approvals: number
   new_devices: Device[]
+  needs_you?: NeedsItem[]
   kids: TodayKid[]
 }
 
