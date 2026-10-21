@@ -7,6 +7,7 @@ resisting the redirect. Counts are per watched MAC and reset each window.
 
 from __future__ import annotations
 
+import logging
 import threading
 import time
 from collections.abc import Callable
@@ -14,6 +15,8 @@ from dataclasses import dataclass, replace
 from typing import Any
 
 from blocker.arp import LanFacts
+
+log = logging.getLogger(__name__)
 
 
 @dataclass
@@ -116,20 +119,31 @@ class ResistanceWatch:
         self._factory = sniffer_factory
         self._sniffer: Any = None
         self._lock = threading.Lock()
+        self._watched: set[str] | None = None
+        self._closed = False
 
     def set_watched(self, macs: set[str]) -> None:
         """Watch exactly macs: restart the sniffer with a matching filter, stop it if empty."""
-        self.counter.set_watched(macs)
+        macs = set(macs)
         with self._lock:
+            if self._closed or macs == self._watched:
+                return
+            self._watched = macs
+            self.counter.set_watched(macs)
             self._stop_sniffer()
             if macs:
                 flt = " or ".join(f"ether src {m}" for m in sorted(macs))
-                self._sniffer = self._factory(
-                    iface=self._cfg.lan_iface or None, filter=flt, prn=self._on_packet
-                )
+                try:
+                    self._sniffer = self._factory(
+                        iface=self._cfg.lan_iface or None, filter=flt, prn=self._on_packet
+                    )
+                except Exception:
+                    log.exception("sniffer start failed")
+                    self._sniffer = None
 
     def stop(self) -> None:
         with self._lock:
+            self._closed = True
             self._stop_sniffer()
 
     def _stop_sniffer(self) -> None:
@@ -137,7 +151,7 @@ class ResistanceWatch:
             try:
                 self._sniffer.stop()
             except Exception:
-                pass
+                log.debug("sniffer stop failed", exc_info=True)
             self._sniffer = None
 
     def _on_packet(self, pkt: Any) -> None:

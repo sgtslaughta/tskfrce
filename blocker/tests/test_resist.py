@@ -1,5 +1,7 @@
 from types import SimpleNamespace
 
+import pytest
+
 from blocker.arp import LanFacts
 from blocker.resist import ResistanceCounter, ResistanceWatch
 
@@ -90,6 +92,7 @@ def test_watch_restarts_sniffer_with_mac_filter():
 
 
 def test_watch_prn_feeds_counter():
+    pytest.importorskip("scapy")
     from scapy.layers.l2 import Ether
 
     captured = {}
@@ -102,3 +105,34 @@ def test_watch_prn_feeds_counter():
     w.set_watched({KID})
     captured["prn"](Ether(src=KID, dst=LAN.gateway_mac))
     assert counter.resisting() == {KID}
+
+
+def _watch(factory):
+    return ResistanceWatch(
+        SimpleNamespace(lan_iface=""), ResistanceCounter(LAN), sniffer_factory=factory
+    )
+
+
+def test_watch_survives_factory_error():
+    def boom(**kw):
+        raise OSError("no iface")
+
+    w = _watch(boom)
+    w.set_watched({KID})
+    assert w._sniffer is None
+
+
+def test_watch_same_set_does_not_restart():
+    calls = []
+    w = _watch(lambda **kw: calls.append(kw) or SimpleNamespace(stop=lambda: None))
+    w.set_watched({KID})
+    w.set_watched({KID})
+    assert len(calls) == 1
+
+
+def test_watch_no_start_after_stop():
+    calls = []
+    w = _watch(lambda **kw: calls.append(kw) or SimpleNamespace(stop=lambda: None))
+    w.stop()
+    w.set_watched({KID})
+    assert calls == []
