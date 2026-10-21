@@ -69,7 +69,11 @@ test('kid name survives a reload on a shared device', async () => {
       ? { device: { id: 1, name: 'iPad' }, kids }
       : p === '/kid/login'
         ? { access_token: 'tok' }
-        : { locked: true, points_balance: 0, chores: [] },
+        : p === '/profiles'
+          ? []
+          : p === '/leaderboard'
+            ? { week_start: '2026-01-05', rows: [] }
+          : { locked: true, points_balance: 0, chores: [] },
   )
   const first = render(wrap(<KidPage />))
   await userEvent.click(await screen.findByRole('button', { name: /Ben/ }))

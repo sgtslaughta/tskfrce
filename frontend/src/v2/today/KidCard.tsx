@@ -1,5 +1,8 @@
 import { DevicePill, deviceKind } from "../components/DevicePill";
+import { BadgeGrid } from "../components/BadgeGrid";
 import { LockBadge } from "../components/LockBadge";
+import { ProgressHeader } from "../components/ProgressHeader";
+import { useProfiles } from "../hooks/useCommunity";
 import type { TodayChore, TodayKid } from "../types";
 import { DeviceQuickMenu } from "./DeviceQuickMenu";
 
@@ -33,14 +36,13 @@ export function KidCard({ kid }: { kid: TodayKid }) {
   const name = kid.name ?? "Kid";
   const todo = kid.chores.filter((c) => c.state !== "done");
   const done = kid.chores.filter((c) => c.state === "done");
+  const recent = (useProfiles().data?.find((p) => p.kid_id === kid.id)?.badges ?? []).slice(-3).reverse();
   const online = kid.devices.some((d) => d.online);
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
       <div className="f-card">
         <div className="f-card-head">
-          <span className="f-display" style={{ fontSize: 20, fontWeight: 600, flex: 1, minWidth: 0 }}>
-            {name}
-          </span>
+          <ProgressHeader name={name} progress={kid.progress} />
           <span>{`${kid.done ?? done.length}/${kid.total ?? kid.chores.length} done today`}</span>
           <span>{online ? "Online" : `Last active ${ago(kid.last_active)}`}</span>
         </div>
@@ -75,6 +77,14 @@ export function KidCard({ kid }: { kid: TodayKid }) {
             </DeviceQuickMenu>
           ))}
         </div>
+        {recent.length > 0 && (
+          <>
+            <div className="f-cap" style={{ marginTop: 16 }}>
+              Recent
+            </div>
+            <BadgeGrid badges={recent} />
+          </>
+        )}
       </div>
     </div>
   );

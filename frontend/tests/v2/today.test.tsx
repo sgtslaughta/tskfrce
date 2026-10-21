@@ -82,7 +82,13 @@ const base: Today = {
 let client: QueryClient;
 function renderPage(data: Today) {
   apiMock.mockImplementation(async (p) =>
-    p === "/today" ? data : { ok: true },
+    p === "/today"
+      ? data
+      : p === "/profiles"
+        ? []
+        : p === "/leaderboard"
+          ? { week_start: "2026-01-05", rows: [] }
+          : { ok: true },
   );
   client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
