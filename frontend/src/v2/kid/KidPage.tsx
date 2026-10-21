@@ -10,6 +10,7 @@ import { AwardOverlay } from './AwardOverlay'
 import { KidChecklist } from './KidChecklist'
 import { FamilySection } from './FamilySection'
 import { KidPicker } from './KidPicker'
+import { Locker } from './Locker'
 import { PinPad } from './PinPad'
 import { RewardsSection } from './RewardsSection'
 import { UnlockedView } from './UnlockedView'
@@ -30,7 +31,8 @@ const SwitchBtn = ({ onClick }: { onClick: () => void }) => (
   </Button>
 )
 
-function Session({ name, kidId, onExit, canSwitch }: { name?: string; kidId?: number | null; onExit: () => void; canSwitch: boolean }) {
+function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; avatar?: string | null; kidId?: number | null; onExit: () => void; canSwitch: boolean }) {
+  const [lockerOpen, setLockerOpen] = useState(false)
   const today = useKidToday(onExit)
   const done = useMarkDone(onExit)
   const d = today.data
@@ -44,9 +46,22 @@ function Session({ name, kidId, onExit, canSwitch }: { name?: string; kidId?: nu
       </>
     )
   if (!d) return <Msg>Loading…</Msg>
+  if (lockerOpen && d.progress)
+    return (
+      <Locker
+        name={name ?? 'You'}
+        avatar={avatar ?? null}
+        level={d.progress.level}
+        title={d.progress.title}
+        onClose={() => setLockerOpen(false)}
+      />
+    )
   const head = d.progress && (
     <StickerCard>
-      <ProgressHeader name={name ?? 'You'} progress={d.progress} />
+      <ProgressHeader name={name ?? 'You'} avatar={avatar ?? null} kid progress={d.progress} />
+      <Button variant="default" size="md" mt="xs" onClick={() => setLockerOpen(true)}>
+        Customize
+      </Button>
     </StickerCard>
   )
   const switcher = canSwitch && <SwitchBtn onClick={onExit} />
@@ -57,7 +72,7 @@ function Session({ name, kidId, onExit, canSwitch }: { name?: string; kidId?: nu
         <UnlockedView points={d.points_balance} done={d.chores.filter((c) => c.state === 'done').length} />
         <RewardsSection onExpired={onExit} />
         <FamilySection meId={kidId} />
-        <AwardOverlay onExpired={onExit} />
+        <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />
         {switcher}
       </>
     )
@@ -81,7 +96,7 @@ function Session({ name, kidId, onExit, canSwitch }: { name?: string; kidId?: nu
       </StickerCard>
       <RewardsSection onExpired={onExit} />
       <FamilySection meId={kidId} />
-      <AwardOverlay onExpired={onExit} />
+      <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />
       {switcher}
     </>
   )
@@ -118,7 +133,7 @@ export function KidPage() {
 
   let body
   if (!ready || (!authed && whoami.isPending)) body = <Msg>Loading…</Msg>
-  else if (authed) body = <Session name={who?.full_name ?? undefined} kidId={who?.id ?? kidId} onExit={exit} canSwitch={kids.length > 1} />
+  else if (authed) body = <Session name={who?.full_name ?? undefined} avatar={who?.avatar} kidId={who?.id ?? kidId} onExit={exit} canSwitch={kids.length > 1} />
   else if (whoami.isError) body = <Msg>{CANT_REACH}</Msg>
   else if (!whoami.data?.device) body = <Msg>This device isn&apos;t set up yet. Ask a parent to add it.</Msg>
   else if (!kids.length) body = <Msg>No kid is set up on this device. Ask a parent to add one.</Msg>

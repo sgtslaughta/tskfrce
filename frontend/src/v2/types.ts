@@ -187,6 +187,8 @@ export interface KidCelebration {
   title: string
   detail: string
   size: 'big' | 'small'
+  /** level celebrations: flair newly unlocked */
+  unlocked?: { id: string; label: string; emblem: string | null }[]
 }
 
 /** GET /custom-badges item. */
@@ -226,6 +228,7 @@ export interface Progress {
   floor: number
   next: number
   streak: number
+  flair?: Flair
 }
 
 export interface Badge {
@@ -246,6 +249,7 @@ export interface LeaderboardRow {
   level: number
   title: string
   rank: number
+  flair?: Flair
 }
 
 /** GET /leaderboard */
@@ -263,6 +267,7 @@ export interface Profile {
   title: string
   streak: number
   badges: Badge[]
+  flair?: Flair
 }
 
 export type FlairSlot = 'card' | 'ring' | 'name' | 'emblem' | 'title'
@@ -278,4 +283,11 @@ export interface FlairItem {
   unlock_level: number
   emblem: string | null
   unlocked: boolean
+}
+
+/** GET /kid/flair */
+export interface FlairCatalog {
+  level: number
+  items: FlairItem[]
+  equipped: Flair
 }
