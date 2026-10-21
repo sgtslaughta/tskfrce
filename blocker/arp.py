@@ -66,13 +66,24 @@ def ndp_advert(target_ip6: str, target_mac: str, gateway_ip6: str, box_mac: str)
 
 
 def redirect_packets(target: TargetAddrs, lan: LanFacts) -> list:
-    """Spoofed packets that point the target at this box (lladdr = box_mac)."""
+    """Spoofed packets that point the target and the gateway at this box.
+
+    Bidirectional: besides telling the device the gateway lives at box_mac, we
+    tell the gateway the device lives at box_mac, so the router hands the device's
+    return traffic to the box (dropped there — closing the kid-side static-ARP
+    bypass — and the stream of it is the resistance signal). We only spoof the
+    gateway when its real MAC is known (never with a guess).
+    """
     pkts = []
     if target.ip:
         pkts.append(arp_reply(target.ip, target.mac, lan.gateway_ip, lan.box_mac))
+        if lan.gateway_mac:
+            pkts.append(arp_reply(lan.gateway_ip, lan.gateway_mac, target.ip, lan.box_mac))
     if lan.gateway_ip6:
         for ip6 in target.ip6:
             pkts.append(ndp_advert(ip6, target.mac, lan.gateway_ip6, lan.box_mac))
+            if lan.gateway_mac6:
+                pkts.append(ndp_advert(lan.gateway_ip6, lan.gateway_mac6, ip6, lan.box_mac))
     return pkts
 
 
@@ -98,10 +109,14 @@ def restore(target: TargetAddrs, lan: LanFacts) -> list:
                 hwdst=target.mac,
             )
         )
+        # also heal the gateway: the device's IP is really at the device's MAC
+        pkts.append(arp_reply(lan.gateway_ip, lan.gateway_mac, target.ip, target.mac))
     if lan.gateway_ip6 and lan.gateway_mac6:
         for ip6 in target.ip6:
             # truth: advertise the v6 gateway's real MAC, resolved separately from v4
             pkts.append(ndp_advert(ip6, target.mac, lan.gateway_ip6, lan.gateway_mac6))
+            # heal the gateway: the device's v6 address is really at the device's MAC
+            pkts.append(ndp_advert(lan.gateway_ip6, lan.gateway_mac6, ip6, target.mac))
     return pkts
 
 

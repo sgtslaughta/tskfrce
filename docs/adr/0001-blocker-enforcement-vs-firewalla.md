@@ -48,11 +48,24 @@ Things we got wrong during evaluation and corrected:
    gateway on the kid's device, cloning a parent's MAC, phone hotspots,
    cellular, flashing the router. A kid who can do those will beat any
    reasonable LAN mechanism; the parent conversation is the fix.
-3. **Detection over prevention.** The box watches blocked devices for
-   traffic that still reaches the real gateway. A device that keeps getting
-   through is flagged `resisting` on the device record and the parents get
-   a notification in plain words. This covers the whole "teen with a YouTube
-   tutorial" class with ~50 lines and no arms race.
+3. **Bidirectional ARP/NDP redirect, then detection for what's left.** The
+   box spoofs both sides: it tells the device the gateway is at the box, and
+   tells the gateway the device is at the box. A kid-side static ARP entry or
+   static gateway is now *prevented*: even if the device talks straight to the
+   router, the router still hands the device's return traffic to the box,
+   which drops it. The box flags a blocked device `resisting` when it keeps
+   receiving router→device traffic for it, meaning a bypass the gateway side
+   didn't catch (e.g. a router with ARP inspection that rejects the
+   gateway-side spoof, or an IPv6 path the box missed). The device record
+   carries the flag and the parents get a notification in plain words.
+
+   **Lab finding:** passively sniffing kid→router traffic is impossible on a
+   switched LAN. A Linux bridge (like any switch or Wi-Fi AP) delivered zero
+   kid→router unicast frames to the box's port, so the original "frames still
+   reach the real gateway" detector could never fire. The box only reliably
+   sees frames addressed to its own MAC. That is why we redirect the gateway
+   too: the router's return traffic for a blocked device lands on the box,
+   where it can be both dropped and counted.
 4. **"Test block" diagnoses, not just reports.** The same sniff distinguishes
    "your router is blocking the box" (ARP takeover never observed) from
    "the device is ignoring the box" (takeover observed, traffic still

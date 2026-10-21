@@ -20,6 +20,14 @@ def test_render_blocks_v4_and_v6_to_wan_allows_lan():
     assert "ip6 saddr @blocked_v6 drop" in r
 
 
+def test_render_drops_return_traffic_to_blocked_ips():
+    # Bidirectional redirect: the spoofed gateway forwards the device's return
+    # traffic to the box, which must drop it.
+    r = render_ruleset({"192.168.1.50"}, {"fe80::50"}, MAC, LAN, "192.168.1.2", 8080)
+    assert "ip daddr @blocked_v4 drop" in r
+    assert "ip6 daddr @blocked_v6 drop" in r
+
+
 def test_render_drops_by_mac_the_authoritative_key():
     r = render_ruleset(set(), set(), MAC, LAN, "192.168.1.2", 8080)
     assert "de:ad:be:ef:00:01" in r

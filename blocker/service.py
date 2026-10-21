@@ -125,7 +125,7 @@ class Service:
                 log.exception("firewall apply failed")
             self._redir.set_targets(devs)
             if self._watch is not None:
-                self._watch.set_watched(macs)
+                self._watch.set_watched(devs)
 
     def _on_seen(self, seen: Seen) -> None:
         with self._lock:
@@ -179,8 +179,14 @@ class Service:
             reason = "unseen"
         elif not online:
             reason = "ok"
+        elif tally.from_gateway > 0:
+            # router handed us the device's return traffic, yet it stayed online:
+            # the device itself is ignoring the redirect.
+            reason = "device"
         else:
-            reason = "device" if tally.to_box > 0 else "router"
+            # device stayed online and we never saw its return traffic: the router
+            # is keeping the box out of the path.
+            reason = "router"
         return {
             "offline": not online,
             "router_resisted": reason == "router",

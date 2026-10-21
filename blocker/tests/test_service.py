@@ -8,6 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from blocker.arp import TargetAddrs
 from blocker.backend import Seen
 from blocker.config import Config
 from blocker.resist import Tally
@@ -112,22 +113,22 @@ def test_test_block_reports_offline_when_probe_fails():
     assert result["router_resisted"] is False
 
 
-def _watch(g, b):
+def _watch(from_gateway):
     return SimpleNamespace(
         set_watched=lambda m: None,
         stop=lambda: None,
         counter=SimpleNamespace(
-            resisting=lambda: set(), tally=lambda mac: Tally(to_gateway=g, to_box=b)
+            resisting=lambda: set(), tally=lambda mac: Tally(from_gateway=from_gateway)
         ),
     )
 
 
 @pytest.mark.parametrize(
-    "online,to_box,reason",
+    "online,from_gateway,reason",
     [(False, 0, "ok"), (True, 0, "router"), (True, 4, "device")],
 )
-def test_test_block_reason(online, to_box, reason):
-    svc, fw, redir = _svc(probe=lambda ip: online, watch=_watch(5, to_box))
+def test_test_block_reason(online, from_gateway, reason):
+    svc, fw, redir = _svc(probe=lambda ip: online, watch=_watch(from_gateway))
     svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
     r = svc.test_block(MAC)
     assert r["reason"] == reason
@@ -136,7 +137,7 @@ def test_test_block_reason(online, to_box, reason):
 
 
 def test_test_block_unseen():
-    svc, fw, redir = _svc(probe=lambda ip: True, watch=_watch(0, 0))
+    svc, fw, redir = _svc(probe=lambda ip: True, watch=_watch(0))
     r = svc.test_block(MAC)
     assert r["reason"] == "unseen"
 
@@ -174,7 +175,7 @@ def test_apply_updates_watch_and_loop_reports_full_set():
     reports = []
     svc, _, _ = _svc(watch=watch, report=lambda c, m: reports.append(m) or True)
     svc.store.set_blocked([MAC])
-    watch.set_watched.assert_called_with({MAC})
+    watch.set_watched.assert_called_with({MAC: TargetAddrs(mac=MAC)})
     svc._resist_once()
     assert reports == [{MAC}]
     watch.counter.resisting.return_value = set()

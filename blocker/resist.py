@@ -1,8 +1,13 @@
-"""Resistance counters: detect blocked devices that keep reaching the real gateway.
+"""Resistance detection via the bidirectional redirect's return path.
 
-A blocked device whose ARP/NDP cache was redirected to this box should send its
-gateway-bound frames here. Frames it still addresses to the real gateway MAC are
-resisting the redirect. Counts are per watched MAC and reset each window.
+On a switched LAN the box never sees a device's unicast frames to the router, so
+we spoof the gateway too (see arp.py): the router then sends the device's return
+traffic to the box. While a device is blocked, that return traffic is the signal
+— a device honoring the redirect produces ~none of it (its requests die at the
+box), a device bypassing produces a stream. We count, per watched MAC and per
+window, gateway->box frames whose IP/IPv6 destination is one of the device's
+addresses (``from_gateway``), plus device->box frames (``to_box``, the device
+honoring the redirect).
 """
 
 from __future__ import annotations
@@ -14,7 +19,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, replace
 from typing import Any
 
-from blocker.arp import LanFacts
+from blocker.arp import LanFacts, TargetAddrs
 
 log = logging.getLogger(__name__)
 
@@ -23,8 +28,20 @@ log = logging.getLogger(__name__)
 class Tally:
     """Frame counts for one watched MAC within the current window."""
 
-    to_gateway: int = 0
     to_box: int = 0
+    from_gateway: int = 0
+
+
+def _ip_map(targets: dict[str, TargetAddrs]) -> dict[str, str]:
+    """ip (v4+v6, lowercased) -> watched MAC (lowercased)."""
+    ip2mac: dict[str, str] = {}
+    for mac, t in targets.items():
+        ml = mac.lower()
+        if t.ip:
+            ip2mac[t.ip.lower()] = ml
+        for ip6 in t.ip6:
+            ip2mac[ip6.lower()] = ml
+    return ip2mac
 
 
 class ResistanceCounter:
@@ -46,34 +63,52 @@ class ResistanceCounter:
         self._clock = clock
         self._lock = threading.Lock()
         self._watched: set[str] = set()
+        self._ip2mac: dict[str, str] = {}
         # mac -> (window_start, tally)
         self._tallies: dict[str, tuple[float, Tally]] = {}
 
-    def set_watched(self, macs: set[str]) -> None:
-        """Replace the watched set; tallies of MACs no longer watched are dropped."""
-        watched = {m.lower() for m in macs}
+    def set_watched(self, targets: dict[str, TargetAddrs]) -> None:
+        """Replace the watched devices; tallies of MACs no longer watched are dropped."""
+        watched = {m.lower() for m in targets}
+        ip2mac = _ip_map(targets)
         with self._lock:
             self._watched = watched
+            self._ip2mac = ip2mac
             for mac in list(self._tallies):
                 if mac not in watched:
                     del self._tallies[mac]
 
-    def observe(self, src_mac: str, dst_mac: str, now: float | None = None) -> None:
-        """Count one frame from src to dst. Frames from unwatched sources are ignored."""
+    def observe(
+        self,
+        src_mac: str,
+        dst_mac: str,
+        ip_dst: str | None = None,
+        now: float | None = None,
+    ) -> None:
+        """Count one box-bound frame. Everything not addressed to the box is ignored.
+
+        A watched device's frame to the box counts as ``to_box`` (honoring the
+        redirect); a gateway frame to the box whose IP destination is a watched
+        device's address counts as that device's ``from_gateway`` (the return
+        traffic that signals a bypass).
+        """
         src = src_mac.lower()
         dst = dst_mac.lower()
         ts = self._clock() if now is None else now
         with self._lock:
-            if src not in self._watched:
+            if dst != self._box:
                 return
-            start, tally = self._tallies.get(src, (ts, Tally()))
+            if src in self._watched:
+                mac, field = src, "to_box"
+            elif src in self._gateways and ip_dst and ip_dst.lower() in self._ip2mac:
+                mac, field = self._ip2mac[ip_dst.lower()], "from_gateway"
+            else:
+                return
+            start, tally = self._tallies.get(mac, (ts, Tally()))
             if ts - start >= self._window:
                 start, tally = ts, Tally()
-            if dst in self._gateways:
-                tally.to_gateway += 1
-            elif dst == self._box:
-                tally.to_box += 1
-            self._tallies[src] = (start, tally)
+            setattr(tally, field, getattr(tally, field) + 1)
+            self._tallies[mac] = (start, tally)
 
     def tally(self, mac: str) -> Tally:
         """Current-window counts for mac (zeros if unwatched or window expired)."""
@@ -81,11 +116,11 @@ class ResistanceCounter:
             return self._live(mac.lower(), self._clock())
 
     def resisting(self) -> set[str]:
-        """Watched MACs whose gateway-bound count in the current window meets the threshold."""
+        """Watched MACs whose gateway-return count in the current window meets the threshold."""
         now = self._clock()
         with self._lock:
             return {
-                mac for mac in self._watched if self._live(mac, now).to_gateway >= self._threshold
+                mac for mac in self._watched if self._live(mac, now).from_gateway >= self._threshold
             }
 
     def _live(self, mac: str, now: float) -> Tally:
@@ -119,20 +154,20 @@ class ResistanceWatch:
         self._factory = sniffer_factory
         self._sniffer: Any = None
         self._lock = threading.Lock()
-        self._watched: set[str] | None = None
+        self._watched: dict[str, TargetAddrs] | None = None
         self._closed = False
 
-    def set_watched(self, macs: set[str]) -> None:
-        """Watch exactly macs: restart the sniffer with a matching filter, stop it if empty."""
-        macs = set(macs)
+    def set_watched(self, targets: dict[str, TargetAddrs]) -> None:
+        """Watch exactly these devices: restart the sniffer, stop it if empty."""
+        targets = dict(targets)
         with self._lock:
-            if self._closed or macs == self._watched:
+            if self._closed or targets == self._watched:
                 return
-            self._watched = macs
-            self.counter.set_watched(macs)
+            self._watched = targets
+            self.counter.set_watched(targets)
             self._stop_sniffer()
-            if macs:
-                flt = " or ".join(f"ether src {m}" for m in sorted(macs))
+            if targets:
+                flt = self._filter(targets)
                 try:
                     self._sniffer = self._factory(
                         iface=self._cfg.lan_iface or None, filter=flt, prn=self._on_packet
@@ -141,6 +176,13 @@ class ResistanceWatch:
                     log.exception("sniffer start failed")
                     self._sniffer = None
                     self._watched = None  # let an identical call retry
+
+    def _filter(self, targets: dict[str, TargetAddrs]) -> str:
+        """Box-bound frames from the gateway(s) or any watched device."""
+        kids = sorted(m.lower() for m in targets)
+        srcs = list(dict.fromkeys([*sorted(self.counter._gateways), *kids]))
+        src_match = " or ".join(f"ether src {m}" for m in srcs)
+        return f"ether dst {self.counter._box} and ({src_match})"
 
     def stop(self) -> None:
         with self._lock:
@@ -156,7 +198,16 @@ class ResistanceWatch:
             self._sniffer = None
 
     def _on_packet(self, pkt: Any) -> None:
+        from scapy.layers.inet import IP
+        from scapy.layers.inet6 import IPv6
         from scapy.layers.l2 import Ether
 
-        if pkt.haslayer(Ether):
-            self.counter.observe(pkt[Ether].src, pkt[Ether].dst)
+        if not pkt.haslayer(Ether):
+            return
+        if pkt.haslayer(IP):
+            ip_dst = pkt[IP].dst
+        elif pkt.haslayer(IPv6):
+            ip_dst = pkt[IPv6].dst
+        else:
+            ip_dst = None
+        self.counter.observe(pkt[Ether].src, pkt[Ether].dst, ip_dst)

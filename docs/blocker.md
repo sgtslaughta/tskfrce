@@ -6,6 +6,8 @@ A small program on an always-on computer at home. It pauses the internet for the
 
 The home box pauses internet for normal use on your Wi‑Fi. It can't stop a determined kid who changes network settings, uses a phone hotspot, or swaps devices — but it will tell you when a paused device is getting around the block.
 
+Changing the device's own network settings no longer gets around the block on most routers; the box tells you if something still does.
+
 - **Test block** checks one device. Press it to see what happened:
   - **Success — the device lost internet access while blocked.**
   - **We haven't seen this device on the network yet, so we couldn't test it.**

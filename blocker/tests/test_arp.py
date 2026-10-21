@@ -16,6 +16,7 @@ from blocker.arp import (  # noqa: E402
     TargetAddrs,
     arp_reply,
     ndp_advert,
+    redirect_packets,
     restore,
 )
 from blocker.config import Config  # noqa: E402
@@ -65,6 +66,56 @@ def test_ndp_advert_fields():
     assert p[IPv6].src == "fe80::1"
     assert p[ICMPv6ND_NA].tgt == "fe80::1"
     assert p[ICMPv6NDOptDstLLAddr].lladdr == "bb:bb:bb:bb:bb:bb"
+
+
+def test_redirect_spoofs_gateway_side():
+    from scapy.all import ARP
+
+    t = TargetAddrs(mac=DEV, ip="192.168.1.50")
+    pkts = redirect_packets(t, LAN)
+    gw = [
+        p
+        for p in pkts
+        if p.haslayer(ARP) and p[ARP].pdst == LAN.gateway_ip and p[ARP].hwsrc == LAN.box_mac
+    ]
+    assert len(gw) == 1
+    a = gw[0][ARP]
+    assert a.pdst == LAN.gateway_ip
+    assert a.hwdst == LAN.gateway_mac
+    assert a.psrc == t.ip
+    assert a.hwsrc == LAN.box_mac
+
+
+def test_redirect_skips_gateway_side_when_gateway_mac_unknown():
+    from dataclasses import replace
+
+    from scapy.all import ARP
+
+    lan = replace(LAN, gateway_mac=None, gateway_mac6=None)
+    t = TargetAddrs(mac=DEV, ip="192.168.1.50", ip6=("fe80::50",))
+    pkts = redirect_packets(t, lan)
+    # kid-side reply still present, no packet addressed to the gateway
+    assert any(p.haslayer(ARP) and p[ARP].pdst == t.ip for p in pkts)
+    assert not any(p.haslayer(ARP) and p[ARP].pdst == lan.gateway_ip for p in pkts)
+
+
+def test_restore_heals_gateway_side():
+    from scapy.all import ARP
+
+    t = TargetAddrs(mac=DEV, ip="192.168.1.50")
+    pkts = restore(t, LAN)
+    gw = [p for p in pkts if p.haslayer(ARP) and p[ARP].pdst == LAN.gateway_ip]
+    assert len(gw) == 1
+    assert gw[0][ARP].hwsrc == DEV  # truth: device IP is at the device MAC
+    assert gw[0][ARP].psrc == t.ip
+
+
+def test_restore_skips_gateway_side_when_gateway_mac_unknown():
+    from dataclasses import replace
+
+    lan = replace(LAN, gateway_mac=None, gateway_mac6=None)
+    t = TargetAddrs(mac=DEV, ip="192.168.1.50", ip6=("fe80::50",))
+    assert restore(t, lan) == []
 
 
 def test_restore_sends_truth():
