@@ -56,14 +56,7 @@ export function KidCard({ kid }: { kid: TodayKid }) {
   const pending = kid.chores.filter((c) => c.state === "needs_you");
   return (
     <StickerCard>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="f-card-head">
         <DeviceQuickMenu
           targets={{ kind: "kid", id: kid.id }}
           label={`${name} lock options`}
@@ -89,9 +82,11 @@ export function KidCard({ kid }: { kid: TodayKid }) {
         >
           {name}
         </span>
-        {pending.length > 0 && <ApproveButton pending={pending} />}
       </div>
-      <ChipRow chores={kid.chores} devices={kid.devices} />
+      <div className="f-card-body">
+        {pending.length > 0 && <ApproveButton pending={pending} />}
+        <ChipRow chores={kid.chores} devices={kid.devices} />
+      </div>
     </StickerCard>
   );
 }

@@ -87,6 +87,12 @@ beforeEach(() => {
 });
 
 describe("TodayPage", () => {
+  test("kid name sits in the card header", async () => {
+    renderPage(base);
+    const name = await screen.findByText("Emma");
+    expect(name.closest(".f-card-head")).not.toBeNull();
+  });
+
   test("renders kids, day name and sticker", async () => {
     renderPage(base);
     expect(await screen.findByText("Emma")).toBeInTheDocument();
