@@ -1,24 +1,58 @@
-from blocker import __main__ as entry
+from pathlib import Path
+
+from blocker import service as svc_mod
+from blocker.config import Config
+from blocker.service import Service
+
+CFG = Config(
+    backend_url="http://b",
+    blocker_url_host="b",
+    internal_token="t",
+    lan_iface="",
+    data_dir=Path("/tmp"),
+)
 
 
-def test_main_binds_control_api_to_loopback(monkeypatch):
-    seen = {}
-
-    class Stop(Exception):
+class _FakeFw:
+    def apply(self, r):
         pass
+
+    def flush(self):
+        pass
+
+    def enable_forwarding(self):
+        pass
+
+
+class _FakeRedir:
+    def set_targets(self, t):
+        pass
+
+    def stop_all(self):
+        pass
+
+
+def test_start_binds_control_api_to_loopback(monkeypatch):
+    seen = {}
 
     class FakeServer:
         def serve_forever(self):
-            raise Stop
+            pass
+
+        def shutdown(self):
+            pass
 
     def fake_make_api(state, token, tester, host, port):
         seen["host"] = host
         return FakeServer()
 
-    monkeypatch.setenv("INTERNAL_TOKEN", "t")
-    monkeypatch.setattr(entry, "make_api", fake_make_api)
-    try:
-        entry.main()
-    except Stop:
-        pass
+    # Stub the long-running loops so start() only exercises the API bind.
+    monkeypatch.setattr(svc_mod, "make_api", fake_make_api)
+    monkeypatch.setattr(svc_mod, "run_discovery", lambda *a, **k: None)
+    monkeypatch.setattr(svc_mod, "run_dns", lambda *a, **k: None)
+    monkeypatch.setattr(svc_mod, "run_http", lambda *a, **k: None)
+
+    svc = Service(CFG, firewall=_FakeFw(), redirection=_FakeRedir(), portal_ip="192.168.1.2")
+    svc.start()
+    svc.stop()
     assert seen["host"] == "127.0.0.1"
