@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
+import { notifications } from '@mantine/notifications'
 import { Button, MultiSelect, Switch, TextInput } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { DeviceQuickMenu } from '@/v2/today/DeviceQuickMenu'
 import { useDeleteDevice, usePatchDevice, useTestBlock, type DevicePatch } from '@/v2/hooks/useDevices'
 import type { Device, Kid } from '@/v2/types'
 import { ConfirmDelete } from './ConfirmDelete'
-import { notifications } from '@mantine/notifications'
-import { toastFail, toasts } from '../notify'
+import { toastFail, toastOk, toasts } from '../notify'
 
 interface Props {
   device: Device
@@ -78,11 +78,12 @@ export function DeviceRow({ device, kids, focused }: Props) {
       </DeviceQuickMenu>
       <Button
         variant="default"
+        aria-label={`Test block on ${device.name}`}
         disabled={test.isPending}
         onClick={() =>
           test.mutate(device.id, {
             onSuccess: (r) =>
-              notifications.show({ message: r.message, color: r.reason === 'ok' ? 'fridgeGreen' : 'fridgeRed' }),
+              r.reason === 'ok' ? toastOk(r.message) : notifications.show({ message: r.message, color: 'fridgeRed' }),
             onError: toastFail,
           })
         }

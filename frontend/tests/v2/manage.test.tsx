@@ -63,6 +63,7 @@ const wrap = (ui: ReactNode) => (
     <MantineProvider theme={fridgeTheme}>{ui}</MantineProvider>
   </QueryClientProvider>
 )
+const TB = 'Test block on Maya laptop'
 const calls = (method: string) => apiMock.mock.calls.filter(([, i]) => i?.method === method)
 
 beforeAll(() => {
@@ -126,9 +127,42 @@ describe('devices', () => {
   test('Test block button posts and toasts message', async () => {
     apiMock.mockImplementation(async () => ({ reason: 'ok', message: 'Blocked fine', offline: false, router_resisted: false }))
     render(wrap(<DeviceRow device={device} kids={kids} />))
-    await userEvent.click(screen.getByRole('button', { name: 'Test block' }))
+    await userEvent.click(screen.getByRole('button', { name: TB }))
     await waitFor(() => expect(calls('POST')[0]).toEqual(['/devices/1/test-block', { method: 'POST' }]))
-    await waitFor(() => expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Blocked fine' })))
+    await waitFor(() =>
+      expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Blocked fine', color: 'fridgeGreen' })),
+    )
+  })
+
+  test('Test block non-ok reason toasts red', async () => {
+    apiMock.mockImplementation(async () => ({ reason: 'router', message: 'x' }))
+    render(wrap(<DeviceRow device={device} kids={kids} />))
+    await userEvent.click(screen.getByRole('button', { name: TB }))
+    await waitFor(() =>
+      expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'x', color: 'fridgeRed' })),
+    )
+  })
+
+  test('Test block failure shows the fail toast', async () => {
+    apiMock.mockImplementation(async () => {
+      throw new Error("The home box didn't answer. Is it plugged in?")
+    })
+    render(wrap(<DeviceRow device={device} kids={kids} />))
+    await userEvent.click(screen.getByRole('button', { name: TB }))
+    await waitFor(() =>
+      expect(notifications.show).toHaveBeenCalledWith(
+        expect.objectContaining({ title: "That didn't work", color: 'fridgeRed' }),
+      ),
+    )
+  })
+
+  test('Test block is disabled and says Testing… while pending', async () => {
+    apiMock.mockImplementation(() => new Promise(() => {}))
+    render(wrap(<DeviceRow device={device} kids={kids} />))
+    await userEvent.click(screen.getByRole('button', { name: TB }))
+    const btn = await screen.findByRole('button', { name: TB })
+    await waitFor(() => expect(btn).toBeDisabled())
+    expect(btn).toHaveTextContent('Testing…')
   })
 
   test('focused row is marked', () => {
@@ -150,7 +184,7 @@ describe('devices page', () => {
   test('renders the honest promise note', async () => {
     apiMock.mockImplementation(async (path) => (path === '/devices' || path === '/kids' ? [] : {}))
     render(wrap(<DevicesPage />))
-    expect(await screen.findByText(/getting around the block/)).toBeInTheDocument()
+    expect(await screen.findByText(/The home box pauses internet/)).toBeInTheDocument()
   })
 })
 
