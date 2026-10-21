@@ -98,7 +98,7 @@ class Service:
             v6 = {ip for t in devs.values() for ip in t.ip6}
             macs = set(blocked)  # authoritative block key
             ruleset = fw.render_ruleset(
-                v4, v6, macs, self._lan_cidrs, self._portal_ip or "0.0.0.0", PORTAL_PORT
+                v4, v6, macs, self._lan_cidrs, self._portal_ip or "", PORTAL_PORT
             )
             try:
                 self._fw.apply(ruleset)
@@ -134,7 +134,9 @@ class Service:
         prior = self.store.current()
         with self._lock:
             ip = (self._devices.get(mac) or TargetAddrs(mac=mac)).ip
-        self.store.set_blocked([mac])
+        # Add to the live set, never replace it — a diagnostic on one device must
+        # not lift enforcement on every other blocked device during the probe.
+        self.store.set_blocked(sorted(prior | {mac}))
         self._sleep(PROBE_WAIT)
         online = self._probe(ip) if ip else False
         self.store.set_blocked(sorted(prior))

@@ -9,7 +9,7 @@ A small program on an always-on computer at home. It pauses the internet for the
 | Change DNS / use a VPN | Doesn't work: all internet traffic is dropped |
 | Forget the network / rotating private address | A new address looks like a new device, so it starts blocked |
 | Set a fixed (static) IP | Doesn't work: the box tracks the device itself, not its number |
-| IPv6 | Blocked too |
+| IPv6 | Blocked too, as long as the box has IPv6 on your network. If it doesn't, turn IPv6 off on your router to be sure. |
 | Mobile data / hotspot / other Wi-Fi | Not covered (home Wi-Fi only) |
 | Unplug the box | Devices come back online; you get an alert |
 | Router that resists blocking | Use the "Test block" button to check; see below |

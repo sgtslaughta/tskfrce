@@ -45,11 +45,16 @@ def render_ruleset(
     lines.append(_set_decl("blocked_v6", "ipv6_addr", blocked_v6))
     lines.append(_set_decl("blocked_mac", "ether_addr", blocked_mac))
     # Redirect blocked HTTP/DNS to the captive portal; HTTPS can't be portal-ed, so drop it.
+    # Portal redirect needs a valid box IP. Without one, omit the dnat rules
+    # entirely (an invalid target would make `nft -f` reject the WHOLE ruleset,
+    # silently dropping all enforcement) — the forward-chain drops below still
+    # block the device; it just gets no friendly portal page.
     lines.append("  chain prerouting {")
     lines.append("    type nat hook prerouting priority -100; policy accept;")
-    lines.append(f"    ip saddr @blocked_v4 udp dport 53 dnat ip to {portal_ip}:{portal_port}")
-    lines.append(f"    ip saddr @blocked_v4 tcp dport 53 dnat ip to {portal_ip}:{portal_port}")
-    lines.append(f"    ip saddr @blocked_v4 tcp dport 80 dnat ip to {portal_ip}:{portal_port}")
+    if portal_ip:
+        lines.append(f"    ip saddr @blocked_v4 udp dport 53 dnat ip to {portal_ip}:{portal_port}")
+        lines.append(f"    ip saddr @blocked_v4 tcp dport 53 dnat ip to {portal_ip}:{portal_port}")
+        lines.append(f"    ip saddr @blocked_v4 tcp dport 80 dnat ip to {portal_ip}:{portal_port}")
     lines.append("  }")
     lines.append("  chain forward {")
     lines.append("    type filter hook forward priority 0; policy accept;")

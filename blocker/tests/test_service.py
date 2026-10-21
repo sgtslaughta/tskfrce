@@ -107,6 +107,19 @@ def test_test_block_reports_offline_when_probe_fails():
     assert result["router_resisted"] is False
 
 
+def test_test_block_preserves_other_blocks():
+    svc, fw, redir = _svc(probe=lambda ip: False)
+    other = "aa:bb:cc:dd:ee:ff"
+    svc._on_seen(Seen(mac=other, ip="192.168.1.9", ipv6=[], hostname=None, vendor=None))
+    svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
+    svc.store.set_blocked([other])
+    n = len(fw.applied)
+    svc.test_block(MAC)
+    assert svc.store.current() == {other}  # other device still blocked afterwards
+    # and it is never dropped from enforcement during the diagnostic
+    assert all(other in r for r in fw.applied[n:])
+
+
 def test_stop_restores_and_flushes_even_on_error():
     svc, fw, redir = _svc()
 

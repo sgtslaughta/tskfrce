@@ -33,6 +33,15 @@ def test_render_redirects_dns_and_http_drops_https():
     assert "tcp dport 443 drop" in r
 
 
+def test_render_omits_dnat_when_no_portal_ip():
+    # No box IP -> omit dnat (an invalid target would reject the whole ruleset),
+    # but the device must still be blocked by the drop rules.
+    r = render_ruleset({"192.168.1.50"}, set(), MAC, LAN, "", 80)
+    assert "dnat" not in r
+    assert "ip saddr @blocked_v4 drop" in r
+    assert "ether saddr @blocked_mac drop" in r
+
+
 def test_render_empty_set_is_noop_safe():
     r = render_ruleset(set(), set(), set(), LAN, "192.168.1.2", 8080)
     assert "elements" not in r  # no elements emitted when empty

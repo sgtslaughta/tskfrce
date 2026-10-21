@@ -100,6 +100,24 @@ def _real_sendp(pkts: list, iface: str | None) -> None:
     sendp(pkts, iface=iface, verbose=0)
 
 
+def _detect_gateway_ip6() -> str | None:
+    """The v6 default-route next hop (the router address a device points at).
+
+    Returning it lets NDP redirection run so a blocked device cannot simply use
+    IPv6 to route around the v4-only ARP block. None when the box has no v6
+    uplink — then v6 can't be intercepted from a spoofing sidecar at all (see
+    docs/blocker.md: disable IPv6 at the router for airtight blocking)."""
+    try:
+        from scapy.all import conf
+
+        nh = conf.route6.route("2000::")[2]
+        if isinstance(nh, list):
+            nh = nh[0] if nh else None
+        return nh if nh and nh != "::" else None
+    except Exception:
+        return None
+
+
 def detect_lan(cfg) -> LanFacts:
     """Best-effort LAN facts from scapy. Production only; tests inject LanFacts."""
     from scapy.all import conf, get_if_hwaddr, getmacbyip
@@ -108,7 +126,12 @@ def detect_lan(cfg) -> LanFacts:
     gw = conf.route.route("0.0.0.0")[2]
     box_mac = get_if_hwaddr(iface)
     gw_mac = getmacbyip(gw) or "ff:ff:ff:ff:ff:ff"
-    return LanFacts(gateway_ip=gw, gateway_mac=gw_mac, box_mac=box_mac, gateway_ip6=None)
+    return LanFacts(
+        gateway_ip=gw,
+        gateway_mac=gw_mac,
+        box_mac=box_mac,
+        gateway_ip6=_detect_gateway_ip6(),
+    )
 
 
 class RedirectionManager:
