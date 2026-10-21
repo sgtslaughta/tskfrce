@@ -45,18 +45,28 @@ export const useThreads = (kid = false) =>
     ...poll(15_000),
   })
 
+/** True when `ref` is a valid id for `kind` ("family", or a numeric kid/chore id). */
+export const validRef = (kind: ThreadKind, ref: string): boolean =>
+  kind === 'family' ? ref === 'family' : (kind === 'private' || kind === 'chore') && /^\d+$/.test(ref)
+
+/** `/chat/threads/{kind}/{ref}`; refs come from URLs, so never build a path from an unchecked one. */
+function threadPath(kind: ThreadKind, ref: string): string {
+  if (!validRef(kind, ref)) throw new Error("That chat doesn't exist.")
+  return `/chat/threads/${kind}/${encodeURIComponent(ref)}`
+}
+
 /** Newest page of one thread; 5 s while open (pass a longer `ms` for previews). */
 export const useThread = (kind: ThreadKind | null, ref: string | null, kid = false, ms = 5_000) =>
   useQuery({
     queryKey: ['chat-thread', kid, kind, ref],
-    queryFn: () => api<ThreadPage>(`/chat/threads/${kind}/${ref}`, { kid }),
-    enabled: !!kind && !!ref,
+    queryFn: () => api<ThreadPage>(threadPath(kind!, ref!), { kid }),
+    enabled: !!kind && !!ref && validRef(kind, ref),
     ...poll(ms),
   })
 
 /** Older messages: GET /chat/threads/{kind}/{ref}?before=<oldest id>. */
 export const fetchEarlier = (kind: ThreadKind, ref: string, before: number, kid = false) =>
-  api<ThreadPage>(`/chat/threads/${kind}/${ref}?before=${before}`, { kid })
+  api<ThreadPage>(`${threadPath(kind, ref)}?before=${Number(before)}`, { kid })
 
 function useRefresh(kid: boolean) {
   const qc = useQueryClient()
@@ -72,7 +82,7 @@ export const useUploadChatPhoto = (kid = false) =>
     mutationFn: ({ threadId, file }: { threadId: number; file: File }) => {
       const body = new FormData()
       body.append('file', file)
-      return api<{ photo_id: number }>(`/chat/threads/${threadId}/photos`, { method: 'POST', body, kid })
+      return api<{ photo_id: number }>(`/chat/threads/${Number(threadId)}/photos`, { method: 'POST', body, kid })
     },
   })
 
@@ -80,7 +90,7 @@ export const usePost = (kid = false) => {
   const refresh = useRefresh(kid)
   return useMutation({
     mutationFn: ({ threadId, body, photoId }: { threadId: number; body?: string; photoId?: number }) =>
-      api<ChatMessage>(`/chat/threads/${threadId}/messages`, {
+      api<ChatMessage>(`/chat/threads/${Number(threadId)}/messages`, {
         method: 'POST',
         body: { body: body || null, photo_id: photoId ?? null },
         kid,
@@ -92,7 +102,7 @@ export const usePost = (kid = false) => {
 export const useMarkRead = (kid = false) => {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (threadId: number) => api(`/chat/threads/${threadId}/read`, { method: 'POST', kid }),
+    mutationFn: (threadId: number) => api(`/chat/threads/${Number(threadId)}/read`, { method: 'POST', kid }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['chat-threads', kid] }),
   })
 }

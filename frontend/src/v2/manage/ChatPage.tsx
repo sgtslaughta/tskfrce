@@ -13,8 +13,9 @@ type Pick = { kind: ThreadKind; ref: string }
 
 /** From ?kid=<id>, ?chore=<task id> or ?family. */
 function fromQuery(q: Record<string, string | string[] | undefined>): Pick | null {
-  if (typeof q.kid === 'string') return { kind: 'private', ref: q.kid }
-  if (typeof q.chore === 'string') return { kind: 'chore', ref: q.chore }
+  // only plain numeric ids: a crafted ?kid=../.. must not steer API requests
+  if (typeof q.kid === 'string' && /^\d+$/.test(q.kid)) return { kind: 'private', ref: q.kid }
+  if (typeof q.chore === 'string' && /^\d+$/.test(q.chore)) return { kind: 'chore', ref: q.chore }
   if (q.family !== undefined) return { kind: 'family', ref: 'family' }
   return null
 }
