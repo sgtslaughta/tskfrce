@@ -30,7 +30,7 @@ def _device(db):
 
 def test_flag_sets_since_and_notifies_each_parent_once(client, db, parent):
     _make_user(db, "dad", UserRole.PARENT)
-    _make_user(db, "kid2", UserRole.KID)
+    kid2 = _make_user(db, "kid2", UserRole.KID)
     d = _device(db)
     r = client.post(URL, json={"resisting": [MAC.upper()]}, headers=tok())
     assert r.status_code == 200 and r.json() == {"flagged": 1, "cleared": 0}
@@ -39,6 +39,11 @@ def test_flag_sets_since_and_notifies_each_parent_once(client, db, parent):
     assert _count(db) == 2
     n = db.query(Notification).first()
     assert n.title == "Pad is getting around the block"
+    assert n.message == (
+        "Pad is still reaching the internet while it should be paused. "
+        "Someone may have changed its network settings. Tap for what to check."
+    )
+    assert db.query(Notification).filter_by(user_id=kid2.id).count() == 0
     assert n.action_url == "/manage/devices" and n.data == {"device_id": d.id}
     r = client.post(URL, json={"resisting": [MAC]}, headers=tok())
     assert r.json() == {"flagged": 0, "cleared": 0}

@@ -15,8 +15,8 @@ from app.core.config import settings
 from app.lock.loop import trigger
 from app.lock.state import desired_blocked
 from app.models.lock import Device
+from app.models.notification import Notification
 from app.models.user import User, UserRole
-from app.services.notification_persistence_service import NotificationPersistenceService
 
 MAC_RE = re.compile(r"^([0-9a-f]{2}:){5}[0-9a-f]{2}$")
 
@@ -115,29 +115,34 @@ def devices_resisting(body: ResistingReport, db: Session = Depends(get_db)) -> d
     now = datetime.now(UTC).replace(tzinfo=None)
     listed = set(body.resisting)
     flagged = cleared = 0
-    newly: list[Device] = []
-    for dev in db.query(Device).all():
-        if dev.mac in listed:
-            if dev.resisting_since is None:
-                dev.resisting_since = now
-                newly.append(dev)
-                flagged += 1
-        elif dev.resisting_since is not None:
-            dev.resisting_since = None
-            cleared += 1
-    db.commit()
-    if newly:
+    try:
         parents = db.query(User).filter(User.role == UserRole.PARENT).all()
-        svc = NotificationPersistenceService(db)
-        for dev in newly:
-            for p in parents:
-                svc.create_notification(
-                    p.id,
-                    "device_resisting",
-                    f"{dev.name} is getting around the block",
-                    f"{dev.name} is still reaching the internet while it should be paused. "
-                    "Someone may have changed its network settings. Tap for what to check.",
-                    action_url="/manage/devices",
-                    data={"device_id": dev.id},
-                )
+        for dev in db.query(Device).all():
+            if dev.mac in listed:
+                if dev.resisting_since is not None:
+                    continue
+                dev.resisting_since = now
+                flagged += 1
+                for p in parents:
+                    db.add(
+                        Notification(
+                            user_id=p.id,
+                            type="device_resisting",
+                            title=f"{dev.name} is getting around the block",
+                            message=f"{dev.name} is still reaching the internet while it "
+                            "should be paused. Someone may have changed its network "
+                            "settings. Tap for what to check.",
+                            action_url="/manage/devices",
+                            data={"device_id": dev.id},
+                            is_read=False,
+                            created_at=now,
+                        )
+                    )
+            elif dev.resisting_since is not None:
+                dev.resisting_since = None
+                cleared += 1
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     return {"flagged": flagged, "cleared": cleared}
