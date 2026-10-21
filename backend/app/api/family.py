@@ -26,6 +26,8 @@ def _fam_out(fam) -> dict:
         "reset_time": fam.reset_time,
         "new_devices_blocked": fam.new_devices_blocked,
         "points_unlock_early": fam.points_unlock_early,
+        "early_bonus_cap": fam.early_bonus_cap,
+        "screen_time_price": fam.screen_time_price,
     }
 
 

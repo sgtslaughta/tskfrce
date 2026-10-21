@@ -12,6 +12,7 @@ from app.models.family import get_family
 from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
 from app.schemas.chore import ChoreCreate, ChoreOut
+from app.services.economy import award_chore
 
 router = APIRouter(prefix="/api/v1/chores", tags=["chores"])
 
@@ -25,6 +26,7 @@ def _out(t: Task) -> dict:
         status=t.status.value,
         due_date=t.due_date.date().isoformat() if t.due_date else None,
         needs_photo=bool((t.recurrence_pattern or {}).get("needs_photo")),
+        due_time=(t.recurrence_pattern or {}).get("due_time"),
     ).model_dump()
 
 
@@ -38,6 +40,8 @@ def create_chore(
     fam = get_family(db)
     day = current_chore_day(fam, datetime.utcnow())
     pattern = {**body.repeat.model_dump(), "needs_photo": body.needs_photo, "chore": True}
+    if body.due_time:
+        pattern["due_time"] = body.due_time
     once = body.repeat.type == "once"
     defn = Task(
         title=body.title,
@@ -81,6 +85,7 @@ def definitions(
                 "days": t.recurrence_pattern.get("days", []),
             },
             "needs_photo": bool(t.recurrence_pattern.get("needs_photo")),
+            "due_time": t.recurrence_pattern.get("due_time"),
         }
         for t in q.order_by(Task.id)
     ]
@@ -111,6 +116,8 @@ def approve(chore_id: int, db: Session = Depends(get_db), parent: User = Depends
     t.status = TaskStatus.DONE
     t.approved_at = t.completed_at = datetime.utcnow()
     t.approved_by_id = parent.id
+    if t.assigned_to_id is not None:
+        award_chore(db, t, get_family(db))
     db.commit()
     return _out(t)
 

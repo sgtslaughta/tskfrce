@@ -4,7 +4,6 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user, get_db
@@ -17,11 +16,11 @@ from app.lock.rules import is_online
 from app.lock.schedule import local_now
 from app.lock.state import device_facts
 from app.models.family import get_family
-from app.models.gamification import Points
 from app.models.lock import Device
 from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
+from app.services import economy
 
 router = APIRouter(prefix="/api/v1/kid", tags=["kid"])
 
@@ -101,18 +100,19 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(r
         .order_by(Task.id)
         .all()
     )
-    balance = (
-        db.query(func.coalesce(func.sum(Points.amount), 0))
-        .filter(Points.user_id == kid.id)
-        .scalar()
-    )
     return {
         "locked": _locked(db, kid, client_ip(request), now),
         "chores": [
-            {"id": t.id, "title": t.title, "points": t.points or 0, "state": chore_state(t)}
+            {
+                "id": t.id,
+                "title": t.title,
+                "points": t.points or 0,
+                "state": chore_state(t),
+                "due_time": (t.recurrence_pattern or {}).get("due_time"),
+            }
             for t in tasks
         ],
-        "points_balance": int(balance),
+        "points_balance": economy.balance(db, kid.id),
     }
 
 

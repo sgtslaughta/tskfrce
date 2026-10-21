@@ -118,6 +118,7 @@ def test_definitions_lists_repeating_only(client, db, kid, parent_headers, kid_h
             "kid_id": kid.id,
             "repeat": {"type": "daily", "days": []},
             "needs_photo": True,
+            "due_time": None,
         }
     ]
     assert (

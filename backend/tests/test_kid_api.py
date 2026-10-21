@@ -173,7 +173,9 @@ def test_today_only_own_chores_points_and_locked(kc, db, parent, kid):
     db.add(Points(user_id=kid.id, points_type=PointsType.TASK_COMPLETION, amount=7))
     db.commit()
     j = kc.get("/api/v1/kid/today", headers=kid_hdr(db, kid)).json()
-    assert j["chores"] == [{"id": mine.id, "title": "x", "points": 3, "state": "todo"}]
+    assert j["chores"] == [
+        {"id": mine.id, "title": "x", "points": 3, "state": "todo", "due_time": None}
+    ]
     assert j["points_balance"] == 7 and j["locked"] is True
 
 

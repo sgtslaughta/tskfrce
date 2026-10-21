@@ -2,7 +2,9 @@
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from app.schemas.lock import _hhmm
 
 
 class Repeat(BaseModel):
@@ -16,6 +18,9 @@ class ChoreCreate(BaseModel):
     points: int = 10
     repeat: Repeat
     needs_photo: bool = False
+    due_time: str | None = None
+
+    _due = field_validator("due_time")(_hhmm)
 
 
 class ChoreOut(BaseModel):
@@ -26,3 +31,4 @@ class ChoreOut(BaseModel):
     status: str
     due_date: str | None = None
     needs_photo: bool = False
+    due_time: str | None = None

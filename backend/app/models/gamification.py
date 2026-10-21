@@ -57,6 +57,7 @@ class PointsType(str, Enum):
     BONUS = "bonus"
     PENALTY = "penalty"
     TRANSFER = "transfer"
+    REDEMPTION = "redemption"
 
 
 class Achievement(Base):

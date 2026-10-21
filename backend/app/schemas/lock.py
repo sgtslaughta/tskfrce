@@ -87,5 +87,7 @@ class FamilyPatch(BaseModel):
     reset_time: str | None = None
     new_devices_blocked: bool | None = None
     points_unlock_early: bool | None = None
+    early_bonus_cap: int | None = Field(default=None, ge=0, le=50)
+    screen_time_price: int | None = Field(default=None, ge=1, le=1000)
 
     _rt = field_validator("reset_time")(_hhmm)
