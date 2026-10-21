@@ -44,7 +44,7 @@ def create_reward(body: RewardCreate, db: Session = Depends(get_db)):
 def patch_reward(reward_id: int, body: RewardPatch, db: Session = Depends(get_db)):
     r = _get(db, reward_id)
     for k, v in body.model_dump(exclude_unset=True).items():
-        if v is not None:
+        if v is not None or k == "icon":  # icon is the only clearable field
             setattr(r, k, v)
     db.commit()
     return _out(r)

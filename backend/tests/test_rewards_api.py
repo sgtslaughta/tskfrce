@@ -34,3 +34,12 @@ def test_delete_hides_and_denies_pending(client, db, kid, parent_headers):
     assert client.delete(f"/api/v1/rewards/{rid}", headers=parent_headers).status_code == 204
     assert client.get("/api/v1/rewards", headers=parent_headers).json() == []
     assert db.query(Redemption).one().status == "denied"
+
+
+def test_patch_can_clear_icon_but_not_name(client, parent_headers):
+    rid = _mk(client, parent_headers).json()["id"]
+    p = client.patch(
+        f"/api/v1/rewards/{rid}", json={"icon": None, "name": None}, headers=parent_headers
+    )
+    assert p.status_code == 200
+    assert p.json()["icon"] is None and p.json()["name"] == "Pizza"
