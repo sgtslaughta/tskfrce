@@ -6,6 +6,21 @@ yaml = pytest.importorskip("yaml", reason="PyYAML not installed; cannot parse la
 
 LAB = Path(__file__).resolve().parents[2] / "lab" / "docker-compose.lab.yml"
 
+
+class _Loader(yaml.SafeLoader):
+    """Compose-only tags (!reset, !override) load as their plain value."""
+
+
+def _plain(loader, tag, node):
+    if isinstance(node, yaml.MappingNode):
+        return loader.construct_mapping(node, deep=True)
+    if isinstance(node, yaml.SequenceNode):
+        return loader.construct_sequence(node, deep=True)
+    return loader.construct_scalar(node)
+
+
+_Loader.add_multi_constructor("!", _plain)
+
 SYSCTLS = {"net.ipv4.ip_forward": 1, "net.ipv6.conf.all.forwarding": 1}
 HOSTS = {
     "kid1": ("10.99.0.11", "fd00:99::11", "02:99:00:00:00:11"),
@@ -16,7 +31,7 @@ HOSTS = {
 
 @pytest.fixture(scope="module")
 def cfg():
-    return yaml.safe_load(LAB.read_text())
+    return yaml.load(LAB.read_text(), Loader=_Loader)
 
 
 def _sysctls(svc):
@@ -35,7 +50,7 @@ def test_project_name_and_internal_networks(cfg):
 
 def test_router(cfg):
     r = cfg["services"]["router"]
-    assert r["mac_address"] == "02:99:00:00:00:02"
+    assert r["networks"]["lab"]["mac_address"] == "02:99:00:00:00:02"
     assert r["networks"]["lab"]["ipv4_address"] == "10.99.0.2"
     assert r["networks"]["lab"]["ipv6_address"] == "fd00:99::2"
     assert r["networks"]["wan"]["ipv4_address"] == "203.0.113.2"

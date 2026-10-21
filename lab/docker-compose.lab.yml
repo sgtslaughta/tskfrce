@@ -1,0 +1,101 @@
+name: task4ce-lab
+
+x-host: &host
+  build: ./host
+  cap_add: [NET_ADMIN]
+  dns: [203.0.113.1]
+
+services:
+  fake-internet:
+    image: nginx:alpine
+    cap_add: [NET_ADMIN]
+    command: >-
+      sh -c "ip route add 10.99.0.0/24 via 203.0.113.2;
+      ip -6 route add fd00:99::/64 via 2001:db8:1::2 || true;
+      exec nginx -g 'daemon off;'"
+    volumes:
+      - ./fake-internet/index.html:/usr/share/nginx/html/index.html:ro
+    networks:
+      wan: {ipv4_address: 203.0.113.1, ipv6_address: "2001:db8:1::1"}
+
+  router:
+    build: ./router
+    cap_add: [NET_ADMIN]
+    sysctls:
+      net.ipv4.ip_forward: 1
+      net.ipv6.conf.all.forwarding: 1
+    networks:
+      lab: {ipv4_address: 10.99.0.2, ipv6_address: "fd00:99::2", mac_address: "02:99:00:00:00:02"}
+      wan: {ipv4_address: 203.0.113.2, ipv6_address: "2001:db8:1::2"}
+
+  backend:
+    extends: {file: ../docker-compose.yml, service: backend}
+    build:
+      context: ../backend
+    container_name: !reset null
+    ports: !reset []
+    depends_on: !reset []
+    healthcheck: {disable: true}
+    environment:
+      INTERNAL_TOKEN: labtoken
+      BLOCKER_URL: http://10.99.0.4:7777
+      TRUSTED_HOSTS: "*"
+      DISABLE_RATE_LIMITING: "true"
+    volumes: !override
+      - ../backend:/app
+      - /app/data
+    networks: !override
+      lab: {ipv4_address: 10.99.0.3}
+
+  blocker:
+    build: ../blocker
+    mac_address: "02:99:00:00:00:04"
+    cap_add: [NET_ADMIN, NET_RAW]
+    sysctls:
+      net.ipv4.ip_forward: 1
+      net.ipv6.conf.all.forwarding: 1
+    environment:
+      BACKEND_URL: http://10.99.0.3:8000
+      INTERNAL_TOKEN: labtoken
+      LAN_IFACE: eth0
+      SCAN_INTERVAL: "5"
+      RECONCILE_INTERVAL: "5"
+      RESIST_INTERVAL: "5"
+      PORTAL_REDIRECT_URL: http://task4ce.local/kid
+    entrypoint: ["sh", "-c", "ip route replace default via 10.99.0.2 && ip -6 route replace default via fd00:99::2; exec python3 -m blocker"]
+    networks:
+      lab: {ipv4_address: 10.99.0.4, ipv6_address: "fd00:99::4"}
+
+  kid1:
+    <<: *host
+    mac_address: "02:99:00:00:00:11"
+    networks:
+      lab: {ipv4_address: 10.99.0.11, ipv6_address: "fd00:99::11"}
+
+  kid2:
+    <<: *host
+    mac_address: "02:99:00:00:00:12"
+    networks:
+      lab: {ipv4_address: 10.99.0.12, ipv6_address: "fd00:99::12"}
+
+  parent:
+    <<: *host
+    mac_address: "02:99:00:00:00:13"
+    networks:
+      lab: {ipv4_address: 10.99.0.13, ipv6_address: "fd00:99::13"}
+
+networks:
+  lab:
+    driver: bridge
+    internal: true
+    enable_ipv6: true
+    ipam:
+      config: [{subnet: 10.99.0.0/24}, {subnet: "fd00:99::/64"}]
+  wan:
+    driver: bridge
+    internal: true
+    enable_ipv6: true
+    ipam:
+      config:
+        - {subnet: 203.0.113.0/24, gateway: 203.0.113.254}
+        - {subnet: "2001:db8:1::/64", gateway: "2001:db8:1::ffff"}
