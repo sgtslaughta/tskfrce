@@ -51,10 +51,15 @@ export function KidChecklist({
   chores,
   onDone,
   busyId,
+  unread,
+  onChat,
 }: {
   chores: KidChore[]
   onDone?: (id: number) => void
   busyId?: number | null
+  /** unread chat count per chore id; with `onChat`, each chore gets a Chat link */
+  unread?: Record<number, number>
+  onChat?: (id: number) => void
 }) {
   if (!chores.length) return <p style={{ margin: 0, fontSize: 18 }}>No chores today.</p>
   return (
@@ -87,7 +92,22 @@ export function KidChecklist({
                 }}
               >
                 Sent back: {c.last_note}
+                {onChat && (
+                  <Button variant="subtle" size="compact-md" ml="xs" onClick={() => onChat(c.id)}>
+                    See the chat
+                  </Button>
+                )}
               </div>
+            )}
+            {onChat && (
+              <Button variant="default" size="md" aria-label={`Chat about ${c.title}`} onClick={() => onChat(c.id)} style={{ minHeight: 44 }}>
+                Chat
+                {!!unread?.[c.id] && (
+                  <span className="f-pill" aria-label={`${unread[c.id]} unread`} style={{ marginLeft: 6 }}>
+                    {unread[c.id]}
+                  </span>
+                )}
+              </Button>
             )}
             {open && onDone && !!c.subtasks?.length && <Steps c={c} />}
             {open && onDone && c.needs_photo && <Photo c={c} />}
