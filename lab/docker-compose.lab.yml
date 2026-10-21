@@ -43,6 +43,7 @@ services:
       BLOCKER_URL: http://10.99.0.4:7777
       TRUSTED_HOSTS: "*"
       DISABLE_RATE_LIMITING: "true"
+      DISABLE_LOGIN_RATE_LIMIT: "true"
     volumes: !override
       - ../backend:/app
       - /app/data

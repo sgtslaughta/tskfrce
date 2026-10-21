@@ -71,9 +71,9 @@ _up() {
 
 _portal() {
   local ip out
-  ip=$($COMPOSE exec -T "$1" nslookup example.com 2>/dev/null | awk '/^Address/ && !/#/ {print $2}' | tail -1)
+  ip=$($COMPOSE exec -T "$1" nslookup example.com 203.0.113.1 2>/dev/null | awk '/^Address/ && !/#/ {print $2}' | tail -1)
   [ "$ip" = 10.99.0.4 ] || { echo "dns: $ip" >&2; return 1; }
-  out=$($COMPOSE exec -T "$1" curl -s -m 3 -o /dev/null -w '%{http_code} %{redirect_url}' http://example.com/ || true)
+  out=$($COMPOSE exec -T "$1" curl -s -m 3 -o /dev/null -w '%{http_code} %{redirect_url}' http://203.0.113.1/ || true)
   echo "$out"
   [ "$out" = "302 http://task4ce.local/kid" ]
 }
