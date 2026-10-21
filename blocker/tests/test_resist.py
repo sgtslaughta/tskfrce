@@ -214,3 +214,12 @@ def test_watch_retries_after_failed_start():
     w.set_watched(WATCHED)
     assert len(calls) == 2
     assert w._sniffer is not None
+
+
+def test_reset_drops_tally():
+    c, _ = _counter()
+    for _ in range(3):
+        c.observe(GW, BOX, KID_IP, INET)
+    c.reset(KID.upper())
+    assert c.tally(KID).from_gateway == 0
+    assert c.resisting() == set()

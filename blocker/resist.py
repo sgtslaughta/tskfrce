@@ -89,6 +89,11 @@ class ResistanceCounter:
                 if mac not in watched:
                     del self._tallies[mac]
 
+    def reset(self, mac: str) -> None:
+        """Drop one MAC's tally."""
+        with self._lock:
+            self._tallies.pop(mac.lower(), None)
+
     def _in_lan(self, ip: str) -> bool:
         try:
             addr = ipaddress.ip_address(ip)

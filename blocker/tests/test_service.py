@@ -96,12 +96,13 @@ def test_reconcile_keeps_last_set_when_app_unreachable():
     assert svc.store.current() == {MAC}
 
 
-def _watch(from_gateway=0, to_box=0):
+def _watch(from_gateway=0, to_box=0, resets=None):
     return SimpleNamespace(
         set_watched=lambda m: None,
         stop=lambda: None,
         counter=SimpleNamespace(
             resisting=lambda: set(),
+            reset=(resets.append if resets is not None else lambda m: None),
             tally=lambda mac: Tally(from_gateway=from_gateway, to_box=to_box),
         ),
     )
@@ -147,15 +148,44 @@ def test_test_block_preserves_other_blocks():
     assert all(other in r for r in fw.applied[n:])
 
 
-def test_apply_strips_ip_claimed_by_two_macs():
+def test_duplicate_ip_still_enforced_for_blocked_mac():
     svc, fw, redir = _svc()
     other = "aa:bb:cc:dd:ee:ff"
     svc._on_seen(Seen(mac=other, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
     svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
-    svc.store.set_blocked([MAC, other])
-    assert "192.168.1.50" not in fw.applied[-1]  # ambiguous IP kept out of the ruleset
-    assert redir.targets[MAC].ip is None
-    assert redir.targets[other].ip is None
+    svc.store.set_blocked([MAC])
+    assert "192.168.1.50" in fw.applied[-1]
+    assert redir.targets[MAC].ip == "192.168.1.50"
+
+
+def test_test_block_resets_tally_before_wait():
+    resets: list = []
+    svc, fw, redir = _svc(watch=_watch(0, 4, resets))
+    svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
+    svc.test_block(MAC)
+    assert resets == [MAC]
+
+
+@pytest.mark.parametrize("gw6", [None, "cc:cc:cc:cc:cc:cc", "boom"])
+def test_test_block_ok_with_ip6_needs_gateway_mac6(gw6):
+    from blocker.arp import LanFacts
+
+    svc, fw, redir = _svc(watch=_watch(0, 4))
+    if gw6 == "boom":
+
+        def lanfacts():
+            raise RuntimeError
+
+        redir._lanfacts = lanfacts
+    else:
+        redir._lanfacts = lambda: LanFacts(
+            gateway_ip="192.168.1.1",
+            gateway_mac="aa:aa:aa:aa:aa:aa",
+            box_mac="bb:bb:bb:bb:bb:bb",
+            gateway_mac6=gw6,
+        )
+    svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=["fe80::5"], hostname=None, vendor=None))
+    assert svc.test_block(MAC)["reason"] == ("ok" if gw6 not in (None, "boom") else "quiet")
 
 
 def test_apply_strips_gateway_ip():

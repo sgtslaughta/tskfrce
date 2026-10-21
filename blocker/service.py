@@ -139,17 +139,12 @@ class Service:
             return None  # LAN detection failed -> gateway/box facts unknown
 
     def _unsafe_ips(self, lan) -> set[str]:
-        """IPs we must not spoof: gateway, portal/box, or claimed by >1 MAC."""
+        """IPs we must not spoof: gateway and portal/box only (duplicates stay enforced)."""
         unsafe: set[str] = set()
         if lan is not None:
             unsafe.update(ip for ip in (lan.gateway_ip, lan.gateway_ip6) if ip)
         if self._portal_ip:
             unsafe.add(self._portal_ip)
-        counts: dict[str, int] = {}
-        for t in self._devices.values():
-            for ip in ([t.ip] if t.ip else []) + list(t.ip6):
-                counts[ip] = counts.get(ip, 0) + 1
-        unsafe.update(ip for ip, n in counts.items() if n > 1)
         return unsafe
 
     @staticmethod
@@ -215,10 +210,14 @@ class Service:
         mac = mac.lower()
         prior = self.store.current()
         with self._lock:
-            ip = (self._devices.get(mac) or TargetAddrs(mac=mac)).ip
+            dev = self._devices.get(mac) or TargetAddrs(mac=mac)
+        ip, has_ip6 = dev.ip, bool(dev.ip6)
+        lan = self._lan()
         # Add to the live set, never replace it — a diagnostic on one device must
         # not lift enforcement on every other blocked device during the probe.
         self.store.set_blocked(sorted(prior | {mac}))
+        if self._watch is not None:
+            self._watch.counter.reset(mac)  # count only traffic inside this window
         self._sleep(PROBE_WAIT)
         tally = self._watch.counter.tally(mac) if self._watch is not None else Tally()
         self.store.set_blocked(sorted(prior))
@@ -228,6 +227,8 @@ class Service:
             reason = "device"
         elif tally.to_box > 0:
             reason = "ok"
+            if has_ip6 and not (lan and lan.gateway_mac6):
+                reason = "quiet"  # can't redirect IPv6 here, so can't claim success
         else:
             reason = "quiet"
         return {
