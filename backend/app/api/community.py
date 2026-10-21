@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user, get_db
+from app.flair.catalog import equipped
 from app.lock.reset import current_chore_day
 from app.models.family import get_family
 from app.models.user import User, UserRole
@@ -26,6 +27,7 @@ def _profile(db: Session, kid: User, today) -> dict:
         "title": lv.title,
         "streak": progression.streak(db, kid.id, today).current,
         "badges": badges.badges_for(db, kid.id),
+        "flair": equipped(kid),
     }
 
 

@@ -6,6 +6,7 @@ from datetime import UTC, date, datetime, timedelta
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.flair.catalog import equipped
 from app.lock.reset import current_chore_day, is_chore_filter, kid_chores_filter
 from app.models.badge import BadgeAward, CustomBadge
 from app.models.family import FamilySettings
@@ -51,6 +52,7 @@ CATALOG: dict[str, BadgeDef] = dict(
         _d("goal_getter", "Goal Getter", "🏆", "Rewards earned.", "rewards", 1, 3, 5, 10, 20),
         _d("patience_pays", "Patience Pays", "🧘", "Big rewards (2000+ points).", "big_rewards", 1, 2, 3, 5, 10),
         _d("time_lord", "Time Lord", "📱", "Screen time earned.", "screen_redemptions", 10, 25, 50, 100, 250),
+        _d("drip", "Drip", "💧", "Equip flair from the Locker.", "slots_equipped", 1),
     ]
 )
 # fmt: on
@@ -140,6 +142,7 @@ def metrics(db: Session, kid: User, fam: FamilySettings) -> dict[str, int]:
         "rewards": len(rewards),
         "big_rewards": sum(1 for r in rewards if r.cost >= BIG_REWARD),
         "screen_redemptions": len(reds) - len(rewards),
+        "slots_equipped": sum(v is not None for v in equipped(kid).values()),
     }
 
 

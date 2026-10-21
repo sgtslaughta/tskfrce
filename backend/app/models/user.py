@@ -7,7 +7,7 @@ This module contains the User model for authentication and user management.
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
@@ -63,6 +63,7 @@ class User(Base):
     pin_hash = Column(String(255), nullable=True)
     avatar = Column(String(255), nullable=True)
     celebrated_level = Column(Integer, nullable=False, default=1, server_default="1")
+    flair = Column(JSON, nullable=False, default=dict, server_default="{}")
 
     # Relationships
     tasks = relationship(

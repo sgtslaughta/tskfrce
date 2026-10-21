@@ -7,6 +7,7 @@ from zoneinfo import ZoneInfo
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.flair.catalog import equipped
 from app.lock.reset import current_chore_day, is_chore_filter, kid_chores_filter
 from app.lock.schedule import local_now
 from app.models.family import FamilySettings
@@ -114,6 +115,7 @@ def progress(db: Session, kid: User, fam: FamilySettings) -> dict:
         "floor": lv.floor,
         "next": lv.next,
         "streak": streak(db, kid.id, today).current,
+        "flair": equipped(kid),
     }
 
 
@@ -150,6 +152,7 @@ def leaderboard(db: Session, fam: FamilySettings, now_utc: datetime) -> dict:
                 "score": int(scores.get(k.id) or 0),
                 "level": lv.level,
                 "title": lv.title,
+                "flair": equipped(k),
             }
         )
     rows.sort(key=lambda r: (-r["score"], r["name"]))
