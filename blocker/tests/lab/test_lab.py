@@ -1,39 +1,12 @@
-import os
-import shutil
 import subprocess
-import time
 
 import pytest
 
-os.environ["INTERNAL_TOKEN"] = "labtoken"
+from . import journey as j
+
 pytestmark = pytest.mark.integration
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
-LAB = ["bash", os.path.join(ROOT, "scripts/lab.sh")]
-COMPOSE = ["docker", "compose", "-f", os.path.join(ROOT, "lab/docker-compose.lab.yml")]
-
-
-def lab(*args, check=False) -> subprocess.CompletedProcess:
-    return subprocess.run([*LAB, *args], capture_output=True, text=True, check=check)
-
-
-def wait_for(pred, timeout=60, every=2):
-    end = time.monotonic() + timeout
-    while time.monotonic() < end:
-        if pred():
-            return True
-        time.sleep(every)
-    return False
-
-
-@pytest.fixture(scope="module", autouse=True)
-def lab_up():
-    if not shutil.which("docker"):
-        pytest.skip("docker not available")
-    try:
-        lab("up", check=True)
-        yield
-    finally:
-        lab("down")
+COMPOSE = j.COMPOSE
+lab, wait_for = j.lab, j.wait_for
 
 
 @pytest.fixture(autouse=True)
@@ -87,7 +60,7 @@ def test_static_arp_is_blocked_and_flagged():
         out = lab("test-block", "kid1", check=True).stdout
         assert '"reason": "device"' in out or '"reason":"device"' in out
     finally:
-        subprocess.run([*COMPOSE, "exec", "-T", "kid1", "pkill", "-f", "while :"])
+        subprocess.run([*COMPOSE, "exec", "-T", "kid1", "pkill", "-f", "while :"], check=False)
     lab("reset", "kid1", check=True)
     assert wait_for(lambda: lab("resisting", "kid1").stdout.strip() == "false", timeout=90)
 

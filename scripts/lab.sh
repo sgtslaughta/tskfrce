@@ -102,8 +102,8 @@ case "$cmd" in
     $COMPOSE exec -T "$1" ip neigh replace 10.99.0.2 lladdr 02:99:00:00:00:02 nud permanent dev eth0
     $COMPOSE exec -T "$1" ip -6 neigh replace fd00:99::2 lladdr 02:99:00:00:00:02 nud permanent dev eth0 ;;
   reset)
-    $COMPOSE exec -T "$1" ip neigh flush dev eth0
-    $COMPOSE exec -T "$1" ip -6 neigh flush dev eth0 ;;
+    $COMPOSE exec -T "$1" ip neigh flush nud all dev eth0
+    $COMPOSE exec -T "$1" ip -6 neigh flush nud all dev eth0 ;;
   resisting)
     mac=$(_mac_of "$1")
     _devices | jq -r --arg m "$mac" '[.[] | select((.mac|ascii_downcase)==$m)][0].resisting // false' ;;
