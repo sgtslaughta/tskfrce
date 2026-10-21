@@ -19,7 +19,7 @@ from blocker.backend import Seen, fetch_blocked, report_resisting
 from blocker.config import Config
 from blocker.discovery import run_discovery
 from blocker.portal import run_dns, run_http
-from blocker.resist import ResistanceCounter, ResistanceWatch
+from blocker.resist import ResistanceCounter, ResistanceWatch, Tally
 from blocker.state_store import StateStore
 
 log = logging.getLogger(__name__)
@@ -56,6 +56,20 @@ def _detect_box_ip(cfg: Config) -> str:
         return get_if_addr(cfg.lan_iface or "eth0")
     except Exception:
         return ""
+
+
+TEST_MESSAGES = {
+    "ok": "Success — the device lost internet access while blocked.",
+    "unseen": "We haven't seen this device on the network yet, so we couldn't test it.",
+    "router": (
+        "The device stayed online and never talked to the box. Your router is probably "
+        "stopping the box from stepping in — check the router list in the docs."
+    ),
+    "device": (
+        "The device stayed online even though it was talking to the box. It looks like the "
+        "device itself is getting around the block — someone may have changed its network settings."
+    ),
+}
 
 
 class Service:
@@ -159,17 +173,20 @@ class Service:
         self.store.set_blocked(sorted(prior | {mac}))
         self._sleep(PROBE_WAIT)
         online = self._probe(ip) if ip else False
+        tally = self._watch.counter.tally(mac) if self._watch is not None else Tally()
         self.store.set_blocked(sorted(prior))
         if ip is None:
-            message = "We haven't seen this device on the network yet, so we couldn't test it."
-        elif online:
-            message = (
-                "The device stayed online. Your router may be ignoring the block — "
-                "some routers resist this."
-            )
+            reason = "unseen"
+        elif not online:
+            reason = "ok"
         else:
-            message = "Success — the device lost internet access while blocked."
-        return {"offline": not online, "router_resisted": bool(online), "message": message}
+            reason = "device" if tally.to_box > 0 else "router"
+        return {
+            "offline": not online,
+            "router_resisted": reason == "router",
+            "reason": reason,
+            "message": TEST_MESSAGES[reason],
+        }
 
     # --- lifecycle ----------------------------------------------------------
 

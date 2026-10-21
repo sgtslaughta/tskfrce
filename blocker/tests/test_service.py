@@ -6,9 +6,12 @@ from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import Mock
 
+import pytest
+
 from blocker.backend import Seen
 from blocker.config import Config
-from blocker.service import Service
+from blocker.resist import Tally
+from blocker.service import TEST_MESSAGES, Service
 
 CFG = Config(
     backend_url="http://b",
@@ -107,6 +110,35 @@ def test_test_block_reports_offline_when_probe_fails():
     result = svc.test_block(MAC)
     assert result["offline"] is True
     assert result["router_resisted"] is False
+
+
+def _watch(g, b):
+    return SimpleNamespace(
+        set_watched=lambda m: None,
+        stop=lambda: None,
+        counter=SimpleNamespace(
+            resisting=lambda: set(), tally=lambda mac: Tally(to_gateway=g, to_box=b)
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    "online,to_box,reason",
+    [(False, 0, "ok"), (True, 0, "router"), (True, 4, "device")],
+)
+def test_test_block_reason(online, to_box, reason):
+    svc, fw, redir = _svc(probe=lambda ip: online, watch=_watch(5, to_box))
+    svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
+    r = svc.test_block(MAC)
+    assert r["reason"] == reason
+    assert r["message"] == TEST_MESSAGES[reason]
+    assert r["router_resisted"] is (reason == "router")
+
+
+def test_test_block_unseen():
+    svc, fw, redir = _svc(probe=lambda ip: True, watch=_watch(0, 0))
+    r = svc.test_block(MAC)
+    assert r["reason"] == "unseen"
 
 
 def test_test_block_preserves_other_blocks():

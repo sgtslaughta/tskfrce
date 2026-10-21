@@ -7,6 +7,7 @@ from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_parent
+from app.lock import blocker_client
 from app.lock.loop import trigger
 from app.lock.overrides import clear_override, set_override
 from app.lock.rules import is_online
@@ -111,6 +112,15 @@ def device_clear_override(device_id: int, db: Session = Depends(get_db)):
     db.commit()
     trigger()
     return {"ok": True}
+
+
+@router.post("/devices/{device_id}/test-block")
+def test_block(device_id: int, db: Session = Depends(get_db)):
+    d = _device(db, device_id)
+    result = blocker_client.test_block(d.mac)
+    if result is None:
+        raise HTTPException(503, "The home box didn't answer. Is it plugged in?")
+    return result
 
 
 @router.delete("/devices/{device_id}")
