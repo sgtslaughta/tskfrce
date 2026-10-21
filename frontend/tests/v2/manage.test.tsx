@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
 import type { ReactNode } from 'react'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -56,6 +56,8 @@ const family: Family = {
   reset_time: '04:00',
   new_devices_blocked: true,
   points_unlock_early: false,
+  early_bonus_cap: 5,
+  screen_time_price: 20,
 }
 
 const wrap = (ui: ReactNode) => (
@@ -273,10 +275,29 @@ describe('windows', () => {
 describe('settings', () => {
   test('PATCH sends only changed fields', async () => {
     render(wrap(<SettingsPage />))
-    await userEvent.click(await screen.findByRole('switch', { name: 'Points can unlock early' }))
+    await userEvent.click(await screen.findByRole('switch', { name: 'Kids can spend points on screen time' }))
     await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
     await waitFor(() =>
       expect(calls('PATCH')[0]).toEqual(['/family', { method: 'PATCH', body: { points_unlock_early: true } }]),
     )
+  })
+
+  test('saves screen_time_price', async () => {
+    render(wrap(<SettingsPage />))
+    const price = await screen.findByLabelText('Screen time price (points per 15 min)')
+    await userEvent.clear(price)
+    await userEvent.type(price, '30')
+    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
+    await waitFor(() =>
+      expect(calls('PATCH')[0]).toEqual(['/family', { method: 'PATCH', body: { screen_time_price: 30 } }]),
+    )
+  })
+
+  test('ChoreEditor sends due_time when set', async () => {
+    render(wrap(<ChoreEditor kidId={7} />))
+    await userEvent.type(screen.getByLabelText('Chore'), 'Dishes')
+    fireEvent.change(screen.getByLabelText('Due by (optional)'), { target: { value: '17:00' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Add chore' }))
+    await waitFor(() => expect((calls('POST')[0][1]?.body as { due_time?: string }).due_time).toBe('17:00'))
   })
 })

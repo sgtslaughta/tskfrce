@@ -6,6 +6,7 @@ import { StickerCard } from "../components/StickerCard";
 import { useToday } from "../hooks/useToday";
 import { KidCard } from "./KidCard";
 import { NewDevicesBanner } from "./NewDevicesBanner";
+import { RequestsPanel } from "./RequestsPanel";
 
 const dayName = (iso?: string) =>
   iso
@@ -29,6 +30,7 @@ export function TodayPage() {
       )}
       {data && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <RequestsPanel />
           <NewDevicesBanner devices={data.new_devices} />
           {data.kids.length === 0 ? (
             <StickerCard>

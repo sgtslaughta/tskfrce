@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Button, CopyButton, NativeSelect, Switch, Text, TextInput } from '@mantine/core'
+import { Button, CopyButton, NativeSelect, NumberInput, Switch, Text, TextInput } from '@mantine/core'
 import { FridgeShell } from '@/v2/components/FridgeShell'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useGroups } from '@/v2/hooks/useDevices'
@@ -73,9 +73,25 @@ function FamilyForm({ fam }: { fam: Family }) {
         onChange={(e) => set({ new_devices_blocked: e.currentTarget.checked })}
       />
       <Switch
-        label="Points can unlock early"
+        label="Kids can spend points on screen time"
         checked={val('points_unlock_early')}
         onChange={(e) => set({ points_unlock_early: e.currentTarget.checked })}
+      />
+      <NumberInput
+        label="Screen time price (points per 15 min)"
+        min={1}
+        max={1000}
+        allowDecimal={false}
+        value={val('screen_time_price')}
+        onChange={(v) => typeof v === 'number' && set({ screen_time_price: v })}
+      />
+      <NumberInput
+        label="Early finish bonus cap"
+        min={0}
+        max={50}
+        allowDecimal={false}
+        value={val('early_bonus_cap')}
+        onChange={(v) => typeof v === 'number' && set({ early_bonus_cap: v })}
       />
       <Button
         disabled={Object.keys(changed).length === 0}

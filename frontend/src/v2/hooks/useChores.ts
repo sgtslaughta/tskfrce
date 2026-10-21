@@ -13,6 +13,7 @@ export interface ChoreBody {
   points: number
   repeat: Repeat
   needs_photo: boolean
+  due_time?: string
 }
 
 /** POST /chores/ answer: definition is null for a one-time chore. */

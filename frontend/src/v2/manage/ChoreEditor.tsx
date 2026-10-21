@@ -20,6 +20,7 @@ export function ChoreEditor({ kidId }: { kidId: number }) {
   const [choice, setChoice] = useState<string>('Every day')
   const [picked, setPicked] = useState<string[]>([])
   const [photo, setPhoto] = useState(false)
+  const [due, setDue] = useState('')
 
   const ready = title.trim() && (choice !== 'Pick days' || picked.length > 0)
 
@@ -31,12 +32,14 @@ export function ChoreEditor({ kidId }: { kidId: number }) {
         points: Number(points) || 0,
         repeat: repeatOf(choice, picked),
         needs_photo: photo,
+        ...(due && { due_time: due }),
       },
       {
         onError: toastFail,
         onSuccess: () => {
           toastOk('Added')
           setTitle('')
+          setDue('')
         },
       },
     )
@@ -57,6 +60,7 @@ export function ChoreEditor({ kidId }: { kidId: number }) {
           </div>
         </Chip.Group>
       )}
+      <TextInput type="time" label="Due by (optional)" value={due} onChange={(e) => setDue(e.currentTarget.value)} />
       <Checkbox label="Needs a photo" checked={photo} onChange={(e) => setPhoto(e.currentTarget.checked)} />
       <Button onClick={submit} disabled={!ready} loading={create.isPending}>
         Add chore

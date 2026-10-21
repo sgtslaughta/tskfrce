@@ -70,6 +70,8 @@ export interface Family {
   reset_time: string
   new_devices_blocked: boolean
   points_unlock_early: boolean
+  early_bonus_cap: number
+  screen_time_price: number
 }
 
 /** Chore entry inside /today and /kid/today */
@@ -113,6 +115,7 @@ export interface Chore {
   status: string
   due_date: string | null
   needs_photo: boolean
+  due_time?: string | null
 }
 
 /** GET /kid/whoami */
@@ -126,4 +129,25 @@ export interface KidToday {
   locked: boolean
   chores: TodayChore[]
   points_balance: number
+}
+
+/** GET /rewards item */
+export interface Reward {
+  id: number
+  name: string
+  price: number
+  icon: string | null
+}
+
+/** GET /redemptions item (pending requests) */
+export interface PendingRedemption {
+  id: number
+  kid_id: number
+  kid_name: string | null
+  kind: 'screen_time' | 'reward'
+  name: string
+  minutes: number | null
+  cost: number
+  created_at: string
+  kid_balance: number
 }
