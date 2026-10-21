@@ -9,11 +9,13 @@ export function ProgressHeader({
   avatar = null,
   kid = false,
   progress: p,
+  size = 'md',
 }: {
   name: string
   avatar?: string | null
   kid?: boolean
   progress?: Progress
+  size?: 'sm' | 'md' | 'lg'
 }) {
   const emblems = useEmblems(kid)
   if (!p) return <span className="f-display">{name}</span>
@@ -21,7 +23,7 @@ export function ProgressHeader({
   const pct = Math.min(100, Math.max(0, Math.round(((p.xp - p.floor) / span) * 100)))
   return (
     <div style={{ flex: 1, minWidth: 0 }}>
-      <NameCard name={name} avatar={avatar} level={p.level} title={p.title} flair={p.flair ?? NO_FLAIR} emblems={emblems}>
+      <NameCard name={name} avatar={avatar} level={p.level} title={p.title} flair={p.flair ?? NO_FLAIR} emblems={emblems} size={size}>
         <div className="xp-bar" role="progressbar" aria-label="XP to next level" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
           <span style={{ width: `${pct}%` }} />
         </div>

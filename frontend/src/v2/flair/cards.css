@@ -14,6 +14,10 @@
   color: var(--fc-ink);
 }
 .flair-card > * { position: relative; z-index: 1; }
+/* numbers and labels inside a name card follow the card's ink, not the page's */
+[data-mantine-color-scheme] .flair-card .f-num,
+.flair-card .f-num { color: var(--fc-ink); }
+.flair-card .f-cap { color: var(--fc-sub); }
 .flair-card-sm { padding: 6px 10px; gap: 8px; }
 .flair-card-lg { padding: 18px 16px; gap: 14px; }
 .flair-card-body { display: grid; gap: 4px; min-width: 0; flex: 1; }
