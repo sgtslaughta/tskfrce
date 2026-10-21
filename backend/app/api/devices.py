@@ -42,6 +42,7 @@ def device_out(db: Session, d: Device, fam: FamilySettings, now: datetime) -> di
         "online": online,
         "override": {"action": ov.action, "expires_at": utc_z(ov.expires_at)} if ov else None,
         "last_seen": utc_z(d.last_seen),
+        "resisting": d.resisting_since is not None,
     }
 
 

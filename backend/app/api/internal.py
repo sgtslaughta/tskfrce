@@ -15,6 +15,8 @@ from app.core.config import settings
 from app.lock.loop import trigger
 from app.lock.state import desired_blocked
 from app.models.lock import Device
+from app.models.user import User, UserRole
+from app.services.notification_persistence_service import NotificationPersistenceService
 
 MAC_RE = re.compile(r"^([0-9a-f]{2}:){5}[0-9a-f]{2}$")
 
@@ -57,6 +59,18 @@ class SeenReport(BaseModel):
         return v
 
 
+class ResistingReport(BaseModel):
+    resisting: list[str] = Field(max_length=1000)
+
+    @field_validator("resisting")
+    @classmethod
+    def _macs(cls, v: list[str]) -> list[str]:
+        out = [m.strip().lower().replace("-", ":") for m in v]
+        if not all(MAC_RE.match(m) for m in out):
+            raise ValueError("MAC address must look like aa:bb:cc:dd:ee:ff.")
+        return out
+
+
 def _apply(dev: Device, body: SeenReport, now: datetime) -> None:
     dev.ip, dev.ipv6, dev.last_seen = body.ip, body.ipv6, now
     dev.hostname = body.hostname or dev.hostname
@@ -94,3 +108,36 @@ def devices_seen(body: SeenReport, db: Session = Depends(get_db)) -> dict:
 @router.get("/state", dependencies=[Depends(require_token)])
 def state(db: Session = Depends(get_db)) -> dict:
     return {"blocked": desired_blocked(db, datetime.now(UTC))}
+
+
+@router.post("/devices/resisting", dependencies=[Depends(require_token)])
+def devices_resisting(body: ResistingReport, db: Session = Depends(get_db)) -> dict:
+    now = datetime.now(UTC).replace(tzinfo=None)
+    listed = set(body.resisting)
+    flagged = cleared = 0
+    newly: list[Device] = []
+    for dev in db.query(Device).all():
+        if dev.mac in listed:
+            if dev.resisting_since is None:
+                dev.resisting_since = now
+                newly.append(dev)
+                flagged += 1
+        elif dev.resisting_since is not None:
+            dev.resisting_since = None
+            cleared += 1
+    db.commit()
+    if newly:
+        parents = db.query(User).filter(User.role == UserRole.PARENT).all()
+        svc = NotificationPersistenceService(db)
+        for dev in newly:
+            for p in parents:
+                svc.create_notification(
+                    p.id,
+                    "device_resisting",
+                    f"{dev.name} is getting around the block",
+                    f"{dev.name} is still reaching the internet while it should be paused. "
+                    "Someone may have changed its network settings. Tap for what to check.",
+                    action_url="/manage/devices",
+                    data={"device_id": dev.id},
+                )
+    return {"flagged": flagged, "cleared": cleared}

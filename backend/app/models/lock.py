@@ -47,6 +47,7 @@ class Device(Base):
     status = Column(String(20), nullable=False, default="unassigned")
     first_seen = Column(DateTime, nullable=False, default=datetime.utcnow)
     last_seen = Column(DateTime, nullable=True)
+    resisting_since = Column(DateTime, nullable=True)
 
     owners = relationship("User", secondary=device_owners, backref="devices")
     groups = relationship("DeviceGroup", secondary=device_group_members, backref="devices")
