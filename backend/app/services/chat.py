@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from app.lock.reset import is_chore_filter, kid_chores_filter
 from app.models.chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
-from app.models.chore_extra import ChorePhoto
 from app.models.task import Task
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
@@ -95,18 +94,14 @@ def post(
     return m
 
 
-def system(db: Session, task: Task, body: str) -> None:
-    post(db, thread_for(db, "chore", task_id=task.id), None, body, kind="system")
+def system(db: Session, task: Task, body: str, photo_id: int | None = None) -> None:
+    """System line in the chore's thread; `photo_id` is a ChorePhoto (proof)."""
+    post(db, thread_for(db, "chore", task_id=task.id), None, body, photo_id, kind="system")
 
 
 def photo_ok(db: Session, thread: Thread, photo_id: int) -> bool:
-    if thread.kind == "chore":
-        return (
-            db.query(ChorePhoto.id)
-            .filter(ChorePhoto.id == photo_id, ChorePhoto.task_id == thread.task_id)
-            .first()
-            is not None
-        )
+    # People attach chat photos only. Proof photos enter a chore thread solely
+    # through system messages, so chat can never add or alter proof.
     return (
         db.query(ChatPhoto.id)
         .filter(ChatPhoto.id == photo_id, ChatPhoto.thread_id == thread.id)
@@ -115,11 +110,12 @@ def photo_ok(db: Session, thread: Thread, photo_id: int) -> bool:
     )
 
 
-def photo_url(thread: Thread, photo_id: int | None) -> str | None:
-    if photo_id is None:
+def photo_url(thread: Thread, msg: ThreadMessage) -> str | None:
+    if msg.photo_id is None:
         return None
-    base = "chore-photos" if thread.kind == "chore" else "chat/photos"
-    return f"/api/v1/{base}/{photo_id}"
+    proof = thread.kind == "chore" and msg.kind == "system"
+    base = "chore-photos" if proof else "chat/photos"
+    return f"/api/v1/{base}/{msg.photo_id}"
 
 
 def mark_read(db: Session, thread: Thread, user: User) -> None:

@@ -2,6 +2,7 @@ import io
 from datetime import date, datetime, timedelta
 
 from app.models.chat import ThreadMessage
+from app.models.chore_extra import ChorePhoto
 from app.models.family import get_family
 from app.models.task import Task
 from app.models.user import UserRole
@@ -122,16 +123,35 @@ def test_photo_in_private_thread(client, db, parent_headers):
     assert bad.status_code == 422
 
 
-def test_photo_in_chore_thread_uses_chore_photos(client, db, parent_headers):
+def test_chat_photo_in_chore_thread_is_never_proof(client, db, parent_headers):
     leo, maya, lh, mh, chore = _world(db, client, parent_headers)
     cid = chore("Dishes", [leo])
+    assert client.post(f"/api/v1/kid/chores/{cid}/done", headers=lh).status_code == 200
     tid = _tid(client, lh, "chore", cid)
+    # chore already with a parent: chat upload still works but adds no proof
     pid = client.post(
         f"{C}/threads/{tid}/photos", files={"file": ("a.jpg", _jpeg(), "image/jpeg")}, headers=lh
     ).json()["photo_id"]
     m = client.post(f"{C}/threads/{tid}/messages", json={"photo_id": pid}, headers=lh).json()
-    assert m["photo_url"] == f"/api/v1/chore-photos/{pid}"
+    assert m["photo_url"] == f"/api/v1/chat/photos/{pid}"
     assert client.get(m["photo_url"], headers=parent_headers).status_code == 200
+    assert db.query(ChorePhoto).filter(ChorePhoto.task_id == cid).count() == 0
+
+
+def test_proof_photo_shows_in_chore_thread(client, db, parent_headers):
+    leo, maya, lh, mh, chore = _world(db, client, parent_headers)
+    cid = chore("Dishes", [leo])
+    proof = client.post(
+        f"/api/v1/kid/chores/{cid}/photos",
+        files={"file": ("a.jpg", _jpeg(), "image/jpeg")},
+        headers=lh,
+    ).json()["id"]
+    msgs = client.get(f"{C}/threads/chore/{cid}", headers=lh).json()["messages"]
+    assert msgs[-1]["photo_url"] == f"/api/v1/chore-photos/{proof}"
+    # a chore photo id can't be smuggled into a user message
+    tid = _tid(client, lh, "chore", cid)
+    bad = client.post(f"{C}/threads/{tid}/messages", json={"photo_id": proof}, headers=lh)
+    assert bad.status_code == 422
 
 
 def test_chore_actions_write_system_messages(client, db, parent_headers):

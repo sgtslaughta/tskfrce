@@ -204,7 +204,7 @@ def add_photo(
     p = save_photo(file, t, kid)
     db.add(p)
     db.flush()
-    chat.system(db, t, "Photo added")
+    chat.system(db, t, "Photo added", p.id)
     db.commit()
     return {"id": p.id, "attempt": p.attempt}
 

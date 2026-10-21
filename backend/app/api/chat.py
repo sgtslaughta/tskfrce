@@ -10,11 +10,10 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user, get_db
 from app.models.chat import ChatPhoto, Thread, ThreadMessage
-from app.models.task import Task
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
 from app.services import chat
-from app.services.photos import chat_storage, put, save_photo
+from app.services.photos import chat_storage, put
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 
@@ -50,7 +49,7 @@ def _msg(t: Thread, m: ThreadMessage) -> dict:
         "author_name": (m.author.full_name or m.author.username) if m.author else None,
         "kind": m.kind,
         "body": m.body,
-        "photo_url": chat.photo_url(t, m.photo_id),
+        "photo_url": chat.photo_url(t, m),
         "created_at": utc_z(m.created_at),
     }
 
@@ -111,11 +110,9 @@ def add_photo(
     user: User = Depends(get_current_active_user),
 ):
     t = _thread(db, user, thread_id)
-    if t.kind == "chore":
-        p = save_photo(file, db.get(Task, t.task_id), user)
-    else:
-        path, thumb = put(chat_storage(), f"thread/{t.id}", file)
-        p = ChatPhoto(thread_id=t.id, uploaded_by_id=user.id, path=path, thumb_path=thumb)
+    # always a chat photo, never chore proof (proof goes through /kid/chores/{id}/photos)
+    path, thumb = put(chat_storage(), f"thread/{t.id}", file)
+    p = ChatPhoto(thread_id=t.id, uploaded_by_id=user.id, path=path, thumb_path=thumb)
     db.add(p)
     db.commit()
     return {"photo_id": p.id}
