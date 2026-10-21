@@ -1,4 +1,20 @@
-import { Fredoka, Nunito } from 'next/font/google'
+import { Inter, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 
-export const fredoka = Fredoka({ subsets: ['latin'], variable: '--font-display', display: 'swap' })
-export const nunito = Nunito({ subsets: ['latin'], variable: '--font-body', display: 'swap' })
+export const display = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-display",
+  display: "swap",
+});
+export const body = Inter({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-body",
+  display: "swap",
+});
+export const mono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-mono",
+  display: "swap",
+});

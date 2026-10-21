@@ -72,7 +72,7 @@ import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { fridgeTheme, colorSchemeManager } from '../src/v2/theme';
-import { fredoka, nunito } from '../src/v2/fonts';
+import { display, body, mono } from '../src/v2/fonts';
 import { makeQueryClient } from '../src/v2/queryClient';
 import { UnifiedAuthProvider } from '../src/contexts/UnifiedAuthContext'
 import { ThemeProvider } from '../src/contexts/ThemeContext'
@@ -116,8 +116,9 @@ function AppContent({ Component, pageProps }: { Component: any; pageProps: any }
     <QueryClientProvider client={queryClient}>
       <style jsx global>{`
         :root {
-          --font-display: ${fredoka.style.fontFamily};
-          --font-body: ${nunito.style.fontFamily};
+          --font-display: ${display.style.fontFamily};
+          --font-body: ${body.style.fontFamily};
+          --font-mono: ${mono.style.fontFamily};
         }
       `}</style>
       <MantineProvider

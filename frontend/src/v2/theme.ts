@@ -7,12 +7,13 @@ import {
 } from '@mantine/core'
 
 export const fridgeTheme: MantineThemeOverride = createTheme({
-  fontFamily: 'var(--font-body), Nunito, system-ui, sans-serif',
-  headings: { fontFamily: 'var(--font-display), Fredoka, system-ui, sans-serif', fontWeight: '600' },
+  fontFamily: 'var(--font-body), Inter, system-ui, sans-serif',
+  fontFamilyMonospace: 'var(--font-mono), "JetBrains Mono", monospace',
+  headings: { fontFamily: 'var(--font-display), "Space Grotesk", system-ui, sans-serif', fontWeight: '700' },
   primaryColor: 'sun',
   autoContrast: true,
   defaultRadius: 'md',
-  radius: { md: '12px', lg: '18px' },
+  radius: { md: '8px', lg: '8px' },
   colors: {
     inkLight: colorsTuple('#1D2B53'),
     inkDark: colorsTuple('#F1F5FF'),

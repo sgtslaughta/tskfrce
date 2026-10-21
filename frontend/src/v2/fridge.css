@@ -1,41 +1,74 @@
 /* t@sk4ce "fridge chart" look. Tokens follow Mantine's color scheme attribute. */
 :root,
 [data-mantine-color-scheme='light'] {
-  --f-bg: #e6eff1;
+  --f-bg: #f4f7fa;
   --f-card: #ffffff;
   --f-ink: #1d2b53;
-  --f-line: #1d2b53;
+  --f-line: #eef1f6;
   --f-sun: #ffc93c;
   --f-red: #ff6b4a;
   --f-green: #7bd389;
   --f-sub: #4a5a80;
-  --f-mute: #dce4f2;
+  --f-mute: #eef1f6;
+  --f-grid: rgba(29, 43, 83, 0.12);
+  --f-shadow: 0 1px 2px rgba(29, 43, 83, 0.06), 0 6px 20px rgba(29, 43, 83, 0.08);
+  --f-head-bg: #1d2b53;
+  --f-head-ink: #ffffff;
+  --f-head-sub: #c6d0ee;
+  --f-head-stripe: transparent;
+  --f-field: #ffffff;
+  --f-edge: #c9d3e6;
 }
 [data-mantine-color-scheme='dark'] {
-  --f-bg: #18213f;
-  --f-card: #232f57;
-  --f-ink: #f1f5ff;
-  --f-line: #0c1229;
+  --f-bg: #1e2026;
+  --f-card: #18213f;
+  --f-ink: #e8eeff;
+  --f-line: #232f57;
   --f-sun: #ffc93c;
   --f-red: #ff7a5c;
   --f-green: #6fd08a;
-  --f-sub: #b4c2e6;
-  --f-mute: #34416b;
+  --f-sub: #8f9cc4;
+  --f-mute: #232f57;
+  --f-grid: rgba(255, 255, 255, 0.08);
+  --f-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  --f-head-bg: #e8eeff;
+  --f-head-ink: #1d2b53;
+  --f-head-sub: #4a5a80;
+  --f-head-stripe: #ffc93c;
+  --f-field: #101833;
+  --f-edge: #34416b;
 }
 /* text on sun/red/green stays dark navy in both schemes */
 :root { --f-on-color: #1d2b53; }
 
 .f-shell {
+  position: relative;
   min-height: 100vh;
-  background: var(--f-bg);
+  background-color: var(--f-bg);
   color: var(--f-ink);
-  font-family: var(--font-body), Nunito, system-ui, sans-serif;
+  font-family: var(--font-body), Inter, system-ui, sans-serif;
 }
+.f-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    linear-gradient(var(--f-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--f-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 10%, transparent 75%);
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 10%, transparent 75%);
+}
+.f-shell > * { position: relative; z-index: 1; }
+.f-num { font-family: var(--font-mono), 'JetBrains Mono', monospace; font-weight: 700; }
+.f-cap { text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; font-weight: 600; }
 .f-display,
 .f-shell h1,
 .f-shell h2,
-.f-shell h3 { font-family: var(--font-display), Fredoka, system-ui, sans-serif; }
-.f-btn { font-family: var(--font-display), Fredoka, system-ui, sans-serif; font-weight: 600; min-height: 44px; }
+.f-shell h3 { font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif; }
+.f-btn { font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif; font-weight: 600; min-height: 44px; }
 
 .f-shell :focus-visible,
 .f-card :focus-visible {
@@ -49,10 +82,11 @@
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  background: var(--f-card);
-  border-bottom: 3px solid var(--f-line);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--f-line);
 }
-.f-wordmark { font-family: var(--font-display), Fredoka, sans-serif; font-weight: 700; font-size: 22px; color: var(--f-ink); text-decoration: none; }
+.f-wordmark { font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 22px; color: var(--f-ink); text-decoration: none; }
 .f-day { color: var(--f-sub); font-weight: 700; }
 .f-nav { display: flex; gap: 4px; flex-wrap: wrap; }
 .f-nav a {
@@ -60,13 +94,16 @@
   align-items: center;
   min-height: 44px;
   padding: 0 12px;
-  border-radius: 12px;
-  color: var(--f-ink);
+  border-radius: 0;
+  color: var(--f-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 12px;
   text-decoration: none;
-  font-family: var(--font-display), Fredoka, sans-serif;
+  font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif;
   font-weight: 600;
 }
-.f-nav a[aria-current='page'] { background: var(--f-sun); color: var(--f-on-color); border: 3px solid var(--f-line); }
+.f-nav a[aria-current='page'] { background: none; border: 0; color: var(--f-ink); box-shadow: inset 0 -2px 0 var(--f-sun); }
 .f-nav-drawer { flex-direction: column; }
 .f-main { max-width: 960px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
 .f-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -95,7 +132,7 @@
   border: 3px solid var(--f-line);
   border-radius: 10px;
   padding: 3px 10px;
-  font-family: var(--font-display), Fredoka, sans-serif;
+  font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif;
   font-weight: 600;
   transform: rotate(-2deg);
 }
