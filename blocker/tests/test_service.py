@@ -204,6 +204,45 @@ def test_test_block_preserves_other_blocks():
     assert all(other in r for r in fw.applied[n:])
 
 
+def _probe_svc(prior, during=None, boom=False):
+    svc, fw, redir = _svc(watch=_watch(0, 4))
+    for m, ip in ((MAC, "192.168.1.50"), ("aa:bb:cc:dd:ee:ff", "192.168.1.9")):
+        svc._on_seen(Seen(mac=m, ip=ip, ipv6=[], hostname=None, vendor=None))
+    svc.store.set_blocked(prior)
+
+    def sleep(_):
+        if during is not None:
+            svc.store.set_blocked(during)
+        if boom:
+            raise RuntimeError("x")
+
+    svc._sleep = sleep
+    return svc, fw
+
+
+def test_test_block_keeps_push_made_during_probe():
+    other = "aa:bb:cc:dd:ee:ff"
+    svc, fw = _probe_svc([], during=[other])
+    svc.test_block(MAC)
+    assert svc.store.current() == {other}
+    assert other in fw.applied[-1] and MAC not in fw.applied[-1]
+
+
+def test_test_block_keeps_already_blocked_mac():
+    svc, fw = _probe_svc([MAC])
+    svc.test_block(MAC)
+    assert svc.store.current() == {MAC}
+    assert MAC in fw.applied[-1]
+
+
+def test_test_block_exception_clears_probing():
+    svc, fw = _probe_svc([], boom=True)
+    with pytest.raises(RuntimeError):
+        svc.test_block(MAC)
+    assert svc._probing == set()
+    assert MAC not in fw.applied[-1]
+
+
 def test_duplicate_ip_still_enforced_for_blocked_mac():
     svc, fw, redir = _svc()
     other = "aa:bb:cc:dd:ee:ff"

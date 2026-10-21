@@ -91,6 +91,7 @@ class Service:
         self._devices: dict[str, TargetAddrs] = {}
         self._seen_at: dict[str, float] = {}
         self._lock = threading.Lock()
+        self._probing: set[str] = set()  # MACs overlaid by test_block; guarded by _lock
         self._stop = threading.Event()
         self._api = None
         self.store.on_change(self._apply)
@@ -108,7 +109,7 @@ class Service:
                 if lan
                 else set()
             )
-            blocked = set(self.store.current())
+            blocked = set(self.store.current()) | self._probing
             skipped = {m for m in blocked if m.lower() in infra}
             if skipped:
                 log.warning("refusing to enforce on router/box MACs: %s", sorted(skipped))
@@ -234,19 +235,24 @@ class Service:
         box (``to_box``) means the block is working; neither means we saw nothing.
         """
         mac = mac.lower()
-        prior = self.store.current()
         with self._lock:
             dev = self._devices.get(mac) or TargetAddrs(mac=mac)
         ip, has_ip6 = dev.ip, bool(dev.ip6)
         lan = self._lan()
-        # Add to the live set, never replace it — a diagnostic on one device must
-        # not lift enforcement on every other blocked device during the probe.
-        self.store.set_blocked(sorted(prior | {mac}))
-        if self._watch is not None:
-            self._watch.counter.reset(mac)  # count only traffic inside this window
-        self._sleep(PROBE_WAIT)
-        tally = self._watch.counter.tally(mac) if self._watch is not None else Tally()
-        self.store.set_blocked(sorted(prior))
+        # Overlay this MAC on the enforced set; never touch the store, so an app
+        # push or reconcile during the wait is never overwritten.
+        with self._lock:
+            self._probing.add(mac)
+        try:
+            self._apply()
+            if self._watch is not None:
+                self._watch.counter.reset(mac)  # count only traffic inside this window
+            self._sleep(PROBE_WAIT)
+            tally = self._watch.counter.tally(mac) if self._watch is not None else Tally()
+        finally:
+            with self._lock:
+                self._probing.discard(mac)
+            self._apply()
         if ip is None:
             reason = "unseen"
         elif tally.from_gateway > 0:
@@ -257,6 +263,8 @@ class Service:
                 reason = "quiet"  # can't redirect IPv6 here, so can't claim success
         else:
             reason = "quiet"
+        # `reason` is authoritative; `offline` and `router_resisted` are deprecated
+        # and kept only for compatibility.
         return {
             "offline": reason in ("ok", "device"),
             "router_resisted": reason == "quiet",
