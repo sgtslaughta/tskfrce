@@ -11,6 +11,7 @@ import signal
 import threading
 import time
 from collections.abc import Callable
+from dataclasses import replace
 
 from blocker import firewall as fw
 from blocker.api import make_api
@@ -33,20 +34,7 @@ DEFAULT_LAN_CIDRS = [
     "fc00::/7",
 ]
 PORTAL_PORT = 80
-PROBE_WAIT = 3.0
-
-
-def _default_probe(ip: str | None) -> bool:
-    """True if the host still answers a single ping. Never raises."""
-    if not ip:
-        return False
-    import subprocess
-
-    try:
-        r = subprocess.run(["ping", "-c", "1", "-W", "1", ip], capture_output=True, timeout=5)
-        return r.returncode == 0
-    except Exception:
-        return False
+PROBE_WAIT = 10.0
 
 
 def _detect_box_ip(cfg: Config) -> str:
@@ -61,13 +49,14 @@ def _detect_box_ip(cfg: Config) -> str:
 TEST_MESSAGES = {
     "ok": "Success — the device lost internet access while blocked.",
     "unseen": "We haven't seen this device on the network yet, so we couldn't test it.",
-    "router": (
-        "The device stayed online and never talked to the box. Your router is probably "
-        "stopping the box from stepping in — check the router list in the docs."
-    ),
     "device": (
-        "The device stayed online even though it was talking to the box. It looks like the "
-        "device itself is getting around the block — someone may have changed its network settings."
+        "The device is trying to get around the block. The box is still stopping it, but "
+        "someone may have changed its network settings."
+    ),
+    "quiet": (
+        "We couldn't see this device use the internet during the test. Open a video on it "
+        "and test again. If you see this again, your router may be stopping the box — check "
+        "the router list in the docs."
     ),
 }
 
@@ -80,7 +69,6 @@ class Service:
         firewall=fw,
         redirection: RedirectionManager | None = None,
         fetch: Callable[[Config], list[str] | None] = fetch_blocked,
-        probe: Callable[[str | None], bool] = _default_probe,
         sleep: Callable[[float], None] = time.sleep,
         lan_cidrs: list[str] | None = None,
         portal_ip: str | None = None,
@@ -91,7 +79,6 @@ class Service:
         self._fw = firewall
         self._redir = redirection or RedirectionManager(cfg)
         self._fetch = fetch
-        self._probe = probe
         self._sleep = sleep
         self._lan_cidrs = lan_cidrs or DEFAULT_LAN_CIDRS
         self._portal_ip = portal_ip
@@ -113,6 +100,14 @@ class Service:
         with self._lock:
             blocked = self.store.current()
             devs = {m: self._devices.get(m, TargetAddrs(mac=m)) for m in blocked}
+            # Never spoof an address that isn't safely one device's: the gateway's
+            # own IP, the box/portal IP, or an IP two MACs both claim (ARP race or
+            # spoof). Stripping it here keeps it out of the firewall sets, the
+            # redirect targets and the watch — and off the restore path.
+            unsafe = self._unsafe_ips()
+            devs, stripped = self._strip_unsafe(devs, unsafe)
+            if stripped:
+                log.warning("refusing unsafe gateway-side addresses: %s", sorted(stripped))
             v4 = {t.ip for t in devs.values() if t.ip}
             v6 = {ip for t in devs.values() for ip in t.ip6}
             macs = set(blocked)  # authoritative block key
@@ -126,6 +121,41 @@ class Service:
             self._redir.set_targets(devs)
             if self._watch is not None:
                 self._watch.set_watched(devs)
+
+    def _unsafe_ips(self) -> set[str]:
+        """IPs we must not spoof: gateway, portal/box, or claimed by >1 MAC."""
+        unsafe: set[str] = set()
+        try:
+            lan = self._redir._lanfacts()
+        except Exception:
+            lan = None  # LAN detection failed -> gateway IPs unknown, skip those
+        if lan is not None:
+            unsafe.update(ip for ip in (lan.gateway_ip, lan.gateway_ip6) if ip)
+        if self._portal_ip:
+            unsafe.add(self._portal_ip)
+        counts: dict[str, int] = {}
+        for t in self._devices.values():
+            for ip in ([t.ip] if t.ip else []) + list(t.ip6):
+                counts[ip] = counts.get(ip, 0) + 1
+        unsafe.update(ip for ip, n in counts.items() if n > 1)
+        return unsafe
+
+    @staticmethod
+    def _strip_unsafe(
+        devs: dict[str, TargetAddrs], unsafe: set[str]
+    ) -> tuple[dict[str, TargetAddrs], set[str]]:
+        """Drop unsafe IPs from each target (ip -> None, filtered ip6). Returns stripped IPs."""
+        stripped: set[str] = set()
+        out: dict[str, TargetAddrs] = {}
+        for mac, t in devs.items():
+            ip = t.ip
+            if ip and ip in unsafe:
+                stripped.add(ip)
+                ip = None
+            ip6 = tuple(a for a in t.ip6 if a not in unsafe)
+            stripped.update(set(t.ip6) - set(ip6))
+            out[mac] = t if (ip == t.ip and ip6 == t.ip6) else replace(t, ip=ip, ip6=ip6)
+        return out, stripped
 
     def _on_seen(self, seen: Seen) -> None:
         with self._lock:
@@ -163,7 +193,13 @@ class Service:
     # --- diagnostics --------------------------------------------------------
 
     def test_block(self, mac: str) -> dict:
-        """Briefly block one MAC, probe it, restore prior state. Plain-language result."""
+        """Briefly block one MAC, watch its traffic, restore prior state.
+
+        Decision comes from what the box observes, not a box->device ping (which
+        a blocked device can still answer on the LAN): internet return traffic for
+        it (``from_gateway``) means the device is dodging the block; traffic to the
+        box (``to_box``) means the block is working; neither means we saw nothing.
+        """
         mac = mac.lower()
         prior = self.store.current()
         with self._lock:
@@ -172,24 +208,19 @@ class Service:
         # not lift enforcement on every other blocked device during the probe.
         self.store.set_blocked(sorted(prior | {mac}))
         self._sleep(PROBE_WAIT)
-        online = self._probe(ip) if ip else False
         tally = self._watch.counter.tally(mac) if self._watch is not None else Tally()
         self.store.set_blocked(sorted(prior))
         if ip is None:
             reason = "unseen"
-        elif not online:
-            reason = "ok"
         elif tally.from_gateway > 0:
-            # router handed us the device's return traffic, yet it stayed online:
-            # the device itself is ignoring the redirect.
             reason = "device"
+        elif tally.to_box > 0:
+            reason = "ok"
         else:
-            # device stayed online and we never saw its return traffic: the router
-            # is keeping the box out of the path.
-            reason = "router"
+            reason = "quiet"
         return {
-            "offline": not online,
-            "router_resisted": reason == "router",
+            "offline": reason in ("ok", "device"),
+            "router_resisted": reason == "quiet",
             "reason": reason,
             "message": TEST_MESSAGES[reason],
         }
@@ -204,7 +235,8 @@ class Service:
         except Exception:
             log.exception("enable_forwarding failed")
         if self._watch is None:
-            self._watch = ResistanceWatch(self.cfg, ResistanceCounter(self._redir._lanfacts()))
+            counter = ResistanceCounter(self._redir._lanfacts(), lan_cidrs=self._lan_cidrs)
+            self._watch = ResistanceWatch(self.cfg, counter)
         self._spawn(self._reconcile_loop)
         self._spawn(self._resist_loop)
         self._spawn(lambda: run_discovery(self.cfg, self._stop, self._on_seen))

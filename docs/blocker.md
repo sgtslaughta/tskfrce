@@ -9,10 +9,10 @@ The home box pauses internet for normal use on your Wi‑Fi. It can't stop a det
 Changing the device's own network settings no longer gets around the block on most routers; the box tells you if something still does.
 
 - **Test block** checks one device. Press it to see what happened:
-  - **Success — the device lost internet access while blocked.**
   - **We haven't seen this device on the network yet, so we couldn't test it.**
-  - **The device stayed online and never talked to the box. Your router is probably stopping the box from stepping in — check the router list in the docs.** See [routers.md](routers.md) for routers that resist blocking.
-  - **The device stayed online even though it was talking to the box. It looks like the device itself is getting around the block — someone may have changed its network settings.**
+  - **Success — the device lost internet access while blocked.**
+  - **The device is trying to get around the block. The box is still stopping it, but someone may have changed its network settings.**
+  - **We couldn't see this device use the internet during the test. Open a video on it and test again. If you see this again, your router may be stopping the box — check the router list in the docs.** See [routers.md](routers.md) for routers that resist blocking.
 - **Getting-around alert.** If a paused device keeps reaching the internet, you get a notification titled "<device> is getting around the block", and the device shows a "getting around the block" badge on the Devices page. The badge clears on its own once the device stops reaching the internet while paused, or once you unpause it.
 
 Some routers, especially certain mesh systems (e.g. some Eero or Google Wifi models), resist blocking. See the [router compatibility list](routers.md) and press "Test block" to find out if yours works.

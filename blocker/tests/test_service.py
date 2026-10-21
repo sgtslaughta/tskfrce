@@ -1,4 +1,4 @@
-"""Service orchestrator tests. Fakes for firewall, redirection, backend, probe."""
+"""Service orchestrator tests. Fakes for firewall, redirection, backend, watch."""
 
 from __future__ import annotations
 
@@ -96,54 +96,46 @@ def test_reconcile_keeps_last_set_when_app_unreachable():
     assert svc.store.current() == {MAC}
 
 
-def test_test_block_reports_router_resisted_when_still_online():
-    svc, fw, redir = _svc(probe=lambda ip: True)  # device stays reachable
-    svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
-    result = svc.test_block(MAC)
-    assert result["router_resisted"] is True
-    assert result["offline"] is False
-    assert svc.store.current() == set()  # prior state restored
-
-
-def test_test_block_reports_offline_when_probe_fails():
-    svc, fw, redir = _svc(probe=lambda ip: False)
-    svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
-    result = svc.test_block(MAC)
-    assert result["offline"] is True
-    assert result["router_resisted"] is False
-
-
-def _watch(from_gateway):
+def _watch(from_gateway=0, to_box=0):
     return SimpleNamespace(
         set_watched=lambda m: None,
         stop=lambda: None,
         counter=SimpleNamespace(
-            resisting=lambda: set(), tally=lambda mac: Tally(from_gateway=from_gateway)
+            resisting=lambda: set(),
+            tally=lambda mac: Tally(from_gateway=from_gateway, to_box=to_box),
         ),
     )
 
 
 @pytest.mark.parametrize(
-    "online,from_gateway,reason",
-    [(False, 0, "ok"), (True, 0, "router"), (True, 4, "device")],
+    "from_gateway,to_box,reason,offline,router_resisted",
+    [
+        (4, 0, "device", True, False),  # internet return traffic -> device dodging
+        (0, 4, "ok", True, False),  # traffic to the box -> block working
+        (0, 0, "quiet", False, True),  # saw nothing -> inconclusive / maybe router
+    ],
 )
-def test_test_block_reason(online, from_gateway, reason):
-    svc, fw, redir = _svc(probe=lambda ip: online, watch=_watch(from_gateway))
+def test_test_block_reason(from_gateway, to_box, reason, offline, router_resisted):
+    svc, fw, redir = _svc(watch=_watch(from_gateway, to_box))
     svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
     r = svc.test_block(MAC)
     assert r["reason"] == reason
     assert r["message"] == TEST_MESSAGES[reason]
-    assert r["router_resisted"] is (reason == "router")
+    assert r["offline"] is offline
+    assert r["router_resisted"] is router_resisted
+    assert svc.store.current() == set()  # prior state restored
 
 
 def test_test_block_unseen():
-    svc, fw, redir = _svc(probe=lambda ip: True, watch=_watch(0))
+    svc, fw, redir = _svc(watch=_watch(0, 0))  # device never seen -> no ip
     r = svc.test_block(MAC)
     assert r["reason"] == "unseen"
+    assert r["offline"] is False
+    assert r["router_resisted"] is False
 
 
 def test_test_block_preserves_other_blocks():
-    svc, fw, redir = _svc(probe=lambda ip: False)
+    svc, fw, redir = _svc(watch=_watch(0, 0))
     other = "aa:bb:cc:dd:ee:ff"
     svc._on_seen(Seen(mac=other, ip="192.168.1.9", ipv6=[], hostname=None, vendor=None))
     svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
@@ -153,6 +145,30 @@ def test_test_block_preserves_other_blocks():
     assert svc.store.current() == {other}  # other device still blocked afterwards
     # and it is never dropped from enforcement during the diagnostic
     assert all(other in r for r in fw.applied[n:])
+
+
+def test_apply_strips_ip_claimed_by_two_macs():
+    svc, fw, redir = _svc()
+    other = "aa:bb:cc:dd:ee:ff"
+    svc._on_seen(Seen(mac=other, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
+    svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
+    svc.store.set_blocked([MAC, other])
+    assert "192.168.1.50" not in fw.applied[-1]  # ambiguous IP kept out of the ruleset
+    assert redir.targets[MAC].ip is None
+    assert redir.targets[other].ip is None
+
+
+def test_apply_strips_gateway_ip():
+    from blocker.arp import LanFacts
+
+    svc, fw, redir = _svc()
+    redir._lanfacts = lambda: LanFacts(
+        gateway_ip="192.168.1.1", gateway_mac=None, box_mac="bb:bb:bb:bb:bb:bb"
+    )
+    svc._on_seen(Seen(mac=MAC, ip="192.168.1.1", ipv6=[], hostname=None, vendor=None))
+    svc.store.set_blocked([MAC])
+    assert "192.168.1.1" not in fw.applied[-1]  # never spoof the gateway's own IP
+    assert redir.targets[MAC].ip is None
 
 
 def test_stop_restores_and_flushes_even_on_error():

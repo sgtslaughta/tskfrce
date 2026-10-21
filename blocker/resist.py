@@ -12,6 +12,7 @@ honoring the redirect).
 
 from __future__ import annotations
 
+import ipaddress
 import logging
 import threading
 import time
@@ -32,15 +33,23 @@ class Tally:
     from_gateway: int = 0
 
 
+def _norm(ip: str) -> str:
+    """Canonical form so e.g. non-canonical IPv6 strings compare equal."""
+    try:
+        return str(ipaddress.ip_address(ip))
+    except ValueError:
+        return ip.lower()
+
+
 def _ip_map(targets: dict[str, TargetAddrs]) -> dict[str, str]:
-    """ip (v4+v6, lowercased) -> watched MAC (lowercased)."""
+    """ip (v4+v6, canonicalized) -> watched MAC (lowercased)."""
     ip2mac: dict[str, str] = {}
     for mac, t in targets.items():
         ml = mac.lower()
         if t.ip:
-            ip2mac[t.ip.lower()] = ml
+            ip2mac[_norm(t.ip)] = ml
         for ip6 in t.ip6:
-            ip2mac[ip6.lower()] = ml
+            ip2mac[_norm(ip6)] = ml
     return ip2mac
 
 
@@ -53,11 +62,13 @@ class ResistanceCounter:
         *,
         window: float = 30.0,
         threshold: int = 20,
+        lan_cidrs: list[str] = (),
         clock: Callable[[], float] = time.monotonic,
     ) -> None:
         # A None gateway MAC is unknown, so it must never match a frame.
         self._gateways = frozenset(m.lower() for m in (lan.gateway_mac, lan.gateway_mac6) if m)
         self._box = lan.box_mac.lower()
+        self._lan_nets = tuple(ipaddress.ip_network(c) for c in lan_cidrs)
         self._window = window
         self._threshold = threshold
         self._clock = clock
@@ -78,19 +89,28 @@ class ResistanceCounter:
                 if mac not in watched:
                     del self._tallies[mac]
 
+    def _in_lan(self, ip: str) -> bool:
+        try:
+            addr = ipaddress.ip_address(ip)
+        except ValueError:
+            return False
+        return any(addr in net for net in self._lan_nets)
+
     def observe(
         self,
         src_mac: str,
         dst_mac: str,
         ip_dst: str | None = None,
+        ip_src: str | None = None,
         now: float | None = None,
     ) -> None:
         """Count one box-bound frame. Everything not addressed to the box is ignored.
 
         A watched device's frame to the box counts as ``to_box`` (honoring the
         redirect); a gateway frame to the box whose IP destination is a watched
-        device's address counts as that device's ``from_gateway`` (the return
-        traffic that signals a bypass).
+        device's address, and whose IP *source* is outside the LAN (i.e. real
+        internet return traffic, not another LAN host reaching the device),
+        counts as that device's ``from_gateway`` — the signal of a bypass.
         """
         src = src_mac.lower()
         dst = dst_mac.lower()
@@ -100,8 +120,14 @@ class ResistanceCounter:
                 return
             if src in self._watched:
                 mac, field = src, "to_box"
-            elif src in self._gateways and ip_dst and ip_dst.lower() in self._ip2mac:
-                mac, field = self._ip2mac[ip_dst.lower()], "from_gateway"
+            elif (
+                src in self._gateways
+                and ip_dst is not None
+                and _norm(ip_dst) in self._ip2mac
+                and ip_src is not None
+                and not self._in_lan(ip_src)
+            ):
+                mac, field = self._ip2mac[_norm(ip_dst)], "from_gateway"
             else:
                 return
             start, tally = self._tallies.get(mac, (ts, Tally()))
@@ -205,9 +231,9 @@ class ResistanceWatch:
         if not pkt.haslayer(Ether):
             return
         if pkt.haslayer(IP):
-            ip_dst = pkt[IP].dst
+            ip_dst, ip_src = pkt[IP].dst, pkt[IP].src
         elif pkt.haslayer(IPv6):
-            ip_dst = pkt[IPv6].dst
+            ip_dst, ip_src = pkt[IPv6].dst, pkt[IPv6].src
         else:
-            ip_dst = None
-        self.counter.observe(pkt[Ether].src, pkt[Ether].dst, ip_dst)
+            ip_dst = ip_src = None
+        self.counter.observe(pkt[Ether].src, pkt[Ether].dst, ip_dst, ip_src)

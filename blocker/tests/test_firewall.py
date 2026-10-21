@@ -28,6 +28,26 @@ def test_render_drops_return_traffic_to_blocked_ips():
     assert "ip6 daddr @blocked_v6 drop" in r
 
 
+def test_render_keeps_lan_to_blocked_reachable_in_order():
+    r = render_ruleset({"192.168.1.50"}, {"fe80::50"}, MAC, LAN, "192.168.1.2", 8080)
+    lines = [ln.strip() for ln in r.splitlines()]
+    v4_lan = lines.index("ip saddr @blocked_v4 ip daddr { 192.168.1.0/24 } accept")
+    v6_lan = lines.index("ip6 saddr @blocked_v6 ip6 daddr { fe80::/10 } accept")
+    v4_in = lines.index("ip saddr { 192.168.1.0/24 } ip daddr @blocked_v4 accept")
+    v6_in = lines.index("ip6 saddr { fe80::/10 } ip6 daddr @blocked_v6 accept")
+    v4_drop = lines.index("ip daddr @blocked_v4 drop")
+    v6_drop = lines.index("ip6 daddr @blocked_v6 drop")
+    saddr_drop = lines.index("ether saddr @blocked_mac drop")
+    assert v4_lan < v4_in < v4_drop < saddr_drop
+    assert v6_lan < v6_in < v6_drop < saddr_drop
+
+
+def test_render_omits_lan_to_blocked_accept_without_lan_family():
+    r = render_ruleset({"192.168.1.50"}, set(), MAC, ["192.168.1.0/24"], "192.168.1.2", 80)
+    assert "ip6 saddr {" not in r
+    assert "ip saddr { 192.168.1.0/24 } ip daddr @blocked_v4 accept" in r
+
+
 def test_render_drops_by_mac_the_authoritative_key():
     r = render_ruleset(set(), set(), MAC, LAN, "192.168.1.2", 8080)
     assert "de:ad:be:ef:00:01" in r

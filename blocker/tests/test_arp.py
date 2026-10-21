@@ -68,6 +68,46 @@ def test_ndp_advert_fields():
     assert p[ICMPv6NDOptDstLLAddr].lladdr == "bb:bb:bb:bb:bb:bb"
 
 
+def _gw_nas(pkts):
+    from scapy.all import ICMPv6ND_NA, IPv6
+
+    return [p for p in pkts if p.haslayer(ICMPv6ND_NA) and p[IPv6].dst == LAN.gateway_ip6]
+
+
+def test_kid_side_ndp_keeps_router_flag():
+    from scapy.all import ICMPv6ND_NA, IPv6
+
+    t = TargetAddrs(mac=DEV, ip6=("fe80::50",))
+    kid = [p for p in redirect_packets(t, LAN) if p[IPv6].dst == "fe80::50"]
+    assert len(kid) == 1 and kid[0][ICMPv6ND_NA].R == 1
+
+
+def test_redirect_ndp_gateway_side_is_host_advert():
+    from scapy.all import ICMPv6ND_NA, ICMPv6NDOptDstLLAddr, Ether
+
+    t = TargetAddrs(mac=DEV, ip6=("fe80::50",))
+    gw = _gw_nas(redirect_packets(t, LAN))
+    assert len(gw) == 1
+    p = gw[0]
+    assert p[ICMPv6ND_NA].tgt == "fe80::50"
+    assert p[ICMPv6ND_NA].R == 0
+    assert p[ICMPv6NDOptDstLLAddr].lladdr == LAN.box_mac
+    assert p[Ether].dst == LAN.gateway_mac6
+
+
+def test_restore_ndp_gateway_heal_is_host_advert():
+    from scapy.all import ICMPv6ND_NA, ICMPv6NDOptDstLLAddr, Ether
+
+    t = TargetAddrs(mac=DEV, ip6=("fe80::50",))
+    gw = _gw_nas(restore(t, LAN))
+    assert len(gw) == 1
+    p = gw[0]
+    assert p[ICMPv6ND_NA].tgt == "fe80::50"
+    assert p[ICMPv6ND_NA].R == 0
+    assert p[ICMPv6NDOptDstLLAddr].lladdr == DEV
+    assert p[Ether].dst == LAN.gateway_mac6
+
+
 def test_redirect_spoofs_gateway_side():
     from scapy.all import ARP
 

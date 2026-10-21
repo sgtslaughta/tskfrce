@@ -66,9 +66,15 @@ def render_ruleset(
         lines.append(f"    ether saddr @blocked_mac ip6 daddr {{ {', '.join(v6_lan)} }} accept")
         lines.append(f"    ip6 saddr @blocked_v6 ip6 daddr {{ {', '.join(v6_lan)} }} accept")
     # Bidirectional redirect: traffic we are asked to forward TO a blocked IP can
-    # only come from the spoofed gateway (LAN hosts reach the device directly), so
-    # drop it here — this is the return path that closes the kid-side bypass.
+    # only come from the spoofed gateway, so drop it — the return path that closes
+    # the kid-side bypass. But first let LAN hosts keep reaching the device: a LAN
+    # source to a blocked IP is local traffic we must not break (printers, casting,
+    # the parent's own access), only internet-sourced returns are the signal.
+    if v4_lan:
+        lines.append(f"    ip saddr {{ {', '.join(v4_lan)} }} ip daddr @blocked_v4 accept")
     lines.append("    ip daddr @blocked_v4 drop")
+    if v6_lan:
+        lines.append(f"    ip6 saddr {{ {', '.join(v6_lan)} }} ip6 daddr @blocked_v6 accept")
     lines.append("    ip6 daddr @blocked_v6 drop")
     # Primary: drop by authoritative MAC (spoof-resistant). Secondary: drop by IP.
     lines.append("    ether saddr @blocked_mac drop")
