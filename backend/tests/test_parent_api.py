@@ -176,6 +176,7 @@ def test_today_shape(client, db, parent, kid, parent_headers):
         "total",
         "needs_you_count",
         "last_active",
+        "progress",
         "chores",
         "devices",
     }

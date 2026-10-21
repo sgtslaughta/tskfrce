@@ -26,6 +26,7 @@ from app.models.reward import Redemption
 from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
 from app.schemas.lock import FamilyPatch
+from app.services import progression
 
 router = APIRouter(prefix="/api/v1", tags=["family"], dependencies=[Depends(require_parent)])
 
@@ -178,6 +179,7 @@ def today(db: Session = Depends(get_db)):
                 "total": len(mine),
                 "needs_you_count": sum(n["kid_id"] == k.id for n in needs),
                 "last_active": _iso(max(seen)) if seen else None,
+                "progress": progression.progress(db, k, fam),
                 "chores": [_chore_out(t, names) for t in mine],
                 "devices": [
                     {"id": d["id"], "name": d["name"], "vendor": d["vendor"], "online": d["online"]}

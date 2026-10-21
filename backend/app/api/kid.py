@@ -28,7 +28,7 @@ from app.models.reward import Redemption, Reward
 from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services import economy
+from app.services import economy, progression
 from app.services.photos import save_photo
 
 router = APIRouter(prefix="/api/v1/kid", tags=["kid"])
@@ -150,6 +150,7 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(r
             for t in tasks
         ],
         "points_balance": economy.balance(db, kid.id),
+        "progress": progression.progress(db, kid, get_family(db)),
     }
 
 
