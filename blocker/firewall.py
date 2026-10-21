@@ -27,16 +27,23 @@ def _set_decl(name: str, typ: str, elements: set[str]) -> str:
 def render_ruleset(
     blocked_v4: set[str],
     blocked_v6: set[str],
+    blocked_mac: set[str],
     lan_cidrs: list[str],
     portal_ip: str,
     portal_port: int,
 ) -> str:
-    """Build the `table inet task4ce` text. Empty sets => matches nothing (noop-safe)."""
+    """Build the `table inet task4ce` text. Empty sets => matches nothing (noop-safe).
+
+    Enforcement is keyed on MAC (`blocked_mac`), the app's authoritative block key:
+    a device cannot evade its block by renumbering its IP. The IP sets drive the
+    captive-portal redirect (which needs L3) and add defence in depth.
+    """
     v4_lan = [c for c in lan_cidrs if ":" not in c]
     v6_lan = [c for c in lan_cidrs if ":" in c]
     lines = [f"table inet {TABLE} {{"]
     lines.append(_set_decl("blocked_v4", "ipv4_addr", blocked_v4))
     lines.append(_set_decl("blocked_v6", "ipv6_addr", blocked_v6))
+    lines.append(_set_decl("blocked_mac", "ether_addr", blocked_mac))
     # Redirect blocked HTTP/DNS to the captive portal; HTTPS can't be portal-ed, so drop it.
     lines.append("  chain prerouting {")
     lines.append("    type nat hook prerouting priority -100; policy accept;")
@@ -47,9 +54,13 @@ def render_ruleset(
     lines.append("  chain forward {")
     lines.append("    type filter hook forward priority 0; policy accept;")
     if v4_lan:
+        lines.append(f"    ether saddr @blocked_mac ip daddr {{ {', '.join(v4_lan)} }} accept")
         lines.append(f"    ip saddr @blocked_v4 ip daddr {{ {', '.join(v4_lan)} }} accept")
     if v6_lan:
+        lines.append(f"    ether saddr @blocked_mac ip6 daddr {{ {', '.join(v6_lan)} }} accept")
         lines.append(f"    ip6 saddr @blocked_v6 ip6 daddr {{ {', '.join(v6_lan)} }} accept")
+    # Primary: drop by authoritative MAC (spoof-resistant). Secondary: drop by IP.
+    lines.append("    ether saddr @blocked_mac drop")
     lines.append("    ip saddr @blocked_v4 tcp dport 443 drop")
     lines.append("    ip6 saddr @blocked_v6 tcp dport 443 drop")
     lines.append("    ip saddr @blocked_v4 drop")

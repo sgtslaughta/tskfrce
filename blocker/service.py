@@ -87,19 +87,24 @@ class Service:
 
     # --- policy application -------------------------------------------------
 
-    def _apply(self, blocked: set[str]) -> None:
+    def _apply(self, _blocked: set[str] | None = None) -> None:
+        # Serialize the whole compute -> apply -> set_targets under one lock and
+        # re-read the authoritative set inside it, so concurrent callers
+        # (on_change, reconcile, _on_seen) can't apply a stale ruleset last.
         with self._lock:
+            blocked = self.store.current()
             devs = {m: self._devices.get(m, TargetAddrs(mac=m)) for m in blocked}
-        v4 = {t.ip for t in devs.values() if t.ip}
-        v6 = {ip for t in devs.values() for ip in t.ip6}
-        ruleset = fw.render_ruleset(
-            v4, v6, self._lan_cidrs, self._portal_ip or "0.0.0.0", PORTAL_PORT
-        )
-        try:
-            self._fw.apply(ruleset)
-        except Exception:
-            log.exception("firewall apply failed")
-        self._redir.set_targets(devs)
+            v4 = {t.ip for t in devs.values() if t.ip}
+            v6 = {ip for t in devs.values() for ip in t.ip6}
+            macs = set(blocked)  # authoritative block key
+            ruleset = fw.render_ruleset(
+                v4, v6, macs, self._lan_cidrs, self._portal_ip or "0.0.0.0", PORTAL_PORT
+            )
+            try:
+                self._fw.apply(ruleset)
+            except Exception:
+                log.exception("firewall apply failed")
+            self._redir.set_targets(devs)
 
     def _on_seen(self, seen: Seen) -> None:
         with self._lock:
