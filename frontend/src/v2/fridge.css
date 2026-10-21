@@ -121,6 +121,7 @@
 .f-card[data-tone='sun'] { border-top: 4px solid var(--f-sun); }
 .f-card[data-tone='red'] { border-top: 4px solid var(--f-red); }
 .f-card[data-tone='green'] { border-top: 4px solid var(--f-green); }
+.f-card[data-tone='mute'] { background: var(--f-mute); }
 .f-card-head {
   display: flex;
   align-items: center;
@@ -134,7 +135,6 @@
 .f-card-head .f-num { color: var(--f-sun); }
 [data-mantine-color-scheme='dark'] .f-card-head .f-num { color: var(--f-head-ink); }
 .f-card-body { padding: 4px 14px 14px; }
-.f-card[data-tone='mute'] { background: var(--f-mute); }
 
 /* sticker label */
 .f-sticker {
