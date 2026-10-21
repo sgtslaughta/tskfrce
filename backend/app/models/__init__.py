@@ -7,6 +7,7 @@ This package contains all SQLAlchemy models for the application.
 # Import from new model files
 # Import from existing comment.py - models that are unique to comment.py
 from .badge import BadgeAward, CustomBadge
+from .chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
 from .chore_extra import ChorePhoto, ChoreSubtask
 from .comment import (
     CommentAuditTrail,
@@ -49,6 +50,10 @@ from .user import UsedInvite, User
 __all__ = [
     "BadgeAward",
     "CustomBadge",
+    "ChatPhoto",
+    "Thread",
+    "ThreadMessage",
+    "ThreadRead",
     "ChorePhoto",
     "ChoreSubtask",
     # Core models

@@ -19,7 +19,7 @@ from app.models.family import get_family
 from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
 from app.schemas.chore import ChoreCreate, ChoreOut, ChorePatch
-from app.services import badges
+from app.services import badges, chat
 from app.services.economy import award_chore
 
 router = APIRouter(prefix="/api/v1/chores", tags=["chores"])
@@ -197,7 +197,8 @@ def approve(chore_id: int, db: Session = Depends(get_db), parent: User = Depends
     t.approved_at = t.completed_at = datetime.utcnow()
     t.approved_by_id = parent.id
     fam = get_family(db)
-    award_chore(db, t, fam)
+    pts = award_chore(db, t, fam)
+    chat.system(db, t, f"Approved · +{pts}")
     badges.check_for_task(db, t, fam)
     db.commit()
     return _out(t)
@@ -223,6 +224,7 @@ def send_back(
     t.attempt = (t.attempt or 1) + 1
     t.last_note = body.note
     t.submitted_for_approval_at = t.submitted_by_id = None
+    chat.system(db, t, f"Sent back: {body.note}")
     db.commit()
     return _out(t)
 

@@ -29,7 +29,7 @@ from app.models.reward import Redemption, Reward
 from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services import badges, economy, progression
+from app.services import badges, chat, economy, progression
 from app.services.photos import save_photo
 
 router = APIRouter(prefix="/api/v1/kid", tags=["kid"])
@@ -203,6 +203,8 @@ def add_photo(
     t = _open_instance(db, kid, chore_id)
     p = save_photo(file, t, kid)
     db.add(p)
+    db.flush()
+    chat.system(db, t, "Photo added")
     db.commit()
     return {"id": p.id, "attempt": p.attempt}
 

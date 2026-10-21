@@ -16,6 +16,7 @@ from app.models.lock import Override, TimeWindow, device_owners
 from app.models.task import Task, TaskStatus, chore_participants
 from app.models.user import User, UserRole
 from app.schemas.lock import KidCreate, KidPatch, OverrideIn
+from app.services import chat
 
 router = APIRouter(prefix="/api/v1/kids", tags=["kids"], dependencies=[Depends(require_parent)])
 
@@ -116,6 +117,8 @@ def delete_kid(kid_id: int, db: Session = Depends(get_db)):
     db.query(TimeWindow).filter(TimeWindow.kid_id == kid.id).delete()
     db.query(Override).filter(Override.created_by_id == kid.id).update({"created_by_id": None})
     db.execute(delete(device_owners).where(device_owners.c.user_id == kid.id))
+    chat.purge_kid(db, kid.id)
+    db.flush()
     db.expire_all()
     for d in owned:
         if not d.owners:

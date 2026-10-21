@@ -176,6 +176,7 @@ def _import_all_models():
         # Import all models here to register them
         from app.models import (
             Achievement,
+            ChatPhoto,
             ChorePhoto,
             ChoreSubtask,
             CommentMention,
@@ -199,6 +200,9 @@ def _import_all_models():
             TaskDependency,
             TaskTag,
             TaskTemplate,
+            Thread,
+            ThreadMessage,
+            ThreadRead,
             TimeWindow,
             UsedInvite,
             User,

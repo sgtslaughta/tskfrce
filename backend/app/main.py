@@ -32,6 +32,7 @@ from app.api import (
     workflow_router,
 )
 from app.api.badges import router as badges_router
+from app.api.chat import router as chat_router
 from app.api.chore_photos import router as chore_photos_router
 from app.api.chores import router as chores_router
 from app.api.community import router as community_router
@@ -149,6 +150,7 @@ fastapi_app.include_router(
 )
 fastapi_app.include_router(chores_router)
 fastapi_app.include_router(chore_photos_router)
+fastapi_app.include_router(chat_router)
 fastapi_app.include_router(internal_router)
 fastapi_app.include_router(devices_router)
 fastapi_app.include_router(kids_router)

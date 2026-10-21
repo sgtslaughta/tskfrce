@@ -32,7 +32,8 @@ def _jpeg(img: Image.Image, size: int) -> bytes:
     return out.getvalue()
 
 
-def save_photo(upload: UploadFile, task: Task, user: User) -> ChorePhoto:
+def encode(upload: UploadFile) -> tuple[bytes, bytes]:
+    """Validate and re-encode an upload: (full-size jpeg, thumbnail jpeg)."""
     if upload.content_type not in TYPES:
         raise HTTPException(415, "Please add a JPEG, PNG or WebP photo.")
     data = upload.file.read(settings.MAX_UPLOAD_SIZE + 1)
@@ -48,14 +49,28 @@ def save_photo(upload: UploadFile, task: Task, user: User) -> ChorePhoto:
         img = ImageOps.exif_transpose(img).convert("RGB")
     except (UnidentifiedImageError, OSError, Image.DecompressionBombError):
         raise HTTPException(415, "We couldn't read that photo. Try another one.") from None
-    key = f"chore/{task.id}/{uuid.uuid4().hex}"
-    store = storage()
-    store.save(f"{key}.jpg", _jpeg(img, FULL), "image/jpeg")
-    store.save(f"{key}_thumb.jpg", _jpeg(img, THUMB), "image/jpeg")
+    return _jpeg(img, FULL), _jpeg(img, THUMB)
+
+
+def put(store: LocalStorage, prefix: str, upload: UploadFile) -> tuple[str, str]:
+    """Encode and store under `prefix/`; returns (path, thumb_path)."""
+    full, thumb = encode(upload)
+    key = f"{prefix}/{uuid.uuid4().hex}"
+    store.save(f"{key}.jpg", full, "image/jpeg")
+    store.save(f"{key}_thumb.jpg", thumb, "image/jpeg")
+    return f"{key}.jpg", f"{key}_thumb.jpg"
+
+
+def chat_storage() -> LocalStorage:
+    return LocalStorage(settings.DATA_DIR / "chat_photos")
+
+
+def save_photo(upload: UploadFile, task: Task, user: User) -> ChorePhoto:
+    path, thumb_path = put(storage(), f"chore/{task.id}", upload)
     return ChorePhoto(
         task_id=task.id,
         attempt=task.attempt or 1,
         uploaded_by_id=user.id,
-        path=f"{key}.jpg",
-        thumb_path=f"{key}_thumb.jpg",
+        path=path,
+        thumb_path=thumb_path,
     )
