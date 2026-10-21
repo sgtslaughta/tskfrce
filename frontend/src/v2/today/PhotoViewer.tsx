@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Button, Modal, Textarea } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { tokenManager } from "@/services/tokenManager";
@@ -86,6 +87,11 @@ export function PhotoViewer({
         >
           Send back
         </Button>
+        {item && (
+          <Link href={`/chat?chore=${item.id}`} onClick={close}>
+            Discuss
+          </Link>
+        )}
       </div>
     </Modal>
   );

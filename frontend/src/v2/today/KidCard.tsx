@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { useThread } from "../hooks/useChat";
 import { DevicePill, deviceKind } from "../components/DevicePill";
 import { BadgeGrid } from "../components/BadgeGrid";
 import { LockBadge } from "../components/LockBadge";
@@ -27,6 +29,23 @@ function ChoreRow({ c }: { c: TodayChore }) {
       {tag && <span className="f-cap">{tag}</span>}
       {!!c.subtasks_total && <span className="f-cap">{`${c.subtasks_done ?? 0}/${c.subtasks_total}`}</span>}
       <b>{`+${c.points}`}</b>
+    </div>
+  );
+}
+
+function ChatBox({ kidId, name }: { kidId: number; name: string }) {
+  const last = (useThread("private", String(kidId), false, 15_000).data?.messages ?? []).slice(-2);
+  return (
+    <div style={{ marginTop: 16 }} aria-label={`Chat with ${name}`} role="group">
+      <div className="f-cap">{`Chat with ${name}`}</div>
+      {last.length === 0 && <p className="f-note">No messages yet.</p>}
+      {last.map((m) => (
+        <p key={m.id} style={{ margin: "4px 0" }}>
+          <b>{m.kind === "system" ? "" : `${m.author_name ?? "Someone"}: `}</b>
+          {m.body ?? "Photo"}
+        </p>
+      ))}
+      <Link href={`/chat?kid=${kidId}`}>Open</Link>
     </div>
   );
 }
@@ -77,6 +96,7 @@ export function KidCard({ kid }: { kid: TodayKid }) {
             </DeviceQuickMenu>
           ))}
         </div>
+        <ChatBox kidId={kid.id} name={name} />
         {recent.length > 0 && (
           <>
             <div className="f-cap" style={{ marginTop: 16 }}>

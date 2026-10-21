@@ -1,12 +1,15 @@
 import { useState, type ReactNode } from "react";
+import Link from "next/link";
 import { Button } from "@mantine/core";
 import {
   IconCamera,
   IconChecklist,
   IconGift,
   IconHourglass,
+  IconMessage,
   IconRefresh,
 } from "@tabler/icons-react";
+import { useThreads } from "../hooks/useChat";
 import { useDecideRedemption } from "../hooks/useRewards";
 import { useApproveChore, useSendBack } from "../hooks/useToday";
 import { toastFail, toastOk } from "../notify";
@@ -56,6 +59,7 @@ export function NeedsYou({ items }: { items: NeedsItem[] }) {
   const approve = useApproveChore();
   const sendBack = useSendBack();
   const decide = useDecideRedemption();
+  const threads = useThreads().data?.threads ?? [];
   if (!items.length) return null;
 
   const active = FILTERS.find((f) => f.key === filter) ?? FILTERS[0];
@@ -141,6 +145,16 @@ export function NeedsYou({ items }: { items: NeedsItem[] }) {
                   </div>
                 )}
               </div>
+              {chore && (
+                <Link href={`/chat?chore=${i.id}`} aria-label={`Chat about ${i.title}`} className="f-row" style={{ gap: 2 }}>
+                  <IconMessage size={16} />
+                  {(threads.find((t) => t.kind === "chore" && t.task_id === i.id)?.unread ?? 0) > 0 && (
+                    <span className="f-pill" data-testid={`chore-unread-${i.id}`}>
+                      {threads.find((t) => t.kind === "chore" && t.task_id === i.id)?.unread}
+                    </span>
+                  )}
+                </Link>
+              )}
               <Button size="xs" onClick={() => run(approveOne(i), "Approved")}>
                 Approve
               </Button>
