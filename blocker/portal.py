@@ -19,15 +19,19 @@ def dns_response(query_wire: bytes, answer_ip: str) -> bytes | None:
 
     try:
         q = DNS(query_wire)
-        if q.qr != 0 or q.opcode != 0 or q.qdcount != 1 or q.qd is None:
+        if q.qr != 0 or q.opcode != 0 or q.qdcount != 1:
             return None
     except Exception:
         log.debug("dropping unparsable DNS packet", exc_info=True)
         return None
-    answer = None
-    if q.qd.qtype == 1:
-        answer = DNSRR(rrname=q.qd.qname, type="A", ttl=30, rdata=answer_ip)
-    resp = DNS(id=q.id, qr=1, aa=1, rd=q.rd, ra=1, rcode=0, qd=q.qd, an=answer)
+    try:
+        first = q.qd[0]
+    except (TypeError, IndexError):
+        first = q.qd
+    answers = []
+    if first.qtype == 1:
+        answers.append(DNSRR(rrname=first.qname, type="A", ttl=30, rdata=answer_ip))
+    resp = DNS(id=q.id, qr=1, aa=1, rd=q.rd, ra=1, rcode=0, qd=[first], an=answers)
     return bytes(resp)
 
 

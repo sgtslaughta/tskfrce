@@ -33,9 +33,9 @@ def test_dns_response_answers_a_with_box_ip():
     assert resp.id == 0x1234
     assert resp.qr == 1
     assert resp.rcode == 0
-    assert resp.qd.qname == b"example.com."
+    assert resp.qd[0].qname == b"example.com."
     assert resp.ancount == 1
-    assert resp.an.rdata == "192.168.1.5"
+    assert resp.an[0].rdata == "192.168.1.5"
 
 
 def test_dns_response_aaaa_noerror_no_answer():
@@ -106,7 +106,7 @@ def test_dns_response_drops_qdcount_not_one():
     pytest.importorskip("scapy")
     from scapy.layers.dns import DNS, DNSQR
 
-    wire = bytes(DNS(id=1, qd=DNSQR(qname="a.com.") / DNSQR(qname="b.com.")))
+    wire = bytes(DNS(id=1, qd=[DNSQR(qname="a.com."), DNSQR(qname="b.com.")]))
     assert dns_response(wire, "192.168.1.5") is None
     assert dns_response(bytes(DNS(id=1, qdcount=0)), "192.168.1.5") is None
 
