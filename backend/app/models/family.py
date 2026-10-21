@@ -1,6 +1,6 @@
 """Family settings (single row, id=1)."""
 
-from sqlalchemy import Boolean, Column, Date, ForeignKey, Integer, String
+from sqlalchemy import Boolean, Column, Date, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import Session
 
 from app.core.database import Base
@@ -17,6 +17,7 @@ class FamilySettings(Base):
     points_unlock_early = Column(Boolean, nullable=False, default=False)
     last_reset_date = Column(Date, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    blocker_last_seen = Column(DateTime, nullable=True)  # naive UTC; home box heartbeat
 
 
 def get_family(db: Session) -> FamilySettings:

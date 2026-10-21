@@ -14,6 +14,7 @@ from app.api.deps import get_db
 from app.core.config import settings
 from app.lock.loop import trigger
 from app.lock.state import desired_blocked
+from app.models.family import get_family
 from app.models.lock import Device
 from app.models.notification import Notification
 from app.models.user import User, UserRole
@@ -21,6 +22,12 @@ from app.models.user import User, UserRole
 MAC_RE = re.compile(r"^([0-9a-f]{2}:){5}[0-9a-f]{2}$")
 
 router = APIRouter(prefix="/api/v1/internal", tags=["internal"])
+
+
+def _touch(db: Session) -> None:
+    """Stamp blocker liveness; called from the endpoints its loops hit periodically."""
+    get_family(db).blocker_last_seen = datetime.now(UTC).replace(tzinfo=None)
+    db.commit()
 
 
 def require_token(x_internal_token: str = Header(default="")) -> None:
@@ -107,11 +114,13 @@ def devices_seen(body: SeenReport, db: Session = Depends(get_db)) -> dict:
 
 @router.get("/state", dependencies=[Depends(require_token)])
 def state(db: Session = Depends(get_db)) -> dict:
+    _touch(db)
     return {"blocked": desired_blocked(db, datetime.now(UTC))}
 
 
 @router.post("/devices/resisting", dependencies=[Depends(require_token)])
 def devices_resisting(body: ResistingReport, db: Session = Depends(get_db)) -> dict:
+    _touch(db)
     now = datetime.now(UTC).replace(tzinfo=None)
     listed = set(body.resisting)
     flagged = cleared = 0

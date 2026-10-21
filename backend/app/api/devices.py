@@ -1,6 +1,6 @@
 """Parent API: devices and device groups."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete
@@ -19,6 +19,9 @@ from app.models.user import User, UserRole
 from app.schemas.lock import DevicePatch, GroupIn, OverrideIn, utc_z
 
 router = APIRouter(prefix="/api/v1", tags=["devices"], dependencies=[Depends(require_parent)])
+
+# Box reports resistance every 15s and polls state every 30s; 3 missed beats = offline.
+BLOCKER_STALE = timedelta(seconds=90)
 
 
 def device_out(db: Session, d: Device, fam: FamilySettings, now: datetime) -> dict:
@@ -59,6 +62,13 @@ def _devices(db: Session, ids: list[int]) -> list[Device]:
     if len(rows) != len(set(ids)):
         raise HTTPException(400, "One of the devices doesn't exist. Refresh and try again.")
     return rows
+
+
+@router.get("/blocker")
+def blocker_status(db: Session = Depends(get_db)) -> dict:
+    seen = get_family(db).blocker_last_seen  # naive UTC
+    online = seen is not None and datetime.now(UTC).replace(tzinfo=None) - seen < BLOCKER_STALE
+    return {"online": online, "last_seen": utc_z(seen)}
 
 
 @router.get("/devices")

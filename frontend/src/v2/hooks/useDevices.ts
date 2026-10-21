@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/v2/api'
 import { toastFail, toastOk } from '@/v2/notify'
-import type { Device, DeviceStatus, Group } from '@/v2/types'
+import type { BlockerStatus, Device, DeviceStatus, Group } from '@/v2/types'
 
 export interface DevicePatch {
   name?: string
@@ -11,6 +11,8 @@ export interface DevicePatch {
 }
 
 export const useDevices = () => useQuery({ queryKey: ['devices'], queryFn: () => api<Device[]>('/devices') })
+export const useBlocker = () =>
+  useQuery({ queryKey: ['blocker'], queryFn: () => api<BlockerStatus>('/blocker'), refetchInterval: 30_000 })
 export const useGroups = () => useQuery({ queryKey: ['groups'], queryFn: () => api<Group[]>('/groups') })
 
 /** Run a mutation then refresh devices, groups and today. */

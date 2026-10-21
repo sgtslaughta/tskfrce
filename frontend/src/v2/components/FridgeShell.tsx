@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { Box, Burger, Button, Drawer } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
+import { BlockerBanner } from './BlockerBanner'
 import { ColorSchemeToggle } from './ColorSchemeToggle'
 import { cancelSignOut, startSignOut } from './RequireParent'
 
@@ -83,6 +84,7 @@ export function FridgeShell({
           <h1>{title}</h1>
           {actions}
         </div>
+        <BlockerBanner />
         {children}
       </main>
     </div>

@@ -30,6 +30,12 @@ export interface Device {
   resisting: boolean
 }
 
+/** GET /blocker: home box liveness */
+export interface BlockerStatus {
+  online: boolean
+  last_seen: string | null
+}
+
 /** GET /groups item */
 export interface Group {
   id: number
