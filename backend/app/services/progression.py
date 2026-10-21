@@ -64,7 +64,8 @@ def level_for(total: int) -> Level:
     return Level(n, title, total, xp_for_level(n), xp_for_level(n + 1))
 
 
-def streak(db: Session, kid_id: int, today: date) -> Streak:
+def chore_days(db: Session, kid_id: int, today: date) -> dict[date, bool]:
+    """chore day -> every instance that day is done/submitted (past and today only)."""
     start = datetime.combine(today - timedelta(days=LOOKBACK_DAYS), datetime.min.time())
     rows = (
         db.query(Task.due_date, Task.status)
@@ -82,6 +83,11 @@ def streak(db: Session, kid_id: int, today: date) -> Streak:
         d = due.date()
         if d <= today:
             days[d] = days.get(d, True) and status in _DONE
+    return days
+
+
+def streak(db: Session, kid_id: int, today: date) -> Streak:
+    days = chore_days(db, kid_id, today)
     runs, run, longest = [], 0, 0
     for d in sorted(days):
         if days[d]:

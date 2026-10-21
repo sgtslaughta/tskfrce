@@ -62,6 +62,7 @@ class User(Base):
     preferences = Column(Text, nullable=True)  # JSON string
     pin_hash = Column(String(255), nullable=True)
     avatar = Column(String(255), nullable=True)
+    celebrated_level = Column(Integer, nullable=False, default=1, server_default="1")
 
     # Relationships
     tasks = relationship(

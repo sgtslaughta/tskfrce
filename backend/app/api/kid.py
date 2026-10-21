@@ -22,13 +22,14 @@ from app.lock.reset import (
 from app.lock.rules import is_online
 from app.lock.schedule import local_now
 from app.lock.state import device_facts
+from app.models.badge import BadgeAward
 from app.models.family import get_family
 from app.models.lock import Device
 from app.models.reward import Redemption, Reward
 from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services import economy, progression
+from app.services import badges, economy, progression
 from app.services.photos import save_photo
 
 router = APIRouter(prefix="/api/v1/kid", tags=["kid"])
@@ -307,5 +308,28 @@ def award_seen(award_id: int, db: Session = Depends(get_db), kid: User = Depends
     if r is None or r.kid_id != kid.id:
         raise HTTPException(404, "That award isn't yours.")
     r.seen_by_kid = True
+    db.commit()
+    return Response(status_code=204)
+
+
+@router.get("/celebrations")
+def celebrations(db: Session = Depends(get_db), kid: User = Depends(require_kid)):
+    return badges.celebrations(db, kid)
+
+
+@router.post("/celebrations/{key}/seen", status_code=204)
+def celebration_seen(key: str, db: Session = Depends(get_db), kid: User = Depends(require_kid)):
+    kind, _, ident = key.partition(":")
+    if not ident.isdigit() or kind not in ("r", "b", "l"):
+        raise HTTPException(404, "That celebration isn't yours.")
+    n = int(ident)
+    if kind == "l":
+        level = progression.level_for(progression.xp(db, kid.id)).level
+        kid.celebrated_level = max(kid.celebrated_level, min(n, level))
+    else:
+        row = db.get(Redemption if kind == "r" else BadgeAward, n)
+        if row is None or (row.kid_id != kid.id):
+            raise HTTPException(404, "That celebration isn't yours.")
+        row.seen_by_kid = True
     db.commit()
     return Response(status_code=204)

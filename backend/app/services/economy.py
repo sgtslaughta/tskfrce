@@ -169,6 +169,10 @@ def decide(db: Session, redemption: Redemption, parent: User, approve: bool) -> 
             screen = True
     redemption.status = "approved" if approve else "denied"
     redemption.decided_at, redemption.decided_by_id = now, parent.id
+    if approve:
+        from app.services import badges  # badges imports this module
+
+        badges.check_badges(db, db.get(User, redemption.kid_id), get_family(db))
     db.commit()
     if screen:
         from app.lock.loop import trigger
