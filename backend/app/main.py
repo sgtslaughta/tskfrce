@@ -38,6 +38,7 @@ from app.api.internal import router as internal_router
 from app.api.kid import router as kid_router
 from app.api.kids import router as kids_router
 from app.api.notifications import router as notifications_router
+from app.api.rewards import redemptions_router
 from app.api.rewards import router as rewards_router
 from app.api.setup import router as setup_router
 from app.api.windows import router as windows_router
@@ -150,6 +151,7 @@ fastapi_app.include_router(kid_router)
 fastapi_app.include_router(windows_router)
 fastapi_app.include_router(family_router)
 fastapi_app.include_router(rewards_router)
+fastapi_app.include_router(redemptions_router)
 fastapi_app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
 
 # Create the final app with ASGI middleware

@@ -7,7 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_parent
 from app.models.reward import Redemption, Reward
+from app.models.user import User
 from app.schemas.reward import RewardCreate, RewardPatch
+from app.services import economy
 
 router = APIRouter(
     prefix="/api/v1/rewards", tags=["rewards"], dependencies=[Depends(require_parent)]
@@ -59,3 +61,55 @@ def delete_reward(reward_id: int, db: Session = Depends(get_db)):
         p.status, p.decided_at = "denied", datetime.utcnow()
     db.commit()
     return Response(status_code=204)
+
+
+redemptions_router = APIRouter(
+    prefix="/api/v1/redemptions", tags=["rewards"], dependencies=[Depends(require_parent)]
+)
+
+
+def redemption_name(db: Session, r: Redemption) -> str:
+    if r.kind == "screen_time":
+        return f"{r.minutes} min of screen time"
+    reward = db.get(Reward, r.reward_id)
+    return reward.name if reward else "Reward"
+
+
+@redemptions_router.get("")
+def list_redemptions(status: str = "pending", db: Session = Depends(get_db)):
+    rows = db.query(Redemption).filter(Redemption.status == status).order_by(Redemption.id).all()
+    out = []
+    for r in rows:
+        kid = db.get(User, r.kid_id)
+        out.append(
+            {
+                "id": r.id,
+                "kid_id": r.kid_id,
+                "kid_name": kid.full_name,
+                "kind": r.kind,
+                "name": redemption_name(db, r),
+                "minutes": r.minutes,
+                "cost": r.cost,
+                "created_at": r.created_at.isoformat() + "Z",
+                "kid_balance": economy.balance(db, r.kid_id),
+            }
+        )
+    return out
+
+
+def _decide(db: Session, rid: int, parent: User, approve: bool) -> dict:
+    r = db.get(Redemption, rid)
+    if r is None:
+        raise HTTPException(404, "That request doesn't exist.")
+    r = economy.decide(db, r, parent, approve)
+    return {"id": r.id, "status": r.status}
+
+
+@redemptions_router.post("/{rid}/approve")
+def approve(rid: int, db: Session = Depends(get_db), parent: User = Depends(require_parent)):
+    return _decide(db, rid, parent, True)
+
+
+@redemptions_router.post("/{rid}/deny")
+def deny(rid: int, db: Session = Depends(get_db), parent: User = Depends(require_parent)):
+    return _decide(db, rid, parent, False)
