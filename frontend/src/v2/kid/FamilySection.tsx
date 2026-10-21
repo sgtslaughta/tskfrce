@@ -14,7 +14,7 @@ export function FamilySection({ meId }: { meId?: number | null }) {
   return (
     <section aria-label="Family" style={{ display: 'grid', gap: 12 }}>
       <h2 style={{ margin: 0 }}>Family</h2>
-      {board && <Leaderboard rows={board.rows} />}
+      {board && <Leaderboard rows={board.rows} kid />}
       {sibs.map((p) => (
         <StickerCard key={p.kid_id}>
           <button

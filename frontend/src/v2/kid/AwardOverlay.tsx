@@ -4,7 +4,7 @@ import { useCelebrations, useMarkCelebrationSeen } from '../hooks/useKidRewards'
 import { TIER_COLORS, TIER_NAMES } from '../tiers'
 import './award.css'
 
-export function AwardOverlay({ onExpired }: { onExpired: () => void }) {
+export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; onLocker?: () => void }) {
   const award = useCelebrations(onExpired).data?.[0]
   const seen = useMarkCelebrationSeen(onExpired)
   const btn = useRef<HTMLButtonElement>(null)
@@ -27,7 +27,8 @@ export function AwardOverlay({ onExpired }: { onExpired: () => void }) {
   const heading = { reward: '🎉 You got it!', screen_time: '⏱️ Time added!', badge: '🏅 New badge!', level: '⬆️ Level up!' }[award.kind]
   const tier = award.kind === 'badge' ? award.detail : ''
   const ring = TIER_NAMES.includes(tier as never) ? TIER_COLORS[tier] : undefined
-  const title = award.kind === 'level' ? `${award.title} · ${award.detail}` : award.title
+  const unlocked = award.kind === 'level' ? (award.unlocked ?? []) : []
+  const title = award.title
   return (
     <div className="award-back">
       <div
@@ -47,6 +48,28 @@ export function AwardOverlay({ onExpired }: { onExpired: () => void }) {
           {title}
         </strong>
         {tier && <span className="f-cap">{tier}</span>}
+        {unlocked.length > 0 && (
+          <>
+            <span className="f-cap">New flair unlocked</span>
+            <div className="f-row" style={{ justifyContent: 'center' }}>
+              {unlocked.map((u) => (
+                <span key={u.id} className="f-pill">{`${u.emblem ?? ''} ${u.label}`.trim()}</span>
+              ))}
+            </div>
+            {onLocker && (
+              <Button
+                size="lg"
+                variant="default"
+                onClick={() => {
+                  close()
+                  onLocker()
+                }}
+              >
+                Go to Locker
+              </Button>
+            )}
+          </>
+        )}
         <Button ref={btn} size="lg" onClick={close}>
           Nice!
         </Button>

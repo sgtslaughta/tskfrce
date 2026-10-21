@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user, get_db
-from app.flair.catalog import equipped
+from app.flair.catalog import CATALOG, equipped
 from app.lock.reset import current_chore_day
 from app.models.family import get_family
 from app.models.user import User, UserRole
@@ -29,6 +29,12 @@ def _profile(db: Session, kid: User, today) -> dict:
         "badges": badges.badges_for(db, kid.id),
         "flair": equipped(kid),
     }
+
+
+@router.get("/flair/emblems")
+def emblems():
+    """Emblem id -> emoji, so every viewer can render a kid's equipped emblem."""
+    return {f.id: f.emblem for f in CATALOG if f.emblem}
 
 
 @router.get("/leaderboard")

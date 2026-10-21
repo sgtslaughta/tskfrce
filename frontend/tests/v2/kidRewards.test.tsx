@@ -99,7 +99,7 @@ describe('RewardsSection', () => {
 
 describe('AwardOverlay', () => {
   const reward = { key: 'r:5', kind: 'reward', title: 'Ice cream', detail: '100 points', size: 'big' }
-  const level = { key: 'l:8', kind: 'level', title: 'Level 8', detail: 'Clutch', size: 'big' }
+  const level = { key: 'l:8', kind: 'level', title: 'Level 8 · Clutch', detail: 'New flair: Crown, Rocket', size: 'big', unlocked: [{ id: 'emblem-crown', label: 'Crown', emblem: '👑' }, { id: 'emblem-rocket', label: 'Rocket', emblem: '🚀' }] }
   const badge = { key: 'b:2', kind: 'badge', title: '🏅 Task Master', detail: 'copper', size: 'small' }
 
   test('shows reward and marks seen', async () => {
@@ -115,6 +115,18 @@ describe('AwardOverlay', () => {
     wrap(<AwardOverlay onExpired={() => {}} />)
     expect(await screen.findByRole('dialog')).toHaveTextContent('Level 8 · Clutch')
     await userEvent.click(screen.getByRole('button', { name: 'Nice!' }))
+    expect(calls('/kid/celebrations/l%3A8/seen')).toHaveLength(1)
+  })
+
+  test('level celebration shows unlocked flair chips and Go to Locker opens the Locker', async () => {
+    const onLocker = jest.fn()
+    route({ 'GET /kid/celebrations': [level], 'POST /kid/celebrations/l%3A8/seen': {} })
+    wrap(<AwardOverlay onExpired={() => {}} onLocker={onLocker} />)
+    const d = await screen.findByRole('dialog')
+    expect(d).toHaveTextContent('👑 Crown')
+    expect(d).toHaveTextContent('🚀 Rocket')
+    await userEvent.click(screen.getByRole('button', { name: 'Go to Locker' }))
+    expect(onLocker).toHaveBeenCalled()
     expect(calls('/kid/celebrations/l%3A8/seen')).toHaveLength(1)
   })
 

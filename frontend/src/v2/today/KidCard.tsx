@@ -42,7 +42,7 @@ export function KidCard({ kid }: { kid: TodayKid }) {
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: 12 }}>
       <div className="f-card">
         <div className="f-card-head">
-          <ProgressHeader name={name} progress={kid.progress} />
+          <ProgressHeader name={name} avatar={kid.avatar} progress={kid.progress} />
           <span>{`${kid.done ?? done.length}/${kid.total ?? kid.chores.length} done today`}</span>
           <span>{online ? "Online" : `Last active ${ago(kid.last_active)}`}</span>
         </div>

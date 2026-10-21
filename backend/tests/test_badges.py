@@ -8,6 +8,7 @@ from app.models.reward import Redemption, Reward
 from app.models.task import Task, TaskStatus
 from app.models.user import UserRole
 from app.services import badges as bd
+from app.services.progression import xp_for_level as xp_for
 
 from .conftest import _headers, _make_user
 
@@ -222,3 +223,23 @@ def test_approve_awards_badges_and_redemption_check(
     assert db.query(BadgeAward).filter_by(kid_id=kid.id, badge_key="first_blood").count() == 1
     feed = client.get("/api/v1/kid/celebrations", headers=kid_headers).json()
     assert feed[0]["detail"] == "copper"
+
+
+def test_level_celebration_lists_new_flair(client, db, kid, kid_headers):
+    kid.celebrated_level = 7
+    db.add(Points(user_id=kid.id, points_type=PointsType.BONUS, amount=xp_for(8), description="a"))
+    db.commit()
+    lv = [
+        f
+        for f in client.get("/api/v1/kid/celebrations", headers=kid_headers).json()
+        if f["kind"] == "level"
+    ][0]
+    assert lv["key"] == "l:8"
+    assert "Crown" in lv["detail"] and "Rocket" in lv["detail"] and "Sun name" in lv["detail"]
+    assert {u["label"] for u in lv["unlocked"]} >= {"Crown", "Rocket"}
+    assert "Slate" not in lv["detail"]
+
+
+def test_emblem_map(client, kid_headers):
+    r = client.get("/api/v1/flair/emblems", headers=kid_headers).json()
+    assert r["emblem-crown"] == "👑" and "card-grid" not in r

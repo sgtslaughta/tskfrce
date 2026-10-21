@@ -6,7 +6,8 @@ from datetime import UTC, date, datetime, timedelta
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
-from app.flair.catalog import equipped
+from app.flair.catalog import CATALOG as FLAIR
+from app.flair.catalog import FlairItem, equipped
 from app.lock.reset import current_chore_day, is_chore_filter, kid_chores_filter
 from app.models.badge import BadgeAward, CustomBadge
 from app.models.family import FamilySettings
@@ -211,6 +212,10 @@ def give_custom(db: Session, kid: User, badge: CustomBadge) -> BadgeAward:
     return a
 
 
+def _flair_label(f: FlairItem) -> str:
+    return f.name if f.slot == "emblem" else f"{f.name} {f.slot}"
+
+
 def celebrations(db: Session, kid: User) -> list[dict]:
     """Unseen moments, oldest first: rewards, badge tiers, then a level-up."""
     items: list[tuple[datetime, dict]] = []
@@ -254,12 +259,18 @@ def celebrations(db: Session, kid: User) -> list[dict]:
     out = [i for _, i in items]
     lv = progression.level_for(progression.xp(db, kid.id))
     if lv.level > kid.celebrated_level:
+        new = [f for f in FLAIR if kid.celebrated_level < f.unlock_level <= lv.level]
         out.append(
             {
                 "key": f"l:{lv.level}",
                 "kind": "level",
-                "title": f"Level {lv.level}",
-                "detail": lv.title,
+                "title": f"Level {lv.level} · {lv.title}",
+                "detail": f"New flair: {', '.join(_flair_label(f) for f in new)}"
+                if new
+                else lv.title,
+                "unlocked": [
+                    {"id": f.id, "label": _flair_label(f), "emblem": f.emblem} for f in new
+                ],
                 "size": "big",
             }
         )
