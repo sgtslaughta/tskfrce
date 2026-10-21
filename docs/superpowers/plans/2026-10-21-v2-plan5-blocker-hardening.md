@@ -397,15 +397,15 @@ git commit -m "feat(frontend): resisting badge, test block button, honest promis
 
 | Service | Image | Networks / IP | MAC | Caps / sysctls | Notes |
 |---|---|---|---|---|---|
-| `fake-internet` | `nginx:alpine` | `wan` 10.99.1.1 / fd00:99:1::1 | — | NET_ADMIN | entrypoint adds `ip route add 10.99.0.0/24 via 10.99.1.2` and `ip -6 route add fd00:99::/64 via fd00:99:1::2`; serves `lab/fake-internet/index.html` ("fake internet") |
-| `router` | `lab/router` (alpine + iproute2) | `lab` 10.99.0.2 / fd00:99::2, `wan` 10.99.1.2 / fd00:99:1::2 | `02:99:00:00:00:02` | NET_ADMIN; `net.ipv4.ip_forward=1`, `net.ipv6.conf.all.forwarding=1` | entrypoint: `sleep infinity` |
+| `fake-internet` | `nginx:alpine` | `wan` 203.0.113.1 / 2001:db8:1::1 | — | NET_ADMIN | entrypoint adds `ip route add 10.99.0.0/24 via 203.0.113.2` and `ip -6 route add fd00:99::/64 via 2001:db8:1::2`; serves `lab/fake-internet/index.html` ("fake internet") |
+| `router` | `lab/router` (alpine + iproute2) | `lab` 10.99.0.2 / fd00:99::2, `wan` 203.0.113.2 / 2001:db8:1::2 | `02:99:00:00:00:02` | NET_ADMIN; `net.ipv4.ip_forward=1`, `net.ipv6.conf.all.forwarding=1` | entrypoint: `sleep infinity` |
 | `backend` | `extends: {file: ../docker-compose.yml, service: backend}` | `lab` 10.99.0.3 | — | — | env `INTERNAL_TOKEN=labtoken`, `BLOCKER_URL=http://10.99.0.4:7777`, `TRUSTED_HOSTS=*`, `DISABLE_RATE_LIMITING=true`; **no** `ports`, anonymous data volume |
 | `blocker` | `build: ../blocker` | `lab` 10.99.0.4 / fd00:99::4 | `02:99:00:00:00:04` | NET_ADMIN, NET_RAW; `net.ipv4.ip_forward=1`, `net.ipv6.conf.all.forwarding=1` | env `BACKEND_URL=http://10.99.0.3:8000`, `INTERNAL_TOKEN=labtoken`, `LAN_IFACE=eth0`, `SCAN_INTERVAL=5`, `RECONCILE_INTERVAL=5`, `RESIST_INTERVAL=5`, `PORTAL_REDIRECT_URL=http://task4ce.local/kid`; `entrypoint: ["sh","-c","ip route replace default via 10.99.0.2 && ip -6 route replace default via fd00:99::2; exec python3 -m blocker"]` |
-| `kid1` | `lab/host` (alpine + curl + bind-tools) | `lab` 10.99.0.11 / fd00:99::11 | `02:99:00:00:00:11` | NET_ADMIN | entrypoint sets v4+v6 default route via router, `sleep infinity`; `dns: [10.99.1.1]` |
+| `kid1` | `lab/host` (alpine + curl + bind-tools) | `lab` 10.99.0.11 / fd00:99::11 | `02:99:00:00:00:11` | NET_ADMIN | entrypoint sets v4+v6 default route via router, `sleep infinity`; `dns: [203.0.113.1]` |
 | `kid2` | same | `lab` 10.99.0.12 / fd00:99::12 | `02:99:00:00:00:12` | same | |
 | `parent` | same | `lab` 10.99.0.13 / fd00:99::13 | `02:99:00:00:00:13` | same | |
 
-Networks: `lab` bridge, `internal: true`, `enable_ipv6: true`, subnets `10.99.0.0/24`, `fd00:99::/64`; `wan` bridge, `internal: true`, `enable_ipv6: true`, subnets `10.99.1.0/24`, `fd00:99:1::/64`. Compose project name `task4ce-lab` (top-level `name:`).
+Networks: `lab` bridge, `internal: true`, `enable_ipv6: true`, subnets `10.99.0.0/24`, `fd00:99::/64`; `wan` bridge, `internal: true`, `enable_ipv6: true`, subnets `203.0.113.0/24`, `2001:db8:1::/64`. Compose project name `task4ce-lab` (top-level `name:`).
 
 - [ ] **Step 1: Write the failing test** `blocker/tests/test_lab_compose.py`: parse `lab/docker-compose.lab.yml` with PyYAML (`importorskip` like `test_compose.py`), assert the table above: each service's `mac_address`, `ipv4_address`, `cap_add`, `sysctls`, `internal: true` on both networks, blocker has no `network_mode`, backend has no `ports`.
 
@@ -420,7 +420,7 @@ Expected: FAIL FileNotFoundError
 
 Run: `cd blocker && python -m pytest tests/test_lab_compose.py -v`
 Expected: pass
-Run: `docker compose -f lab/docker-compose.lab.yml up -d --build && docker compose -f lab/docker-compose.lab.yml exec kid1 curl -s -m 3 http://10.99.1.1/ && docker compose -f lab/docker-compose.lab.yml down -v`
+Run: `docker compose -f lab/docker-compose.lab.yml up -d --build && docker compose -f lab/docker-compose.lab.yml exec kid1 curl -s -m 3 http://203.0.113.1/ && docker compose -f lab/docker-compose.lab.yml down -v`
 Expected: prints the fake-internet page (contains "fake internet")
 
 - [ ] **Step 5: Commit**
@@ -445,8 +445,8 @@ git commit -m "feat(lab): docker network lab with router, fake internet, kids"
   - `lab.sh token` — prints an access token: `POST /api/v1/auth/login {"username":"labparent","password":"labpassword1"}` → `.access_token`.
   - `lab.sh device-id <kidN>` — maps `kid1→02:99:00:00:00:11`, `kid2→…12`, `parent→…13`; prints the backend device id from `GET /api/v1/devices`.
   - `lab.sh block <kidN>` — `POST /api/v1/devices/{id}/override {"action":"lock"}`; `unblock` — `{"action":"unlock"}`. (Real policy path: backend tick → `push_blocked` → blocker `/state`.)
-  - `lab.sh check <kidN>` — `exec <kidN> curl -s -m 3 -o /dev/null http://10.99.1.1/`; exit 0 = online, 1 = offline.
-  - `lab.sh check6 <kidN>` — `exec <kidN> curl -s -m 3 -o /dev/null http://[fd00:99:1::1]/` (fake-internet over IPv6, off-LAN so the block applies). Exit 0 = online, 1 = offline.
+  - `lab.sh check <kidN>` — `exec <kidN> curl -s -m 3 -o /dev/null http://203.0.113.1/`; exit 0 = online, 1 = offline.
+  - `lab.sh check6 <kidN>` — `exec <kidN> curl -s -m 3 -o /dev/null http://[2001:db8:1::1]/` (fake-internet over IPv6, off-LAN so the block applies). Exit 0 = online, 1 = offline.
   - `lab.sh portal <kidN>` — asserts `nslookup example.com` inside kid resolves to `10.99.0.4` **and** `curl -s -m 3 -o /dev/null -w '%{http_code} %{redirect_url}' http://example.com/` prints `302 http://task4ce.local/kid`; exit 0 on both, 1 otherwise.
   - `lab.sh resist <kidN>` — `exec <kidN> ip neigh replace 10.99.0.2 lladdr 02:99:00:00:00:02 nud permanent dev eth0` and `ip -6 neigh replace fd00:99::2 lladdr 02:99:00:00:00:02 nud permanent dev eth0`.
   - `lab.sh reset <kidN>` — `ip neigh flush dev eth0` (v4 and v6).
