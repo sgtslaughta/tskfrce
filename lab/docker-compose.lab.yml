@@ -59,6 +59,7 @@ services:
       net.ipv6.conf.all.forwarding: 1
     environment:
       BACKEND_URL: http://10.99.0.3:8000
+      BLOCKER_BIND: 0.0.0.0
       INTERNAL_TOKEN: labtoken
       LAN_IFACE: eth0
       SCAN_INTERVAL: "5"

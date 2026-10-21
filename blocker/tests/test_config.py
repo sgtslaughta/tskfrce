@@ -42,3 +42,9 @@ def test_resist_interval_default_15_and_env(tmp_path):
     base = _env(tmp_path, INTERNAL_TOKEN="t")
     assert Config.from_env(base).resist_interval == 15
     assert Config.from_env({**base, "RESIST_INTERVAL": "5"}).resist_interval == 5
+
+
+def test_bind_host_defaults_loopback_and_reads_env(tmp_path):
+    base = {"INTERNAL_TOKEN": "t", "DATA_DIR": str(tmp_path)}
+    assert Config.from_env(base).bind_host == "127.0.0.1"
+    assert Config.from_env({**base, "BLOCKER_BIND": "0.0.0.0"}).bind_host == "0.0.0.0"

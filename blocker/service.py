@@ -208,7 +208,7 @@ class Service:
             self.store,
             self.cfg.internal_token,
             self.test_block,
-            "127.0.0.1",
+            self.cfg.bind_host,
             self.cfg.blocker_port,
         )
         self._spawn(self._api.serve_forever)

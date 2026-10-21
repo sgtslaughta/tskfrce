@@ -16,6 +16,7 @@ class Config:
     lan_iface: str
     data_dir: Path
     blocker_port: int = 7777
+    bind_host: str = "127.0.0.1"  # API bind; 0.0.0.0 only for the lab (host net = loopback)
     scan_interval: float = 20
     reconcile_interval: float = 30
     resist_interval: float = 15
@@ -34,6 +35,7 @@ class Config:
             lan_iface=environ.get("LAN_IFACE", ""),
             data_dir=data_dir,
             blocker_port=int(environ.get("BLOCKER_PORT", 7777)),
+            bind_host=environ.get("BLOCKER_BIND", "127.0.0.1"),
             scan_interval=float(environ.get("SCAN_INTERVAL", 20)),
             reconcile_interval=float(environ.get("RECONCILE_INTERVAL", 30)),
             resist_interval=float(environ.get("RESIST_INTERVAL", 15)),
