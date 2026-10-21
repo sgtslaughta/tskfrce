@@ -5,7 +5,7 @@ import time
 
 import pytest
 
-os.environ.setdefault("INTERNAL_TOKEN", "labtoken")
+os.environ["INTERNAL_TOKEN"] = "labtoken"
 pytestmark = pytest.mark.integration
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
 LAB = ["bash", os.path.join(ROOT, "scripts/lab.sh")]
@@ -29,9 +29,11 @@ def wait_for(pred, timeout=60, every=2):
 def lab_up():
     if not shutil.which("docker"):
         pytest.skip("docker not available")
-    lab("up", check=True)
-    yield
-    lab("down")
+    try:
+        lab("up", check=True)
+        yield
+    finally:
+        lab("down")
 
 
 @pytest.fixture(autouse=True)

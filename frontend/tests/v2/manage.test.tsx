@@ -77,6 +77,7 @@ beforeAll(() => {
 })
 
 beforeEach(() => {
+  jest.mocked(notifications.show).mockClear()
   apiMock.mockReset().mockImplementation(async (path) => {
     if (path === '/family') return family
     if (path === '/windows') return []
