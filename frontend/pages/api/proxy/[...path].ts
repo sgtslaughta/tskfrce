@@ -8,9 +8,24 @@ import { NextApiRequest, NextApiResponse } from 'next'
 const PASS_REQ = ['authorization', 'cookie', 'content-type', 'user-agent', 'accept']
 const DROP_RES = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
 
+// uploads are capped at 8 MB by the backend; leave room for multipart framing
+const MAX_BODY = 12 * 1024 * 1024
+
+class TooLarge extends Error {}
+
 async function rawBody(req: NextApiRequest): Promise<Buffer> {
+  if (Number(req.headers['content-length'] || 0) > MAX_BODY) throw new TooLarge()
   const chunks: Buffer[] = []
-  for await (const c of req) chunks.push(typeof c === 'string' ? Buffer.from(c) : c)
+  let size = 0
+  for await (const c of req) {
+    const b = typeof c === 'string' ? Buffer.from(c) : (c as Buffer)
+    size += b.length
+    if (size > MAX_BODY) {
+      req.destroy()
+      throw new TooLarge()
+    }
+    chunks.push(b)
+  }
   return Buffer.concat(chunks)
 }
 
@@ -18,6 +33,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const backendUrl = process.env.BACKEND_INTERNAL_URL || 'http://backend:8000'
   // keep the query string (?before=, ?kid=…); strip the /api/proxy prefix
   const rest = (req.url || '').replace(/^\/api\/proxy\/?/, '')
+  if (rest.split('?')[0].split('/').some((seg) => seg === '..' || seg === '.' || /%2e/i.test(seg))) {
+    res.status(400).json({ detail: 'Bad request.' })
+    return
+  }
   const targetUrl = `${backendUrl}/api/v1/${rest}`
 
   const headers: Record<string, string> = {}
@@ -47,6 +66,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
     res.end(Buffer.from(await response.arrayBuffer()))
   } catch (error) {
+    if (error instanceof TooLarge) {
+      res.status(413).json({ detail: 'That file is too big. Try one under 8 MB.' })
+      return
+    }
     console.error('[API Proxy] Error:', error)
     res.status(502).json({ detail: "Can't reach the home box. Check it's plugged in and on Wi-Fi." })
   }
