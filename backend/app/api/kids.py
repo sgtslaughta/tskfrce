@@ -13,6 +13,7 @@ from app.lock.loop import trigger
 from app.lock.overrides import clear_override, set_override
 from app.lock.reset import is_chore_filter
 from app.models.badge import BadgeAward
+from app.models.chore_extra import ChorePhoto, ChoreSubtask
 from app.models.gamification import Points
 from app.models.lock import Override, TimeWindow, device_owners
 from app.models.reward import Redemption
@@ -20,6 +21,7 @@ from app.models.task import Task, TaskStatus, chore_participants
 from app.models.user import User, UserRole
 from app.schemas.lock import KidCreate, KidPatch, OverrideIn
 from app.services import chat
+from app.services.photos import storage
 
 router = APIRouter(prefix="/api/v1/kids", tags=["kids"], dependencies=[Depends(require_parent)])
 
@@ -121,6 +123,11 @@ def delete_kid(kid_id: int, db: Session = Depends(get_db)):
     db.query(Override).filter(Override.created_by_id == kid.id).update({"created_by_id": None})
     db.execute(delete(device_owners).where(device_owners.c.user_id == kid.id))
     chat.purge_kid(db, kid.id)
+    for p in db.query(ChorePhoto).filter(ChorePhoto.uploaded_by_id == kid.id):
+        for key in (p.path, p.thumb_path):
+            storage().delete(key)
+        db.delete(p)
+    db.query(ChoreSubtask).filter(ChoreSubtask.done_by_id == kid.id).update({"done_by_id": None})
     db.query(Points).filter(Points.user_id == kid.id).delete()
     db.query(Redemption).filter(Redemption.kid_id == kid.id).delete()
     db.query(BadgeAward).filter(BadgeAward.kid_id == kid.id).delete()
