@@ -8,7 +8,7 @@ API=http://10.99.0.3:8000
 BLK=http://10.99.0.4:7777
 USER_=labparent PASS_=labpassword1
 
-_curl_parent() { $COMPOSE exec -T parent curl -s -m 10 "$@"; }
+_curl_parent() { $COMPOSE exec -T parent curl -s -m 30 "$@"; }
 
 _mac_of() {
   case "$1" in

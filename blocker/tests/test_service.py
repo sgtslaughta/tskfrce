@@ -123,7 +123,9 @@ def test_fresh_address_collision_still_enforced():
     svc.store.set_blocked([MAC])
     t[0] = 5.0
     svc._on_seen(_seen(MAC2, "192.168.1.50"))
+    svc._apply()  # MAC2 is unblocked, so its sighting alone doesn't re-apply
     assert redir.targets[MAC].ip == "192.168.1.50"
+    assert "192.168.1.50" in fw.applied[-1]
 
 
 def test_blocked_mac_without_ip_is_pending_then_enforced_when_seen():
