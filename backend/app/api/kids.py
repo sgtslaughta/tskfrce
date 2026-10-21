@@ -90,7 +90,19 @@ def patch_kid(kid_id: int, body: KidPatch, db: Session = Depends(get_db)):
 def delete_kid(kid_id: int, db: Session = Depends(get_db)):
     kid = _kid(db, kid_id)
     owned = list(kid.devices)
-    # stop their chores spawning for nobody; finished history stays
+    # drop them from shared chore definitions; the chore carries on for the rest
+    for d in db.query(Task).filter(is_chore_filter(), Task.is_recurring.is_(True)):
+        p = dict(d.recurrence_pattern or {})
+        ids = p.get("assignees") or [d.assigned_to_id]
+        if kid.id not in ids or ids == [kid.id]:
+            continue  # untouched, or solely theirs (cancelled below)
+        rest = [i for i in ids if i != kid.id]
+        p["assignees"] = rest
+        if len(rest) == 1:
+            p["mode"] = "each"
+        d.recurrence_pattern, d.assigned_to_id = p, rest[0]
+    db.flush()
+    # stop their own chores spawning for nobody; finished history stays
     for t in db.query(Task).filter(
         is_chore_filter(),
         Task.assigned_to_id == kid.id,

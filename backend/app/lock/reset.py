@@ -73,9 +73,20 @@ def task_kid_ids(t: Task) -> list[int]:
     return [u.id for u in t.participants]
 
 
-def make_instances(defn: Task, day: date) -> list[Task]:
-    """One instance per assignee (each), or one shared instance (race/team)."""
-    ids = assignee_ids(defn)
+def make_instances(defn: Task, day: date, db: Session | None = None) -> list[Task]:
+    """One instance per assignee (each), or one shared instance (race/team).
+
+    Assignees that no longer exist as kids are skipped. `db` is needed when
+    `defn` is a transient template (one-time chores) not added to a session.
+    """
+    db = db or object_session(defn)
+    wanted = assignee_ids(defn)
+    live = {
+        uid for (uid,) in db.query(User.id).filter(User.id.in_(wanted), User.role == UserRole.KID)
+    }
+    ids = [i for i in wanted if i in live]
+    if not ids:
+        return []
     pattern = defn.recurrence_pattern or {}
 
     def new(owner: int | None) -> Task:
@@ -98,7 +109,7 @@ def make_instances(defn: Task, day: date) -> list[Task]:
     if pattern.get("mode", "each") == "each" or len(ids) == 1:
         return [new(i) for i in ids]
     shared = new(None)
-    shared.participants = [object_session(defn).get(User, i) for i in ids]
+    shared.participants = [db.get(User, i) for i in ids]
     return [shared]
 
 

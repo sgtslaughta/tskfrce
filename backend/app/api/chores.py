@@ -82,17 +82,18 @@ def create_chore(
         status=TaskStatus.TODO,
         due_date=midnight(day) if once else None,
     )
-    db.add(defn)
-    db.flush()
     insts: list[Task] = []
     if once:
-        # a one-time chore has no definition; its instances are built from a throwaway one
-        insts = make_instances(defn, day)
-        db.expunge(defn)
+        # a one-time chore has no definition: build instances from a transient
+        # template that is never added to the session (it would become a phantom chore)
+        insts = make_instances(defn, day, db)
         for i in insts:
             i.parent_task_id = None
-    elif occurs_on(pattern, day):
-        insts = make_instances(defn, day)
+    else:
+        db.add(defn)
+        db.flush()
+        if occurs_on(pattern, day):
+            insts = make_instances(defn, day)
     db.add_all(insts)
     db.commit()
     return {
