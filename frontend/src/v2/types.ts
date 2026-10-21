@@ -27,6 +27,7 @@ export interface Device {
   online: boolean
   override: Override | null
   last_seen: string | null
+  resisting: boolean
 }
 
 /** GET /groups item */

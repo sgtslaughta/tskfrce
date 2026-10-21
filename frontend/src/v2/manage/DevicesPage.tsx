@@ -23,6 +23,11 @@ function DevicesBody() {
 
   return (
     <FridgeShell title="Devices">
+      <Text className="f-note">
+        The home box pauses internet for normal use on your Wi‑Fi. It can&apos;t stop a determined kid who changes network
+        settings, uses a phone hotspot, or swaps devices — but it will tell you when a paused device is getting around
+        the block.
+      </Text>
       {devices.isError && <Text role="alert">{devices.error.message}</Text>}
       {SECTIONS.map(({ status, title }) => {
         const rows = all.filter((d) => d.status === status)

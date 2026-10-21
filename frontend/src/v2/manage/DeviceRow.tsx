@@ -2,10 +2,11 @@ import { useEffect, useRef, useState } from 'react'
 import { Button, MultiSelect, Switch, TextInput } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { DeviceQuickMenu } from '@/v2/today/DeviceQuickMenu'
-import { useDeleteDevice, usePatchDevice, type DevicePatch } from '@/v2/hooks/useDevices'
+import { useDeleteDevice, usePatchDevice, useTestBlock, type DevicePatch } from '@/v2/hooks/useDevices'
 import type { Device, Kid } from '@/v2/types'
 import { ConfirmDelete } from './ConfirmDelete'
-import { toasts } from '../notify'
+import { notifications } from '@mantine/notifications'
+import { toastFail, toasts } from '../notify'
 
 interface Props {
   device: Device
@@ -18,6 +19,7 @@ const seen = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : 'ne
 export function DeviceRow({ device, kids, focused }: Props) {
   const patch = usePatchDevice()
   const del = useDeleteDevice()
+  const test = useTestBlock()
   const [name, setName] = useState(device.name)
   const [confirm, { open, close }] = useDisclosure(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -47,6 +49,14 @@ export function DeviceRow({ device, kids, focused }: Props) {
         <span className="f-pill" data-online={device.online}>
           {device.online ? 'online' : 'offline'}
         </span>
+        {device.resisting && (
+          <>
+            {' '}
+            <span className="f-pill" data-resisting>
+              getting around the block
+            </span>
+          </>
+        )}
       </p>
       <MultiSelect
         label="Owners"
@@ -66,6 +76,19 @@ export function DeviceRow({ device, kids, focused }: Props) {
       <DeviceQuickMenu targets={{ kind: 'device', id: device.id }} label={device.name}>
         <Button variant="default">Lock options</Button>
       </DeviceQuickMenu>
+      <Button
+        variant="default"
+        disabled={test.isPending}
+        onClick={() =>
+          test.mutate(device.id, {
+            onSuccess: (r) =>
+              notifications.show({ message: r.message, color: r.reason === 'ok' ? 'fridgeGreen' : 'fridgeRed' }),
+            onError: toastFail,
+          })
+        }
+      >
+        {test.isPending ? 'Testing…' : 'Test block'}
+      </Button>
       <Button color="fridgeRed" variant="light" onClick={open}>
         Delete
       </Button>

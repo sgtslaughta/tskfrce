@@ -30,6 +30,10 @@ export const usePatchDevice = () =>
   useRefreshing(({ id, patch }: { id: number; patch: DevicePatch }) =>
     api(`/devices/${id}`, { method: 'PATCH', body: patch }),
   )
+export const useTestBlock = () =>
+  useMutation({
+    mutationFn: (id: number) => api<{ reason: string; message: string }>(`/devices/${id}/test-block`, { method: 'POST' }),
+  })
 export const useDeleteDevice = () => useRefreshing((id: number) => api(`/devices/${id}`, { method: 'DELETE' }), 'Deleted')
 export const useSaveGroup = () =>
   useRefreshing(({ id, name, device_ids }: { id?: number; name: string; device_ids: number[] }) =>

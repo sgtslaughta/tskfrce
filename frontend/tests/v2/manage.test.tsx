@@ -14,10 +14,12 @@ import { ChoreEditor } from '@/v2/manage/ChoreEditor'
 import { ChoreList } from '@/v2/manage/ChoreList'
 import { KidEditor } from '@/v2/manage/KidEditor'
 import { WindowEditor } from '@/v2/manage/WindowEditor'
+import { DevicesPage } from '@/v2/manage/DevicesPage'
 import { SettingsPage } from '@/v2/manage/SettingsPage'
 import type { Device, Family, Kid } from '@/v2/types'
 
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
+jest.mock('next/router', () => ({ useRouter: () => ({ query: {} }) }))
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
 jest.mock('@/v2/today/DeviceQuickMenu', () => ({
   DeviceQuickMenu: ({ children }: { children: ReactNode }) => <>{children}</>,
@@ -46,6 +48,7 @@ const device: Device = {
   online: false,
   override: null,
   last_seen: null,
+  resisting: false,
 }
 const family: Family = {
   name: 'Soto',
@@ -110,6 +113,24 @@ describe('devices', () => {
     await waitFor(() => expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Deleted' })))
   })
 
+  test('shows resisting pill when device.resisting', () => {
+    render(wrap(<DeviceRow device={{ ...device, resisting: true }} kids={kids} />))
+    expect(screen.getByText('getting around the block')).toHaveAttribute('data-resisting')
+  })
+
+  test('hides pill otherwise', () => {
+    render(wrap(<DeviceRow device={device} kids={kids} />))
+    expect(screen.queryByText('getting around the block')).toBeNull()
+  })
+
+  test('Test block button posts and toasts message', async () => {
+    apiMock.mockImplementation(async () => ({ reason: 'ok', message: 'Blocked fine', offline: false, router_resisted: false }))
+    render(wrap(<DeviceRow device={device} kids={kids} />))
+    await userEvent.click(screen.getByRole('button', { name: 'Test block' }))
+    await waitFor(() => expect(calls('POST')[0]).toEqual(['/devices/1/test-block', { method: 'POST' }]))
+    await waitFor(() => expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Blocked fine' })))
+  })
+
   test('focused row is marked', () => {
     render(wrap(<DeviceRow device={device} kids={kids} focused />))
     expect(document.getElementById('device-1')).toHaveAttribute('data-focused', 'true')
@@ -122,6 +143,14 @@ describe('devices', () => {
     await waitFor(() =>
       expect(calls('POST')[0]).toEqual(['/groups', { method: 'POST', body: { name: 'Tablets', device_ids: [] } }]),
     )
+  })
+})
+
+describe('devices page', () => {
+  test('renders the honest promise note', async () => {
+    apiMock.mockImplementation(async (path) => (path === '/devices' || path === '/kids' ? [] : {}))
+    render(wrap(<DevicesPage />))
+    expect(await screen.findByText(/getting around the block/)).toBeInTheDocument()
   })
 })
 
