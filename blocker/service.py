@@ -113,13 +113,7 @@ class Service:
             if skipped:
                 log.warning("refusing to enforce on router/box MACs: %s", sorted(skipped))
                 blocked -= skipped
-            now = self._clock()
-            devs = {
-                m: self._devices[m]
-                if m in self._devices and now - self._seen_at.get(m, now) <= ADDR_TTL
-                else TargetAddrs(mac=m)
-                for m in blocked
-            }
+            devs = {m: self._live_addrs(m) for m in blocked}
             # Never spoof an address that isn't safely one device's: the gateway's
             # own IP or the box/portal IP. Stripping it here keeps it out of the firewall sets, the
             # redirect targets and the watch — and off the restore path.
@@ -146,6 +140,28 @@ class Service:
             return self._redir._lanfacts()
         except Exception:
             return None  # LAN detection failed -> gateway/box facts unknown
+
+    def _live_addrs(self, mac: str) -> TargetAddrs:
+        # Keep last-known addresses (a dodging device goes silent), but drop one
+        # that is stale AND since reported by a different MAC (IP was reassigned).
+        dev = self._devices.get(mac)
+        if dev is None:
+            return TargetAddrs(mac=mac)
+        seen = self._seen_at.get(mac, float("-inf"))  # never timestamped = stale
+        if self._clock() - seen <= ADDR_TTL:
+            return dev
+
+        def taken(ip: str) -> bool:
+            return any(
+                o != mac and ip in (d.ip, *d.ip6) and self._seen_at.get(o, 0.0) > seen
+                for o, d in self._devices.items()
+            )
+
+        return replace(
+            dev,
+            ip=None if dev.ip and taken(dev.ip) else dev.ip,
+            ip6=tuple(i for i in dev.ip6 if not taken(i)),
+        )
 
     def _unsafe_ips(self, lan) -> set[str]:
         """IPs we must not spoof: gateway and portal/box only (duplicates stay enforced)."""

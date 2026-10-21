@@ -72,20 +72,57 @@ def test_on_change_recomputes_and_applies():
     assert redir.targets[MAC].ip == "192.168.1.50"
 
 
-def test_stale_address_dropped_then_relearned():
+MAC2 = "de:ad:be:ef:00:02"
+
+
+def _seen(mac, ip, v6=()):
+    return Seen(mac=mac, ip=ip, ipv6=list(v6), hostname=None, vendor=None)
+
+
+def test_stale_address_kept_without_claimant():
     t = [0.0]
     svc, fw, redir = _svc(clock=lambda: t[0])
-    seen = Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None)
-    svc._on_seen(seen)
+    svc._on_seen(_seen(MAC, "192.168.1.50"))
     svc.store.set_blocked([MAC])
-    assert "192.168.1.50" in fw.applied[-1]
     t[0] = ADDR_TTL + 1
+    svc._apply()
+    assert "192.168.1.50" in fw.applied[-1]
+    assert redir.targets[MAC].ip == "192.168.1.50"
+
+
+def test_stale_address_dropped_when_other_mac_claims_it():
+    t = [0.0]
+    svc, fw, redir = _svc(clock=lambda: t[0])
+    svc._on_seen(_seen(MAC, "192.168.1.50", ["fe80::1", "fe80::2"]))
+    svc.store.set_blocked([MAC])
+    t[0] = ADDR_TTL + 1
+    svc._on_seen(_seen(MAC2, "192.168.1.50", ["fe80::2"]))
     svc._apply()
     assert "192.168.1.50" not in fw.applied[-1]
     assert MAC in fw.applied[-1]
     assert redir.targets[MAC].ip is None
-    svc._on_seen(seen)
-    assert "192.168.1.50" in fw.applied[-1]
+    assert redir.targets[MAC].ip6 == ("fe80::1",)
+    svc._on_seen(_seen(MAC, "192.168.1.50"))  # re-seen: address comes back
+    assert redir.targets[MAC].ip == "192.168.1.50"
+
+
+def test_untimestamped_device_is_stale_but_keeps_unclaimed_address():
+    svc, fw, redir = _svc(clock=lambda: 1.0)
+    svc._devices[MAC] = TargetAddrs(mac=MAC, ip="192.168.1.50")
+    svc.store.set_blocked([MAC])
+    assert redir.targets[MAC].ip == "192.168.1.50"
+    svc._on_seen(_seen(MAC2, "192.168.1.50"))
+    svc._apply()
+    assert redir.targets[MAC].ip is None
+
+
+def test_fresh_address_collision_still_enforced():
+    t = [0.0]
+    svc, fw, redir = _svc(clock=lambda: t[0])
+    svc._on_seen(_seen(MAC, "192.168.1.50"))
+    svc.store.set_blocked([MAC])
+    t[0] = 5.0
+    svc._on_seen(_seen(MAC2, "192.168.1.50"))
     assert redir.targets[MAC].ip == "192.168.1.50"
 
 
