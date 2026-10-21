@@ -57,6 +57,11 @@ _up() {
     -d "{\"family_name\":\"Lab\",\"timezone\":\"UTC\",\"parent\":{\"username\":\"$USER_\",\"password\":\"$PASS_\",\"full_name\":\"Lab Parent\"}}" || true
   for _ in $(seq 30); do
     if [ -n "$(_id_of kid1 2>/dev/null || true)" ] && [ -n "$(_id_of kid2 2>/dev/null || true)" ]; then
+      local id
+      for id in $(_devices | jq -r '.[].id'); do
+        _curl_parent -o /dev/null -X PATCH -H "Authorization: Bearer $(_token)" \
+          -H 'Content-Type: application/json' -d '{"status":"guest"}' "$API/api/v1/devices/$id"
+      done
       echo "lab up"; return 0
     fi
     sleep 2
@@ -81,8 +86,8 @@ case "$cmd" in
   device-id) _need_id "$1" ;;
   block) _post "/api/v1/devices/$(_need_id "$1")/override" '{"action":"lock"}' >/dev/null ;;
   unblock) _post "/api/v1/devices/$(_need_id "$1")/override" '{"action":"unlock"}' >/dev/null ;;
-  check) $COMPOSE exec -T "$1" curl -s -m 3 -o /dev/null http://203.0.113.1/ && exit 0 || exit 1 ;;
-  check6) $COMPOSE exec -T "$1" curl -s -m 3 -o /dev/null 'http://[2001:db8:1::1]/' && exit 0 || exit 1 ;;
+  check) $COMPOSE exec -T "$1" sh -c 'curl -s -m 3 http://203.0.113.1/ | grep -q "fake internet"' && exit 0 || exit 1 ;;
+  check6) $COMPOSE exec -T "$1" sh -c 'curl -s -m 3 "http://[2001:db8:1::1]/" | grep -q "fake internet"' && exit 0 || exit 1 ;;
   portal) _portal "$1" && exit 0 || exit 1 ;;
   resist)
     $COMPOSE exec -T "$1" ip neigh replace 10.99.0.2 lladdr 02:99:00:00:00:02 nud permanent dev eth0
