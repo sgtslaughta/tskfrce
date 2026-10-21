@@ -12,7 +12,7 @@ from blocker.arp import TargetAddrs
 from blocker.backend import Seen
 from blocker.config import Config
 from blocker.resist import Tally
-from blocker.service import TEST_MESSAGES, Service
+from blocker.service import ADDR_TTL, TEST_MESSAGES, Service
 
 CFG = Config(
     backend_url="http://b",
@@ -68,6 +68,23 @@ def test_on_change_recomputes_and_applies():
     svc, fw, redir = _svc()
     svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
     svc.store.set_blocked([MAC])
+    assert "192.168.1.50" in fw.applied[-1]
+    assert redir.targets[MAC].ip == "192.168.1.50"
+
+
+def test_stale_address_dropped_then_relearned():
+    t = [0.0]
+    svc, fw, redir = _svc(clock=lambda: t[0])
+    seen = Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None)
+    svc._on_seen(seen)
+    svc.store.set_blocked([MAC])
+    assert "192.168.1.50" in fw.applied[-1]
+    t[0] = ADDR_TTL + 1
+    svc._apply()
+    assert "192.168.1.50" not in fw.applied[-1]
+    assert MAC in fw.applied[-1]
+    assert redir.targets[MAC].ip is None
+    svc._on_seen(seen)
     assert "192.168.1.50" in fw.applied[-1]
     assert redir.targets[MAC].ip == "192.168.1.50"
 

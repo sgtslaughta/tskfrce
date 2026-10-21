@@ -35,6 +35,7 @@ DEFAULT_LAN_CIDRS = [
 ]
 PORTAL_PORT = 80
 PROBE_WAIT = 10.0
+ADDR_TTL = 600.0  # seconds a device's addresses stay redirect-worthy
 
 
 def _detect_box_ip(cfg: Config) -> str:
@@ -70,6 +71,7 @@ class Service:
         redirection: RedirectionManager | None = None,
         fetch: Callable[[Config], list[str] | None] = fetch_blocked,
         sleep: Callable[[float], None] = time.sleep,
+        clock: Callable[[], float] = time.monotonic,
         lan_cidrs: list[str] | None = None,
         portal_ip: str | None = None,
         watch: ResistanceWatch | None = None,
@@ -80,12 +82,14 @@ class Service:
         self._redir = redirection or RedirectionManager(cfg)
         self._fetch = fetch
         self._sleep = sleep
+        self._clock = clock
         self._lan_cidrs = lan_cidrs or DEFAULT_LAN_CIDRS
         self._portal_ip = portal_ip
         self._watch = watch
         self._report = report
         self.store = StateStore()
         self._devices: dict[str, TargetAddrs] = {}
+        self._seen_at: dict[str, float] = {}
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._api = None
@@ -109,10 +113,15 @@ class Service:
             if skipped:
                 log.warning("refusing to enforce on router/box MACs: %s", sorted(skipped))
                 blocked -= skipped
-            devs = {m: self._devices.get(m, TargetAddrs(mac=m)) for m in blocked}
+            now = self._clock()
+            devs = {
+                m: self._devices[m]
+                if m in self._devices and now - self._seen_at.get(m, now) <= ADDR_TTL
+                else TargetAddrs(mac=m)
+                for m in blocked
+            }
             # Never spoof an address that isn't safely one device's: the gateway's
-            # own IP, the box/portal IP, or an IP two MACs both claim (ARP race or
-            # spoof). Stripping it here keeps it out of the firewall sets, the
+            # own IP or the box/portal IP. Stripping it here keeps it out of the firewall sets, the
             # redirect targets and the watch — and off the restore path.
             unsafe = self._unsafe_ips(lan)
             devs, stripped = self._strip_unsafe(devs, unsafe)
@@ -167,6 +176,7 @@ class Service:
     def _on_seen(self, seen: Seen) -> None:
         with self._lock:
             self._devices[seen.mac] = TargetAddrs(mac=seen.mac, ip=seen.ip, ip6=tuple(seen.ipv6))
+            self._seen_at[seen.mac] = self._clock()
         if seen.mac in self.store.current():
             self._apply(self.store.current())
 
