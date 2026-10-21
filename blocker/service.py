@@ -21,7 +21,7 @@ from blocker.config import Config
 from blocker.discovery import run_discovery
 from blocker.portal import run_dns, run_http
 from blocker.resist import ResistanceCounter, ResistanceWatch, Tally
-from blocker.state_store import StateStore
+from blocker.state_store import MAC_RE, StateStore
 
 log = logging.getLogger(__name__)
 
@@ -234,7 +234,9 @@ class Service:
         it (``from_gateway``) means the device is dodging the block; traffic to the
         box (``to_box``) means the block is working; neither means we saw nothing.
         """
-        mac = mac.lower()
+        mac = mac.strip().lower()
+        if not MAC_RE.match(mac):  # _probing feeds the nft ruleset text: validate here
+            raise ValueError(f"'{mac}' is not a valid MAC address.")
         with self._lock:
             dev = self._devices.get(mac) or TargetAddrs(mac=mac)
         ip, has_ip6 = dev.ip, bool(dev.ip6)

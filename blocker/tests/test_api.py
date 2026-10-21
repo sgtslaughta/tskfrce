@@ -107,3 +107,17 @@ def test_bad_content_length_is_400(api):
     server, _ = api
     assert _raw(server, "abc") == 400
     assert _raw(server, "70000") == 400
+
+
+def test_test_block_bad_mac_is_400():
+    def tester(mac):
+        raise ValueError(f"'{mac}' is not a valid MAC address.")
+
+    server = make_api(state=StateStore(), token="t", tester=tester)
+    threading.Thread(target=server.serve_forever, daemon=True).start()
+    try:
+        status, body = _call(server, "/test-block", {"mac": "nope"})
+        assert status == 400 and "not a valid MAC" in body["error"]
+    finally:
+        server.shutdown()
+        server.server_close()

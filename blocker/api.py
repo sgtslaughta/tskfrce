@@ -62,7 +62,10 @@ def _test_block(h: _Handler) -> tuple[int, dict]:
         return 400, {"error": str(e)}
     if not isinstance(body, dict) or not isinstance(body.get("mac"), str):
         return 400, {"error": "The request body must be a JSON object with a 'mac' text value."}
-    return 200, h.server.tester(body["mac"])  # type: ignore[attr-defined]
+    try:
+        return 200, h.server.tester(body["mac"])  # type: ignore[attr-defined]
+    except ValueError as e:
+        return 400, {"error": str(e)}
 
 
 # (method, path) -> handler(request_handler) -> (status, json body)

@@ -350,3 +350,10 @@ def test_lanfacts_failure_still_enforces_kid():
     svc.store.set_blocked([MAC])
     assert MAC in fw.applied[-1]
     assert set(redir.targets) == {MAC}
+
+
+def test_test_block_rejects_malformed_mac():
+    svc, fw, redir = _svc()
+    with pytest.raises(ValueError):
+        svc.test_block("aa:bb:cc:dd:ee:ff } ; flush ruleset ; {")
+    assert svc._probing == set()
