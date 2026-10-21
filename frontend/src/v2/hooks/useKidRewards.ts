@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, AuthError } from '../api'
 import { toastFail, toastOk } from '../notify'
-import type { KidAward, KidRewards } from '../types'
+import type { KidCelebration, KidRewards } from '../types'
 
 /** Expired kid token (401) calls onExpired, like useKidToday. */
 function useExpiry(error: unknown, onExpired: () => void) {
@@ -37,25 +37,25 @@ export function useRedeem(onExpired: () => void) {
   })
 }
 
-export function useAwards(onExpired: () => void) {
+export function useCelebrations(onExpired: () => void) {
   const q = useQuery({
-    queryKey: ['kid', 'awards'],
-    queryFn: () => api<KidAward[]>('/kid/awards', { kid: true }),
+    queryKey: ['kid', 'celebrations'],
+    queryFn: () => api<KidCelebration[]>('/kid/celebrations', { kid: true }),
     refetchInterval: 15_000,
   })
   useExpiry(q.error, onExpired)
   return q
 }
 
-export function useMarkAwardSeen(onExpired: () => void) {
+export function useMarkCelebrationSeen(onExpired: () => void) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (id: number) => api(`/kid/awards/${id}/seen`, { method: 'POST', kid: true }),
+    mutationFn: (key: string) => api(`/kid/celebrations/${encodeURIComponent(key)}/seen`, { method: 'POST', kid: true }),
     onError: (e: Error) => {
       if (e instanceof AuthError) onExpired()
     },
     onSettled: () => {
-      qc.invalidateQueries({ queryKey: ['kid', 'awards'] })
+      qc.invalidateQueries({ queryKey: ['kid', 'celebrations'] })
       qc.invalidateQueries({ queryKey: ['kid', 'rewards'] })
       qc.invalidateQueries({ queryKey: ['kid', 'today'] })
     },

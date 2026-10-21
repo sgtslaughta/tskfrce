@@ -5,6 +5,7 @@ import { RequireParent } from '@/v2/components/RequireParent'
 import { useChoreDefinitions, useChoresToday } from '@/v2/hooks/useChores'
 import { useKids } from '@/v2/hooks/useKids'
 import { ChoresSection } from './ChoresSection'
+import { CustomBadgesPanel } from './CustomBadgesPanel'
 import { KidsSection } from './KidsSection'
 import { ManageLayout, SECTIONS, type KidProgress, type Section } from './ManageLayout'
 import { RewardsSection } from './RewardsSection'
@@ -37,6 +38,7 @@ function KidsBody() {
         )}
         {section === 'kids' && <KidsSection kids={list} />}
         {section === 'rewards' && <RewardsSection />}
+        {section === 'badges' && <CustomBadgesPanel />}
       </ManageLayout>
     </FridgeShell>
   )

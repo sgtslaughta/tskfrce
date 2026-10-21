@@ -105,6 +105,7 @@ export interface TodayKid {
   total?: number
   needs_you_count?: number
   last_active?: string | null
+  progress?: Progress
   chores: TodayChore[]
   devices: TodayDevice[]
 }
@@ -167,6 +168,7 @@ export interface KidToday {
   locked: boolean
   chores: KidChore[]
   points_balance: number
+  progress?: Progress
 }
 
 /** GET /kid/rewards */
@@ -178,13 +180,21 @@ export interface KidRewards {
   pending: { id: number; kind: 'reward' | 'screen_time'; reward_id: number | null; minutes: number | null; cost: number }[]
 }
 
-/** GET /kid/awards */
-export interface KidAward {
+/** GET /kid/celebrations item. key: "r:<id>" | "b:<id>" | "l:<level>". */
+export interface KidCelebration {
+  key: string
+  kind: 'reward' | 'screen_time' | 'badge' | 'level'
+  title: string
+  detail: string
+  size: 'big' | 'small'
+}
+
+/** GET /custom-badges item. */
+export interface CustomBadge {
   id: number
-  kind: 'reward' | 'screen_time'
-  name: string | null
-  minutes: number | null
-  cost: number
+  name: string
+  icon: string
+  description: string
 }
 
 /** GET /rewards item */
@@ -206,4 +216,51 @@ export interface PendingRedemption {
   cost: number
   created_at: string
   kid_balance: number
+}
+
+/** progress block in GET /today kids and GET /kid/today */
+export interface Progress {
+  level: number
+  title: string
+  xp: number
+  floor: number
+  next: number
+  streak: number
+}
+
+export interface Badge {
+  key: string
+  name: string
+  icon: string
+  description: string
+  tier: number
+  tier_name: string
+  custom: boolean
+}
+
+export interface LeaderboardRow {
+  kid_id: number
+  name: string
+  avatar: string | null
+  score: number
+  level: number
+  title: string
+  rank: number
+}
+
+/** GET /leaderboard */
+export interface Leaderboard {
+  week_start: string
+  rows: LeaderboardRow[]
+}
+
+/** GET /profiles(/id) */
+export interface Profile {
+  kid_id: number
+  name: string
+  avatar: string | null
+  level: number
+  title: string
+  streak: number
+  badges: Badge[]
 }

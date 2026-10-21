@@ -1,13 +1,14 @@
 import { useEffect, useRef } from 'react'
 import { Button } from '@mantine/core'
-import { useAwards, useMarkAwardSeen } from '../hooks/useKidRewards'
+import { useCelebrations, useMarkCelebrationSeen } from '../hooks/useKidRewards'
+import { TIER_COLORS, TIER_NAMES } from '../tiers'
 import './award.css'
 
 export function AwardOverlay({ onExpired }: { onExpired: () => void }) {
-  const award = useAwards(onExpired).data?.[0]
-  const seen = useMarkAwardSeen(onExpired)
+  const award = useCelebrations(onExpired).data?.[0]
+  const seen = useMarkCelebrationSeen(onExpired)
   const btn = useRef<HTMLButtonElement>(null)
-  const id = award?.id
+  const id = award?.key
   const close = () => {
     if (id !== undefined && !seen.isPending) seen.mutate(id)
   }
@@ -22,8 +23,11 @@ export function AwardOverlay({ onExpired }: { onExpired: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id])
   if (!award) return null
-  const big = award.kind === 'reward'
-  const title = big ? award.name : `${award.minutes} minutes of screen time`
+  const big = award.size === 'big'
+  const heading = { reward: '🎉 You got it!', screen_time: '⏱️ Time added!', badge: '🏅 New badge!', level: '⬆️ Level up!' }[award.kind]
+  const tier = award.kind === 'badge' ? award.detail : ''
+  const ring = TIER_NAMES.includes(tier as never) ? TIER_COLORS[tier] : undefined
+  const title = award.kind === 'level' ? `${award.title} · ${award.detail}` : award.title
   return (
     <div className="award-back">
       <div
@@ -34,9 +38,15 @@ export function AwardOverlay({ onExpired }: { onExpired: () => void }) {
       >
         {big && Array.from({ length: 20 }, (_, i) => <span key={i} className="award-confetti" style={{ '--i': i } as React.CSSProperties} />)}
         <p className="f-display" style={{ margin: 0, fontSize: big ? 28 : 20 }}>
-          {big ? '🎉 You got it!' : '⏱️ Time added!'}
+          {heading}
         </p>
-        <strong style={{ fontSize: big ? 32 : 20 }}>{title}</strong>
+        <strong
+          className={ring ? 'award-ring' : undefined}
+          style={{ fontSize: big ? 32 : 20, ...(ring && { '--ring': ring }) } as React.CSSProperties}
+        >
+          {title}
+        </strong>
+        {tier && <span className="f-cap">{tier}</span>}
         <Button ref={btn} size="lg" onClick={close}>
           Nice!
         </Button>

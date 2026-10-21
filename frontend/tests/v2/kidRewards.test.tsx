@@ -98,19 +98,38 @@ describe('RewardsSection', () => {
 })
 
 describe('AwardOverlay', () => {
-  const award = { id: 5, kind: 'reward', name: 'Ice cream', minutes: null, cost: 100 }
+  const reward = { key: 'r:5', kind: 'reward', title: 'Ice cream', detail: '100 points', size: 'big' }
+  const level = { key: 'l:8', kind: 'level', title: 'Level 8', detail: 'Clutch', size: 'big' }
+  const badge = { key: 'b:2', kind: 'badge', title: '🏅 Task Master', detail: 'copper', size: 'small' }
 
   test('shows reward and marks seen', async () => {
-    route({ 'GET /kid/awards': [award], 'POST /kid/awards/5/seen': {} })
+    route({ 'GET /kid/celebrations': [reward], 'POST /kid/celebrations/r%3A5/seen': {} })
     wrap(<AwardOverlay onExpired={() => {}} />)
     expect(await screen.findByRole('dialog')).toHaveTextContent('Ice cream')
     await userEvent.click(screen.getByRole('button', { name: 'Nice!' }))
-    expect(calls('/kid/awards/5/seen')).toHaveLength(1)
+    expect(calls('/kid/celebrations/r%3A5/seen')).toHaveLength(1)
+  })
+
+  test('level celebration shows new title and url-encodes key', async () => {
+    route({ 'GET /kid/celebrations': [level], 'POST /kid/celebrations/l%3A8/seen': {} })
+    wrap(<AwardOverlay onExpired={() => {}} />)
+    expect(await screen.findByRole('dialog')).toHaveTextContent('Level 8 · Clutch')
+    await userEvent.click(screen.getByRole('button', { name: 'Nice!' }))
+    expect(calls('/kid/celebrations/l%3A8/seen')).toHaveLength(1)
+  })
+
+  test('small badge celebration shows tier', async () => {
+    route({ 'GET /kid/celebrations': [badge] })
+    wrap(<AwardOverlay onExpired={() => {}} />)
+    const d = await screen.findByRole('dialog')
+    expect(d).toHaveTextContent('Task Master')
+    expect(d).toHaveTextContent('copper')
+    expect(d).toHaveClass('award-toast')
   })
 
   test('renders with reduced motion', async () => {
     window.matchMedia = ((q: string) => ({ matches: q.includes('reduce'), addListener() {}, removeListener() {}, addEventListener() {}, removeEventListener() {} })) as never
-    route({ 'GET /kid/awards': [award] })
+    route({ 'GET /kid/celebrations': [reward] })
     wrap(<AwardOverlay onExpired={() => {}} />)
     expect(await screen.findByRole('dialog')).toHaveTextContent('Ice cream')
   })

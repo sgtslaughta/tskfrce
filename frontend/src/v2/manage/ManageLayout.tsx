@@ -4,11 +4,12 @@ import { SegmentedControl } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { useRouter } from 'next/router'
 
-export type Section = 'chores' | 'kids' | 'rewards'
+export type Section = 'chores' | 'kids' | 'rewards' | 'badges'
 export const SECTIONS: { id: Section; label: string }[] = [
   { id: 'chores', label: 'Chores' },
   { id: 'kids', label: 'Kids' },
   { id: 'rewards', label: 'Rewards' },
+  { id: 'badges', label: 'Badges' },
 ]
 
 export interface KidProgress {
@@ -25,7 +26,7 @@ interface Props {
   children: ReactNode
 }
 
-/** Sidebar (top menu under 768 px) with sections and a per-kid jump list. Badges stays hidden until it has a section. */
+/** Sidebar (top menu under 768 px) with sections and a per-kid jump list. */
 export function ManageLayout({ section, counts, kids, children }: Props) {
   const small = useMediaQuery('(max-width: 767px)')
   const router = useRouter()

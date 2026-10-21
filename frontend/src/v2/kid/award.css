@@ -65,3 +65,9 @@
     display: none;
   }
 }
+.award-ring {
+  padding: 4px 14px;
+  border-radius: 999px;
+  border: 4px solid transparent;
+  background: var(--mantine-color-body) padding-box, var(--ring) border-box;
+}
