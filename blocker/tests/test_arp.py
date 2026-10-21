@@ -206,3 +206,47 @@ def test_pending_target_without_ip_activates_on_update():
     assert fs.event.wait(1.0)
     assert mac in m._threads
     m.stop_all()
+
+
+def test_stop_all_heals_repeatedly_and_never_spoofs_after(monkeypatch):
+    # A lone restore can land inside the device's neighbor locktime and be
+    # ignored, and a late loop spoof would re-poison: heal must repeat and be last.
+    from blocker import arp
+    from scapy.all import ARP
+
+    monkeypatch.setattr(arp, "HEAL_INTERVAL", 0.01)
+    fs = FakeSend()
+    m = RedirectionManager(CFG, lan=LAN, send=fs, cadence=0.02)
+    m.set_targets({DEV: TargetAddrs(mac=DEV, ip="192.168.1.50")})
+    assert fs.event.wait(1.0)
+    m.stop_all()  # blocks until healed
+    is_truth = [
+        any(p.haslayer(ARP) and p[ARP].hwsrc == LAN.gateway_mac for p in c) for c in fs.calls
+    ]
+    first = is_truth.index(True)
+    assert all(is_truth[first:])
+    assert len(is_truth) - first == arp.HEAL_ROUNDS
+
+
+def test_unresolved_gateway_mac_is_redetected_before_heal(monkeypatch):
+    # Boot-time ARP miss must not disable healing for the process lifetime.
+    from dataclasses import replace
+
+    from blocker import arp
+    from scapy.all import ARP
+
+    monkeypatch.setattr(arp, "HEAL_INTERVAL", 0.01)
+    monkeypatch.setattr(arp, "REDETECT_INTERVAL", 0.0)
+    results = [replace(LAN, gateway_mac=None), LAN]
+    fs = FakeSend()
+    m = RedirectionManager(
+        CFG,
+        send=fs,
+        detect=lambda _cfg: results.pop(0) if len(results) > 1 else results[0],
+        cadence=0.02,
+    )
+    assert m._lanfacts().gateway_mac is None
+    m.set_targets({DEV: TargetAddrs(mac=DEV, ip="192.168.1.50")})
+    assert fs.event.wait(1.0)
+    m.stop_all()
+    assert any(p.haslayer(ARP) and p[ARP].hwsrc == LAN.gateway_mac for p in fs.calls[-1])

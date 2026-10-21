@@ -10,12 +10,18 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
 log = logging.getLogger(__name__)
 
 DEFAULT_CADENCE = 2.0
+# Heal is repeated: Linux ignores neighbor updates within `locktime` (~1s) of the
+# last one, so a single restore landing right after a spoof is silently dropped.
+HEAL_ROUNDS = 4
+HEAL_INTERVAL = 1.2
+REDETECT_INTERVAL = 30.0  # seconds between retries while a gateway MAC is unresolved
 
 
 @dataclass(frozen=True)
@@ -202,6 +208,8 @@ class RedirectionManager:
     ) -> None:
         self.cfg = cfg
         self._lan = lan
+        self._autodetect = lan is None  # injected facts (tests) are never re-detected
+        self._lan_at = 0.0
         self._send = send
         self._detect = detect
         self.cadence = cadence
@@ -211,8 +219,22 @@ class RedirectionManager:
         self._threads: dict[str, threading.Thread] = {}
 
     def _lanfacts(self) -> LanFacts:
-        if self._lan is None:
-            self._lan = self._detect(self.cfg)
+        # Re-detect while a gateway MAC is unresolved (ARP/ND not populated at boot):
+        # without it restore() can't heal and unblocks fall back to slow cache expiry.
+        lan = self._lan
+        stale = lan is None or (
+            self._autodetect
+            and (not lan.gateway_mac or (lan.gateway_ip6 and not lan.gateway_mac6))
+            and time.monotonic() - self._lan_at >= REDETECT_INTERVAL
+        )
+        if stale:
+            self._lan_at = time.monotonic()
+            try:
+                self._lan = self._detect(self.cfg)
+            except Exception:
+                if lan is None:
+                    raise
+                log.exception("LAN re-detect failed; keeping last facts")
         return self._lan
 
     def set_targets(self, targets: dict[str, TargetAddrs]) -> None:
@@ -220,14 +242,18 @@ class RedirectionManager:
             new = dict(targets)
             for mac in list(self._threads):
                 if not _active(new.get(mac)):
-                    self._stop_one(mac)  # reads old self._targets for the heal
+                    self._stop_one(mac)  # loop thread heals from its last-seen target
             self._targets = new
             for mac, t in new.items():
                 if _active(t) and mac not in self._threads:
                     self._start_one(mac)
 
     def stop_all(self) -> None:
+        with self._lock:
+            threads = list(self._threads.values())
         self.set_targets({})
+        for t in threads:  # block until every device is healed (fail open)
+            t.join(timeout=HEAL_ROUNDS * HEAL_INTERVAL + 2)
 
     def _start_one(self, mac: str) -> None:
         stop = threading.Event()
@@ -237,24 +263,34 @@ class RedirectionManager:
         t.start()
 
     def _stop_one(self, mac: str) -> None:
+        # The loop thread itself heals on stop: same thread => no spoof can go out
+        # after the restore.
         ev = self._stops.pop(mac, None)
         if ev:
             ev.set()
         self._threads.pop(mac, None)
-        target = self._targets.get(mac)
-        if target:
-            try:
-                self._send(restore(target, self._lanfacts()), self.cfg.lan_iface or None)
-            except Exception:
-                log.exception("restore failed for %s", mac)
 
     def _loop(self, mac: str, stop: threading.Event) -> None:
-        lan = self._lanfacts()
+        iface = self.cfg.lan_iface or None
+        last = None
         while not stop.is_set():
             target = self._targets.get(mac)
             if target:
+                last = target
                 try:
-                    self._send(redirect_packets(target, lan), self.cfg.lan_iface or None)
+                    self._send(redirect_packets(target, self._lanfacts()), iface)
                 except Exception:
                     log.exception("redirect send failed for %s", mac)
             stop.wait(self.cadence)
+        if last is None:
+            return
+        lan = self._lanfacts()
+        for i in range(HEAL_ROUNDS):
+            if mac in self._stops:  # re-blocked meanwhile: new loop owns it
+                return
+            try:
+                self._send(restore(last, lan), iface)
+            except Exception:
+                log.exception("restore failed for %s", mac)
+            if i < HEAL_ROUNDS - 1:
+                time.sleep(HEAL_INTERVAL)
