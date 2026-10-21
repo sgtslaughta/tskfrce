@@ -5,9 +5,11 @@ import { LockBadge } from '../components/LockBadge'
 import { StickerCard } from '../components/StickerCard'
 import { useKidSession, useKidToday, useMarkDone, loginMessage } from '../hooks/useKid'
 import type { KidWhoami } from '../types'
+import { AwardOverlay } from './AwardOverlay'
 import { KidChecklist } from './KidChecklist'
 import { KidPicker } from './KidPicker'
 import { PinPad } from './PinPad'
+import { RewardsSection } from './RewardsSection'
 import { UnlockedView } from './UnlockedView'
 
 type K = KidWhoami['kids'][number]
@@ -45,6 +47,8 @@ function Session({ name, onExit, canSwitch }: { name?: string; onExit: () => voi
     return (
       <>
         <UnlockedView points={d.points_balance} done={d.chores.filter((c) => c.state === 'done').length} />
+        <RewardsSection onExpired={onExit} />
+        <AwardOverlay onExpired={onExit} />
         {switcher}
       </>
     )
@@ -65,6 +69,8 @@ function Session({ name, onExit, canSwitch }: { name?: string; onExit: () => voi
           busyId={done.isPending ? done.variables : null}
         />
       </StickerCard>
+      <RewardsSection onExpired={onExit} />
+      <AwardOverlay onExpired={onExit} />
       {switcher}
     </>
   )

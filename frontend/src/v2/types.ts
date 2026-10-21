@@ -131,6 +131,24 @@ export interface KidToday {
   points_balance: number
 }
 
+/** GET /kid/rewards */
+export interface KidRewards {
+  balance: number
+  screen_time_price: number
+  screen_time_enabled: boolean
+  rewards: { id: number; name: string; price: number; icon: string | null }[]
+  pending: { id: number; kind: 'reward' | 'screen_time'; reward_id: number | null; minutes: number | null; cost: number }[]
+}
+
+/** GET /kid/awards */
+export interface KidAward {
+  id: number
+  kind: 'reward' | 'screen_time'
+  name: string | null
+  minutes: number | null
+  cost: number
+}
+
 /** GET /rewards item */
 export interface Reward {
   id: number
