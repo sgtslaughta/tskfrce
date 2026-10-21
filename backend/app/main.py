@@ -34,6 +34,7 @@ from app.api import (
 from app.api.badges import router as badges_router
 from app.api.chore_photos import router as chore_photos_router
 from app.api.chores import router as chores_router
+from app.api.community import router as community_router
 from app.api.devices import router as devices_router
 from app.api.family import router as family_router
 from app.api.internal import router as internal_router
@@ -155,6 +156,7 @@ fastapi_app.include_router(windows_router)
 fastapi_app.include_router(family_router)
 fastapi_app.include_router(rewards_router)
 fastapi_app.include_router(badges_router)
+fastapi_app.include_router(community_router)
 fastapi_app.include_router(redemptions_router)
 fastapi_app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
 

@@ -2,15 +2,17 @@
 
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.lock.reset import current_chore_day, is_chore_filter, kid_chores_filter
+from app.lock.schedule import local_now
 from app.models.family import FamilySettings
 from app.models.gamification import Points, PointsType
 from app.models.task import Task, TaskStatus
-from app.models.user import User
+from app.models.user import User, UserRole
 
 TITLES = [
     (1, "Rookie"),
@@ -113,3 +115,45 @@ def progress(db: Session, kid: User, fam: FamilySettings) -> dict:
         "next": lv.next,
         "streak": streak(db, kid.id, today).current,
     }
+
+
+def leaderboard(db: Session, fam: FamilySettings, now_utc: datetime) -> dict:
+    """Weekly (Mon 00:00 family-local) XP-style score for every kid; ties share a rank."""
+    tz = ZoneInfo(fam.timezone)
+    monday = local_now(fam.timezone, now_utc).date()
+    monday -= timedelta(days=monday.weekday())
+
+    def utc(d: date) -> datetime:
+        return (
+            datetime.combine(d, datetime.min.time(), tzinfo=tz).astimezone(UTC).replace(tzinfo=None)
+        )
+
+    scores = dict(
+        db.query(Points.user_id, func.sum(Points.amount))
+        .filter(
+            Points.amount > 0,
+            Points.points_type.notin_([PointsType.REDEMPTION, PointsType.TRANSFER]),
+            Points.created_at >= utc(monday),
+            Points.created_at < utc(monday + timedelta(days=7)),
+        )
+        .group_by(Points.user_id)
+        .all()
+    )
+    rows = []
+    for k in db.query(User).filter(User.role == UserRole.KID, User.is_active):
+        lv = level_for(xp(db, k.id))
+        rows.append(
+            {
+                "kid_id": k.id,
+                "name": k.full_name or k.username,
+                "avatar": k.avatar,
+                "score": int(scores.get(k.id) or 0),
+                "level": lv.level,
+                "title": lv.title,
+            }
+        )
+    rows.sort(key=lambda r: (-r["score"], r["name"]))
+    for i, r in enumerate(rows):
+        same = i and r["score"] == rows[i - 1]["score"]
+        r["rank"] = rows[i - 1]["rank"] if same else i + 1
+    return {"week_start": monday.isoformat(), "rows": rows}
