@@ -81,9 +81,13 @@
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  background: transparent;
+  background: var(--f-card); /* solid: the page grid must not show through */
   border: 0;
   border-bottom: 1px solid var(--f-line);
+  box-shadow: var(--f-shadow);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 .f-wordmark { font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif; font-weight: 700; font-size: 22px; color: var(--f-ink); text-decoration: none; }
 .f-day { color: var(--f-sub); font-weight: 700; }
