@@ -197,3 +197,31 @@ def test_apply_updates_watch_and_loop_reports_full_set():
     watch.counter.resisting.return_value = set()
     svc._resist_once()
     assert reports[-1] == set()
+
+
+GW = "aa:aa:aa:aa:aa:aa"
+BOX = "bb:bb:bb:bb:bb:bb"
+
+
+@pytest.mark.parametrize("infra", [GW, BOX])
+def test_never_enforces_on_router_or_box_mac(infra):
+    from blocker.arp import LanFacts
+
+    svc, fw, redir = _svc()
+    redir._lanfacts = lambda: LanFacts(gateway_ip="192.168.1.1", gateway_mac=GW, box_mac=BOX)
+    svc.store.set_blocked([infra.upper(), MAC])
+    assert MAC in fw.applied[-1]
+    assert infra not in fw.applied[-1].lower()
+    assert set(redir.targets) == {MAC}
+
+
+def test_lanfacts_failure_still_enforces_kid():
+    svc, fw, redir = _svc()
+
+    def boom():
+        raise RuntimeError("no lan")
+
+    redir._lanfacts = boom
+    svc.store.set_blocked([MAC])
+    assert MAC in fw.applied[-1]
+    assert set(redir.targets) == {MAC}

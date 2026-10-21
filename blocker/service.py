@@ -98,13 +98,23 @@ class Service:
         # re-read the authoritative set inside it, so concurrent callers
         # (on_change, reconcile, _on_seen) can't apply a stale ruleset last.
         with self._lock:
-            blocked = self.store.current()
+            lan = self._lan()
+            infra = (
+                {m.lower() for m in (lan.gateway_mac, lan.gateway_mac6, lan.box_mac) if m}
+                if lan
+                else set()
+            )
+            blocked = set(self.store.current())
+            skipped = {m for m in blocked if m.lower() in infra}
+            if skipped:
+                log.warning("refusing to enforce on router/box MACs: %s", sorted(skipped))
+                blocked -= skipped
             devs = {m: self._devices.get(m, TargetAddrs(mac=m)) for m in blocked}
             # Never spoof an address that isn't safely one device's: the gateway's
             # own IP, the box/portal IP, or an IP two MACs both claim (ARP race or
             # spoof). Stripping it here keeps it out of the firewall sets, the
             # redirect targets and the watch — and off the restore path.
-            unsafe = self._unsafe_ips()
+            unsafe = self._unsafe_ips(lan)
             devs, stripped = self._strip_unsafe(devs, unsafe)
             if stripped:
                 log.warning("refusing unsafe gateway-side addresses: %s", sorted(stripped))
@@ -122,13 +132,15 @@ class Service:
             if self._watch is not None:
                 self._watch.set_watched(devs)
 
-    def _unsafe_ips(self) -> set[str]:
+    def _lan(self):
+        try:
+            return self._redir._lanfacts()
+        except Exception:
+            return None  # LAN detection failed -> gateway/box facts unknown
+
+    def _unsafe_ips(self, lan) -> set[str]:
         """IPs we must not spoof: gateway, portal/box, or claimed by >1 MAC."""
         unsafe: set[str] = set()
-        try:
-            lan = self._redir._lanfacts()
-        except Exception:
-            lan = None  # LAN detection failed -> gateway IPs unknown, skip those
         if lan is not None:
             unsafe.update(ip for ip in (lan.gateway_ip, lan.gateway_ip6) if ip)
         if self._portal_ip:
