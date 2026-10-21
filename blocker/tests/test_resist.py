@@ -136,3 +136,19 @@ def test_watch_no_start_after_stop():
     w.stop()
     w.set_watched({KID})
     assert calls == []
+
+
+def test_watch_retries_after_failed_start():
+    calls = []
+
+    def flaky(**kw):
+        calls.append(kw)
+        if len(calls) == 1:
+            raise OSError("iface down")
+        return SimpleNamespace(stop=lambda: None)
+
+    w = _watch(flaky)
+    w.set_watched({KID})
+    w.set_watched({KID})
+    assert len(calls) == 2
+    assert w._sniffer is not None

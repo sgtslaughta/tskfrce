@@ -140,6 +140,7 @@ class ResistanceWatch:
                 except Exception:
                     log.exception("sniffer start failed")
                     self._sniffer = None
+                    self._watched = None  # let an identical call retry
 
     def stop(self) -> None:
         with self._lock:
