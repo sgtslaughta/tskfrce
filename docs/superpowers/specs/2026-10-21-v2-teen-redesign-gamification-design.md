@@ -1,7 +1,7 @@
 # t@sk4ce v2: teen redesign + gamification
 
 Date: 2026-10-21. Status: approved by owner 2026-10-21.
-Mockups (visual reference, not committed): `tskfrce-blocker/.superpowers/brainstorm/3658153-1792603322/content/` — `theme-final.html`, `controls.html`, `levels-flair.html`.
+Mockups (visual reference, open in a browser): `docs/superpowers/specs/2026-10-21-v2-teen-redesign-mockups/` — `theme-final.html`, `controls.html` (option C = gamer-cut), `levels-flair.html`.
 
 ## Why
 
