@@ -4,10 +4,10 @@ import { FridgeShell } from '@/v2/components/FridgeShell'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useChoreDefinitions, useChoresToday } from '@/v2/hooks/useChores'
 import { useKids } from '@/v2/hooks/useKids'
-import { ChoresSection } from './ChoresSection'
+import { ChoresSection, type KidProgress } from './ChoresSection'
 import { CustomBadgesPanel } from './CustomBadgesPanel'
 import { KidsSection } from './KidsSection'
-import { ManageLayout, SECTIONS, type KidProgress, type Section } from './ManageLayout'
+import { ManageLayout, SECTIONS, type Section } from './ManageLayout'
 import { RewardsSection } from './RewardsSection'
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
@@ -32,7 +32,7 @@ function KidsBody() {
   return (
     <FridgeShell title="Kids & chores">
       {kids.isError && <Text role="alert">{kids.error.message}</Text>}
-      <ManageLayout section={section} counts={{ chores: defs.length, kids: list.length }} kids={progress}>
+      <ManageLayout section={section} counts={{ chores: defs.length, kids: list.length }}>
         {section === 'chores' && (
           <ChoresSection key={first(query.kid)} kids={list} chores={defs} progress={progress} initialKid={first(query.kid)} />
         )}

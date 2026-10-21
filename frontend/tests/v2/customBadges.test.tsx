@@ -51,8 +51,10 @@ describe('CustomBadgesPanel', () => {
   test('create posts name, icon, description', async () => {
     wrap()
     await screen.findByRole('button', { name: 'Award Helper' })
-    await userEvent.type(screen.getByLabelText('Badge name'), 'Kind')
-    await userEvent.type(screen.getByLabelText('Emoji'), '💛')
+    await userEvent.click(screen.getByRole('button', { name: 'New badge' }))
+    await userEvent.type(await screen.findByLabelText('Badge name'), 'Kind')
+    await userEvent.click(screen.getByRole('button', { name: 'Emoji' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Pick 💛' }))
     await userEvent.type(screen.getByLabelText('Description'), 'Was kind')
     await userEvent.click(screen.getByRole('button', { name: 'Add badge' }))
     expect(calls('/custom-badges').find((c) => c[1]?.method === 'POST')?.[1]).toMatchObject({

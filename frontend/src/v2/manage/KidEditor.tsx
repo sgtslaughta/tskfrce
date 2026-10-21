@@ -3,6 +3,7 @@ import { Button, PasswordInput, TextInput } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useCreateKid, useDeleteKid, usePatchKid, type KidBody } from '@/v2/hooks/useKids'
 import type { Kid } from '@/v2/types'
+import { EmojiPicker } from '@/v2/components/EmojiPicker'
 import { ConfirmDelete } from './ConfirmDelete'
 import { toastFail, toastOk } from '../notify'
 
@@ -41,9 +42,9 @@ export function KidEditor({ kid, onDone }: { kid?: Kid; onDone?: () => void }) {
   }
 
   return (
-    <div className="f-card">
+    <div className="m-form">
       <TextInput label="Name" value={name} onChange={(e) => setName(e.currentTarget.value)} />
-      <TextInput label="Avatar (an emoji)" value={avatar} maxLength={8} onChange={(e) => setAvatar(e.currentTarget.value)} />
+      <EmojiPicker label="Avatar (an emoji)" value={avatar} onChange={setAvatar} />
       <PasswordInput
         label={kid?.has_pin ? 'New PIN (4 digits)' : 'PIN (4 digits)'}
         value={pin}
@@ -53,30 +54,32 @@ export function KidEditor({ kid, onDone }: { kid?: Kid; onDone?: () => void }) {
         description={kid?.has_pin ? 'A PIN is set. Enter a new one to change it.' : undefined}
         error={pinBad ? 'Use exactly 4 digits.' : undefined}
       />
-      <Button onClick={save} disabled={!name.trim() || pinBad} loading={create.isPending || patch.isPending}>
-        {kid ? 'Save kid' : 'Add kid'}
-      </Button>
-      {kid?.has_pin && (
-        <Button
-          variant="default"
-          onClick={() => patch.mutate({ id: kid.id, body: { clear_pin: true } }, { onError: toastFail, onSuccess: () => toastOk('PIN removed') })}
-        >
-          Remove PIN
+      <div className="m-actions">
+        <Button onClick={save} disabled={!name.trim() || pinBad} loading={create.isPending || patch.isPending}>
+          {kid ? 'Save kid' : 'Add kid'}
         </Button>
-      )}
-      {kid && (
-        <>
-          <Button color="fridgeRed" variant="light" onClick={open}>
+        {kid?.has_pin && (
+          <Button
+            variant="default"
+            onClick={() => patch.mutate({ id: kid.id, body: { clear_pin: true } }, { onError: toastFail, onSuccess: () => toastOk('PIN removed') })}
+          >
+            Remove PIN
+          </Button>
+        )}
+        {kid && (
+          <Button className="m-push" color="fridgeRed" variant="subtle" onClick={open}>
             Delete kid
           </Button>
-          <ConfirmDelete
-            opened={confirm}
-            title={`Delete ${label}?`}
-            body={`Deleting ${label} removes their chores and frees their devices.`}
-            onConfirm={() => del.mutate(kid.id, { onSuccess: onDone })}
-            onClose={close}
-          />
-        </>
+        )}
+      </div>
+      {kid && (
+        <ConfirmDelete
+          opened={confirm}
+          title={`Delete ${label}?`}
+          body={`Deleting ${label} removes their chores and frees their devices.`}
+          onConfirm={() => del.mutate(kid.id, { onSuccess: onDone })}
+          onClose={close}
+        />
       )}
     </div>
   )

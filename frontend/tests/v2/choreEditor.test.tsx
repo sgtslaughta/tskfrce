@@ -88,9 +88,10 @@ describe('sections', () => {
     expect(screen.queryByText('Clean room')).toBeNull()
   })
 
-  test('sidebar shows per-kid done/total', async () => {
+  test('kid filter chips show per-kid done/total; no sidebar kid list', async () => {
     await open()
-    expect(screen.getByRole('link', { name: /Maya\s*1\/2/ })).toBeInTheDocument()
+    expect(screen.getByText('Maya').closest('label')).toHaveTextContent(/Maya\s*1\/2/)
+    expect(screen.queryByRole('link', { name: /Maya/ })).toBeNull()
   })
 
   test('Shared filter shows only multi-kid chores', async () => {

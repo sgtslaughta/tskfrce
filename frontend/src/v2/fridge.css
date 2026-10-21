@@ -108,7 +108,7 @@
 }
 .f-nav a[aria-current='page'] { background: none; border: 0; color: var(--f-ink); box-shadow: inset 0 -2px 0 var(--f-sun); }
 .f-nav-drawer { flex-direction: column; }
-.f-main { max-width: 960px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+.f-main { max-width: 960px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; gap: 16px; }
 .f-title-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .f-title-row h1 { margin: 0; font-size: 28px; }
 
@@ -119,7 +119,7 @@
   border: none;
   border-radius: 8px;
   box-shadow: var(--f-shadow);
-  padding: 14px;
+  padding: 16px;
 }
 .f-card:has(> .f-card-head) { padding: 0; overflow: hidden; }
 .f-card[data-tone='sun'] { border-top: 4px solid var(--f-sun); }
@@ -168,7 +168,7 @@
 .f-lock[data-online='none'] { background: var(--f-mute); }
 
 /* chip row */
-.f-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-width: 0; }
+.f-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; min-width: 0; }
 .f-chip {
   display: inline-grid;
   place-items: center;

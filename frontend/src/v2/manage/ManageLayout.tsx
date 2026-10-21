@@ -12,22 +12,14 @@ export const SECTIONS: { id: Section; label: string }[] = [
   { id: 'badges', label: 'Badges' },
 ]
 
-export interface KidProgress {
-  id: number
-  name: string
-  done: number
-  total: number
-}
-
 interface Props {
   section: Section
   counts: Partial<Record<Section, number>>
-  kids: KidProgress[]
   children: ReactNode
 }
 
-/** Sidebar (top menu under 768 px) with sections and a per-kid jump list. */
-export function ManageLayout({ section, counts, kids, children }: Props) {
+/** Sidebar (top menu under 768 px) with the sections. */
+export function ManageLayout({ section, counts, children }: Props) {
   const small = useMediaQuery('(max-width: 767px)')
   const router = useRouter()
   return (
@@ -48,18 +40,9 @@ export function ManageLayout({ section, counts, kids, children }: Props) {
               {counts[s.id] !== undefined && <span className="m-n">{counts[s.id]}</span>}
             </Link>
           ))}
-          {kids.length > 0 && <div className="m-grp">Kids</div>}
-          {kids.map((k) => (
-            <Link key={k.id} href={`/kids?section=chores&kid=${k.id}`}>
-              {k.name}
-              <span className="m-n">
-                {k.done}/{k.total}
-              </span>
-            </Link>
-          ))}
         </nav>
       )}
-      <div style={{ display: 'grid', gap: 14, minWidth: 0 }}>{children}</div>
+      <div className="m-main">{children}</div>
     </div>
   )
 }

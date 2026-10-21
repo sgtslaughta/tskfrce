@@ -19,7 +19,7 @@ export function KidsSection({ kids }: { kids: Kid[] }) {
         {kids.map((k) => (
           <button key={k.id} type="button" className="m-row" onClick={() => setOpen({ kid: k })}>
             <span>
-              {k.avatar} <b style={{ display: 'inline' }}>{k.full_name ?? k.username}</b>
+              {k.avatar ?? ''} <b style={{ display: 'inline' }}>{k.full_name ?? k.username}</b>
             </span>
             <span className="m-meta">{k.has_pin ? 'PIN set' : 'No PIN'}</span>
           </button>

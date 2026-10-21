@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Button, Select, TextInput } from '@mantine/core'
+import { Button, Drawer, Select, TextInput } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
+import { EmojiPicker } from '@/v2/components/EmojiPicker'
 import { useAwardBadge, useCustomBadges, useDeleteBadge, useSaveBadge } from '@/v2/hooks/useCustomBadges'
 import { useKids } from '@/v2/hooks/useKids'
 import { TIER_NAMES } from '@/v2/tiers'
@@ -8,28 +10,25 @@ import { toastFail, toastOk } from '../notify'
 
 /** Parent custom badges: list, add, edit, delete, and Award a kid (+1 tier). */
 export function CustomBadgesPanel() {
+  const small = useMediaQuery('(max-width: 767px)')
   const badges = useCustomBadges()
   const kids = useKids().data ?? []
   const save = useSaveBadge()
   const del = useDeleteBadge()
   const award = useAwardBadge()
+  const [opened, setOpened] = useState(false)
   const [editing, setEditing] = useState<CustomBadge | null>(null)
   const [name, setName] = useState('')
   const [icon, setIcon] = useState('')
   const [description, setDescription] = useState('')
   const [kid, setKid] = useState<string | null>(null)
 
-  const reset = () => {
-    setEditing(null)
-    setName('')
-    setIcon('')
-    setDescription('')
-  }
-  const edit = (b: CustomBadge) => {
+  const show = (b: CustomBadge | null) => {
     setEditing(b)
-    setName(b.name)
-    setIcon(b.icon)
-    setDescription(b.description)
+    setName(b?.name ?? '')
+    setIcon(b?.icon ?? '')
+    setDescription(b?.description ?? '')
+    setOpened(true)
   }
   const submit = () =>
     save.mutate(
@@ -38,7 +37,7 @@ export function CustomBadgesPanel() {
         onError: toastFail,
         onSuccess: () => {
           toastOk(editing ? 'Saved' : 'Added')
-          reset()
+          setOpened(false)
         },
       },
     )
@@ -49,8 +48,11 @@ export function CustomBadgesPanel() {
     )
 
   return (
-    <section className="f-card" aria-label="Badges">
-      <h2 className="f-display f-card-head">Badges</h2>
+    <section aria-label="Badges" className="m-main">
+      <div className="f-title-row">
+        <h2 className="f-display">Badges</h2>
+        <Button onClick={() => show(null)}>New badge</Button>
+      </div>
       <Select
         label="Award to"
         placeholder="Pick a kid"
@@ -58,33 +60,42 @@ export function CustomBadgesPanel() {
         value={kid}
         onChange={setKid}
       />
-      {badges.data?.map((b) => (
-        <div key={b.id} className="f-row">
-          <span style={{ flex: 1 }}>
-            {b.icon} {b.name} <span className="f-cap">{b.description}</span>
-          </span>
-          <Button disabled={!kid} loading={award.isPending && award.variables?.id === b.id} onClick={() => give(b)}>{`Award ${b.name}`}</Button>
-          <Button variant="default" onClick={() => edit(b)}>{`Edit ${b.name}`}</Button>
-          <Button
-            variant="default"
-            loading={del.isPending && del.variables === b.id}
-            onClick={() => del.mutate(b.id, { onError: toastFail, onSuccess: () => toastOk('Deleted') })}
-          >{`Delete ${b.name}`}</Button>
+      {badges.data?.length === 0 && <p>No custom badges yet. Add one with New badge.</p>}
+      {!!badges.data?.length && (
+        <div className="f-card m-list">
+          {badges.data.map((b) => (
+            <div key={b.id} className="m-rr">
+              <span className="m-ico">{b.icon}</span>
+              <span className="m-grow">
+                <b>{b.name}</b>
+                <span className="m-meta">{b.description}</span>
+              </span>
+              <Button disabled={!kid} loading={award.isPending && award.variables?.id === b.id} onClick={() => give(b)}>{`Award ${b.name}`}</Button>
+              <Button variant="default" onClick={() => show(b)}>{`Edit ${b.name}`}</Button>
+              <Button
+                variant="default"
+                loading={del.isPending && del.variables === b.id}
+                onClick={() => del.mutate(b.id, { onError: toastFail, onSuccess: () => toastOk('Deleted') })}
+              >{`Delete ${b.name}`}</Button>
+            </div>
+          ))}
         </div>
-      ))}
-      <TextInput label="Badge name" value={name} maxLength={60} onChange={(e) => setName(e.currentTarget.value)} />
-      <TextInput label="Emoji" value={icon} maxLength={8} onChange={(e) => setIcon(e.currentTarget.value)} />
-      <TextInput label="Description" value={description} maxLength={200} onChange={(e) => setDescription(e.currentTarget.value)} />
-      <div className="f-row">
-        <Button onClick={submit} disabled={!name.trim() || !icon.trim()} loading={save.isPending}>
-          {editing ? 'Save badge' : 'Add badge'}
-        </Button>
-        {editing && (
-          <Button variant="default" onClick={reset}>
-            Cancel
-          </Button>
-        )}
-      </div>
+      )}
+      <Drawer opened={opened} onClose={() => setOpened(false)} position="right" size={small ? '100%' : 'md'} title={editing ? 'Edit badge' : 'New badge'}>
+        <div className="m-form">
+          <TextInput label="Badge name" value={name} maxLength={60} onChange={(e) => setName(e.currentTarget.value)} />
+          <EmojiPicker label="Emoji" value={icon} onChange={setIcon} />
+          <TextInput label="Description" value={description} maxLength={200} onChange={(e) => setDescription(e.currentTarget.value)} />
+          <div className="m-actions">
+            <Button onClick={submit} disabled={!name.trim() || !icon.trim()} loading={save.isPending}>
+              {editing ? 'Save badge' : 'Add badge'}
+            </Button>
+            <Button variant="default" onClick={() => setOpened(false)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      </Drawer>
     </section>
   )
 }

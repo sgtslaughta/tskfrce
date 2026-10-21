@@ -33,7 +33,13 @@ export const fridgeTheme: MantineThemeOverride = createTheme({
     SegmentedControl: { classNames: { root: 'f-seg' } },
     Switch: { classNames: { track: 'f-switch' } },
     Checkbox: { classNames: { input: 'f-check' } },
-    Chip: { classNames: { label: 'f-chipctl' } },
+    Chip: { classNames: { label: 'f-chipctl', iconWrapper: 'f-chipicon' } },
+    Drawer: {
+      classNames: { content: 'f-sheet', header: 'f-sheet-head', title: 'f-sheet-title', close: 'f-sheet-close', body: 'f-sheet-body', overlay: 'f-overlay' },
+    },
+    Modal: {
+      classNames: { content: 'f-sheet', header: 'f-sheet-head', title: 'f-sheet-title', close: 'f-sheet-close', body: 'f-sheet-body', overlay: 'f-overlay' },
+    },
   },
 })
 

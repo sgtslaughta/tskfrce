@@ -66,6 +66,8 @@
   letter-spacing: 0.08em;
   font-size: 11px;
   font-weight: 600;
+  display: block;
+  margin-bottom: 4px;
 }
 
 .f-seg.f-seg {
@@ -109,11 +111,43 @@ input:checked + .f-switch.f-switch {
 .f-chipctl.f-chipctl {
   border: 1.5px solid var(--f-edge);
   border-radius: 4px;
-  background: var(--f-field);
+  background: transparent;
   color: var(--f-ink);
+  padding-inline: 12px;
 }
 .f-chipctl.f-chipctl[data-checked] {
   background: var(--f-ink);
   border-color: var(--f-ink);
   color: var(--f-card);
+  padding-inline: 12px;
 }
+.f-chipicon.f-chipicon { display: none; }
+
+/* emoji picker */
+.f-pick-label { margin-bottom: 4px; }
+.f-pick-btn {
+  width: 44px; height: 44px; font-size: 22px; cursor: pointer;
+  background: var(--f-field); color: var(--f-ink);
+  border: 1.5px solid var(--f-edge); border-radius: 4px;
+}
+.f-pick-btn:focus-visible, .f-pick-cell:focus-visible { outline: 3px solid var(--f-sun); outline-offset: 2px; }
+.f-pick-pop.f-pick-pop { background: var(--f-card); border: 1.5px solid var(--f-edge); color: var(--f-ink); padding: 8px; max-width: calc(100vw - 32px); }
+.f-pick-grid { display: grid; grid-template-columns: repeat(6, 44px); gap: 4px; }
+.f-pick-cell {
+  width: 44px; height: 44px; font-size: 22px; cursor: pointer;
+  background: transparent; border: 1.5px solid transparent; border-radius: 4px; color: var(--f-ink);
+}
+.f-pick-cell:hover { background: var(--f-mute); }
+.f-pick-cell[data-on] { border-color: var(--f-ink); background: var(--f-mute); }
+
+/* drawers and modals */
+.f-sheet.f-sheet { background: var(--f-card); color: var(--f-ink); }
+.f-sheet-head.f-sheet-head { background: var(--f-card); color: var(--f-ink); border-bottom: 1px solid var(--f-line); }
+.f-sheet-title.f-sheet-title {
+  font-family: var(--font-display), "Space Grotesk", system-ui, sans-serif;
+  font-weight: 700; font-size: 18px; color: var(--f-ink);
+}
+.f-sheet-close.f-sheet-close { color: var(--f-sub); }
+.f-sheet-close.f-sheet-close:hover { background: var(--f-mute); }
+.f-sheet-body.f-sheet-body { padding: 16px; }
+.f-overlay.f-overlay { background: rgba(0, 0, 0, 0.55); opacity: 1; }

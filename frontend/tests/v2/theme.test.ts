@@ -17,3 +17,9 @@ test('controls get gamer-cut classNames', () => {
   expect(c.Checkbox?.classNames).toMatchObject({ input: 'f-check' })
   expect(c.Chip?.classNames).toMatchObject({ label: 'f-chipctl' })
 })
+
+test('drawers and modals use the themed sheet classes', () => {
+  const c = fridgeTheme.components as Record<string, { classNames?: unknown }>
+  expect(c.Drawer?.classNames).toMatchObject({ content: 'f-sheet', title: 'f-sheet-title' })
+  expect(c.Modal?.classNames).toMatchObject({ content: 'f-sheet', title: 'f-sheet-title' })
+})

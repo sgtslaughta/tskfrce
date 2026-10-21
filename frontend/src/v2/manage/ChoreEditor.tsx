@@ -98,13 +98,13 @@ function ChoreForm({ kids, chore, copy, onCopy, onClose }: FormProps) {
   }
 
   return (
-    <div className="f-col" style={{ display: 'grid', gap: 12 }}>
+    <div className="m-form">
       {editing && (
-        <div className="f-row">
+        <div className="m-actions">
           <Button variant="default" onClick={onCopy}>
             Copy
           </Button>
-          <Button color="fridgeRed" variant="light" onClick={open}>
+          <Button className="m-push" color="fridgeRed" variant="subtle" onClick={open}>
             Delete
           </Button>
           <ConfirmDelete
@@ -122,7 +122,7 @@ function ChoreForm({ kids, chore, copy, onCopy, onClose }: FormProps) {
         <TextInput type="time" label="Due by (optional)" value={due} onChange={(e) => setDue(e.currentTarget.value)} />
       </div>
       <div>
-        <div className="m-meta">Repeat</div>
+        <div className="f-label">Repeat</div>
         <SegmentedControl fullWidth aria-label="Repeat" data={[...CHOICES]} value={choice} onChange={setChoice} />
       </div>
       {choice === 'Pick days' && (
@@ -137,7 +137,7 @@ function ChoreForm({ kids, chore, copy, onCopy, onClose }: FormProps) {
         </Chip.Group>
       )}
       <div>
-        <div className="m-meta">Assign to</div>
+        <div className="f-label">Assign to</div>
         <Chip.Group multiple value={who} onChange={setWho}>
           <div className="f-row">
             {kids.map((k) => (
@@ -150,7 +150,7 @@ function ChoreForm({ kids, chore, copy, onCopy, onClose }: FormProps) {
       </div>
       {who.length > 1 && (
         <div>
-          <div className="m-meta">When more than one kid</div>
+          <div className="f-label">When more than one kid</div>
           <SegmentedControl
             fullWidth
             aria-label="Mode"
@@ -162,7 +162,7 @@ function ChoreForm({ kids, chore, copy, onCopy, onClose }: FormProps) {
         </div>
       )}
       <div>
-        <div className="m-meta">Subtasks</div>
+        <div className="f-label">Subtasks</div>
         {subs.map((s, i) => (
           <div key={`${i}-${s}`} className="m-sub">
             <span>{s}</span>
