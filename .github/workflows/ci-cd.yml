@@ -50,6 +50,25 @@ jobs:
     - name: Run test suite
       run: cd backend && python -m pytest tests -q
 
+  lab:
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    timeout-minutes: 25
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with: { python-version: '3.11' }
+    - run: pip install pytest pyyaml
+    - name: Enable IPv6 on Docker bridges
+      run: |
+        echo '{"ipv6": true, "fixed-cidr-v6": "fd00:d0c::/64"}' | sudo tee /etc/docker/daemon.json
+        sudo systemctl restart docker
+    - name: Lab integration tests
+      run: cd blocker && RUN_INTEGRATION=1 python -m pytest tests/lab -v
+    - name: Lab logs on failure
+      if: failure()
+      run: INTERNAL_TOKEN=labtoken docker compose -f lab/docker-compose.lab.yml logs --no-color
+
   security-scan:
     runs-on: ubuntu-latest
     needs: [test, lint]
