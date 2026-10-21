@@ -5,11 +5,11 @@ The home box pauses a device by stepping in between it and your router. Some rou
 | Router | Works? | Notes |
 |---|---|---|
 | Most ISP routers | Works | — |
-| Eero (mesh) | Often resists | Try disabling "Client steering". |
+| Eero (mesh) | Often resists | Try disabling 'Client steering' / use a wired box. |
 | Google Wifi / Nest Wifi | Often resists | — |
 | UniFi with "Client device isolation" | Resists until isolation is off | Turn off "Client device isolation" for the network the box is on. |
 | Asus AiMesh | Usually works | — |
 
 ## Report your router
 
-If you tried "Test block" and your router isn't on this list, or it's listed but doesn't match what you see, [open a router report](../../issues/new?labels=router). Include your router's make and model, and what "Test block" said.
+If you tried "Test block" and your router isn't on this list, or it's listed but doesn't match what you see, [open a router report](https://github.com/sgtslaughta/tskfrce/issues/new?labels=router). Include your router's make and model, and what "Test block" said.

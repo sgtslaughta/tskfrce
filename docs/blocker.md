@@ -13,6 +13,8 @@ The home box pauses internet for normal use on your Wi‑Fi. It can't stop a det
   - **The device stayed online even though it was talking to the box. It looks like the device itself is getting around the block — someone may have changed its network settings.**
 - **Getting-around alert.** If a paused device keeps reaching the internet, you get a notification titled "<device> is getting around the block", and the device shows a "getting around the block" badge on the Devices page. The badge clears on its own once the device stops reaching the internet while paused, or once you unpause it.
 
+Some routers, especially certain mesh systems (e.g. some Eero or Google Wifi models), resist blocking. See the [router compatibility list](routers.md) and press "Test block" to find out if yours works.
+
 For the reasoning behind these limits, see the [blocker enforcement decision record](adr/0001-blocker-enforcement-vs-firewalla.md).
 
 ## What can kids try to get around it?
@@ -35,10 +37,6 @@ Keep the box somewhere kids can't get to it. Unplugging it turns blocking off.
 ## If the box is off
 
 It fails open: if the box is off or unplugged, all devices get their internet back.
-
-## Router compatibility
-
-Some routers, especially certain mesh systems (e.g. some Eero or Google Wifi models), resist blocking; press "Test block" to find out if yours works.
 
 ## Setup
 
