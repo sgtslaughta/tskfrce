@@ -19,9 +19,17 @@ _mac_of() {
   esac
 }
 
+# ponytail: one login per lab session, cached; login is rate limited (10/min)
+TOKEN_FILE="${XDG_RUNTIME_DIR:-/tmp}/task4ce-lab.token"
 _token() {
-  _curl_parent -X POST "$API/api/v1/auth/login" -H 'Content-Type: application/json' \
-    -d "{\"username\":\"$USER_\",\"password\":\"$PASS_\"}" | jq -r .access_token
+  local t
+  t=$(cat "$TOKEN_FILE" 2>/dev/null || true)
+  if [ -z "$t" ] || [ "$t" = null ]; then
+    t=$(_curl_parent -X POST "$API/api/v1/auth/login" -H 'Content-Type: application/json' \
+      -d "{\"username\":\"$USER_\",\"password\":\"$PASS_\"}" | jq -r .access_token)
+    [ "$t" != null ] && printf '%s' "$t" > "$TOKEN_FILE"
+  fi
+  printf '%s\n' "$t"
 }
 
 _devices() { _curl_parent -H "Authorization: Bearer $(_token)" "$API/api/v1/devices"; }
@@ -50,6 +58,7 @@ _wait_http() { # url
 }
 
 _up() {
+  rm -f "$TOKEN_FILE"
   $COMPOSE up -d --build
   _wait_http "$API/health"
   _wait_http "$BLK/health"
@@ -81,7 +90,7 @@ _portal() {
 cmd=${1:-}; shift || true
 case "$cmd" in
   up) _up ;;
-  down) $COMPOSE down -v ;;
+  down) rm -f "$TOKEN_FILE"; $COMPOSE down -v ;;
   token) _token ;;
   device-id) _need_id "$1" ;;
   block) _post "/api/v1/devices/$(_need_id "$1")/override" '{"action":"lock"}' >/dev/null ;;
