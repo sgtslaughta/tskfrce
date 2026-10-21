@@ -30,6 +30,7 @@ from .goal import Goal, GoalProgress
 from .lock import Device, DeviceGroup, Override, TimeWindow
 from .media import MediaAttachment
 from .notification import Notification
+from .reward import Redemption, Reward
 from .task import (
     Task,
     TaskCategory,
@@ -71,6 +72,8 @@ __all__ = [
     "TimeWindow",
     "Override",
     "Notification",
+    "Reward",
+    "Redemption",
     # Comment and messaging models
     "TaskComment",
     "CommentReaction",
