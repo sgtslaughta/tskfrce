@@ -12,7 +12,13 @@ from app.core.auth import AuthService
 from app.core.client_ip import client_ip, norm_ip
 from app.core.ratelimit import check, hit
 from app.lock.loop import trigger
-from app.lock.reset import chore_state, current_chore_day, is_chore_filter, midnight
+from app.lock.reset import (
+    chore_state,
+    current_chore_day,
+    is_chore_filter,
+    kid_chores_filter,
+    midnight,
+)
 from app.lock.rules import is_online
 from app.lock.schedule import local_now
 from app.lock.state import device_facts
@@ -101,7 +107,7 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(r
         .filter(
             is_chore_filter(),
             Task.is_recurring.is_(False),
-            Task.assigned_to_id == kid.id,
+            kid_chores_filter(kid.id),
             Task.due_date == midnight(day),
             Task.status != TaskStatus.CANCELLED,
         )
@@ -128,7 +134,7 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(r
 def done(chore_id: int, db: Session = Depends(get_db), kid: User = Depends(require_kid)):
     t = (
         db.query(Task)
-        .filter(Task.id == chore_id, is_chore_filter(), Task.assigned_to_id == kid.id)
+        .filter(Task.id == chore_id, is_chore_filter(), kid_chores_filter(kid.id))
         .first()
     )
     if t is None or t.status not in (TaskStatus.TODO, TaskStatus.IN_PROGRESS):
@@ -139,6 +145,7 @@ def done(chore_id: int, db: Session = Depends(get_db), kid: User = Depends(requi
         raise HTTPException(status_code=409, detail="That chore is from another day.")
     t.status = TaskStatus.SUBMITTED_FOR_APPROVAL
     t.submitted_for_approval_at = now
+    t.submitted_by_id = kid.id
     db.commit()
     trigger()
     return {

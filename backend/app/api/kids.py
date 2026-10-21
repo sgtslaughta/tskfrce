@@ -13,7 +13,7 @@ from app.lock.loop import trigger
 from app.lock.overrides import clear_override, set_override
 from app.lock.reset import is_chore_filter
 from app.models.lock import Override, TimeWindow, device_owners
-from app.models.task import Task, TaskStatus
+from app.models.task import Task, TaskStatus, chore_participants
 from app.models.user import User, UserRole
 from app.schemas.lock import KidCreate, KidPatch, OverrideIn
 
@@ -98,6 +98,8 @@ def delete_kid(kid_id: int, db: Session = Depends(get_db)):
     ):
         t.is_recurring = False
         t.status = TaskStatus.CANCELLED
+    db.execute(delete(chore_participants).where(chore_participants.c.kid_id == kid.id))
+    db.query(Task).filter(Task.submitted_by_id == kid.id).update({"submitted_by_id": None})
     db.flush()  # expire_all below would drop unflushed changes
     db.query(TimeWindow).filter(TimeWindow.kid_id == kid.id).delete()
     db.query(Override).filter(Override.created_by_id == kid.id).update({"created_by_id": None})

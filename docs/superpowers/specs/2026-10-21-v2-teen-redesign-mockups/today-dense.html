@@ -1,0 +1,83 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap');
+.td { --ink:#1d2b53; --sun:#ffc93c; --red:#ff6b4a; --green:#7bd389; --bg:#f4f7fa; --card:#fff; --text:#1d2b53; --sub:#4a5a80; --line:#eef1f6; --edge:#c9d3e6; font-family:Inter; color:var(--text); }
+.td .h { font-family:'Space Grotesk'; font-weight:700; }
+.td .cap { text-transform:uppercase; letter-spacing:.08em; font-size:10.5px; font-weight:600; }
+.td .mono { font-family:'JetBrains Mono'; font-weight:700; }
+.td .scr { background:var(--bg); padding:16px; border-radius:10px; position:relative; }
+.td .title { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; }
+.td .title .h { font-size:24px; }
+.td .needs { background:var(--card); border-radius:8px; box-shadow:0 6px 20px rgba(29,43,83,.08); border-top:4px solid var(--sun); padding:10px 14px; margin-bottom:14px; }
+.td .needs .list { display:flex; gap:10px; overflow-x:auto; padding:6px 0 2px; }
+.td .ni { flex:none; display:flex; gap:8px; align-items:center; border:1.5px solid var(--edge); border-radius:6px; padding:6px 8px; font-size:12px; }
+.td .photo { width:38px; height:38px; border-radius:4px; background:linear-gradient(135deg,#9fb3d9,#5b6fb5); flex:none; cursor:zoom-in; position:relative; }
+.td .photo::after { content:"⤢"; position:absolute; right:2px; bottom:0; font-size:10px; color:#fff; }
+.td .btn { font-family:'Space Grotesk'; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.06em; padding:6px 9px; background:var(--sun); color:var(--ink); clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px)); }
+.td .btn.s { background:var(--edge); }
+.td .grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+@media (max-width:1000px){ .td .grid{grid-template-columns:1fr} }
+.td .kid { background:var(--card); border-radius:8px; overflow:hidden; box-shadow:0 1px 2px rgba(29,43,83,.06),0 6px 20px rgba(29,43,83,.08); }
+.td .head { background:var(--ink); color:#fff; padding:10px 12px; }
+.td .r { display:flex; justify-content:space-between; align-items:center; gap:6px; }
+.td .tag { font-size:9.5px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,.14); color:#c6d0ee; }
+.td .hs { color:#c6d0ee; font-size:11.5px; margin-top:6px; }
+.td .track { height:5px; border-radius:99px; background:rgba(255,255,255,.16); overflow:hidden; margin-top:6px; }
+.td .fill { height:100%; background:linear-gradient(90deg,var(--sun),#ffb020); }
+.td .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green); margin-right:4px; }
+.td .dot.off { background:#8f9cc4; }
+.td .body { padding:2px 12px 8px; }
+.td .row { display:flex; align-items:center; gap:8px; padding:7px 0; border-top:1px solid var(--line); font-size:12.5px; }
+.td .row:first-child { border-top:none; }
+.td .chk { width:14px; height:14px; flex:none; border:1.5px solid var(--edge); border-radius:3px; }
+.td .meta { margin-left:auto; color:var(--sub); font-size:11px; display:flex; gap:6px; align-items:center; }
+.td .pill { font-size:9.5px; padding:1px 5px; border-radius:4px; text-transform:uppercase; font-weight:700; background:rgba(255,107,74,.15); color:#c4401f; }
+.td .more { display:block; text-align:center; font-size:11.5px; color:var(--sub); padding:6px 0; border-top:1px solid var(--line); }
+.td .foot { display:flex; justify-content:space-between; padding:8px 12px; border-top:1px solid var(--line); font-size:11.5px; color:var(--sub); }
+.td .badge { background:var(--red); color:var(--ink); font-size:10px; font-weight:700; border-radius:99px; padding:0 5px; margin-left:3px; }
+.td .lb { position:absolute; inset:0; background:rgba(10,14,30,.78); border-radius:10px; display:flex; align-items:center; justify-content:center; }
+.td .lbc { background:var(--card); border-radius:8px; width:min(420px,90%); overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.4); }
+.td .big { height:240px; background:linear-gradient(135deg,#9fb3d9,#5b6fb5); display:grid; place-items:center; color:#fff; font-size:13px; }
+.td .lbf { padding:12px; }
+.td .note { margin-top:8px; border:1.5px solid var(--edge); border-radius:4px; padding:7px 9px; font-size:12px; color:#9aa3b8; }
+.td .wrap { display:grid; gap:18px; }
+</style>
+
+<h2>Today with several kids and long lists</h2>
+<p class="subtitle">Approvals from every kid gather in one "Needs you" strip at the top. Kid cards sit side by side and stay short: three chores max, "+N more" to expand, finished chores folded into one line. Bottom: tapping a photo opens it full size with Approve / Send back.</p>
+
+<div class="td wrap">
+<div class="scr">
+  <div class="title"><span class="h">Tuesday</span><span class="cap" style="color:var(--sub)">3 kids · 9 left · 3 need you</span></div>
+  <div class="needs">
+    <div class="r"><span class="cap">Needs you · 3</span><span class="cap" style="color:var(--sub)">Approve all ▸</span></div>
+    <div class="list">
+      <div class="ni"><span class="photo"></span><div><b>Maya</b> · Clean room<div style="color:var(--sub);font-size:11px">3/3 subtasks · 4:12pm</div></div><span class="btn">Approve</span><span class="btn s">Send back</span></div>
+      <div class="ni"><span class="photo"></span><div><b>Sam</b> · Wash car<div style="color:var(--sub);font-size:11px">Team · 4/4</div></div><span class="btn">Approve</span><span class="btn s">Send back</span></div>
+      <div class="ni"><div><b>Leo</b> · 30 min screen time<div style="color:var(--sub);font-size:11px">40 pts · has 95</div></div><span class="btn">Approve</span><span class="btn s">Deny</span></div>
+    </div>
+  </div>
+  <div class="grid">
+    <div class="kid"><div class="head"><div class="r"><span><span class="h" style="font-size:17px">Maya</span> <span class="tag cap">Lv 8 · Clutch</span></span><span class="mono" style="color:var(--sun)">240</span></div><div class="track"><div class="fill" style="width:60%"></div></div><div class="r hs"><span><b class="mono">3/7</b> today · <b class="mono" style="color:var(--red)">12</b>d streak</span><span><span class="dot"></span>Online</span></div></div>
+      <div class="body"><div class="row"><span class="chk"></span>Walk the dog<span class="meta"><span class="pill">5pm</span>+15</span></div><div class="row"><span class="chk"></span>Take out trash<span class="meta">Race · +20</span></div><div class="row"><span class="chk"></span>Practice piano<span class="meta">+10</span></div></div>
+      <span class="more">+1 more to do · 3 done ▾</span>
+      <div class="foot"><span><span class="dot"></span>iPad · <span class="dot off"></span>Laptop 2h</span><span>💬<span class="badge">2</span></span></div></div>
+    <div class="kid"><div class="head"><div class="r"><span><span class="h" style="font-size:17px">Leo</span> <span class="tag cap">Lv 3 · Regular</span></span><span class="mono" style="color:var(--sun)">95</span></div><div class="track"><div class="fill" style="width:25%"></div></div><div class="r hs"><span><b class="mono">1/5</b> today · <b class="mono">3</b>d streak</span><span><span class="dot off"></span>35m ago</span></div></div>
+      <div class="body"><div class="row"><span class="chk"></span>Homework<span class="meta"><span class="pill">6pm</span>+20</span></div><div class="row"><span class="chk"></span>Clean room<span class="meta">1/3 · +15</span></div><div class="row"><span class="chk"></span>Take out trash<span class="meta">Race · +20</span></div></div>
+      <span class="more">+1 more to do · 1 done ▾</span>
+      <div class="foot"><span><span class="dot off"></span>Switch 35m</span><span>💬</span></div></div>
+    <div class="kid"><div class="head"><div class="r"><span><span class="h" style="font-size:17px">Sam</span> <span class="tag cap">Lv 12 · Elite</span></span><span class="mono" style="color:var(--sun)">610</span></div><div class="track"><div class="fill" style="width:80%"></div></div><div class="r hs"><span><b class="mono">4/4</b> today · <b class="mono" style="color:var(--red)">30</b>d streak</span><span><span class="dot"></span>Online</span></div></div>
+      <div class="body"><div class="row" style="color:var(--sub)">✓ All done for today</div></div>
+      <span class="more">4 done ▾</span>
+      <div class="foot"><span><span class="dot"></span>Phone</span><span>💬</span></div></div>
+  </div>
+</div>
+
+<div class="scr" style="min-height:420px">
+  <div class="lb"><div class="lbc">
+    <div class="big">Photo, full size (pinch to zoom on phones)</div>
+    <div class="lbf"><div class="r"><span><b>Maya</b> · Clean room</span><span style="color:var(--sub);font-size:12px">4:12pm</span></div>
+      <div class="note">Note for Maya (optional, needed for Send back)…</div>
+      <div class="r" style="margin-top:10px;justify-content:flex-start;gap:8px"><span class="btn">Approve</span><span class="btn s">Send back</span><span style="margin-left:auto;color:var(--sub);font-size:12px">Close ✕</span></div></div>
+  </div></div>
+</div>
+</div>

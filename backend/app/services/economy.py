@@ -43,35 +43,51 @@ def bonus_for(done_utc: datetime | None, deadline: datetime | None, cap: int) ->
     return cap // 2 if done_utc <= deadline else 0
 
 
+def _recipients(task: Task) -> list[int]:
+    """Kids paid for an approved chore: owner, race winner, or every team member."""
+    if task.assigned_to_id is not None:
+        return [task.assigned_to_id]
+    if (task.recurrence_pattern or {}).get("mode") == "race":
+        return [task.submitted_by_id] if task.submitted_by_id else []
+    return [u.id for u in task.participants]
+
+
 def award_chore(db: Session, task: Task, fam: FamilySettings) -> int:
-    """Add completion (+ bonus) rows for an approved chore. Caller commits."""
-    kid_id = task.assigned_to_id
-    base = task.points or 0
-    db.add(
-        Points(
-            user_id=kid_id,
-            points_type=PointsType.TASK_COMPLETION,
-            amount=base,
-            description=task.title,
-            reference_type="task",
-            reference_id=task.id,
-        )
-    )
+    """Add completion (+ bonus) rows for an approved chore. Caller commits.
+
+    Team chores split points and bonus evenly (remainder dropped).
+    """
+    kids = _recipients(task)
+    if not kids:
+        return 0
+    n = len(kids)
+    base = (task.points or 0) // n
     due = (task.recurrence_pattern or {}).get("due_time")
     deadline = deadline_utc(fam, task.due_date.date(), due) if task.due_date else None
-    bonus = bonus_for(task.submitted_for_approval_at, deadline, fam.early_bonus_cap)
-    if bonus > 0:
+    bonus = bonus_for(task.submitted_for_approval_at, deadline, fam.early_bonus_cap) // n
+    for kid_id in kids:
         db.add(
             Points(
                 user_id=kid_id,
-                points_type=PointsType.BONUS,
-                amount=bonus,
-                description=f"Early bonus: {task.title}",
-                reference_type="task_bonus",
+                points_type=PointsType.TASK_COMPLETION,
+                amount=base,
+                description=task.title,
+                reference_type="task",
                 reference_id=task.id,
             )
         )
-    return base + bonus
+        if bonus > 0:
+            db.add(
+                Points(
+                    user_id=kid_id,
+                    points_type=PointsType.BONUS,
+                    amount=bonus,
+                    description=f"Early bonus: {task.title}",
+                    reference_type="task_bonus",
+                    reference_id=task.id,
+                )
+            )
+    return (base + bonus) * n
 
 
 def request(

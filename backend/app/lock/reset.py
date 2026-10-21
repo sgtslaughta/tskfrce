@@ -2,12 +2,13 @@
 
 from datetime import date, datetime, time
 
-from sqlalchemy.orm import Session
+from sqlalchemy import or_, select
+from sqlalchemy.orm import Session, object_session
 
 from app.lock.rules import OwnerChores
 from app.lock.schedule import local_now, occurs_on
 from app.models.family import FamilySettings
-from app.models.task import Task, TaskStatus
+from app.models.task import Task, TaskStatus, chore_participants
 from app.models.user import User, UserRole
 
 
@@ -50,18 +51,50 @@ def midnight(day: date) -> datetime:
     return datetime.combine(day, time.min)
 
 
-def make_instance(defn: Task, day: date) -> Task:
-    return Task(
-        title=defn.title,
-        is_recurring=False,
-        parent_task_id=defn.id,
-        due_date=midnight(day),
-        status=TaskStatus.TODO,
-        assigned_to_id=defn.assigned_to_id,
-        created_by_id=defn.created_by_id,
-        points=defn.points,
-        recurrence_pattern=dict(defn.recurrence_pattern or {}),
+def kid_chores_filter(kid_id: int):
+    """SQL clause: instances owned by the kid or shared with them."""
+    return or_(
+        Task.assigned_to_id == kid_id,
+        Task.id.in_(
+            select(chore_participants.c.task_id).where(chore_participants.c.kid_id == kid_id)
+        ),
     )
+
+
+def assignee_ids(defn: Task) -> list[int]:
+    return list((defn.recurrence_pattern or {}).get("assignees") or [defn.assigned_to_id])
+
+
+def task_kid_ids(t: Task) -> list[int]:
+    """Kids an instance belongs to (its owner, or its participants when shared)."""
+    if t.assigned_to_id is not None:
+        return [t.assigned_to_id]
+    return [u.id for u in t.participants]
+
+
+def make_instances(defn: Task, day: date) -> list[Task]:
+    """One instance per assignee (each), or one shared instance (race/team)."""
+    ids = assignee_ids(defn)
+    pattern = defn.recurrence_pattern or {}
+
+    def new(owner: int | None) -> Task:
+        return Task(
+            title=defn.title,
+            is_recurring=False,
+            parent_task_id=defn.id,
+            due_date=midnight(day),
+            status=TaskStatus.TODO,
+            assigned_to_id=owner,
+            created_by_id=defn.created_by_id,
+            points=defn.points,
+            recurrence_pattern=dict(pattern),
+        )
+
+    if pattern.get("mode", "each") == "each" or len(ids) == 1:
+        return [new(i) for i in ids]
+    shared = new(None)
+    shared.participants = [object_session(defn).get(User, i) for i in ids]
+    return [shared]
 
 
 def run_reset(db: Session, day: date) -> int:
@@ -89,8 +122,9 @@ def run_reset(db: Session, day: date) -> int:
         )
         if exists:
             continue
-        db.add(make_instance(defn, day))
-        created += 1
+        new = make_instances(defn, day)
+        db.add_all(new)
+        created += len(new)
     fam = db.get(FamilySettings, 1)
     if fam is not None:
         fam.last_reset_date = day
@@ -109,7 +143,7 @@ def chore_counts(db: Session, kid_id: int, day: date) -> OwnerChores:
         .filter(
             is_chore_filter(),
             Task.is_recurring.is_(False),
-            Task.assigned_to_id == kid_id,
+            kid_chores_filter(kid_id),
             Task.due_date == midnight(day),
             Task.status != TaskStatus.CANCELLED,
         )

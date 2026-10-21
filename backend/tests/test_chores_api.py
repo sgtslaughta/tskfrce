@@ -110,17 +110,19 @@ def test_definitions_lists_repeating_only(client, db, kid, parent_headers, kid_h
     d = mk().json()["definition"]
     mk(repeat={"type": "once"})
     r = client.get(f"/api/v1/chores/definitions?kid_id={kid.id}", headers=parent_headers)
-    assert r.json() == [
-        {
-            "id": d["id"],
-            "title": "Dishes",
-            "points": 10,
-            "kid_id": kid.id,
-            "repeat": {"type": "daily", "days": []},
-            "needs_photo": True,
-            "due_time": None,
-        }
-    ]
+    (row,) = r.json()
+    want = {
+        "id": d["id"],
+        "title": "Dishes",
+        "points": 10,
+        "kid_id": kid.id,
+        "kid_ids": [kid.id],
+        "mode": "each",
+        "repeat": {"type": "daily", "days": []},
+        "needs_photo": True,
+        "due_time": None,
+    }
+    assert {k: row[k] for k in want} == want
     assert (
         client.get("/api/v1/chores/definitions?kid_id=999999", headers=parent_headers).json() == []
     )

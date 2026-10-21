@@ -17,12 +17,20 @@ from sqlalchemy import (
     ForeignKey,
     Integer,
     String,
+    Table,
     Text,
 )
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
+
+chore_participants = Table(
+    "chore_participants",
+    Base.metadata,
+    Column("task_id", Integer, ForeignKey("tasks.id"), primary_key=True),
+    Column("kid_id", Integer, ForeignKey("users.id"), primary_key=True),
+)
 
 
 class TaskPriority(str, Enum):
@@ -123,6 +131,11 @@ class Task(Base):
     approved_at = Column(DateTime, nullable=True)
     approved_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
 
+    # Shared chores: who submitted (race winner), retry count, parent's send-back note
+    submitted_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    attempt = Column(Integer, nullable=False, default=1, server_default="1")
+    last_note = Column(String(500), nullable=True)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -153,6 +166,7 @@ class Task(Base):
 
     # New workflow and messaging relationships
     approved_by = relationship("User", foreign_keys=[approved_by_id])
+    participants = relationship("User", secondary=chore_participants)
     comments = relationship("TaskComment", back_populates="task", cascade="all, delete-orphan")
     status_history = relationship(
         "TaskStatusHistory", back_populates="task", cascade="all, delete-orphan"

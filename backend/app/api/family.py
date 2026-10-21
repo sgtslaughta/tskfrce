@@ -9,7 +9,13 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db, require_parent
 from app.api.devices import device_out
 from app.lock.loop import trigger
-from app.lock.reset import chore_state, current_chore_day, is_chore_filter, midnight
+from app.lock.reset import (
+    chore_state,
+    current_chore_day,
+    is_chore_filter,
+    midnight,
+    task_kid_ids,
+)
 from app.models.family import get_family
 from app.models.lock import Device
 from app.models.task import Task, TaskStatus
@@ -76,7 +82,7 @@ def today(db: Session = Depends(get_db)):
         chores = [
             {"id": t.id, "title": t.title, "points": t.points or 0, "state": chore_state(t)}
             for t in tasks
-            if t.assigned_to_id == k.id
+            if k.id in task_kid_ids(t)
         ]
         kids.append(
             {

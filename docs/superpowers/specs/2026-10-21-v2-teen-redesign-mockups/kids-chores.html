@@ -1,0 +1,106 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap');
+.kc { --ink:#1d2b53; --sun:#ffc93c; --red:#ff6b4a; --green:#7bd389; --bg:#f4f7fa; --card:#fff; --sub:#4a5a80; --line:#eef1f6; --edge:#c9d3e6; font-family:Inter; color:var(--ink); }
+.kc .h { font-family:'Space Grotesk'; font-weight:700; }
+.kc .cap { text-transform:uppercase; letter-spacing:.08em; font-size:10.5px; font-weight:600; }
+.kc .mono { font-family:'JetBrains Mono'; font-weight:700; }
+.kc .app { display:grid; grid-template-columns:190px 1fr 300px; background:var(--bg); border-radius:10px; overflow:hidden; min-height:560px; }
+@media (max-width:1000px){ .kc .app{grid-template-columns:1fr} .kc .side{display:none} }
+.kc .side { background:var(--ink); color:#c6d0ee; padding:16px 0; }
+.kc .side .h { color:#fff; padding:0 16px 14px; font-size:16px; }
+.kc .side a { display:flex; justify-content:space-between; padding:10px 16px; color:#c6d0ee; text-decoration:none; font-size:13px; }
+.kc .side a.on { background:rgba(255,255,255,.08); color:#fff; box-shadow:inset 3px 0 0 var(--sun); }
+.kc .side .n { font-family:'JetBrains Mono'; font-size:11px; opacity:.7; }
+.kc .side .grp { padding:14px 16px 4px; opacity:.55; }
+.kc .main { padding:18px; }
+.kc .top { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:8px; flex-wrap:wrap; }
+.kc .top .h { font-size:24px; }
+.kc .btn { font-family:'Space Grotesk'; font-weight:700; font-size:11px; text-transform:uppercase; letter-spacing:.06em; padding:9px 13px; background:var(--sun); color:var(--ink); clip-path:polygon(0 0,calc(100% - 8px) 0,100% 8px,100% 100%,8px 100%,0 calc(100% - 8px)); display:inline-block; }
+.kc .btn.s { background:var(--edge); }
+.kc .filters { display:flex; gap:6px; margin-bottom:12px; flex-wrap:wrap; }
+.kc .chip { font-size:12px; padding:5px 10px; border:1.5px solid var(--edge); border-radius:4px; background:#fff; }
+.kc .chip.on { background:var(--ink); color:#fff; border-color:var(--ink); }
+.kc .list { background:var(--card); border-radius:8px; box-shadow:0 1px 2px rgba(29,43,83,.06),0 6px 20px rgba(29,43,83,.08); }
+.kc .row { display:grid; grid-template-columns:1fr auto auto auto; gap:12px; align-items:center; padding:11px 14px; border-top:1px solid var(--line); font-size:13px; }
+.kc .row:first-child { border-top:none; }
+.kc .row.sel { background:#fffbea; box-shadow:inset 3px 0 0 var(--sun); }
+.kc .t { font-weight:600; }
+.kc .meta { color:var(--sub); font-size:11.5px; margin-top:2px; }
+.kc .avs { display:flex; }
+.kc .av { width:24px; height:24px; border-radius:50%; background:#c9d3ee; display:grid; place-items:center; font-size:11px; font-weight:700; border:2px solid #fff; margin-left:-6px; }
+.kc .av:first-child { margin-left:0; }
+.kc .mode { font-size:10px; padding:2px 7px; border-radius:4px; text-transform:uppercase; letter-spacing:.05em; font-weight:700; }
+.kc .m-each { background:#eef1f6; color:var(--sub); }
+.kc .m-race { background:rgba(255,107,74,.15); color:#c4401f; }
+.kc .m-team { background:rgba(123,211,137,.2); color:#2f8a45; }
+.kc .acts { color:var(--sub); font-size:12px; display:flex; gap:10px; }
+.kc .drawer { background:var(--card); border-left:1px solid var(--line); padding:16px; display:grid; gap:12px; align-content:start; }
+.kc label { display:block; margin-bottom:4px; color:var(--sub); }
+.kc .in { border:1.5px solid var(--edge); border-radius:4px; padding:8px 10px; font-size:13px; background:#fff; }
+.kc .in.f { border-color:var(--ink); box-shadow:3px 3px 0 var(--sun); }
+.kc .r2 { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.kc .seg { display:flex; border:1.5px solid var(--edge); border-radius:4px; padding:2px; gap:2px; font-size:12px; }
+.kc .seg span { flex:1; text-align:center; padding:6px 0; }
+.kc .seg .on { background:var(--ink); color:#fff; border-radius:2px; }
+.kc .hint { font-size:11.5px; color:var(--sub); }
+.kc .sub { display:flex; align-items:center; gap:8px; font-size:13px; padding:5px 0; }
+.kc .grip { color:#b6c1d8; }
+.kc .x { margin-left:auto; color:var(--sub); }
+.kc .ov { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:14px; }
+.kc .kp { background:var(--card); border-radius:8px; padding:12px; box-shadow:0 1px 2px rgba(29,43,83,.06),0 6px 20px rgba(29,43,83,.08); }
+.kc .bar { height:6px; border-radius:99px; background:#edf1f7; overflow:hidden; margin:6px 0 4px; }
+.kc .bar i { display:block; height:100%; background:var(--green); }
+</style>
+
+<h2>Kids &amp; chores: sidebar layout</h2>
+<p class="subtitle">A sidebar for each section. The Chores section opens here: a quick progress strip for each kid, then a chore list you can filter. Picking a chore opens the editor on the right, which handles editing, copying, assigning to several kids, shared mode and subtasks.</p>
+
+<div class="kc"><div class="app">
+  <div class="side">
+    <div class="h">Kids &amp; chores</div>
+    <a href="#" class="on">Chores <span class="n">12</span></a>
+    <a href="#">Kids <span class="n">3</span></a>
+    <a href="#">Rewards <span class="n">4</span></a>
+    <a href="#">Badges <span class="n">2</span></a>
+    <div class="grp cap">Kids</div>
+    <a href="#">Maya <span class="n">3/5</span></a>
+    <a href="#">Leo <span class="n">1/4</span></a>
+    <a href="#">Sam <span class="n">4/4</span></a>
+  </div>
+
+  <div class="main">
+    <div class="ov">
+      <div class="kp"><div class="top" style="margin:0"><span class="h">Maya</span><span class="mono">3/5</span></div><div class="bar"><i style="width:60%"></i></div><div class="meta">2 left · 1 waiting for you</div></div>
+      <div class="kp"><div class="top" style="margin:0"><span class="h">Leo</span><span class="mono">1/4</span></div><div class="bar"><i style="width:25%"></i></div><div class="meta">3 left · Homework due 6pm</div></div>
+      <div class="kp"><div class="top" style="margin:0"><span class="h">Sam</span><span class="mono">4/4</span></div><div class="bar"><i style="width:100%"></i></div><div class="meta">All done</div></div>
+    </div>
+
+    <div class="top"><span class="h">Chores</span><span><span class="btn">+ New chore</span></span></div>
+    <div class="filters"><span class="chip on">Everyone</span><span class="chip">Maya</span><span class="chip">Leo</span><span class="chip">Sam</span><span class="chip">Shared</span></div>
+
+    <div class="list">
+      <div class="row sel"><div><div class="t">Clean room</div><div class="meta">Daily · due 7pm · 3 subtasks</div></div><div class="avs"><span class="av">M</span><span class="av">L</span></div><span class="mode m-each">Each</span><span class="mono">+15</span></div>
+      <div class="row"><div><div class="t">Take out trash</div><div class="meta">Mon, Thu · due 8pm</div></div><div class="avs"><span class="av">M</span><span class="av">L</span><span class="av">S</span></div><span class="mode m-race">Race</span><span class="mono">+20</span></div>
+      <div class="row"><div><div class="t">Wash the car</div><div class="meta">Saturday · 4 subtasks</div></div><div class="avs"><span class="av">L</span><span class="av">S</span></div><span class="mode m-team">Team</span><span class="mono">+40</span></div>
+      <div class="row"><div><div class="t">Homework</div><div class="meta">Weekdays · due 6pm</div></div><div class="avs"><span class="av">L</span></div><span class="mode m-each">Solo</span><span class="mono">+20</span></div>
+      <div class="row"><div><div class="t">Walk the dog</div><div class="meta">Daily · due 5pm</div></div><div class="avs"><span class="av">M</span></div><span class="mode m-each">Solo</span><span class="mono">+15</span></div>
+    </div>
+  </div>
+
+  <div class="drawer">
+    <div class="top" style="margin:0"><span class="h" style="font-size:18px">Edit chore</span><span class="acts"><span>Copy</span><span style="color:#c4401f">Delete</span></span></div>
+    <div><label class="cap">Chore</label><div class="in f">Clean room</div></div>
+    <div class="r2"><div><label class="cap">Points</label><div class="in">15</div></div><div><label class="cap">Due by</label><div class="in">7:00 PM</div></div></div>
+    <div><label class="cap">Repeat</label><div class="seg"><span>Once</span><span class="on">Daily</span><span>Weekdays</span><span>Pick days</span></div></div>
+    <div><label class="cap">Assign to</label><div class="filters" style="margin:0"><span class="chip on">Maya</span><span class="chip on">Leo</span><span class="chip">Sam</span></div></div>
+    <div><label class="cap">When more than one kid</label><div class="seg"><span class="on">Each</span><span>Race</span><span>Team</span></div><div class="hint" style="margin-top:4px">Each kid gets their own copy and their own points.</div></div>
+    <div><label class="cap">Subtasks</label>
+      <div class="sub"><span class="grip">⋮⋮</span>Fold clothes<span class="x">✕</span></div>
+      <div class="sub"><span class="grip">⋮⋮</span>Make bed<span class="x">✕</span></div>
+      <div class="sub"><span class="grip">⋮⋮</span>Vacuum floor<span class="x">✕</span></div>
+      <div class="in" style="color:#9aa3b8">+ Add a subtask</div>
+      <div class="hint">Every subtask must be ticked before the chore goes to you for approval.</div>
+    </div>
+    <div><span class="btn">Save</span> <span class="btn s">Cancel</span></div>
+  </div>
+</div></div>
