@@ -1,0 +1,119 @@
+/* gamer-cut form controls (classNames wired in theme.ts) */
+.f-btn.f-btn {
+  font-family: var(--font-display), "Space Grotesk", system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  min-height: 44px;
+  border: none;
+  border-radius: 0;
+  clip-path: polygon(
+    0 0,
+    calc(100% - 10px) 0,
+    100% 10px,
+    100% 100%,
+    10px 100%,
+    0 calc(100% - 10px)
+  );
+}
+.f-btn.f-btn[data-variant="filled"] {
+  background: var(--f-sun);
+  color: #1d2b53;
+}
+.f-btn.f-btn[data-variant="default"],
+.f-btn.f-btn[data-variant="light"] {
+  background: var(--f-edge);
+  color: var(--f-ink);
+}
+.f-btn.f-btn[data-variant="subtle"] {
+  background: transparent;
+  color: var(--f-ink);
+  clip-path: none;
+  border-radius: 4px;
+}
+.f-btn.f-btn[data-variant="subtle"][data-color="red"] {
+  color: var(--f-red);
+}
+.f-btn.f-btn:disabled,
+.f-btn.f-btn[data-disabled] {
+  opacity: 0.5;
+}
+/* clip-path would hide the outline, so drop the cut while focused */
+.f-btn.f-btn:focus-visible {
+  clip-path: none;
+  border-radius: 4px;
+  outline: 3px solid var(--f-sun);
+  outline-offset: 2px;
+}
+
+.f-input.f-input {
+  background: var(--f-field);
+  color: var(--f-ink);
+  border: 1.5px solid var(--f-edge);
+  border-radius: 4px;
+  min-height: 44px;
+}
+.f-input.f-input:focus,
+.f-input.f-input:focus-within {
+  border-color: var(--f-ink);
+  box-shadow: 3px 3px 0 var(--f-sun);
+}
+
+.f-label.f-label {
+  color: var(--f-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.f-seg.f-seg {
+  border: 1.5px solid var(--f-edge);
+  border-radius: 4px;
+  background: transparent;
+}
+.f-seg.f-seg .mantine-SegmentedControl-indicator {
+  background: var(--f-ink);
+  border-radius: 2px;
+  box-shadow: none;
+}
+.f-seg.f-seg [data-active] .mantine-SegmentedControl-label,
+.f-seg.f-seg [data-active] {
+  color: var(--f-card);
+}
+
+.f-switch.f-switch {
+  border-radius: 4px;
+  border: 1.5px solid var(--f-edge);
+  background: var(--f-edge);
+}
+.f-switch.f-switch::before {
+  border-radius: 2px;
+}
+input:checked + .f-switch.f-switch {
+  background: var(--f-green);
+  border-color: var(--f-green);
+}
+
+.f-check.f-check {
+  border-radius: 3px;
+  border: 1.5px solid var(--f-edge);
+  background: var(--f-field);
+}
+.f-check.f-check:checked {
+  background: var(--f-green);
+  border-color: var(--f-green);
+}
+
+.f-chipctl.f-chipctl {
+  border: 1.5px solid var(--f-edge);
+  border-radius: 4px;
+  background: var(--f-field);
+  color: var(--f-ink);
+}
+.f-chipctl.f-chipctl[data-checked] {
+  background: var(--f-ink);
+  border-color: var(--f-ink);
+  color: var(--f-card);
+}

@@ -68,7 +68,6 @@
 .f-shell h1,
 .f-shell h2,
 .f-shell h3 { font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif; }
-.f-btn { font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif; font-weight: 600; min-height: 44px; }
 
 .f-shell :focus-visible,
 .f-card :focus-visible {

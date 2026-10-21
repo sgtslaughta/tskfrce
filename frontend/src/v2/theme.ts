@@ -27,7 +27,13 @@ export const fridgeTheme: MantineThemeOverride = createTheme({
     fridgeGreen: virtualColor({ name: 'fridgeGreen', light: 'fridgeGreenLight', dark: 'fridgeGreenDark' }),
   },
   components: {
-    Button: { defaultProps: { className: 'f-btn' } },
+    Button: { classNames: { root: 'f-btn' } },
+    Input: { classNames: { input: 'f-input' } },
+    InputWrapper: { classNames: { label: 'f-label' } },
+    SegmentedControl: { classNames: { root: 'f-seg' } },
+    Switch: { classNames: { track: 'f-switch' } },
+    Checkbox: { classNames: { input: 'f-check' } },
+    Chip: { classNames: { label: 'f-chipctl' } },
   },
 })
 
