@@ -13,13 +13,21 @@ def _health(handler: _Handler) -> tuple[int, dict]:
     return 200, {"ok": True}
 
 
+MAX_BODY = 64 * 1024
+
+
 def _authorized(h: _Handler) -> bool:
     got = h.headers.get("X-Internal-Token") or ""
-    return bool(got) and hmac.compare_digest(got, h.server.token)  # type: ignore[attr-defined]
+    return bool(got) and hmac.compare_digest(got.encode("utf-8"), h.server.token.encode("utf-8"))  # type: ignore[attr-defined]
 
 
 def _json_body(h: _Handler) -> Any:
-    length = int(h.headers.get("Content-Length") or 0)
+    try:
+        length = max(0, int(h.headers.get("Content-Length") or 0))
+    except ValueError:
+        length = 0
+    if length > MAX_BODY:
+        raise ValueError("The request body is too large.")
     try:
         return json.loads(h.rfile.read(length) or b"null")
     except ValueError:
@@ -29,7 +37,10 @@ def _json_body(h: _Handler) -> Any:
 def _state(h: _Handler) -> tuple[int, dict]:
     if not _authorized(h):
         return 403, {"error": "forbidden"}
-    body = _json_body(h)
+    try:
+        body = _json_body(h)
+    except ValueError as e:
+        return 400, {"error": str(e)}
     if not isinstance(body, dict):
         return 400, {"error": "The request body must be a JSON object."}
     macs = body.get("blocked")
@@ -45,7 +56,10 @@ def _state(h: _Handler) -> tuple[int, dict]:
 def _test_block(h: _Handler) -> tuple[int, dict]:
     if not _authorized(h):
         return 403, {"error": "forbidden"}
-    body = _json_body(h)
+    try:
+        body = _json_body(h)
+    except ValueError as e:
+        return 400, {"error": str(e)}
     if not isinstance(body, dict) or not isinstance(body.get("mac"), str):
         return 400, {"error": "The request body must be a JSON object with a 'mac' text value."}
     return 200, h.server.tester(body["mac"])  # type: ignore[attr-defined]

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 import re
 import threading
 from collections.abc import Callable
+
+log = logging.getLogger(__name__)
 
 # Deliberate copy of the app's MAC_RE (blocker must not import backend code).
 MAC_RE = re.compile(r"^([0-9a-f]{2}:){5}[0-9a-f]{2}$")
@@ -25,8 +28,13 @@ class StateStore:
             self._blocked = new
             result = set(new)
             callbacks = list(self._callbacks)
+        # Concurrent set_blocked callers may fire callbacks out of order;
+        # subscribers should re-read current().
         for cb in callbacks:
-            cb(set(result))
+            try:
+                cb(set(result))
+            except Exception:
+                log.exception("state change callback failed")
         return result
 
     def current(self) -> set[str]:

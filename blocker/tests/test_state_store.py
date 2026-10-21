@@ -30,3 +30,16 @@ def test_on_change_fires_with_new_set():
     with pytest.raises(ValueError):
         s.set_blocked(["bad"])
     assert seen == [{"aa:bb:cc:dd:ee:ff"}]
+
+
+def test_failing_callback_does_not_skip_others():
+    s = StateStore()
+    seen = []
+
+    def boom(_):
+        raise RuntimeError("x")
+
+    s.on_change(boom)
+    s.on_change(seen.append)
+    assert s.set_blocked(["aa:bb:cc:dd:ee:ff"]) == {"aa:bb:cc:dd:ee:ff"}
+    assert seen == [{"aa:bb:cc:dd:ee:ff"}]

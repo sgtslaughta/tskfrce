@@ -88,3 +88,22 @@ def test_test_block_returns_tester_result(api):
     status, body = _call(server, "/test-block", {"mac": "aa:bb:cc:dd:ee:ff"})
     assert status == 200 and body["offline"] is True
     assert _call(server, "/test-block", {"mac": "x"}, token="bad")[0] == 403
+
+
+def test_non_ascii_token_is_403(api):
+    server, _ = api
+    assert _call(server, "/state", {"blocked": []}, token="té")[0] == 403
+
+
+def _raw(server, length):
+    conn = http.client.HTTPConnection("127.0.0.1", server.server_address[1], timeout=5)
+    headers = {"X-Internal-Token": "t", "Content-Length": length}
+    conn.request("POST", "/state", body=b"{}", headers=headers)
+    resp = conn.getresponse()
+    return resp.status
+
+
+def test_bad_content_length_is_400(api):
+    server, _ = api
+    assert _raw(server, "abc") == 400
+    assert _raw(server, "70000") == 400
