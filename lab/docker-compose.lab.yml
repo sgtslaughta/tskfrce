@@ -4,9 +4,11 @@ x-host: &host
   build: ./host
   cap_add: [NET_ADMIN]
   dns: [203.0.113.1]
+  depends_on: [router]
 
 services:
   fake-internet:
+    depends_on: [router]
     image: nginx:alpine
     cap_add: [NET_ADMIN]
     command: >-
@@ -34,7 +36,7 @@ services:
       context: ../backend
     container_name: !reset null
     ports: !reset []
-    depends_on: !reset []
+    depends_on: !override [router]
     healthcheck: {disable: true}
     environment:
       INTERNAL_TOKEN: labtoken
@@ -49,6 +51,7 @@ services:
 
   blocker:
     build: ../blocker
+    depends_on: [router]
     mac_address: "02:99:00:00:00:04"
     cap_add: [NET_ADMIN, NET_RAW]
     sysctls:
