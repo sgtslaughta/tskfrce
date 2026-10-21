@@ -1,8 +1,11 @@
 from datetime import UTC, date, datetime, timedelta
 
 from app.lock.state import tick
+from app.models.badge import BadgeAward
 from app.models.family import get_family
+from app.models.gamification import Points, PointsType
 from app.models.lock import Device, DeviceGroup, Override, TimeWindow
+from app.models.reward import Redemption
 from app.models.task import Task, TaskStatus
 
 DAY = date(2026, 10, 20)
@@ -249,6 +252,18 @@ def test_delete_group_removes_windows(client, db, parent_headers):
     db.commit()
     assert client.delete(f"/api/v1/groups/{g['id']}", headers=parent_headers).status_code == 200
     assert db.query(TimeWindow).count() == 0 and db.query(Device).count() == 1
+
+
+def test_delete_kid_removes_points_and_requests(client, db, kid, parent_headers):
+    db.add(Points(user_id=kid.id, points_type=PointsType.BONUS, amount=5))
+    db.add(Redemption(kid_id=kid.id, kind="screen_time", minutes=15, cost=5))
+    db.add(BadgeAward(kid_id=kid.id, badge_key="first_blood", tier=1))
+    db.commit()
+    assert client.delete(f"/api/v1/kids/{kid.id}", headers=parent_headers).status_code == 200
+    assert db.query(Points).count() == 0
+    assert db.query(Redemption).count() == 0
+    assert db.query(BadgeAward).count() == 0
+    assert client.get("/api/v1/redemptions", headers=parent_headers).json() == []
 
 
 def test_delete_kid_cancels_their_chores(client, db, parent, kid, parent_headers):

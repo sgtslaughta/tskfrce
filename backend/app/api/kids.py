@@ -12,7 +12,10 @@ from app.core.auth import AuthService
 from app.lock.loop import trigger
 from app.lock.overrides import clear_override, set_override
 from app.lock.reset import is_chore_filter
+from app.models.badge import BadgeAward
+from app.models.gamification import Points
 from app.models.lock import Override, TimeWindow, device_owners
+from app.models.reward import Redemption
 from app.models.task import Task, TaskStatus, chore_participants
 from app.models.user import User, UserRole
 from app.schemas.lock import KidCreate, KidPatch, OverrideIn
@@ -118,6 +121,9 @@ def delete_kid(kid_id: int, db: Session = Depends(get_db)):
     db.query(Override).filter(Override.created_by_id == kid.id).update({"created_by_id": None})
     db.execute(delete(device_owners).where(device_owners.c.user_id == kid.id))
     chat.purge_kid(db, kid.id)
+    db.query(Points).filter(Points.user_id == kid.id).delete()
+    db.query(Redemption).filter(Redemption.kid_id == kid.id).delete()
+    db.query(BadgeAward).filter(BadgeAward.kid_id == kid.id).delete()
     db.flush()
     db.expire_all()
     for d in owned:
