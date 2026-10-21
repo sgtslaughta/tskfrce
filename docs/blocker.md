@@ -2,6 +2,19 @@
 
 A small program on an always-on computer at home. It pauses the internet for the devices you choose until their chores are approved. It only works on your own home Wi-Fi.
 
+## What it can't do
+
+The home box pauses internet for normal use on your Wi‑Fi. It can't stop a determined kid who changes network settings, uses a phone hotspot, or swaps devices — but it will tell you when a paused device is getting around the block.
+
+- **Test block** checks one device. Press it to see what happened:
+  - **Success — the device lost internet access while blocked.**
+  - **We haven't seen this device on the network yet, so we couldn't test it.**
+  - **The device stayed online and never talked to the box. Your router is probably stopping the box from stepping in — check the router list in the docs.** See [routers.md](routers.md) for routers that resist blocking.
+  - **The device stayed online even though it was talking to the box. It looks like the device itself is getting around the block — someone may have changed its network settings.**
+- **Getting-around alert.** If a paused device keeps reaching the internet, you get a notification titled "<device> is getting around the block", and the device shows a "getting around the block" badge on the Devices page. The badge clears on its own once the device stops reaching the internet while paused, or once you unpause it.
+
+For the reasoning behind these limits, see the [blocker enforcement decision record](adr/0001-blocker-enforcement-vs-firewalla.md).
+
 ## What can kids try to get around it?
 
 | Trick | What happens |
