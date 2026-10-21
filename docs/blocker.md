@@ -29,5 +29,7 @@ Some routers, especially certain mesh systems (e.g. some Eero or Google Wifi mod
 
 ## Setup
 
-1. Set `LAN_IFACE` to your box's network name (for example `eth0`).
-2. Run `docker compose up -d blocker`.
+1. Start the app once. On its first start it makes a secret code (the internal token) so the app and the box can trust each other.
+2. Copy that code into a file named `.env` next to `docker-compose.yml`, on one line: `INTERNAL_TOKEN=your-code-here`.
+3. Set `LAN_IFACE` (in the same `.env`) to your box's network name, for example `LAN_IFACE=eth0`.
+4. Run `docker compose up -d blocker`.

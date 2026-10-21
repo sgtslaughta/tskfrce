@@ -97,11 +97,8 @@ services:
     environment:
       # Host network: reach the app over loopback
       BACKEND_URL: ${BLOCKER_BACKEND_URL:-http://127.0.0.1:8000}
-      DATA_DIR: /data
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?set INTERNAL_TOKEN in .env}
       LAN_IFACE: ${LAN_IFACE:-eth0}
-    volumes:
-      # Read-only: blocker only reads secrets.json for INTERNAL_TOKEN
-      - task4ce_data:/data:ro
     restart: unless-stopped
 
   # PostgreSQL (optional, for production)

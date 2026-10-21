@@ -18,6 +18,7 @@ def test_blocker_service_has_host_net_and_minimal_caps():
     assert not svc.get("privileged", False)
 
 
-def test_blocker_data_volume_is_read_only():
+def test_blocker_has_no_data_volume_and_gets_token_from_env():
     svc = _blocker()
-    assert "task4ce_data:/data:ro" in svc["volumes"]
+    assert not any("task4ce_data" in str(v) for v in svc.get("volumes", []))
+    assert "INTERNAL_TOKEN" in svc["environment"]
