@@ -22,6 +22,8 @@ Prerequisite: Projects 1–6 merged into `feat/v2-teen-redesign`, lab e2e green.
 - Polish passes change no product behavior unless a pass finds a bug; each fix is its own commit with a test where it's logic.
 - Publishing (pushing, enabling Pages) is **not** part of this plan: the owner does it or approves it separately.
 
+- Owner bar (2026-10-21): "we have a lot of front end work to do (this should be a world-class app)". Polish passes are front-end heavy: every screen reviewed in a real browser (light/dark, 1280 px and 360 px) against the approved mockups, using the `frontend-design` skill; motion, empty/loading states, micro-interactions, typography rhythm and touch ergonomics get the same weight as bugs. Each pass ends with before/after screenshots the owner can review.
+
 ## Review Focus
 
 1. **Jargon leak** into parent pages. (Task 5 check: grep the parent pages for a banned-word list.)
