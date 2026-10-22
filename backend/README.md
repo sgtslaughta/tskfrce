@@ -257,7 +257,11 @@ docker-compose logs -f frontend
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+## Account recovery
+
+On the box: `docker compose -f docker-compose.prod.yml exec backend python -m app.cli reset-password <parent-username>` prints a one-time link (30 minutes). Another parent can also make one in Settings → Parents.
 
 ## Support
 

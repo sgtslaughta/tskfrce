@@ -61,18 +61,11 @@ Copper, silver, gold, platinum and mega-diamond. Doing more moves a badge up a l
 
 ## Can I check in when I'm away from home?
 
-Yes, with a free service called Tailscale. The last step of the setup wizard has the short version.
+Yes, with a free service called Tailscale. See [Remote access](../remote-access.md) for the steps.
 
 ## How do I update?
 
-In the `tskfrce` folder on the box:
-
-```bash
-git pull
-docker compose up -d --build backend frontend blocker
-```
-
-The app saves a copy of your data before it changes anything.
+Run the install line again (see [Install](02-install.md)). Your family, chores and settings are kept. The app saves a copy of your data before it changes anything.
 
 ## How do I report a bug or ask for a feature?
 

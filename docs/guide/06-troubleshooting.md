@@ -52,7 +52,23 @@ The real fix is a talk. If you see the alert, ask. Keep the box out of reach.
 
 ## I forgot my password
 
-Ask another parent to sign in and use **Settings → Parents** to invite you again. If you are the only parent, see "Start over" below.
+**If there is another parent:**
+
+1. They sign in and tap **Settings**, then **Parents**.
+2. They tap **Reset password** next to your name, then **Copy link**.
+   You should see: a link and the words "It works once, for 30 minutes."
+3. They send you the link. Open it, type a new password twice and tap **Save password**.
+   You should see: the log in page with "Password saved".
+
+**If you are the only parent**, type this on the home box (in the `task4ce` folder), with your username in place of `mom`:
+
+```bash
+docker compose -f docker-compose.prod.yml exec backend python -m app.cli reset-password mom
+```
+
+You should see: a link. Open it on your phone or computer, and choose a new password. If the name is wrong, the box shows the parent names it knows.
+
+If the link says it has expired, make a new one. Each new link cancels the old one.
 
 ## A kid forgot their PIN
 

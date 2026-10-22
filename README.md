@@ -19,7 +19,12 @@ It is honest about its limits: a determined kid can get around it (a phone hotsp
 ## Get started (about 20 minutes)
 
 1. [See what you need](docs/guide/01-what-you-need.md): a small always-on computer and an ordinary home router.
-2. [Install t@sk4ce](docs/guide/02-install.md): copy and paste a few lines.
+2. [Install t@sk4ce](docs/guide/02-install.md): copy and paste one line.
+
+   ```bash
+   curl -fsSL https://sgtslaughta.github.io/tskfrce/install.sh | sh
+   ```
+
 3. [Do the first-time setup](docs/guide/03-first-setup.md): add your family, kids and devices.
 4. [Learn the everyday routine](docs/guide/04-everyday-use.md): approve chores, answer requests, give rewards.
 5. [Show your kids](docs/guide/05-for-kids.md): a one-page guide you can hand over.
@@ -29,6 +34,8 @@ Something wrong? See [Troubleshooting](docs/guide/06-troubleshooting.md) and the
 ## For developers
 
 Architecture, data model, security notes and how to add badges or flair: [docs/engineering.md](docs/engineering.md).
+
+Forgot a parent password? Another parent can make a reset link in Settings, or run `docker compose -f docker-compose.prod.yml exec backend python -m app.cli reset-password <name>` on the box.
 
 Layout: `backend/` (FastAPI + SQLite), `frontend/` (Next.js), `blocker/` (the home box service), `lab/` (an isolated Docker network for tests).
 
