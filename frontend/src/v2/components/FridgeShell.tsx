@@ -6,6 +6,7 @@ import { useDisclosure } from '@mantine/hooks'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { ChatDock } from '@/v2/chat/ChatDock'
 import { BlockerBanner } from './BlockerBanner'
+import { Bell } from './Bell'
 import { ColorSchemeToggle } from './ColorSchemeToggle'
 import { cancelSignOut, startSignOut } from './RequireParent'
 
@@ -68,6 +69,7 @@ export function FridgeShell({
         <Box visibleFrom="md" style={{ flex: 1 }}>
           <Nav current={router.pathname} />
         </Box>
+        <Bell />
         <Box hiddenFrom="md" style={{ flex: 1 }} />
         <ColorSchemeToggle />
         <Button variant="default" onClick={logOut} visibleFrom="xs">

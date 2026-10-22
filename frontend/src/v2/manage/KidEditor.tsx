@@ -4,6 +4,7 @@ import { useDisclosure } from '@mantine/hooks'
 import { useCreateKid, useDeleteKid, usePatchKid, type KidBody } from '@/v2/hooks/useKids'
 import type { Kid } from '@/v2/types'
 import { EmojiPicker } from '@/v2/components/EmojiPicker'
+import { BonusForm } from './BonusForm'
 import { ConfirmDelete } from './ConfirmDelete'
 import { toastFail, toastOk } from '../notify'
 
@@ -72,6 +73,7 @@ export function KidEditor({ kid, onDone }: { kid?: Kid; onDone?: () => void }) {
           </Button>
         )}
       </div>
+      {kid && <BonusForm kid={kid} />}
       {kid && (
         <ConfirmDelete
           opened={confirm}

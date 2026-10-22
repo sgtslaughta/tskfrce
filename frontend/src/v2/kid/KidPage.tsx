@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@mantine/core'
 import { CANT_REACH } from '../api'
 import { ProgressHeader } from '../components/ProgressHeader'
+import { Bell } from '../components/Bell'
 import { LockBadge } from '../components/LockBadge'
 import { StickerCard } from '../components/StickerCard'
 import { ChatDock } from '../chat/ChatDock'
@@ -178,6 +179,11 @@ export function KidPage() {
   return (
     <main className="f-shell" style={{ minHeight: '100vh' }}>
       <div className="f-main" style={{ maxWidth: 520 }}>
+        {authed && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <Bell kid />
+          </div>
+        )}
         {body}
       </div>
       {authed && <ChatDock kid meId={who?.id ?? kidId ?? null} />}
