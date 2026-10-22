@@ -10,7 +10,7 @@
 |----------|----------|---------|--------|
 | HIGH | Authentication | Password change endpoint not verifying current password | FIXED |
 | MEDIUM | Authorization | IDOR on GET /api/v1/users/{user_id} | FIXED |
-| MEDIUM | Authorization | Kid login allows multiple pin-less kids on same device | FIXED |
+| MEDIUM | Authorization | Shared devices without PINs allow easy kid-to-kid login | MITIGATED (Nudge) |
 | MEDIUM | API Security | CORS configuration overly permissive (allow_methods="*", allow_headers="*") | FIXED |
 | LOW | Headers | Missing Content-Security-Policy header | FIXED |
 
@@ -55,11 +55,11 @@
 
 ---
 
-### 3. Kid Login PIN Enforcement (MEDIUM)
+### 3. Shared Devices Without PINs Allow Easy Kid-to-Kid Login (MEDIUM)
 
 **Location:** `backend/app/api/kid.py` lines 80-94
 
-**Issue:** When multiple kids own the same device (same IP), any kid without a PIN could login as any other kid on that device without a PIN. The login endpoint accepted the kid_id in the request body without additional verification when no PIN was set.
+**Issue:** When multiple kids own the same device (same IP), any kid without a PIN could login as any other kid on that device without a PIN. The login endpoint accepts the kid_id in the request body without additional verification when no PIN is set.
 
 **Exploit Scenario:** 
 - Device has kids A and B both as owners
@@ -67,12 +67,19 @@
 - Kid A can login as kid B by providing B's kid_id
 - Kid B would see A's tasks and profile
 
-**Fix:** Added validation to require all kids on a multi-kid device to have PINs. The endpoint now:
-- Checks if multiple kids on the device lack PINs
-- Rejects login attempt with 401 if pin-less kids exist on a multi-kid device
-- Still allows PIN verification for kids with PINs set
+**Mitigation (Per Owner Decision):** Rather than enforce PIN requirement, nudge parents to add PINs via:
+- Backend: `shared_without_pin` array in `/chores/today` payload lists devices with ≥2 kids where ≥1 lacks PIN
+- Backend: `needs_pins: bool` flag in device output
+- Frontend: Info card on Today page: "Leo and Maya share Family iPad. Add PINs so they can't sign in as each other."
+- Frontend: "Set PINs" button links to kid PIN editor with deep link `?section=kids&kid=<id>&pin=1`
+- Frontend: Similar nudge in Devices drawer for each device with `needs_pins=true`
 
-**Verification:** Added test coverage in `test_kid_login_multi_kid_device` (part of security_fixes.py)
+**Verification:** 
+- Backend tests verify shared_without_pin payload populated correctly
+- Test with 2 kids, one without PIN → listed
+- Test with 2 kids, both with PIN → not listed
+- Frontend card renders and button targets correct kid
+- Tests pass: 357 backend tests + 206 frontend tests
 
 ---
 
@@ -120,7 +127,7 @@ Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'
 
 ### Backend Tests
 ```
-355 tests passed (including 3 new security-specific tests)
+357 tests passed (including 5 security and nudge tests)
 1 pre-existing failure (test_unlock_timer_expires - unrelated to security fixes)
 ```
 
