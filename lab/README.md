@@ -10,6 +10,8 @@ Isolated Docker Compose lab for exercising the blocker (ARP/NDP, redirect, resis
 | kid1 | .11 / ::11 | - | 02:99:00:00:00:11 |
 | kid2 | .12 / ::12 | - | 02:99:00:00:00:12 |
 | parent | .13 / ::13 | - | 02:99:00:00:00:13 |
+| frontend (e2e profile) | .5 | - | - |
+| e2e (Playwright, e2e profile) | .6 | - | - |
 | fake-internet | - | 203.0.113.1 / 2001:db8:1::1 | - |
 
 Both networks are `internal: true`; nothing reaches the real internet.
@@ -20,6 +22,12 @@ Both networks are `internal: true`; nothing reaches the real internet.
     docker compose -f lab/docker-compose.lab.yml up -d --build
     docker compose -f lab/docker-compose.lab.yml exec kid1 curl -s -m 3 http://203.0.113.1/
     docker compose -f lab/docker-compose.lab.yml down -v
+
+## Driver script and tests
+
+`bash scripts/lab.sh up` builds the lab, runs first-time setup (user `labparent`) and marks the kid and parent containers as guests; `down` tears it down. `e2e` starts the frontend and runs the browser tests (screenshots land in `frontend/e2e-artifacts`). Helpers: `block|unblock|check|check6|portal|resist|reset|resisting|test-block <kid1|kid2|parent>`. Run it with no arguments for usage.
+
+Journey tests (real ARP, nftables, portal): `cd blocker && RUN_INTEGRATION=1 python -m pytest tests/lab -v`. CI runs both, see [docs/engineering.md](../docs/engineering.md#testing).
 
 Docker takes the first address of each subnet as gateway; on `wan` the gateway is moved to
 203.0.113.254 / 2001:db8:1::ffff so `fake-internet` can own .1.

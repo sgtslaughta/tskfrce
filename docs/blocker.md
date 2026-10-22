@@ -42,7 +42,9 @@ It fails open: if the box is off or unplugged, all devices get their internet ba
 
 ## Setup
 
-1. Start the app once. On its first start it makes a secret code (the internal token) so the app and the box can trust each other.
-2. Copy that code into a file named `.env` next to `docker-compose.yml`, on one line: `INTERNAL_TOKEN=your-code-here`.
-3. Set `LAN_IFACE` (in the same `.env`) to your box's network name, for example `LAN_IFACE=eth0`.
-4. Run `docker compose up -d blocker`.
+The parent-friendly steps are in the [install guide](guide/02-install.md). In short:
+
+1. Put `INTERNAL_TOKEN=temporary` and `LAN_IFACE=<your network name, for example eth0>` in a `.env` file next to `docker-compose.yml` (compose refuses to run without a token).
+2. Start the app: `docker compose up -d --build backend frontend`. On its first start the app makes a secret code (the internal token) so the app and the box can trust each other, and stores it in `secrets.json` in its data folder.
+3. Read it with `docker compose exec backend python -c "import json; print(json.load(open('/app/data/secrets.json'))['INTERNAL_TOKEN'])"` and put it in `.env` in place of `temporary`.
+4. Run `docker compose up -d blocker`. The box needs Linux (it uses host networking).
