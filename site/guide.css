@@ -16,10 +16,6 @@
   min-width: 0;
 }
 
-.guide-chapters-toggle {
-  display: none;
-}
-
 .guide-chapters {
   display: flex;
   flex-direction: column;
@@ -433,9 +429,15 @@
   }
 }
 
+@media (min-width: 961px) {
+  .guide-chapters-toggle summary {
+    display: none;
+  }
+}
+
 @media (max-width: 600px) {
   .guide-layout {
-    padding: 16px 8px;
+    padding: 16px;
   }
 
   .guide-header {

@@ -171,7 +171,7 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
     if current_idx == 0:
         summary_text = f"Chapters ({chapter_count})"
     else:
-        summary_text = f"Chapter {current_num} of {chapter_count} · {title} ▾"
+        summary_text = f"Chapter {current_num} of {chapter_count} · {title}"
 
     html = f"""<!doctype html>
 <html lang="en">
@@ -233,6 +233,10 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
             {chapter_links}
           </nav>
         </details>
+        <script>
+          // desktop: sidebar always open; phone: starts closed
+          if (matchMedia('(min-width: 961px)').matches) document.querySelector('.guide-chapters-toggle').open = true;
+        </script>
       </aside>
 
       <!-- Main content -->
