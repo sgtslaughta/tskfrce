@@ -28,15 +28,6 @@ class QueryCounter:
 
     def _hook(self, conn, cursor, statement, *a):
         self.statements.append(statement)
-        if os.environ.get("QTRACE") and statement.startswith(os.environ["QTRACE"]):
-            print(
-                "TRACE",
-                [
-                    f"{f.filename.split('/')[-1]}:{f.lineno}"
-                    for f in traceback.extract_stack()
-                    if "/app/" in f.filename
-                ][-4:],
-            )
 
     def __enter__(self):
         event.listen(self.engine, "before_cursor_execute", self._hook)
