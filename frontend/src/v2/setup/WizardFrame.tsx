@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { Button, Group } from '@mantine/core'
+import { AuthBrand } from '../components/AuthBrand'
 import { StickerCard } from '../components/StickerCard'
 
 export const STEP_TITLES = ['Your family', 'Your account', 'Add kids', 'Devices', 'Chores', 'Bedtime', 'Remote access']
@@ -17,14 +18,16 @@ interface Props {
 /** Numbered sticker progress + card + Back / Skip / Next row. */
 export function WizardFrame({ step, children, onBack, onNext, nextLabel = 'Next', onSkip, busy }: Props) {
   return (
-    <main className="f-main" style={{ maxWidth: 640 }}>
-      <ol aria-label="Setup steps" className="f-row" style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+    <main className="f-main f-auth" style={{ maxWidth: 640 }}>
+      <AuthBrand />
+      <ol aria-label="Setup steps" className="w-steps">
         {STEP_TITLES.map((t, i) => (
           <li key={t} aria-current={i + 1 === step ? 'step' : undefined} aria-label={`Step ${i + 1}, ${t}`}>
-            <span className="f-sticker" style={{ opacity: i + 1 === step ? 1 : 0.55 }}>{i + 1}</span>
+            <span className="w-bar" data-done={i + 1 <= step ? '' : undefined} />
           </li>
         ))}
       </ol>
+      <p className="f-cap w-count">{`Step ${step} of ${STEP_TITLES.length}`}</p>
       <StickerCard>
         <h1 className="f-display" style={{ marginTop: 0 }}>{STEP_TITLES[step - 1]}</h1>
         {children}

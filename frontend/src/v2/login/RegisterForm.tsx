@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { Button, PasswordInput, TextInput } from '@mantine/core'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api } from '@/v2/api'
+import { AuthBrand } from '@/v2/components/AuthBrand'
 import { StickerCard } from '@/v2/components/StickerCard'
 
 /** Redeem a parent's invite link. The username comes from the invite itself. */
@@ -33,7 +34,8 @@ export function RegisterForm({ token }: { token: string | undefined }) {
   }
 
   return (
-    <main className="f-main" style={{ maxWidth: 440 }}>
+    <main className="f-main f-auth">
+      <AuthBrand />
       <StickerCard>
         <h1 className="f-display" style={{ marginTop: 0 }}>Join the family</h1>
         {token ? (

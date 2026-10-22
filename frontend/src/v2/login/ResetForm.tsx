@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Button, PasswordInput } from '@mantine/core'
 import { api } from '@/v2/api'
+import { AuthBrand } from '@/v2/components/AuthBrand'
 import { StickerCard } from '@/v2/components/StickerCard'
 
 /** Set a new password from a parent's one-time reset link. */
@@ -29,7 +30,8 @@ export function ResetForm({ token }: { token: string | undefined }) {
   }
 
   return (
-    <main className="f-main" style={{ maxWidth: 440 }}>
+    <main className="f-main f-auth">
+      <AuthBrand />
       <StickerCard>
         <h1 className="f-display" style={{ marginTop: 0 }}>Choose a new password</h1>
         {token ? (

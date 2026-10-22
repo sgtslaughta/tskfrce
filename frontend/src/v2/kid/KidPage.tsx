@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@mantine/core'
 import { CANT_REACH } from '../api'
+import { AuthBrand } from '../components/AuthBrand'
 import { ProgressHeader } from '../components/ProgressHeader'
 import { Bell } from '../components/Bell'
 import { LockBadge } from '../components/LockBadge'
@@ -178,7 +179,8 @@ export function KidPage() {
 
   return (
     <main className="f-shell" style={{ minHeight: '100vh' }}>
-      <div className="f-main" style={{ maxWidth: 520 }}>
+      <div className={authed ? 'f-main' : 'f-main f-auth'} style={{ maxWidth: 520 }}>
+        {!authed && <AuthBrand />}
         {authed && (
           <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
             <Bell kid />

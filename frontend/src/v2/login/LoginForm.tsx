@@ -5,6 +5,7 @@ import { Button, PasswordInput, TextInput } from '@mantine/core'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api } from '@/v2/api'
 import type { SetupStatus } from '@/v2/types'
+import { AuthBrand } from '@/v2/components/AuthBrand'
 import { StickerCard } from '@/v2/components/StickerCard'
 
 /** Only same-site paths survive; anything a browser could reinterpret falls back to "/". */
@@ -54,7 +55,8 @@ export function LoginForm() {
   }
 
   return (
-    <main className="f-main" style={{ maxWidth: 440 }}>
+    <main className="f-main f-auth">
+      <AuthBrand />
       <StickerCard>
         <h1 className="f-display" style={{ marginTop: 0 }}>Welcome back</h1>
         {router.query?.reset && <p role="status">Password saved. Log in with your new password.</p>}
