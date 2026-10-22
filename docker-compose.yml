@@ -23,6 +23,9 @@ services:
       DATA_DIR: /app/data
       DISABLE_RATE_LIMITING: ${DISABLE_RATE_LIMITING:-false}
       DISABLE_LOGIN_RATE_LIMIT: ${DISABLE_LOGIN_RATE_LIMIT:-true}
+      # Same token as the blocker (the backend would otherwise generate its own)
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?set INTERNAL_TOKEN in .env}
+      BOX_URL: ${BOX_URL:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://192.168.1.95:3000}
       TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,192.168.1.95,backend,taaskmaaster-backend}
       # Only the frontend proxy (static IPs below) may set X-Real-IP
@@ -99,6 +102,7 @@ services:
       BACKEND_URL: ${BLOCKER_BACKEND_URL:-http://127.0.0.1:8000}
       INTERNAL_TOKEN: ${INTERNAL_TOKEN:?set INTERNAL_TOKEN in .env}
       LAN_IFACE: ${LAN_IFACE:-eth0}
+      PORTAL_REDIRECT_URL: ${BOX_URL:-http://task4ce.local:3000}/kid
     restart: unless-stopped
 
   # PostgreSQL (optional, for production)

@@ -18,6 +18,11 @@ else
     echo "✅ .env file already exists"
 fi
 
+# Backend and blocker must share one token; compose refuses to run without it
+if ! grep -q '^INTERNAL_TOKEN=.' .env; then
+    echo "INTERNAL_TOKEN=$(openssl rand -hex 32 2>/dev/null || od -An -N32 -tx1 /dev/urandom | tr -d ' \n')" >> .env
+fi
+
 # Check if Docker is running
 if ! docker info > /dev/null 2>&1; then
     echo "❌ Docker is not running. Please start Docker and try again."
