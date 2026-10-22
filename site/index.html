@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>t@sk4ce — Chores first, then screens</title>
+  <meta name="description" content="A free family app where kids do their chores, parents approve them, and the home internet only switches on once the chores are done.">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <script>
+    // Dark mode preference
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (isDark) {
+      document.documentElement.style.colorScheme = 'dark';
+    }
+
+    // Back to app link (only show if from=app)
+    window.addEventListener('load', function() {
+      const params = new URLSearchParams(window.location.search);
+      const fromApp = params.get('from') === 'app';
+      const backBtn = document.getElementById('back-to-app');
+      if (backBtn) {
+        if (fromApp) {
+          backBtn.style.display = 'flex';
+        } else {
+          backBtn.style.display = 'none';
+        }
+      }
+    });
+
+    // Copy button
+    function copyToClipboard(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const original = btn.textContent;
+        btn.textContent = '✓ Copied';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = original;
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+</head>
+<body>
+  <div class="f-shell">
+    <!-- Top bar -->
+    <div class="f-bar">
+      <a href="/" class="f-wordmark">t@sk4ce</a>
+      <div class="f-bar-buttons">
+        <a id="back-to-app" class="f-back" style="display: none;" onclick="history.back()">← Back to app</a>
+      </div>
+    </div>
+
+    <main class="f-main">
+      <!-- Hero Section -->
+      <section class="hero">
+        <h1>Chores first, then screens.</h1>
+        <p class="tagline">A free family app where kids do their chores, parents approve them, and the home internet only switches on once the chores are done. It runs on a small computer in your home — your family's data stays in your house.</p>
+        <div class="hero-buttons">
+          <a href="docs/guide/README.md" class="f-btn" data-variant="filled">Get started</a>
+          <a href="#setup" class="f-btn" data-variant="default">Set up in 20 minutes</a>
+        </div>
+        <img src="img/today-hero.jpg" alt="The Today screen showing chores waiting for parent approval" class="hero-image" loading="lazy">
+      </section>
+
+      <!-- How it works -->
+      <section>
+        <div class="section-intro">
+          <h2>How it works</h2>
+          <p>Three simple steps, every day.</p>
+        </div>
+        <div class="steps">
+          <div class="step">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h3>Kids get chores</h3>
+              <p>Each morning, your kids see their list of chores for the day. Chores earn points, and points unlock rewards and extra screen time.</p>
+              <img src="img/how-it-works-1.svg" alt="A kid's home screen with their daily chores" class="step-image" loading="lazy" style="max-width: 100%; height: auto; margin-top: 12px; border-radius: 8px;">
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h3>Kids submit chores for approval</h3>
+              <p>When a chore is done, your kid taps "Done" and can add a photo as proof. Then they wait for you to review it.</p>
+            </div>
+          </div>
+          <div class="step">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h3>Parents approve and internet comes back</h3>
+              <p>You review the chores in the app ("Needs you" screen) and approve or send back. Once approved, your kid's internet is back on immediately.</p>
+              <img src="img/how-it-works-3.svg" alt="A parent approving chores, with internet access restored to the kid's device" class="step-image" loading="lazy" style="max-width: 100%; height: auto; margin-top: 12px; border-radius: 8px;">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- What kids see -->
+      <section>
+        <div class="section-intro">
+          <h2>What kids see</h2>
+          <p>A simple, motivating interface.</p>
+        </div>
+        <div class="grid-2">
+          <div class="f-card">
+            <div class="f-card-head">
+              <h3>Today's chores</h3>
+            </div>
+            <img src="img/kid-home.jpg" alt="Kid's home screen showing daily chores with checkmarks and point values" loading="lazy" style="width: 100%; border-radius: 4px;">
+            <p>Each chore shows how many points it's worth and whether a photo is needed. Tap a chore to see the steps.</p>
+          </div>
+          <div class="f-card">
+            <div class="f-card-head">
+              <h3>Levels and rewards</h3>
+            </div>
+            <img src="img/kid-locker.jpg" alt="Kid's locker showing levels, badges, and reward items to unlock" loading="lazy" style="width: 100%; border-radius: 4px;">
+            <p>Points add up to levels. Unlock badges, special flair, and spend points on rewards — like extra screen time or games.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- What parents see -->
+      <section>
+        <div class="section-intro">
+          <h2>What parents see</h2>
+          <p>Everything you need in one place.</p>
+        </div>
+        <div class="grid-2">
+          <div class="f-card">
+            <div class="f-card-head">
+              <h3>Today screen</h3>
+            </div>
+            <img src="img/today-parent.jpg" alt="Parent's Today screen showing all kids' chores and approval status" loading="lazy" style="width: 100%; border-radius: 4px;">
+            <p>See every kid's chores at a glance. Approve them one by one, or pause to remind a kid to do better.</p>
+          </div>
+          <div class="f-card">
+            <div class="f-card-head">
+              <h3>Needs you</h3>
+            </div>
+            <img src="img/needs-you.jpg" alt="Needs you screen with chores waiting for parent approval or decision" loading="lazy" style="width: 100%; border-radius: 4px;">
+            <p>One focused screen for everything waiting: chores to approve, screen time requests, reward redemptions, and chat messages.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Is it right for my family -->
+      <section>
+        <div class="section-intro">
+          <h2>Is it right for my family?</h2>
+          <p>t@sk4ce works best when you want chores tied to internet access.</p>
+        </div>
+        <div class="f-card">
+          <div class="f-card-head">
+            <h3>What it does well</h3>
+          </div>
+          <ul style="margin: 0; padding: 0 0 0 20px; color: var(--f-sub);">
+            <li>Kids who are old enough to understand cause and effect (usually 8+).</li>
+            <li>Families with home internet and an always-on computer (a Raspberry Pi, a laptop, even a spare phone on WiFi).</li>
+            <li>Parents who can check the app once a day or more.</li>
+            <li>Kids who want something to work toward (points, levels, rewards).</li>
+          </ul>
+        </div>
+        <div class="f-card" style="border-left: 4px solid var(--f-red); margin-top: 12px;">
+          <div class="f-card-head" style="background: transparent; border: none; padding: 0 0 12px 0;">
+            <h3>Be honest about the limits</h3>
+          </div>
+          <p style="margin: 0; color: var(--f-sub); font-size: 14px;">
+            t@sk4ce is not a fortress. A determined kid can get around it (a phone hotspot, changing network settings, even plugging in a computer to another network). The app watches for these workarounds and tells you when they happen — that's when you talk to your kid about trust. If the home box is off, the internet just works (we fail open, not locked).
+          </p>
+          <p style="margin: 12px 0 0 0; color: var(--f-sub); font-size: 14px;">
+            This is not a spyware app. We don't track websites, screen time, location, or keystrokes. The app is here to enforce chores, not surveil your family. Chore completion, points, levels, and badges are the only data we see.
+          </p>
+        </div>
+      </section>
+
+      <!-- Set it up in 20 minutes -->
+      <section id="setup">
+        <div class="section-intro">
+          <h2>Set it up in 20 minutes</h2>
+          <p>Five straightforward steps.</p>
+        </div>
+        <div class="setup-steps">
+          <div class="setup-step">
+            <div class="setup-step-num">1</div>
+            <div class="setup-step-content">
+              <h3>Copy the one-line installer</h3>
+              <p>Click the button to copy this command. Then paste it into your computer's terminal.</p>
+              <div style="margin-top: 12px; background: var(--f-field); border: 1px solid var(--f-edge); border-radius: 4px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; word-break: break-all; color: var(--f-ink);">
+                curl -fsSL https://sgtslaughta.github.io/tskfrce/install.sh | sh
+              </div>
+              <button class="copy-btn" onclick="copyToClipboard('curl -fsSL https://sgtslaughta.github.io/tskfrce/install.sh | sh', this)" style="margin-top: 8px;">📋 Copy</button>
+              <p style="color: var(--f-sub); font-size: 12px; margin-top: 8px;">The installer needs Linux (Raspberry Pi OS, Ubuntu, Debian) and will ask before installing Docker if you don't have it.</p>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="setup-step-num">2</div>
+            <div class="setup-step-content">
+              <h3>Let the installer run</h3>
+              <p>It will download t@sk4ce, ask a few questions, and start the app. Wait for it to finish (usually 2–3 minutes).</p>
+              <p style="color: var(--f-sub); font-size: 12px;">The app runs in the background. Your data stays on your computer the whole time.</p>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="setup-step-num">3</div>
+            <div class="setup-step-content">
+              <h3>Open the app on your phone or computer</h3>
+              <p>Once the installer is done, open a web browser and go to the IP address it gave you. The app will show you a setup wizard.</p>
+              <p style="color: var(--f-sub); font-size: 12px;"><a href="docs/guide/02-install.md">See step-by-step instructions with screenshots</a></p>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="setup-step-num">4</div>
+            <div class="setup-step-content">
+              <h3>Add your family and kids</h3>
+              <p>Create a parent account, then add your children and choose which devices they use.</p>
+              <p style="color: var(--f-sub); font-size: 12px;"><a href="docs/guide/03-first-setup.md">Follow the setup wizard guide</a></p>
+            </div>
+          </div>
+          <div class="setup-step">
+            <div class="setup-step-num">5</div>
+            <div class="setup-step-content">
+              <h3>Create a chore and go</h3>
+              <p>Make a chore, give it to your kids, and you're ready. The app handles the rest.</p>
+              <p style="color: var(--f-sub); font-size: 12px;"><a href="docs/guide/04-everyday-use.md">Learn the everyday routine</a></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Privacy -->
+      <section>
+        <div class="section-intro">
+          <h2>Privacy</h2>
+          <p>Your family's data belongs to you.</p>
+        </div>
+        <div class="features">
+          <div class="feature-card">
+            <h3>Stays in your home</h3>
+            <p>t@sk4ce runs on a computer in your house. Your chores, kids, points, chat, and photos never leave your network.</p>
+          </div>
+          <div class="feature-card">
+            <h3>No accounts with us</h3>
+            <p>We don't have a server. No sign-up, no username, no password saved anywhere but on your box. You own your data entirely.</p>
+          </div>
+          <div class="feature-card">
+            <h3>No ads or trackers</h3>
+            <p>t@sk4ce is free and open-source. We don't sell your data, show ads, or track anything. Ever.</p>
+          </div>
+          <div class="feature-card">
+            <h3>GIFs are optional</h3>
+            <p>Kids can use GIFs in chat, but only if you turn it on. GIFs come from GIPHY through your home box — we never pass along who's sending them.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section>
+        <div class="section-intro">
+          <h2>Frequently asked questions</h2>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <details class="faq-item">
+            <summary>What computer do I need?</summary>
+            <p>Any always-on Linux machine: a Raspberry Pi 4 or 5, an old laptop, a NAS, or even a spare laptop running Ubuntu. It needs to be plugged in and connected to your home network 24/7 (or at least during the hours kids use internet). Details in <a href="docs/guide/01-what-you-need.md">What you need</a>.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Do I need a special router?</summary>
+            <p>No. t@sk4ce works with any home router. We've tested with common models (TP-Link, Netgear, Eero, Asus, UniFi). If you have a mesh network, pick one of the main routers. <a href="docs/routers.md">See the full router compatibility list</a>.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What if my internet goes down?</summary>
+            <p>If your home internet is down, t@sk4ce still runs locally — parents and kids can chat and plan chores. Chores can't be marked done until the internet comes back (the app needs to tell the blocker to let them online). This is by design: no internet, no rewarding (and no blocking).</p>
+          </details>
+          <details class="faq-item">
+            <summary>Can I use it with devices outside my home?</summary>
+            <p>t@sk4ce is designed for devices on your home network. If your kid has a phone that sometimes connects to the home WiFi and sometimes doesn't, the app will block when they're home and let them through when they're away. Remote access (VPN to your home network) is planned but not yet built.</p>
+          </details>
+          <details class="faq-item">
+            <summary>What if a kid finds a workaround?</summary>
+            <p>t@sk4ce watches for common workarounds (phone hotspots, trying to connect to other networks). If it detects one, it flags that device as "resisting" and sends you a notification. That's your signal to talk to your kid about trust and boundaries. The app doesn't spy or lock down further — that's between you and them.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Where's the manual / troubleshooting?</summary>
+            <p><a href="docs/guide/">The full guide is here</a>. Problems? Check <a href="docs/guide/06-troubleshooting.md">Troubleshooting</a>.</p>
+          </details>
+          <details class="faq-item">
+            <summary>Is this open source?</summary>
+            <p>Yes! t@sk4ce is licensed under GPL-3.0. The code is on <a href="https://github.com/sgtslaughta/tskfrce">GitHub</a>. You can review it, modify it, and learn how it works.</p>
+          </details>
+        </div>
+      </section>
+
+      <!-- Engineering link -->
+      <section style="text-align: center; padding: 40px 0;">
+        <p style="color: var(--f-sub); margin: 0;">For technical folks and contributors:</p>
+        <a href="engineering.html" class="f-btn" data-variant="subtle" style="margin-top: 12px;">Architecture & engineering →</a>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+      <div class="footer-content">
+        <div class="footer-section">
+          <h3>t@sk4ce</h3>
+          <p><a href="https://github.com/sgtslaughta/tskfrce">GitHub</a></p>
+          <p>Licensed under <a href="LICENSE">GPL-3.0</a></p>
+        </div>
+        <div class="footer-section">
+          <h3>Get help</h3>
+          <p><a href="docs/guide/README.md">Full guide</a></p>
+          <p><a href="docs/guide/06-troubleshooting.md">Troubleshooting</a></p>
+          <p><a href="docs/guide/07-faq.md">FAQ</a></p>
+        </div>
+        <div class="footer-section">
+          <h3>For developers</h3>
+          <p><a href="engineering.html">Architecture overview</a></p>
+          <p><a href="docs/engineering.md">Full engineering docs</a></p>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>t@sk4ce: Chores first, then screens. Free, open-source family software.</p>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
