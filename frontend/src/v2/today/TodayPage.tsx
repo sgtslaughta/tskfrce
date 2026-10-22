@@ -9,6 +9,7 @@ import { useToday } from "../hooks/useToday";
 import { KidTabs } from "./KidTabs";
 import { NewDevicesBanner } from "./NewDevicesBanner";
 import { NeedsYou } from "./NeedsYou";
+import { PINsNudge } from "./PINsNudge";
 
 const dayName = (iso?: string) =>
   iso
@@ -33,6 +34,7 @@ export function TodayPage() {
       {data && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <NeedsYou items={data.needs_you ?? []} />
+          <PINsNudge nudges={data.shared_without_pin ?? []} />
           <NewDevicesBanner devices={data.new_devices} />
           {data.kids.length === 0 ? (
             <StickerCard>

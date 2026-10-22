@@ -40,6 +40,9 @@ def device_out(
     if ov and ov.expires_at and ov.expires_at <= now.replace(tzinfo=None):
         ov = None
     online = is_online(device_facts(db, d, fam, now, pre), local_now(fam.timezone, now))
+    # two or more kids share this device and someone can sign in without a PIN
+    active_kids = [k for k in d.owners if k.role == UserRole.KID and k.is_active]
+    needs_pins = len(active_kids) >= 2 and any(not k.pin_hash for k in active_kids)
     return {
         "id": d.id,
         "name": d.name,
@@ -52,6 +55,7 @@ def device_out(
         "override": {"action": ov.action, "expires_at": utc_z(ov.expires_at)} if ov else None,
         "last_seen": utc_z(d.last_seen),
         "resisting": d.resisting_since is not None,
+        "needs_pins": needs_pins,
     }
 
 

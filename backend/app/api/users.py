@@ -137,10 +137,18 @@ async def change_password(
     current_user: User = Depends(get_current_active_user),
 ):
     """Change user password."""
-    UserService(db)
+    auth = AuthService(db)
 
-    # TODO: Verify current password and update to new password
-    # For now, just return success
+    # Verify current password before allowing change
+    if not auth.verify_password(password_data.current_password, current_user.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect.",
+        )
+
+    # Update to new password
+    current_user.hashed_password = auth.get_password_hash(password_data.new_password)
+    db.commit()
     return {"message": "Password changed successfully"}
 
 
@@ -151,7 +159,8 @@ async def get_user(
     db: Session = Depends(get_db_session),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Get a specific user by ID."""
+    """Get a specific user by ID. Kids may only view their own profile."""
+    require_self_or_parent(user_id, current_user)
     user_service = UserService(db)
     user = user_service.get_user(user_id)
 

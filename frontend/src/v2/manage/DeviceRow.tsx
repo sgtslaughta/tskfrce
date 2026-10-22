@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/router'
 import { notifications } from '@mantine/notifications'
 import { Button, MultiSelect, Switch, TextInput } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
@@ -18,12 +19,18 @@ interface Props {
 const seen = (iso: string | null) => (iso ? new Date(iso).toLocaleString() : 'never')
 
 export function DeviceRow({ device, kids, focused, onDone }: Props) {
+  const router = useRouter()
   const patch = usePatchDevice()
   const del = useDeleteDevice()
   const test = useTestBlock()
   const [name, setName] = useState(device.name)
   const [confirm, { open, close }] = useDisclosure(false)
   const ref = useRef<HTMLDivElement>(null)
+
+  // Find kids owned by this device that don't have PINs
+  const owners = device.owner_ids.map(id => kids.find(k => k.id === id)).filter(Boolean) as Kid[]
+  const ownerNames = owners.map(k => k.full_name || k.username)
+  const needsPins = device.needs_pins && owners.length > 0
 
   useEffect(() => setName(device.name), [device.name])
   useEffect(() => {
@@ -74,6 +81,30 @@ export function DeviceRow({ device, kids, focused, onDone }: Props) {
           save({ status: e.currentTarget.checked ? 'guest' : device.owner_ids.length ? 'assigned' : 'unassigned' }, 'Saved')
         }
       />
+      {needsPins && (
+        <div style={{ padding: 12, border: '1px solid #e0e0e0', borderRadius: 4, backgroundColor: '#f9f9f9', marginTop: 12 }}>
+          <p style={{ margin: '0 0 8px 0', fontSize: 13, color: '#666' }}>
+            {ownerNames.join(' and ')} share this device. Add PINs so they can&apos;t sign in as each other.
+          </p>
+          <button
+            onClick={() => {
+              const firstKidId = device.owner_ids[0]
+              router.push(`/kids?section=kids&kid=${firstKidId}&pin=1`)
+            }}
+            style={{
+              padding: '6px 12px',
+              backgroundColor: '#0070f3',
+              color: 'white',
+              border: 'none',
+              borderRadius: 3,
+              cursor: 'pointer',
+              fontSize: 12,
+            }}
+          >
+            Set PINs
+          </button>
+        </div>
+      )}
       <div className="m-actions">
         <DeviceQuickMenu targets={{ kind: 'device', id: device.id }} label={device.name}>
           <Button variant="default">Lock options</Button>
