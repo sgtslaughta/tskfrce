@@ -2,8 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   
-  // Transpile packages  
-  transpilePackages: ['@emotion/react', '@emotion/styled'],
   
   // Suppress HMR warnings in development
   onDemandEntries: {

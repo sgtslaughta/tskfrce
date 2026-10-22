@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/v2/api'
-import type { PendingRedemption, Reward } from '@/v2/types'
+import type { Reward } from '@/v2/types'
 
 export interface RewardBody {
   name: string
@@ -9,14 +9,6 @@ export interface RewardBody {
 }
 
 export const useRewards = () => useQuery({ queryKey: ['rewards'], queryFn: () => api<Reward[]>('/rewards') })
-
-export const usePendingRedemptions = () =>
-  useQuery({
-    queryKey: ['redemptions'],
-    queryFn: () => api<PendingRedemption[]>('/redemptions'),
-    refetchInterval: 30_000,
-    refetchIntervalInBackground: false,
-  })
 
 function useInvalidating<V>(fn: (v: V) => Promise<unknown>, keys: string[]) {
   const qc = useQueryClient()

@@ -1,6 +1,5 @@
 /** Shapes of the v2 backend responses (backend/app/api/{family,kid,devices,kids,windows,chores,setup}.py). */
 
-export type Role = 'parent' | 'kid'
 export type ChoreState = 'done' | 'needs_you' | 'todo'
 export type DeviceStatus = 'unassigned' | 'assigned' | 'guest'
 export type OverrideAction = 'lock' | 'unlock'
