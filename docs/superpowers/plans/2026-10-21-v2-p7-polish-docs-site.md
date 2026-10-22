@@ -35,6 +35,26 @@ Prerequisite: Projects 1–6 merged into `feat/v2-teen-redesign`, lab e2e green.
 
 ---
 
+### Task 0: Easy install and account recovery (owner decisions 2026-10-22)
+
+Owner picked: one-line installer; password reset both ways (another parent in the app, and a command on the box); license GPL-3.0.
+
+**Files:**
+- Create: `install.sh` (repo root; also published as `site/install.sh` in Task 5), `docker-compose.prod.yml`, `backend/app/cli.py`, `backend/app/models/password_reset.py`, `backend/app/api/password_reset.py`, alembic revision `password_resets`, `frontend/pages/reset.tsx`, tests `backend/tests/test_password_reset.py`, `frontend/tests/v2/reset.test.tsx`, `scripts/test-install.sh`
+- Modify: `docker-compose.yml` (pass `INTERNAL_TOKEN` to backend too), blocker `PORTAL_REDIRECT_URL` default from `BOX_URL` (`http://<box>:3000/kid`), Settings → Parents (`frontend/src/v2/manage/InviteSection.tsx` or sibling: parent list + "Reset password" for other parents), `.env.example`, `scripts/start.sh`, `backend/README.md`, `frontend/package.json` name, `pyproject.toml` license → GPL-3.0 (match LICENSE text exactly: `GPL-3.0-only` or `-or-later`), `frontend/pages/api/proxy/[...path].ts` comment (backend cap is `MAX_UPLOAD_SIZE`, 10 MB), `.github/workflows/ci-cd.yml` (shellcheck + installer smoke test), guide pages `02-install.md`, `06-troubleshooting.md`, `07-faq.md`, `README.md`
+- Create: `docs/remote-access.md` (the setup wizard links to it; Tailscale, beginner steps)
+
+**Behavior:**
+- `curl -fsSL https://sgtslaughta.github.io/tskfrce/install.sh | sh`: Linux only for the home box (Raspberry Pi OS / Debian / Ubuntu, arm64 + amd64; other OS → friendly message). Asks before installing Docker (official `get.docker.com`) if missing. Installs to `~/task4ce` (env `TASK4CE_DIR` overrides): downloads the repo tarball of the release branch (env `TASK4CE_REF`, default `main`; `TASK4CE_SRC=<path>` uses a local checkout for tests), writes `.env` once with generated `SECRET_KEY` and `INTERNAL_TOKEN` (`openssl rand -hex 32`, fallback `/dev/urandom`) and `BOX_URL=http://<primary LAN IP>:3000`, runs `docker compose -f docker-compose.prod.yml up -d --build`, waits for health (≤ 180 s), prints one friendly block: "t@sk4ce is running. Open http://<ip>:3000 on your phone or computer." Re-running = update (keeps `.env` and data volume). Plain-English output, no stack traces; every failure says what to do next. POSIX `sh`, passes `shellcheck`.
+- `docker-compose.prod.yml`: no source bind mounts, production builds/targets, `restart: unless-stopped`, named data volume, same `INTERNAL_TOKEN` to backend and blocker, blocker `network_mode: host` as today.
+- Password reset: table `password_resets` (id, user_id → users cascade, token_hash String(64) unique, created_by_id → users nullable, expires_at, used_at nullable); token = 32 random bytes urlsafe, stored as sha256 hex; valid 30 min, single use; creating a new one voids older unused ones for that user. `POST /api/v1/parents/{id}/reset-link` (parent only, target must be another parent, not self) → `{url}` (`<BOX_URL or request origin>/reset?token=…`). `python -m app.cli reset-password <username>` (run as `docker compose exec backend python -m app.cli reset-password <name>`; prints the link; lists parent usernames if the name is wrong). `POST /api/v1/auth/reset {token, password}` (public, rate limited like login, password rules as register) → 204; bad/expired/used → 400 "That reset link has expired. Ask for a new one." Reset revokes the user's refresh tokens if the app stores them. Kids are not reset this way (parents change kid PINs already).
+- Settings → Parents lists parents (name, "you"); other parents get "Reset password" → shows the link with Copy and "Send this to <name>. It works once, for 30 minutes."
+- `/reset` page: two password fields, show/hide, plain errors, success → login.
+
+- [ ] **Step 1: Failing tests:** reset token single-use, expiry, hash-only storage, voiding older links, self-reset forbidden (403), kid caller 403, CLI prints link for valid parent and lists names for an unknown one, `/auth/reset` bad token 400 + rate limit; frontend reset page validation + success redirect, Parents list + copy link. `scripts/test-install.sh`: runs `install.sh` with `TASK4CE_SRC=$PWD TASK4CE_DIR=$(mktemp -d)` in CI (Docker available) and asserts health + `.env` has both secrets; second run keeps `.env` unchanged.
+- [ ] **Step 2: Run → FAIL. Step 3: Implement. Step 4:** full suites + ruff + shellcheck + `scripts/test-install.sh` locally → PASS.
+- [ ] **Step 5: Commit** `feat: one-line installer and password reset` (split into commits per area if cleaner).
+
 ### Task 1: Polish pass 1 — look and layout
 
 - [ ] **Step 1:** Run the lab e2e (`bash scripts/lab.sh up && bash scripts/lab.sh e2e`) and review every screenshot, light/dark, desktop/phone. Write findings to `docs/superpowers/polish/pass-1.md` (screen, problem, fix), covering: spacing and alignment, inconsistent radii/shadows, leftover fridge-era visuals, truncation, empty states that look broken, tap targets < 44 px, focus visibility, animation jank.
