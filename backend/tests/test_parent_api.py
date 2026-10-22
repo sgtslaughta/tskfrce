@@ -42,12 +42,21 @@ def test_assign_owner_marks_assigned(client, db, kid, parent_headers):
     assert r.json()["status"] == "assigned" and r.json()["owner_ids"] == [kid.id]
 
 
-def test_unlock_timer_expires(client, db, parent, kid, parent_headers):
+def test_unlock_timer_expires(client, db, parent, kid, parent_headers, monkeypatch):
+    # Pin the clock to the fixture chore day: with real wall-clock time, tick() sees a new
+    # day and runs the daily reset, which clears the pending chore (device stays online).
+    now = datetime(2026, 10, 20, 16, 0, tzinfo=UTC)
+
+    class FrozenDT(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return now
+
+    monkeypatch.setattr("app.lock.overrides.datetime", FrozenDT)
     setup_day(db)
     d = mkdev(db)
     assign(client, parent_headers, d, kid)
     mkchore(db, parent, kid)  # pending chore -> offline
-    now = datetime.now(UTC)
     assert d.mac in tick(db, now)
     r = client.post(
         f"/api/v1/devices/{d.id}/override",
