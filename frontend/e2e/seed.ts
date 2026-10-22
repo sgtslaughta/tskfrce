@@ -6,9 +6,18 @@ const BASE = process.env.E2E_BASE_URL ?? 'http://10.99.0.5:3000'
 /** Log in through the form (the same path a parent takes). */
 export async function loginUi(page: Page, next = '/') {
   await page.goto(`/login?next=${encodeURIComponent(next)}`)
-  await page.getByLabel('Username').fill(PARENT.username)
-  await page.getByLabel('Password').fill(PARENT.password)
-  await page.getByRole('button', { name: 'Log in' }).click()
+  // login is rate limited (10/min): when a burst of screens hits it, wait it out and retry
+  for (let attempt = 0; attempt < 4; attempt++) {
+    await page.getByLabel('Username').fill(PARENT.username)
+    await page.getByLabel('Password').fill(PARENT.password)
+    await page.getByRole('button', { name: 'Log in' }).click()
+    try {
+      await page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 15_000 })
+      return
+    } catch {
+      await page.waitForTimeout(20_000)
+    }
+  }
   await page.waitForURL((u) => !u.pathname.startsWith('/login'))
 }
 
@@ -18,7 +27,12 @@ let token: Promise<string> | undefined // login is rate limited (10/min): log in
 export async function parentApi(): Promise<APIRequestContext> {
   token ??= (async () => {
     const anon = await request.newContext({ baseURL: BASE })
-    const res = await anon.post('/api/proxy/auth/login', { data: PARENT })
+    let res = await anon.post('/api/proxy/auth/login', { data: PARENT })
+    // the screens just before us log in a lot: wait out the login rate limit
+    for (let i = 0; i < 6 && res.status() === 429; i++) {
+      await new Promise((r) => setTimeout(r, 15_000))
+      res = await anon.post('/api/proxy/auth/login', { data: PARENT })
+    }
     const { access_token } = await res.json()
     await anon.dispose()
     return access_token as string
