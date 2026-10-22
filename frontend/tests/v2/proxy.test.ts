@@ -4,9 +4,8 @@ import handler from '../../pages/api/proxy/[...path]';
 function fakeResp(status: number, body: string, ct: string | null) {
   return {
     status,
-    headers: { get: () => ct, forEach: (cb: any) => ct && cb(ct, 'content-type') },
-    text: async () => body,
-    json: async () => JSON.parse(body),
+    headers: { forEach: (cb: any) => ct && cb(ct, 'content-type') },
+    arrayBuffer: async () => Uint8Array.from(Buffer.from(body)).buffer,
   };
 }
 
@@ -15,34 +14,67 @@ function mockRes() {
   res.setHeader = jest.fn((k: string, v: string) => { res.headers[k] = v; });
   res.status = jest.fn(() => res);
   res.json = jest.fn(() => res);
-  res.send = jest.fn(() => res);
   res.end = jest.fn(() => res);
   return res;
 }
-const req: any = { method: 'DELETE', query: { path: ['chores', '1'] }, headers: {}, socket: {} };
 
-beforeEach(() => { jest.spyOn(console, 'log').mockImplementation(() => {}); });
+function mockReq(method: string, url: string, body = '', headers: Record<string, string> = {}): any {
+  const chunks = body ? [Buffer.from(body)] : [];
+  return {
+    method,
+    url,
+    headers,
+    socket: { remoteAddress: '::ffff:10.0.0.7' },
+    destroy: jest.fn(),
+    async *[Symbol.asyncIterator]() { yield* chunks; },
+  };
+}
 
-test('204 with json content-type ends with no body', async () => {
+beforeEach(() => { jest.spyOn(console, 'error').mockImplementation(() => {}); });
+
+test('204 ends with no body', async () => {
   (global as any).fetch = jest.fn(async () => fakeResp(204, '', 'application/json'));
   const res = mockRes();
-  await handler(req, res);
+  await handler(mockReq('DELETE', '/api/proxy/chores/1'), res);
   expect(res.status).toHaveBeenCalledWith(204);
-  expect(res.end).toHaveBeenCalled();
-  expect(res.json).not.toHaveBeenCalled();
-  expect(res.send).not.toHaveBeenCalled();
+  expect(res.end).toHaveBeenCalledWith();
 });
 
-test('json body is still forwarded', async () => {
-  (global as any).fetch = jest.fn(async () => fakeResp(200, '{"a":1}', 'application/json'));
+test('body bytes, content-type and query string pass through', async () => {
+  const fetch = jest.fn(async () => fakeResp(200, '{"a":1}', 'application/json'));
+  (global as any).fetch = fetch;
   const res = mockRes();
-  await handler({ ...req, method: 'GET' }, res);
-  expect(res.json).toHaveBeenCalledWith({ a: 1 });
+  const ct = 'multipart/form-data; boundary=x';
+  await handler(mockReq('POST', '/api/proxy/chat/threads/1/photos?before=5', '--x--', { 'content-type': ct }), res);
+  const [url, init] = fetch.mock.calls[0] as any;
+  expect(url).toMatch(/\/api\/v1\/chat\/threads\/1\/photos\?before=5$/);
+  expect(init.headers['content-type']).toBe(ct);
+  expect(init.headers['X-Real-IP']).toBe('10.0.0.7');
+  expect(Buffer.from(init.body).toString()).toBe('--x--');
+  expect(res.headers['content-type']).toBe('application/json');
+  expect(Buffer.from(res.end.mock.calls[0][0]).toString()).toBe('{"a":1}');
 });
 
-test('empty 200 body ends cleanly', async () => {
-  (global as any).fetch = jest.fn(async () => fakeResp(200, '', 'application/json'));
+test('client-sent x-forwarded-for is not copied', async () => {
+  const fetch = jest.fn(async () => fakeResp(200, '', null));
+  (global as any).fetch = fetch;
+  await handler(mockReq('GET', '/api/proxy/kid/today', '', { 'x-forwarded-for': '1.2.3.4' }), mockRes());
+  const [, init] = fetch.mock.calls[0] as any;
+  expect(init.headers['x-forwarded-for']).toBeUndefined();
+});
+
+test('oversized body is refused with 413', async () => {
+  (global as any).fetch = jest.fn();
   const res = mockRes();
-  await handler({ ...req, method: 'GET' }, res);
-  expect(res.end).toHaveBeenCalled();
+  await handler(mockReq('POST', '/api/proxy/chat/threads/1/photos', '', { 'content-length': String(13 * 1024 * 1024) }), res);
+  expect(res.status).toHaveBeenCalledWith(413);
+  expect((global as any).fetch).not.toHaveBeenCalled();
+});
+
+test('dot segments are refused', async () => {
+  (global as any).fetch = jest.fn();
+  const res = mockRes();
+  await handler(mockReq('GET', '/api/proxy/chat/../internal/state'), res);
+  expect(res.status).toHaveBeenCalledWith(400);
+  expect((global as any).fetch).not.toHaveBeenCalled();
 });
