@@ -5,6 +5,9 @@ on:
     branches: [main]
     paths:
       - 'site/**'
+      - 'docs/guide/**'
+      - 'docs/remote-access.md'
+      - 'scripts/build_site.py'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -21,6 +24,17 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install markdown==3.10.2
+
+      - name: Build guide site
+        run: python scripts/build_site.py
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
