@@ -9,7 +9,7 @@ import { ConfirmDelete } from './ConfirmDelete'
 import { toastFail, toastOk } from '../notify'
 
 /** Edit a kid, or add one when `kid` is omitted. Only changed fields are sent. */
-export function KidEditor({ kid, onDone }: { kid?: Kid; onDone?: () => void }) {
+export function KidEditor({ kid, onDone, focusPin }: { kid?: Kid; onDone?: () => void; focusPin?: boolean }) {
   const create = useCreateKid()
   const patch = usePatchKid()
   const del = useDeleteKid()
@@ -47,6 +47,7 @@ export function KidEditor({ kid, onDone }: { kid?: Kid; onDone?: () => void }) {
       <TextInput label="Name" value={name} onChange={(e) => setName(e.currentTarget.value)} />
       <EmojiPicker label="Avatar (an emoji)" value={avatar} onChange={setAvatar} />
       <PasswordInput
+        data-autofocus={focusPin || undefined}
         label={kid?.has_pin ? 'New PIN (4 digits)' : 'PIN (4 digits)'}
         value={pin}
         inputMode="numeric"

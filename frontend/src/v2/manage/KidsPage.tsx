@@ -37,7 +37,7 @@ function KidsBody() {
         {section === 'chores' && !kids.isPending && (
           <ChoresSection key={first(query.kid)} kids={list} chores={defs} progress={progress} initialKid={first(query.kid)} />
         )}
-        {section === 'kids' && !kids.isPending && <KidsSection kids={list} />}
+        {section === 'kids' && !kids.isPending && <KidsSection kids={list} initialKid={first(query.kid)} focusPin={first(query.pin) === '1'} />}
         {section === 'rewards' && <RewardsSection />}
         {section === 'badges' && <CustomBadgesPanel />}
       </ManageLayout>

@@ -4,10 +4,13 @@ import { useMediaQuery } from '@mantine/hooks'
 import type { Kid } from '@/v2/types'
 import { KidEditor } from './KidEditor'
 
-/** Kid list; each opens KidEditor in a drawer. "Add a kid" opens it empty. */
-export function KidsSection({ kids }: { kids: Kid[] }) {
+/** Kid list; each opens KidEditor in a drawer. "Add a kid" opens it empty. `initialKid` deep-links one open. */
+export function KidsSection({ kids, initialKid, focusPin }: { kids: Kid[]; initialKid?: string; focusPin?: boolean }) {
   const small = useMediaQuery('(max-width: 767px)')
-  const [open, setOpen] = useState<{ kid?: Kid } | null>(null)
+  const [open, setOpen] = useState<{ kid?: Kid } | null>(() => {
+    const kid = kids.find((k) => String(k.id) === initialKid)
+    return kid ? { kid } : null
+  })
   const close = () => setOpen(null)
   return (
     <>
@@ -26,7 +29,7 @@ export function KidsSection({ kids }: { kids: Kid[] }) {
         ))}
       </div>
       <Drawer opened={open !== null} onClose={close} position="right" size={small ? '100%' : 'md'} title={open?.kid ? 'Edit kid' : 'Add a kid'}>
-        <KidEditor key={open?.kid?.id ?? 'new'} kid={open?.kid} onDone={close} />
+        <KidEditor key={open?.kid?.id ?? 'new'} kid={open?.kid} onDone={close} focusPin={focusPin && open?.kid?.id === Number(initialKid)} />
       </Drawer>
     </>
   )
