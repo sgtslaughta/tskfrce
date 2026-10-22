@@ -100,5 +100,5 @@ test("Today chat box shows the last 2 messages", async () => {
   expect(await screen.findByText(/m3/)).toBeInTheDocument();
   expect(screen.getByText(/m2/)).toBeInTheDocument();
   expect(screen.queryByText(/m1/)).toBeNull();
-  expect(screen.getByRole("button", { name: "Open" })).toBeInTheDocument();
+  expect(screen.getByRole("button", { name: "Open chat" })).toBeInTheDocument();
 });

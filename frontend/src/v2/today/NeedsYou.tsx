@@ -103,14 +103,15 @@ export function NeedsYou({ items }: { items: NeedsItem[] }) {
           </Button>
         </span>
       </div>
-      <div style={{ display: "flex", gap: 10, overflowX: "auto", padding: "10px 0 2px" }}>
+      <div className="n-list">
         {shown.map((i) => {
           const m = META[i.type];
           const chore = isChore(i);
           return (
             <div
               key={`${i.type}-${i.id}`}
-              style={{ flex: "none", display: "flex", gap: 10, alignItems: "center", border: "1.5px solid var(--f-edge)", borderLeft: `4px solid ${m.edge}`, borderRadius: 6, padding: "8px 10px", fontSize: 13 }}
+              className="n-item"
+              style={{ borderLeft: `4px solid ${m.edge}` }}
             >
               {i.thumb_url ? (
                 <Thumb item={i} onOpen={() => setViewing(i)} />
@@ -119,7 +120,7 @@ export function NeedsYou({ items }: { items: NeedsItem[] }) {
                   {m.icon}
                 </span>
               )}
-              <div>
+              <div className="n-text">
                 <span className="f-cap" style={{ display: "inline-flex", gap: 4, alignItems: "center" }}>
                   <span data-testid={`type-${i.type}`} style={{ display: "inline-flex" }}>{m.icon}</span>
                   {i.type === "redo" ? "Redo" : m.label === "Rewards" ? "Reward" : m.label}

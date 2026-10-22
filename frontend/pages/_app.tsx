@@ -12,6 +12,7 @@ import '@mantine/dates/styles.css';
 import '../src/styles/mantine-fixes.css';
 import '../src/v2/fridge.css';
 import '../src/v2/controls.css';
+import '../src/v2/polish.css';
 import '../src/v2/chat/chatDock.css';
 import '../src/v2/flair/cards.css';
 import '../src/v2/flair/rings.css';

@@ -1,0 +1,65 @@
+/* Polish pass 1: layout fixes found in the lab screenshots (docs/superpowers/polish/pass-1.md) */
+
+/* sign-in style pages: brand above the card, card sits a little down the page */
+.f-auth { max-width: 440px; padding-top: clamp(16px, 8vh, 96px); gap: 20px; }
+.f-auth-brand { margin: 0; text-align: center; font-size: 32px; }
+
+/* section headings inside manage cards: no stray top margin */
+.m-main h2, .m-card h2 { margin: 0; font-size: 22px; line-height: 1.2; }
+
+/* disabled buttons stay readable: outlined, not a faded blob */
+.f-btn.f-btn:disabled,
+.f-btn.f-btn[data-disabled] {
+  opacity: 1;
+  background: transparent;
+  color: var(--f-sub);
+  border: 1.5px dashed var(--f-edge);
+  clip-path: none;
+  border-radius: 4px;
+  cursor: not-allowed;
+}
+
+/* segmented section switcher on phones: 44px targets, scrolls with a fade when it overflows */
+.f-seg.f-seg .mantine-SegmentedControl-label {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.f-seg.f-seg[data-scroll] {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+  mask-image: linear-gradient(90deg, #000 calc(100% - 32px), transparent);
+}
+.f-seg.f-seg[data-scroll]::-webkit-scrollbar { display: none; }
+
+/* Needs you: items scroll sideways on desktop, stack on phones so buttons are never clipped */
+.n-list { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0 2px; }
+.n-item {
+  flex: none;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border: 1.5px solid var(--f-edge);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.n-text { min-width: 0; }
+@media (max-width: 767px) {
+  .n-list { flex-direction: column; overflow: visible; }
+  .n-item { flex-wrap: wrap; width: 100%; }
+  .n-text { flex: 1 1 140px; }
+}
+
+/* setup wizard progress: one bar per step, filled up to the current one */
+.w-steps { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.w-steps li { flex: 1; }
+.w-bar { display: block; height: 6px; border-radius: 3px; background: var(--f-edge); }
+.w-bar[data-done] { background: var(--f-sun); }
+.w-count { margin: -8px 0 0; color: var(--f-sub); }
+
+/* top-bar menu button: 44px touch target */
+.mantine-Burger-root { min-width: 44px; min-height: 44px; }

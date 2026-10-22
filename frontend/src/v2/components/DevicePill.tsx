@@ -43,7 +43,8 @@ export function DevicePill({
   const body = (
     <>
       <span aria-hidden="true">{DEVICE_ICON[kind]}</span>
-      {name}
+      {/* "pixel-7.lan" reads better as "pixel-7"; the full name stays in the aria label */}
+      {/^[\d.]+$/.test(name) ? name : name.split(".")[0]}
     </>
   );
   return onClick ? (

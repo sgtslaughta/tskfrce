@@ -72,8 +72,8 @@ function ChatBox({ kidId, name }: { kidId: number; name: string }) {
           {m.body ?? "Photo"}
         </p>
       ))}
-      <Button variant="subtle" size="compact-md" onClick={() => openChat("private", String(kidId))}>
-        Open
+      <Button variant="default" size="xs" onClick={() => openChat("private", String(kidId))}>
+        Open chat
       </Button>
     </div>
   );

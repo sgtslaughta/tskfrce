@@ -124,6 +124,13 @@ describe("TodayPage", () => {
     expect(screen.getByText(/New device joined: Xbox/)).toBeInTheDocument();
   });
 
+  test("many new devices collapse into one banner", async () => {
+    const d = (id: number, name: string) => ({ id, name }) as never;
+    renderPage({ ...base, new_devices: [d(1, "pixel.lan"), d(2, "xbox.lan"), d(3, "tv.lan")] });
+    expect(await screen.findByText(/3 new devices joined: pixel, xbox and 1 more/)).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /Assign them/ })).toHaveLength(1);
+  });
+
   test("Needs you shows one item per type with chip label and icon", async () => {
     renderPage(base);
     await screen.findByText("Needs you · 4");
