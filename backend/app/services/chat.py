@@ -141,6 +141,22 @@ def title(db: Session, t: Thread) -> str:
     return _title(db, t, {kid.id: kid.full_name or kid.username} if kid else {})
 
 
+def _preview(m: ThreadMessage | None) -> dict:
+    """Newest message of a thread for list rows: when, who, and a one-line text."""
+    if m is None:
+        return {"last_message_at": None, "last_author": None, "last_text": None}
+    who = (
+        None
+        if m.kind == "system"
+        else (m.author.full_name or m.author.username if m.author else None)
+    )
+    return {
+        "last_message_at": utc_z(m.created_at),
+        "last_author": who,
+        "last_text": (m.body or "").strip()[:140] or ("Photo" if m.photo_id else None),
+    }
+
+
 def unread(db: Session, user: User) -> dict:
     """Threads the user can see (with messages, plus family/private) and unread counts."""
     parent = user.role == UserRole.PARENT
@@ -177,20 +193,19 @@ def unread(db: Session, user: User) -> dict:
         .group_by(ThreadMessage.thread_id)
         .all()
     )
-    last = dict(
-        db.query(ThreadMessage.thread_id, func.max(ThreadMessage.created_at))
-        .group_by(ThreadMessage.thread_id)
-        .all()
+    newest = (
+        db.query(func.max(ThreadMessage.id)).group_by(ThreadMessage.thread_id).scalar_subquery()
     )
+    latest = {m.thread_id: m for m in db.query(ThreadMessage).filter(ThreadMessage.id.in_(newest))}
     out = [
         {
+            **_preview(latest.get(t.id)),
             "id": t.id,
             "kind": t.kind,
             "task_id": t.run_id,  # key kept for the frontend; it is the run id
             "kid_id": t.kid_id,
             "title": _title(db, t, names),
             "unread": counts.get(t.id, 0),
-            "last_message_at": utc_z(last.get(t.id)),
         }
         for t in threads
     ]

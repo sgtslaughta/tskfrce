@@ -240,3 +240,17 @@ def test_delete_kid_with_chat(client, db, parent_headers):
     assert client.delete(f"/api/v1/kids/{leo.id}", headers=parent_headers).status_code == 200
     msgs = client.get(f"{C}/threads/family/family", headers=mh).json()["messages"]
     assert msgs[0]["author_id"] is None
+
+
+def test_thread_list_previews_latest_message(client, db, parent_headers):
+    leo, _, lh, _, _ = _world(db, client, parent_headers)
+    tid = _tid(client, lh, "private", leo.id)
+    _say(client, lh, tid, "first")
+    _say(client, lh, tid, "can I have more time?")
+    rows = client.get(f"{C}/threads", headers=parent_headers).json()["threads"]
+    row = next(r for r in rows if r["kind"] == "private" and r["kid_id"] == leo.id)
+    assert row["last_text"] == "can I have more time?"
+    assert row["last_author"]
+    assert row["last_message_at"]
+    quiet = next(r for r in rows if r["kind"] == "family")
+    assert quiet["last_text"] is None and quiet["last_author"] is None

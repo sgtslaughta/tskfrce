@@ -132,7 +132,7 @@ def test_custom_badge_flow(client, db, kid, kid_headers, parent_headers):
             "tier": tier
         }
     r = client.post(url, json={"kid_id": kid.id}, headers=parent_headers)
-    assert r.status_code == 409 and r.json()["detail"] == "Already at mega-diamond."
+    assert r.status_code == 409 and r.json()["detail"] == "This badge is already at the top tier."
     shown = bd.badges_for(db, kid.id)
     assert shown[0]["custom"] and shown[0]["tier_name"] == "mega-diamond"
     assert (

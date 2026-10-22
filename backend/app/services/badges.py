@@ -211,7 +211,7 @@ def give_custom(db: Session, kid: User, badge: CustomBadge) -> BadgeAward:
         a = BadgeAward(kid_id=kid.id, custom_badge_id=badge.id, tier=0)
         db.add(a)
     if a.tier >= len(TIERS):
-        raise HTTPException(409, "Already at mega-diamond.")
+        raise HTTPException(409, "This badge is already at the top tier.")
     a.tier, a.seen_by_kid, a.earned_at = a.tier + 1, False, datetime.utcnow()
     inbox.notify(db, [kid.id], "badge_earned", f"New badge: {badge.name}", TIERS[a.tier - 1])
     db.flush()

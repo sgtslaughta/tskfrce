@@ -45,7 +45,7 @@ async def create_user(
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already registered",
+            detail="That username is taken. Pick another one.",
         )
 
     # Check if email already exists
@@ -53,7 +53,7 @@ async def create_user(
     if existing_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered",
+            detail="That email is already used. Log in instead, or use another one.",
         )
 
     user = user_service.create_user(user_data)
@@ -85,7 +85,7 @@ async def get_users(
         logger.error(f"Error fetching users: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching users: {str(e)}",
+            detail="We couldn't load the list. Try again in a moment.",
         )
 
 
@@ -109,7 +109,7 @@ async def get_users_for_assignment(
         logger.error(f"Error fetching users for assignment: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error fetching users for assignment: {str(e)}",
+            detail="We couldn't load the list. Try again in a moment.",
         )
 
 
@@ -156,7 +156,9 @@ async def get_user(
     user = user_service.get_user(user_id)
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="We couldn't find that person."
+        )
 
     return user
 
@@ -179,7 +181,9 @@ async def update_user(
     user = user_service.update_user(user_id, user_data)
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="We couldn't find that person."
+        )
 
     return user
 
@@ -200,4 +204,6 @@ async def delete_user(
     success = user_service.delete_user(user_id)
 
     if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="We couldn't find that person."
+        )

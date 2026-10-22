@@ -119,7 +119,7 @@ async def refresh_token(refresh_data: RefreshTokenRequest, db: Session = Depends
     if payload is None or payload.get("type") != "refresh":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token",
+            detail="You were signed out. Log in again.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -128,7 +128,7 @@ async def refresh_token(refresh_data: RefreshTokenRequest, db: Session = Depends
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token payload",
+            detail="You were signed out. Log in again.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -136,7 +136,7 @@ async def refresh_token(refresh_data: RefreshTokenRequest, db: Session = Depends
     if user is None or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found or inactive",
+            detail="You were signed out. Log in again.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

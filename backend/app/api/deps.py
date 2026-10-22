@@ -53,7 +53,10 @@ def get_current_active_user(current_user: User = Depends(get_current_user)) -> U
     Get current active user (must be active/not disabled).
     """
     if not current_user.is_active:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This account is turned off. Ask a parent.",
+        )
     return current_user
 
 
@@ -79,7 +82,9 @@ def get_current_superuser(current_user: User = Depends(get_current_user)) -> Use
     Get current superuser (must be superuser/admin).
     """
     if not current_user.is_superuser:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="You can't do that with this account."
+        )
     return current_user
 
 
