@@ -123,7 +123,7 @@ def test_pick_gif_stores_animated_photo(client, parent_headers, kid_headers, mon
     assert r.headers["content-type"] == "image/gif"
     assert Image.open(io.BytesIO(r.content)).n_frames == 3
     t = client.get(m["photo_url"] + "/thumb", headers=parent_headers)
-    assert t.headers["content-type"] == "image/jpeg"
+    assert t.headers["content-type"] == "image/gif"
 
 
 def test_gif_upload_keeps_frames_strips_comment(client, kid_headers):
