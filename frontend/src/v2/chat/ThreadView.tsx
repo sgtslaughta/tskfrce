@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button, Modal } from '@mantine/core'
 import { IconPhoto } from '@tabler/icons-react'
+import { GifPicker } from '@/v2/chat/GifPicker'
 import {
   fetchEarlier,
   useMarkRead,
   usePost,
   useThread,
+  useThreads,
   useUploadChatPhoto,
   type ChatMessage,
   type ThreadKind,
@@ -97,6 +99,8 @@ export function ThreadView({
   const thread = useThread(kind, refId, kid)
   const post = usePost(kid)
   const upload = useUploadChatPhoto(kid)
+  const gifsOn = !!useThreads(kid).data?.gifs_enabled
+  const [gifOpen, setGifOpen] = useState(false)
   const markRead = useMarkRead(kid)
   const [older, setOlder] = useState<ChatMessage[]>([])
   const [hasMore, setHasMore] = useState<boolean | null>(null)
@@ -141,6 +145,11 @@ export function ThreadView({
       toastFail(e)
     }
   }
+  const sendGif = async (id: number) => {
+    if (!data) return
+    await post.mutateAsync({ threadId: data.id, body: text.trim(), photoId: id })
+    setText('')
+  }
   const pick = async (file?: File) => {
     if (!file || !data) return
     try {
@@ -182,7 +191,7 @@ export function ThreadView({
           void send()
         }}
       >
-        <input ref={fileRef} type="file" accept="image/*" hidden aria-label="Photo file" onChange={(e) => pick(e.target.files?.[0])} />
+        <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden aria-label="Photo file" onChange={(e) => pick(e.target.files?.[0])} />
         <Button
           variant={photoId ? 'filled' : 'default'}
           aria-label={photoId ? 'Photo added' : 'Add photo'}
@@ -191,6 +200,11 @@ export function ThreadView({
         >
           <IconPhoto size={18} />
         </Button>
+        {gifsOn && (
+          <Button variant="default" aria-label="Add GIF" onClick={() => setGifOpen(true)}>
+            GIF
+          </Button>
+        )}
         <textarea
           aria-label="Message"
           value={text}
@@ -210,6 +224,9 @@ export function ThreadView({
           Send
         </Button>
       </form>
+      {gifsOn && data && (
+        <GifPicker threadId={data.id} kid={kid} opened={gifOpen} onClose={() => setGifOpen(false)} onPicked={sendGif} />
+      )}
     </section>
   )
 }

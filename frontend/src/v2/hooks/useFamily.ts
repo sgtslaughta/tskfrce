@@ -7,7 +7,7 @@ export const useFamily = () => useQuery({ queryKey: ['family'], queryFn: () => a
 export function usePatchFamily() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (patch: Partial<Family>) => api<Family>('/family', { method: 'PATCH', body: patch }),
+    mutationFn: (patch: Partial<Family> & { giphy_api_key?: string }) => api<Family>('/family', { method: 'PATCH', body: patch }),
     onSuccess: (fam) => {
       qc.setQueryData(['family'], fam)
       return qc.invalidateQueries({ queryKey: ['today'] })

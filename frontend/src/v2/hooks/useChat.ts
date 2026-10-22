@@ -41,7 +41,7 @@ const poll = (ms: number) => ({ refetchInterval: ms, refetchIntervalInBackground
 export const useThreads = (kid = false) =>
   useQuery({
     queryKey: ['chat-threads', kid],
-    queryFn: () => api<{ total: number; threads: ThreadSummary[] }>('/chat/threads', { kid }),
+    queryFn: () => api<{ total: number; threads: ThreadSummary[]; gifs_enabled?: boolean }>('/chat/threads', { kid }),
     ...poll(15_000),
   })
 
@@ -106,3 +106,31 @@ export const useMarkRead = (kid = false) => {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['chat-threads', kid] }),
   })
 }
+
+export interface Gif {
+  id: string
+  width: number
+  height: number
+  preview_url: string
+}
+
+/** GET /chat/gifs?q=: search results, or trending when `q` is empty. */
+export const useGifs = (q: string, kid = false, enabled = true) =>
+  useQuery({
+    queryKey: ['chat-gifs', kid, q],
+    queryFn: () => api<Gif[]>(`/chat/gifs?q=${encodeURIComponent(q)}`, { kid }),
+    enabled,
+    staleTime: 5 * 60_000,
+    retry: false,
+  })
+
+/** POST /chat/threads/{id}/gifs: the server downloads the GIF and stores it as a chat photo. */
+export const usePickGif = (kid = false) =>
+  useMutation({
+    mutationFn: ({ threadId, gifId }: { threadId: number; gifId: string }) =>
+      api<{ photo_id: number }>(`/chat/threads/${Number(threadId)}/gifs`, {
+        method: 'POST',
+        body: { gif_id: gifId },
+        kid,
+      }),
+  })

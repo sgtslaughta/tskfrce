@@ -4,7 +4,7 @@ import io
 import uuid
 
 from fastapi import HTTPException, UploadFile
-from PIL import Image, ImageOps, UnidentifiedImageError
+from PIL import Image, ImageOps, ImageSequence, UnidentifiedImageError
 
 from app.core.config import settings
 from app.models.chore_extra import ChorePhoto
@@ -17,6 +17,8 @@ FULL, THUMB = 1600, 320
 # Byte caps don't bound decoded size: a tiny PNG can expand to gigabytes.
 # 40 MP covers any phone camera (12-48 MP sensors bin to <= ~24 MP output).
 MAX_PIXELS = 40_000_000
+# Animated GIFs (chat only): total decoded pixels across frames are capped the same way.
+GIF_MAX_BYTES, GIF_MAX_FRAMES = 8 * 1024 * 1024, 300
 
 
 def storage() -> LocalStorage:
@@ -52,13 +54,62 @@ def encode(upload: UploadFile) -> tuple[bytes, bytes]:
     return _jpeg(img, FULL), _jpeg(img, THUMB)
 
 
-def put(store: LocalStorage, prefix: str, upload: UploadFile) -> tuple[str, str]:
-    """Encode and store under `prefix/`; returns (path, thumb_path)."""
-    full, thumb = encode(upload)
+def encode_gif(data: bytes) -> tuple[bytes, bytes]:
+    """Validate and re-save an animated GIF: (clean gif, first-frame jpeg thumbnail)."""
+    if len(data) > GIF_MAX_BYTES:
+        raise HTTPException(413, "That GIF is too big. The limit is 8 MB.")
+    try:
+        img = Image.open(io.BytesIO(data))  # lazy: header only
+        if img.format != "GIF":
+            raise UnidentifiedImageError("not a gif")
+        n = getattr(img, "n_frames", 1)
+        w, h = img.size
+        if n > GIF_MAX_FRAMES or w * h * n > MAX_PIXELS:
+            raise HTTPException(413, "That GIF is too long or too large. Try a shorter one.")
+        frames, durations = [], []
+        for f in ImageSequence.Iterator(img):
+            durations.append(f.info.get("duration", 100))
+            c = f.convert("RGBA")
+            c.info.clear()  # drops comment/extension metadata carried in frame info
+            frames.append(c)
+        out = io.BytesIO()
+        # explicit save args only: comments and extension blocks are not carried over
+        frames[0].save(
+            out,
+            "GIF",
+            save_all=True,
+            append_images=frames[1:],
+            loop=0,
+            duration=durations,
+            disposal=2,
+        )
+        return out.getvalue(), _jpeg(frames[0].convert("RGB"), THUMB)
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError, EOFError):
+        raise HTTPException(415, "We couldn't read that GIF. Try another one.") from None
+
+
+def put(
+    store: LocalStorage, prefix: str, upload: UploadFile, *, gif: bool = False
+) -> tuple[str, str]:
+    """Encode and store under `prefix/`; returns (path, thumb_path).
+
+    `gif=True` (chat only) also accepts animated GIFs, which are stored as .gif.
+    """
     key = f"{prefix}/{uuid.uuid4().hex}"
+    if gif and upload.content_type == "image/gif":
+        data = upload.file.read(GIF_MAX_BYTES + 1)
+        return put_gif(store, key, data)
+    full, thumb = encode(upload)
     store.save(f"{key}.jpg", full, "image/jpeg")
     store.save(f"{key}_thumb.jpg", thumb, "image/jpeg")
     return f"{key}.jpg", f"{key}_thumb.jpg"
+
+
+def put_gif(store: LocalStorage, key: str, data: bytes) -> tuple[str, str]:
+    full, thumb = encode_gif(data)
+    store.save(f"{key}.gif", full, "image/gif")
+    store.save(f"{key}_thumb.jpg", thumb, "image/jpeg")
+    return f"{key}.gif", f"{key}_thumb.jpg"
 
 
 def chat_storage() -> LocalStorage:

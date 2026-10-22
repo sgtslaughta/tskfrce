@@ -40,6 +40,9 @@ def _fam_out(fam) -> dict:
         "points_unlock_early": fam.points_unlock_early,
         "early_bonus_cap": fam.early_bonus_cap,
         "screen_time_price": fam.screen_time_price,
+        "gifs_enabled": fam.gifs_enabled,
+        "gif_rating": fam.gif_rating,
+        "giphy_key_set": bool(fam.giphy_api_key),  # the key itself is never returned
     }
 
 
@@ -60,7 +63,9 @@ def patch_family(body: FamilyPatch, db: Session = Depends(get_db)):
             raise HTTPException(400, "Unknown time zone.") from None
     # a time zone change takes effect at the next reset; no immediate reset
     for k, v in body.model_dump(exclude_unset=True).items():
-        if v is not None:
+        if k == "giphy_api_key" and v is not None:
+            fam.giphy_api_key = v.strip() or None
+        elif v is not None:
             setattr(fam, k, v)
     db.commit()
     trigger()

@@ -72,6 +72,9 @@ export interface Family {
   points_unlock_early: boolean
   early_bonus_cap: number
   screen_time_price: number
+  gifs_enabled: boolean
+  gif_rating: 'g' | 'pg'
+  giphy_key_set: boolean
 }
 
 /** Chore entry inside /today and /kid/today */

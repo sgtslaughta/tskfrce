@@ -57,6 +57,9 @@ const family: Family = {
   points_unlock_early: false,
   early_bonus_cap: 5,
   screen_time_price: 20,
+  gifs_enabled: false,
+  gif_rating: 'g',
+  giphy_key_set: false,
 }
 
 const wrap = (ui: ReactNode) => (

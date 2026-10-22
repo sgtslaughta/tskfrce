@@ -1,19 +1,21 @@
 """Chat: chore, private and family threads (polled by clients)."""
 
+import uuid
 from datetime import datetime, timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, StringConstraints, model_validator
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user, get_db
 from app.models.chat import ChatPhoto, Thread, ThreadMessage
+from app.models.family import get_family
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services import chat
-from app.services.photos import chat_storage, put
+from app.services import chat, giphy
+from app.services.photos import chat_storage, put, put_gif
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
 
@@ -57,6 +59,8 @@ def _msg(t: Thread, m: ThreadMessage) -> dict:
 @router.get("/threads")
 def threads(db: Session = Depends(get_db), user: User = Depends(get_current_active_user)):
     out = chat.unread(db, user)
+    fam = get_family(db)
+    out["gifs_enabled"] = bool(fam.gifs_enabled and fam.giphy_api_key)
     db.commit()
     return out
 
@@ -111,7 +115,59 @@ def add_photo(
 ):
     t = _thread(db, user, thread_id)
     # always a chat photo, never chore proof (proof goes through /kid/chores/{id}/photos)
-    path, thumb = put(chat_storage(), f"thread/{t.id}", file)
+    path, thumb = put(chat_storage(), f"thread/{t.id}", file, gif=True)
+    p = ChatPhoto(thread_id=t.id, uploaded_by_id=user.id, path=path, thumb_path=thumb)
+    db.add(p)
+    db.commit()
+    return {"photo_id": p.id}
+
+
+class GifIn(BaseModel):
+    gif_id: str
+
+
+def _gif_settings(db: Session):
+    fam = get_family(db)
+    if not (fam.gifs_enabled and fam.giphy_api_key):
+        raise HTTPException(404, "GIFs are turned off.")
+    return fam
+
+
+@router.get("/gifs")
+def gif_search(
+    q: str = "",
+    offset: int = Query(0, ge=0, le=500),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    fam = _gif_settings(db)
+    return giphy.search(fam.giphy_api_key, fam.gif_rating, q, offset)
+
+
+@router.get("/gifs/{gif_id}/preview")
+def gif_preview(
+    gif_id: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    _gif_settings(db)
+    data = giphy.fetch_media(gif_id, "200w.gif", giphy.PREVIEW_MAX)
+    return Response(
+        data, media_type="image/gif", headers={"Cache-Control": "private, max-age=86400"}
+    )
+
+
+@router.post("/threads/{thread_id}/gifs")
+def add_gif(
+    thread_id: int,
+    body: GifIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    t = _thread(db, user, thread_id)
+    _gif_settings(db)
+    data = giphy.fetch_media(body.gif_id, "giphy.gif", giphy.FULL_MAX)
+    path, thumb = put_gif(chat_storage(), f"thread/{t.id}/{uuid.uuid4().hex}", data)
     p = ChatPhoto(thread_id=t.id, uploaded_by_id=user.id, path=path, thumb_path=thumb)
     db.add(p)
     db.commit()
@@ -174,4 +230,5 @@ def _file(db: Session, user: User, photo_id: int, thumb: bool) -> FileResponse:
         path = chat_storage().open(p.thumb_path if thumb else p.path)
     except FileNotFoundError:
         raise HTTPException(404, "We couldn't find that photo.") from None
-    return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "private"})
+    kind = "image/gif" if not thumb and p.path.endswith(".gif") else "image/jpeg"
+    return FileResponse(path, media_type=kind, headers={"Cache-Control": "private"})
