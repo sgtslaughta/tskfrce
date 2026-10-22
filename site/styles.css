@@ -1,8 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&display=swap');
 
-/* Tokens copied from frontend/src/v2/fridge.css and controls.css */
-:root,
-[data-mantine-color-scheme='light'] {
+/* Tokens copied from frontend/src/v2/fridge.css and controls.css — light mode */
+:root {
   --f-bg: #f4f7fa;
   --f-card: #ffffff;
   --f-ink: #1d2b53;
@@ -20,11 +19,13 @@
   --f-head-stripe: transparent;
   --f-field: #ffffff;
   --f-edge: #c9d3e6;
+  --f-on-color: #1d2b53;
+  --f-band: #f0f4f9;
 }
 
-[data-mantine-color-scheme='dark'],
+/* Dark mode via prefers-color-scheme */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-mantine-color-scheme='light']) {
+  :root {
     --f-bg: #1e2026;
     --f-card: #18213f;
     --f-ink: #e8eeff;
@@ -42,11 +43,8 @@
     --f-head-stripe: #ffc93c;
     --f-field: #101833;
     --f-edge: #34416b;
+    --f-band: #0f1620;
   }
-}
-
-:root {
-  --f-on-color: #1d2b53;
 }
 
 * {
@@ -100,8 +98,8 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.2;
 }
 
-h1 { font-size: 32px; }
-h2 { font-size: 24px; }
+h1 { font-size: 48px; }
+h2 { font-size: 32px; }
 h3 { font-size: 20px; }
 
 p {
@@ -122,15 +120,16 @@ a:hover {
   outline-offset: 2px;
 }
 
-/* Top bar */
+/* Top bar — navy in light, pale in dark */
 .f-bar {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 10px 16px;
-  background: var(--f-card);
+  background: var(--f-head-bg);
+  color: var(--f-head-ink);
   border: 0;
-  border-bottom: 1px solid var(--f-line);
+  border-bottom: 4px solid var(--f-head-stripe);
   box-shadow: var(--f-shadow);
   position: sticky;
   top: 0;
@@ -141,7 +140,7 @@ a:hover {
   font-family: 'Space Grotesk', system-ui, sans-serif;
   font-weight: 700;
   font-size: 20px;
-  color: var(--f-ink);
+  color: var(--f-head-ink);
   text-decoration: none;
   display: flex;
   align-items: center;
@@ -160,40 +159,55 @@ a:hover {
   align-items: center;
   gap: 6px;
   padding: 0 12px;
-  height: 44px;
-  background: var(--f-edge);
-  color: var(--f-ink);
-  border: none;
-  border-radius: 4px;
+  min-height: 44px;
+  background: rgba(255, 255, 255, 0.2);
+  color: var(--f-head-ink);
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-radius: 0;
+  clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
   font-family: 'Space Grotesk', system-ui, sans-serif;
-  font-weight: 600;
-  font-size: 12px;
+  font-weight: 700;
+  font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   cursor: pointer;
   text-decoration: none;
+  transition: opacity 0.2s ease;
 }
 
 .f-back:hover {
-  opacity: 0.8;
+  opacity: 0.9;
+}
+
+.f-back:focus-visible {
+  clip-path: none;
+  border-radius: 4px;
+  outline: 3px solid var(--f-sun);
+  outline-offset: -3px;
 }
 
 .f-theme-toggle {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
-  background: var(--f-edge);
-  border: none;
+  min-width: 44px;
+  min-height: 44px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
   border-radius: 4px;
   cursor: pointer;
-  color: var(--f-ink);
+  color: var(--f-head-ink);
   font-size: 18px;
+  transition: opacity 0.2s ease;
 }
 
 .f-theme-toggle:hover {
-  opacity: 0.8;
+  opacity: 0.9;
+}
+
+.f-theme-toggle:focus-visible {
+  outline: 3px solid var(--f-sun);
+  outline-offset: -3px;
 }
 
 /* Main layout */
@@ -206,7 +220,7 @@ a:hover {
   gap: 16px;
 }
 
-/* Card */
+/* Card with yellow 4px accent stripe */
 .f-card {
   background: var(--f-card);
   color: var(--f-ink);
@@ -215,6 +229,7 @@ a:hover {
   box-shadow: var(--f-shadow);
   padding: 24px;
   overflow: hidden;
+  border-left: 4px solid var(--f-sun);
 }
 
 .f-card-head {
@@ -235,11 +250,38 @@ a:hover {
   color: inherit;
 }
 
-/* Section */
+/* Section with alternating bands for visual energy */
 section {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 48px 16px;
+  margin-left: -16px;
+  margin-right: -16px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
+
+section:nth-child(odd) {
+  background: var(--f-band);
+}
+
+@media (prefers-color-scheme: light) {
+  section:nth-child(even) {
+    background: transparent;
+  }
+  section:nth-child(odd) {
+    background: #f0f4f9;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  section:nth-child(even) {
+    background: transparent;
+  }
+  section:nth-child(odd) {
+    background: #0f1620;
+  }
 }
 
 .section-intro {
@@ -264,20 +306,28 @@ section {
   flex-direction: column;
   gap: 24px;
   align-items: center;
-  padding: 40px 16px;
+  padding: 60px 16px 40px;
   text-align: center;
+  margin-left: -16px;
+  margin-right: -16px;
+  margin-bottom: 0;
+  padding-left: 16px;
+  padding-right: 16px;
 }
 
 .hero h1 {
-  font-size: 40px;
+  font-size: 48px;
   margin: 0 0 12px 0;
+  font-weight: 700;
+  line-height: 1.1;
 }
 
 .hero .tagline {
-  font-size: 20px;
+  font-size: 22px;
   color: var(--f-sub);
   margin: 0 0 24px 0;
-  max-width: 600px;
+  max-width: 700px;
+  line-height: 1.4;
 }
 
 .hero .description {
@@ -285,6 +335,7 @@ section {
   color: var(--f-sub);
   max-width: 600px;
   margin: 0 0 24px 0;
+  line-height: 1.6;
 }
 
 .hero-buttons {

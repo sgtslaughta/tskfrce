@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { Box, Burger, Button, Drawer } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
+import { IconHelp } from '@tabler/icons-react'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { ChatDock } from '@/v2/chat/ChatDock'
 import { BlockerBanner } from './BlockerBanner'
@@ -75,10 +76,16 @@ export function FridgeShell({
           component="a"
           href="https://sgtslaughta.github.io/tskfrce/?from=app"
           variant="subtle"
+          p="4px"
+          w="44px"
+          h="44px"
+          display="flex"
+          style={{ alignItems: 'center', justifyContent: 'center' }}
           visibleFrom="xs"
+          aria-label="Help"
           title="Help and documentation"
         >
-          ?
+          <IconHelp size={20} strokeWidth={1.5} />
         </Button>
         <Button variant="default" onClick={logOut} visibleFrom="xs">
           Log out
