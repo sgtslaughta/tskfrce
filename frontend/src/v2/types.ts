@@ -28,6 +28,7 @@ export interface Device {
   override: Override | null
   last_seen: string | null
   resisting: boolean
+  needs_pins?: boolean
 }
 
 /** GET /blocker: home box liveness */
@@ -130,12 +131,21 @@ export interface NeedsItem {
   mode?: string
 }
 
+/** Device with kids missing PINs */
+export interface SharedDeviceNudge {
+  device_id: number
+  device_name: string
+  kid_ids: number[]
+  kid_names: string[]
+}
+
 /** GET /today */
 export interface Today {
   day: string
   pending_approvals: number
   new_devices: Device[]
   needs_you?: NeedsItem[]
+  shared_without_pin?: SharedDeviceNudge[]
   kids: TodayKid[]
 }
 

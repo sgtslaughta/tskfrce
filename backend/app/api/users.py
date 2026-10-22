@@ -14,7 +14,6 @@ from app.api.deps import (
     require_self_or_parent,
 )
 from app.core.auth import INVITE_TTL, AuthService
-from pydantic import Field
 from app.core.database import get_db_session
 from app.models.user import User, UserRole
 from app.schemas.user import (
