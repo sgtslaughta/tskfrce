@@ -55,7 +55,7 @@ def encode(upload: UploadFile) -> tuple[bytes, bytes]:
 
 
 def encode_gif(data: bytes) -> tuple[bytes, bytes]:
-    """Validate and re-save an animated GIF: (clean gif, first-frame jpeg thumbnail)."""
+    """Validate and re-save an animated GIF: (clean gif, small animated gif thumbnail)."""
     if len(data) > GIF_MAX_BYTES:
         raise HTTPException(413, "That GIF is too big. The limit is 8 MB.")
     try:
@@ -77,20 +77,23 @@ def encode_gif(data: bytes) -> tuple[bytes, bytes]:
             c = f.convert("RGBA")
             c.info.clear()  # drops comment/extension metadata carried in frame info
             frames.append(c)
-        out = io.BytesIO()
-        # explicit save args only: comments and extension blocks are not carried over
-        frames[0].save(
-            out,
-            "GIF",
-            save_all=True,
-            append_images=frames[1:],
-            loop=0,
-            duration=durations,
-            disposal=2,
-        )
-        return out.getvalue(), _jpeg(frames[0].convert("RGB"), THUMB)
-    except (UnidentifiedImageError, OSError, Image.DecompressionBombError, EOFError):
+        small = []
+        for c in frames:
+            t = c.copy()
+            t.thumbnail((THUMB, THUMB))
+            small.append(t)
+        return _gif(frames, durations), _gif(small, durations)
+    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError, EOFError):
         raise HTTPException(415, "We couldn't read that GIF. Try another one.") from None
+
+
+def _gif(frames: list[Image.Image], durations: list[int]) -> bytes:
+    out = io.BytesIO()
+    # explicit save args only: comments and extension blocks are not carried over
+    frames[0].save(
+        out, "GIF", save_all=True, append_images=frames[1:], loop=0, duration=durations, disposal=2
+    )
+    return out.getvalue()
 
 
 def put(
@@ -113,8 +116,8 @@ def put(
 def put_gif(store: LocalStorage, key: str, data: bytes) -> tuple[str, str]:
     full, thumb = encode_gif(data)
     store.save(f"{key}.gif", full, "image/gif")
-    store.save(f"{key}_thumb.jpg", thumb, "image/jpeg")
-    return f"{key}.gif", f"{key}_thumb.jpg"
+    store.save(f"{key}_thumb.gif", thumb, "image/gif")
+    return f"{key}.gif", f"{key}_thumb.gif"
 
 
 def chat_storage() -> LocalStorage:

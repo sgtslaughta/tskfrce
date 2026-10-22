@@ -253,3 +253,23 @@ def test_gif_frame_size_enforced_per_frame(client, kid_headers, monkeypatch):
     assert _up(client, kid_headers, tid, _gif(2)).status_code == 413
     monkeypatch.setattr(photos.ImageSequence, "Iterator", real)
     assert _up(client, kid_headers, tid, _gif(2)).status_code == 200
+
+
+def test_transparent_animated_gif_encodes_and_thumb_animates():
+    # regression: Pillow 11.0 raised "invalid palette size" on transparent frames with disposal=2
+    import io
+
+    from app.services.photos import encode_gif
+    from PIL import Image
+
+    frames = []
+    for i in range(4):
+        im = Image.new("RGBA", (400, 300), (0, 0, 0, 0))
+        im.paste((255, 40 * i, 0, 255), (i * 50, 0, i * 50 + 60, 60))
+        frames.append(im)
+    buf = io.BytesIO()
+    frames[0].save(buf, "GIF", save_all=True, append_images=frames[1:], loop=0, duration=80)
+    full, thumb = encode_gif(buf.getvalue())
+    t = Image.open(io.BytesIO(thumb))
+    assert Image.open(io.BytesIO(full)).n_frames == 4
+    assert t.format == "GIF" and t.n_frames == 4 and max(t.size) <= 320

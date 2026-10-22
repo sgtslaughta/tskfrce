@@ -232,8 +232,9 @@ def _file(db: Session, user: User, photo_id: int, thumb: bool) -> FileResponse:
     if t is None or not chat.can_access(db, user, t):
         raise HTTPException(404, "We couldn't find that photo.")
     try:
-        path = chat_storage().open(p.thumb_path if thumb else p.path)
+        name = p.thumb_path if thumb else p.path
+        path = chat_storage().open(name)
     except FileNotFoundError:
         raise HTTPException(404, "We couldn't find that photo.") from None
-    kind = "image/gif" if not thumb and p.path.endswith(".gif") else "image/jpeg"
+    kind = "image/gif" if name.endswith(".gif") else "image/jpeg"
     return FileResponse(path, media_type=kind, headers={"Cache-Control": "private"})
