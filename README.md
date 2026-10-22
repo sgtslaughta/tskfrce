@@ -4,6 +4,8 @@ Chores first, then screens. t@sk4ce is a free family app where kids do their cho
 
 **Website and setup help: https://sgtslaughta.github.io/tskfrce/**
 
+**📖 [Full beginner's guide online](https://sgtslaughta.github.io/tskfrce/guide/) — step-by-step for parents, no technical knowledge needed.**
+
 ![The Today screen: chores waiting for a parent to approve, and one tab for each kid](docs/guide/img/today.png)
 
 ## What you get
@@ -18,18 +20,22 @@ It is honest about its limits: a determined kid can get around it (a phone hotsp
 
 ## Get started (about 20 minutes)
 
-1. [See what you need](docs/guide/01-what-you-need.md): a small always-on computer and an ordinary home router.
-2. [Install t@sk4ce](docs/guide/02-install.md): copy and paste one line.
+**👉 [Go to the full guide →](https://sgtslaughta.github.io/tskfrce/guide/)**
+
+Or here's the short version:
+
+1. [See what you need](https://sgtslaughta.github.io/tskfrce/guide/01-what-you-need.html): a small always-on computer and an ordinary home router.
+2. [Install t@sk4ce](https://sgtslaughta.github.io/tskfrce/guide/02-install.html): copy and paste one line.
 
    ```bash
    curl -fsSL https://sgtslaughta.github.io/tskfrce/install.sh | sh
    ```
 
-3. [Do the first-time setup](docs/guide/03-first-setup.md): add your family, kids and devices.
-4. [Learn the everyday routine](docs/guide/04-everyday-use.md): approve chores, answer requests, give rewards.
-5. [Show your kids](docs/guide/05-for-kids.md): a one-page guide you can hand over.
+3. [Do the first-time setup](https://sgtslaughta.github.io/tskfrce/guide/03-first-setup.html): add your family, kids and devices.
+4. [Learn the everyday routine](https://sgtslaughta.github.io/tskfrce/guide/04-everyday-use.html): approve chores, answer requests, give rewards.
+5. [Show your kids](https://sgtslaughta.github.io/tskfrce/guide/05-for-kids.html): a one-page guide you can hand over.
 
-Something wrong? See [Troubleshooting](docs/guide/06-troubleshooting.md) and the [FAQ](docs/guide/07-faq.md). The whole guide is at [docs/guide](docs/guide/README.md).
+Something wrong? See [Troubleshooting](https://sgtslaughta.github.io/tskfrce/guide/06-troubleshooting.html) and the [FAQ](https://sgtslaughta.github.io/tskfrce/guide/07-faq.html).
 
 ## For developers
 

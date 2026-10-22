@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Menu } from '@mantine/core'
 
-export const HELP_URL = 'https://sgtslaughta.github.io/tskfrce/?from=app'
+export const HELP_URL = 'https://sgtslaughta.github.io/tskfrce/guide/?from=app'
 
 /** Top-bar account button: name and initial open Help, Settings and Log out. */
 export function AccountMenu({ name, onLogout }: { name: string; onLogout: () => void }) {
