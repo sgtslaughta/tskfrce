@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db, require_parent
 from app.lock import blocker_client
@@ -12,7 +12,7 @@ from app.lock.loop import trigger
 from app.lock.overrides import clear_override, set_override
 from app.lock.rules import is_online
 from app.lock.schedule import local_now
-from app.lock.state import device_facts
+from app.lock.state import Prefetch, device_facts
 from app.models.family import FamilySettings, get_family
 from app.models.lock import Device, DeviceGroup, Override, TimeWindow, device_group_members
 from app.models.user import User, UserRole
@@ -24,17 +24,22 @@ router = APIRouter(prefix="/api/v1", tags=["devices"], dependencies=[Depends(req
 BLOCKER_STALE = timedelta(seconds=90)
 
 
-def device_out(db: Session, d: Device, fam: FamilySettings, now: datetime) -> dict:
-    """Device JSON; `now` is aware UTC."""
-    ov = (
-        db.query(Override)
-        .filter(Override.device_id == d.id, Override.source == "manual")
-        .order_by(Override.created_at.desc(), Override.id.desc())
-        .first()
-    )
+def device_out(
+    db: Session, d: Device, fam: FamilySettings, now: datetime, pre: Prefetch | None = None
+) -> dict:
+    """Device JSON; `now` is aware UTC. Pass `pre` when rendering many devices."""
+    if pre:
+        ov = next((o for o in pre.overrides[d.id] if o.source == "manual"), None)
+    else:
+        ov = (
+            db.query(Override)
+            .filter(Override.device_id == d.id, Override.source == "manual")
+            .order_by(Override.created_at.desc(), Override.id.desc())
+            .first()
+        )
     if ov and ov.expires_at and ov.expires_at <= now.replace(tzinfo=None):
         ov = None
-    online = is_online(device_facts(db, d, fam, now), local_now(fam.timezone, now))
+    online = is_online(device_facts(db, d, fam, now, pre), local_now(fam.timezone, now))
     return {
         "id": d.id,
         "name": d.name,
@@ -74,7 +79,14 @@ def blocker_status(db: Session = Depends(get_db)) -> dict:
 @router.get("/devices")
 def list_devices(db: Session = Depends(get_db)):
     fam, now = get_family(db), datetime.now(UTC)
-    return [device_out(db, d, fam, now) for d in db.query(Device).order_by(Device.id)]
+    devs = (
+        db.query(Device)
+        .options(selectinload(Device.owners), selectinload(Device.groups))
+        .order_by(Device.id)
+        .all()
+    )
+    pre = Prefetch(db, devs)
+    return [device_out(db, d, fam, now, pre) for d in devs]
 
 
 @router.patch("/devices/{device_id}")

@@ -33,4 +33,5 @@ def get_family(db: Session) -> FamilySettings:
         fam = FamilySettings(id=1, name="My Family")
         db.add(fam)
         db.flush()  # caller commits
+    db.info["family"] = fam  # strong ref: the identity map is weak, so repeat calls re-query
     return fam

@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db, require_parent
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, ChoreStep
@@ -99,7 +99,14 @@ def _renumber(db: Session, c: Chore) -> None:
 
 @router.get("/api/v1/chores/")
 def list_chores(kid_id: int | None = None, archived: bool = False, db: Session = Depends(get_db)):
-    q = db.query(Chore).order_by(Chore.id)
+    q = (
+        db.query(Chore)
+        .options(
+            selectinload(Chore.steps),
+            selectinload(Chore.assignments).selectinload(ChoreAssignment.kids),
+        )
+        .order_by(Chore.id)
+    )
     if not archived:
         q = q.filter(Chore.archived_at.is_(None))
     out = []

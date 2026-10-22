@@ -8,7 +8,7 @@ from datetime import UTC, date, datetime
 
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.lock.reset import current_chore_day
 from app.lock.schedule import occurs_on
@@ -65,9 +65,25 @@ def day_runs(db: Session, day: date):
     return db.query(ChoreRun).filter(ChoreRun.day == day, ChoreRun.status != "cancelled")
 
 
+def with_detail(q, kids: bool = True, photos: bool = True):
+    """Eager-load everything chore_out/steps_out/state/photo_count read (no per-run queries)."""
+    return q.options(
+        *([selectinload(ChoreRun.kids)] if kids else []),
+        joinedload(ChoreRun.assignment).joinedload(ChoreAssignment.chore).selectinload(Chore.steps),
+        joinedload(ChoreRun.approved_by),
+        selectinload(ChoreRun.ticks),
+        *([selectinload(ChoreRun.photos)] if photos else []),
+    )
+
+
 def counts(db: Session, kid_id: int, day: date) -> tuple[int, int]:
     """(approved, total) for a kid today; approved needs a parent's approval."""
-    runs = day_runs(db, day).filter(kid_runs_filter(kid_id)).all()
+    runs = (
+        day_runs(db, day)
+        .options(joinedload(ChoreRun.approved_by))
+        .filter(kid_runs_filter(kid_id))
+        .all()
+    )
     return sum(state(r) == "done" for r in runs), len(runs)
 
 

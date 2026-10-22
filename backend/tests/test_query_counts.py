@@ -3,6 +3,9 @@
 from datetime import UTC, datetime, timedelta
 
 import pytest
+from app.api.deps import get_db
+from app.core.database import get_db_session
+from app.main import fastapi_app
 from app.models.chat import Thread, ThreadMessage
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import ChoreRun
@@ -10,11 +13,13 @@ from app.models.family import get_family
 from app.models.lock import Device
 from app.models.user import UserRole
 from sqlalchemy import event
+from sqlalchemy.orm import sessionmaker
 
 from tests.conftest import _headers, _make_user
 from tests.factories import DAY, api_chore
 
 LIMIT = 15
+LIMITS = {"/api/v1/today": 17}  # per-device lock facts and per-kid progress are batched
 
 
 class QueryCounter:
@@ -23,6 +28,15 @@ class QueryCounter:
 
     def _hook(self, conn, cursor, statement, *a):
         self.statements.append(statement)
+        if os.environ.get("QTRACE") and statement.startswith(os.environ["QTRACE"]):
+            print(
+                "TRACE",
+                [
+                    f"{f.filename.split('/')[-1]}:{f.lineno}"
+                    for f in traceback.extract_stack()
+                    if "/app/" in f.filename
+                ][-4:],
+            )
 
     def __enter__(self):
         event.listen(self.engine, "before_cursor_execute", self._hook)
@@ -91,8 +105,23 @@ def family(client, db, parent_headers):
     ],
 )
 def test_query_count(client, db, family, who, path):
+    """Each request gets a fresh session, like production (no warm identity map)."""
+
+    def fresh():
+        s = sessionmaker(bind=db.get_bind(), autoflush=False)()
+        try:
+            yield s
+        finally:
+            s.close()
+
+    fastapi_app.dependency_overrides[get_db] = fresh
+    fastapi_app.dependency_overrides[get_db_session] = fresh
     with QueryCounter(db.get_bind()) as q:
         r = client.get(path, headers=family[who])
     assert r.status_code == 200, r.text
-    print(f"QUERIES {who} {path}: {len(q.statements)}")
-    assert len(q.statements) <= LIMIT, "\n".join(q.statements[:40])
+    limit = LIMITS.get(path, LIMIT)
+    if len(q.statements) > limit:
+        import collections
+
+        c = collections.Counter(s.split(" FROM ")[-1][:90] for s in q.statements)
+        pytest.fail(f"{len(q.statements)} queries > {limit}: {c.most_common(12)}")
