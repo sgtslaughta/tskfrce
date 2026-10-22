@@ -29,6 +29,8 @@ export interface ApiInit {
   method?: string
   body?: unknown
   kid?: boolean
+  /** Parent preview: parent token plus X-View-As (GET kid routes only). */
+  asKid?: number
 }
 
 const GENERIC = 'Something went wrong. Check your connection and try again.'
@@ -53,6 +55,7 @@ async function send(path: string, init: ApiInit): Promise<Response> {
   const token = init.kid ? kidToken() : tokenManager.getAccessToken()
   const headers: Record<string, string> = {}
   if (token) headers.Authorization = `Bearer ${token}`
+  if (init.asKid) headers['X-View-As'] = String(init.asKid)
   const form = init.body instanceof FormData
   if (init.body !== undefined && !form) headers['Content-Type'] = 'application/json'
   return fetch(`/api/proxy${path}`, {

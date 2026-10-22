@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, AuthError, KID_TOKEN_KEY } from '../api'
+import { blocked, kidInit, useAsKid } from './usePreview'
 import { toastFail, toastOk } from '../notify'
 import type { KidToday, KidWhoami } from '../types'
 
@@ -80,9 +81,10 @@ export function useKidSession() {
 
 /** Kid's chores and lock state, refetched every 10 s. A 401 calls onExpired. */
 export function useKidToday(onExpired: () => void) {
+  const as = useAsKid()
   const q = useQuery({
-    queryKey: ['kid', 'today'],
-    queryFn: () => api<KidToday>('/kid/today', { kid: true }),
+    queryKey: ['kid', 'today', as],
+    queryFn: () => api<KidToday>('/kid/today', kidInit(as)),
     refetchInterval: 10_000,
     refetchIntervalInBackground: false,
   })
@@ -96,8 +98,9 @@ export function useKidToday(onExpired: () => void) {
 
 export function useMarkDone(onExpired: () => void) {
   const qc = useQueryClient()
+  const as = useAsKid()
   return useMutation({
-    mutationFn: (id: number) => api(`/kid/chores/${id}/done`, { method: 'POST', kid: true }),
+    mutationFn: (id: number) => (as ? blocked() : api(`/kid/chores/${id}/done`, { method: 'POST', kid: true })),
     onSuccess: () => toastOk('Marked done'),
     onError: (e: Error) => {
       if (e instanceof AuthError) onExpired()
@@ -111,9 +114,10 @@ const refetch = (qc: ReturnType<typeof useQueryClient>) => qc.invalidateQueries(
 
 export function useTickSubtask() {
   const qc = useQueryClient()
+  const as = useAsKid()
   return useMutation({
     mutationFn: (v: { chore: number; sub: number; done: boolean }) =>
-      api(`/kid/chores/${v.chore}/subtasks/${v.sub}`, { method: 'POST', body: { done: v.done }, kid: true }),
+      as ? blocked() : api(`/kid/chores/${v.chore}/subtasks/${v.sub}`, { method: 'POST', body: { done: v.done }, kid: true }),
     onError: (e: Error) => toastFail(e),
     onSettled: () => refetch(qc),
   })
@@ -121,8 +125,10 @@ export function useTickSubtask() {
 
 export function useUploadPhoto() {
   const qc = useQueryClient()
+  const as = useAsKid()
   return useMutation({
     mutationFn: (v: { chore: number; file: File }) => {
+      if (as) return blocked()
       const body = new FormData()
       body.append('file', v.file)
       return api(`/kid/chores/${v.chore}/photos`, { method: 'POST', body, kid: true })

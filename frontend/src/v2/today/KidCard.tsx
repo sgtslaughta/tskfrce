@@ -120,6 +120,9 @@ export function KidCard({ kid }: { kid: TodayKid }) {
           <span className="f-cap">
             {online ? "Online" : `Last active ${ago(kid.last_active)}`}
           </span>
+          <Button component="a" href={`/kid?as=${kid.id}`} variant="default" size="xs" ml="auto">
+            View as kid
+          </Button>
         </div>
       </div>
       <div

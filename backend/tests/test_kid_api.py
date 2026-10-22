@@ -211,3 +211,54 @@ def test_done_timestamp_is_utc_z(kc, db, parent, kid):
     t = mkchore(db, parent, kid)
     r = kc.post(f"/api/v1/kid/chores/{t.id}/done", headers=kid_hdr(db, kid))
     assert r.json()["submitted_for_approval_at"].endswith("Z")
+
+
+# --- parent "view as kid" preview (GET only) ---
+
+
+def view(h, kid_id):
+    return {**h, "X-View-As": str(kid_id)}
+
+
+def test_parent_preview_today_shows_kids_chores(client, db, parent, kid, parent_headers):
+    get_family(db).last_reset_date = DAY.date()
+    mkdev(db, kid, ip="10.9.9.9")  # not the parent's IP: lock comes from the kid's device
+    mkchore(db, parent, kid)
+    db.commit()
+    r = client.get("/api/v1/kid/today", headers=view(parent_headers, kid.id))
+    assert r.status_code == 200 and len(r.json()["chores"]) == 1
+    assert r.json()["locked"] is True
+
+
+def test_parent_preview_other_gets(client, db, parent, kid, parent_headers):
+    h = view(parent_headers, kid.id)
+    for p in ("rewards", "awards", "celebrations"):
+        assert client.get(f"/api/v1/kid/{p}", headers=h).status_code == 200, p
+
+
+def test_parent_preview_non_kid_404(client, parent, parent_headers):
+    r = client.get("/api/v1/kid/today", headers=view(parent_headers, parent.id))
+    assert r.status_code == 404 and r.json()["detail"] == "We couldn't find that kid."
+    assert client.get("/api/v1/kid/today", headers=view(parent_headers, 9999)).status_code == 404
+
+
+def test_parent_without_header_403(client, parent_headers):
+    assert client.get("/api/v1/kid/today", headers=parent_headers).status_code == 403
+    r = client.get("/api/v1/kid/today", headers={**parent_headers, "X-View-As": "x"})
+    assert r.status_code == 403
+
+
+def test_kid_ignores_view_header(client, db, parent, kid, kid_headers):
+    sis = other_kid(db)
+    mkchore(db, parent, sis)
+    r = client.get("/api/v1/kid/today", headers=view(kid_headers, sis.id))
+    assert r.status_code == 200 and r.json()["chores"] == []
+
+
+def test_parent_preview_writes_403(client, db, parent, kid, parent_headers):
+    run = mkchore(db, parent, kid)
+    h = view(parent_headers, kid.id)
+    assert client.post(f"/api/v1/kid/chores/{run.id}/done", headers=h).status_code == 403
+    r = client.post("/api/v1/kid/redeem", headers=h, json={"kind": "screen_time", "minutes": 15})
+    assert r.status_code == 403
+    assert client.post("/api/v1/kid/celebrations/x/seen", headers=h).status_code == 403

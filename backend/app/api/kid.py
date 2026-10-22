@@ -53,6 +53,24 @@ def require_kid(user: User = Depends(get_current_active_user)) -> User:
     return user
 
 
+def view_kid(
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+) -> User:
+    """GET routes only: the kid themself, or a parent previewing a kid via X-View-As."""
+    if user.role == UserRole.KID:
+        return user
+    raw = request.headers.get("x-view-as", "")
+    if user.role == UserRole.PARENT and raw.strip().isdigit():
+        kid = db.get(User, int(raw))  # single-family app: any kid is theirs
+        if kid is None or kid.role != UserRole.KID:
+            raise HTTPException(status_code=404, detail="We couldn't find that kid.")
+        request.state.previewing = True
+        return kid
+    raise HTTPException(status_code=403, detail="Only kids can do this.")
+
+
 def request_device(db: Session, ip: str, devices: list[Device] | None = None) -> Device | None:
     want = norm_ip(ip)
     if want is None:
@@ -125,7 +143,7 @@ def _kid_extras(run: ChoreRun, kid: User, takers: dict[int, User]) -> dict:
 
 
 @router.get("/today")
-def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(require_kid)):
+def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(view_kid)):
     now = datetime.now(UTC)
     runs = (
         svc.with_detail(svc.day_runs(db, svc.today(db, now)), kids=False)
@@ -138,7 +156,13 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(r
     takers = _names(db, {r.submitted_by_id for r in runs} - {None, kid.id})
     done = sum(svc.state(r) == "done" for r in runs)
     return {
-        "locked": _locked(db, kid, client_ip(request), now, {kid.id: (done, len(runs))}),
+        "locked": _locked(
+            db,
+            kid,
+            "" if getattr(request.state, "previewing", False) else client_ip(request),
+            now,
+            {kid.id: (done, len(runs))},
+        ),
         "chores": [
             {
                 "id": r.id,
@@ -231,7 +255,7 @@ def done(chore_id: int, db: Session = Depends(get_db), kid: User = Depends(requi
 
 
 @router.get("/rewards")
-def rewards(db: Session = Depends(get_db), kid: User = Depends(require_kid)):
+def rewards(db: Session = Depends(get_db), kid: User = Depends(view_kid)):
     fam = get_family(db)
     pending = db.query(Redemption).filter(
         Redemption.kid_id == kid.id, Redemption.status == "pending"
@@ -271,7 +295,7 @@ def redeem(body: RedeemIn, db: Session = Depends(get_db), kid: User = Depends(re
 
 
 @router.get("/awards")
-def awards(db: Session = Depends(get_db), kid: User = Depends(require_kid)):
+def awards(db: Session = Depends(get_db), kid: User = Depends(view_kid)):
     rows = (
         db.query(Redemption)
         .filter(
@@ -305,7 +329,7 @@ def award_seen(award_id: int, db: Session = Depends(get_db), kid: User = Depends
 
 
 @router.get("/celebrations")
-def celebrations(db: Session = Depends(get_db), kid: User = Depends(require_kid)):
+def celebrations(db: Session = Depends(get_db), kid: User = Depends(view_kid)):
     return badges.celebrations(db, kid)
 
 

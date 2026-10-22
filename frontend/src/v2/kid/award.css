@@ -71,3 +71,17 @@
   border: 4px solid transparent;
   background: var(--f-card) padding-box, var(--ring) border-box;
 }
+
+.kid-preview-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--f-card, #fff);
+  border: 2px solid var(--f-line, #000);
+  border-radius: 12px;
+}

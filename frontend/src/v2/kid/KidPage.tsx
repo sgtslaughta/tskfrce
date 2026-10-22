@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/router'
 import { Button } from '@mantine/core'
 import { CANT_REACH } from '../api'
+import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
+import { PreviewProvider, useAsKid } from '../hooks/usePreview'
 import { AuthBrand } from '../components/AuthBrand'
 import { ProgressHeader } from '../components/ProgressHeader'
 import { Bell } from '../components/Bell'
@@ -9,6 +12,7 @@ import { StickerCard } from '../components/StickerCard'
 import { ChatDock } from '../chat/ChatDock'
 import { openChat } from '../chat/dock'
 import { useThreads } from '../hooks/useChat'
+import { useKids } from '../hooks/useKids'
 import { useKidSession, useKidToday, useMarkDone, loginMessage } from '../hooks/useKid'
 import type { KidWhoami } from '../types'
 import { AwardOverlay } from './AwardOverlay'
@@ -38,12 +42,13 @@ const SwitchBtn = ({ onClick }: { onClick: () => void }) => (
 
 function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; avatar?: string | null; kidId?: number | null; onExit: () => void; canSwitch: boolean }) {
   const [lockerOpen, setLockerOpen] = useState(false)
-  const threads = useThreads(true)
+  const preview = useAsKid() !== null
+  const threads = useThreads(!preview)
   const today = useKidToday(onExit)
   const done = useMarkDone(onExit)
   const d = today.data
   const unread = Object.fromEntries(
-    (threads.data?.threads ?? []).filter((t) => t.kind === 'chore').map((t) => [t.task_id, t.unread]),
+    (preview ? [] : threads.data?.threads ?? []).filter((t) => t.kind === 'chore').map((t) => [t.task_id, t.unread]),
   )
   if (!d && today.isError)
     return (
@@ -68,9 +73,11 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
   const head = d.progress && (
     <StickerCard>
       <ProgressHeader name={name ?? 'You'} avatar={avatar ?? null} kid progress={d.progress} />
-      <Button variant="default" size="md" mt="xs" onClick={() => setLockerOpen(true)}>
-        Customize
-      </Button>
+      {!preview && (
+        <Button variant="default" size="md" mt="xs" onClick={() => setLockerOpen(true)}>
+          Customize
+        </Button>
+      )}
     </StickerCard>
   )
   const switcher = canSwitch && <SwitchBtn onClick={onExit} />
@@ -81,7 +88,7 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
         <UnlockedView points={d.points_balance} done={d.chores.filter((c) => c.state === 'done').length} />
         <RewardsSection onExpired={onExit} />
         <FamilySection meId={kidId} />
-        <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />
+        {!preview && <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />}
         {switcher}
       </>
     )
@@ -101,20 +108,63 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
           chores={d.chores}
           onDone={(id) => done.mutate(id)}
           busyId={done.isPending ? done.variables : null}
-          unread={unread}
-          onChat={(id) => openChat('chore', String(id))}
+          unread={preview ? undefined : unread}
+          onChat={preview ? undefined : (id) => openChat('chore', String(id))}
         />
       </StickerCard>
       <RewardsSection onExpired={onExit} />
       <FamilySection meId={kidId} />
-      <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />
+      {!preview && <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />}
       {switcher}
     </>
   )
 }
 
-/** Kid screen: who is this, PIN if needed, then lock or unlocked view. Kid auth only. */
+const Shell = ({ children }: { children: React.ReactNode }) => (
+  <main className="f-shell" style={{ minHeight: '100vh' }}>
+    <div className="f-main" style={{ maxWidth: 520 }}>
+      {children}
+    </div>
+  </main>
+)
+
+/** Parent-only read-only look at a kid's screen (/kid?as=<id>). */
+function KidPreview({ id }: { id: number }) {
+  const router = useRouter()
+  const kids = useKids().data
+  const kid = (kids ?? []).find((k) => k.id === id)
+  const name = kid?.full_name ?? 'kid'
+  return (
+    <PreviewProvider value={id}>
+      <main className="f-shell" style={{ minHeight: '100vh' }}>
+        <div className="f-main" style={{ maxWidth: 520 }}>
+          <div className="kid-preview-bar" role="status">
+            <b>{`Viewing as ${name} (preview)`}</b>
+            <Button size="xs" variant="default" onClick={() => router.push('/kids')}>
+              Back to parent
+            </Button>
+          </div>
+          <Session name={kid?.full_name ?? undefined} avatar={kid?.avatar} kidId={id} onExit={() => {}} canSwitch={false} />
+        </div>
+      </main>
+    </PreviewProvider>
+  )
+}
+
+/** Gate: only a logged-in parent gets the preview; anyone else sees the normal kid screen. */
+function PreviewGate({ id }: { id: number }) {
+  const { user, isLoading } = useUnifiedAuth()
+  if (isLoading) return <Shell><Msg>Loading…</Msg></Shell>
+  return user?.role === 'parent' ? <KidPreview id={id} /> : <KidScreen />
+}
+
 export function KidPage() {
+  const as = Number(useRouter().query?.as)
+  return as > 0 ? <PreviewGate id={as} /> : <KidScreen />
+}
+
+/** Kid screen: who is this, PIN if needed, then lock or unlocked view. Kid auth only. */
+function KidScreen() {
   const { ready, authed, kidId, whoami, login, logout } = useKidSession()
   const [picked, setPicked] = useState<K | null>(null)
   const tried = useRef(false)

@@ -57,6 +57,14 @@ describe('api', () => {
     expect(headersOf(0).Authorization).toBe('Bearer kid-tok')
   })
 
+  test('asKid sends the parent token and X-View-As', async () => {
+    localStorage.setItem(KID_TOKEN_KEY, 'kid-tok')
+    fetchMock.mockResolvedValue(res(200, {}))
+    await api('/kid/today', { asKid: 5 })
+    expect(headersOf(0).Authorization).toBe('Bearer parent-tok')
+    expect(headersOf(0)['X-View-As']).toBe('5')
+  })
+
   test('parent 401 refreshes once, then throws AuthError', async () => {
     tm.refreshTokens.mockResolvedValue({ success: true, shouldLogout: false })
     fetchMock.mockResolvedValue(res(401, { detail: 'Not authenticated' }))
