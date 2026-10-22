@@ -7,6 +7,7 @@ Converts markdown guide files to styled HTML pages matching the main site.
 import os
 import re
 import shutil
+import html as html_lib
 from pathlib import Path
 from urllib.parse import quote
 
@@ -100,9 +101,12 @@ def rewrite_links(html, source_file):
     html = re.sub(r'href="\.\./remote-access\.md([#"]?)', r'href="remote-access.html\1', html)
     html = re.sub(r'href="remote-access([#"]?)"', r'href="remote-access.html\1"', html)
 
-    # Links to repo files: docs/*.md, LICENSE, etc -> GitHub URLs
+    # Links to engineering.md: ../engineering.md -> ../engineering.html
+    html = re.sub(r'href="\.\./engineering\.md"', r'href="../engineering.html"', html)
+
+    # Links to other repo files: docs/*.md, LICENSE, etc -> GitHub URLs
     html = re.sub(
-        r'href="\.\./((?:routers|blocker|engineering)\.md)"',
+        r'href="\.\./((?:routers|blocker)\.md)"',
         r'href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/\1"',
         html,
     )
@@ -117,6 +121,9 @@ def rewrite_links(html, source_file):
 
 def build_page_html(content_html, title, chapters_list, current_idx, headings):
     """Build complete HTML page with site styling."""
+    # Remove the first <h1> from content (will be in header instead)
+    content_html = re.sub(r'<h1[^>]*>.+?</h1>\n?', '', content_html, count=1, flags=re.DOTALL)
+
     # Find previous and next chapters
     prev_ch = chapters_list[current_idx - 1] if current_idx > 0 else None
     next_ch = chapters_list[current_idx + 1] if current_idx < len(chapters_list) - 1 else None
@@ -152,6 +159,19 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
         is_active = i == current_idx
         active_class = " active" if is_active else ""
         chapter_links += f'<a href="{ch_url}" class="guide-chapter-link{active_class}">{ch_title}</a>\n'
+
+    # Build breadcrumb
+    breadcrumb = "Guide"
+    if current_idx > 0:  # Not the intro page
+        breadcrumb = f"Guide › {title}"
+
+    # Build chapter summary for mobile (closed by default)
+    chapter_count = len(chapters_list)
+    current_num = current_idx + 1
+    if current_idx == 0:
+        summary_text = f"Chapters ({chapter_count})"
+    else:
+        summary_text = f"Chapter {current_num} of {chapter_count} · {title} ▾"
 
     html = f"""<!doctype html>
 <html lang="en">
@@ -207,8 +227,8 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
     <main class="guide-layout">
       <!-- Chapter sidebar (desktop) / collapsible (mobile) -->
       <aside class="guide-sidebar">
-        <details class="guide-chapters-toggle" open>
-          <summary>Chapters</summary>
+        <details class="guide-chapters-toggle">
+          <summary>{summary_text}</summary>
           <nav class="guide-chapters">
             {chapter_links}
           </nav>
@@ -219,6 +239,7 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
       <article class="guide-content">
         <div class="guide-content-inner">
           <header class="guide-header">
+            <div style="font-size: 13px; color: var(--f-sub); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 600;">{breadcrumb}</div>
             <h1>{title}</h1>
           </header>
 
@@ -304,15 +325,32 @@ def process_guide_file(source_file, all_chapters, chapter_idx):
     with open(source_file, "r") as f:
         md_content = f.read()
 
+    # Strip maintainer notes from README
+    if source_file.name == "README.md":
+        # Remove the "Screenshots in this guide are listed in..." line
+        md_content = re.sub(
+            r'\nScreenshots in this guide are listed in.*?\n',
+            '\n',
+            md_content,
+            flags=re.DOTALL
+        )
+
     # Convert markdown to HTML
     html = markdown_to_html(md_content)
 
     # Extract title from first h1 or use chapter title
-    title_match = re.search(r"<h1[^>]*>([^<]+)</h1>", html)
-    title = title_match.group(1) if title_match else "t@sk4ce Guide"
+    title_match = re.search(r"<h1[^>]*>(.+?)</h1>", html, re.DOTALL)
+    if title_match:
+        # Extract text content, removing any tags
+        title_html = title_match.group(1)
+        title = re.sub(r"<[^>]+>", "", title_html).strip()
+        title = html_lib.unescape(title)
+    else:
+        title = "t@sk4ce Guide"
 
-    # Clean up title if it starts with "# "
+    # Clean up title
     title = title.strip("#").strip()
+    title = title.rstrip("¶").strip()  # Remove pilcrow from header-link
 
     # Extract headings for TOC
     headings = extract_headings(html)
@@ -437,10 +475,16 @@ def build_site():
 
 def build_standalone_page(content_html, title):
     """Build a standalone page (like remote-access) without chapter navigation."""
+    # Remove the first <h1> from content (will be in header instead)
+    content_html = re.sub(r'<h1[^>]*>.+?</h1>\n?', '', content_html, count=1, flags=re.DOTALL)
+
     headings = extract_headings(content_html)
     toc_html = render_toc(headings)
 
     chapter_links = '<a href="index.html" class="guide-chapter-link">← Back to guide</a>\n'
+
+    # Breadcrumb
+    breadcrumb = f"Guide › {title}"
 
     html = f"""<!doctype html>
 <html lang="en">
@@ -498,6 +542,7 @@ def build_standalone_page(content_html, title):
       <article class="guide-content">
         <div class="guide-content-inner">
           <header class="guide-header">
+            <div style="font-size: 13px; color: var(--f-sub); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 600;">{breadcrumb}</div>
             <h1>{title}</h1>
           </header>
 

@@ -2,9 +2,9 @@
 
 .guide-layout {
   display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 40px;
-  max-width: 1200px;
+  grid-template-columns: 240px 1fr;
+  gap: 48px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 40px 16px;
 }
@@ -13,6 +13,7 @@
   position: sticky;
   top: 80px;
   height: fit-content;
+  min-width: 0;
 }
 
 .guide-chapters-toggle {
@@ -249,15 +250,21 @@
 
 /* Links */
 .guide-body a {
-  color: var(--f-sun);
+  color: var(--f-ink);
   text-decoration: none;
-  border-bottom: 1px solid rgba(255, 201, 60, 0.3);
+  border-bottom: 2px solid var(--f-sun);
   transition: all 0.2s ease;
 }
 
 .guide-body a:hover {
-  color: #ffb020;
-  border-bottom-color: #ffb020;
+  border-bottom-width: 3px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .guide-body a {
+    color: #e8eeff;
+    border-bottom-color: var(--f-sun);
+  }
 }
 
 .guide-body a[href^="https://github.com"]::after {
@@ -373,11 +380,11 @@
   }
 
   .guide-chapters-toggle summary {
-    padding: 8px 12px;
+    padding: 10px 12px;
     background: var(--f-mute);
     border-radius: 4px;
     font-weight: 600;
-    font-size: 14px;
+    font-size: 13px;
     color: var(--f-ink);
     list-style: none;
     display: flex;
@@ -385,14 +392,14 @@
     justify-content: space-between;
   }
 
-  .guide-chapters-toggle summary::before {
-    content: '▶';
-    margin-right: 8px;
-    transition: transform 0.2s ease;
+  .guide-chapters-toggle summary::after {
+    content: ' ▾';
+    font-size: 12px;
+    margin-left: 8px;
   }
 
-  .guide-chapters-toggle[open] summary::before {
-    transform: rotate(90deg);
+  .guide-chapters-toggle[open] summary::after {
+    content: ' ▴';
   }
 
   .guide-chapters-toggle:not([open]) .guide-chapters {
