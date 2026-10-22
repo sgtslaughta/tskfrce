@@ -64,6 +64,11 @@ Owner picked: one-line installer; password reset both ways (another parent in th
 
 ### Task 2: Polish pass 2 — words, errors, empty and loading states, accessibility
 
+- [ ] **Step 0 (owner-side review of pass 1, 2026-10-22):** also fix these, with before/after screenshots:
+  1. Kid home: per-row "Chat" buttons are heavy and repeated → one quiet icon button with unread dot per chore; "Waiting for Mom or Dad" becomes the row's status chip (like parent Today), not a loose line; disabled "Mark done" must read as a real disabled button with the reason ("Add a photo first"), not a dashed placeholder; empty "Rewards · 0 points" card needs a friendly empty state with the next step; "Family" heading belongs inside its card.
+  2. Phone: floating chat button overlaps content (kid tabs, last item) → reserve bottom space (`padding-bottom` ≥ launcher + 16 px) on every page and keep the launcher clear of tab bars; device pills show a friendly short name (strip lab/host prefixes and domain, title case, max ~14 chars + ellipsis, full name in title/aria).
+  3. Top bar: "Log out" moves into a small account menu (avatar/name → Help, Settings, Log out); theme toggle stays.
+  4. Today "Chat with <kid>": show the latest message across that kid's threads (private + their chore threads) with sender and time, or "Say hi to <kid>" with a composer shortcut when empty; never "No messages yet." beside unread badges.
 - [ ] **Step 1:** Findings to `docs/superpowers/polish/pass-2.md`: every user-facing string (frontend + backend `HTTPException` details) read for tone (plain, friendly, next step), consistency of names (chore/task, box/blocker → "home box"), empty states with a helpful next action, loading states (skeletons, no layout jump), error states (network down, box offline), and an accessibility sweep (labels, roles, `aria-live` for toasts and celebrations, keyboard paths through Today/Needs you, the chore editor, the Locker and the award overlay).
 - [ ] **Step 2:** Fix; update tests that assert changed copy.
 - [ ] **Step 3:** Commit `fix(ux): polish pass 2 — copy, states and accessibility`.
