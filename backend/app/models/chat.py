@@ -19,6 +19,7 @@ class Thread(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     task = relationship("Task", backref=backref("threads", cascade="all, delete-orphan"))
+    run = relationship("ChoreRun", backref=backref("threads", cascade="all, delete-orphan"))
     messages = relationship("ThreadMessage", cascade="all, delete-orphan")
     photos = relationship("ChatPhoto", cascade="all, delete-orphan")
 

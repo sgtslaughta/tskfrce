@@ -1,4 +1,4 @@
-"""Pure schedule helpers: time windows and chore recurrence."""
+"""Schedule helpers: time windows and chore recurrence."""
 
 from dataclasses import dataclass
 from datetime import UTC, date, datetime, time
@@ -30,13 +30,13 @@ def in_window(w: Window, now_local: datetime) -> bool:
     return (wd in w.days and t >= w.start) or ((wd - 1) % 7 in w.days and t < w.end)
 
 
-def occurs_on(pattern: dict, d: date) -> bool:
-    kind = pattern.get("type")
-    if kind == "daily":
+def occurs_on(assignment, d: date) -> bool:
+    """Does an assignment (repeat/days/on_date) produce work on day `d`?"""
+    if assignment.repeat == "daily":
         return True
-    if kind == "weekly":
-        return d.weekday() in pattern.get("days", [])
-    return False
+    if assignment.repeat == "weekly":
+        return str(d.weekday()) in (assignment.days or "")
+    return assignment.repeat == "once" and assignment.on_date == d
 
 
 def local_now(tz: str, now_utc: datetime) -> datetime:

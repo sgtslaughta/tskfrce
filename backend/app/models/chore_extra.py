@@ -30,7 +30,7 @@ class ChorePhoto(Base):
     __tablename__ = "chore_photos"
 
     id = Column(Integer, primary_key=True)
-    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False, index=True)
+    task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True, index=True)  # legacy
     run_id = Column(Integer, ForeignKey("chore_runs.id"), nullable=True, index=True)
     attempt = Column(Integer, nullable=False, default=1)
     uploaded_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -39,3 +39,4 @@ class ChorePhoto(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     task = relationship("Task", backref=backref("chore_photos", cascade="all, delete-orphan"))
+    run = relationship("ChoreRun", backref=backref("photos", cascade="all, delete-orphan"))

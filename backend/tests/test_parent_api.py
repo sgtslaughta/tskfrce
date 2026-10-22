@@ -2,12 +2,15 @@ from datetime import UTC, date, datetime, timedelta
 
 from app.lock.state import tick
 from app.models.badge import BadgeAward
-from app.models.chore_extra import ChorePhoto, ChoreSubtask
+from app.models.chore_extra import ChorePhoto
+from app.models.chores import ChoreAssignment, ChoreRun, RunStepTick
 from app.models.family import get_family
 from app.models.gamification import Points, PointsType
 from app.models.lock import Device, DeviceGroup, Override, TimeWindow
 from app.models.reward import Redemption
-from app.models.task import Task, TaskStatus
+from app.services import chores as svc
+
+from tests.factories import api_chore, make_run
 
 DAY = date(2026, 10, 20)
 
@@ -19,20 +22,8 @@ def mkdev(db, mac="aa:bb:cc:dd:ee:01", status="unassigned"):
     return d
 
 
-def mkchore(db, parent, kid, status=TaskStatus.TODO, approved=False, title="x"):
-    t = Task(
-        title=title,
-        created_by_id=parent.id,
-        assigned_to_id=kid.id,
-        due_date=datetime(2026, 10, 20),
-        status=status,
-        points=3,
-        approved_by_id=parent.id if approved else None,
-        recurrence_pattern={"chore": True},
-    )
-    db.add(t)
-    db.commit()
-    return t
+def mkchore(db, parent, kid, status="todo", approved=False, title="x"):
+    return make_run(db, parent, kid, status=status, approved=approved, title=title)
 
 
 def setup_day(db):
@@ -162,10 +153,10 @@ def test_today_shape(client, db, parent, kid, parent_headers):
     d = mkdev(db)
     mkdev(db, "aa:bb:cc:dd:ee:02")  # stays unassigned -> new device
     assign(client, parent_headers, d, kid)
-    mkchore(db, parent, kid, TaskStatus.DONE, approved=True, title="a")
-    mkchore(db, parent, kid, TaskStatus.SUBMITTED_FOR_APPROVAL, title="b")
-    mkchore(db, parent, kid, TaskStatus.DONE, approved=False, title="c")  # not approved
-    mkchore(db, parent, kid, TaskStatus.TODO, title="d")
+    mkchore(db, parent, kid, "done", approved=True, title="a")
+    mkchore(db, parent, kid, "submitted", title="b")
+    mkchore(db, parent, kid, "done", approved=False, title="c")  # not approved
+    mkchore(db, parent, kid, "todo", title="d")
     j = client.get("/api/v1/today", headers=parent_headers).json()
     assert set(j) == {"day", "pending_approvals", "new_devices", "needs_you", "kids"}
     assert j["day"] == "2026-10-20" and j["pending_approvals"] == 1
@@ -257,8 +248,7 @@ def test_delete_group_removes_windows(client, db, parent_headers):
 
 def test_delete_kid_removes_points_and_requests(client, db, parent, kid, parent_headers):
     t = mkchore(db, parent, kid)
-    db.add(ChorePhoto(task_id=t.id, uploaded_by_id=kid.id, path="x.jpg", thumb_path="x_t.jpg"))
-    db.add(ChoreSubtask(task_id=t.id, title="a", done_by_id=kid.id))
+    db.add(ChorePhoto(run_id=t.id, uploaded_by_id=kid.id, path="x.jpg", thumb_path="x_t.jpg"))
     db.add(Points(user_id=kid.id, points_type=PointsType.BONUS, amount=5))
     db.add(Redemption(kid_id=kid.id, kind="screen_time", minutes=15, cost=5))
     db.add(BadgeAward(kid_id=kid.id, badge_key="first_blood", tier=1))
@@ -268,28 +258,34 @@ def test_delete_kid_removes_points_and_requests(client, db, parent, kid, parent_
     assert db.query(Redemption).count() == 0
     assert db.query(BadgeAward).count() == 0
     assert db.query(ChorePhoto).count() == 0
-    assert db.query(ChoreSubtask).one().done_by_id is None
+    assert db.query(ChoreRun).count() == 0
     assert client.get("/api/v1/redemptions", headers=parent_headers).json() == []
 
 
-def test_delete_kid_cancels_their_chores(client, db, parent, kid, parent_headers):
+def test_delete_kid_removes_their_runs_and_stops_generation(
+    client, db, parent, kid, parent_headers
+):
     setup_day(db)
-    j = client.post(
-        "/api/v1/chores/",
-        json={"title": "Dishes", "kid_id": kid.id, "repeat": {"type": "daily"}},
-        headers=parent_headers,
-    ).json()
-    done = mkchore(db, parent, kid, TaskStatus.DONE, approved=True)
+    api_chore(client, parent_headers, [kid], title="Dishes")
+    done = mkchore(db, parent, kid, "done", approved=True)
+    db.add(RunStepTick(run_id=done.id, step_id=_step(db, done), done_by_id=kid.id))
+    db.commit()
     r = client.delete(f"/api/v1/kids/{kid.id}", headers=parent_headers)
     assert r.status_code == 200
     db.expire_all()
-    defn, inst = db.get(Task, j["definition"]["id"]), db.get(Task, j["instance"]["id"])
-    assert defn.is_recurring is False and defn.status == TaskStatus.CANCELLED
-    assert inst.status == TaskStatus.CANCELLED
-    assert db.get(Task, done.id).status == TaskStatus.DONE
-    from app.lock.reset import run_reset
+    assert db.query(ChoreRun).count() == 0
+    assert db.query(ChoreAssignment).filter(ChoreAssignment.active.is_(True)).count() == 0
+    assert svc.run_reset(db, date(2026, 10, 21)) == 0
 
-    assert run_reset(db, date(2026, 10, 21)) == 0
+
+def _step(db, run):
+    from app.models.chores import ChoreStep
+
+    c = run.assignment.chore
+    s = ChoreStep(chore_id=c.id, title="s", position=0)
+    db.add(s)
+    db.flush()
+    return s.id
 
 
 def test_legacy_user_delete_refuses_kids(client, db, parent, kid, parent_headers):

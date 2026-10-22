@@ -11,16 +11,16 @@ from app.api.deps import get_db, require_parent
 from app.core.auth import AuthService
 from app.lock.loop import trigger
 from app.lock.overrides import clear_override, set_override
-from app.lock.reset import is_chore_filter
 from app.models.badge import BadgeAward
-from app.models.chore_extra import ChorePhoto, ChoreSubtask
+from app.models.chore_extra import ChorePhoto
+from app.models.chores import ChoreAssignment, ChoreRun, RunStepTick, assignment_kids, run_kids
 from app.models.gamification import Points
 from app.models.lock import Override, TimeWindow, device_owners
 from app.models.reward import Redemption
-from app.models.task import Task, TaskStatus, chore_participants
 from app.models.user import User, UserRole
 from app.schemas.lock import KidCreate, KidPatch, OverrideIn
 from app.services import chat
+from app.services import chores as svc
 from app.services.photos import storage
 
 router = APIRouter(prefix="/api/v1/kids", tags=["kids"], dependencies=[Depends(require_parent)])
@@ -96,28 +96,27 @@ def patch_kid(kid_id: int, body: KidPatch, db: Session = Depends(get_db)):
 def delete_kid(kid_id: int, db: Session = Depends(get_db)):
     kid = _kid(db, kid_id)
     owned = list(kid.devices)
-    # drop them from shared chore definitions; the chore carries on for the rest
-    for d in db.query(Task).filter(is_chore_filter(), Task.is_recurring.is_(True)):
-        p = dict(d.recurrence_pattern or {})
-        ids = p.get("assignees") or [d.assigned_to_id]
-        if kid.id not in ids or ids == [kid.id]:
-            continue  # untouched, or solely theirs (cancelled below)
-        rest = [i for i in ids if i != kid.id]
-        p["assignees"] = rest
-        if len(rest) == 1:
-            p["mode"] = "each"
-        d.recurrence_pattern, d.assigned_to_id = p, rest[0]
+    # their own runs go (with photos and chat); shared runs carry on for the others
+    db.query(Points).filter(Points.user_id == kid.id).delete()  # ledger rows point at runs
+    own = db.query(ChoreRun).filter(ChoreRun.kid_id == kid.id).all()
+    svc.delete_runs(db, own, storage())
     db.flush()
-    # stop their own chores spawning for nobody; finished history stays
-    for t in db.query(Task).filter(
-        is_chore_filter(),
-        Task.assigned_to_id == kid.id,
-        Task.status.notin_([TaskStatus.DONE, TaskStatus.CANCELLED]) | Task.is_recurring,
+    db.query(ChoreRun).filter(ChoreRun.submitted_by_id == kid.id).update({"submitted_by_id": None})
+    db.query(RunStepTick).filter(RunStepTick.done_by_id == kid.id).update({"done_by_id": None})
+    db.execute(delete(run_kids).where(run_kids.c.kid_id == kid.id))
+    db.execute(delete(assignment_kids).where(assignment_kids.c.kid_id == kid.id))
+    db.flush()
+    db.expire_all()
+    for r in db.query(ChoreRun).filter(
+        ChoreRun.kid_id.is_(None), ChoreRun.status.in_(["todo", "submitted"])
     ):
-        t.is_recurring = False
-        t.status = TaskStatus.CANCELLED
-    db.execute(delete(chore_participants).where(chore_participants.c.kid_id == kid.id))
-    db.query(Task).filter(Task.submitted_by_id == kid.id).update({"submitted_by_id": None})
+        if not r.kids:
+            r.status = "cancelled"  # a shared run nobody is left on
+    for a in db.query(ChoreAssignment).filter(ChoreAssignment.active.is_(True)):
+        if not a.kids:
+            a.active = False  # nobody left to generate for
+        elif len(a.kids) == 1:
+            a.mode = "each"
     db.flush()  # expire_all below would drop unflushed changes
     db.query(TimeWindow).filter(TimeWindow.kid_id == kid.id).delete()
     db.query(Override).filter(Override.created_by_id == kid.id).update({"created_by_id": None})
@@ -127,8 +126,6 @@ def delete_kid(kid_id: int, db: Session = Depends(get_db)):
         for key in (p.path, p.thumb_path):
             storage().delete(key)
         db.delete(p)
-    db.query(ChoreSubtask).filter(ChoreSubtask.done_by_id == kid.id).update({"done_by_id": None})
-    db.query(Points).filter(Points.user_id == kid.id).delete()
     db.query(Redemption).filter(Redemption.kid_id == kid.id).delete()
     db.query(BadgeAward).filter(BadgeAward.kid_id == kid.id).delete()
     db.flush()

@@ -5,10 +5,10 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user, get_db
-from app.lock.reset import kid_chores_filter
 from app.models.chore_extra import ChorePhoto
-from app.models.task import Task
+from app.models.chores import ChoreRun
 from app.models.user import User, UserRole
+from app.services.chores import kid_runs_filter
 from app.services.photos import storage
 
 router = APIRouter(prefix="/api/v1/chore-photos", tags=["chores"])
@@ -18,7 +18,7 @@ def _file(photo_id: int, db: Session, user: User, thumb: bool) -> FileResponse:
     p = db.get(ChorePhoto, photo_id)
     ok = p is not None and (
         user.role == UserRole.PARENT
-        or db.query(Task.id).filter(Task.id == p.task_id, kid_chores_filter(user.id)).first()
+        or db.query(ChoreRun.id).filter(ChoreRun.id == p.run_id, kid_runs_filter(user.id)).first()
     )
     if not ok:
         raise HTTPException(404, "We couldn't find that photo.")

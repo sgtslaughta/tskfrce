@@ -3,12 +3,13 @@
 from datetime import UTC, date, datetime, timedelta
 
 from app.core.config import settings
-from app.lock.reset import midnight, run_reset
 from app.lock.state import desired_blocked, tick
 from app.main import app
+from app.models.chores import ChoreRun
 from app.models.family import get_family
 from app.models.lock import Override
 from app.models.task import Task
+from app.services import chores as svc
 from fastapi.testclient import TestClient
 
 KID_IP = "192.168.1.50"
@@ -51,14 +52,22 @@ def _setup(client):
     return ph, kid, dev
 
 
+def _dishes(client, ph, kid):
+    """A daily chore for the kid; returns the chore, assignment and today's run id."""
+    chore = client.post("/api/v1/chores/", json={"title": "Dishes"}, headers=ph).json()
+    a = client.post(
+        f"/api/v1/chores/{chore['id']}/assignments",
+        json={"kid_ids": [kid["id"]], "repeat": {"type": "daily"}},
+        headers=ph,
+    ).json()
+    run = client.get("/api/v1/chores/today", headers=ph).json()[str(kid["id"])][0]
+    return {"definition": chore, "assignment": a, "instance": run}
+
+
 def _kid_with_chore(client):
     ph, kid, dev = _setup(client)
     client.patch(f"/api/v1/devices/{dev['id']}", json={"owner_ids": [kid["id"]]}, headers=ph)
-    ch = client.post(
-        "/api/v1/chores/",
-        json={"title": "Dishes", "kid_id": kid["id"], "repeat": {"type": "daily"}},
-        headers=ph,
-    ).json()
+    ch = _dishes(client, ph, kid)
     kc = from_ip(KID_IP)
     kt = kc.post("/api/v1/kid/login", json={"kid_id": kid["id"]}).json()["access_token"]
     return ph, kid, dev, ch, kc, {"Authorization": f"Bearer {kt}"}
@@ -70,11 +79,7 @@ def test_full_flow(client, db):
     r = client.patch(f"/api/v1/devices/{dev['id']}", json={"owner_ids": [kid["id"]]}, headers=ph)
     assert r.json()["status"] == "assigned"
     assert blocked(client) == []  # no chores yet
-    ch = client.post(
-        "/api/v1/chores/",
-        json={"title": "Dishes", "kid_id": kid["id"], "repeat": {"type": "daily"}},
-        headers=ph,
-    ).json()
+    ch = _dishes(client, ph, kid)
     inst = ch["instance"]["id"]
     assert blocked(client) == [MAC]
     tick(db, datetime.now(UTC))  # reset keeps it, creates no duplicate
@@ -142,38 +147,32 @@ def test_kid_free_window_unlocks(client, db):
 def test_kid_cannot_escape_by_deleting_chore(client, db):
     _, _, _, ch, kc, kh = _kid_with_chore(client)
     assert blocked(client) == [MAC]
-    for t in (ch["instance"]["id"], ch["definition"]["id"]):
-        r = kc.post("/api/v1/tasks/delete", json={"task_id": t}, headers=kh)
+    for url in (
+        f"/api/v1/chores/{ch['definition']['id']}",
+        f"/api/v1/assignments/{ch['assignment']['id']}",
+    ):
+        r = kc.delete(url, headers=kh)
         assert r.status_code == 403, r.text
     assert blocked(client) == [MAC]
 
 
 def test_kid_cannot_preempt_tomorrows_instance(client, db):
     _, kid, _, ch, kc, kh = _kid_with_chore(client)
-    tomorrow = date.today() + timedelta(days=1)
-    r = kc.post(
-        "/api/v1/tasks/",
-        json={
-            "title": "x",
-            "parent_task_id": ch["definition"]["id"],
-            "due_date": f"{tomorrow}T00:00:00",
-        },
-        headers=kh,
-    )
-    assert r.status_code == 403
-    # even a placeholder that slipped in some other way doesn't count as the chore
+    tomorrow = svc.today(db) + timedelta(days=1)  # the family's day, at any wall-clock time
+    # a placeholder row a kid slipped in some other way is not a run
     db.add(
         Task(
             title="x",
             created_by_id=kid["id"],
             assigned_to_id=kid["id"],
-            parent_task_id=ch["definition"]["id"],
-            due_date=midnight(tomorrow),
+            due_date=datetime.combine(tomorrow, datetime.min.time()),
         )
     )
     db.commit()
-    assert run_reset(db, tomorrow) == 1
+    # tomorrow's run is made by the reset only, once; the kid stays blocked
+    assert svc.run_reset(db, tomorrow) == 1
     db.commit()
+    assert db.query(ChoreRun).filter(ChoreRun.day == tomorrow).count() == 1
     assert desired_blocked(db, datetime.now(UTC)) == [MAC]
 
 

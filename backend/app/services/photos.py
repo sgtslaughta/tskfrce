@@ -8,7 +8,7 @@ from PIL import Image, ImageOps, ImageSequence, UnidentifiedImageError
 
 from app.core.config import settings
 from app.models.chore_extra import ChorePhoto
-from app.models.task import Task
+from app.models.chores import ChoreRun
 from app.models.user import User
 from app.services.local_storage import LocalStorage
 
@@ -124,11 +124,11 @@ def chat_storage() -> LocalStorage:
     return LocalStorage(settings.DATA_DIR / "chat_photos")
 
 
-def save_photo(upload: UploadFile, task: Task, user: User) -> ChorePhoto:
-    path, thumb_path = put(storage(), f"chore/{task.id}", upload)
+def save_photo(upload: UploadFile, run: ChoreRun, user: User) -> ChorePhoto:
+    path, thumb_path = put(storage(), f"chore/{run.id}", upload)
     return ChorePhoto(
-        task_id=task.id,
-        attempt=task.attempt or 1,
+        run_id=run.id,
+        attempt=run.attempt or 1,
         uploaded_by_id=user.id,
         path=path,
         thumb_path=thumb_path,

@@ -3,11 +3,11 @@ from datetime import UTC, date, datetime, timedelta
 from app.lock.reset import current_chore_day
 from app.models.family import get_family
 from app.models.gamification import Points, PointsType
-from app.models.task import Task, TaskStatus
 from app.models.user import UserRole
 from app.services import progression as pr
 
 from tests.conftest import _headers, _make_user
+from tests.factories import make_run
 
 
 def _kid(db):
@@ -16,18 +16,7 @@ def _kid(db):
 
 def _day(db, kid, d, *statuses):
     for st in statuses:
-        db.add(
-            Task(
-                title="c",
-                is_recurring=False,
-                due_date=datetime.combine(d, datetime.min.time()),
-                status=st,
-                assigned_to_id=kid.id,
-                created_by_id=kid.id,
-                recurrence_pattern={"chore": True},
-            )
-        )
-    db.commit()
+        make_run(db, kid, kid, status=st, day=d)
 
 
 def test_xp_for_level():
@@ -63,7 +52,7 @@ def test_xp_ignores_spending(db):
 
 
 T = date(2026, 10, 20)
-D, S, TODO = TaskStatus.DONE, TaskStatus.SUBMITTED_FOR_APPROVAL, TaskStatus.TODO
+D, S, TODO = "done", "submitted", "todo"
 
 
 def test_streak_counts_and_breaks(db):

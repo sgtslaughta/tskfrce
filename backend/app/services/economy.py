@@ -7,12 +7,12 @@ from fastapi import HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from app.models.chores import ChoreRun
 from app.models.family import FamilySettings, get_family
 from app.models.gamification import Points, PointsType
 from app.models.lock import Override
 from app.models.notification import Notification
 from app.models.reward import Redemption, Reward
-from app.models.task import Task
 from app.models.user import User, UserRole
 
 SCREEN_MINUTES = range(15, 121, 15)
@@ -43,37 +43,37 @@ def bonus_for(done_utc: datetime | None, deadline: datetime | None, cap: int) ->
     return cap // 2 if done_utc <= deadline else 0
 
 
-def _recipients(task: Task) -> list[int]:
+def _recipients(run: ChoreRun) -> list[int]:
     """Kids paid for an approved chore: owner, race winner, or every team member."""
-    if task.assigned_to_id is not None:
-        return [task.assigned_to_id]
-    if (task.recurrence_pattern or {}).get("mode") == "race":
-        return [task.submitted_by_id] if task.submitted_by_id else []
-    return [u.id for u in task.participants]
+    if run.kid_id is not None:
+        return [run.kid_id]
+    if run.assignment.mode == "race":
+        return [run.submitted_by_id] if run.submitted_by_id else []
+    return [u.id for u in run.kids]
 
 
-def award_chore(db: Session, task: Task, fam: FamilySettings) -> int:
+def award_chore(db: Session, run: ChoreRun, fam: FamilySettings) -> int:
     """Add completion (+ bonus) rows for an approved chore. Caller commits.
 
-    Team chores split points and bonus evenly (remainder dropped).
+    Points are the chore's at this moment; the ledger row keeps them. Team chores
+    split points and bonus evenly (remainder dropped).
     """
-    kids = _recipients(task)
+    kids = _recipients(run)
     if not kids:
         return 0
+    chore = run.assignment.chore
     n = len(kids)
-    base = (task.points or 0) // n
-    due = (task.recurrence_pattern or {}).get("due_time")
-    deadline = deadline_utc(fam, task.due_date.date(), due) if task.due_date else None
-    bonus = bonus_for(task.submitted_for_approval_at, deadline, fam.early_bonus_cap) // n
+    base = (chore.points or 0) // n
+    deadline = deadline_utc(fam, run.day, run.assignment.due_time)
+    bonus = bonus_for(run.submitted_at, deadline, fam.early_bonus_cap) // n
     for kid_id in kids:
         db.add(
             Points(
                 user_id=kid_id,
                 points_type=PointsType.TASK_COMPLETION,
                 amount=base,
-                description=task.title,
-                reference_type="task",
-                reference_id=task.id,
+                description=chore.title,
+                run_id=run.id,
             )
         )
         if bonus > 0:
@@ -82,9 +82,8 @@ def award_chore(db: Session, task: Task, fam: FamilySettings) -> int:
                     user_id=kid_id,
                     points_type=PointsType.BONUS,
                     amount=bonus,
-                    description=f"Early bonus: {task.title}",
-                    reference_type="task_bonus",
-                    reference_id=task.id,
+                    description=f"Early bonus: {chore.title}",
+                    run_id=run.id,
                 )
             )
     return (base + bonus) * n
@@ -148,8 +147,7 @@ def decide(db: Session, redemption: Redemption, parent: User, approve: bool) -> 
                 points_type=PointsType.REDEMPTION,
                 amount=-redemption.cost,
                 description="Screen time" if redemption.kind == "screen_time" else "Reward",
-                reference_type="redemption",
-                reference_id=redemption.id,
+                redemption_id=redemption.id,
             )
         )
         if redemption.kind == "screen_time":

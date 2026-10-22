@@ -2,13 +2,14 @@ import io
 from datetime import date
 
 from app.models.chore_extra import ChorePhoto
+from app.models.chores import ChoreRun
 from app.models.family import get_family
-from app.models.task import Task, TaskStatus
 from app.models.user import UserRole
 from app.services.photos import storage
 from PIL import Image
 
 from tests.conftest import _headers, _make_user
+from tests.factories import api_chore
 
 DAY = date(2026, 10, 20)
 
@@ -30,10 +31,8 @@ def _setup(db, client, ph, **kw):
     get_family(db).last_reset_date = DAY
     db.commit()
     k = _make_user(db, "leo", UserRole.KID)
-    body = {"title": "Room", "repeat": {"type": "daily"}, "kid_ids": [k.id], **kw}
-    assert client.post("/api/v1/chores/", json=body, headers=ph).status_code == 200
-    t = db.query(Task).filter(Task.is_recurring.is_(False)).one()
-    return k, _headers(db, k), t.id
+    api_chore(client, ph, [k], title="Room", **kw)
+    return k, _headers(db, k), db.query(ChoreRun).one().id
 
 
 def _up(client, h, cid, data=None, ctype="image/jpeg"):
@@ -47,11 +46,12 @@ def _done(client, h, cid):
     return client.post(f"/api/v1/kid/chores/{cid}/done", headers=h)
 
 
-def test_subtasks_copied_in_order_and_ticked(client, db, parent_headers):
-    k, h, cid = _setup(db, client, parent_headers, subtasks=["a", "b", "c"])
-    t = db.get(Task, cid)
-    assert [s.title for s in t.chore_subtasks] == ["a", "b", "c"]
-    ids = [s.id for s in t.chore_subtasks]
+def test_steps_in_order_and_ticked(client, db, parent_headers):
+    k, h, cid = _setup(db, client, parent_headers, steps=["a", "b", "c"])
+    run = db.get(ChoreRun, cid)
+    steps = run.assignment.chore.steps
+    assert [s.title for s in steps] == ["a", "b", "c"]
+    ids = [s.id for s in steps]
     for i in ids:
         assert (
             client.post(
@@ -60,15 +60,21 @@ def test_subtasks_copied_in_order_and_ticked(client, db, parent_headers):
             == 200
         )
     db.expire_all()
-    assert all(s.done_at for s in db.get(Task, cid).chore_subtasks)
+    assert {t.step_id for t in db.get(ChoreRun, cid).ticks} == set(ids)
     client.post(f"/api/v1/kid/chores/{cid}/subtasks/{ids[0]}", json={"done": False}, headers=h)
     db.expire_all()
-    assert db.get(Task, cid).chore_subtasks[0].done_at is None
+    assert {t.step_id for t in db.get(ChoreRun, cid).ticks} == set(ids[1:])
+    assert (
+        client.post(
+            f"/api/v1/kid/chores/{cid}/subtasks/99999", json={"done": True}, headers=h
+        ).status_code
+        == 404
+    )
 
 
 def test_done_needs_every_step(client, db, parent_headers):
-    k, h, cid = _setup(db, client, parent_headers, subtasks=["a", "b"])
-    sid = db.get(Task, cid).chore_subtasks[0].id
+    k, h, cid = _setup(db, client, parent_headers, steps=["a", "b"])
+    sid = db.get(ChoreRun, cid).assignment.chore.steps[0].id
     client.post(f"/api/v1/kid/chores/{cid}/subtasks/{sid}", json={"done": True}, headers=h)
     r = _done(client, h, cid)
     assert r.status_code == 409 and r.json()["detail"] == "Tick every step first."
@@ -113,8 +119,8 @@ def test_photo_access(client, db, parent_headers):
 
 
 def test_send_back(client, db, parent_headers):
-    k, h, cid = _setup(db, client, parent_headers, needs_photo=True, subtasks=["a"])
-    sid = db.get(Task, cid).chore_subtasks[0].id
+    k, h, cid = _setup(db, client, parent_headers, needs_photo=True, steps=["a"])
+    sid = db.get(ChoreRun, cid).assignment.chore.steps[0].id
     client.post(f"/api/v1/kid/chores/{cid}/subtasks/{sid}", json={"done": True}, headers=h)
     _up(client, h, cid)
     assert _done(client, h, cid).status_code == 200
@@ -126,8 +132,8 @@ def test_send_back(client, db, parent_headers):
     assert r.json()["status"] == "todo" and r.json()["attempt"] == 2
     assert r.json()["last_note"] == "Under the bed too"
     db.expire_all()
-    t = db.get(Task, cid)
-    assert t.status == TaskStatus.TODO and t.chore_subtasks[0].done_at is not None
+    t = db.get(ChoreRun, cid)
+    assert t.status == "todo" and len(t.ticks) == 1
     assert _done(client, h, cid).json()["detail"] == "Add a photo first."
     # not submitted any more
     assert client.post(url, json={"note": "x"}, headers=parent_headers).status_code == 409
@@ -138,9 +144,8 @@ def test_race_send_back_clears_submitter(client, db, parent_headers):
     db.commit()
     a = _make_user(db, "leo", UserRole.KID)
     b = _make_user(db, "maya", UserRole.KID)
-    body = {"title": "T", "repeat": {"type": "daily"}, "kid_ids": [a.id, b.id], "mode": "race"}
-    client.post("/api/v1/chores/", json=body, headers=parent_headers)
-    cid = db.query(Task).filter(Task.is_recurring.is_(False)).one().id
+    api_chore(client, parent_headers, [a, b], "race", title="T")
+    cid = db.query(ChoreRun).one().id
     client.post(f"/api/v1/kid/chores/{cid}/done", headers=_headers(db, b))
     r = client.post(
         f"/api/v1/chores/{cid}/send-back", json={"note": "again"}, headers=parent_headers

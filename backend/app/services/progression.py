@@ -8,12 +8,13 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.flair.catalog import equipped
-from app.lock.reset import current_chore_day, is_chore_filter, kid_chores_filter
+from app.lock.reset import current_chore_day
 from app.lock.schedule import local_now
+from app.models.chores import ChoreRun
 from app.models.family import FamilySettings
 from app.models.gamification import Points, PointsType
-from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
+from app.services.chores import kid_runs_filter
 
 TITLES = [
     (1, "Rookie"),
@@ -26,7 +27,7 @@ TITLES = [
     (25, "Mythic"),
 ]
 LOOKBACK_DAYS = 400
-_DONE = (TaskStatus.DONE, TaskStatus.SUBMITTED_FOR_APPROVAL)
+_DONE = ("done", "submitted")
 
 
 @dataclass(frozen=True)
@@ -69,21 +70,14 @@ def level_for(total: int) -> Level:
 
 def chore_days(db: Session, kid_id: int, today: date) -> dict[date, bool]:
     """chore day -> every instance that day is done/submitted (past and today only)."""
-    start = datetime.combine(today - timedelta(days=LOOKBACK_DAYS), datetime.min.time())
+    start = today - timedelta(days=LOOKBACK_DAYS)
     rows = (
-        db.query(Task.due_date, Task.status)
-        .filter(
-            is_chore_filter(),
-            Task.is_recurring.is_(False),
-            kid_chores_filter(kid_id),
-            Task.status != TaskStatus.CANCELLED,
-            Task.due_date >= start,
-        )
+        db.query(ChoreRun.day, ChoreRun.status)
+        .filter(kid_runs_filter(kid_id), ChoreRun.status != "cancelled", ChoreRun.day >= start)
         .all()
     )
     days: dict[date, bool] = {}
-    for due, status in rows:
-        d = due.date()
+    for d, status in rows:
         if d <= today:
             days[d] = days.get(d, True) and status in _DONE
     return days

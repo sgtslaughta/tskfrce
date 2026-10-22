@@ -135,6 +135,7 @@ class ChoreRun(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     assignment = relationship("ChoreAssignment")
+    approved_by = relationship("User", foreign_keys=[approved_by_id])
     kids = relationship("User", secondary=run_kids)
     ticks = relationship("RunStepTick", cascade="all, delete-orphan")
 

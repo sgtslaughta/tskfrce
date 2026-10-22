@@ -3,12 +3,13 @@ from datetime import date, datetime, timedelta
 
 from app.models.chat import ThreadMessage
 from app.models.chore_extra import ChorePhoto
+from app.models.chores import Chore, ChoreAssignment, ChoreRun
 from app.models.family import get_family
-from app.models.task import Task
 from app.models.user import UserRole
 from PIL import Image
 
 from tests.conftest import _headers, _make_user
+from tests.factories import api_chore
 
 DAY = date(2026, 10, 20)
 C = "/api/v1/chat"
@@ -21,15 +22,13 @@ def _world(db, client, ph):
     maya = _make_user(db, "maya", UserRole.KID)
 
     def chore(title, kids, mode="each"):
-        body = {
-            "title": title,
-            "repeat": {"type": "daily"},
-            "kid_ids": [k.id for k in kids],
-            "mode": mode,
-            "points": 15,
-        }
-        assert client.post("/api/v1/chores/", json=body, headers=ph).status_code == 200
-        return db.query(Task).filter(Task.title == title, Task.is_recurring.is_(False)).first().id
+        api_chore(client, ph, kids, mode, title=title, points=15)
+        return (
+            db.query(ChoreRun)
+            .filter(ChoreRun.assignment.has(ChoreAssignment.chore.has(Chore.title == title)))
+            .first()
+            .id
+        )
 
     return leo, maya, _headers(db, leo), _headers(db, maya), chore
 
@@ -135,7 +134,7 @@ def test_chat_photo_in_chore_thread_is_never_proof(client, db, parent_headers):
     m = client.post(f"{C}/threads/{tid}/messages", json={"photo_id": pid}, headers=lh).json()
     assert m["photo_url"] == f"/api/v1/chat/photos/{pid}"
     assert client.get(m["photo_url"], headers=parent_headers).status_code == 200
-    assert db.query(ChorePhoto).filter(ChorePhoto.task_id == cid).count() == 0
+    assert db.query(ChorePhoto).filter(ChorePhoto.run_id == cid).count() == 0
 
 
 def test_proof_photo_shows_in_chore_thread(client, db, parent_headers):
@@ -184,7 +183,7 @@ def test_unread_excludes_own_includes_system_and_read_clears(client, db, parent_
     _say(client, lh, tid, "mine")
     from app.services import chat
 
-    chat.system(db, db.get(Task, cid), "Photo added")
+    chat.system(db, db.get(ChoreRun, cid), "Photo added")
     db.commit()
 
     def row(h, tid):

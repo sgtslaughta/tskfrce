@@ -11,21 +11,15 @@ from app.api.deps import get_db, require_parent
 from app.api.devices import device_out
 from app.api.rewards import redemption_name
 from app.lock.loop import trigger
-from app.lock.reset import (
-    chore_state,
-    current_chore_day,
-    is_chore_filter,
-    midnight,
-    task_kid_ids,
-)
 from app.models.chore_extra import ChorePhoto
+from app.models.chores import ChoreAssignment, ChoreRun
 from app.models.family import get_family
 from app.models.gamification import Points
 from app.models.lock import Device
 from app.models.reward import Redemption
-from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
 from app.schemas.lock import FamilyPatch
+from app.services import chores as svc
 from app.services import progression
 
 router = APIRouter(prefix="/api/v1", tags=["family"], dependencies=[Depends(require_parent)])
@@ -76,35 +70,36 @@ def _iso(dt: datetime | None) -> str | None:
     return dt.isoformat() + "Z" if dt else None
 
 
-def _needs_you(db: Session, tasks: list[Task], names: dict[int, str]) -> list[dict]:
+def _needs_you(db: Session, runs: list[ChoreRun], names: dict[int, str]) -> list[dict]:
     """Submitted chores and pending requests, oldest first."""
-    sub = [t for t in tasks if t.status == TaskStatus.SUBMITTED_FOR_APPROVAL]
+    sub = [r for r in runs if r.status == "submitted"]
     photos = {}
     if sub:
         rows = (
             db.query(ChorePhoto)
-            .filter(ChorePhoto.task_id.in_([t.id for t in sub]))
+            .filter(ChorePhoto.run_id.in_([r.id for r in sub]))
             .order_by(ChorePhoto.id)
             .all()
         )
-        photos = {(p.task_id, p.attempt): p.id for p in rows}  # latest wins
+        photos = {(p.run_id, p.attempt): p.id for p in rows}  # latest wins
     items = []
-    for t in sub:
-        kid_id = t.submitted_by_id or (task_kid_ids(t) or [None])[0]
-        pid = photos.get((t.id, t.attempt))
+    for r in sub:
+        kid_id = r.submitted_by_id or (svc.run_kid_ids(r) or [None])[0]
+        pid = photos.get((r.id, r.attempt))
+        steps = svc.steps_out(r)
         items.append(
             {
-                "type": "redo" if t.attempt > 1 else "chore",
-                "id": t.id,
+                "type": "redo" if r.attempt > 1 else "chore",
+                "id": r.id,
                 "kid_id": kid_id,
                 "kid_name": names.get(kid_id),
-                "title": t.title,
-                "attempt": t.attempt,
+                "title": svc.chore_of(r).title,
+                "attempt": r.attempt,
                 "thumb_url": f"/chore-photos/{pid}/thumb" if pid else None,
-                "subtasks_done": sum(s.done_at is not None for s in t.chore_subtasks),
-                "subtasks_total": len(t.chore_subtasks),
-                "submitted_at": _iso(t.submitted_for_approval_at),
-                "mode": (t.recurrence_pattern or {}).get("mode", "each"),
+                "subtasks_done": sum(s["done"] for s in steps),
+                "subtasks_total": len(steps),
+                "submitted_at": _iso(r.submitted_at),
+                "mode": svc.mode_of(r),
             }
         )
     reds = db.query(Redemption).filter(Redemption.status == "pending").all()
@@ -130,40 +125,37 @@ def _needs_you(db: Session, tasks: list[Task], names: dict[int, str]) -> list[di
     return sorted(items, key=lambda x: x["submitted_at"] or "")
 
 
-def _chore_out(t: Task, names: dict[int, str]) -> dict:
-    p = t.recurrence_pattern or {}
-    state = chore_state(t)
-    mode = p.get("mode", "each")
-    taken = mode == "race" and state != "todo" and t.submitted_by_id
+def _chore_out(r: ChoreRun, names: dict[int, str]) -> dict:
+    c, st, mode = svc.chore_of(r), svc.state(r), svc.mode_of(r)
+    steps = svc.steps_out(r)
+    taken = mode == "race" and st != "todo" and r.submitted_by_id
     return {
-        "id": t.id,
-        "title": t.title,
-        "points": t.points or 0,
-        "state": state,
-        "due_time": p.get("due_time"),
-        "mode": mode if t.assigned_to_id is None else "each",
-        "subtasks_done": sum(s.done_at is not None for s in t.chore_subtasks),
-        "subtasks_total": len(t.chore_subtasks),
-        "attempt": t.attempt,
-        "last_note": t.last_note,
-        "taken_by": names.get(t.submitted_by_id) if taken else None,
+        "id": r.id,
+        "title": c.title,
+        "points": c.points or 0,
+        "state": st,
+        "due_time": r.assignment.due_time,
+        "mode": mode,
+        "subtasks_done": sum(s["done"] for s in steps),
+        "subtasks_total": len(steps),
+        "attempt": r.attempt,
+        "last_note": r.last_note,
+        "taken_by": names.get(r.submitted_by_id) if taken else None,
     }
 
 
 @router.get("/today")
 def today(db: Session = Depends(get_db)):
     fam, now = get_family(db), datetime.now(UTC)
-    day = current_chore_day(fam, now)
+    day = svc.today(db, now)
     tasks = (
-        db.query(Task)
-        .options(selectinload(Task.chore_subtasks), selectinload(Task.participants))
-        .filter(
-            is_chore_filter(),
-            Task.is_recurring.is_(False),
-            Task.due_date == midnight(day),
-            Task.status != TaskStatus.CANCELLED,
+        svc.day_runs(db, day)
+        .options(
+            selectinload(ChoreRun.ticks),
+            selectinload(ChoreRun.kids),
+            selectinload(ChoreRun.assignment).selectinload(ChoreAssignment.chore),
         )
-        .order_by(Task.id)
+        .order_by(ChoreRun.id)
         .all()
     )
     kid_rows = db.query(User).filter(User.role == UserRole.KID).order_by(User.id).all()
@@ -172,7 +164,7 @@ def today(db: Session = Depends(get_db)):
     kids = []
     for k in kid_rows:
         devs = [device_out(db, d, fam, now) for d in k.devices]
-        mine = [t for t in tasks if k.id in task_kid_ids(t)]
+        mine = [t for t in tasks if k.id in svc.run_kid_ids(t)]
         seen = [d.last_seen for d in k.devices if d.last_seen]
         kids.append(
             {
@@ -180,7 +172,7 @@ def today(db: Session = Depends(get_db)):
                 "name": k.full_name,
                 "avatar": k.avatar,
                 "online_all": bool(devs) and all(d["online"] for d in devs),
-                "done": sum(chore_state(t) == "done" for t in mine),
+                "done": sum(svc.state(t) == "done" for t in mine),
                 "total": len(mine),
                 "needs_you_count": sum(n["kid_id"] == k.id for n in needs),
                 "last_active": _iso(max(seen)) if seen else None,
@@ -196,7 +188,7 @@ def today(db: Session = Depends(get_db)):
     db.commit()
     return {
         "day": day.isoformat(),
-        "pending_approvals": sum(t.status == TaskStatus.SUBMITTED_FOR_APPROVAL for t in tasks),
+        "pending_approvals": sum(t.status == "submitted" for t in tasks),
         "new_devices": [device_out(db, d, fam, now) for d in new],
         "needs_you": needs,
         "kids": kids,

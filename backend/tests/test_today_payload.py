@@ -1,14 +1,15 @@
 from datetime import UTC, date, datetime, timedelta
 
 from app.models.chore_extra import ChorePhoto
+from app.models.chores import ChoreRun
 from app.models.family import get_family
 from app.models.gamification import Points, PointsType
 from app.models.lock import Device
 from app.models.reward import Redemption
-from app.models.task import Task
 from app.models.user import UserRole
 
 from tests.conftest import _headers, _make_user
+from tests.factories import api_chore
 
 DAY = date(2026, 10, 20)
 
@@ -22,16 +23,8 @@ def _setup(db):
 
 
 def _create(client, ph, kids, mode="each", **kw):
-    body = {
-        "title": "Trash",
-        "repeat": {"type": "daily"},
-        "kid_ids": [k.id for k in kids],
-        "mode": mode,
-        "points": 10,
-        **kw,
-    }
-    r = client.post("/api/v1/chores/", json=body, headers=ph)
-    assert r.status_code == 200, r.text
+    kw.setdefault("points", 10)
+    api_chore(client, ph, kids, mode, **kw)
 
 
 def _ids(client, h):
@@ -52,8 +45,8 @@ def test_needs_you_mixes_types_oldest_first(client, db, parent_headers):
     client.post(f"/api/v1/kid/chores/{da}/done", headers=ha)
     client.post(f"/api/v1/kid/chores/{bb}/done", headers=hb)
     old = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=3)
-    t = db.get(Task, bb)
-    t.attempt, t.submitted_for_approval_at = 2, old
+    t = db.get(ChoreRun, bb)
+    t.attempt, t.submitted_at = 2, old
     db.add(
         Redemption(
             kid_id=a.id,
@@ -78,7 +71,7 @@ def test_needs_you_thumb_url_current_attempt(client, db, parent_headers):
     _create(client, parent_headers, [a])
     cid = _ids(client, ha)[0]
     client.post(f"/api/v1/kid/chores/{cid}/done", headers=ha)
-    db.add(ChorePhoto(task_id=cid, attempt=1, uploaded_by_id=a.id, path="p", thumb_path="t"))
+    db.add(ChorePhoto(run_id=cid, attempt=1, uploaded_by_id=a.id, path="p", thumb_path="t"))
     db.commit()
     pid = db.query(ChorePhoto).one().id
     n = _today(client, parent_headers)["needs_you"]

@@ -43,11 +43,16 @@ def test_from_row():
 
 
 def test_occurs_on():
-    weekly = {"type": "weekly", "days": [5, 6]}
+    def asg(repeat, days=None, on_date=None):
+        return SimpleNamespace(repeat=repeat, days=days, on_date=on_date)
+
+    weekly = asg("weekly", "56")
     assert occurs_on(weekly, date(2026, 10, 24))
     assert not occurs_on(weekly, date(2026, 10, 26))
-    assert occurs_on({"type": "daily"}, MON)
-    assert not occurs_on({"type": "monthly"}, MON)
+    assert occurs_on(asg("daily"), MON)
+    assert occurs_on(asg("once", on_date=MON), MON)
+    assert not occurs_on(asg("once", on_date=MON), date(2026, 10, 27))
+    assert not occurs_on(asg("monthly"), MON)
 
 
 def test_local_now():

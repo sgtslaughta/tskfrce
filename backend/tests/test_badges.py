@@ -5,36 +5,30 @@ from app.models.badge import BadgeAward
 from app.models.family import get_family
 from app.models.gamification import Points, PointsType
 from app.models.reward import Redemption, Reward
-from app.models.task import Task, TaskStatus
 from app.models.user import UserRole
 from app.services import badges as bd
 from app.services.progression import xp_for_level as xp_for
 
 from .conftest import _headers, _make_user
+from .factories import make_run
 
 NOW = datetime(2026, 10, 20, 12, 0)
 
 
 def _done(db, kid, parent, n=1, **kw):
-    """n approved chore instances (one per day backwards from today)."""
+    """n approved runs (one per day backwards from today)."""
     day = current_chore_day(get_family(db), datetime.now(UTC))
     for i in range(n):
-        db.add(
-            Task(
-                title="c",
-                is_recurring=False,
-                due_date=datetime.combine(day - timedelta(days=i), datetime.min.time()),
-                status=TaskStatus.DONE,
-                assigned_to_id=kid.id,
-                created_by_id=parent.id,
-                approved_by_id=parent.id,
-                approved_at=NOW,
-                submitted_for_approval_at=NOW,
-                recurrence_pattern=kw.pop("pattern", None) or {"chore": True},
-                **kw,
-            )
+        make_run(
+            db,
+            parent,
+            kid,
+            status="done",
+            approved=True,
+            day=day - timedelta(days=i),
+            submitted_at=NOW,
+            **kw,
         )
-    db.commit()
 
 
 def _keys(awards):
@@ -83,21 +77,17 @@ def test_timing_metrics(db, parent, kid):
     dl = datetime.combine(day, datetime.min.time()) + timedelta(hours=18)  # UTC tz default
     fam.timezone = "UTC"
     for done in (dl - timedelta(hours=2), dl - timedelta(minutes=5), dl + timedelta(minutes=5)):
-        db.add(
-            Task(
-                title="t",
-                is_recurring=False,
-                due_date=datetime.combine(day, datetime.min.time()),
-                status=TaskStatus.DONE,
-                assigned_to_id=kid.id,
-                created_by_id=parent.id,
-                approved_by_id=parent.id,
-                submitted_for_approval_at=done,
-                created_at=done - timedelta(days=1),
-                recurrence_pattern={"chore": True, "due_time": "18:00"},
-            )
+        make_run(
+            db,
+            parent,
+            kid,
+            status="done",
+            approved=True,
+            day=day,
+            submitted_at=done,
+            due_time="18:00",
+            title=f"t{done}",
         )
-    db.commit()
     m = bd.metrics(db, kid, fam)
     assert (m["early"], m["clutch"], m["on_time_run"], m["speed"]) == (1, 1, 2, 0)
 
@@ -206,19 +196,9 @@ def test_celebration_seen_not_others(client, db, kid, kid_headers):
 def test_approve_awards_badges_and_redemption_check(
     client, db, parent, kid, parent_headers, kid_headers
 ):
-    t = Task(
-        title="c",
-        is_recurring=False,
-        status=TaskStatus.SUBMITTED_FOR_APPROVAL,
-        assigned_to_id=kid.id,
-        created_by_id=parent.id,
-        points=5,
-        due_date=datetime.combine(NOW.date(), datetime.min.time()),
-        submitted_for_approval_at=NOW,
-        recurrence_pattern={"chore": True},
+    t = make_run(
+        db, parent, kid, status="submitted", points=5, day=NOW.date(), submitted_at=NOW, title="c"
     )
-    db.add(t)
-    db.commit()
     assert client.post(f"/api/v1/chores/{t.id}/approve", headers=parent_headers).status_code == 200
     assert db.query(BadgeAward).filter_by(kid_id=kid.id, badge_key="first_blood").count() == 1
     feed = client.get("/api/v1/kid/celebrations", headers=kid_headers).json()

@@ -6,9 +6,10 @@ from app.main import app
 from app.models.family import get_family
 from app.models.gamification import Points, PointsType
 from app.models.lock import Device
-from app.models.task import Task, TaskStatus
 from app.models.user import User, UserRole
 from fastapi.testclient import TestClient
+
+from tests.factories import make_run
 
 IP = "192.168.1.50"
 DAY = datetime(2026, 10, 20)
@@ -41,19 +42,7 @@ def mkdev(db, owner=None, ip=IP, mac="aa:bb:cc:dd:ee:01"):
 
 
 def mkchore(db, parent, kid, **kw):
-    t = Task(
-        title="x",
-        created_by_id=parent.id,
-        assigned_to_id=kid.id,
-        due_date=DAY,
-        status=kw.pop("status", TaskStatus.TODO),
-        points=3,
-        recurrence_pattern={"chore": True},
-        **kw,
-    )
-    db.add(t)
-    db.commit()
-    return t
+    return make_run(db, parent, kid, day=DAY.date(), **kw)
 
 
 def other_kid(db):
@@ -188,7 +177,7 @@ def test_kid_marks_own_chore_done(kc, db, parent, kid, monkeypatch):
     assert r.status_code == 200 and r.json()["status"] == "submitted_for_approval"
     assert r.json()["submitted_for_approval_at"] and calls == [1]
     db.refresh(t)
-    assert t.status == TaskStatus.SUBMITTED_FOR_APPROVAL
+    assert t.status == "submitted"
 
 
 def test_kid_cannot_mark_other_kids_chore(kc, db, parent, kid):
@@ -196,7 +185,7 @@ def test_kid_cannot_mark_other_kids_chore(kc, db, parent, kid):
     r = kc.post(f"/api/v1/kid/chores/{t.id}/done", headers=kid_hdr(db, kid))
     assert r.status_code == 403
     db.refresh(t)
-    assert t.status == TaskStatus.TODO
+    assert t.status == "todo"
 
 
 def test_parent_token_rejected(kc, db, parent, parent_headers):

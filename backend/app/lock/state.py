@@ -4,11 +4,12 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
-from app.lock.reset import chore_counts, current_chore_day, reset_due, run_reset
-from app.lock.rules import DeviceFacts, is_online
+from app.lock.reset import current_chore_day, reset_due
+from app.lock.rules import DeviceFacts, OwnerChores, is_online
 from app.lock.schedule import Window, local_now
 from app.models.family import FamilySettings, get_family
 from app.models.lock import Device, Override, TimeWindow
+from app.services import chores
 
 
 def _naive_utc(now: datetime) -> datetime:
@@ -53,7 +54,9 @@ def device_facts(
         free.extend(f)
     return DeviceFacts(
         status=device.status,
-        owners=tuple(chore_counts(db, o.id, day) for o in device.owners),
+        owners=tuple(
+            OwnerChores(t, a) for a, t in (chores.counts(db, o.id, day) for o in device.owners)
+        ),
         allowed_sets=tuple(allowed_sets),
         free=tuple(free),
         override=manual[0].action if manual else None,
@@ -77,7 +80,7 @@ def tick(db: Session, now_utc: datetime) -> list[str]:
     fam = get_family(db)
     now_local = local_now(fam.timezone, _aware_utc(now_utc))
     if reset_due(fam, now_local):
-        run_reset(db, now_local.date())
+        chores.run_reset(db, now_local.date())
     db.query(Override).filter(
         Override.expires_at.isnot(None), Override.expires_at <= _naive_utc(now_utc)
     ).delete()

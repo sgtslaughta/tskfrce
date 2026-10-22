@@ -1,129 +1,121 @@
-from datetime import date, datetime
+from datetime import date
 
-from app.lock.reset import run_reset
+from app.models.chores import Chore, ChoreRun
 from app.models.family import get_family
-from app.models.task import Task, TaskStatus
+from app.services import chores as svc
 
-BODY = {"title": "Dishes", "repeat": {"type": "daily"}, "needs_photo": True}
+from tests.factories import api_chore, make_run
+
+D = date(2026, 10, 20)
 
 
-def set_day(db, d=date(2026, 10, 20)):
+def set_day(db, d=D):
     get_family(db).last_reset_date = d
     db.commit()
 
 
-def test_create_daily_makes_definition_and_instance(client, db, kid, parent_headers):
+def test_assignment_makes_todays_run(client, db, kid, parent_headers):
     set_day(db)
-    r = client.post("/api/v1/chores/", json={**BODY, "kid_id": kid.id}, headers=parent_headers)
-    assert r.status_code == 200
-    j = r.json()
-    assert j["definition"]["needs_photo"] and j["instance"]["due_date"] == "2026-10-20"
+    chore, _ = api_chore(client, parent_headers, [kid], needs_photo=True, title="Dishes")
+    assert chore["needs_photo"] and chore["title"] == "Dishes"
     today = client.get("/api/v1/chores/today", headers=parent_headers).json()
-    assert len(today[str(kid.id)]) == 1
+    (row,) = today[str(kid.id)]
+    assert row["due_date"] == "2026-10-20" and row["needs_photo"] and row["status"] == "todo"
 
 
-def test_create_once_is_its_own_instance(client, db, kid, parent_headers):
+def test_chore_without_assignment_has_no_runs(client, db, kid, parent_headers):
     set_day(db)
-    body = {**BODY, "kid_id": kid.id, "repeat": {"type": "once"}}
-    j = client.post("/api/v1/chores/", json=body, headers=parent_headers).json()
-    assert j["definition"] is None and j["instance"]["due_date"] == "2026-10-20"
+    r = client.post("/api/v1/chores/", json={"title": "Dishes"}, headers=parent_headers)
+    assert r.status_code == 200 and r.json()["assignments"] == []
+    assert db.query(ChoreRun).count() == 0
 
 
-def test_delete_stops_future_instances(client, db, kid, parent_headers):
+def test_once_assignment_runs_once(client, db, kid, parent_headers):
     set_day(db)
-    j = client.post(
-        "/api/v1/chores/", json={**BODY, "kid_id": kid.id}, headers=parent_headers
-    ).json()
-    r = client.delete(f"/api/v1/chores/{j['definition']['id']}", headers=parent_headers)
+    _, a = api_chore(client, parent_headers, [kid], repeat={"type": "once"})
+    assert a["on_date"] == "2026-10-20"
+    assert svc.run_reset(db, date(2026, 10, 21)) == 0
+    assert db.query(ChoreRun).count() == 1
+
+
+def test_delete_with_history_archives_and_stops_future_runs(client, db, kid, parent_headers):
+    set_day(db)
+    chore, _ = api_chore(client, parent_headers, [kid])
+    r = client.delete(f"/api/v1/chores/{chore['id']}", headers=parent_headers)
     assert r.status_code == 204
-    assert run_reset(db, date(2026, 10, 21)) == 0
-    assert db.get(Task, j["instance"]["id"]).status == TaskStatus.CANCELLED
+    assert svc.run_reset(db, date(2026, 10, 21)) == 0
+    c = db.get(Chore, chore["id"])
+    assert c.archived_at is not None
+    assert db.query(ChoreRun).one().status == "cancelled"
 
 
-def _instance(db, parent, kid, status):
-    t = Task(
-        title="x",
-        created_by_id=parent.id,
-        assigned_to_id=kid.id,
-        due_date=datetime(2026, 10, 20),
-        status=status,
-        recurrence_pattern={"chore": True},
-    )
-    db.add(t)
-    db.commit()
-    return t
+def test_delete_without_runs_removes_it(client, db, kid, parent_headers):
+    set_day(db)  # Tuesday
+    chore, _ = api_chore(client, parent_headers, [kid], repeat={"type": "weekly", "days": [3]})
+    assert client.delete(f"/api/v1/chores/{chore['id']}", headers=parent_headers).status_code == 204
+    assert db.get(Chore, chore["id"]) is None
 
 
 def test_approve_requires_submitted(client, db, parent, kid, parent_headers):
-    t = _instance(db, parent, kid, TaskStatus.TODO)
+    t = make_run(db, parent, kid, status="todo")
     r = client.post(f"/api/v1/chores/{t.id}/approve", headers=parent_headers)
     assert r.status_code == 409
     assert r.json()["detail"] == "This chore isn't waiting for approval."
 
 
 def test_approve_marks_done(client, db, parent, kid, parent_headers):
-    t = _instance(db, parent, kid, TaskStatus.SUBMITTED_FOR_APPROVAL)
+    t = make_run(db, parent, kid, status="submitted")
     assert client.post(f"/api/v1/chores/{t.id}/approve", headers=parent_headers).status_code == 200
     db.refresh(t)
-    assert t.status == TaskStatus.DONE and t.approved_by_id == parent.id
+    assert t.status == "done" and t.approved_by_id == parent.id
     assert t.approved_at and t.completed_at
 
 
 def test_kid_cannot_approve(client, db, parent, kid, kid_headers):
-    t = _instance(db, parent, kid, TaskStatus.SUBMITTED_FOR_APPROVAL)
+    t = make_run(db, parent, kid, status="submitted")
     assert client.post(f"/api/v1/chores/{t.id}/approve", headers=kid_headers).status_code == 403
 
 
-def test_delete_cancels_submitted_instance(client, db, parent, kid, parent_headers):
+def test_delete_cancels_submitted_run(client, db, parent, kid, parent_headers):
     """Deleting a chore must not keep a kid locked by it."""
     set_day(db)
-    j = client.post(
-        "/api/v1/chores/", json={**BODY, "kid_id": kid.id}, headers=parent_headers
-    ).json()
-    inst = db.get(Task, j["instance"]["id"])
-    inst.status = TaskStatus.SUBMITTED_FOR_APPROVAL
+    chore, _ = api_chore(client, parent_headers, [kid])
+    run = db.query(ChoreRun).one()
+    run.status = "submitted"
     db.commit()
-    client.delete(f"/api/v1/chores/{j['definition']['id']}", headers=parent_headers)
-    db.refresh(inst)
-    assert inst.status == TaskStatus.CANCELLED
+    client.delete(f"/api/v1/chores/{chore['id']}", headers=parent_headers)
+    db.refresh(run)
+    assert run.status == "cancelled"
 
 
-def test_approve_non_chore_is_404(client, db, parent, kid, parent_headers):
-    t = Task(title="v1", created_by_id=parent.id, status=TaskStatus.SUBMITTED_FOR_APPROVAL)
-    db.add(t)
-    db.commit()
-    r = client.post(f"/api/v1/chores/{t.id}/approve", headers=parent_headers)
-    assert r.status_code == 404  # (global 404 handler replaces the detail text)
+def test_approve_unknown_run_is_404(client, parent_headers):
+    assert client.post("/api/v1/chores/9999/approve", headers=parent_headers).status_code == 404
 
 
 def test_today_works_on_fresh_install(client, db, kid, parent_headers):
-    client.post("/api/v1/chores/", json={**BODY, "kid_id": kid.id}, headers=parent_headers)
+    api_chore(client, parent_headers, [kid])
     today = client.get("/api/v1/chores/today", headers=parent_headers).json()
     assert len(today[str(kid.id)]) == 1
 
 
-def test_definitions_lists_repeating_only(client, db, kid, parent_headers, kid_headers):
+def test_library_lists_chores_for_a_kid(client, db, kid, parent_headers, kid_headers):
     set_day(db)
-    mk = lambda **kw: client.post(  # noqa: E731
-        "/api/v1/chores/", json={**BODY, "kid_id": kid.id, **kw}, headers=parent_headers
-    )
-    d = mk().json()["definition"]
-    mk(repeat={"type": "once"})
-    r = client.get(f"/api/v1/chores/definitions?kid_id={kid.id}", headers=parent_headers)
-    (row,) = r.json()
+    chore, a = api_chore(client, parent_headers, [kid], title="Dishes", needs_photo=True)
+    api_chore(client, parent_headers, [kid], title="Once", repeat={"type": "once"})
+    client.post("/api/v1/chores/", json={"title": "Unused"}, headers=parent_headers)
+    rows = client.get(f"/api/v1/chores/?kid_id={kid.id}", headers=parent_headers).json()
+    assert [r["title"] for r in rows] == ["Dishes", "Once"]
     want = {
-        "id": d["id"],
+        "id": chore["id"],
         "title": "Dishes",
-        "points": 10,
-        "kid_id": kid.id,
-        "kid_ids": [kid.id],
-        "mode": "each",
-        "repeat": {"type": "daily", "days": []},
+        "points": 25,
         "needs_photo": True,
-        "due_time": None,
+        "steps": [],
+        "archived": False,
     }
-    assert {k: row[k] for k in want} == want
-    assert (
-        client.get("/api/v1/chores/definitions?kid_id=999999", headers=parent_headers).json() == []
-    )
-    assert client.get("/api/v1/chores/definitions", headers=kid_headers).status_code == 403
+    assert {k: rows[0][k] for k in want} == want
+    asg = rows[0]["assignments"][0]
+    assert asg["kid_ids"] == [kid.id] and asg["repeat"] == {"type": "daily", "days": []}
+    assert len(client.get("/api/v1/chores/", headers=parent_headers).json()) == 3
+    assert client.get("/api/v1/chores/", headers=kid_headers).status_code == 403
+    assert client.get("/api/v1/chores/definitions", headers=parent_headers).status_code != 200

@@ -2,8 +2,9 @@ from datetime import date, datetime
 
 from app.models.family import get_family
 from app.models.gamification import Points, PointsType
-from app.models.task import Task, TaskStatus
 from app.services.economy import bonus_for, deadline_utc
+
+from tests.factories import make_run
 
 D = datetime(2026, 10, 21, 17, 0)
 
@@ -25,19 +26,16 @@ def test_deadline_uses_family_timezone(db):
 
 
 def _submitted(db, parent, kid, due_time=None, at=None, points=15):
-    t = Task(
-        title="x",
-        created_by_id=parent.id,
-        assigned_to_id=kid.id,
-        due_date=datetime(2026, 10, 21),
-        status=TaskStatus.SUBMITTED_FOR_APPROVAL,
-        submitted_for_approval_at=at or datetime(2026, 10, 21, 12, 0),
+    return make_run(
+        db,
+        parent,
+        kid,
+        status="submitted",
+        day=date(2026, 10, 21),
+        submitted_at=at or datetime(2026, 10, 21, 12, 0),
         points=points,
-        recurrence_pattern={"chore": True, **({"due_time": due_time} if due_time else {})},
+        due_time=due_time,
     )
-    db.add(t)
-    db.commit()
-    return t
 
 
 def _rows(db, kid):
@@ -50,7 +48,7 @@ def test_approve_awards_points_once(client, db, parent, kid, parent_headers, kid
     assert client.post(url, headers=parent_headers).status_code == 200
     rows = _rows(db, kid)
     assert [(r.points_type, r.amount) for r in rows] == [(PointsType.TASK_COMPLETION, 15)]
-    assert rows[0].reference_type == "task" and rows[0].reference_id == t.id
+    assert rows[0].run_id == t.id
     assert client.get("/api/v1/kid/today", headers=kid_headers).json()["points_balance"] == 15
     assert client.post(url, headers=parent_headers).status_code == 409
     assert len(_rows(db, kid)) == 1
@@ -75,3 +73,11 @@ def test_family_settings_roundtrip(client, parent_headers):
     assert (j["early_bonus_cap"], j["screen_time_price"]) == (8, 30)
     bad = client.patch("/api/v1/family", json={"early_bonus_cap": 51}, headers=parent_headers)
     assert bad.status_code == 422
+
+
+def test_points_come_from_the_chore_at_approval(client, db, parent, kid, parent_headers):
+    t = _submitted(db, parent, kid)
+    t.assignment.chore.points = 40  # edited while the run was waiting
+    db.commit()
+    client.post(f"/api/v1/chores/{t.id}/approve", headers=parent_headers)
+    assert [r.amount for r in _rows(db, kid)] == [40]

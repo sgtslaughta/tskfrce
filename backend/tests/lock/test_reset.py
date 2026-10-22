@@ -1,64 +1,71 @@
-from datetime import date, datetime, timedelta
+from datetime import UTC, date, datetime, timedelta
 
-from app.lock.reset import chore_counts, chore_day, reset_due, run_reset
-from app.lock.rules import OwnerChores
+from app.lock.reset import chore_day, reset_due
 from app.lock.schedule import local_now
+from app.lock.state import tick
+from app.models.chores import ChoreRun
 from app.models.family import get_family
-from app.models.task import Task, TaskStatus
+from app.services import chores as svc
+from app.services.chores import run_reset
+from tests.factories import make_chore, make_run
 
 D = date(2026, 10, 20)  # Tuesday
 
 
-def defn(db, parent, kid, pattern):
-    t = Task(
-        title="Dishes",
-        is_recurring=True,
-        recurrence_pattern={**pattern, "chore": True},
-        assigned_to_id=kid.id,
-        created_by_id=parent.id,
-        points=5,
-    )
-    db.add(t)
-    db.commit()
-    return t
-
-
-def instances(db):
-    return db.query(Task).filter(Task.is_recurring.is_(False)).all()
-
-
-def test_reset_creates_daily_instances_once(db, parent, kid):
-    defn(db, parent, kid, {"type": "daily"})
+def test_reset_creates_daily_runs_once(db, parent, kid):
+    make_chore(db, parent, kids=[kid])
     assert run_reset(db, D) == 1
     assert run_reset(db, D) == 0
-    assert len(instances(db)) == 1
+    assert db.query(ChoreRun).count() == 1
+
+
+def test_generate_twice_is_idempotent_for_each_and_shared(db, parent, kid):
+    """Review focus 3: two workers / a box restart never double up."""
+    from app.models.user import UserRole
+    from tests.conftest import _make_user
+
+    other = _make_user(db, "maya", UserRole.KID)
+    make_chore(db, parent, kids=[kid, other], mode="each")
+    make_chore(db, parent, title="Race", kids=[kid, other], mode="race")
+    assert len(svc.generate(db, D)) == 3
+    db.commit()
+    assert svc.generate(db, D) == []
+    db.commit()
+    assert db.query(ChoreRun).count() == 3
 
 
 def test_reset_cancels_unfinished_yesterday(db, parent, kid):
-    defn(db, parent, kid, {"type": "daily"})
+    make_chore(db, parent, kids=[kid])
     run_reset(db, D - timedelta(days=1))
-    old = instances(db)[0]
-    done = Task(
-        title="x",
-        created_by_id=parent.id,
-        assigned_to_id=kid.id,
-        due_date=datetime(2026, 10, 19),
-        status=TaskStatus.DONE,
-        recurrence_pattern={"chore": True},
-    )
-    db.add(done)
-    db.commit()
+    old = db.query(ChoreRun).one()
+    done = make_run(db, parent, kid, status="done", approved=True, day=D - timedelta(days=1))
     run_reset(db, D)
     db.refresh(old)
-    assert old.status == TaskStatus.CANCELLED
-    assert done.status == TaskStatus.DONE
-    assert chore_counts(db, kid.id, D).total == 1
+    assert old.status == "cancelled"
+    assert done.status == "done"
+    assert svc.counts(db, kid.id, D) == (0, 1)
 
 
 def test_weekly_chore_only_on_its_days(db, parent, kid):
-    defn(db, parent, kid, {"type": "weekly", "days": [0]})  # Monday
+    make_chore(db, parent, kids=[kid], repeat="weekly", days="0")  # Monday
     assert run_reset(db, D) == 0
     assert run_reset(db, date(2026, 10, 26)) == 1
+
+
+def test_once_assignment_only_on_its_date(db, parent, kid):
+    _, a = make_chore(db, parent, kids=[kid], repeat="once", on_date=D)
+    assert run_reset(db, D - timedelta(days=1)) == 0
+    assert run_reset(db, D) == 1
+    assert run_reset(db, D + timedelta(days=1)) == 0
+    db.refresh(a)
+    assert a.active is False
+
+
+def test_archived_chore_makes_no_runs(db, parent, kid):
+    c, _ = make_chore(db, parent, kids=[kid])
+    c.archived_at = datetime(2026, 10, 1)
+    db.commit()
+    assert run_reset(db, D) == 0
 
 
 def test_before_reset_time_yesterday_still_counts(db):
@@ -87,51 +94,25 @@ def test_dst_day_resets_once(db):
     assert fam.last_reset_date == date(2026, 11, 1)
 
 
-def test_reset_leaves_non_chore_tasks_alone(db, parent, kid):
-    v1 = Task(
-        title="v1",
-        created_by_id=parent.id,
-        due_date=datetime(2026, 10, 1),
-        status=TaskStatus.TODO,
-    )
-    db.add(v1)
-    db.commit()
-    run_reset(db, D)
-    db.refresh(v1)
-    assert v1.status == TaskStatus.TODO
-
-
 def test_done_without_parent_approval_does_not_count(db, parent, kid):
-    row = Task(
-        title="x",
-        created_by_id=parent.id,
-        assigned_to_id=kid.id,
-        due_date=datetime(2026, 10, 20),
-        status=TaskStatus.DONE,
-        recurrence_pattern={"chore": True},
-    )
-    db.add(row)
-    db.commit()
-    assert chore_counts(db, kid.id, D).approved == 0
+    row = make_run(db, parent, kid, status="done")
+    assert svc.counts(db, kid.id, D)[0] == 0
     row.approved_by_id = kid.id  # a kid is not an approver
     db.commit()
-    assert chore_counts(db, kid.id, D).approved == 0
+    assert svc.counts(db, kid.id, D)[0] == 0
     row.approved_by_id = parent.id
     db.commit()
-    assert chore_counts(db, kid.id, D) == OwnerChores(1, 1)
+    assert svc.counts(db, kid.id, D) == (1, 1)
 
 
-def test_reset_ignores_kid_made_placeholder(db, parent, kid):
-    d = defn(db, parent, kid, {"type": "daily"})
-    fake = Task(
-        title="x",
-        created_by_id=kid.id,
-        assigned_to_id=kid.id,
-        parent_task_id=d.id,
-        due_date=datetime(2026, 10, 20),
-        status=TaskStatus.DONE,
-    )
-    db.add(fake)
+def test_today_is_the_family_date_just_after_utc_midnight(db, parent, kid):
+    """Review focus 4: 00:30 UTC is still yesterday evening in New York."""
+    fam = get_family(db)
+    fam.timezone, fam.reset_time = "America/New_York", "06:00"
     db.commit()
-    assert run_reset(db, D) == 1
-    assert chore_counts(db, kid.id, D) == OwnerChores(1, 0)
+    make_chore(db, parent, kids=[kid])
+    now = datetime(2026, 10, 22, 0, 30, tzinfo=UTC)
+    assert svc.today(db, now) == date(2026, 10, 21)
+    tick(db, now)
+    assert {r.day for r in db.query(ChoreRun)} == {date(2026, 10, 21)}
+    assert fam.last_reset_date == date(2026, 10, 21)

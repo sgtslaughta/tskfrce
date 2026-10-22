@@ -5,14 +5,14 @@ from datetime import datetime
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
-from app.lock.reset import is_chore_filter, kid_chores_filter
 from app.models.chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
-from app.models.task import Task
+from app.models.chores import ChoreRun
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
+from app.services.chores import kid_runs_filter
 
 
-def _target_ok(db: Session, user: User, kind: str, task_id: int | None, kid_id: int | None) -> bool:
+def _target_ok(db: Session, user: User, kind: str, run_id: int | None, kid_id: int | None) -> bool:
     """Does the target exist, and may `user` see it?"""
     parent = user.role == UserRole.PARENT
     if kind == "family":
@@ -25,35 +25,35 @@ def _target_ok(db: Session, user: User, kind: str, task_id: int | None, kid_id: 
             )
         return kid_id == user.id
     if kind == "chore":
-        q = db.query(Task.id).filter(Task.id == task_id, is_chore_filter())
+        q = db.query(ChoreRun.id).filter(ChoreRun.id == run_id)
         if not parent:
-            q = q.filter(kid_chores_filter(user.id))
+            q = q.filter(kid_runs_filter(user.id))
         return q.first() is not None
     return False
 
 
 def can_access(db: Session, user: User, thread: Thread) -> bool:
-    return _target_ok(db, user, thread.kind, thread.task_id, thread.kid_id)
+    return _target_ok(db, user, thread.kind, thread.run_id, thread.kid_id)
 
 
 def find(
-    db: Session, kind: str, *, task_id: int | None = None, kid_id: int | None = None
+    db: Session, kind: str, *, run_id: int | None = None, kid_id: int | None = None
 ) -> Thread | None:
     q = db.query(Thread).filter(Thread.kind == kind)
     if kind == "chore":
-        q = q.filter(Thread.task_id == task_id)
+        q = q.filter(Thread.run_id == run_id)
     elif kind == "private":
         q = q.filter(Thread.kid_id == kid_id)
     return q.first()
 
 
 def thread_for(
-    db: Session, kind: str, *, task_id: int | None = None, kid_id: int | None = None
+    db: Session, kind: str, *, run_id: int | None = None, kid_id: int | None = None
 ) -> Thread:
     """Get or create. Flushes, never commits."""
-    t = find(db, kind, task_id=task_id, kid_id=kid_id)
+    t = find(db, kind, run_id=run_id, kid_id=kid_id)
     if t is None:
-        t = Thread(kind=kind, task_id=task_id, kid_id=kid_id)
+        t = Thread(kind=kind, run_id=run_id, kid_id=kid_id)
         db.add(t)
         db.flush()
     return t
@@ -61,16 +61,16 @@ def thread_for(
 
 def resolve(db: Session, user: User, kind: str, ref: str) -> Thread | None:
     """Thread for a URL (kind + ref) if it exists and the user may see it, else None."""
-    task_id = kid_id = None
+    run_id = kid_id = None
     if kind in ("chore", "private"):
         if not ref.isdigit():
             return None
-        task_id, kid_id = (int(ref), None) if kind == "chore" else (None, int(ref))
+        run_id, kid_id = (int(ref), None) if kind == "chore" else (None, int(ref))
     elif kind != "family" or ref != "family":
         return None
-    if not _target_ok(db, user, kind, task_id, kid_id):
+    if not _target_ok(db, user, kind, run_id, kid_id):
         return None
-    return thread_for(db, kind, task_id=task_id, kid_id=kid_id)
+    return thread_for(db, kind, run_id=run_id, kid_id=kid_id)
 
 
 def post(
@@ -94,9 +94,9 @@ def post(
     return m
 
 
-def system(db: Session, task: Task, body: str, photo_id: int | None = None) -> None:
-    """System line in the chore's thread; `photo_id` is a ChorePhoto (proof)."""
-    post(db, thread_for(db, "chore", task_id=task.id), None, body, photo_id, kind="system")
+def system(db: Session, run: ChoreRun, body: str, photo_id: int | None = None) -> None:
+    """System line in the run's thread; `photo_id` is a ChorePhoto (proof)."""
+    post(db, thread_for(db, "chore", run_id=run.id), None, body, photo_id, kind="system")
 
 
 def photo_ok(db: Session, thread: Thread, photo_id: int) -> bool:
@@ -132,8 +132,8 @@ def _title(db: Session, t: Thread, names: dict[int, str]) -> str:
         return "Family"
     if t.kind == "private":
         return names.get(t.kid_id, "Kid")
-    task = db.get(Task, t.task_id)
-    return task.title if task else "Chore"
+    run = db.get(ChoreRun, t.run_id)
+    return run.assignment.chore.title if run else "Chore"
 
 
 def title(db: Session, t: Thread) -> str:
@@ -157,7 +157,7 @@ def unread(db: Session, user: User) -> dict:
                 Thread.kind == "family",
                 (Thread.kind == "private") & (Thread.kid_id == user.id),
                 (Thread.kind == "chore")
-                & Thread.task_id.in_(db.query(Task.id).filter(kid_chores_filter(user.id))),
+                & Thread.run_id.in_(db.query(ChoreRun.id).filter(kid_runs_filter(user.id))),
             )
         )
     threads = q.order_by(Thread.id).all()
@@ -186,7 +186,7 @@ def unread(db: Session, user: User) -> dict:
         {
             "id": t.id,
             "kind": t.kind,
-            "task_id": t.task_id,
+            "task_id": t.run_id,  # key kept for the frontend; it is the run id
             "kid_id": t.kid_id,
             "title": _title(db, t, names),
             "unread": counts.get(t.id, 0),

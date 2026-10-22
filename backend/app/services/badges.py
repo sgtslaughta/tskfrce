@@ -8,12 +8,13 @@ from sqlalchemy.orm import Session
 
 from app.flair.catalog import CATALOG as FLAIR
 from app.flair.catalog import FlairItem, equipped
-from app.lock.reset import current_chore_day, is_chore_filter, kid_chores_filter
+from app.lock.reset import current_chore_day
 from app.models.badge import BadgeAward, CustomBadge
+from app.models.chores import ChoreRun
 from app.models.family import FamilySettings
 from app.models.reward import Redemption
-from app.models.task import Task, TaskStatus
 from app.models.user import User
+from app.services import chores as chore_svc
 from app.services import economy, progression
 
 TIERS = ("copper", "silver", "gold", "platinum", "mega-diamond")
@@ -81,33 +82,28 @@ def _weekend_run(days: dict[date, bool]) -> int:
 
 def _task_metrics(db: Session, kid: User, fam: FamilySettings) -> dict[str, int]:
     rows = (
-        db.query(Task)
+        db.query(ChoreRun)
         .filter(
-            is_chore_filter(),
-            Task.is_recurring.is_(False),
-            kid_chores_filter(kid.id),
-            Task.status == TaskStatus.DONE,
-            Task.approved_by_id.isnot(None),
+            chore_svc.kid_runs_filter(kid.id),
+            ChoreRun.status == "done",
+            ChoreRun.approved_by_id.isnot(None),
         )
-        .order_by(Task.due_date, Task.id)
+        .order_by(ChoreRun.day, ChoreRun.id)
         .all()
     )
-    rows = [t for t in rows if kid.id in economy._recipients(t)]
+    rows = [r for r in rows if kid.id in economy._recipients(r)]
     weeks: dict[tuple, int] = {}
-    defs, early, speed, clutch, on_time = set(), 0, 0, 0, []
-    for t in rows:
-        if t.due_date:
-            wk = t.due_date.isocalendar()[:2]
-            weeks[wk] = weeks.get(wk, 0) + 1
-        if t.parent_task_id:
-            defs.add(t.parent_task_id)
-        done = t.submitted_for_approval_at
+    chores, early, speed, clutch, on_time = set(), 0, 0, 0, []
+    for r in rows:
+        wk = r.day.isocalendar()[:2]
+        weeks[wk] = weeks.get(wk, 0) + 1
+        chores.add(r.assignment.chore_id)
+        done = r.submitted_at
         if done is None:
             continue
-        if t.created_at and done - t.created_at <= timedelta(minutes=15):
+        if r.created_at and done - r.created_at <= timedelta(minutes=15):
             speed += 1
-        due = (t.recurrence_pattern or {}).get("due_time")
-        dl = economy.deadline_utc(fam, t.due_date.date(), due) if t.due_date else None
+        dl = economy.deadline_utc(fam, r.day, r.assignment.due_time)
         if dl is None:
             continue
         on_time.append(done <= dl)
@@ -116,7 +112,7 @@ def _task_metrics(db: Session, kid: User, fam: FamilySettings) -> dict[str, int]
     return {
         "approved": len(rows),
         "best_week": max(weeks.values(), default=0),
-        "variety": len(defs),
+        "variety": len(chores),
         "early": early,
         "speed": speed,
         "clutch": clutch,
@@ -167,9 +163,9 @@ def check_badges(db: Session, kid: User, fam: FamilySettings) -> list[BadgeAward
     return won
 
 
-def check_for_task(db: Session, task: Task, fam: FamilySettings) -> None:
+def check_for_run(db: Session, run: ChoreRun, fam: FamilySettings) -> None:
     """Re-check badges for every kid paid for an approved chore."""
-    for kid_id in economy._recipients(task):
+    for kid_id in economy._recipients(run):
         kid = db.get(User, kid_id)
         if kid:
             check_badges(db, kid, fam)

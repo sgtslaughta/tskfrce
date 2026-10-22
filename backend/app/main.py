@@ -33,6 +33,7 @@ from app.api import (
 )
 from app.api.badges import router as badges_router
 from app.api.chat import router as chat_router
+from app.api.chore_library import router as chore_library_router
 from app.api.chore_photos import router as chore_photos_router
 from app.api.chores import router as chores_router
 from app.api.community import router as community_router
@@ -148,6 +149,7 @@ fastapi_app.include_router(presence_router, prefix="/api/v1/presence", tags=["pr
 fastapi_app.include_router(
     notifications_router, prefix="/api/v1/notifications", tags=["notifications"]
 )
+fastapi_app.include_router(chore_library_router)
 fastapi_app.include_router(chores_router)
 fastapi_app.include_router(chore_photos_router)
 fastapi_app.include_router(chat_router)
