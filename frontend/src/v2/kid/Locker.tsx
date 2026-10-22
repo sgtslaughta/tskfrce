@@ -46,7 +46,7 @@ export function Locker({ name, avatar, level, title, onClose }: Props) {
               key={i.id}
               variant={preview[slot] === i.id ? 'filled' : 'default'}
               onClick={() => choose(i.id)}
-              style={{ opacity: i.unlocked ? 1 : 0.5, height: 'auto', padding: 8 }}
+              style={{ opacity: i.unlocked ? 1 : 0.7, height: 'auto', padding: 8 }}
             >
               <span style={{ display: 'grid', justifyItems: 'center' }}>
                 <span>{i.emblem ?? ''} {i.name}</span>

@@ -40,6 +40,7 @@ export function ManageLayout<S extends string = Section>({
       {small ? (
         <SegmentedControl
           fullWidth
+          data-scroll={sections.length > 4 ? '' : undefined}
           aria-label="Section"
           data={sections.map((s) => ({ value: s.id, label: s.label }))}
           value={section}

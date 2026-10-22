@@ -8,9 +8,9 @@ const nameOf = (k: Kid) => k.full_name ?? k.username
 const usedBy = (c: LibChore) => Array.from(new Set(c.assignments.filter((a) => a.active).flatMap((a) => a.kid_ids)))
 
 function meta(c: LibChore) {
-  const bits = [`${c.steps.length} ${c.steps.length === 1 ? 'subtask' : 'subtasks'}`]
+  const bits = c.steps.length ? [`${c.steps.length} ${c.steps.length === 1 ? 'subtask' : 'subtasks'}`] : []
   if (c.needs_photo) bits.push('📷 photo')
-  return bits.join(' · ')
+  return bits.join(' · ') || 'No steps'
 }
 
 export interface KidProgress {

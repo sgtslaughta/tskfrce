@@ -2,10 +2,10 @@
   position: relative;
   display: inline-grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border: 1px solid var(--f-edge);
-  border-radius: 10px;
+  border-radius: 4px;
   background: var(--f-card);
   color: var(--f-ink);
   cursor: pointer;
