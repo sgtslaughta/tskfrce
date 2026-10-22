@@ -16,7 +16,7 @@ export function AccountMenu({ name, onLogout }: { name: string; onLogout: () => 
         </button>
       </Menu.Target>
       <Menu.Dropdown>
-        <Menu.Item component="a" href={HELP_URL} target="_blank" rel="noopener noreferrer">
+        <Menu.Item component="a" href={HELP_URL}>
           Help
         </Menu.Item>
         <Menu.Item component={Link} href="/settings">

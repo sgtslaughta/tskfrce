@@ -76,7 +76,7 @@ export function FridgeShell({
       </header>
       <Drawer opened={open} onClose={close} title="t@sk4ce" size="xs" hiddenFrom="md">
         <Nav current={router.pathname} drawer />
-        <Button component="a" href={HELP_URL} target="_blank" rel="noopener noreferrer" variant="default" mt="md" fullWidth>
+        <Button component="a" href={HELP_URL} variant="default" mt="md" fullWidth>
           Help
         </Button>
         <Button variant="default" mt="xs" fullWidth onClick={logOut}>
