@@ -12,6 +12,7 @@ from .family import FamilySettings, get_family
 from .flair import KidFlair
 from .inbox import Notification
 from .lock import Device, DeviceGroup, Override, TimeWindow
+from .password_reset import PasswordReset
 from .points import Points, PointsType
 from .reward import Redemption, Reward
 from .user import UsedInvite, User
@@ -34,6 +35,7 @@ __all__ = [
     "User",
     "FamilySettings",
     "get_family",
+    "PasswordReset",
     "Points",
     "PointsType",
     "Device",

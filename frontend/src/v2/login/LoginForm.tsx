@@ -57,6 +57,7 @@ export function LoginForm() {
     <main className="f-main" style={{ maxWidth: 440 }}>
       <StickerCard>
         <h1 className="f-display" style={{ marginTop: 0 }}>Welcome back</h1>
+        {router.query?.reset && <p role="status">Password saved. Log in with your new password.</p>}
         <form onSubmit={submit}>
           <TextInput
             label="Username"
@@ -78,6 +79,7 @@ export function LoginForm() {
             Log in
           </Button>
         </form>
+        <p className="m-help">Forgot your password? Ask another parent for a reset link.</p>
         <p>
           Are you a kid? <Link href="/kid">Go to your checklist</Link>
         </p>

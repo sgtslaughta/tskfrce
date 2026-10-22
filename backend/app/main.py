@@ -33,6 +33,7 @@ from app.api.inbox import router as notifications_router
 from app.api.internal import router as internal_router
 from app.api.kid import router as kid_router
 from app.api.kids import router as kids_router
+from app.api.password_reset import router as password_reset_router
 from app.api.rewards import redemptions_router
 from app.api.rewards import router as rewards_router
 from app.api.setup import router as setup_router
@@ -121,6 +122,7 @@ async def log_requests(request: Request, call_next):
 
 # Include API routers
 fastapi_app.include_router(auth_router)
+fastapi_app.include_router(password_reset_router)
 fastapi_app.include_router(setup_router)
 fastapi_app.include_router(users_router)
 

@@ -6,6 +6,7 @@ import { useFamily } from '@/v2/hooks/useFamily'
 import { FamilyCard, GifsCard, ScreenTimeCard } from './FamilyCards'
 import { HoursSection } from './HoursSection'
 import { InviteSection } from './InviteSection'
+import { ParentsList } from './ParentsList'
 import { ManageLayout, type SectionDef } from './ManageLayout'
 
 type S = 'family' | 'screen' | 'gifs' | 'hours' | 'parents'
@@ -32,7 +33,12 @@ function SettingsBody() {
         {section === 'screen' && family.data && <ScreenTimeCard fam={family.data} />}
         {section === 'gifs' && family.data && <GifsCard fam={family.data} />}
         {section === 'hours' && <HoursSection />}
-        {section === 'parents' && <InviteSection />}
+        {section === 'parents' && (
+          <>
+            <ParentsList />
+            <InviteSection />
+          </>
+        )}
       </ManageLayout>
     </FridgeShell>
   )

@@ -21,3 +21,18 @@ export const useInvite = () =>
     mutationFn: (username: string) =>
       api<{ token: string; expires_in: number }>('/users/invite', { method: 'POST', body: { username } }),
   })
+
+export interface ParentRow {
+  id: number
+  username: string
+  full_name: string | null
+  is_me: boolean
+}
+
+export const useParents = () => useQuery({ queryKey: ['parents'], queryFn: () => api<ParentRow[]>('/parents') })
+
+/** POST /parents/{id}/reset-link -> one-time password reset link (30 min). */
+export const useResetLink = () =>
+  useMutation({
+    mutationFn: (id: number) => api<{ url: string }>(`/parents/${id}/reset-link`, { method: 'POST' }),
+  })

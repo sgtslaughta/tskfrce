@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str | None = None
     JWT_SECRET_KEY: str | None = None
     INTERNAL_TOKEN: str | None = None
+    BOX_URL: str | None = None  # e.g. http://192.168.1.20:3000, used in reset links
     BLOCKER_URL: str = "http://127.0.0.1:7777"
     LOCK_INTERVAL_SECONDS: int = 30
     LOCK_LOOP_ENABLED: bool = True

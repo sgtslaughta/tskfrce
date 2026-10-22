@@ -186,6 +186,7 @@ def _import_all_models():
             FamilySettings,
             Notification,
             Override,
+            PasswordReset,
             Points,
             Thread,
             ThreadMessage,
