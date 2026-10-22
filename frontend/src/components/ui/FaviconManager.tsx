@@ -6,7 +6,7 @@
  */
 
 import React, { useEffect } from 'react';
-import { useTheme } from '@/contexts';
+import { useTheme } from '@/contexts/ThemeContext';
 
 /**
  * @description FaviconManager component that updates favicon based on theme

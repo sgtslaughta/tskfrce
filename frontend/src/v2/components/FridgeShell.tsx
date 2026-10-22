@@ -15,7 +15,6 @@ export const NAV = [
   { href: '/devices', label: 'Devices' },
   { href: '/kids', label: 'Kids & chores' },
   { href: '/settings', label: 'Settings' },
-  { href: '/hub', label: 'Old version' },
 ] as const
 
 function Nav({ current, drawer }: { current: string; drawer?: boolean }) {
@@ -69,8 +68,8 @@ export function FridgeShell({
         <Box visibleFrom="md" style={{ flex: 1 }}>
           <Nav current={router.pathname} />
         </Box>
-        <Bell />
         <Box hiddenFrom="md" style={{ flex: 1 }} />
+        <Bell />
         <ColorSchemeToggle />
         <Button variant="default" onClick={logOut} visibleFrom="xs">
           Log out
