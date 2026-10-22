@@ -35,7 +35,7 @@ Something wrong? See [Troubleshooting](docs/guide/06-troubleshooting.md) and the
 
 Architecture, data model, security notes and how to add badges or flair: [docs/engineering.md](docs/engineering.md).
 
-Forgot a parent password? Another parent can make a reset link in Settings, or run `docker compose -f docker-compose.prod.yml exec backend python -m app.cli reset-password <name>` on the box.
+Forgot a parent password? Another parent can make a reset link in Settings, or run `cd ~/task4ce && docker compose -f docker-compose.prod.yml exec backend python -m app.cli reset-password <name>` on the box.
 
 Layout: `backend/` (FastAPI + SQLite), `frontend/` (Next.js), `blocker/` (the home box service), `lab/` (an isolated Docker network for tests).
 
