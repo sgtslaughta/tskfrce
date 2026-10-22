@@ -11,6 +11,7 @@ from enum import Enum
 from sqlalchemy import (
     JSON,
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     Float,
@@ -151,6 +152,9 @@ class Points(Base):
     """
 
     __tablename__ = "points"
+    __table_args__ = (
+        CheckConstraint("run_id IS NULL OR redemption_id IS NULL", name="ck_points_one_ref"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
@@ -159,6 +163,8 @@ class Points(Base):
     description = Column(String(255), nullable=True)
     reference_id = Column(Integer, nullable=True)  # ID of related entity
     reference_type = Column(String(50), nullable=True)  # Type of related entity
+    run_id = Column(Integer, ForeignKey("chore_runs.id"), nullable=True, index=True)
+    redemption_id = Column(Integer, ForeignKey("redemptions.id"), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships

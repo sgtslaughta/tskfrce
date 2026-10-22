@@ -177,7 +177,11 @@ def _import_all_models():
         from app.models import (
             Achievement,
             ChatPhoto,
+            Chore,
+            ChoreAssignment,
             ChorePhoto,
+            ChoreRun,
+            ChoreStep,
             ChoreSubtask,
             CommentMention,
             CommentReaction,

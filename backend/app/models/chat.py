@@ -14,6 +14,7 @@ class Thread(Base):
     id = Column(Integer, primary_key=True)
     kind = Column(String(10), nullable=False, index=True)  # chore | private | family
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=True, index=True)
+    run_id = Column(Integer, ForeignKey("chore_runs.id"), nullable=True, index=True)
     kid_id = Column(Integer, ForeignKey("users.id"), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 

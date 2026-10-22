@@ -31,6 +31,7 @@ class ChorePhoto(Base):
 
     id = Column(Integer, primary_key=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False, index=True)
+    run_id = Column(Integer, ForeignKey("chore_runs.id"), nullable=True, index=True)
     attempt = Column(Integer, nullable=False, default=1)
     uploaded_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     path = Column(String(255), nullable=False)

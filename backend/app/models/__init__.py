@@ -9,6 +9,7 @@ This package contains all SQLAlchemy models for the application.
 from .badge import BadgeAward, CustomBadge
 from .chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
 from .chore_extra import ChorePhoto, ChoreSubtask
+from .chores import Chore, ChoreAssignment, ChoreRun, ChoreStep, RunStepTick
 from .comment import (
     CommentAuditTrail,
     DirectMessageMedia,
@@ -56,6 +57,11 @@ __all__ = [
     "ThreadRead",
     "ChorePhoto",
     "ChoreSubtask",
+    "Chore",
+    "ChoreStep",
+    "ChoreAssignment",
+    "ChoreRun",
+    "RunStepTick",
     # Core models
     "UsedInvite",
     "User",

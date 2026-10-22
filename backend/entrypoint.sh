@@ -2,6 +2,11 @@
 # entrypoint.sh
 set -e
 
+# Back up the DB before migrating when it is not already at head
+if ! alembic current 2>/dev/null | grep -q "(head)"; then
+  python -m app.utils.backup_db
+fi
+
 # Apply database migrations
 alembic upgrade head
 
