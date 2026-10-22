@@ -1,0 +1,15 @@
+
+line-length = 100
+target-version = "py311"
+
+[lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = [
+    "B008",  # FastAPI Depends() in argument defaults
+    # Legacy v1 code slated for removal/rewrite in plan 1; do not hand-fix.
+    "B904", "B007", "E501", "E712", "E402", "F841", "UP042",
+]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"backend/app/core/database.py" = ["F401"]  # model imports register tables
