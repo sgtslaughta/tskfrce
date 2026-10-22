@@ -83,18 +83,11 @@ def login(body: KidLogin, request: Request, db: Session = Depends(get_db)):
     key = f"kid:{ip}"
     check(key, 5, 60)  # only failed tries count
     dev = request_device(db, ip)
-    active_kids = [k for k in (dev.owners if dev else []) if k.role == UserRole.KID and k.is_active]
-    kid = next((k for k in active_kids if k.id == body.kid_id), None)
-    if kid is None:
+    kid = next((k for k in (dev.owners if dev else []) if k.id == body.kid_id), None)
+    if kid is None or kid.role != UserRole.KID or not kid.is_active:
         hit(key, 60)
         raise HTTPException(status_code=403, detail=NOT_YOURS)
     auth = AuthService(db)
-    # If multiple kids on device, all must have PINs to distinguish them
-    kids_without_pin = [k for k in active_kids if not k.pin_hash]
-    if len(kids_without_pin) > 1:
-        hit(key, 60)
-        raise HTTPException(status_code=401, detail="All kids on this device need a PIN.")
-    # Verify PIN if set
     if kid.pin_hash and not (body.pin and auth.verify_password(body.pin, kid.pin_hash)):
         hit(key, 60)
         raise HTTPException(status_code=401, detail="Wrong PIN. Try again.")
