@@ -8,6 +8,7 @@ from app.api.deps import get_db
 from app.api.kid import require_kid
 from app.flair.catalog import BY_ID, CATALOG, SLOTS, equipped
 from app.models.family import get_family
+from app.models.flair import KidFlair
 from app.models.user import User
 from app.services import badges, progression
 
@@ -39,7 +40,7 @@ def get_flair(db: Session = Depends(get_db), kid: User = Depends(require_kid)):
             }
             for f in CATALOG
         ],
-        "equipped": equipped(kid),
+        "equipped": equipped(db, kid.id),
     }
 
 
@@ -56,11 +57,12 @@ def put_flair(body: EquipIn, db: Session = Depends(get_db), kid: User = Depends(
         if _level(db, kid) < item.unlock_level:
             raise HTTPException(403, f"Reach level {item.unlock_level} to unlock that.")
     # Rebuild from valid ids so stale ones are dropped on save.
-    merged = {**equipped(kid), body.slot: body.id}
-    kid.flair = {s: v for s, v in merged.items() if v}
+    merged = {**equipped(db, kid.id), body.slot: body.id}
+    db.query(KidFlair).filter(KidFlair.kid_id == kid.id).delete()
+    db.add_all(KidFlair(kid_id=kid.id, slot=s, item_id=v) for s, v in merged.items() if v)
     new = badges.check_badges(db, kid, get_family(db))
     db.commit()
     return {
-        "equipped": equipped(kid),
-        "new_badges": [badges.badge_info(db, a.badge_key, a.tier) for a in new],
+        "equipped": equipped(db, kid.id),
+        "new_badges": [badges.badge_info(db, a) for a in new],
     }

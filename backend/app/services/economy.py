@@ -72,6 +72,7 @@ def award_chore(db: Session, run: ChoreRun, fam: FamilySettings) -> int:
                 user_id=kid_id,
                 points_type=PointsType.TASK_COMPLETION,
                 amount=base,
+                reason="chore",
                 description=chore.title,
                 run_id=run.id,
             )
@@ -82,6 +83,7 @@ def award_chore(db: Session, run: ChoreRun, fam: FamilySettings) -> int:
                     user_id=kid_id,
                     points_type=PointsType.BONUS,
                     amount=bonus,
+                    reason="early_bonus",
                     description=f"Early bonus: {chore.title}",
                     run_id=run.id,
                 )
@@ -146,6 +148,7 @@ def decide(db: Session, redemption: Redemption, parent: User, approve: bool) -> 
                 user_id=redemption.kid_id,
                 points_type=PointsType.REDEMPTION,
                 amount=-redemption.cost,
+                reason="redemption",
                 description="Screen time" if redemption.kind == "screen_time" else "Reward",
                 redemption_id=redemption.id,
             )

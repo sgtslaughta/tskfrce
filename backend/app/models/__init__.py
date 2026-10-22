@@ -22,6 +22,7 @@ from .comment import (
 from .conversation import Conversation, ConversationSettings
 from .direct_message import DirectMessage, MessageReaction
 from .family import FamilySettings, get_family
+from .flair import KidFlair
 from .gamification import (
     Achievement,
     Leaderboard,
@@ -50,6 +51,7 @@ from .user import UsedInvite, User
 
 __all__ = [
     "BadgeAward",
+    "KidFlair",
     "CustomBadge",
     "ChatPhoto",
     "Thread",

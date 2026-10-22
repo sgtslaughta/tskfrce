@@ -139,7 +139,7 @@ def metrics(db: Session, kid: User, fam: FamilySettings) -> dict[str, int]:
         "rewards": len(rewards),
         "big_rewards": sum(1 for r in rewards if r.cost >= BIG_REWARD),
         "screen_redemptions": len(reds) - len(rewards),
-        "slots_equipped": sum(v is not None for v in equipped(kid).values()),
+        "slots_equipped": sum(v is not None for v in equipped(db, kid.id).values()),
     }
 
 
@@ -147,7 +147,12 @@ def check_badges(db: Session, kid: User, fam: FamilySettings) -> list[BadgeAward
     """Upsert newly reached tiers (never lowers one). Caller commits."""
     db.flush()
     m = metrics(db, kid, fam)
-    have = {a.badge_key: a for a in db.query(BadgeAward).filter(BadgeAward.kid_id == kid.id)}
+    have = {
+        a.badge_key: a
+        for a in db.query(BadgeAward).filter(
+            BadgeAward.kid_id == kid.id, BadgeAward.badge_key.isnot(None)
+        )
+    }
     won = []
     for b in CATALOG.values():
         tier = sum(m[b.metric] >= t for t in b.thresholds)
@@ -171,13 +176,16 @@ def check_for_run(db: Session, run: ChoreRun, fam: FamilySettings) -> None:
             check_badges(db, kid, fam)
 
 
-def badge_info(db: Session, key: str, tier: int) -> dict:
-    if key.startswith("custom:"):
-        c = db.get(CustomBadge, int(key[7:]))
+def badge_info(db: Session, a: BadgeAward) -> dict:
+    tier = a.tier
+    if a.custom_badge_id is not None:
+        c = db.get(CustomBadge, a.custom_badge_id)
         name, icon, desc = (c.name, c.icon, c.description) if c else ("Badge", "🏅", "")
+        key = f"custom:{a.custom_badge_id}"
     else:
-        b = CATALOG[key]
+        b = CATALOG[a.badge_key]
         name, icon, desc = b.name, b.icon, b.description
+        key = a.badge_key
     return {
         "key": key,
         "name": name,
@@ -185,21 +193,20 @@ def badge_info(db: Session, key: str, tier: int) -> dict:
         "description": desc,
         "tier": tier,
         "tier_name": TIERS[tier - 1],
-        "custom": key.startswith("custom:"),
+        "custom": a.custom_badge_id is not None,
     }
 
 
 def badges_for(db: Session, kid_id: int) -> list[dict]:
     rows = db.query(BadgeAward).filter(BadgeAward.kid_id == kid_id).order_by(BadgeAward.id)
-    return [badge_info(db, a.badge_key, a.tier) for a in rows]
+    return [badge_info(db, a) for a in rows]
 
 
 def give_custom(db: Session, kid: User, badge: CustomBadge) -> BadgeAward:
     """Parent award: that kid's tier +1 (409 at max). Caller commits."""
-    key = f"custom:{badge.id}"
-    a = db.query(BadgeAward).filter_by(kid_id=kid.id, badge_key=key).first()
+    a = db.query(BadgeAward).filter_by(kid_id=kid.id, custom_badge_id=badge.id).first()
     if a is None:
-        a = BadgeAward(kid_id=kid.id, badge_key=key, tier=0)
+        a = BadgeAward(kid_id=kid.id, custom_badge_id=badge.id, tier=0)
         db.add(a)
     if a.tier >= len(TIERS):
         raise HTTPException(409, "Already at mega-diamond.")
@@ -238,7 +245,7 @@ def celebrations(db: Session, kid: User) -> list[dict]:
     for a in db.query(BadgeAward).filter(
         BadgeAward.kid_id == kid.id, BadgeAward.seen_by_kid.is_(False)
     ):
-        info = badge_info(db, a.badge_key, a.tier)
+        info = badge_info(db, a)
         items.append(
             (
                 a.earned_at,

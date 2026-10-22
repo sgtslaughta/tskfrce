@@ -57,8 +57,6 @@ async def award_points(
     amount: int,
     points_type: PointsType,
     description: str | None = Query(None, description="Transaction description"),
-    reference_id: int | None = Query(None, description="Reference to related entity"),
-    reference_type: str | None = Query(None, description="Type of reference entity"),
     db: Session = Depends(get_db_session),
     _: User = Depends(require_parent),
 ):
@@ -69,8 +67,6 @@ async def award_points(
         amount=amount,
         points_type=points_type,
         description=description,
-        reference_id=reference_id,
-        reference_type=reference_type,
     )
     return points
 

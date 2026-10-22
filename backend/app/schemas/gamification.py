@@ -70,8 +70,6 @@ class PointsBase(BaseModel):
     points_type: PointsType = Field(..., description="Type of points transaction")
     amount: int = Field(..., description="Points amount (positive or negative)")
     description: str | None = Field(None, max_length=255, description="Transaction description")
-    reference_id: int | None = Field(None, description="Reference to related entity")
-    reference_type: str | None = Field(None, max_length=50, description="Type of reference entity")
 
 
 class PointsResponse(PointsBase):

@@ -42,8 +42,6 @@ class GamificationService:
         amount: int,
         points_type: PointsType,
         description: str | None = None,
-        reference_id: int | None = None,
-        reference_type: str | None = None,
     ) -> Points:
         """
         Award points to a user.
@@ -53,8 +51,6 @@ class GamificationService:
             amount: Points amount (positive or negative)
             points_type: Type of points transaction
             description: Transaction description
-            reference_id: Reference to related entity
-            reference_type: Type of reference entity
 
         Returns:
             Created points transaction
@@ -64,8 +60,6 @@ class GamificationService:
             amount=amount,
             points_type=points_type,
             description=description,
-            reference_id=reference_id,
-            reference_type=reference_type,
         )
 
         self.db.add(points)
@@ -214,8 +208,6 @@ class GamificationService:
                         amount=achievement.points_reward,
                         points_type=PointsType.ACHIEVEMENT,
                         description=f"Achievement: {achievement.name}",
-                        reference_id=achievement.id,
-                        reference_type="achievement",
                     )
 
                 newly_awarded.append(achievement)

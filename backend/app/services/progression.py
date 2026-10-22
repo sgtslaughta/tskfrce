@@ -109,7 +109,7 @@ def progress(db: Session, kid: User, fam: FamilySettings) -> dict:
         "floor": lv.floor,
         "next": lv.next,
         "streak": streak(db, kid.id, today).current,
-        "flair": equipped(kid),
+        "flair": equipped(db, kid.id),
     }
 
 
@@ -146,7 +146,7 @@ def leaderboard(db: Session, fam: FamilySettings, now_utc: datetime) -> dict:
                 "score": int(scores.get(k.id) or 0),
                 "level": lv.level,
                 "title": lv.title,
-                "flair": equipped(k),
+                "flair": equipped(db, k.id),
             }
         )
     rows.sort(key=lambda r: (-r["score"], r["name"]))

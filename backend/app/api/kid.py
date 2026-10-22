@@ -18,7 +18,7 @@ from app.lock.state import device_facts
 from app.models.badge import BadgeAward
 from app.models.chores import ChoreRun
 from app.models.family import get_family
-from app.models.lock import Device
+from app.models.lock import Device, DeviceIPv6
 from app.models.reward import Redemption, Reward
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
@@ -57,8 +57,11 @@ def request_device(db: Session, ip: str) -> Device | None:
     if want is None:
         return None
     for d in db.query(Device).all():
-        if want in {norm_ip(d.ip), *(norm_ip(v) for v in d.ipv6 or [])}:
+        if want == norm_ip(d.ip):
             return d
+    for row in db.query(DeviceIPv6).all():
+        if want == norm_ip(row.address):
+            return db.get(Device, row.device_id)
     return None
 
 

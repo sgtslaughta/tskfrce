@@ -14,6 +14,7 @@ from app.lock.overrides import clear_override, set_override
 from app.models.badge import BadgeAward
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import ChoreAssignment, ChoreRun, RunStepTick, assignment_kids, run_kids
+from app.models.flair import KidFlair
 from app.models.gamification import Points
 from app.models.lock import Override, TimeWindow, device_owners
 from app.models.reward import Redemption
@@ -128,6 +129,7 @@ def delete_kid(kid_id: int, db: Session = Depends(get_db)):
         db.delete(p)
     db.query(Redemption).filter(Redemption.kid_id == kid.id).delete()
     db.query(BadgeAward).filter(BadgeAward.kid_id == kid.id).delete()
+    db.query(KidFlair).filter(KidFlair.kid_id == kid.id).delete()
     db.flush()
     db.expire_all()
     for d in owned:

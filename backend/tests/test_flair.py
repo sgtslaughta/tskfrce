@@ -1,6 +1,7 @@
 from collections import Counter
 
 from app.flair.catalog import BY_ID, CATALOG, SLOTS
+from app.models.flair import KidFlair
 from app.models.gamification import Points, PointsType
 
 
@@ -59,13 +60,14 @@ def test_unequip(client, kid_headers):
 
 
 def test_unknown_stored_id_ignored_then_dropped(client, db, kid, kid_headers):
-    kid.flair = {"card": "card-gone", "title": "title-basic"}
+    db.add_all([KidFlair(kid_id=kid.id, slot="card", item_id="card-gone")])
+    db.add(KidFlair(kid_id=kid.id, slot="title", item_id="title-basic"))
     db.commit()
     eq = client.get("/api/v1/kid/flair", headers=kid_headers).json()["equipped"]
     assert eq["card"] is None and eq["title"] == "title-basic"
     _put(client, kid_headers, "emblem", "emblem-star")
-    db.refresh(kid)
-    assert kid.flair == {"title": "title-basic", "emblem": "emblem-star"}
+    rows = db.query(KidFlair.slot, KidFlair.item_id).filter_by(kid_id=kid.id).all()
+    assert dict(rows) == {"title": "title-basic", "emblem": "emblem-star"}
 
 
 def test_parent_cannot_equip(client, parent_headers):

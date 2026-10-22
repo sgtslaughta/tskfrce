@@ -79,7 +79,8 @@ class ResistingReport(BaseModel):
 
 
 def _apply(dev: Device, body: SeenReport, now: datetime) -> None:
-    dev.ip, dev.ipv6, dev.last_seen = body.ip, body.ipv6, now
+    dev.ip, dev.last_seen = body.ip, now
+    dev.ipv6 = body.ipv6
     dev.hostname = body.hostname or dev.hostname
     dev.vendor = body.vendor or dev.vendor
 

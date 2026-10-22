@@ -2,7 +2,9 @@
 
 from dataclasses import dataclass
 
-from app.models.user import User
+from sqlalchemy.orm import Session
+
+from app.models.flair import KidFlair
 
 SLOTS = ("card", "ring", "name", "emblem", "title")
 
@@ -50,9 +52,9 @@ CATALOG: tuple[FlairItem, ...] = tuple(
 BY_ID: dict[str, FlairItem] = {f.id: f for f in CATALOG}
 
 
-def equipped(user: User) -> dict[str, str | None]:
+def equipped(db: Session, kid_id: int) -> dict[str, str | None]:
     """All five slots; unknown or wrong-slot ids (removed from the catalog) read as empty."""
-    saved = user.flair or {}
+    saved = dict(db.query(KidFlair.slot, KidFlair.item_id).filter(KidFlair.kid_id == kid_id).all())
     return {
         s: saved[s] if (it := BY_ID.get(saved.get(s))) and it.slot == s else None for s in SLOTS
     }

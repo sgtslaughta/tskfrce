@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import backref, relationship
 
 from app.core.database import Base
@@ -10,6 +10,13 @@ from app.core.database import Base
 
 class Thread(Base):
     __tablename__ = "threads"
+    __table_args__ = (
+        CheckConstraint(
+            "(kind = 'chore' AND run_id IS NOT NULL) OR (kind = 'private' AND kid_id IS NOT NULL)"
+            " OR kind = 'family'",
+            name="ck_thread_kind",
+        ),
+    )
 
     id = Column(Integer, primary_key=True)
     kind = Column(String(10), nullable=False, index=True)  # chore | private | family
@@ -26,6 +33,7 @@ class Thread(Base):
 
 class ThreadMessage(Base):
     __tablename__ = "thread_messages"
+    __table_args__ = (CheckConstraint("kind IN ('user','system')", name="ck_message_kind"),)
 
     id = Column(Integer, primary_key=True)
     thread_id = Column(Integer, ForeignKey("threads.id"), nullable=False, index=True)

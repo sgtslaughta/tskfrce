@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Integer, String
 
 from app.core.database import Base
 
@@ -20,6 +20,14 @@ class Reward(Base):
 
 class Redemption(Base):
     __tablename__ = "redemptions"
+    __table_args__ = (
+        CheckConstraint("kind IN ('screen_time','reward')", name="ck_redemption_kind"),
+        CheckConstraint("status IN ('pending','approved','denied')", name="ck_redemption_status"),
+        CheckConstraint("(kind = 'reward') = (reward_id IS NOT NULL)", name="ck_redemption_reward"),
+        CheckConstraint(
+            "(kind = 'screen_time') = (minutes IS NOT NULL)", name="ck_redemption_minutes"
+        ),
+    )
 
     id = Column(Integer, primary_key=True)
     kid_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)

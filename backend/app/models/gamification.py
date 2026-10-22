@@ -146,14 +146,17 @@ class Points(Base):
         points_type: Type of points transaction
         amount: Points amount (positive or negative)
         description: Transaction description
-        reference_id: Reference to related entity (task, achievement, etc.)
-        reference_type: Type of reference entity
+        reason: Machine-read kind (chore, early_bonus, team_share, redemption, bonus, adjustment)
         created_at: Creation timestamp
     """
 
     __tablename__ = "points"
     __table_args__ = (
         CheckConstraint("run_id IS NULL OR redemption_id IS NULL", name="ck_points_one_ref"),
+        CheckConstraint(
+            "reason IN ('chore','early_bonus','team_share','redemption','bonus','adjustment')",
+            name="ck_points_reason",
+        ),
     )
 
     id = Column(Integer, primary_key=True, index=True)
@@ -161,8 +164,7 @@ class Points(Base):
     points_type = Column(SQLEnum(PointsType), nullable=False, index=True)
     amount = Column(Integer, nullable=False)
     description = Column(String(255), nullable=True)
-    reference_id = Column(Integer, nullable=True)  # ID of related entity
-    reference_type = Column(String(50), nullable=True)  # Type of related entity
+    reason = Column(String(12), nullable=False, default="adjustment", server_default="adjustment")
     run_id = Column(Integer, ForeignKey("chore_runs.id"), nullable=True, index=True)
     redemption_id = Column(Integer, ForeignKey("redemptions.id"), nullable=True, index=True)
     created_at = Column(DateTime, default=datetime.utcnow)

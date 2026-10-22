@@ -2,7 +2,16 @@
 
 from datetime import datetime
 
-from sqlalchemy import Boolean, Column, DateTime, ForeignKey, Integer, String, UniqueConstraint
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 
 from app.core.database import Base
 
@@ -20,11 +29,18 @@ class CustomBadge(Base):
 
 class BadgeAward(Base):
     __tablename__ = "badge_awards"
-    __table_args__ = (UniqueConstraint("kid_id", "badge_key", name="uq_badge_award_kid_key"),)
+    __table_args__ = (
+        UniqueConstraint("kid_id", "badge_key", name="uq_badge_award_kid_key"),
+        UniqueConstraint("kid_id", "custom_badge_id", name="uq_badge_award_kid_custom"),
+        CheckConstraint(
+            "(badge_key IS NULL) != (custom_badge_id IS NULL)", name="ck_badge_award_one_badge"
+        ),
+    )
 
     id = Column(Integer, primary_key=True)
     kid_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
-    badge_key = Column(String(40), nullable=False)  # catalog key or "custom:<id>"
+    badge_key = Column(String(40), nullable=True)  # catalog key (code, not a row)
+    custom_badge_id = Column(Integer, ForeignKey("custom_badges.id"), nullable=True)
     tier = Column(Integer, nullable=False)
     earned_at = Column(DateTime, default=datetime.utcnow)
     seen_by_kid = Column(Boolean, nullable=False, default=False)

@@ -1,6 +1,7 @@
 """Parent API: rewards catalog."""
 
 from datetime import datetime
+from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
@@ -76,7 +77,9 @@ def redemption_name(db: Session, r: Redemption) -> str:
 
 
 @redemptions_router.get("")
-def list_redemptions(status: str = "pending", db: Session = Depends(get_db)):
+def list_redemptions(
+    status: Literal["pending", "approved", "denied"] = "pending", db: Session = Depends(get_db)
+):
     rows = db.query(Redemption).filter(Redemption.status == status).order_by(Redemption.id).all()
     out = []
     for r in rows:

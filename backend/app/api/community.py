@@ -27,7 +27,7 @@ def _profile(db: Session, kid: User, today) -> dict:
         "title": lv.title,
         "streak": progression.streak(db, kid.id, today).current,
         "badges": badges.badges_for(db, kid.id),
-        "flair": equipped(kid),
+        "flair": equipped(db, kid.id),
     }
 
 

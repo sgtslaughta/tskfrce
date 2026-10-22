@@ -3,7 +3,6 @@
 from datetime import datetime
 
 from sqlalchemy import (
-    JSON,
     CheckConstraint,
     Column,
     DateTime,
@@ -43,18 +42,36 @@ class Device(Base):
     vendor = Column(String(100), nullable=True)
     hostname = Column(String(255), nullable=True)
     ip = Column(String(45), nullable=True)
-    ipv6 = Column(JSON, nullable=True)
     status = Column(String(20), nullable=False, default="unassigned")
     first_seen = Column(DateTime, nullable=False, default=datetime.utcnow)
     last_seen = Column(DateTime, nullable=True)
     resisting_since = Column(DateTime, nullable=True)
 
+    ipv6_rows = relationship("DeviceIPv6", cascade="all, delete-orphan")
     owners = relationship("User", secondary=device_owners, backref="devices")
     groups = relationship("DeviceGroup", secondary=device_group_members, backref="devices")
+
+    @property
+    def ipv6(self) -> list[str]:
+        return [r.address for r in self.ipv6_rows]
+
+    @ipv6.setter
+    def ipv6(self, addresses) -> None:
+        want = list(dict.fromkeys(addresses or []))
+        self.ipv6_rows = [r for r in self.ipv6_rows if r.address in want] + [
+            DeviceIPv6(address=a) for a in want if a not in self.ipv6
+        ]
 
     @validates("mac")
     def _lower_mac(self, _key, value):
         return value.lower()
+
+
+class DeviceIPv6(Base):
+    __tablename__ = "device_ipv6"
+
+    device_id = Column(Integer, ForeignKey("devices.id", ondelete="CASCADE"), primary_key=True)
+    address = Column(String(45), primary_key=True)
 
 
 class DeviceGroup(Base):
