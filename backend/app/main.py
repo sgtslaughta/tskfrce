@@ -18,18 +18,7 @@ from sqlalchemy.exc import OperationalError
 # Import API routers
 from app.api import (
     auth_router,
-    comments_router,
-    gamification_router,
-    goals_router,
-    lists_router,
-    media_router,
-    mentions_router,
-    messaging_router,
-    presence_router,
-    tasks_router,
     users_router,
-    websocket_router,
-    workflow_router,
 )
 from app.api.badges import router as badges_router
 from app.api.chat import router as chat_router
@@ -134,18 +123,7 @@ async def log_requests(request: Request, call_next):
 fastapi_app.include_router(auth_router)
 fastapi_app.include_router(setup_router)
 fastapi_app.include_router(users_router)
-fastapi_app.include_router(tasks_router)
-fastapi_app.include_router(goals_router)
-fastapi_app.include_router(gamification_router)
-fastapi_app.include_router(lists_router)
-fastapi_app.include_router(media_router)
 
-# New workflow and messaging routers
-fastapi_app.include_router(comments_router, prefix="/api/v1/comments", tags=["comments"])
-fastapi_app.include_router(workflow_router, prefix="/api/v1/workflow", tags=["workflow"])
-fastapi_app.include_router(messaging_router, prefix="/api/v1/messages", tags=["messaging"])
-fastapi_app.include_router(mentions_router, prefix="/api/v1/mentions", tags=["mentions"])
-fastapi_app.include_router(presence_router, prefix="/api/v1/presence", tags=["presence"])
 fastapi_app.include_router(
     notifications_router, prefix="/api/v1/notifications", tags=["notifications"]
 )
@@ -164,7 +142,6 @@ fastapi_app.include_router(badges_router)
 fastapi_app.include_router(community_router)
 fastapi_app.include_router(flair_router)
 fastapi_app.include_router(redemptions_router)
-fastapi_app.include_router(websocket_router, prefix="/ws", tags=["websocket"])
 
 # Create the final app with ASGI middleware
 app = MetricsMiddleware(fastapi_app)

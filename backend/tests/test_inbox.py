@@ -39,7 +39,7 @@ def test_submit_notifies_each_parent_once(client, db, parent, kid):
 
 
 def test_redemption_request_and_decision(client, db, parent, kid, kid_headers, parent_headers):
-    from app.models.gamification import Points, PointsType
+    from app.models.points import Points, PointsType
 
     db.add(Points(user_id=kid.id, points_type=PointsType.BONUS, amount=200, reason="bonus"))
     rw = Reward(name="Movie", price=100)

@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime, timedelta
 
 from app.lock.reset import current_chore_day
 from app.models.family import get_family
-from app.models.gamification import Points, PointsType
+from app.models.points import Points, PointsType
 from app.models.user import UserRole
 from app.services import progression as pr
 

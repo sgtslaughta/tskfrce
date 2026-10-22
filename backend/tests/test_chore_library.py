@@ -4,7 +4,7 @@ from datetime import date, timedelta
 
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, ChoreStep
 from app.models.family import get_family
-from app.models.gamification import Points
+from app.models.points import Points
 from app.models.user import UserRole
 
 from tests.conftest import _headers, _make_user

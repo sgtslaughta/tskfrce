@@ -5,6 +5,7 @@ import os
 import sqlite3
 import subprocess
 import sys
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 BACKEND = Path(__file__).resolve().parent.parent
@@ -336,3 +337,48 @@ def test_chore_library_migration(tmp_path):
     assert q("SELECT run_id FROM threads")[0]["run_id"] == sent_back["id"]
     assert q("SELECT COUNT(*) n FROM thread_messages")[0]["n"] == 2
     assert [p["run_id"] for p in q("SELECT run_id FROM points ORDER BY id")] == [team["id"]] * 3
+
+
+def _snapshot(url: str) -> dict:
+    """What the parent and the lock see: needs-you items, attempts, notes, blocked MACs."""
+    from app.api.family import _needs_you
+    from app.lock.state import desired_blocked
+    from app.models.chores import ChoreRun
+    from app.models.user import User
+    from app.services import chores as svc
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    with Session(create_engine(url)) as db:
+        runs = svc.day_runs(db, date(2026, 10, 21)).order_by(ChoreRun.id).all()
+        names = {u.id: u.full_name for u in db.query(User)}
+        return {
+            "needs_you": _needs_you(db, runs, names),
+            "runs": [(r.id, r.attempt, r.last_note, r.status, svc.run_kid_ids(r)) for r in runs],
+            "blocked": desired_blocked(db, datetime(2026, 10, 21, 12, 0, tzinfo=UTC)),
+        }
+
+
+def test_drop_legacy_keeps_what_parents_and_lock_see(tmp_path):
+    from app.models.lock import Device
+    from app.models.user import User
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    url = f"sqlite:///{tmp_path / 'm.db'}"
+    _alembic(url, OLD)
+    con = sqlite3.connect(tmp_path / "m.db")
+    _seed(con.cursor())
+    con.commit()
+    con.close()
+    _alembic(url, "d0e1f2a3b4c5")
+    with Session(create_engine(url)) as db:
+        for i, kid in enumerate(db.query(User).filter(User.id.in_([2, 3]))):
+            db.add(
+                Device(mac=f"aa:bb:cc:dd:ee:0{i}", name=f"d{i}", status="assigned", owners=[kid])
+            )
+        db.commit()
+    before = _snapshot(url)
+    assert before["needs_you"] and before["runs"] and before["blocked"]
+    _alembic(url, "head")
+    assert _snapshot(url) == before

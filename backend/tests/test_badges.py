@@ -3,7 +3,7 @@ from datetime import UTC, datetime, timedelta
 from app.lock.reset import current_chore_day
 from app.models.badge import BadgeAward
 from app.models.family import get_family
-from app.models.gamification import Points, PointsType
+from app.models.points import Points, PointsType
 from app.models.reward import Redemption, Reward
 from app.models.user import UserRole
 from app.services import badges as bd

@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 
 from app.models.chores import ChoreRun
 from app.models.family import FamilySettings, get_family
-from app.models.gamification import Points, PointsType
 from app.models.lock import Override
+from app.models.points import Points, PointsType
 from app.models.reward import Redemption, Reward
 from app.models.user import User
 from app.services import inbox

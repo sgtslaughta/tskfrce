@@ -14,8 +14,8 @@ from app.lock.loop import trigger
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import ChoreAssignment, ChoreRun
 from app.models.family import get_family
-from app.models.gamification import Points
 from app.models.lock import Device
+from app.models.points import Points
 from app.models.reward import Redemption
 from app.models.user import User, UserRole
 from app.schemas.lock import FamilyPatch

@@ -2,7 +2,7 @@ from datetime import date
 
 from app.models.chores import ChoreRun
 from app.models.family import get_family
-from app.models.gamification import Points
+from app.models.points import Points
 from app.models.user import UserRole
 from app.services import chores as svc
 

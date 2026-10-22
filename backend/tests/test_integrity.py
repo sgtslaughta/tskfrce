@@ -11,8 +11,8 @@ import pytest
 from app.models.badge import BadgeAward, CustomBadge
 from app.models.chat import Thread, ThreadMessage
 from app.models.flair import KidFlair
-from app.models.gamification import Points, PointsType
 from app.models.lock import Device
+from app.models.points import Points, PointsType
 from app.models.reward import Redemption, Reward
 from app.services import badges as bd
 from sqlalchemy.exc import IntegrityError

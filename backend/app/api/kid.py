@@ -18,8 +18,8 @@ from app.lock.state import device_facts
 from app.models.badge import BadgeAward
 from app.models.chores import ChoreRun
 from app.models.family import get_family
-from app.models.gamification import Points
 from app.models.lock import Device, DeviceIPv6
+from app.models.points import Points
 from app.models.reward import Redemption, Reward
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z

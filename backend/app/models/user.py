@@ -65,48 +65,7 @@ class User(Base):
     celebrated_level = Column(Integer, nullable=False, default=1, server_default="1")
 
     # Relationships
-    tasks = relationship(
-        "Task",
-        back_populates="assigned_to",
-        foreign_keys="Task.assigned_to_id",
-    )
-    created_tasks = relationship(
-        "Task", back_populates="created_by", foreign_keys="Task.created_by_id"
-    )
-    goals = relationship("Goal", back_populates="user")
-    achievements = relationship("UserAchievement", back_populates="user")
     points = relationship("Points", back_populates="user")
-    created_lists = relationship("TaskList", back_populates="created_by")
-
-    # Comment relationships
-    comments = relationship(
-        "TaskComment", back_populates="user", foreign_keys="TaskComment.user_id"
-    )
-    comment_reactions = relationship("CommentReaction", back_populates="user")
-    comment_mentions_received = relationship(
-        "CommentMention",
-        back_populates="mentioned_user",
-        foreign_keys="CommentMention.mentioned_user_id",
-    )
-    comment_mentions_made = relationship(
-        "CommentMention",
-        back_populates="mentioned_by_user",
-        foreign_keys="CommentMention.mentioned_by_user_id",
-    )
-    comment_audit_entries = relationship("CommentAuditTrail", back_populates="user")
-
-    # Messaging relationships
-    sent_messages = relationship(
-        "DirectMessage", back_populates="sender", foreign_keys="DirectMessage.sender_id"
-    )
-    message_reactions = relationship("MessageReaction", back_populates="user")
-    created_conversations = relationship(
-        "Conversation", back_populates="creator", foreign_keys="Conversation.creator_id"
-    )
-    conversations = relationship(
-        "Conversation", secondary="conversation_participants", back_populates="participants"
-    )
-    conversation_settings = relationship("ConversationSettings", back_populates="user")
 
     def __repr__(self) -> str:
         """String representation of User."""

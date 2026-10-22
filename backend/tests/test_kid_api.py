@@ -4,8 +4,8 @@ import pytest
 from app.core.auth import AuthService
 from app.main import app
 from app.models.family import get_family
-from app.models.gamification import Points, PointsType
 from app.models.lock import Device
+from app.models.points import Points, PointsType
 from app.models.user import User, UserRole
 from fastapi.testclient import TestClient
 

@@ -2,7 +2,7 @@ from collections import Counter
 
 from app.flair.catalog import BY_ID, CATALOG, SLOTS
 from app.models.flair import KidFlair
-from app.models.gamification import Points, PointsType
+from app.models.points import Points, PointsType
 
 
 def _xp(db, kid, n):

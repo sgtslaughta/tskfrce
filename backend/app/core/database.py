@@ -174,52 +174,26 @@ def _import_all_models():
         logger.info("Importing models...")
 
         # Import all models here to register them
-        from app.models import (
-            Achievement,
+        from app.models import (  # noqa: F401
             ChatPhoto,
             Chore,
             ChoreAssignment,
             ChorePhoto,
             ChoreRun,
             ChoreStep,
-            ChoreSubtask,
-            CommentMention,
-            CommentReaction,
-            Conversation,
-            ConversationSettings,
             Device,
             DeviceGroup,
-            DirectMessage,
             FamilySettings,
-            Goal,
-            GoalProgress,
-            Leaderboard,
-            MediaAttachment,
-            MessageReaction,
+            Notification,
             Override,
             Points,
-            Task,
-            TaskCategory,
-            TaskComment,
-            TaskDependency,
-            TaskTag,
-            TaskTemplate,
             Thread,
             ThreadMessage,
             ThreadRead,
             TimeWindow,
             UsedInvite,
             User,
-            UserAchievement,
         )
-
-        # Import additional models that might exist
-        try:
-            from app.models import CommentAuditTrail, TaskStatusHistory, UserStatus
-        except ImportError:
-            logger.info(
-                "Optional models (CommentAuditTrail, TaskStatusHistory, UserStatus) not found, skipping"
-            )
 
         logger.info("All models imported successfully")
 

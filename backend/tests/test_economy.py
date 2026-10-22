@@ -1,7 +1,7 @@
 from datetime import date, datetime
 
 from app.models.family import get_family
-from app.models.gamification import Points, PointsType
+from app.models.points import Points, PointsType
 from app.services.economy import bonus_for, deadline_utc
 
 from tests.factories import make_run

@@ -12,7 +12,7 @@ from app.lock.reset import current_chore_day
 from app.lock.schedule import local_now
 from app.models.chores import ChoreRun
 from app.models.family import FamilySettings
-from app.models.gamification import Points, PointsType
+from app.models.points import Points, PointsType
 from app.models.user import User, UserRole
 from app.services.chores import kid_runs_filter
 

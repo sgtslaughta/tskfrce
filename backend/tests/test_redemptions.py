@@ -4,9 +4,9 @@ from app.lock.rules import is_online
 from app.lock.schedule import local_now
 from app.lock.state import device_facts
 from app.models.family import get_family
-from app.models.gamification import Points, PointsType
 from app.models.inbox import Notification
 from app.models.lock import Device, Override, TimeWindow
+from app.models.points import Points, PointsType
 from app.models.reward import Redemption, Reward
 from app.models.user import UserRole
 

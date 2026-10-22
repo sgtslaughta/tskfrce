@@ -12,7 +12,7 @@ from app.lock.reset import current_chore_day
 from app.models.badge import BadgeAward, CustomBadge
 from app.models.chores import ChoreRun
 from app.models.family import FamilySettings
-from app.models.gamification import Points
+from app.models.points import Points
 from app.models.reward import Redemption
 from app.models.user import User
 from app.services import chores as chore_svc

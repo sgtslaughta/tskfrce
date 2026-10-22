@@ -5,8 +5,8 @@ from app.models.badge import BadgeAward
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import ChoreAssignment, ChoreRun, RunStepTick
 from app.models.family import get_family
-from app.models.gamification import Points, PointsType
 from app.models.lock import Device, DeviceGroup, Override, TimeWindow
+from app.models.points import Points, PointsType
 from app.models.reward import Redemption
 from app.services import chores as svc
 

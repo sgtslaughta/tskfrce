@@ -1,4 +1,4 @@
-from app.models.gamification import Points
+from app.models.points import Points
 
 URL = "/api/v1/kids/{}/points"
 

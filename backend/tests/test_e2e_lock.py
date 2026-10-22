@@ -8,7 +8,6 @@ from app.main import app
 from app.models.chores import ChoreRun
 from app.models.family import get_family
 from app.models.lock import Override
-from app.models.task import Task
 from app.services import chores as svc
 from fastapi.testclient import TestClient
 
@@ -159,16 +158,6 @@ def test_kid_cannot_escape_by_deleting_chore(client, db):
 def test_kid_cannot_preempt_tomorrows_instance(client, db):
     _, kid, _, ch, kc, kh = _kid_with_chore(client)
     tomorrow = svc.today(db) + timedelta(days=1)  # the family's day, at any wall-clock time
-    # a placeholder row a kid slipped in some other way is not a run
-    db.add(
-        Task(
-            title="x",
-            created_by_id=kid["id"],
-            assigned_to_id=kid["id"],
-            due_date=datetime.combine(tomorrow, datetime.min.time()),
-        )
-    )
-    db.commit()
     # tomorrow's run is made by the reset only, once; the kid stays blocked
     assert svc.run_reset(db, tomorrow) == 1
     db.commit()
