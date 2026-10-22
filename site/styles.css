@@ -53,6 +53,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -63,6 +64,7 @@ body {
   font-family: Inter, system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.6;
+  overflow-x: hidden;
 }
 
 .f-shell {
@@ -256,10 +258,12 @@ section {
   flex-direction: column;
   gap: 16px;
   padding: 48px 16px;
-  margin-left: -16px;
-  margin-right: -16px;
-  padding-left: 16px;
-  padding-right: 16px;
+}
+
+@media (max-width: 480px) {
+  section {
+    padding: 32px 16px;
+  }
 }
 
 section:nth-child(odd) {
