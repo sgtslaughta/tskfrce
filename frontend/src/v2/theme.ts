@@ -34,6 +34,11 @@ export const fridgeTheme: MantineThemeOverride = createTheme({
     Switch: { classNames: { track: 'f-switch' } },
     Checkbox: { classNames: { input: 'f-check' } },
     Chip: { classNames: { label: 'f-chipctl', iconWrapper: 'f-chipicon' } },
+    Menu: { classNames: { dropdown: 'f-pop', item: 'f-pop-item', divider: 'f-pop-div' } },
+    Popover: { classNames: { dropdown: 'f-pop' } },
+    Select: { classNames: { dropdown: 'f-pop', option: 'f-pop-item' } },
+    MultiSelect: { classNames: { dropdown: 'f-pop', option: 'f-pop-item' } },
+    Tooltip: { classNames: { tooltip: 'f-tip' } },
     Drawer: {
       classNames: { content: 'f-sheet', header: 'f-sheet-head', title: 'f-sheet-title', close: 'f-sheet-close', body: 'f-sheet-body', overlay: 'f-overlay' },
     },

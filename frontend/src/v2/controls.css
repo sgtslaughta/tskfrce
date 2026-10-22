@@ -151,3 +151,19 @@ input:checked + .f-switch.f-switch {
 .f-sheet-close.f-sheet-close:hover { background: var(--f-mute); }
 .f-sheet-body.f-sheet-body { padding: 16px; }
 .f-overlay.f-overlay { background: rgba(0, 0, 0, 0.55); opacity: 1; }
+/* dropdowns, popovers, selects: solid themed card so items never float over the page */
+.f-pop.f-pop {
+  background: var(--f-card); color: var(--f-ink);
+  border: 2px solid var(--f-ink); border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--f-sun); padding: 6px;
+}
+.f-pop-item.f-pop-item { color: var(--f-ink); border-radius: 6px; font-weight: 600; }
+.f-pop-item.f-pop-item:where([data-hovered], [data-combobox-active], :hover) { background: var(--f-mute); }
+.f-pop-item.f-pop-item[data-combobox-selected] { background: var(--f-sun); color: var(--f-on-color); }
+.f-pop-div.f-pop-div { border-color: var(--f-line); }
+.f-tip.f-tip { background: var(--f-ink); color: var(--f-card); font-weight: 600; }
+/* phone drawer: nav links sit on a panel, not loose on the sheet */
+.f-nav-drawer { gap: 0; background: var(--f-mute); border: 1px solid var(--f-line); border-radius: 8px; overflow: hidden; }
+.f-nav-drawer a { border-bottom: 1px solid var(--f-line); }
+.f-nav-drawer a:last-child { border-bottom: 0; }
+.f-nav-drawer a[aria-current='page'] { background: var(--f-card); box-shadow: inset 3px 0 0 var(--f-sun); }
