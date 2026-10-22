@@ -19,10 +19,8 @@ python-dotenv==1.0.0
 pydantic==2.5.0
 pydantic-settings==2.1.0
 
-# HTTP Client
+# HTTP Client (httpx also backs the test client)
 httpx==0.25.2
-requests==2.32.4
-urllib3==2.5.0
 
 # Logging and Monitoring
 structlog==23.2.0
@@ -30,15 +28,3 @@ prometheus-client==0.19.0
 
 # Testing
 pytest==7.4.3
-pytest-asyncio==0.21.1
-pytest-cov==4.1.0
-
-# Development
-ruff==0.17.1
-mypy==1.7.1
-mypy-extensions==1.0.0
-pathspec==0.12.1
-
-# Utilities
-python-dateutil==2.8.2
-pytz==2023.3
