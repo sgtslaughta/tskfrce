@@ -23,7 +23,7 @@ export function StepDevices({ kids }: { kids: Kid[] }) {
 
   return (
     <>
-      <p>Devices show up here once the box sees them on your Wi-Fi.</p>
+      <p>Devices show up here once the home box sees them on your Wi-Fi.</p>
       {list.data?.length === 0 && <p>No devices yet — you can add them later from Devices.</p>}
       {list.error && <p role="alert">Couldn&apos;t load devices. {list.error.message}</p>}
       {patch.error && <p role="alert">Couldn&apos;t save that. {patch.error.message}</p>}

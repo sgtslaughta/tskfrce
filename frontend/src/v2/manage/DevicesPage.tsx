@@ -1,6 +1,6 @@
 import { useRouter } from 'next/router'
-import { Text } from '@mantine/core'
 import { FridgeShell } from '@/v2/components/FridgeShell'
+import { LoadError, LoadingCards } from '@/v2/components/States'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useDevices, useGroups } from '@/v2/hooks/useDevices'
 import { useKids } from '@/v2/hooks/useKids'
@@ -27,9 +27,10 @@ function DevicesBody() {
 
   return (
     <FridgeShell title="Devices">
-      {devices.isError && <Text role="alert">{devices.error.message}</Text>}
+      {devices.isError && <LoadError error={devices.error} onRetry={() => devices.refetch()} />}
       <ManageLayout path="/devices" sections={DEVICE_SECTIONS} section={section} counts={{ devices: all.length, groups: groups.data?.length }}>
-        {section === 'devices' && <DevicesSection devices={all} kids={kids.data ?? []} focus={Number(first(query.focus))} />}
+        {devices.isPending && <LoadingCards />}
+        {section === 'devices' && !devices.isPending && <DevicesSection devices={all} kids={kids.data ?? []} focus={Number(first(query.focus))} />}
         {section === 'groups' && <GroupsPanel devices={all} />}
       </ManageLayout>
     </FridgeShell>

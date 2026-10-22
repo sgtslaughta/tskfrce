@@ -1,4 +1,5 @@
 import { Button, Checkbox } from '@mantine/core'
+import { IconMessage } from '@tabler/icons-react'
 import { ChoreChip } from '../components/ChoreChip'
 import { useTickSubtask, useUploadPhoto } from '../hooks/useKid'
 import type { KidChore } from '../types'
@@ -46,6 +47,14 @@ function Photo({ c }: { c: KidChore }) {
   )
 }
 
+/** What is still missing before a chore can be marked done. */
+function why(c: KidChore) {
+  const steps = (c.subtasks ?? []).some((s) => !s.done)
+  const photo = !!c.needs_photo && !(c.photo_count_current ?? 0)
+  if (photo && steps) return 'Do the steps and add a photo first'
+  return photo ? 'Add a photo first' : 'Tick every step first'
+}
+
 /** Chore rows for the locked screen. `onDone` omitted = read-only. */
 export function KidChecklist({
   chores,
@@ -57,11 +66,12 @@ export function KidChecklist({
   chores: KidChore[]
   onDone?: (id: number) => void
   busyId?: number | null
-  /** unread chat count per chore id; with `onChat`, each chore gets a Chat link */
+  /** unread chat count per chore id; with `onChat`, each chore gets a chat icon button */
   unread?: Record<number, number>
   onChat?: (id: number) => void
 }) {
-  if (!chores.length) return <p style={{ margin: 0, fontSize: 18 }}>No chores today.</p>
+  if (!chores.length)
+    return <p style={{ margin: 0, fontSize: 18 }}>No chores today. Enjoy the free time.</p>
   return (
     <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: 14 }}>
       {chores.map((c) => {
@@ -81,6 +91,27 @@ export function KidChecklist({
               )}
             </span>
             <span style={{ fontWeight: 800, color: 'var(--f-sub)' }}>+{c.points}</span>
+            {c.taken_by ? (
+              <span className="f-pill" data-tone="mute">{`Taken by ${c.taken_by}`}</span>
+            ) : (
+              <>
+                {c.state === 'needs_you' && (
+                  <span className="f-pill" data-tone="wait">Waiting for Mom or Dad</span>
+                )}
+                {c.state === 'done' && <span className="f-pill" data-tone="done">Done</span>}
+              </>
+            )}
+            {onChat && (
+              <button
+                type="button"
+                className="f-iconbtn"
+                aria-label={`Chat about ${c.title}${unread?.[c.id] ? `, ${unread[c.id]} unread` : ''}`}
+                onClick={() => onChat(c.id)}
+              >
+                <IconMessage size={22} aria-hidden />
+                {!!unread?.[c.id] && <span className="f-iconbtn-dot" aria-hidden="true" />}
+              </button>
+            )}
             {c.last_note && open && (
               <div
                 style={{
@@ -99,30 +130,19 @@ export function KidChecklist({
                 )}
               </div>
             )}
-            {onChat && (
-              <Button variant="default" size="md" aria-label={`Chat about ${c.title}`} onClick={() => onChat(c.id)} style={{ minHeight: 44 }}>
-                Chat
-                {!!unread?.[c.id] && (
-                  <span className="f-pill" aria-label={`${unread[c.id]} unread`} style={{ marginLeft: 6 }}>
-                    {unread[c.id]}
-                  </span>
-                )}
-              </Button>
-            )}
             {open && onDone && !!c.subtasks?.length && <Steps c={c} />}
             {open && onDone && c.needs_photo && <Photo c={c} />}
             {open && onDone && (
-              <Button size="lg" disabled={!ready} loading={busyId === c.id} onClick={() => onDone(c.id)}>
-                Mark done
-              </Button>
-            )}
-            {c.taken_by ? (
-              <span style={{ fontWeight: 700 }}>Taken by {c.taken_by}</span>
-            ) : (
-              <>
-                {c.state === 'needs_you' && <span style={{ fontWeight: 700 }}>Waiting for Mom or Dad</span>}
-                {c.state === 'done' && <span style={{ fontWeight: 700 }}>Done</span>}
-              </>
+              <div style={{ flexBasis: '100%', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <Button size="lg" disabled={!ready} loading={busyId === c.id} onClick={() => onDone(c.id)} aria-describedby={ready ? undefined : `why-${c.id}`}>
+                  Mark done
+                </Button>
+                {!ready && (
+                  <span id={`why-${c.id}`} style={{ fontWeight: 700, color: 'var(--f-sub)' }}>
+                    {why(c)}
+                  </span>
+                )}
+              </div>
             )}
           </li>
         )

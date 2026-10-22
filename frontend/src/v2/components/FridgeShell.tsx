@@ -6,6 +6,7 @@ import { useDisclosure } from '@mantine/hooks'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { ChatDock } from '@/v2/chat/ChatDock'
 import { BlockerBanner } from './BlockerBanner'
+import { AccountMenu, HELP_URL } from './AccountMenu'
 import { Bell } from './Bell'
 import { ColorSchemeToggle } from './ColorSchemeToggle'
 import { cancelSignOut, startSignOut } from './RequireParent'
@@ -71,13 +72,14 @@ export function FridgeShell({
         <Box hiddenFrom="md" style={{ flex: 1 }} />
         <Bell />
         <ColorSchemeToggle />
-        <Button variant="default" onClick={logOut} visibleFrom="xs">
-          Log out
-        </Button>
+        <AccountMenu name={user?.username ?? 'Account'} onLogout={logOut} />
       </header>
       <Drawer opened={open} onClose={close} title="t@sk4ce" size="xs" hiddenFrom="md">
         <Nav current={router.pathname} drawer />
-        <Button variant="default" mt="md" fullWidth onClick={logOut}>
+        <Button component="a" href={HELP_URL} target="_blank" rel="noopener noreferrer" variant="default" mt="md" fullWidth>
+          Help
+        </Button>
+        <Button variant="default" mt="xs" fullWidth onClick={logOut}>
           Log out
         </Button>
       </Drawer>

@@ -1,6 +1,6 @@
-import { Text } from '@mantine/core'
 import { useRouter } from 'next/router'
 import { FridgeShell } from '@/v2/components/FridgeShell'
+import { LoadError, LoadingCards } from '@/v2/components/States'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useChoresToday, useLibrary } from '@/v2/hooks/useChores'
 import { useKids } from '@/v2/hooks/useKids'
@@ -31,12 +31,13 @@ function KidsBody() {
   })
   return (
     <FridgeShell title="Kids & chores">
-      {kids.isError && <Text role="alert">{kids.error.message}</Text>}
+      {kids.isError && <LoadError error={kids.error} onRetry={() => kids.refetch()} />}
       <ManageLayout section={section} counts={{ chores: defs.length, kids: list.length }}>
-        {section === 'chores' && (
+        {kids.isPending && <LoadingCards />}
+        {section === 'chores' && !kids.isPending && (
           <ChoresSection key={first(query.kid)} kids={list} chores={defs} progress={progress} initialKid={first(query.kid)} />
         )}
-        {section === 'kids' && <KidsSection kids={list} />}
+        {section === 'kids' && !kids.isPending && <KidsSection kids={list} />}
         {section === 'rewards' && <RewardsSection />}
         {section === 'badges' && <CustomBadgesPanel />}
       </ManageLayout>

@@ -11,6 +11,9 @@ export interface ThreadSummary {
   title: string
   unread: number
   last_message_at: string | null
+  last_author?: string | null
+  /** one-line text of the newest message; "Photo" for a photo-only one */
+  last_text?: string | null
 }
 
 export interface ChatMessage {

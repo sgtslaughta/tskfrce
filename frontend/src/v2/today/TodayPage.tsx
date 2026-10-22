@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { ApiError, CANT_REACH } from "../api";
 import { FridgeShell } from "../components/FridgeShell";
+import { LoadError, LoadingCards } from "../components/States";
 import { Leaderboard } from "../components/Leaderboard";
 import { Sticker } from "../components/Sticker";
 import { StickerCard } from "../components/StickerCard";
@@ -19,7 +19,7 @@ const dayName = (iso?: string) =>
 
 /** Parent home: day, needs-you feed, new devices, one tab per kid. */
 export function TodayPage() {
-  const { data, isError, error } = useToday();
+  const { data, isError, error, refetch } = useToday();
   const board = useLeaderboard().data;
   const n = data?.pending_approvals ?? 0;
   const sticker = n > 0 && (
@@ -28,9 +28,8 @@ export function TodayPage() {
 
   return (
     <FridgeShell title={dayName(data?.day)} actions={sticker || undefined}>
-      {isError && (
-        <p role="alert">{error instanceof ApiError ? error.message : CANT_REACH}</p>
-      )}
+      {isError && !data && <LoadError error={error} onRetry={() => refetch()} />}
+      {!data && !isError && <LoadingCards n={3} h={140} />}
       {data && (
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <NeedsYou items={data.needs_you ?? []} />

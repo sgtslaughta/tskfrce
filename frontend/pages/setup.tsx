@@ -179,7 +179,7 @@ export default function SetupPage() {
             <p role="alert">Your account was created. <Link href="/login">Log in</Link> to continue.</p>
           )}
           {step === 3 && <StepKids kids={kids} name={kidDraft} onName={setKidDraft} onAdd={(k) => setKids([...kids, k])}
-              draftError={tried && kidDraft.trim() ? `Add ${kidDraft.trim()} first or clear the box.` : undefined} />}
+              draftError={tried && kidDraft.trim() ? `Add ${kidDraft.trim()} first or clear the field.` : undefined} />}
           {step === 4 && <StepDevices kids={kids} />}
           {step === 5 && <StepChores selected={chores} hasKids={kids.length > 0} onChange={setChores} />}
           {step === 6 && <StepWindows bedtime={bedtime} hasKids={kids.length > 0} onChange={setBedtime} />}

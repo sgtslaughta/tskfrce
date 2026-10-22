@@ -2,8 +2,7 @@ import { tokenManager } from '@/services/tokenManager'
 
 export const KID_TOKEN_KEY = 'task4ce-kid-token'
 
-/** Shown whenever the box can't be reached. */
-export const CANT_REACH = "Can't reach the home box. Check it's plugged in and on Wi-Fi."
+export { CANT_REACH, errorText } from './errorText'
 
 export class ApiError extends Error {
   constructor(

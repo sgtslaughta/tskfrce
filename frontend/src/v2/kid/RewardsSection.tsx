@@ -31,7 +31,7 @@ export function RewardsSection({ onExpired }: { onExpired: () => void }) {
               Costs <span className="f-num">{cost}</span> points
             </p>
             {pendingTime ? (
-              <p style={{ margin: 0 }}>Waiting for a parent</p>
+              <span className="f-pill" data-tone="wait">Waiting for a parent</span>
             ) : (
               <Button
                 disabled={cost > d.balance || redeem.isPending}
@@ -41,6 +41,11 @@ export function RewardsSection({ onExpired }: { onExpired: () => void }) {
               </Button>
             )}
           </div>
+        )}
+        {!d.screen_time_enabled && d.rewards.length === 0 && (
+          <p style={{ margin: 0, color: 'var(--f-sub)' }}>
+            Nothing to spend points on yet. Keep finishing chores, then ask a parent to add rewards you can save up for.
+          </p>
         )}
         {d.rewards.map((r) => {
           const pending = pendingReward(r.id)
@@ -55,7 +60,7 @@ export function RewardsSection({ onExpired }: { onExpired: () => void }) {
                 aria-valuenow={Math.round(Math.min(d.balance / r.price, 1) * 100)}
               />
               {pending ? (
-                <p style={{ margin: 0 }}>Waiting for a parent</p>
+                <span className="f-pill" data-tone="wait">Waiting for a parent</span>
               ) : (
                 <Button
                   disabled={d.balance < r.price || redeem.isPending}

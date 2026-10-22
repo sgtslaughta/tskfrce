@@ -96,7 +96,7 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
         </div>
       </StickerCard>
       <StickerCard>
-        {name && <h2 style={{ margin: '0 0 8px' }}>{name}</h2>}
+        <h2 style={{ margin: '0 0 8px' }}>{d.progress || !name ? 'Your chores' : name}</h2>
         <KidChecklist
           chores={d.chores}
           onDone={(id) => done.mutate(id)}

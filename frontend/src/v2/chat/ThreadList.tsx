@@ -2,7 +2,7 @@ import { IconMessage } from '@tabler/icons-react'
 import { refOf, type ThreadSummary } from '@/v2/hooks/useChat'
 
 const when = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'No messages yet'
+  iso ? new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Nothing yet'
 
 const LABEL = { family: 'Family', private: 'Private', chore: 'Chore' } as const
 
@@ -36,6 +36,11 @@ export function ThreadList({
               <span style={{ flex: 1, minWidth: 0 }}>
                 <b>{t.title}</b>
                 <span className="f-cap" style={{ display: 'block' }}>{`${LABEL[t.kind]} · ${when(t.last_message_at)}`}</span>
+                {t.last_text && (
+                  <span style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--f-sub)' }}>
+                    {`${t.last_author ? `${t.last_author}: ` : ''}${t.last_text}`}
+                  </span>
+                )}
               </span>
               {t.unread > 0 && (
                 <span className="f-pill" data-testid={`unread-${t.id}`} aria-label={`${t.unread} unread`}>

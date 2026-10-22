@@ -7,15 +7,12 @@
 /* section headings inside manage cards: no stray top margin */
 .m-main h2, .m-card h2 { margin: 0; font-size: 22px; line-height: 1.2; }
 
-/* disabled buttons stay readable: outlined, not a faded blob */
+/* disabled buttons keep their shape and read as "not yet": muted fill, readable label (pass 2) */
 .f-btn.f-btn:disabled,
 .f-btn.f-btn[data-disabled] {
   opacity: 1;
-  background: transparent;
+  background: var(--f-mute);
   color: var(--f-sub);
-  border: 1.5px dashed var(--f-edge);
-  clip-path: none;
-  border-radius: 4px;
   cursor: not-allowed;
 }
 
@@ -63,3 +60,40 @@
 
 /* top-bar menu button: 44px touch target */
 .mantine-Burger-root { min-width: 44px; min-height: 44px; }
+
+/* Pass 2: account menu in the top bar (avatar initial + name on wide screens) */
+.f-acct {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 6px;
+  background: none; border: 0; color: var(--f-ink); font: inherit; font-weight: 600; cursor: pointer;
+}
+.f-acct-dot {
+  display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%;
+  background: var(--f-sun); color: var(--f-on-color); font-weight: 800;
+}
+.f-acct-name { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 575px) {
+  .f-acct-name, .f-day { display: none; }
+}
+
+/* status pill tones (kid rows, rewards): wait = sun, done = green, mute = neutral */
+.f-pill[data-tone='wait'] { background: var(--f-sun); }
+.f-pill[data-tone='done'] { background: var(--f-green); }
+.f-pill[data-tone='mute'] { background: var(--f-mute); color: var(--f-ink); }
+.f-pill[data-tone] { padding: 4px 10px; }
+
+/* quiet icon button with an unread dot (chore chat on the kid screen) */
+.f-iconbtn {
+  position: relative; display: grid; place-items: center; width: 44px; height: 44px; flex: none;
+  background: none; border: 1.5px solid var(--f-edge); border-radius: 4px; color: var(--f-ink); cursor: pointer;
+}
+.f-iconbtn:hover { background: var(--f-mute); }
+.f-iconbtn-dot {
+  position: absolute; top: 6px; right: 6px; width: 10px; height: 10px; border-radius: 50%;
+  background: var(--f-red); border: 2px solid var(--f-card);
+}
+
+/* the floating chat button must never cover the last item: reserve its height under every page */
+.f-main { padding-bottom: 88px; }
+@media (max-width: 767px) {
+  .f-main { padding-bottom: 96px; }
+}

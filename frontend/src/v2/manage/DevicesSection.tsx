@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Chip, Drawer } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import type { Device, Kid } from '@/v2/types'
+import { shortName } from '@/v2/components/DevicePill'
 import { DeviceRow } from './DeviceRow'
 
 const FILTERS: { status: Device['status']; label: string; empty: string }[] = [
@@ -37,7 +38,7 @@ export function DevicesSection({ devices, kids, focus }: { devices: Device[]; ki
 
   return (
     <>
-      <h2 className="f-display">Devices</h2>
+      <h2 className="f-display">Your devices</h2>
       <div className="f-card m-info">
         The home box pauses internet for normal use on your Wi‑Fi. It can&apos;t stop a determined kid who changes
         network settings, uses a phone hotspot, or swaps devices — but it will tell you when a paused device is getting
@@ -58,7 +59,7 @@ export function DevicesSection({ devices, kids, focus }: { devices: Device[]; ki
           {rows.map((d) => (
             <button key={d.id} type="button" className="m-row" onClick={() => setOpenId(d.id)}>
               <span>
-                {icon(d.name)} <b style={{ display: 'inline' }}>{d.name}</b>
+                {icon(d.name)} <b style={{ display: 'inline' }} title={d.name}>{shortName(d.name)}</b>
                 <span className="m-meta">
                   <span className="m-dot" data-on={d.online || undefined} role="img" aria-label={d.online ? 'online' : 'offline'} />
                   {d.vendor ?? 'Unknown maker'}

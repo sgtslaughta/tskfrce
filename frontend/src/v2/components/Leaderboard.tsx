@@ -4,11 +4,11 @@ import { useEmblems } from '../hooks/useEmblems'
 import type { LeaderboardRow } from '../types'
 
 /** This week's family ranking; ties share a rank and are marked. */
-export function Leaderboard({ rows, kid = false }: { rows: LeaderboardRow[]; kid?: boolean }) {
+export function Leaderboard({ rows, kid = false, bare = false }: { rows: LeaderboardRow[]; kid?: boolean; bare?: boolean }) {
   const emblems = useEmblems(kid)
   if (!rows.length) return null
   return (
-    <div className="f-card">
+    <div className={bare ? undefined : 'f-card'}>
       <div className="f-cap">This week</div>
       <ol style={{ listStyle: 'none', margin: '8px 0 0', padding: 0 }}>
         {rows.map((r, i) => {

@@ -29,7 +29,7 @@ test.describe('parent journeys', () => {
     await expect(needs.getByText('E2E dishes')).toHaveCount(0)
   })
 
-  test('create a race chore with subtasks, copy it, edit it', async ({ page }) => {
+  test('create a race chore with steps, copy it, edit it', async ({ page }) => {
     const api = await parentApi()
     const a = await makeKid(api, 'Race A')
     const b = await makeKid(api, 'Race B')
@@ -39,8 +39,8 @@ test.describe('parent journeys', () => {
       const drawer = page.getByRole('dialog')
       await drawer.getByLabel('Chore', { exact: true }).fill('E2E race')
       for (const s of ['First step', 'Second step']) {
-        await drawer.getByLabel('Add a subtask').fill(s)
-        await drawer.getByRole('button', { name: 'Add subtask' }).click()
+        await drawer.getByLabel('Add a step').fill(s)
+        await drawer.getByRole('button', { name: 'Add step' }).click()
       }
       await drawer.getByRole('button', { name: 'Save', exact: true }).click()
 
@@ -52,9 +52,9 @@ test.describe('parent journeys', () => {
       await drawer.getByRole('button', { name: 'Save', exact: true }).click()
       await expect(drawer.getByText(/Race A, Race B · Every day · race/)).toBeVisible()
       await drawer.getByRole('button', { name: 'Cancel' }).click()
-      const row = page.getByRole('button', { name: /^E2E race 2 subtasks/ })
+      const row = page.getByRole('button', { name: /^E2E race 2 steps/ })
       await expect(row).toBeVisible()
-      await expect(row).toContainText('2 subtasks')
+      await expect(row).toContainText('2 steps')
 
       await row.click()
       await page.getByRole('button', { name: 'Copy' }).click()

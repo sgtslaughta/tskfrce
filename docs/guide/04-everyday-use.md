@@ -1,6 +1,6 @@
 # 4. Everyday use
 
-The top bar has four places: **Today**, **Devices**, **Kids & chores** and **Settings**. There is also a bell for notifications, and a chat button.
+The top bar has four places: **Today**, **Devices**, **Kids & chores** and **Settings**. There is also a bell for notifications and a chat button. Tap your name at the right end of the bar to open **Help**, **Settings** and **Log out**.
 
 ## Today
 
@@ -17,7 +17,7 @@ This is the page you will use most.
 
 Use the filter chips to show only one kind. Tap **Approve all** to approve every chore in view.
 
-Below that is one tab for each kid. A red dot means that kid has something waiting for you. Each tab shows their level, points, streak, what they still have to do, what is done, their devices and recent activity.
+Below that is one tab for each kid. A red dot means that kid has something waiting for you. Each tab shows their level, points, streak, what they still have to do, what is done, their devices and recent activity. **Chat with** shows the latest message from that kid, or **Say hi** if nobody has written yet.
 
 ### Approve a chore or send it back
 

@@ -12,24 +12,25 @@ export function FamilySection({ meId }: { meId?: number | null }) {
   const sibs = (profiles ?? []).filter((p) => p.kid_id !== meId)
   if (!board && !sibs.length) return null
   return (
-    <section aria-label="Family" style={{ display: 'grid', gap: 12 }}>
-      <h2 style={{ margin: 0 }}>Family</h2>
-      {board && <Leaderboard rows={board.rows} kid />}
-      {sibs.map((p) => (
-        <StickerCard key={p.kid_id}>
+    <StickerCard>
+      <section aria-label="Family" style={{ display: 'grid', gap: 12 }}>
+        <h2 style={{ margin: 0 }}>Family</h2>
+        {board && <Leaderboard rows={board.rows} kid bare />}
+        {sibs.map((p) => (
           <button
+            key={p.kid_id}
             type="button"
             onClick={() => setOpen(p.kid_id)}
             aria-label={`See ${p.name}'s profile`}
-            style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center', width: '100%', minHeight: 48 }}
+            style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center', width: '100%', minHeight: 48, borderTop: '1px solid var(--f-line)' }}
           >
             <span aria-hidden>{p.avatar}</span>
             <b style={{ flex: 1 }}>{p.name}</b>
             <span className="f-pill">{`Lv ${p.level} · ${p.title}`}</span>
           </button>
-        </StickerCard>
-      ))}
-      <ProfileModal kidId={open} kid onClose={() => setOpen(null)} />
-    </section>
+        ))}
+        <ProfileModal kidId={open} kid onClose={() => setOpen(null)} />
+      </section>
+    </StickerCard>
   )
 }

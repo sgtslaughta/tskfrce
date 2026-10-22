@@ -1,6 +1,6 @@
 import { Button } from "@mantine/core";
 import { openChat } from "@/v2/chat/dock";
-import { useThread } from "../hooks/useChat";
+import { useThreads } from "../hooks/useChat";
 import { DevicePill, deviceKind } from "../components/DevicePill";
 import { BadgeGrid } from "../components/BadgeGrid";
 import { LockBadge } from "../components/LockBadge";
@@ -54,27 +54,40 @@ function ChoreRow({ c }: { c: TodayChore }) {
   );
 }
 
-function ChatBox({ kidId, name }: { kidId: number; name: string }) {
-  const last = (
-    useThread("private", String(kidId), false, 15_000).data?.messages ?? []
-  ).slice(-2);
+function sent(iso: string) {
+  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  return m < 1 ? "just now" : m < 60 ? `${m}m ago` : m < 1440 ? `${Math.round(m / 60)}h ago` : `${Math.round(m / 1440)}d ago`;
+}
+
+/** Latest message across the kid's private thread and their chore threads, or a nudge to say hi. */
+function ChatBox({ kid, name }: { kid: TodayKid; name: string }) {
+  const runs = new Set(kid.chores.map((c) => c.id));
+  const mine = (useThreads().data?.threads ?? []).filter(
+    (t) => (t.kind === "private" && t.kid_id === kid.id) || (t.kind === "chore" && t.task_id != null && runs.has(t.task_id)),
+  );
+  const unread = mine.reduce((n, t) => n + t.unread, 0);
+  const last = mine
+    .filter((t) => t.last_message_at && t.last_text)
+    .sort((a, b) => (b.last_message_at! > a.last_message_at! ? 1 : -1))[0];
   return (
-    <div
-      style={{ marginTop: 16 }}
-      aria-label={`Chat with ${name}`}
-      role="group"
-    >
-      <div className="f-cap">{`Chat with ${name}`}</div>
-      {last.length === 0 && <p className="f-note">No messages yet.</p>}
-      {last.map((m) => (
-        <p key={m.id} style={{ margin: "4px 0" }}>
-          <b>{m.kind === "system" ? "" : `${m.author_name ?? "Someone"}: `}</b>
-          {m.body ?? "Photo"}
+    <div style={{ marginTop: 16, display: "grid", gap: 6 }} aria-label={`Chat with ${name}`} role="group">
+      <div className="f-cap">{`Chat with ${name}${unread ? ` · ${unread} new` : ""}`}</div>
+      {last ? (
+        <p style={{ margin: 0 }}>
+          <b>{last.last_author ? `${last.last_author}: ` : ""}</b>
+          {last.last_text}
+          <span className="f-note" style={{ display: "block" }}>
+            {`${sent(last.last_message_at!)}${last.kind === "chore" ? ` · in ${last.title}` : ""}`}
+          </span>
         </p>
-      ))}
-      <Button variant="default" size="xs" onClick={() => openChat("private", String(kidId))}>
-        Open chat
-      </Button>
+      ) : (
+        <p className="f-note" style={{ margin: 0 }}>{`Nothing yet. Say hi to ${name}.`}</p>
+      )}
+      <div>
+        <Button variant="default" size="xs" onClick={() => openChat(last && last.kind === "chore" ? "chore" : "private", last && last.kind === "chore" ? String(last.task_id) : String(kid.id))}>
+          {last ? "Open chat" : `Say hi to ${name}`}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -171,7 +184,7 @@ export function KidCard({ kid }: { kid: TodayKid }) {
               </DeviceQuickMenu>
             ))}
           </div>
-          <ChatBox kidId={kid.id} name={name} />
+          <ChatBox kid={kid} name={name} />
           {recent.length > 0 && (
             <>
               <div className="f-cap" style={{ marginTop: 16 }}>

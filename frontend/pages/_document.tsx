@@ -21,7 +21,7 @@ export default function Document() {
         {/* Meta tags */}
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="description" content="A comprehensive task management system designed to help parents encourage children to complete household tasks through gamification and rewards." />
+        <meta name="description" content="Chores, rewards and internet time for families. t@sk4ce pauses the internet until the chores are done." />
         
         {/* Favicon - Managed dynamically by FaviconManager component */}
         <link rel="icon" href="/favicon_dark.ico" />

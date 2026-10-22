@@ -33,14 +33,16 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="You got a reward"
+        aria-labelledby="award-heading"
+        aria-describedby="award-title"
         className={big ? 'award-card' : 'award-card award-toast'}
       >
         {big && Array.from({ length: 20 }, (_, i) => <span key={i} className="award-confetti" style={{ '--i': i } as React.CSSProperties} />)}
-        <p className="f-display" style={{ margin: 0, fontSize: big ? 28 : 20 }}>
+        <p id="award-heading" className="f-display" style={{ margin: 0, fontSize: big ? 28 : 20 }}>
           {heading}
         </p>
         <strong
+          id="award-title"
           className={ring ? 'award-ring' : undefined}
           style={{ fontSize: big ? 32 : 20, ...(ring && { '--ring': ring }) } as React.CSSProperties}
         >

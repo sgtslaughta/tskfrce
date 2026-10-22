@@ -3,6 +3,7 @@ import { Button } from '@mantine/core'
 import { IconArrowLeft, IconMessage, IconX } from '@tabler/icons-react'
 import { refOf, useThreads, validRef, type ThreadKind } from '@/v2/hooks/useChat'
 import { OPEN_CHAT_EVENT } from './dock'
+import { LoadError, LoadingCards } from '@/v2/components/States'
 import { ThreadList } from './ThreadList'
 import { ThreadView } from './ThreadView'
 
@@ -117,7 +118,8 @@ export function ChatDock({ kid = false, meId }: { kid?: boolean; meId: number | 
               <ThreadView key={`${pick.kind}:${pick.ref}`} kind={pick.kind} refId={pick.ref} meId={meId} kid={kid} />
             ) : (
               <>
-                {threads.isError && <p role="alert">{threads.error.message}</p>}
+                {threads.isError && <LoadError error={threads.error} onRetry={() => threads.refetch()} />}
+                {threads.isPending && <LoadingCards n={3} h={56} />}
                 <ThreadList
                   threads={threads.data?.threads ?? []}
                   selected={null}

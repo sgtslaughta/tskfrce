@@ -28,7 +28,8 @@ test.describe('every screen', () => {
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(500) // let web fonts and query data settle
     const wide = await page.evaluate(
-      () => document.documentElement.scrollWidth > window.innerWidth,
+      (w) => document.documentElement.scrollWidth > w,
+      page.viewportSize()!.width, // not innerWidth: a too-wide page makes phones widen the viewport and hide the overflow
     )
     await page.screenshot({
       path: `e2e-artifacts/screens/${project}/${slug(route)}.png`,
@@ -60,6 +61,15 @@ test.describe('every screen', () => {
     await expect(page.getByText('Notifications', { exact: true }).last()).toBeVisible()
     await page.waitForTimeout(500)
     await page.screenshot({ path: `e2e-artifacts/screens/${info.project.name}/bell-open.png` })
+  })
+
+  test('account menu open', async ({ page }, info) => {
+    await loginUi(page)
+    await page.goto('/')
+    await page.getByRole('button', { name: /^Account menu/ }).click()
+    await expect(page.getByRole('menuitem', { name: 'Log out' })).toBeVisible()
+    await page.waitForTimeout(400)
+    await page.screenshot({ path: `e2e-artifacts/screens/${info.project.name}/account-menu.png` })
   })
 
   test('chat dock open', async ({ page }, info) => {

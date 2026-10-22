@@ -6,7 +6,7 @@ Show this page to your kid. It's short.
 
 1. You have chores. Open t@sk4ce and see them.
 2. Do the chore. Tick each step if it has steps.
-3. Add a photo if it asks for one.
+3. Add a photo if it asks for one. **Mark done** stays grey and tells you what is missing (like "Add a photo first") until you are ready.
 4. Tap **Mark done**.
 5. A parent checks it. When they approve, you get points. When all your chores are approved, your internet comes on.
 
@@ -32,17 +32,17 @@ Points are for spending. Levels only go up and show how much you've done in all.
 
 ## The Locker
 
-Tap **Locker** to dress up your name: cards, rings, name colors, emblems and titles. Higher levels unlock more. Items you haven't unlocked show the level you need.
+Tap **Customize** to open the Locker and dress up your name: cards, rings, name colors, emblems and titles. Higher levels unlock more. Items you haven't unlocked show the level you need.
 
 ![The Locker](img/kid-locker.png)
 
 ## Spending points
 
-Open **Rewards**. Ask for screen time (you pick the minutes), or save up for a reward and ask when the bar is full. A parent has to say yes. If they say no, you keep your points.
+Look for **Rewards**. Ask for screen time (you pick the minutes), or save up for a reward and ask when the bar is full. A parent has to say yes. If they say no, you keep your points.
 
 ## Chat
 
-Use the chat to talk about a chore, send a photo, message your parents, or talk to the whole family. Be kind. Parents can read the chats you are in.
+Tap the small speech bubble next to a chore to talk about it. A dot on it means there is a new message. You can also use the chat button to message your parents, or talk to the whole family. Be kind. Parents can read the chats you are in.
 
 ## Good to know
 

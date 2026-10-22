@@ -12,6 +12,7 @@ import {
   type ChatMessage,
   type ThreadKind,
 } from '@/v2/hooks/useChat'
+import { LoadError, LoadingCards } from '@/v2/components/States'
 import { toastFail } from '@/v2/notify'
 import { useAuthImage } from '@/v2/today/PhotoViewer'
 
@@ -162,7 +163,8 @@ export function ThreadView({
   let day = ''
   return (
     <section aria-label={data?.title ?? 'Conversation'} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
-      {thread.isError && <p role="alert">{thread.error.message}</p>}
+      {thread.isError && <LoadError error={thread.error} onRetry={() => thread.refetch()} />}
+      {thread.isPending && !thread.isError && <LoadingCards n={3} h={48} />}
       <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 2px', minHeight: 240 }}>
         {(hasMore ?? data?.has_more) && (
           <Button variant="default" size="xs" onClick={loadEarlier} style={{ alignSelf: 'center' }}>

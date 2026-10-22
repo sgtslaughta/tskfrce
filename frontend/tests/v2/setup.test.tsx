@@ -181,6 +181,6 @@ describe('setup wizard', () => {
     await finishAccount(user)
     await user.type(screen.getByLabelText('Name'), 'Ben')
     await user.click(screen.getByRole('button', { name: 'Next' }))
-    expect(await screen.findByText('Add Ben first or clear the box.')).toBeInTheDocument()
+    expect(await screen.findByText('Add Ben first or clear the field.')).toBeInTheDocument()
   })
 })

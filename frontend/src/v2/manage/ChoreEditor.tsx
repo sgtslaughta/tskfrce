@@ -120,17 +120,17 @@ function ChoreForm({ kids, chore, onOpen, onClose }: FormProps) {
         ))}
         <div className="f-row">
           <TextInput
-            aria-label="Add a subtask"
-            placeholder="+ Add a subtask"
+            aria-label="Add a step"
+            placeholder="Add a step"
             value={next}
             onChange={(e) => setNext(e.currentTarget.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addStep())}
           />
           <Button variant="default" onClick={addStep} disabled={!next.trim()}>
-            Add subtask
+            Add step
           </Button>
         </div>
-        <div className="m-meta">Every subtask must be ticked before the chore goes to you for approval.</div>
+        <div className="m-meta">Every step must be ticked before the chore goes to you for approval.</div>
       </div>
       <Checkbox label="Needs a photo" checked={photo} onChange={(e) => setPhoto(e.currentTarget.checked)} />
       <div className="f-row">

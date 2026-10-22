@@ -69,7 +69,17 @@ export function NeedsYou({ items }: { items: NeedsItem[] }) {
     isChore(i) ? approve.mutateAsync(i.id) : decide.mutateAsync({ id: i.id, approve: true });
   const run = (p: Promise<unknown>, ok: string) => p.then(() => toastOk(ok), toastFail);
   const approveAll = async () => {
-    for (const i of shown) await run(approveOne(i), "Approved");
+    let n = 0;
+    for (const i of shown) {
+      try {
+        await approveOne(i);
+        n++;
+      } catch (e) {
+        toastFail(e);
+        break;
+      }
+    }
+    if (n) toastOk(n === 1 ? "Approved" : `Approved ${n} items`);
   };
   const submitSendBack = (id: number, n: string) => {
     setSending(null);

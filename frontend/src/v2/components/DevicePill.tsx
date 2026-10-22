@@ -30,6 +30,15 @@ type Props = {
   ref?: Ref<HTMLButtonElement>;
 } & Omit<ButtonHTMLAttributes<HTMLButtonElement>, "name">;
 
+/** "task4ce-lab-kid1-1.home.lan" -> "Kid1"; "pixel-7.lan" -> "Pixel 7"; max 14 characters. */
+export function shortName(name: string): string {
+  if (/^[\d.]+$/.test(name)) return name;
+  let n = name.split(".")[0].replace(/^(task4ce|tskfrce|t4sk)[-_]/i, "").replace(/^lab[-_]/i, "");
+  n = n.replace(/[-_]\d+$/, (m) => (/^[-_]1$/.test(m) ? "" : m)).replace(/[-_]+/g, " ").trim() || name;
+  n = n.charAt(0).toUpperCase() + n.slice(1).toLowerCase();
+  return n.length > 14 ? `${n.slice(0, 13)}…` : n;
+}
+
 /** Device pill: icon + name, green online / red offline. Becomes a button when onClick is set; ref and extra props go to that button (so it can be a Menu target). */
 export function DevicePill({
   name,
@@ -43,14 +52,15 @@ export function DevicePill({
   const body = (
     <>
       <span aria-hidden="true">{DEVICE_ICON[kind]}</span>
-      {/* "pixel-7.lan" reads better as "pixel-7"; the full name stays in the aria label */}
-      {/^[\d.]+$/.test(name) ? name : name.split(".")[0]}
+      {/* friendly short name; the full name stays in title and aria-label */}
+      {shortName(name)}
     </>
   );
   return onClick ? (
     <button
       type="button"
       aria-label={label}
+      title={name}
       {...rest}
       ref={ref}
       className="f-pill"
@@ -60,7 +70,7 @@ export function DevicePill({
       {body}
     </button>
   ) : (
-    <span className="f-pill" data-online={online} role="img" aria-label={label}>
+    <span className="f-pill" data-online={online} role="img" aria-label={label} title={name}>
       {body}
     </span>
   );

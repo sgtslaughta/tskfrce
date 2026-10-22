@@ -1,4 +1,5 @@
 import { notifications } from '@mantine/notifications'
+import { errorText } from './errorText'
 
 /** Success toast reuses the action word ("Delete" -> "Deleted"). */
 export const toastOk = (message: string) => notifications.show({ message, color: 'fridgeGreen' })
@@ -7,7 +8,7 @@ export const toastOk = (message: string) => notifications.show({ message, color:
 export const toastFail = (e: unknown) =>
   notifications.show({
     title: "That didn't work",
-    message: e instanceof Error ? e.message : 'Check your connection and try again.',
+    message: errorText(e),
     color: 'fridgeRed',
   })
 

@@ -130,7 +130,7 @@ describe('sections', () => {
 describe('chore library', () => {
   test('rows show steps count and Used by avatars; archived are not requested', async () => {
     await open()
-    expect(screen.getByText('2 subtasks')).toBeInTheDocument()
+    expect(screen.getByText('2 steps')).toBeInTheDocument()
     expect(screen.getAllByRole('img', { name: 'Leo' })).toHaveLength(1)
     expect(apiMock).toHaveBeenCalledWith('/chores/')
   })
@@ -155,7 +155,7 @@ describe('chore library', () => {
     const d = await dialog()
     await userEvent.type(within(d).getByLabelText('Chore'), 'Laundry')
     for (const s of ['Fold clothes', 'Make bed']) {
-      await userEvent.type(within(d).getByLabelText('Add a subtask'), `${s}{Enter}`)
+      await userEvent.type(within(d).getByLabelText('Add a step'), `${s}{Enter}`)
     }
     await userEvent.click(within(d).getByRole('button', { name: 'Save' }))
     await waitFor(() =>

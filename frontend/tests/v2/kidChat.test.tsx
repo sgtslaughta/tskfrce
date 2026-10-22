@@ -63,7 +63,7 @@ describe('kid chat', () => {
 
   test('chore chat link opens its thread with the kid token', async () => {
     renderKid()
-    await userEvent.click(await screen.findByRole('button', { name: 'Chat about Dishes' }))
+    await userEvent.click(await screen.findByRole('button', { name: /^Chat about Dishes/ }))
     await waitFor(() =>
       expect(apiMock).toHaveBeenCalledWith('/chat/threads/chore/7', expect.objectContaining({ kid: true })),
     )
@@ -72,7 +72,6 @@ describe('kid chat', () => {
 
   test('chore link shows its unread count', async () => {
     renderKid()
-    const btn = await screen.findByRole('button', { name: 'Chat about Dishes' })
-    await waitFor(() => expect(btn).toHaveTextContent('4'))
+    expect(await screen.findByRole('button', { name: 'Chat about Dishes, 4 unread' })).toBeInTheDocument()
   })
 })
