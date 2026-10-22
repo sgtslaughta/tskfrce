@@ -71,6 +71,15 @@ export function FridgeShell({
         <Box hiddenFrom="md" style={{ flex: 1 }} />
         <Bell />
         <ColorSchemeToggle />
+        <Button
+          component="a"
+          href="https://sgtslaughta.github.io/tskfrce/?from=app"
+          variant="subtle"
+          visibleFrom="xs"
+          title="Help and documentation"
+        >
+          ?
+        </Button>
         <Button variant="default" onClick={logOut} visibleFrom="xs">
           Log out
         </Button>
