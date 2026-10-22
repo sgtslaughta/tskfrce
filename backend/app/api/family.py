@@ -4,18 +4,17 @@ from datetime import UTC, datetime
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db, require_parent
 from app.api.devices import device_out
 from app.api.rewards import redemption_name
 from app.lock.loop import trigger
+from app.lock.state import Prefetch
 from app.models.chore_extra import ChorePhoto
-from app.models.chores import ChoreAssignment, ChoreRun
+from app.models.chores import ChoreRun
 from app.models.family import get_family
 from app.models.lock import Device
-from app.models.points import Points
 from app.models.reward import Redemption
 from app.models.user import User, UserRole
 from app.schemas.lock import FamilyPatch
@@ -70,7 +69,9 @@ def _iso(dt: datetime | None) -> str | None:
     return dt.isoformat() + "Z" if dt else None
 
 
-def _needs_you(db: Session, runs: list[ChoreRun], names: dict[int, str]) -> list[dict]:
+def _needs_you(
+    db: Session, runs: list[ChoreRun], names: dict[int, str], balances: dict[int, int] | None = None
+) -> list[dict]:
     """Submitted chores and pending requests, oldest first."""
     sub = [r for r in runs if r.status == "submitted"]
     photos = {}
@@ -103,12 +104,10 @@ def _needs_you(db: Session, runs: list[ChoreRun], names: dict[int, str]) -> list
             }
         )
     reds = db.query(Redemption).filter(Redemption.status == "pending").all()
-    balances = dict(
-        db.query(Points.user_id, func.sum(Points.amount))
-        .filter(Points.user_id.in_({r.kid_id for r in reds}))
-        .group_by(Points.user_id)
-        .all()
-    )
+    if balances is None:
+        balances = {
+            i: b for i, (_, b) in progression.totals_many(db, [r.kid_id for r in reds]).items()
+        }
     items += [
         {
             "type": r.kind,
@@ -117,7 +116,7 @@ def _needs_you(db: Session, runs: list[ChoreRun], names: dict[int, str]) -> list
             "kid_name": names.get(r.kid_id),
             "title": redemption_name(db, r),
             "cost": r.cost,
-            "kid_balance": int(balances.get(r.kid_id) or 0),
+            "kid_balance": balances.get(r.kid_id, 0),
             "submitted_at": _iso(r.created_at),
         }
         for r in reds
@@ -148,24 +147,28 @@ def _chore_out(r: ChoreRun, names: dict[int, str]) -> dict:
 def today(db: Session = Depends(get_db)):
     fam, now = get_family(db), datetime.now(UTC)
     day = svc.today(db, now)
-    tasks = (
-        svc.day_runs(db, day)
-        .options(
-            selectinload(ChoreRun.ticks),
-            selectinload(ChoreRun.kids),
-            selectinload(ChoreRun.assignment).selectinload(ChoreAssignment.chore),
-        )
-        .order_by(ChoreRun.id)
+    tasks = svc.with_detail(svc.day_runs(db, day), photos=False).order_by(ChoreRun.id).all()
+    kid_rows = db.query(User).filter(User.role == UserRole.KID).order_by(User.id).all()
+    devices = (
+        db.query(Device)
+        .options(selectinload(Device.owners), selectinload(Device.groups))
+        .order_by(Device.id)
         .all()
     )
-    kid_rows = db.query(User).filter(User.role == UserRole.KID).order_by(User.id).all()
+    mine_by = {k.id: [t for t in tasks if k.id in svc.run_kid_ids(t)] for k in kid_rows}
+    counts = {i: (sum(svc.state(t) == "done" for t in m), len(m)) for i, m in mine_by.items()}
+    kid_devs = {k.id: [d for d in devices if k in d.owners] for k in kid_rows}
+    new = [d for d in devices if d.status == "unassigned"]
+    pre = Prefetch(db, devices, counts)
+    balances: dict = {}
+    prog = progression.progress_many(db, kid_rows, fam, balances)
     names = {k.id: k.full_name for k in kid_rows}
-    needs = _needs_you(db, tasks, names)
+    needs = _needs_you(db, tasks, names, balances)
     kids = []
     for k in kid_rows:
-        devs = [device_out(db, d, fam, now) for d in k.devices]
-        mine = [t for t in tasks if k.id in svc.run_kid_ids(t)]
-        seen = [d.last_seen for d in k.devices if d.last_seen]
+        devs = [device_out(db, d, fam, now, pre) for d in kid_devs[k.id]]
+        mine = mine_by[k.id]
+        seen = [d.last_seen for d in kid_devs[k.id] if d.last_seen]
         kids.append(
             {
                 "id": k.id,
@@ -176,7 +179,7 @@ def today(db: Session = Depends(get_db)):
                 "total": len(mine),
                 "needs_you_count": sum(n["kid_id"] == k.id for n in needs),
                 "last_active": _iso(max(seen)) if seen else None,
-                "progress": progression.progress(db, k, fam),
+                "progress": prog[k.id],
                 "chores": [_chore_out(t, names) for t in mine],
                 "devices": [
                     {"id": d["id"], "name": d["name"], "vendor": d["vendor"], "online": d["online"]}
@@ -184,12 +187,12 @@ def today(db: Session = Depends(get_db)):
                 ],
             }
         )
-    new = db.query(Device).filter(Device.status == "unassigned").order_by(Device.id).all()
-    db.commit()
-    return {
+    out = {
         "day": day.isoformat(),
         "pending_approvals": sum(t.status == "submitted" for t in tasks),
-        "new_devices": [device_out(db, d, fam, now) for d in new],
+        "new_devices": [device_out(db, d, fam, now, pre) for d in new],
         "needs_you": needs,
         "kids": kids,
     }
+    db.commit()  # after the payload is built: commit expires every loaded row
+    return out

@@ -84,6 +84,7 @@ export function useKidToday(onExpired: () => void) {
     queryKey: ['kid', 'today'],
     queryFn: () => api<KidToday>('/kid/today', { kid: true }),
     refetchInterval: 10_000,
+    refetchIntervalInBackground: false,
   })
   const expired = q.error instanceof AuthError
   useEffect(() => {

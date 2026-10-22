@@ -4,7 +4,7 @@
  */
 
 import { createTheme, MantineColorsTuple, MantineThemeOverride } from '@mantine/core';
-import type { BrandColors } from '../types/user';
+import type { BrandColors } from '../utils/cookies';
 
 export type { BrandColors };
 

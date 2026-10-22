@@ -178,10 +178,14 @@ def check_for_run(db: Session, run: ChoreRun, fam: FamilySettings) -> None:
             check_badges(db, kid, fam)
 
 
-def badge_info(db: Session, a: BadgeAward) -> dict:
+def badge_info(db: Session, a: BadgeAward, customs: dict[int, CustomBadge] | None = None) -> dict:
     tier = a.tier
     if a.custom_badge_id is not None:
-        c = db.get(CustomBadge, a.custom_badge_id)
+        c = (
+            customs.get(a.custom_badge_id)
+            if customs is not None
+            else db.get(CustomBadge, a.custom_badge_id)
+        )
         name, icon, desc = (c.name, c.icon, c.description) if c else ("Badge", "🏅", "")
         key = f"custom:{a.custom_badge_id}"
     else:
@@ -202,6 +206,19 @@ def badge_info(db: Session, a: BadgeAward) -> dict:
 def badges_for(db: Session, kid_id: int) -> list[dict]:
     rows = db.query(BadgeAward).filter(BadgeAward.kid_id == kid_id).order_by(BadgeAward.id)
     return [badge_info(db, a) for a in rows]
+
+
+def badges_for_many(db: Session, kid_ids: list[int]) -> dict[int, list[dict]]:
+    """`badges_for` for many kids in two queries."""
+    rows = db.query(BadgeAward).filter(BadgeAward.kid_id.in_(kid_ids)).order_by(BadgeAward.id).all()
+    ids = {a.custom_badge_id for a in rows if a.custom_badge_id is not None}
+    customs = (
+        {c.id: c for c in db.query(CustomBadge).filter(CustomBadge.id.in_(ids))} if ids else {}
+    )
+    out: dict[int, list[dict]] = {i: [] for i in kid_ids}
+    for a in rows:
+        out[a.kid_id].append(badge_info(db, a, customs))
+    return out
 
 
 def give_custom(db: Session, kid: User, badge: CustomBadge) -> BadgeAward:

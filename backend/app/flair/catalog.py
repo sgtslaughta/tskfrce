@@ -58,3 +58,16 @@ def equipped(db: Session, kid_id: int) -> dict[str, str | None]:
     return {
         s: saved[s] if (it := BY_ID.get(saved.get(s))) and it.slot == s else None for s in SLOTS
     }
+
+
+def equipped_many(db: Session, kid_ids: list[int]) -> dict[int, dict[str, str | None]]:
+    """`equipped` for many kids in one query."""
+    saved: dict[int, dict[str, str]] = {i: {} for i in kid_ids}
+    for kid_id, slot, item in db.query(KidFlair.kid_id, KidFlair.slot, KidFlair.item_id).filter(
+        KidFlair.kid_id.in_(kid_ids)
+    ):
+        saved[kid_id][slot] = item
+    return {
+        i: {s: m[s] if (it := BY_ID.get(m.get(s))) and it.slot == s else None for s in SLOTS}
+        for i, m in saved.items()
+    }

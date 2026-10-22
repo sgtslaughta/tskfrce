@@ -3,10 +3,10 @@
 from datetime import datetime
 
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.models.chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
-from app.models.chores import ChoreRun
+from app.models.chores import ChoreAssignment, ChoreRun
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
 from app.services.chores import kid_runs_filter
@@ -127,13 +127,26 @@ def mark_read(db: Session, thread: Thread, user: User) -> None:
         r.last_read_at = now
 
 
-def _title(db: Session, t: Thread, names: dict[int, str]) -> str:
+def _title(
+    db: Session, t: Thread, names: dict[int, str], chores: dict[int, str] | None = None
+) -> str:
     if t.kind == "family":
         return "Family"
     if t.kind == "private":
         return names.get(t.kid_id, "Kid")
+    if chores is not None:
+        return chores.get(t.run_id, "Chore")
     run = db.get(ChoreRun, t.run_id)
     return run.assignment.chore.title if run else "Chore"
+
+
+def _ensure_private(db: Session, kid_ids: list[int]) -> None:
+    """Create any missing private threads (one lookup for all kids). Flushes, never commits."""
+    have = {r[0] for r in db.query(Thread.kid_id).filter(Thread.kind == "private")}
+    for i in kid_ids:
+        if i not in have:
+            db.add(Thread(kind="private", kid_id=i))
+    db.flush()
 
 
 def title(db: Session, t: Thread) -> str:
@@ -162,8 +175,7 @@ def unread(db: Session, user: User) -> dict:
     parent = user.role == UserRole.PARENT
     thread_for(db, "family")
     kids = db.query(User).filter(User.role == UserRole.KID).all() if parent else [user]
-    for k in kids:
-        thread_for(db, "private", kid_id=k.id)
+    _ensure_private(db, [k.id for k in kids])
     names = {k.id: k.full_name or k.username for k in kids}
     has_msgs = db.query(ThreadMessage.thread_id).filter(ThreadMessage.thread_id == Thread.id)
     q = db.query(Thread).filter(or_(Thread.kind != "chore", has_msgs.exists()))
@@ -196,7 +208,21 @@ def unread(db: Session, user: User) -> dict:
     newest = (
         db.query(func.max(ThreadMessage.id)).group_by(ThreadMessage.thread_id).scalar_subquery()
     )
-    latest = {m.thread_id: m for m in db.query(ThreadMessage).filter(ThreadMessage.id.in_(newest))}
+    latest = {
+        m.thread_id: m
+        for m in db.query(ThreadMessage)
+        .filter(ThreadMessage.id.in_(newest))
+        .options(joinedload(ThreadMessage.author))
+    }
+    run_ids = [t.run_id for t in threads if t.kind == "chore"]
+    chores = {}
+    if run_ids:
+        runs = (
+            db.query(ChoreRun)
+            .filter(ChoreRun.id.in_(run_ids))
+            .options(joinedload(ChoreRun.assignment).joinedload(ChoreAssignment.chore))
+        )
+        chores = {r.id: r.assignment.chore.title for r in runs}
     out = [
         {
             **_preview(latest.get(t.id)),
@@ -204,7 +230,7 @@ def unread(db: Session, user: User) -> dict:
             "kind": t.kind,
             "task_id": t.run_id,  # key kept for the frontend; it is the run id
             "kid_id": t.kid_id,
-            "title": _title(db, t, names),
+            "title": _title(db, t, names, chores),
             "unread": counts.get(t.id, 0),
         }
         for t in threads

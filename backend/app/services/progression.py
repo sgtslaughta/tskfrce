@@ -4,17 +4,16 @@ from dataclasses import dataclass
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from sqlalchemy import func
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
-from app.flair.catalog import equipped
+from app.flair.catalog import equipped_many
 from app.lock.reset import current_chore_day
 from app.lock.schedule import local_now
-from app.models.chores import ChoreRun
+from app.models.chores import ChoreRun, run_kids
 from app.models.family import FamilySettings
 from app.models.points import Points, PointsType
 from app.models.user import User, UserRole
-from app.services.chores import kid_runs_filter
 
 TITLES = [
     (1, "Rookie"),
@@ -56,6 +55,30 @@ def xp(db: Session, kid_id: int) -> int:
     return int(total.scalar())
 
 
+def totals_many(db: Session, kid_ids: list[int]) -> dict[int, tuple[int, int]]:
+    """kid -> (lifetime xp, points balance) in one query."""
+    earned = case(
+        (
+            (Points.amount > 0)
+            & Points.points_type.notin_([PointsType.REDEMPTION, PointsType.TRANSFER]),
+            Points.amount,
+        ),
+        else_=0,
+    )
+    rows = (
+        db.query(Points.user_id, func.sum(earned), func.sum(Points.amount))
+        .filter(Points.user_id.in_(kid_ids))
+        .group_by(Points.user_id)
+        .all()
+    )
+    got = {u: (int(x or 0), int(b or 0)) for u, x, b in rows}
+    return {i: got.get(i, (0, 0)) for i in kid_ids}
+
+
+def xp_many(db: Session, kid_ids: list[int]) -> dict[int, int]:
+    return {i: x for i, (x, _) in totals_many(db, kid_ids).items()}
+
+
 def xp_for_level(n: int) -> int:
     return round(50 * (n - 1) ** 1.6)
 
@@ -68,23 +91,29 @@ def level_for(total: int) -> Level:
     return Level(n, title, total, xp_for_level(n), xp_for_level(n + 1))
 
 
-def chore_days(db: Session, kid_id: int, today: date) -> dict[date, bool]:
-    """chore day -> every instance that day is done/submitted (past and today only)."""
+def chore_days_many(db: Session, kid_ids: list[int], today: date) -> dict[int, dict[date, bool]]:
+    """kid -> {chore day -> every instance that day is done/submitted (past and today only)}."""
     start = today - timedelta(days=LOOKBACK_DAYS)
+    out: dict[int, dict[date, bool]] = {i: {} for i in kid_ids}
+    kid = func.coalesce(ChoreRun.kid_id, run_kids.c.kid_id)
     rows = (
-        db.query(ChoreRun.day, ChoreRun.status)
-        .filter(kid_runs_filter(kid_id), ChoreRun.status != "cancelled", ChoreRun.day >= start)
+        db.query(kid, ChoreRun.day, ChoreRun.status)
+        .outerjoin(run_kids, run_kids.c.run_id == ChoreRun.id)
+        .filter(kid.in_(kid_ids), ChoreRun.status != "cancelled", ChoreRun.day >= start)
         .all()
     )
-    days: dict[date, bool] = {}
-    for d, status in rows:
+    for kid_id, d, status in rows:
         if d <= today:
+            days = out[kid_id]
             days[d] = days.get(d, True) and status in _DONE
-    return days
+    return out
 
 
-def streak(db: Session, kid_id: int, today: date) -> Streak:
-    days = chore_days(db, kid_id, today)
+def chore_days(db: Session, kid_id: int, today: date) -> dict[date, bool]:
+    return chore_days_many(db, [kid_id], today)[kid_id]
+
+
+def streak_of(days: dict[date, bool], today: date) -> Streak:
     runs, run, longest = [], 0, 0
     for d in sorted(days):
         if days[d]:
@@ -99,18 +128,41 @@ def streak(db: Session, kid_id: int, today: date) -> Streak:
     return Streak(run, longest, runs)
 
 
-def progress(db: Session, kid: User, fam: FamilySettings) -> dict:
-    lv = level_for(xp(db, kid.id))
+def streak(db: Session, kid_id: int, today: date) -> Streak:
+    return streak_of(chore_days(db, kid_id, today), today)
+
+
+def progress(db: Session, kid: User, fam: FamilySettings, balances: dict | None = None) -> dict:
+    return progress_many(db, [kid], fam, balances)[kid.id]
+
+
+def progress_many(
+    db: Session, kids: list[User], fam: FamilySettings, balances: dict | None = None
+) -> dict[int, dict]:
+    """Level, streak and flair for many kids in a fixed number of queries.
+
+    Pass a dict as `balances` to also receive each kid's points balance (same query).
+    """
+    ids = [k.id for k in kids]
     today = current_chore_day(fam, datetime.now(UTC))
-    return {
-        "level": lv.level,
-        "title": lv.title,
-        "xp": lv.xp,
-        "floor": lv.floor,
-        "next": lv.next,
-        "streak": streak(db, kid.id, today).current,
-        "flair": equipped(db, kid.id),
-    }
+    totals = totals_many(db, ids)
+    if balances is not None:
+        balances.update({i: b for i, (_, b) in totals.items()})
+    days = chore_days_many(db, ids, today)
+    flair = equipped_many(db, ids)
+    out = {}
+    for i in ids:
+        lv = level_for(totals[i][0])
+        out[i] = {
+            "level": lv.level,
+            "title": lv.title,
+            "xp": lv.xp,
+            "floor": lv.floor,
+            "next": lv.next,
+            "streak": streak_of(days[i], today).current,
+            "flair": flair[i],
+        }
+    return out
 
 
 def leaderboard(db: Session, fam: FamilySettings, now_utc: datetime) -> dict:
@@ -136,8 +188,11 @@ def leaderboard(db: Session, fam: FamilySettings, now_utc: datetime) -> dict:
         .all()
     )
     rows = []
-    for k in db.query(User).filter(User.role == UserRole.KID, User.is_active):
-        lv = level_for(xp(db, k.id))
+    kids = db.query(User).filter(User.role == UserRole.KID, User.is_active).all()
+    ids = [k.id for k in kids]
+    totals, flair = xp_many(db, ids), equipped_many(db, ids)
+    for k in kids:
+        lv = level_for(totals[k.id])
         rows.append(
             {
                 "kid_id": k.id,
@@ -146,7 +201,7 @@ def leaderboard(db: Session, fam: FamilySettings, now_utc: datetime) -> dict:
                 "score": int(scores.get(k.id) or 0),
                 "level": lv.level,
                 "title": lv.title,
-                "flair": equipped(db, k.id),
+                "flair": flair[k.id],
             }
         )
     rows.sort(key=lambda r: (-r["score"], r["name"]))

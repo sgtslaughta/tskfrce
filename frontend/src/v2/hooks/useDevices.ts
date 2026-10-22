@@ -12,7 +12,7 @@ export interface DevicePatch {
 
 export const useDevices = () => useQuery({ queryKey: ['devices'], queryFn: () => api<Device[]>('/devices') })
 export const useBlocker = () =>
-  useQuery({ queryKey: ['blocker'], queryFn: () => api<BlockerStatus>('/blocker'), refetchInterval: 30_000 })
+  useQuery({ queryKey: ['blocker'], queryFn: () => api<BlockerStatus>('/blocker'), refetchInterval: 30_000, refetchIntervalInBackground: false })
 export const useGroups = () => useQuery({ queryKey: ['groups'], queryFn: () => api<Group[]>('/groups') })
 
 /** Run a mutation then refresh devices, groups and today. */

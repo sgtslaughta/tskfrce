@@ -7,7 +7,7 @@ const GUEST = 'guest'
 
 export function StepDevices({ kids }: { kids: Kid[] }) {
   const qc = useQueryClient()
-  const list = useQuery({ queryKey: ['setup-devices'], queryFn: () => api<Device[]>('/devices'), refetchInterval: 5000 })
+  const list = useQuery({ queryKey: ['setup-devices'], queryFn: () => api<Device[]>('/devices'), refetchInterval: 5000, refetchIntervalInBackground: false })
   const patch = useMutation({
     mutationFn: (v: { id: number; status: Device['status']; owner_ids: number[] }) =>
       api<Device>(`/devices/${v.id}`, { method: 'PATCH', body: { status: v.status, owner_ids: v.owner_ids } }),

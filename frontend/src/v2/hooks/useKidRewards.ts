@@ -42,6 +42,7 @@ export function useCelebrations(onExpired: () => void) {
     queryKey: ['kid', 'celebrations'],
     queryFn: () => api<KidCelebration[]>('/kid/celebrations', { kid: true }),
     refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
   })
   useExpiry(q.error, onExpired)
   return q

@@ -21,12 +21,10 @@ class Settings(BaseSettings):
 
     # Application settings
     APP_NAME: str = "TaaskMaaster"
-    APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
 
     # API settings
-    API_V1_STR: str = "/api/v1"
     # Generated at first boot into DATA_DIR/secrets.json unless set via env
     SECRET_KEY: str | None = None
     JWT_SECRET_KEY: str | None = None
@@ -43,7 +41,6 @@ class Settings(BaseSettings):
 
     # Database settings
     DATABASE_URL: str | None = None  # default: sqlite:///{DATA_DIR}/task4ce.db
-    DATABASE_ECHO: bool = False
 
     # CORS settings
     BACKEND_CORS_ORIGINS: list[str] = [
@@ -76,110 +73,39 @@ class Settings(BaseSettings):
         raise ValueError(v)
 
     # Email settings
-    SMTP_TLS: bool = True
-    SMTP_PORT: int | None = None
-    SMTP_HOST: str | None = None
-    SMTP_USER: str | None = None
-    SMTP_PASSWORD: str | None = None
-    EMAILS_FROM_EMAIL: str | None = None
-    EMAILS_FROM_NAME: str | None = None
 
     # File upload settings
     DATA_DIR: Path = Path("./data")
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
-    ALLOWED_EXTENSIONS: list[str] = [
-        ".jpg",
-        ".jpeg",
-        ".png",
-        ".gif",
-        ".bmp",
-        ".pdf",
-        ".doc",
-        ".docx",
-        ".txt",
-        ".rtf",
-        ".mp4",
-        ".avi",
-        ".mov",
-        ".wmv",
-        ".flv",
-        ".mp3",
-        ".wav",
-        ".flac",
-        ".aac",
-        ".zip",
-        ".rar",
-        ".7z",
-        ".tar",
-        ".gz",
-    ]
 
     # WebSocket settings
-    WEBSOCKET_HEARTBEAT_INTERVAL: int = 30
-    WEBSOCKET_MAX_CONNECTIONS: int = 1000
 
     # Rate limiting settings
-    RATE_LIMIT_ENABLED: bool = True
 
     # Logging settings
     LOG_LEVEL: str = "INFO"
-    LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    LOG_FILE: str | None = None
 
     # Security settings
-    PASSWORD_MIN_LENGTH: int = 8
-    PASSWORD_REQUIRE_UPPERCASE: bool = True
-    PASSWORD_REQUIRE_LOWERCASE: bool = True
-    PASSWORD_REQUIRE_DIGITS: bool = True
-    PASSWORD_REQUIRE_SYMBOLS: bool = False
 
     # Session settings
-    SESSION_TIMEOUT_MINUTES: int = 1440  # 24 hours
-    REMEMBER_ME_DAYS: int = 30
 
     # Notification settings
-    ENABLE_EMAIL_NOTIFICATIONS: bool = True
-    ENABLE_PUSH_NOTIFICATIONS: bool = True
-    ENABLE_WEBSOCKET_NOTIFICATIONS: bool = True
 
     # Feature flags
-    ENABLE_GAMIFICATION: bool = True
-    ENABLE_REAL_TIME_COLLABORATION: bool = True
-    ENABLE_ADVANCED_SEARCH: bool = True
-    ENABLE_FILE_VERSIONING: bool = True
-    ENABLE_AUDIT_LOGGING: bool = True
 
     # Performance settings
-    DATABASE_POOL_SIZE: int = 10
-    DATABASE_MAX_OVERFLOW: int = 20
-    DATABASE_POOL_RECYCLE: int = 3600
 
     # Cache settings
-    CACHE_TTL: int = 3600  # 1 hour
-    CACHE_MAX_SIZE: int = 1000
 
     # Pagination settings
-    DEFAULT_PAGE_SIZE: int = 50
-    MAX_PAGE_SIZE: int = 100
 
     # Search settings
-    SEARCH_INDEX_NAME: str = "taaskmaaster"
-    SEARCH_MAX_RESULTS: int = 1000
 
     # Backup settings
-    BACKUP_ENABLED: bool = False
-    BACKUP_INTERVAL_HOURS: int = 24
-    BACKUP_RETENTION_DAYS: int = 30
 
     # Monitoring settings
-    ENABLE_METRICS: bool = True
-    METRICS_PORT: int = 9090
-    HEALTH_CHECK_INTERVAL: int = 60
 
     # External service settings
-    OPENAI_API_KEY: str | None = None
-    SLACK_WEBHOOK_URL: str | None = None
-    DISCORD_WEBHOOK_URL: str | None = None
 
     model_config = ConfigDict(
         env_file=".env",

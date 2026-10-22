@@ -29,13 +29,45 @@ def _windows(db: Session, **target) -> tuple[list[Window], list[Window]]:
     return allowed, free
 
 
+class Prefetch:
+    """Overrides and windows for many devices in two queries (avoids N+1 in list endpoints).
+
+    `counts` maps kid id -> (approved, total) for the chore day; pass it when the caller
+    already holds today's runs, otherwise each owner is counted on demand.
+    """
+
+    def __init__(self, db: Session, devices: list[Device], counts: dict | None = None):
+        ids = {d.id for d in devices}
+        self.overrides: dict[int, list[Override]] = {i: [] for i in ids}
+        for o in (
+            db.query(Override)
+            .filter(Override.device_id.in_(ids))
+            .order_by(Override.created_at.desc(), Override.id.desc())
+        ):
+            self.overrides[o.device_id].append(o)
+        self.windows: dict[tuple[str, int], list[TimeWindow]] = {}
+        for w in db.query(TimeWindow).all():
+            key = ("kid_id", w.kid_id) if w.kid_id is not None else ("group_id", w.group_id)
+            self.windows.setdefault(key, []).append(w)
+        self.counts = counts or {}
+
+
+def _split(rows) -> tuple[list[Window], list[Window]]:
+    return (
+        [Window.from_row(r) for r in rows if r.kind == "allowed"],
+        [Window.from_row(r) for r in rows if r.kind == "free"],
+    )
+
+
 def device_facts(
-    db: Session, device: Device, fam: FamilySettings, now_utc: datetime
+    db: Session, device: Device, fam: FamilySettings, now_utc: datetime, pre: Prefetch | None = None
 ) -> DeviceFacts:
     now = _naive_utc(now_utc)
     day = current_chore_day(fam, _aware_utc(now_utc))
     overrides = (
-        db.query(Override)
+        pre.overrides.get(device.id, [])
+        if pre
+        else db.query(Override)
         .filter(Override.device_id == device.id)
         .order_by(Override.created_at.desc(), Override.id.desc())
         .all()
@@ -48,14 +80,18 @@ def device_facts(
         {"group_id": g.id} for g in device.groups
     ]
     for t in targets:
-        a, f = _windows(db, **t)
+        a, f = _split(pre.windows.get(next(iter(t.items())), [])) if pre else _windows(db, **t)
         if a:
             allowed_sets.append(tuple(a))
         free.extend(f)
     return DeviceFacts(
         status=device.status,
         owners=tuple(
-            OwnerChores(t, a) for a, t in (chores.counts(db, o.id, day) for o in device.owners)
+            OwnerChores(t, a)
+            for a, t in (
+                pre.counts[o.id] if pre and o.id in pre.counts else chores.counts(db, o.id, day)
+                for o in device.owners
+            )
         ),
         allowed_sets=tuple(allowed_sets),
         free=tuple(free),

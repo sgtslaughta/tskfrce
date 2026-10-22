@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from pydantic import BaseModel
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_active_user, get_db
 from app.api.rewards import redemption_name
@@ -14,7 +14,7 @@ from app.core.ratelimit import check, hit
 from app.lock.loop import trigger
 from app.lock.rules import is_online
 from app.lock.schedule import local_now
-from app.lock.state import device_facts
+from app.lock.state import Prefetch, device_facts
 from app.models.badge import BadgeAward
 from app.models.chores import ChoreRun
 from app.models.family import get_family
@@ -53,11 +53,11 @@ def require_kid(user: User = Depends(get_current_active_user)) -> User:
     return user
 
 
-def request_device(db: Session, ip: str) -> Device | None:
+def request_device(db: Session, ip: str, devices: list[Device] | None = None) -> Device | None:
     want = norm_ip(ip)
     if want is None:
         return None
-    for d in db.query(Device).all():
+    for d in devices if devices is not None else db.query(Device).all():
         if want == norm_ip(d.ip):
             return d
     for row in db.query(DeviceIPv6).all():
@@ -94,18 +94,26 @@ def login(body: KidLogin, request: Request, db: Session = Depends(get_db)):
     return {"access_token": auth.create_access_token(data={"sub": str(kid.id)})}
 
 
-def _locked(db: Session, kid: User, ip: str, now: datetime) -> bool:
+def _locked(db: Session, kid: User, ip: str, now: datetime, counts: dict) -> bool:
     fam = get_family(db)
-    dev = request_device(db, ip)
-    devs = [dev] if dev and kid in dev.owners else list(kid.devices)
+    all_devs = (
+        db.query(Device).options(selectinload(Device.owners), selectinload(Device.groups)).all()
+    )
+    dev = request_device(db, ip, all_devs)
+    devs = [dev] if dev and kid in dev.owners else [d for d in all_devs if kid in d.owners]
     local = local_now(fam.timezone, now)
-    return any(not is_online(device_facts(db, d, fam, now), local) for d in devs)
+    pre = Prefetch(db, devs, counts)
+    return any(not is_online(device_facts(db, d, fam, now, pre), local) for d in devs)
 
 
-def _kid_extras(db: Session, run: ChoreRun, kid: User) -> dict:
+def _names(db: Session, ids: set[int]) -> dict[int, User]:
+    return {u.id: u for u in db.query(User).filter(User.id.in_(ids))} if ids else {}
+
+
+def _kid_extras(run: ChoreRun, kid: User, takers: dict[int, User]) -> dict:
     """Fields the kid screen needs beyond the basics."""
     c, mode = svc.chore_of(run), svc.mode_of(run)
-    taker = db.get(User, run.submitted_by_id) if run.submitted_by_id not in (None, kid.id) else None
+    taker = takers.get(run.submitted_by_id)
     return {
         "mode": mode,
         "needs_photo": bool(c.needs_photo),
@@ -120,13 +128,17 @@ def _kid_extras(db: Session, run: ChoreRun, kid: User) -> dict:
 def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(require_kid)):
     now = datetime.now(UTC)
     runs = (
-        svc.day_runs(db, svc.today(db, now))
+        svc.with_detail(svc.day_runs(db, svc.today(db, now)), kids=False)
         .filter(svc.kid_runs_filter(kid.id))
         .order_by(ChoreRun.id)
         .all()
     )
+    balances: dict = {}
+    prog = progression.progress(db, kid, get_family(db), balances)
+    takers = _names(db, {r.submitted_by_id for r in runs} - {None, kid.id})
+    done = sum(svc.state(r) == "done" for r in runs)
     return {
-        "locked": _locked(db, kid, client_ip(request), now),
+        "locked": _locked(db, kid, client_ip(request), now, {kid.id: (done, len(runs))}),
         "chores": [
             {
                 "id": r.id,
@@ -134,12 +146,12 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(r
                 "points": svc.chore_of(r).points or 0,
                 "state": svc.state(r),
                 "due_time": r.assignment.due_time,
-                **_kid_extras(db, r, kid),
+                **_kid_extras(r, kid, takers),
             }
             for r in runs
         ],
-        "points_balance": economy.balance(db, kid.id),
-        "progress": progression.progress(db, kid, get_family(db)),
+        "points_balance": balances[kid.id],
+        "progress": prog,
     }
 
 
