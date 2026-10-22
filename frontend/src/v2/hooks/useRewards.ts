@@ -15,6 +15,7 @@ export const usePendingRedemptions = () =>
     queryKey: ['redemptions'],
     queryFn: () => api<PendingRedemption[]>('/redemptions'),
     refetchInterval: 30_000,
+    refetchIntervalInBackground: false,
   })
 
 function useInvalidating<V>(fn: (v: V) => Promise<unknown>, keys: string[]) {

@@ -8,6 +8,7 @@ export const useToday = () =>
     queryKey: ['today'],
     queryFn: () => api<Today>('/today'),
     refetchInterval: 15_000,
+    refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
   })
 
