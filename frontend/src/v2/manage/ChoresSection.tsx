@@ -1,19 +1,15 @@
 import { useState } from 'react'
 import { Button, Chip } from '@mantine/core'
-import type { ChoreDefinition } from '@/v2/hooks/useChores'
-import type { Kid } from '@/v2/types'
+import type { Kid, LibChore } from '@/v2/types'
 import { ChoreEditor } from './ChoreEditor'
 
 const nameOf = (k: Kid) => k.full_name ?? k.username
-const REPEAT_DAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
-function meta(c: ChoreDefinition) {
-  const r = c.repeat
-  const when =
-    r.type === 'daily' ? 'Daily' : r.type === 'once' ? 'Once' : r.days.map((d) => REPEAT_DAY[d]).join(', ')
-  const bits = [when]
-  if (c.due_time) bits.push(`due ${c.due_time}`)
-  if (c.subtasks.length) bits.push(`${c.subtasks.length} subtasks`)
+const usedBy = (c: LibChore) => Array.from(new Set(c.assignments.filter((a) => a.active).flatMap((a) => a.kid_ids)))
+
+function meta(c: LibChore) {
+  const bits = [`${c.steps.length} ${c.steps.length === 1 ? 'subtask' : 'subtasks'}`]
+  if (c.needs_photo) bits.push('📷 photo')
   return bits.join(' · ')
 }
 
@@ -26,7 +22,7 @@ export interface KidProgress {
 
 interface Props {
   kids: Kid[]
-  chores: ChoreDefinition[]
+  chores: LibChore[]
   progress: KidProgress[]
   initialKid?: string
 }
@@ -34,9 +30,13 @@ interface Props {
 /** Filterable chore list (kid chips show today's progress) and the editor drawer. */
 export function ChoresSection({ kids, chores, progress, initialKid }: Props) {
   const [filter, setFilter] = useState(initialKid ?? 'all')
-  const [open, setOpen] = useState<{ chore?: ChoreDefinition; copy?: boolean } | null>(null)
+  const [open, setOpen] = useState<{ id?: number } | null>(null)
   const shown = chores.filter((c) =>
-    filter === 'all' ? true : filter === 'shared' ? c.kid_ids.length > 1 : c.kid_ids.includes(Number(filter)),
+    filter === 'all'
+      ? true
+      : filter === 'shared'
+        ? c.assignments.some((a) => a.active && a.kid_ids.length > 1)
+        : c.assignments.some((a) => a.active && a.kid_ids.includes(Number(filter))),
   )
   const byId = new Map(kids.map((k) => [k.id, k]))
   const prog = new Map(progress.map((p) => [p.id, p]))
@@ -64,13 +64,13 @@ export function ChoresSection({ kids, chores, progress, initialKid }: Props) {
       {shown.length === 0 && <p>No chores here yet. Add one with New chore.</p>}
       <div className="f-card m-list">
         {shown.map((c) => (
-          <button key={c.id} type="button" className="m-row" onClick={() => setOpen({ chore: c })}>
+          <button key={c.id} type="button" className="m-row" onClick={() => setOpen({ id: c.id })}>
             <span>
               <b>{c.title}</b>
               <span className="m-meta">{meta(c)}</span>
             </span>
             <span className="m-avs">
-              {c.kid_ids.map((id) => {
+              {usedBy(c).map((id) => {
                 const k = byId.get(id)
                 const name = k ? nameOf(k) : 'Unknown kid'
                 return (
@@ -80,9 +80,6 @@ export function ChoresSection({ kids, chores, progress, initialKid }: Props) {
                 )
               })}
             </span>
-            <span className="m-mode" data-mode={c.kid_ids.length > 1 ? c.mode : 'solo'}>
-              {c.kid_ids.length > 1 ? c.mode : 'Solo'}
-            </span>
             <span className="m-num">+{c.points}</span>
           </button>
         ))}
@@ -90,9 +87,8 @@ export function ChoresSection({ kids, chores, progress, initialKid }: Props) {
       <ChoreEditor
         opened={open !== null}
         kids={kids}
-        chore={open?.chore}
-        copy={open?.copy}
-        onCopy={(chore) => setOpen({ chore, copy: true })}
+        chore={chores.find((c) => c.id === open?.id)}
+        onOpen={(id) => setOpen({ id })}
         onClose={() => setOpen(null)}
       />
     </>

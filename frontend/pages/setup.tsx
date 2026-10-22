@@ -36,6 +36,7 @@ export default function SetupPage() {
   const [chores, setChores] = useState<string[]>([])
   const [bedtime, setBedtime] = useState(false)
   const applied = useRef(new Set<string>())
+  const choreIds = useRef(new Map<string, number>()) // created chores, so a retry only redoes the assignment
 
   // Already set up (and not by us a moment ago): go log in.
   const status = useQuery({ queryKey: ['setup'], queryFn: () => api<SetupStatus>('/setup'), staleTime: Infinity })
@@ -77,10 +78,10 @@ export default function SetupPage() {
 
   /** POST each not-yet-applied request; remember successes so Back/Next never duplicates. */
   const apply = useMutation({
-    mutationFn: async (jobs: { key: string; path: string; body: unknown }[]) => {
+    mutationFn: async (jobs: { key: string; run: () => Promise<unknown> }[]) => {
       for (const j of jobs) {
         if (applied.current.has(j.key)) continue
-        await api(j.path, { method: 'POST', body: j.body })
+        await j.run()
         applied.current.add(j.key)
       }
     },
@@ -108,13 +109,32 @@ export default function SetupPage() {
     }
     if (step === 5) {
       return apply.mutate(
-        kids.flatMap((k) =>
-          chores.map((title) => ({
-            key: `chore:${k.id}:${title}`,
-            path: '/chores/',
-            body: { title, kid_id: k.id, points: 10, repeat: { type: 'daily', days: [] } },
-          })),
-        ),
+        kids.length === 0
+          ? []
+          : chores.map((title) => ({
+              key: `chore:${title}`,
+              run: async () => {
+                let id = choreIds.current.get(title)
+                if (id === undefined) {
+                  const c = await api<{ id: number }>('/chores/', {
+                    method: 'POST',
+                    body: { title, points: 10, needs_photo: false, steps: [] },
+                  })
+                  id = c.id
+                  choreIds.current.set(title, id)
+                }
+                await api(`/chores/${id}/assignments`, {
+                  method: 'POST',
+                  body: {
+                    kid_ids: kids.map((k) => k.id),
+                    mode: 'each',
+                    repeat: { type: 'daily', days: [] },
+                    on_date: null,
+                    due_time: null,
+                  },
+                })
+              },
+            })),
       )
     }
     if (step === 6) {
@@ -122,8 +142,11 @@ export default function SetupPage() {
         bedtime
           ? kids.map((k) => ({
               key: `window:${k.id}`,
-              path: '/windows',
-              body: { kind: 'allowed', days: '0123456', start: '07:00', end: '21:00', kid_id: k.id },
+              run: () =>
+                api('/windows', {
+                  method: 'POST',
+                  body: { kind: 'allowed', days: '0123456', start: '07:00', end: '21:00', kid_id: k.id },
+                }),
             }))
           : [],
       )

@@ -50,6 +50,7 @@ beforeEach(() => {
     if (path === '/setup' && init?.method === 'POST') return { access_token: 't', refresh_token: 'r', expires_in: 1800 }
     if (path === '/setup') return { needed: true }
     if (path === '/devices') return []
+    if (path === '/chores/') return { id: 31 }
     if (path === '/kids') return { id: 7, full_name: 'Ava', username: 'kid-ava', avatar: '🦊', has_pin: false }
     return {}
   })
@@ -160,7 +161,12 @@ describe('setup wizard', () => {
     expect(posts('/chores/')).toHaveLength(1)
     expect(posts('/chores/')[0][1]).toEqual({
       method: 'POST',
-      body: { title: 'Make bed', kid_id: 7, points: 10, repeat: { type: 'daily', days: [] } },
+      body: { title: 'Make bed', points: 10, needs_photo: false, steps: [] },
+    })
+    expect(posts('/chores/31/assignments')).toHaveLength(1)
+    expect(posts('/chores/31/assignments')[0][1]).toEqual({
+      method: 'POST',
+      body: { kid_ids: [7], mode: 'each', repeat: { type: 'daily', days: [] }, on_date: null, due_time: null },
     })
     expect(posts('/windows')).toHaveLength(1)
     expect(posts('/windows')[0][1]).toEqual({

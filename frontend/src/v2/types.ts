@@ -151,6 +151,29 @@ export interface Chore {
   due_time?: string | null
 }
 
+/** One way a library chore is given out: POST /chores/{id}/assignments */
+export interface Assignment {
+  id: number
+  chore_id: number
+  kid_ids: number[]
+  mode: 'each' | 'race' | 'team'
+  repeat: { type: 'daily' | 'weekly' | 'once'; days: number[] }
+  on_date: string | null
+  due_time: string | null
+  active: boolean
+}
+
+/** GET /chores: a chore in the library with its assignments */
+export interface LibChore {
+  id: number
+  title: string
+  points: number
+  needs_photo: boolean
+  steps: { id: number; title: string }[]
+  assignments: Assignment[]
+  archived: boolean
+}
+
 /** GET /kid/whoami */
 export interface KidWhoami {
   device: { id: number; name: string } | null

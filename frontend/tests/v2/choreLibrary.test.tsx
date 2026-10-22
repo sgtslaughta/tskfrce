@@ -28,19 +28,35 @@ const kids: Kid[] = [
   { id: 7, full_name: 'Maya', username: 'kid-maya', avatar: null, has_pin: false },
   { id: 8, full_name: 'Leo', username: 'kid-leo', avatar: null, has_pin: true },
 ]
-const def = (over = {}) => ({
-  id: 5,
-  title: 'Clean room',
-  points: 15,
+const asg = (over = {}) => ({
+  id: 11,
+  chore_id: 5,
   kid_ids: [7],
   mode: 'each',
   repeat: { type: 'daily', days: [] },
-  needs_photo: false,
+  on_date: null,
   due_time: '19:00',
-  subtasks: ['Fold clothes', 'Make bed'],
+  active: true,
   ...over,
 })
-const defs = [def(), def({ id: 6, title: 'Trash', kid_ids: [7, 8], mode: 'race', subtasks: [] })]
+const lib = (over = {}) => ({
+  id: 5,
+  title: 'Clean room',
+  points: 15,
+  needs_photo: false,
+  steps: [
+    { id: 1, title: 'Fold clothes' },
+    { id: 2, title: 'Make bed' },
+  ],
+  assignments: [asg()],
+  archived: false,
+  ...over,
+})
+const defs = [
+  lib(),
+  lib({ id: 6, title: 'Trash', steps: [], assignments: [asg({ id: 12, chore_id: 6, kid_ids: [7, 8], mode: 'race' })] }),
+  lib({ id: 9, title: 'Unassigned', steps: [], assignments: [] }),
+]
 
 const wrap = (ui: ReactNode) => (
   <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -62,7 +78,7 @@ beforeEach(() => {
   query = {}
   apiMock.mockReset().mockImplementation(async (path) => {
     if (path === '/kids') return kids
-    if (path.startsWith('/chores/definitions')) return defs
+    if (path === '/chores/') return defs
     if (path === '/chores/today') return { '7': [{ id: 1, status: 'done' }, { id: 2, status: 'todo' }] }
     if (path === '/rewards') return []
     return {}
@@ -111,33 +127,78 @@ describe('sections', () => {
   })
 })
 
-describe('chore editor', () => {
-  test('create sends kid_ids, mode, subtasks in order', async () => {
+describe('chore library', () => {
+  test('rows show steps count and Used by avatars; archived are not requested', async () => {
+    await open()
+    expect(screen.getByText('2 subtasks')).toBeInTheDocument()
+    expect(screen.getAllByRole('img', { name: 'Leo' })).toHaveLength(1)
+    expect(apiMock).toHaveBeenCalledWith('/chores/')
+  })
+
+  test('kid chip filters by assignment', async () => {
+    await open()
+    await userEvent.click(screen.getByText('Leo'))
+    expect(screen.getByText('Trash')).toBeInTheDocument()
+    expect(screen.queryByText('Clean room')).toBeNull()
+    expect(screen.queryByText('Unassigned')).toBeNull()
+  })
+
+  test('create POSTs chore fields only, then offers Assign', async () => {
+    apiMock.mockImplementation(async (path, init) => {
+      if (init?.method === 'POST' && path === '/chores/') return lib({ id: 20, title: 'Laundry', assignments: [], steps: [] })
+      if (path === '/kids') return kids
+      if (path === '/chores/') return [...defs, lib({ id: 20, title: 'Laundry', assignments: [], steps: [] })]
+      return {}
+    })
     await open()
     await userEvent.click(screen.getByRole('button', { name: 'New chore' }))
     const d = await dialog()
     await userEvent.type(within(d).getByLabelText('Chore'), 'Laundry')
-    await userEvent.click(within(d).getByText('Maya'))
-    await userEvent.click(within(d).getByText('Leo'))
-    await userEvent.click(within(d).getByText('Race'))
     for (const s of ['Fold clothes', 'Make bed']) {
       await userEvent.type(within(d).getByLabelText('Add a subtask'), `${s}{Enter}`)
     }
-    fireEvent.change(within(d).getByLabelText('Due by (optional)'), { target: { value: '17:00' } })
     await userEvent.click(within(d).getByRole('button', { name: 'Save' }))
     await waitFor(() =>
       expect(calls('POST')[0]).toEqual([
         '/chores/',
+        { method: 'POST', body: { title: 'Laundry', points: 10, needs_photo: false, steps: ['Fold clothes', 'Make bed'] } },
+      ]),
+    )
+    expect(await within(d).findByRole('button', { name: 'Assign' })).toBeInTheDocument()
+  })
+
+  test('saving PATCHes only chore fields, with reordered steps', async () => {
+    await open()
+    await userEvent.click(screen.getByText('Clean room'))
+    const d = await dialog()
+    await userEvent.click(within(d).getByRole('button', { name: 'Move down Fold clothes' }))
+    await userEvent.click(within(d).getByRole('button', { name: 'Save' }))
+    await waitFor(() => expect(calls('PATCH')).toHaveLength(1))
+    expect(calls('PATCH')[0]).toEqual([
+      '/chores/5',
+      { method: 'PATCH', body: { title: 'Clean room', points: 15, needs_photo: false, steps: ['Make bed', 'Fold clothes'] } },
+    ])
+  })
+
+  test('Assign posts AssignmentIn with exact keys; mode hidden with one kid', async () => {
+    await open()
+    await userEvent.click(screen.getByText('Unassigned'))
+    const d = await dialog()
+    await userEvent.click(within(d).getByRole('button', { name: 'Assign' }))
+    await userEvent.click(within(d).getByText('Maya'))
+    expect(within(d).queryByLabelText('Mode')).toBeNull()
+    fireEvent.change(within(d).getByLabelText('Due by (optional)'), { target: { value: '17:00' } })
+    await userEvent.click(within(d).getByRole('button', { name: 'Save' }))
+    await waitFor(() =>
+      expect(calls('POST')[0]).toEqual([
+        '/chores/9/assignments',
         {
           method: 'POST',
           body: {
-            title: 'Laundry',
-            points: 10,
-            kid_ids: [7, 8],
-            mode: 'race',
-            subtasks: ['Fold clothes', 'Make bed'],
+            kid_ids: [7],
+            mode: 'each',
             repeat: { type: 'daily', days: [] },
-            needs_photo: false,
+            on_date: null,
             due_time: '17:00',
           },
         },
@@ -145,12 +206,12 @@ describe('chore editor', () => {
     )
   })
 
-  test('mode explanation changes per mode', async () => {
+  test('two kids show the mode control and its hint', async () => {
     await open()
-    await userEvent.click(screen.getByRole('button', { name: 'New chore' }))
+    await userEvent.click(screen.getByText('Unassigned'))
     const d = await dialog()
+    await userEvent.click(within(d).getByRole('button', { name: 'Assign' }))
     await userEvent.click(within(d).getByText('Maya'))
-    expect(within(d).queryByText('Race')).toBeNull()
     await userEvent.click(within(d).getByText('Leo'))
     expect(within(d).getByText(/own copy and their own points/)).toBeInTheDocument()
     await userEvent.click(within(d).getByText('Race'))
@@ -159,37 +220,51 @@ describe('chore editor', () => {
     expect(within(d).getByText(/split evenly/)).toBeInTheDocument()
   })
 
-  test('subtask reorder changes the order sent; edit PATCHes the definition', async () => {
+  test('One time needs a date before Save is enabled', async () => {
+    await open()
+    await userEvent.click(screen.getByText('Unassigned'))
+    const d = await dialog()
+    await userEvent.click(within(d).getByRole('button', { name: 'Assign' }))
+    await userEvent.click(within(d).getByText('Maya'))
+    await userEvent.click(within(d).getByText('One time'))
+    const save = within(d).getByRole('button', { name: 'Save' })
+    expect(save).toBeDisabled()
+    fireEvent.change(within(d).getByLabelText('Date'), { target: { value: '2026-11-01' } })
+    expect(save).toBeEnabled()
+    await userEvent.click(save)
+    await waitFor(() => expect(calls('POST')[0][1]?.body).toMatchObject({ repeat: { type: 'once', days: [] }, on_date: '2026-11-01' }))
+  })
+
+  test('editing an assignment PATCHes it; removing DELETEs it', async () => {
     await open()
     await userEvent.click(screen.getByText('Clean room'))
     const d = await dialog()
-    await userEvent.click(within(d).getByRole('button', { name: 'Move down Fold clothes' }))
+    await userEvent.click(within(d).getByRole('button', { name: /Maya/ }))
     await userEvent.click(within(d).getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(calls('PATCH')).toHaveLength(1))
-    const [path, init] = calls('PATCH')[0]
-    expect(path).toBe('/chores/5')
-    expect(init?.body).toMatchObject({ subtasks: ['Make bed', 'Fold clothes'], kid_ids: [7], due_time: '19:00' })
+    await waitFor(() => expect(calls('PATCH')[0][0]).toBe('/assignments/11'))
+    await userEvent.click(await within(d).findByRole('button', { name: /Maya/ }))
+    await userEvent.click(within(d).getByRole('button', { name: 'Remove' }))
+    const confirm = await screen.findByRole('dialog', { name: 'Remove this assignment?' })
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(calls('DELETE')[0]).toEqual(['/assignments/11', { method: 'DELETE' }]))
   })
 
-  test('Copy opens a "(copy)" title and saving POSTs', async () => {
+  test('Copy POSTs /copy and opens the copy', async () => {
     await open()
     await userEvent.click(screen.getByText('Clean room'))
     const d = await dialog()
     await userEvent.click(within(d).getByRole('button', { name: 'Copy' }))
-    await waitFor(() => expect(within(d).getByLabelText('Chore')).toHaveValue('Clean room (copy)'))
-    await userEvent.click(within(d).getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(calls('POST')).toHaveLength(1))
-    expect(calls('PATCH')).toHaveLength(0)
-    expect(calls('POST')[0][1]?.body).toMatchObject({ title: 'Clean room (copy)' })
+    await waitFor(() => expect(calls('POST')[0]).toEqual(['/chores/5/copy', { method: 'POST' }]))
   })
 
-  test('Delete asks first via ConfirmDelete', async () => {
+  test('Delete asks first, says history stays, then DELETEs and toasts', async () => {
     await open()
     await userEvent.click(screen.getByText('Clean room'))
     const d = await dialog()
     await userEvent.click(within(d).getByRole('button', { name: 'Delete' }))
     expect(calls('DELETE')).toHaveLength(0)
     const confirm = await screen.findByRole('dialog', { name: 'Delete Clean room?' })
+    expect(within(confirm).getByText('Chores already done stay in history.')).toBeInTheDocument()
     await userEvent.click(within(confirm).getByRole('button', { name: 'Delete' }))
     await waitFor(() => expect(calls('DELETE')[0]).toEqual(['/chores/5', { method: 'DELETE' }]))
   })

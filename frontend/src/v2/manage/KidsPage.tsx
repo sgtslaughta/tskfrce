@@ -2,7 +2,7 @@ import { Text } from '@mantine/core'
 import { useRouter } from 'next/router'
 import { FridgeShell } from '@/v2/components/FridgeShell'
 import { RequireParent } from '@/v2/components/RequireParent'
-import { useChoreDefinitions, useChoresToday } from '@/v2/hooks/useChores'
+import { useChoresToday, useLibrary } from '@/v2/hooks/useChores'
 import { useKids } from '@/v2/hooks/useKids'
 import { ChoresSection, type KidProgress } from './ChoresSection'
 import { CustomBadgesPanel } from './CustomBadgesPanel'
@@ -15,7 +15,7 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 function KidsBody() {
   const { query } = useRouter()
   const kids = useKids()
-  const defs = useChoreDefinitions().data ?? []
+  const defs = useLibrary().data ?? []
   const today = useChoresToday().data ?? {}
   const want = first(query.section)
   const section: Section = SECTIONS.some((s) => s.id === want) ? (want as Section) : 'chores'
