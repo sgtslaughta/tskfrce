@@ -26,7 +26,7 @@ sudo tailscale up
 
 You should see: a web address. Open it on any device, sign in, and tap **Connect**.
 
-You should see: the box in your Tailscale machine list, with a number like `100.101.102.103`.
+You should see: the box in your Tailscale machine list, with a number like `100.101.102.103`. You can also type `tailscale ip -4` on the box to see it. Write it down.
 
 ## Step 3. Put Tailscale on your phone
 
@@ -46,5 +46,5 @@ Tip: bookmark it.
 
 - Only people you share your Tailscale account or machine with can reach it.
 - Kids do not need this. Their own page works on the home Wi-Fi.
-- Password reset links use the address saved as `BOX_URL` in the `.env` file. If you want links that work from away, use the Tailscale address there, then run the install line again to restart.
+- Password reset links use the address saved as `BOX_URL` in the `.env` file. If you want links that work from away: in the Terminal on the box, type `cd ~/task4ce`, then `nano .env`, change the `BOX_URL=` line to your Tailscale address (for example `BOX_URL=http://100.101.102.103:3000`), save (Ctrl+O, Enter), leave (Ctrl+X), and type `docker compose -f docker-compose.prod.yml up -d` to apply it. Running the install line again does not change this file.
 - Turn it off any time: `sudo tailscale down` on the box.

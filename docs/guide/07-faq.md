@@ -33,7 +33,7 @@ Most routers work. A few, especially some mesh systems, don't. Check the [router
 
 ## Can I use it without pausing the internet?
 
-Yes. Skip step 9 of the install and don't assign devices. Chores, points, chat and rewards all still work.
+Yes. Skip the **Devices** step in [first-time setup](03-first-setup.md) and mark every device **Guest** (or don't assign any, and turn off "Block new devices" in Settings). Nothing is paused then. Chores, points, chat and rewards all still work.
 
 ## Can I use it with Wi-Fi on my phone only (no box)?
 

@@ -1,5 +1,7 @@
 # 3. First-time setup
 
+"Open t@sk4ce" means: in a web browser on your phone or computer, type the address from the install step (like `http://192.168.1.50:3000`) into the address bar. Not working? See [Troubleshooting](06-troubleshooting.md).
+
 When you open t@sk4ce for the first time, a short wizard asks a few questions. It has seven steps. You can change every answer later.
 
 ![The first step of the setup wizard](img/setup-family.png)

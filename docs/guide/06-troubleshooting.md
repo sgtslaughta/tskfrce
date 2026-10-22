@@ -2,6 +2,10 @@
 
 Find your problem below. Each fix is one step at a time.
 
+Commands on this page are typed in the Terminal on the home box (see [Install](02-install.md) if you need to know how to open it). First go to the t@sk4ce folder by typing `cd ~/task4ce` and pressing Enter. Every `docker compose` command below must include `-f docker-compose.prod.yml`, exactly as shown.
+
+If a command says "permission denied" for Docker, put `sudo` in front of it. If it says "no configuration file provided" or "no such file", you are not in the `task4ce` folder.
+
 ## A banner says the home box is offline
 
 The banner reads something like "The home box went quiet at ..." It means the app has not heard from the box for a few minutes.
@@ -12,13 +16,13 @@ The banner reads something like "The home box went quiet at ..." It means the ap
    You should see: lights on the box and on the router port.
 2. Wait two minutes.
    You should see: the banner goes away by itself.
-3. If it stays, open a command line on the box, go to the `tskfrce` folder and type `docker compose ps`.
+3. If it stays, open the Terminal on the box, go to the folder (`cd ~/task4ce`) and type `docker compose -f docker-compose.prod.yml ps`.
    You should see: `blocker`, `backend` and `frontend` all running.
-4. If `blocker` is missing, type `docker compose up -d blocker`.
+4. If `blocker` is missing, type `docker compose -f docker-compose.prod.yml up -d blocker`.
    You should see: `Started`.
-5. If it keeps stopping, type `docker compose logs blocker --tail 30` and send it with a new issue on GitHub (see "Still stuck" below).
+5. If it keeps stopping, type `docker compose -f docker-compose.prod.yml logs blocker --tail 30` and send it with a new issue on GitHub (see "Still stuck" below).
 
-The most common cause is a wrong network name in the `.env` file. Run `ip route show default` again, fix `LAN_IFACE=` in `.env` and run `docker compose up -d blocker`.
+The most common cause is a wrong network name in the `.env` file. Type `ip route show default`. The word right after `dev` (for example `eth0`) is the network name. Open the file with `nano .env`, fix the `LAN_IFACE=` line, save (Ctrl+O, Enter) and leave (Ctrl+X). Then run `docker compose -f docker-compose.prod.yml up -d blocker`.
 
 ## A device isn't being paused
 
@@ -60,7 +64,7 @@ The real fix is a talk. If you see the alert, ask. Keep the box out of reach.
 3. They send you the link. Open it, type a new password twice and tap **Save password**.
    You should see: the log in page with "Password saved".
 
-**If you are the only parent**, type this on the home box (in the `task4ce` folder), with your username in place of `mom`:
+**If you are the only parent**, type this on the home box (in the `task4ce` folder), with your username in place of `mom` (the user name you chose in setup, not your display name):
 
 ```bash
 docker compose -f docker-compose.prod.yml exec backend python -m app.cli reset-password mom
@@ -85,11 +89,11 @@ If the link says it has expired, make a new one. Each new link cancels the old o
 
 Your family's information lives in one data store on the box. Before any upgrade that changes the database, the app saves a copy in `backups`, named `pre-upgrade-<time>.db`, inside that data store.
 
-To keep your own copy, type this in the `tskfrce` folder on the box:
+To keep your own copy, type this in the `task4ce` folder on the box:
 
 ```bash
 mkdir -p ~/tskfrce-backup
-docker compose cp backend:/app/data ~/tskfrce-backup/
+docker compose -f docker-compose.prod.yml cp backend:/app/data ~/tskfrce-backup/
 ```
 
 You should see: a folder `~/tskfrce-backup/data` with a file ending `.db`. Copy that folder to a USB stick now and then.
@@ -99,11 +103,11 @@ You should see: a folder `~/tskfrce-backup/data` with a file ending `.db`. Copy 
 This erases everything, including the chores and points. Do this only if you really want to.
 
 ```bash
-docker compose down -v
-docker compose up -d --build backend frontend
+cd ~/task4ce
+docker compose -f docker-compose.prod.yml down -v
 ```
 
-Then follow the steps from [Install](02-install.md#step-7-get-the-boxs-secret-code) on to get the secret code and restart the box part.
+Then run the install line from [Install](02-install.md) again. You will see the setup wizard like the first time.
 
 ## Still stuck
 

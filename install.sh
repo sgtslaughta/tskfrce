@@ -138,7 +138,7 @@ wait_healthy() {
   api="$(env_value BACKEND_PORT | sed 's/.*://')"
   say "Starting up. The first time takes several minutes while it builds..."
   waited=0
-  while [ "$waited" -lt 180 ]; do
+  while [ "$waited" -lt 600 ]; do
     if curl -fsS "http://127.0.0.1:${api:-8000}/health" >/dev/null 2>&1 &&
       curl -fsS "http://127.0.0.1:${port:-3000}/api/health" >/dev/null 2>&1; then
       return 0
@@ -159,7 +159,7 @@ main() {
     die "Docker could not build or start t@sk4ce." \
       "Run: cd $DIR && docker compose -f docker-compose.prod.yml logs   and share what it says when asking for help."
   wait_healthy ||
-    die "t@sk4ce did not answer within 3 minutes." \
+    die "t@sk4ce did not answer within 10 minutes." \
       "Wait a minute and open the address below. If it still fails: cd $DIR && docker compose -f docker-compose.prod.yml logs"
   say ""
   say "t@sk4ce is running. Open $(env_value BOX_URL) on your phone or computer."
