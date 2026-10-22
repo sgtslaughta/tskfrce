@@ -265,26 +265,11 @@ section {
   }
 }
 
+/* alternating bands run edge to edge; the content stays in .f-main */
 section:nth-child(odd) {
   background: var(--f-band);
-}
-
-@media (prefers-color-scheme: light) {
-  section:nth-child(even) {
-    background: transparent;
-  }
-  section:nth-child(odd) {
-    background: #f0f4f9;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  section:nth-child(even) {
-    background: transparent;
-  }
-  section:nth-child(odd) {
-    background: #0f1620;
-  }
+  box-shadow: 0 0 0 100vmax var(--f-band);
+  clip-path: inset(0 -100vmax);
 }
 
 .section-intro {
@@ -770,3 +755,7 @@ code {
     gap: 16px;
   }
 }
+
+/* hero product mockups: two up on desktop, stacked on phones */
+.hero-mocks { width: 100%; max-width: 900px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 40px; text-align: left; }
+@media (max-width: 720px) { .hero-mocks { grid-template-columns: 1fr; } }
