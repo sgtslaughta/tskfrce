@@ -18,8 +18,9 @@ def reset_password(username: str) -> int:
             print(f"No parent named '{username}'. Parents on this box: {names}")
             return 1
         token = create_reset(db, user, None)
+        name = user.username  # read before the session closes and detaches user
     base = (settings.BOX_URL or "http://<this-box>:3000").rstrip("/")
-    print(f"Open this link to set a new password for {user.username} (works once, 30 minutes):")
+    print(f"Open this link to set a new password for {name} (works once, 30 minutes):")
     print(f"{base}/reset?token={token}")
     return 0
 

@@ -99,6 +99,7 @@ def test_cli_prints_link(db, dad, monkeypatch, capsys):
             return db
 
         def __exit__(self, *a):
+            db.expunge_all()  # like a real session closing: objects become detached
             return False
 
     monkeypatch.setattr(cli, "SessionLocal", lambda: Sess())
