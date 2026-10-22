@@ -2,8 +2,10 @@
 
 import re
 import secrets
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field, StringConstraints
 from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
@@ -15,12 +17,12 @@ from app.models.badge import BadgeAward
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import ChoreAssignment, ChoreRun, RunStepTick, assignment_kids, run_kids
 from app.models.flair import KidFlair
-from app.models.gamification import Points
+from app.models.gamification import Points, PointsType
 from app.models.lock import Override, TimeWindow, device_owners
 from app.models.reward import Redemption
 from app.models.user import User, UserRole
 from app.schemas.lock import KidCreate, KidPatch, OverrideIn
-from app.services import chat
+from app.services import chat, economy
 from app.services import chores as svc
 from app.services.photos import storage
 
@@ -139,6 +141,30 @@ def delete_kid(kid_id: int, db: Session = Depends(get_db)):
     db.commit()
     trigger()
     return {"ok": True}
+
+
+class BonusIn(BaseModel):
+    amount: Annotated[int, Field(ge=1, le=500)]
+    note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+
+
+@router.post("/{kid_id}/points")
+def give_points(kid_id: int, body: BonusIn, db: Session = Depends(get_db)):
+    kid = _kid(db, kid_id)
+    before = economy.level_of(db, kid.id)
+    db.add(
+        Points(
+            user_id=kid.id,
+            points_type=PointsType.BONUS,
+            amount=body.amount,
+            reason="bonus",
+            description=body.note,
+            seen_by_kid=False,
+        )
+    )
+    economy.level_check(db, kid.id, before)
+    db.commit()
+    return {"balance": economy.balance(db, kid.id)}
 
 
 @router.post("/{kid_id}/override")

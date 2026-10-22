@@ -16,8 +16,7 @@ from app.lock.loop import trigger
 from app.lock.state import desired_blocked
 from app.models.family import get_family
 from app.models.lock import Device
-from app.models.notification import Notification
-from app.models.user import User, UserRole
+from app.services import inbox
 
 MAC_RE = re.compile(r"^([0-9a-f]{2}:){5}[0-9a-f]{2}$")
 
@@ -100,6 +99,15 @@ def devices_seen(body: SeenReport, db: Session = Depends(get_db)) -> dict:
         _apply(dev, body, now)
         db.add(dev)
         try:
+            db.flush()
+            inbox.notify(
+                db,
+                inbox.parents(db),
+                "new_device",
+                f"New device: {dev.name}",
+                "Say whose it is so it follows their rules.",
+                device_id=dev.id,
+            )
             db.commit()
         except IntegrityError:  # concurrent first report for the same MAC
             db.rollback()
@@ -126,28 +134,23 @@ def devices_resisting(body: ResistingReport, db: Session = Depends(get_db)) -> d
     listed = set(body.resisting)
     flagged = cleared = 0
     try:
-        parents = db.query(User).filter(User.role == UserRole.PARENT).all()
+        parents = inbox.parents(db)
         for dev in db.query(Device).all():
             if dev.mac in listed:
                 if dev.resisting_since is not None:
                     continue
                 dev.resisting_since = now
                 flagged += 1
-                for p in parents:
-                    db.add(
-                        Notification(
-                            user_id=p.id,
-                            type="device_resisting",
-                            title=f"{dev.name} is getting around the block",
-                            message=f"{dev.name} is still reaching the internet while it "
-                            "should be paused. Someone may have changed its network "
-                            "settings. Tap for what to check.",
-                            action_url="/manage/devices",
-                            data={"device_id": dev.id},
-                            is_read=False,
-                            created_at=now,
-                        )
-                    )
+                inbox.notify(
+                    db,
+                    parents,
+                    "device_resisting",
+                    f"{dev.name} is getting around the block",
+                    f"{dev.name} is still reaching the internet while it "
+                    "should be paused. Someone may have changed its network "
+                    "settings. Tap for what to check.",
+                    device_id=dev.id,
+                )
             elif dev.resisting_since is not None:
                 dev.resisting_since = None
                 cleared += 1

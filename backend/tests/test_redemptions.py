@@ -5,8 +5,8 @@ from app.lock.schedule import local_now
 from app.lock.state import device_facts
 from app.models.family import get_family
 from app.models.gamification import Points, PointsType
+from app.models.inbox import Notification
 from app.models.lock import Device, Override, TimeWindow
-from app.models.notification import Notification
 from app.models.reward import Redemption, Reward
 from app.models.user import UserRole
 
@@ -167,8 +167,8 @@ def test_other_kid_cannot_mark_seen(client, db, kid, kid_headers, parent_headers
 def test_parents_notified_and_listed(client, db, parent, kid, kid_headers, parent_headers):
     _fund(db, kid, 150)
     rid = _ask(client, kid_headers, _reward(db).id).json()["id"]
-    n = db.query(Notification).filter(Notification.type == "redemption_request").all()
-    assert [(x.user_id, x.data) for x in n] == [(parent.id, {"redemption_id": rid})]
+    n = db.query(Notification).filter(Notification.kind == "redemption_request").all()
+    assert [(x.user_id, x.redemption_id) for x in n] == [(parent.id, rid)]
     rows = client.get("/api/v1/redemptions?status=pending", headers=parent_headers).json()
     assert rows[0]["kid_name"] == kid.full_name and rows[0]["kid_balance"] == 150
     assert rows[0]["name"] == "Movie night" and rows[0]["cost"] == 100

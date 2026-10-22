@@ -18,12 +18,12 @@ def kid2(db):
 
 def test_x_user_data_header_alone_is_401(client, parent):
     spoof = {"X-User-Data": json.dumps({"user_id": parent.id, "id": parent.id})}
-    assert client.get("/api/v1/notifications/stats", headers=spoof).status_code == 401
+    assert client.get("/api/v1/notifications", headers=spoof).status_code == 401
     assert client.get("/api/v1/auth/me", headers=spoof).status_code == 401
 
 
 def test_bearer_token_still_works(client, parent_headers):
-    assert client.get("/api/v1/notifications/stats", headers=parent_headers).status_code == 200
+    assert client.get("/api/v1/notifications", headers=parent_headers).status_code == 200
 
 
 def test_kid_cannot_award_points(client, kid, kid_headers, parent_headers):
@@ -319,7 +319,6 @@ def test_parent_only_maintenance_routes(client, kid_headers, parent_headers):
     for path in (
         "/api/v1/tasks/recurring/create",
         "/api/v1/presence/cleanup",
-        "/api/v1/notifications/demo",
     ):
         assert client.post(path).status_code == 401, path
         assert client.post(path, headers=kid_headers).status_code == 403, path

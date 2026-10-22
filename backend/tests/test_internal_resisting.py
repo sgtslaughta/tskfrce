@@ -3,8 +3,8 @@ from datetime import UTC, datetime
 from app.api.devices import device_out
 from app.core.config import settings
 from app.models.family import get_family
+from app.models.inbox import Notification
 from app.models.lock import Device
-from app.models.notification import Notification
 from app.models.user import UserRole
 
 from tests.conftest import _make_user
@@ -18,7 +18,7 @@ def tok():
 
 
 def _count(db):
-    return db.query(Notification).filter_by(type="device_resisting").count()
+    return db.query(Notification).filter_by(kind="device_resisting").count()
 
 
 def _device(db):
@@ -39,12 +39,12 @@ def test_flag_sets_since_and_notifies_each_parent_once(client, db, parent):
     assert _count(db) == 2
     n = db.query(Notification).first()
     assert n.title == "Pad is getting around the block"
-    assert n.message == (
+    assert n.body == (
         "Pad is still reaching the internet while it should be paused. "
         "Someone may have changed its network settings. Tap for what to check."
     )
     assert db.query(Notification).filter_by(user_id=kid2.id).count() == 0
-    assert n.action_url == "/manage/devices" and n.data == {"device_id": d.id}
+    assert n.device_id == d.id
     r = client.post(URL, json={"resisting": [MAC]}, headers=tok())
     assert r.json() == {"flagged": 0, "cleared": 0}
     assert _count(db) == 2

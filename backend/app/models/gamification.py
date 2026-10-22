@@ -167,6 +167,7 @@ class Points(Base):
     reason = Column(String(12), nullable=False, default="adjustment", server_default="adjustment")
     run_id = Column(Integer, ForeignKey("chore_runs.id"), nullable=True, index=True)
     redemption_id = Column(Integer, ForeignKey("redemptions.id"), nullable=True, index=True)
+    seen_by_kid = Column(Boolean, nullable=False, default=True, server_default="1")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships

@@ -11,9 +11,9 @@ from app.models.chores import ChoreRun
 from app.models.family import FamilySettings, get_family
 from app.models.gamification import Points, PointsType
 from app.models.lock import Override
-from app.models.notification import Notification
 from app.models.reward import Redemption, Reward
-from app.models.user import User, UserRole
+from app.models.user import User
+from app.services import inbox
 
 SCREEN_MINUTES = range(15, 121, 15)
 
@@ -52,6 +52,20 @@ def _recipients(run: ChoreRun) -> list[int]:
     return [u.id for u in run.kids]
 
 
+def level_of(db: Session, kid_id: int) -> int:
+    from app.services import progression  # progression imports chores
+
+    db.flush()
+    return progression.level_for(progression.xp(db, kid_id)).level
+
+
+def level_check(db: Session, kid_id: int, before: int) -> None:
+    """Tell the kid when new points moved them up a level. Caller commits."""
+    now = level_of(db, kid_id)
+    if now > before:
+        inbox.notify(db, [kid_id], "level_up", f"You reached level {now}!")
+
+
 def award_chore(db: Session, run: ChoreRun, fam: FamilySettings) -> int:
     """Add completion (+ bonus) rows for an approved chore. Caller commits.
 
@@ -61,6 +75,7 @@ def award_chore(db: Session, run: ChoreRun, fam: FamilySettings) -> int:
     kids = _recipients(run)
     if not kids:
         return 0
+    levels = {k: level_of(db, k) for k in kids}
     chore = run.assignment.chore
     n = len(kids)
     base = (chore.points or 0) // n
@@ -88,6 +103,8 @@ def award_chore(db: Session, run: ChoreRun, fam: FamilySettings) -> int:
                     run_id=run.id,
                 )
             )
+    for k, before in levels.items():
+        level_check(db, k, before)
     return (base + bonus) * n
 
 
@@ -119,17 +136,14 @@ def request(
     red = Redemption(kid_id=kid.id, kind=kind, reward_id=reward_id, minutes=minutes, cost=cost)
     db.add(red)
     db.flush()
-    for parent in db.query(User).filter(User.role == UserRole.PARENT, User.is_active):
-        db.add(
-            Notification(
-                user_id=parent.id,
-                type="redemption_request",
-                title="New request",
-                message=f"{kid.full_name} wants {label} ({cost} points)",
-                action_url="/",
-                data={"redemption_id": red.id},
-            )
-        )
+    inbox.notify(
+        db,
+        inbox.parents(db),
+        "redemption_request",
+        "New request",
+        f"{kid.full_name} wants {label} ({cost} points)",
+        redemption_id=red.id,
+    )
     db.commit()
     return red
 
@@ -170,6 +184,14 @@ def decide(db: Session, redemption: Redemption, parent: User, approve: bool) -> 
             screen = True
     redemption.status = "approved" if approve else "denied"
     redemption.decided_at, redemption.decided_by_id = now, parent.id
+    inbox.notify(
+        db,
+        [redemption.kid_id],
+        "redemption_decided",
+        "Request approved" if approve else "Request not approved",
+        "Check your rewards." if approve else "Ask a parent if you want to know why.",
+        redemption_id=redemption.id,
+    )
     if approve:
         from app.services import badges  # badges imports this module
 

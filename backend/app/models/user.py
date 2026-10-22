@@ -108,9 +108,6 @@ class User(Base):
     )
     conversation_settings = relationship("ConversationSettings", back_populates="user")
 
-    # Notification relationships
-    notifications = relationship("Notification", back_populates="user")
-
     def __repr__(self) -> str:
         """String representation of User."""
         return (

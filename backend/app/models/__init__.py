@@ -32,9 +32,9 @@ from .gamification import (
     UserAchievement,
 )
 from .goal import Goal, GoalProgress
+from .inbox import Notification
 from .lock import Device, DeviceGroup, Override, TimeWindow
 from .media import MediaAttachment
-from .notification import Notification
 from .reward import Redemption, Reward
 from .task import (
     Task,

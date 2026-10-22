@@ -17,7 +17,6 @@ from app.models.direct_message import DirectMessage
 from app.models.task import Task
 from app.models.task_comment import TaskComment
 from app.models.user import User
-from app.services.notification_persistence_service import NotificationPersistenceService
 from app.services.websocket_service import websocket_manager
 
 logger = get_logger(__name__)
@@ -61,7 +60,6 @@ class NotificationService:
     def __init__(self, db: Session):
         """Initialize notification service with database session."""
         self.db = db
-        self.persistence_service = NotificationPersistenceService(db)
 
     async def _send_notification(
         self,
@@ -98,23 +96,8 @@ class NotificationService:
             # Send via WebSocket for real-time delivery
             await websocket_manager.broadcast_notifications(recipients, websocket_notification)
 
-            # Store in database for offline users
-            for user_id in recipients:
-                try:
-                    self.persistence_service.create_notification(
-                        user_id=user_id,
-                        notification_type=notification_type,
-                        title=title,
-                        message=message,
-                        action_url=action_url,
-                        data=data,
-                    )
-                except Exception as e:
-                    logger.error(f"Failed to store notification for user {user_id}: {e}")
-                    # Continue with other users even if one fails
-
             logger.info(
-                f"Sent {notification_type} notification to {len(recipients)} users (WebSocket + DB)"
+                f"Sent {notification_type} notification to {len(recipients)} users (WebSocket)"
             )
 
         except Exception as e:

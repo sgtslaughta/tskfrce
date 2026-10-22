@@ -18,11 +18,12 @@ from app.lock.state import device_facts
 from app.models.badge import BadgeAward
 from app.models.chores import ChoreRun
 from app.models.family import get_family
+from app.models.gamification import Points
 from app.models.lock import Device, DeviceIPv6
 from app.models.reward import Redemption, Reward
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services import badges, chat, economy, progression
+from app.services import badges, chat, economy, inbox, progression
 from app.services import chores as svc
 from app.services.photos import save_photo
 
@@ -200,6 +201,14 @@ def done(chore_id: int, db: Session = Depends(get_db), kid: User = Depends(requi
     r.status = "submitted"
     r.submitted_at = now
     r.submitted_by_id = kid.id
+    inbox.notify(
+        db,
+        inbox.parents(db),
+        "chore_submitted",
+        f"{kid.full_name} finished {c.title}",
+        "Take a look and approve it.",
+        run_id=r.id,
+    )
     db.commit()
     trigger()
     return {
@@ -291,15 +300,15 @@ def celebrations(db: Session = Depends(get_db), kid: User = Depends(require_kid)
 @router.post("/celebrations/{key}/seen", status_code=204)
 def celebration_seen(key: str, db: Session = Depends(get_db), kid: User = Depends(require_kid)):
     kind, _, ident = key.partition(":")
-    if not ident.isdigit() or kind not in ("r", "b", "l"):
+    if not ident.isdigit() or kind not in ("r", "b", "l", "p"):
         raise HTTPException(404, "That celebration isn't yours.")
     n = int(ident)
     if kind == "l":
         level = progression.level_for(progression.xp(db, kid.id)).level
         kid.celebrated_level = max(kid.celebrated_level, min(n, level))
     else:
-        row = db.get(Redemption if kind == "r" else BadgeAward, n)
-        if row is None or (row.kid_id != kid.id):
+        row = db.get({"r": Redemption, "b": BadgeAward, "p": Points}[kind], n)
+        if row is None or ((row.user_id if kind == "p" else row.kid_id) != kid.id):
             raise HTTPException(404, "That celebration isn't yours.")
         row.seen_by_kid = True
     db.commit()

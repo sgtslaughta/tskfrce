@@ -12,10 +12,11 @@ from app.lock.reset import current_chore_day
 from app.models.badge import BadgeAward, CustomBadge
 from app.models.chores import ChoreRun
 from app.models.family import FamilySettings
+from app.models.gamification import Points
 from app.models.reward import Redemption
 from app.models.user import User
 from app.services import chores as chore_svc
-from app.services import economy, progression
+from app.services import economy, inbox, progression
 
 TIERS = ("copper", "silver", "gold", "platinum", "mega-diamond")
 
@@ -164,6 +165,7 @@ def check_badges(db: Session, kid: User, fam: FamilySettings) -> list[BadgeAward
             db.add(a)
         a.tier, a.seen_by_kid, a.earned_at = tier, False, datetime.utcnow()
         won.append(a)
+        inbox.notify(db, [kid.id], "badge_earned", f"New badge: {b.name}", TIERS[tier - 1])
     db.flush()
     return won
 
@@ -211,6 +213,7 @@ def give_custom(db: Session, kid: User, badge: CustomBadge) -> BadgeAward:
     if a.tier >= len(TIERS):
         raise HTTPException(409, "Already at mega-diamond.")
     a.tier, a.seen_by_kid, a.earned_at = a.tier + 1, False, datetime.utcnow()
+    inbox.notify(db, [kid.id], "badge_earned", f"New badge: {badge.name}", TIERS[a.tier - 1])
     db.flush()
     return a
 
@@ -239,6 +242,19 @@ def celebrations(db: Session, kid: User) -> list[dict]:
                     "title": redemption_name(db, r),
                     "detail": f"{r.cost} points",
                     "size": "big" if reward else "small",
+                },
+            )
+        )
+    for p in db.query(Points).filter(Points.user_id == kid.id, Points.seen_by_kid.is_(False)):
+        items.append(
+            (
+                p.created_at,
+                {
+                    "key": f"p:{p.id}",
+                    "kind": "bonus",
+                    "title": f"+{p.amount} bonus points",
+                    "detail": p.description or "From a parent",
+                    "size": "big",
                 },
             )
         )

@@ -40,10 +40,10 @@ from app.api.community import router as community_router
 from app.api.devices import router as devices_router
 from app.api.family import router as family_router
 from app.api.flair import router as flair_router
+from app.api.inbox import router as notifications_router
 from app.api.internal import router as internal_router
 from app.api.kid import router as kid_router
 from app.api.kids import router as kids_router
-from app.api.notifications import router as notifications_router
 from app.api.rewards import redemptions_router
 from app.api.rewards import router as rewards_router
 from app.api.setup import router as setup_router
