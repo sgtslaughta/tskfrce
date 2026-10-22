@@ -5,7 +5,7 @@ Common dependencies used across API endpoints including database sessions,
 authentication, and user context management.
 """
 
-from fastapi import Depends, Header, HTTPException, status
+from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -81,49 +81,3 @@ def get_current_superuser(current_user: User = Depends(get_current_user)) -> Use
     if not current_user.is_superuser:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions")
     return current_user
-
-
-def get_optional_user(
-    token: HTTPAuthorizationCredentials | None = Depends(security),
-    db: Session = Depends(get_db),
-) -> User | None:
-    """Current user if a valid bearer token is sent, else None."""
-    return user_from_token(token.credentials if token else None, db)
-
-
-class CommonQueryParams:
-    """
-    Common query parameters for list endpoints.
-    """
-
-    def __init__(
-        self,
-        limit: int = 50,
-        offset: int = 0,
-        sort_by: str | None = None,
-        sort_order: str = "desc",
-    ):
-        self.limit = min(limit, 100)  # Cap at 100
-        self.offset = max(offset, 0)  # Ensure non-negative
-        self.sort_by = sort_by
-        self.sort_order = sort_order.lower() if sort_order.lower() in ["asc", "desc"] else "desc"
-
-
-def get_pagination_params(
-    limit: int = 50, offset: int = 0, sort_by: str | None = None, sort_order: str = "desc"
-) -> CommonQueryParams:
-    """
-    Dependency for common pagination parameters.
-    """
-    return CommonQueryParams(limit, offset, sort_by, sort_order)
-
-
-def get_request_metadata(
-    user_agent: str | None = Header(None),
-    x_forwarded_for: str | None = Header(None),
-    x_real_ip: str | None = Header(None),
-) -> dict:
-    """
-    Extract request metadata for logging and analytics.
-    """
-    return {"user_agent": user_agent, "forwarded_for": x_forwarded_for, "real_ip": x_real_ip}
