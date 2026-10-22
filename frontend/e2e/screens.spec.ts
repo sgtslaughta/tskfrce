@@ -52,4 +52,13 @@ test.describe('every screen', () => {
       errors = []
     }
   })
+
+  test('bell open', async ({ page }, info) => {
+    await loginUi(page)
+    await page.goto('/')
+    await page.getByRole('button', { name: /^Notifications/ }).click()
+    await expect(page.getByText('Notifications', { exact: true }).last()).toBeVisible()
+    await page.waitForTimeout(500)
+    await page.screenshot({ path: `e2e-artifacts/screens/${info.project.name}/bell-open.png` })
+  })
 })

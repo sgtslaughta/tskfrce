@@ -76,6 +76,9 @@ services:
       - ../frontend:/work
     environment:
       E2E_BASE_URL: http://10.99.0.5:3000
+      E2E_KID_RUN:  # passed through from lab/e2e_run.py
+      E2E_KID_TOKEN:
+      E2E_JPEG:
     command: npx playwright test
     networks:
       lab: {ipv4_address: 10.99.0.6}

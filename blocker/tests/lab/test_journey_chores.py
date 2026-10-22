@@ -44,7 +44,7 @@ def test_chore_gate():
 
 def test_subtasks_photo_and_send_back():
     a = make_kid("Photo", "1234", "kid1")
-    c = make_chore([a["id"]], title="Room", subtasks=["Bed", "Floor"], needs_photo=True)
+    c = make_chore([a["id"]], title="Room", steps=["Bed", "Floor"], needs_photo=True)
     wait_online("kid1", False)
     assert status_of(submit, a, c["id"]) == 409  # steps not ticked
     for s in chore_of(a, c["id"])["subtasks"]:

@@ -149,28 +149,27 @@ def make_kid(name, pin, host) -> dict:
     return k
 
 
-def make_chore(kid_ids, title="Dishes", points=10, **extra) -> dict:
-    """Create a daily chore; returns the first instance. Deleted on cleanup."""
-    res = parent(
+def make_chore(
+    kid_ids, title="Dishes", points=10, steps=(), needs_photo=False, mode="each"
+) -> dict:
+    """Library chore + daily assignment; returns today's run (its id is the kid/approve id)."""
+    c = parent(
         "POST",
         "/api/v1/chores/",
-        {
-            "title": title,
-            "kid_ids": kid_ids,
-            "points": points,
-            "repeat": {"type": "daily"},
-            **extra,
-        },
+        {"title": title, "points": points, "needs_photo": needs_photo, "steps": list(steps)},
     )
-    on_cleanup(lambda: parent("DELETE", f"/api/v1/chores/{res['definition']['id']}"))
-    return res["instance"]
+    on_cleanup(lambda: parent("DELETE", f"/api/v1/chores/{c['id']}"))
+    parent(
+        "POST",
+        f"/api/v1/chores/{c['id']}/assignments",
+        {"kid_ids": kid_ids, "mode": mode, "repeat": {"type": "daily"}},
+    )
+    runs = parent("GET", "/api/v1/chores/today")[str(kid_ids[0])]
+    return max((r for r in runs if r["title"] == title), key=lambda r: r["id"])
 
 
 def award(kid_id, amount):
-    parent(
-        "POST",
-        f"/api/v1/gamification/points/award?user_id={kid_id}&amount={amount}&points_type=bonus",
-    )
+    parent("POST", f"/api/v1/kids/{kid_id}/points", {"amount": amount, "note": "lab bonus"})
 
 
 def set_family(**patch):

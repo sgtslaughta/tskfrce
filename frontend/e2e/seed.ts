@@ -13,11 +13,17 @@ export async function loginUi(page: Page, next = '/') {
 }
 
 /** Authenticated API client for seeding, talking to the backend through the app's proxy. */
+let token: Promise<string> | undefined // login is rate limited (10/min): log in once per run
+
 export async function parentApi(): Promise<APIRequestContext> {
-  const anon = await request.newContext({ baseURL: BASE })
-  const res = await anon.post('/api/proxy/auth/login', { data: PARENT })
-  const { access_token } = await res.json()
-  await anon.dispose()
+  token ??= (async () => {
+    const anon = await request.newContext({ baseURL: BASE })
+    const res = await anon.post('/api/proxy/auth/login', { data: PARENT })
+    const { access_token } = await res.json()
+    await anon.dispose()
+    return access_token as string
+  })()
+  const access_token = await token
   return request.newContext({
     baseURL: BASE,
     extraHTTPHeaders: { Authorization: `Bearer ${access_token}` },
