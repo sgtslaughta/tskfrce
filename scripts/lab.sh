@@ -50,7 +50,7 @@ _post() { # path json
 }
 
 _wait_http() { # url
-  for _ in $(seq 60); do
+  for _ in $(seq 180); do
     [ "$(_curl_parent -o /dev/null -w '%{http_code}' "$1" 2>/dev/null || true)" = 200 ] && return 0
     sleep 1
   done

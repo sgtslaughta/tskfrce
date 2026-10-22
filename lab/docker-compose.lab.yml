@@ -49,7 +49,7 @@ services:
       - ../backend:/app
       - /app/data
     networks: !override
-      lab: {ipv4_address: 10.99.0.3}
+      lab: {ipv4_address: 10.99.0.3, ipv6_address: "fd00:99::3"}
 
   # Browser e2e only: the Next dev server, proxying to the lab backend
   frontend:
@@ -64,7 +64,7 @@ services:
       NEXT_TELEMETRY_DISABLED: "1"
       NODE_OPTIONS: --max-old-space-size=2048
     networks:
-      lab: {ipv4_address: 10.99.0.5}
+      lab: {ipv4_address: 10.99.0.5, ipv6_address: "fd00:99::5"}
 
   # Playwright runner; keep the image tag equal to @playwright/test in frontend/package.json
   e2e:
@@ -81,7 +81,7 @@ services:
       E2E_JPEG:
     command: npx playwright test
     networks:
-      lab: {ipv4_address: 10.99.0.6}
+      lab: {ipv4_address: 10.99.0.6, ipv6_address: "fd00:99::6"}
 
   blocker:
     build: ../blocker
