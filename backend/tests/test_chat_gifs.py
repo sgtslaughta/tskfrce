@@ -111,6 +111,7 @@ def test_preview_rejects_bad_id(client, parent_headers):
 def test_pick_gif_stores_animated_photo(client, parent_headers, kid_headers, monkeypatch):
     _on(client, parent_headers)
     monkeypatch.setattr(giphy, "fetch_media", lambda i, n, c: _gif())
+    monkeypatch.setattr(giphy, "rating_ok", lambda f, i: True)
     tid = _thread(client, kid_headers)
     pid = client.post(
         f"{C}/threads/{tid}/gifs", json={"gif_id": "abc"}, headers=kid_headers
@@ -160,3 +161,95 @@ def test_chore_proof_still_rejects_gif(client, db, parent_headers, ctype):
 
     k, h, cid = _setup(db, client, parent_headers)
     assert proof_up(client, h, cid, _gif(), ctype).status_code == 415
+
+
+def _rating(monkeypatch, rating):
+    giphy._OK.clear()
+    seen = []
+
+    class R:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return {"data": {"rating": rating}}
+
+    monkeypatch.setattr(giphy.httpx, "get", lambda url, **kw: seen.append(url) or R())
+    monkeypatch.setattr(giphy, "fetch_media", lambda i, n, c: _gif())
+    return seen
+
+
+@pytest.mark.parametrize(
+    "setting,rating,ok",
+    [
+        ("g", "r", False),
+        ("g", "pg", False),
+        ("g", "g", True),
+        ("g", "y", True),
+        ("pg", "pg", True),
+        ("pg", "pg-13", False),
+        ("pg", "zzz", False),
+    ],
+)
+def test_server_side_rating(client, parent_headers, kid_headers, monkeypatch, setting, rating, ok):
+    _on(client, parent_headers, gif_rating=setting)
+    seen = _rating(monkeypatch, rating)
+    tid = _thread(client, kid_headers)
+    a = client.post(f"{C}/threads/{tid}/gifs", json={"gif_id": "abc"}, headers=kid_headers)
+    p = client.get(f"{C}/gifs/abc/preview", headers=kid_headers)
+    assert (a.status_code, p.status_code) == ((200, 200) if ok else (404, 404))
+    if not ok:
+        assert a.json()["detail"] == "That GIF isn't available."
+    elif len(seen) != 1:  # second call served from cache
+        raise AssertionError(seen)
+
+
+def test_rating_lookup_failure_is_502(client, parent_headers, kid_headers, monkeypatch):
+    _on(client, parent_headers)
+    giphy._OK.clear()
+
+    def boom(*a, **k):
+        raise giphy.httpx.ConnectError("x")
+
+    monkeypatch.setattr(giphy.httpx, "get", boom)
+    assert client.get(f"{C}/gifs/abc/preview", headers=kid_headers).status_code == 502
+
+
+def test_fetch_media_stops_at_cap(monkeypatch):
+    read = []
+
+    class S:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            pass
+
+        def raise_for_status(self):
+            pass
+
+        def iter_bytes(self):
+            for _ in range(100):
+                read.append(1)
+                yield b"x" * 10
+
+    monkeypatch.setattr(giphy.httpx, "stream", lambda *a, **k: S())
+    with pytest.raises(giphy.HTTPException) as e:
+        giphy.fetch_media("abc", "x.gif", 25)
+    assert e.value.status_code == 413 and len(read) == 3
+
+
+def test_gif_frame_size_enforced_per_frame(client, kid_headers, monkeypatch):
+    tid = _thread(client, kid_headers)
+    big = Image.new("RGB", (200, 200))
+    real = photos.ImageSequence.Iterator
+    monkeypatch.setattr(photos.ImageSequence, "Iterator", lambda img: iter([big]))
+    r = _up(client, kid_headers, tid, _gif(2))  # header says 20x20
+    assert r.status_code == 413
+    # running total: header 2*400=800 passes a 1000 cap, but 3 decoded frames do not
+    small = Image.new("RGB", (20, 20))
+    monkeypatch.setattr(photos, "MAX_PIXELS", 1000)
+    monkeypatch.setattr(photos.ImageSequence, "Iterator", lambda img: iter([small] * 3))
+    assert _up(client, kid_headers, tid, _gif(2)).status_code == 413
+    monkeypatch.setattr(photos.ImageSequence, "Iterator", real)
+    assert _up(client, kid_headers, tid, _gif(2)).status_code == 200

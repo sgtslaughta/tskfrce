@@ -1,6 +1,7 @@
 """GIPHY via the home box: kids' devices never talk to GIPHY directly."""
 
 import re
+import time
 
 import httpx
 from fastapi import HTTPException
@@ -51,9 +52,38 @@ def search(key: str, rating: str, q: str, offset: int) -> list[dict]:
     return out
 
 
+_OK: dict[tuple[str, str], float] = {}  # (rating, id) -> expiry
+OK_TTL = 3600
+ALLOWED = {"g": {"g", "y"}, "pg": {"g", "y", "pg"}}
+
+
+def rating_ok(fam, gif_id: str) -> bool:
+    """Server-side check that a GIF id fits the family rating (clients can send any id)."""
+    key = (fam.gif_rating, check_id(gif_id))
+    now = time.monotonic()
+    # ponytail: per-process cache; each worker looks up once per hour
+    if _OK.get(key, 0) > now:
+        return True
+    data = _get(f"{API}/{key[1]}", params={"api_key": fam.giphy_api_key}).json().get("data")
+    rating = str((data or {}).get("rating", "")).lower() if isinstance(data, dict) else ""
+    if rating not in ALLOWED.get(fam.gif_rating, set()):
+        return False
+    _OK[key] = now + OK_TTL
+    return True
+
+
 def fetch_media(gif_id: str, name: str, cap: int) -> bytes:
     """Download a fixed GIPHY media file (host is hard-coded, id is validated)."""
-    r = _get(f"{MEDIA}/{check_id(gif_id)}/{name}")
-    if len(r.content) > cap:
-        raise HTTPException(413, "That GIF is too big.")
-    return r.content
+    buf = bytearray()
+    try:
+        with httpx.stream(
+            "GET", f"{MEDIA}/{check_id(gif_id)}/{name}", timeout=TIMEOUT, follow_redirects=False
+        ) as r:
+            r.raise_for_status()
+            for chunk in r.iter_bytes():
+                buf += chunk
+                if len(buf) > cap:
+                    raise HTTPException(413, "That GIF is too big.")
+    except httpx.HTTPError:
+        raise HTTPException(502, DOWN) from None
+    return bytes(buf)

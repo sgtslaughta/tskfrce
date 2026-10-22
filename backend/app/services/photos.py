@@ -66,8 +66,13 @@ def encode_gif(data: bytes) -> tuple[bytes, bytes]:
         w, h = img.size
         if n > GIF_MAX_FRAMES or w * h * n > MAX_PIXELS:
             raise HTTPException(413, "That GIF is too long or too large. Try a shorter one.")
-        frames, durations = [], []
+        frames, durations, total = [], [], 0
         for f in ImageSequence.Iterator(img):
+            # header sizes are untrusted: enforce per frame, before decoding (convert)
+            fw, fh = f.size
+            total += fw * fh
+            if fw > w or fh > h or fw * fh > MAX_PIXELS or total > MAX_PIXELS:
+                raise HTTPException(413, "That GIF is too long or too large. Try a shorter one.")
             durations.append(f.info.get("duration", 100))
             c = f.convert("RGBA")
             c.info.clear()  # drops comment/extension metadata carried in frame info

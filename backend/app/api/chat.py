@@ -133,6 +133,11 @@ def _gif_settings(db: Session):
     return fam
 
 
+def _gif_allowed(fam, gif_id: str) -> None:
+    if not giphy.rating_ok(fam, gif_id):
+        raise HTTPException(404, "That GIF isn't available.")
+
+
 @router.get("/gifs")
 def gif_search(
     q: str = "",
@@ -150,7 +155,7 @@ def gif_preview(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_active_user),
 ):
-    _gif_settings(db)
+    _gif_allowed(_gif_settings(db), gif_id)
     data = giphy.fetch_media(gif_id, "200w.gif", giphy.PREVIEW_MAX)
     return Response(
         data, media_type="image/gif", headers={"Cache-Control": "private, max-age=86400"}
@@ -165,7 +170,7 @@ def add_gif(
     user: User = Depends(get_current_active_user),
 ):
     t = _thread(db, user, thread_id)
-    _gif_settings(db)
+    _gif_allowed(_gif_settings(db), body.gif_id)
     data = giphy.fetch_media(body.gif_id, "giphy.gif", giphy.FULL_MAX)
     path, thumb = put_gif(chat_storage(), f"thread/{t.id}/{uuid.uuid4().hex}", data)
     p = ChatPhoto(thread_id=t.id, uploaded_by_id=user.id, path=path, thumb_path=thumb)
