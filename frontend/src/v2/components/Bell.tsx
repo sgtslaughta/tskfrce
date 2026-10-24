@@ -55,10 +55,16 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
 }
 
 /** Notification bell: popover on desktop, full sheet under 768 px. `kid` uses the kid token. */
-export function Bell({ kid = false }: { kid?: boolean }) {
+export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; placement?: 'rail' | 'header' }) {
   const [opened, setOpened] = useState(false)
   const small = useMediaQuery('(max-width: 767px)')
   const unread = useInbox(kid).data?.unread ?? 0
+
+  // On mobile, don't render bell for rail placement (header only)
+  if (placement === 'rail' && small) {
+    return null
+  }
+
   const btn = (
     <button
       type="button"

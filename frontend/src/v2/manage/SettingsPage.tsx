@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { FridgeShell } from '@/v2/components/FridgeShell'
+import { ParentShell } from '@/v2/parent/ParentShell'
 import { LoadError, LoadingCards } from '@/v2/components/States'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useFamily } from '@/v2/hooks/useFamily'
@@ -26,7 +26,7 @@ function SettingsBody() {
   const want = first(query.section)
   const section: S = SETTINGS_SECTIONS.some((s) => s.id === want) ? (want as S) : 'family'
   return (
-    <FridgeShell title="Settings">
+    <ParentShell title="Settings">
       {family.isError && <LoadError error={family.error} onRetry={() => family.refetch()} />}
       <ManageLayout path="/settings" sections={SETTINGS_SECTIONS} section={section} counts={{}}>
         {family.isPending && ['family', 'screen', 'gifs'].includes(section) && <LoadingCards />}
@@ -41,7 +41,7 @@ function SettingsBody() {
           </>
         )}
       </ManageLayout>
-    </FridgeShell>
+    </ParentShell>
   )
 }
 

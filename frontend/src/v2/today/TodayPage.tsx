@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FridgeShell } from "../components/FridgeShell";
+import { ParentShell } from "../parent/ParentShell";
 import { LoadError, LoadingCards } from "../components/States";
 import { Leaderboard } from "../components/Leaderboard";
 import { Sticker } from "../components/Sticker";
@@ -28,7 +28,7 @@ export function TodayPage() {
   );
 
   return (
-    <FridgeShell title={dayName(data?.day)} actions={sticker || undefined}>
+    <ParentShell title={dayName(data?.day)} actions={sticker || undefined}>
       {isError && !data && <LoadError error={error} onRetry={() => refetch()} />}
       {!data && !isError && <LoadingCards n={3} h={140} />}
       {data && (
@@ -47,6 +47,6 @@ export function TodayPage() {
           {board && <Leaderboard rows={board.rows} />}
         </div>
       )}
-    </FridgeShell>
+    </ParentShell>
   );
 }
