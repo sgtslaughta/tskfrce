@@ -134,3 +134,45 @@
   color: var(--p-sub);
   margin-left: 26px;
 }
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Segmented control */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-segmented-control {
+  display: flex;
+  gap: 4px;
+  background: var(--p-soft);
+  padding: 4px;
+  border-radius: 10px;
+  width: fit-content;
+}
+
+[data-look='parent'] .p-segmented-button {
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-sub);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-look='parent'] .p-segmented-button {
+    transition: none;
+  }
+}
+
+[data-look='parent'] .p-segmented-button:hover {
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-segmented-button[data-active='true'] {
+  background: var(--p-card);
+  color: var(--p-ink);
+  box-shadow: inset 0 0 0 1.5px var(--p-ink);
+}
