@@ -116,3 +116,11 @@
   color: var(--p-ink);
   margin-top: 2px;
 }
+
+.p-kid-expanded .p-track {
+  height: 8px;
+  border-radius: 8px;
+  background: var(--p-soft);
+  border: 1px solid var(--p-line);
+  overflow: hidden;
+}

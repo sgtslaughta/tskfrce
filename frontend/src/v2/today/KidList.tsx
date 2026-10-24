@@ -53,7 +53,9 @@ export function KidList({ onSelectKid, selectedKid }: { onSelectKid: (kid: Today
                   <div className="p-kid-status">{stateChip(kid)}</div>
                   {selectedKid?.id === kid.id && kid.progress && (
                     <div className="p-kid-expanded" data-testid="kid-expanded">
-                      <div className="p-meter-bar" style={{ width: `${(kid.done ?? 0) / (kid.total ?? 1) * 100}%` }} />
+                      <div className="p-track">
+                        <div className="p-meter-bar" style={{ width: `${(kid.done ?? 0) / (kid.total ?? 1) * 100}%` }} />
+                      </div>
                       <div className="p-kid-facts">
                         <div>
                           <span>Points</span>

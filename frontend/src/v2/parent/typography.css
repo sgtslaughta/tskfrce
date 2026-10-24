@@ -22,7 +22,7 @@
 [data-look='parent'] .p-meter-bar {
   height: 8px;
   border-radius: 8px;
-  background: var(--p-acc);
+  background: var(--p-meter);
   transition: width 200ms ease-out;
 }
 
