@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Icon } from '@/v2/parent/Icon'
+import { Chip, type ChipTone } from '@/v2/parent/Chip'
 import type { Device, Group as DeviceGroup, Kid } from '@/v2/types'
 
 interface Props {
@@ -12,12 +13,12 @@ interface Props {
   onSelectGroup?: (id: number) => void
 }
 
-const statusChip = (status: string) => {
-  if (status === 'open' || status === 'assigned') return { tone: 'acc' as const, text: 'Open', icon: 'lock_open' }
-  if (status === 'locked') return { tone: 'grey' as const, text: 'Locked', icon: 'lock' }
-  if (status === 'exempt') return { tone: 'lav' as const, text: 'Exempt', icon: 'shield' }
-  if (status === 'guest') return { tone: 'grey' as const, text: 'Guest', icon: 'person' }
-  return { tone: 'amb' as const, text: "Who's this?", icon: 'help' }
+const statusChip = (status: string): { tone: ChipTone; text: string; icon: string } => {
+  if (status === 'open' || status === 'assigned') return { tone: 'acc', text: 'Open', icon: 'lock_open' }
+  if (status === 'locked') return { tone: 'grey', text: 'Locked', icon: 'lock' }
+  if (status === 'exempt') return { tone: 'lav', text: 'Exempt', icon: 'shield' }
+  if (status === 'guest') return { tone: 'grey', text: 'Guest', icon: 'person' }
+  return { tone: 'amb', text: "Who's this?", icon: 'help' }
 }
 
 const ownerName = (kids: Kid[], ownerIds: number[]) => {
@@ -170,10 +171,9 @@ export function DeviceList({
                       {owner} · {relativeTime(d.last_seen)}
                     </div>
                   </div>
-                  <div className="p-chip" data-tone={chip.tone}>
-                    <Icon name={chip.icon} size={12} />
+                  <Chip tone={chip.tone} icon={chip.icon}>
                     {chip.text}
-                  </div>
+                  </Chip>
                 </button>
               )
             })}
