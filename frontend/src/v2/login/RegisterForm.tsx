@@ -116,7 +116,7 @@ export function RegisterForm({ token }: { token: string | undefined }) {
               ))}
             </div>
             <button type="submit" className="p-auth-button primary" disabled={busy}>
-              Create account
+              Join
               <Icon name="arrow_forward" size={20} />
             </button>
           </form>
