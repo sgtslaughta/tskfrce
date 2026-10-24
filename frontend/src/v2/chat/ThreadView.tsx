@@ -15,6 +15,7 @@ import {
   type ChatMessage,
   type ThreadKind,
 } from '@/v2/hooks/useChat'
+import { useRunDetail } from '@/v2/hooks/useChores'
 import { LoadError, LoadingCards } from '@/v2/components/States'
 import { toastFail } from '@/v2/notify'
 import { useAuthImage } from '@/v2/today/PhotoViewer'
@@ -116,6 +117,7 @@ export function ThreadView({
   const wideLay = useMediaQuery('(min-width: 1250px)')
 
   const data = thread.data
+  const runDetail = useRunDetail(data?.run_id ?? null)
   const latest = data?.messages ?? []
   const lastId = latest.length ? latest[latest.length - 1].id : 0
   const messages = [...older.filter((o) => !latest.some((l) => l.id === o.id)), ...latest]
@@ -290,7 +292,7 @@ export function ThreadView({
           </section>
 
           {/* Side panel for chore threads (hidden on narrow screens) */}
-          {wideLay && kind === 'chore' && (
+          {wideLay && kind === 'chore' && runDetail.data && (
             <div style={{ width: 250, borderLeft: '1.5px solid var(--p-line)', paddingLeft: 12, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
               {/* Steps card */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -299,54 +301,39 @@ export function ThreadView({
                   Steps
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 0, fontSize: '13px', color: 'var(--p-sub)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderTop: '1.5px solid var(--p-line)' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="check_circle" size={16} /> Math worksheet</span>
-                    <span style={{ fontSize: '12px' }}>5:02</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderTop: '1.5px solid var(--p-line)' }}>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Icon name="check_circle" size={16} /> Check answers</span>
-                    <span style={{ fontSize: '12px' }}>5:30</span>
-                  </div>
+                  {runDetail.data.steps.map((step) => (
+                    <div key={step.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderTop: '1.5px solid var(--p-line)' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Icon name={step.done ? 'check_circle' : 'radio_button_unchecked'} size={16} />
+                        {step.title}
+                      </span>
+                      {step.done_at && (
+                        <span style={{ fontSize: '12px' }}>
+                          {new Date(step.done_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </div>
 
               {/* Photos card */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 8px 0', color: 'var(--p-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Icon name="photo_library" size={18} />
-                  Photos
-                </h3>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  <div style={{ width: 96, height: 70, borderRadius: 8, background: 'var(--p-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--p-sub)' }}>
-                    <Icon name="image" size={24} />
-                  </div>
-                  <div style={{ width: 96, height: 70, borderRadius: 8, background: 'var(--p-soft)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--p-sub)' }}>
-                    <Icon name="image" size={24} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Kid today card */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 8px 0', color: 'var(--p-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Icon name="person" size={18} />
-                  Mia today
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 0, fontSize: '13px', color: 'var(--p-sub)' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderTop: '1.5px solid var(--p-line)' }}>
-                    <span>Chores</span>
-                    <span style={{ color: 'var(--p-ink)', fontWeight: 600 }}>3 / 5</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderTop: '1.5px solid var(--p-line)' }}>
-                    <span>Points</span>
-                    <span style={{ color: 'var(--p-ink)', fontWeight: 600 }}>860</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderTop: '1.5px solid var(--p-line)' }}>
-                    <span>iPad</span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '11px', fontWeight: 700, padding: '2px 8px', borderRadius: 6, background: 'var(--p-acc)', color: '#292928', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Open</span>
+              {runDetail.data.photos.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 8px 0', color: 'var(--p-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Icon name="photo_library" size={18} />
+                    Photos
+                  </h3>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {runDetail.data.photos.map((photo) => (
+                      <div key={photo.id} style={{ width: 96, height: 70, borderRadius: 8, background: 'var(--p-soft)', overflow: 'hidden' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={proxyPath(photo.thumb_url)} alt="Chore photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
         </div>

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useMediaQuery } from '@mantine/hooks'
 import { refOf, type ThreadSummary } from '@/v2/hooks/useChat'
 import { Icon } from '../parent/Icon'
 
@@ -21,6 +22,7 @@ export function ThreadList({
 }) {
   const [filter, setFilter] = useState<FilterTab>('all')
   const [search, setSearch] = useState('')
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
 
   const filtered = useMemo(() => {
     let result = threads
@@ -29,8 +31,8 @@ export function ThreadList({
     if (filter === 'chores') {
       result = result.filter(t => t.kind === 'chore')
     } else if (filter === 'notes') {
-      // Notes are chore threads where the last message contains a note indicator
-      result = result.filter(t => t.kind === 'chore' && t.last_text?.toLowerCase().includes('note:'))
+      // Notes are chore threads with has_note flag
+      result = result.filter(t => t.kind === 'chore' && t.has_note)
     } else if (filter === 'family') {
       result = result.filter(t => t.kind === 'family')
     }
@@ -49,7 +51,7 @@ export function ThreadList({
 
   const counts = useMemo(() => ({
     chores: threads.filter(t => t.kind === 'chore').length,
-    notes: threads.filter(t => t.kind === 'chore' && t.last_text?.toLowerCase().includes('note:')).length,
+    notes: threads.filter(t => t.kind === 'chore' && t.has_note).length,
     family: threads.filter(t => t.kind === 'family').length,
   }), [threads])
 
@@ -102,7 +104,7 @@ export function ThreadList({
                 cursor: 'pointer',
                 font: 'inherit',
                 fontSize: '13px',
-                transition: 'background-color 150ms ease-out, color 150ms ease-out',
+                transition: prefersReducedMotion ? 'none' : 'background-color 150ms ease-out, color 150ms ease-out',
               }}
             >
               {label}
@@ -115,7 +117,7 @@ export function ThreadList({
       <ul aria-label="Conversations" style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto', minHeight: 0 }}>
         {filtered.map((t) => {
           const key = `${t.kind}:${refOf(t)}`
-          const hasNote = t.last_text?.toLowerCase().includes('note:')
+          const hasNote = t.has_note
           return (
             <li key={t.id}>
               <button
@@ -125,7 +127,7 @@ export function ThreadList({
                 className="p-thread-row"
                 style={{
                   width: '100%', minHeight: 48, display: 'flex', flexWrap: 'nowrap', textAlign: 'left', cursor: 'pointer', padding: '10px 12px',
-                  border: '1.5px solid transparent', borderRadius: 12, background: selected === key ? 'var(--p-soft)' : 'var(--p-card)', color: 'inherit', font: 'inherit', alignItems: 'center', gap: 10, transition: 'background-color 150ms ease-out',
+                  border: '1.5px solid transparent', borderRadius: 12, background: selected === key ? 'var(--p-soft)' : 'var(--p-card)', color: 'inherit', font: 'inherit', alignItems: 'center', gap: 10, transition: prefersReducedMotion ? 'none' : 'background-color 150ms ease-out',
                 }}
                 onMouseEnter={(e) => {
                   if (selected !== key) (e.currentTarget).style.borderColor = 'var(--p-line)';
