@@ -1,13 +1,14 @@
 import type { ButtonHTMLAttributes, Ref } from "react";
+import { Icon } from "../parent/Icon";
 
 export type DeviceKind = "phone" | "console" | "tv" | "laptop" | "other";
 
 export const DEVICE_ICON: Record<DeviceKind, string> = {
-  phone: "📱",
-  console: "🎮",
-  tv: "📺",
-  laptop: "💻",
-  other: "🔌",
+  phone: "smartphone",
+  console: "controller",
+  tv: "tv",
+  laptop: "laptop",
+  other: "power",
 };
 
 const GUESS: [DeviceKind, RegExp][] = [
@@ -51,7 +52,7 @@ export function DevicePill({
   const label = `${name}, ${online ? "online" : "offline"}`;
   const body = (
     <>
-      <span aria-hidden="true">{DEVICE_ICON[kind]}</span>
+      <Icon name={DEVICE_ICON[kind]} label="" />
       {/* friendly short name; the full name stays in title and aria-label */}
       {shortName(name)}
     </>

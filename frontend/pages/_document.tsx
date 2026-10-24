@@ -7,6 +7,7 @@
 
 import { Html, Head, Main, NextScript } from 'next/document'
 import { ColorSchemeScript, mantineHtmlProps } from '@mantine/core';
+import { parent } from '../src/v2/fonts';
 
 /**
  * @description Custom Document component
@@ -14,7 +15,7 @@ import { ColorSchemeScript, mantineHtmlProps } from '@mantine/core';
  */
 export default function Document() {
   return (
-    <Html lang="en" {...mantineHtmlProps}>
+    <Html lang="en" className={parent.className} {...mantineHtmlProps}>
       <Head>
         <ColorSchemeScript defaultColorScheme="auto" localStorageKey="task4ce-color-scheme" />
         
