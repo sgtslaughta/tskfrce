@@ -46,7 +46,7 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
   const approve = useApproveChore()
   const sendBack = useSendBack()
   const decideRedemption = useDecideRedemption()
-  const items = inbox.data?.items ?? []
+  const items = useMemo(() => inbox.data?.items ?? [], [inbox.data?.items])
   const [filter, setFilter] = useState<FilterKind>('all')
 
   const filtered = useMemo(() => {
