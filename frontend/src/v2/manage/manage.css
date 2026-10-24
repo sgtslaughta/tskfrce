@@ -71,6 +71,14 @@
 
 /* Settings and Devices cards */
 .m-card { padding: 16px; display: grid; gap: 16px; }
+
+/* Override fridge styling for parent look */
+[data-look='parent'] .f-card { background: var(--p-card); color: var(--p-ink); border: 1px solid var(--p-line); box-shadow: none; }
+[data-look='parent'] .f-card :focus-visible { outline-color: var(--p-acc); }
+[data-look='parent'] .f-display { color: var(--p-ink); font-weight: 600; font-size: 20px; }
+[data-look='parent'] .f-title-row { color: var(--p-ink); }
+[data-look='parent'] .f-title-row h2, [data-look='parent'] .f-title-row h3 { color: var(--p-ink); }
+
 [data-look='parent'] .m-help { color: var(--p-sub); font-size: 12px; margin: 0; }
 [data-look='fridge'] .m-help { color: var(--f-sub); font-size: 12px; margin: 0; }
 [data-look='parent'] .m-info { padding: 12px 16px; color: var(--p-sub); font-size: 13px; }
