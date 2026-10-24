@@ -7,7 +7,13 @@ import { MantineProvider } from '@mantine/core'
 import { api } from '@/v2/api'
 import { ChatDock } from '@/v2/chat/ChatDock'
 import { openChat } from '@/v2/chat/dock'
-import { FridgeShell, NAV } from '@/v2/components/FridgeShell'
+
+jest.mock('@/v2/parent/useLook', () => ({
+  useLook: jest.fn(),
+}))
+jest.mock('@/v2/parent/ParentShell', () => ({
+  ParentShell: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+}))
 
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
@@ -79,10 +85,8 @@ describe('ChatDock', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
-  test('the top nav has no Chat link, the shell has the dock', async () => {
-    expect((NAV as readonly { label: string }[]).some((n) => n.label === 'Chat')).toBe(false)
-    wrap(<FridgeShell title="Today">x</FridgeShell>)
-    expect(screen.queryByRole('link', { name: /Chat/ })).toBeNull()
+  test('ChatDock mounts and shows unread count', async () => {
+    wrap(<ChatDock meId={1} />)
     expect(await screen.findByTestId('dock-unread')).toBeInTheDocument()
   })
 })

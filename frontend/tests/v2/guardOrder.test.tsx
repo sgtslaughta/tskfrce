@@ -18,9 +18,6 @@ jest.mock('@/contexts/UnifiedAuthContext', () => ({ useUnifiedAuth: jest.fn() })
 jest.mock('@/v2/parent/ParentShell', () => ({
   ParentShell: ({ children }: { children: ReactNode }) => <>{children}</>,
 }))
-jest.mock('@/v2/components/FridgeShell', () => ({
-  FridgeShell: ({ children }: { children: ReactNode }) => <>{children}</>,
-}))
 jest.mock('@/v2/components/RequireParent', () => ({
   RequireParent: ({ children }: { children: ReactNode }) => <>{children}</>,
   startSignOut: jest.fn(),

@@ -6,7 +6,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MantineProvider } from "@mantine/core";
 import { api } from "@/v2/api";
 import { ThreadView } from "@/v2/chat/ThreadView";
-import { FridgeShell } from "@/v2/components/FridgeShell";
 import { KidCard } from "@/v2/today/KidCard";
 import type { TodayKid } from "@/v2/types";
 

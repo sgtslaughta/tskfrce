@@ -32,23 +32,6 @@ jest.mock("@/v2/parent/ParentShell", () => ({
     </div>
   ),
 }));
-jest.mock("@/v2/components/FridgeShell", () => ({
-  FridgeShell: ({
-    title,
-    actions,
-    children,
-  }: {
-    title: string;
-    actions?: unknown;
-    children: unknown;
-  }) => (
-    <div>
-      <h1>{title as string}</h1>
-      {actions as never}
-      {children as never}
-    </div>
-  ),
-}));
 jest.mock("@/v2/parent/useLook", () => ({
   useLook: jest.fn(),
 }));
