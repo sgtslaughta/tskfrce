@@ -88,8 +88,8 @@
   align-items: center;
   justify-content: center;
   padding: 32px;
-  background: #f8f8f8;
-  color: #292928;
+  background: var(--p-bg);
+  color: var(--p-ink);
 }
 
 [data-look='parent'] .p-auth-form {
@@ -400,34 +400,28 @@
   }
 }
 
-/* Form side inherits parent tokens (respects dark mode) */
+/* Form side always uses light colors regardless of global dark mode (mockup 06) */
 [data-look='parent'] .p-auth-form-side {
-  background: var(--p-bg);
-  color: var(--p-ink);
+  background: #f8f8f8;
+  color: #292928;
 }
 
-/* Light mode form side colors */
-[data-look='parent']:not([data-mantine-color-scheme='dark']) .p-auth-form-side {
-  --p-bg: #f8f8f8;
-  --p-card: #ffffff;
-  --p-ink: #292928;
-  --p-sub: #5f5f5c;
-  --p-line: #e4e4e1;
-  --p-acc: #c3f832;
-  --p-redbg: #fde3e0;
-  --p-red: #8f1d13;
+/* CRITICAL: Override parent dark tokens on login form in dark mode */
+[data-mantine-color-scheme='dark'] .p-auth-form-side {
+  background: #f8f8f8 !important;
+  color: #292928 !important;
 }
 
-/* Dark mode form side colors */
-[data-look='parent'][data-mantine-color-scheme='dark'] .p-auth-form-side {
-  --p-bg: #1c1c1b;
-  --p-card: #292928;
-  --p-ink: #f4f4f2;
-  --p-sub: #a8a8a4;
-  --p-line: #3d3d3b;
-  --p-acc: #c3f832;
-  --p-redbg: #3e2422;
-  --p-red: #ff9b8f;
+[data-mantine-color-scheme='dark'] .p-auth-form-side,
+[data-mantine-color-scheme='dark'] .p-auth-form-side * {
+  --p-bg: #f8f8f8 !important;
+  --p-card: #ffffff !important;
+  --p-ink: #292928 !important;
+  --p-sub: #5f5f5c !important;
+  --p-line: #e4e4e1 !important;
+  --p-acc: #c3f832 !important;
+  --p-redbg: #fde3e0 !important;
+  --p-red: #8f1d13 !important;
 }
 
 /* Focus lives on the field wrapper (mockup 06 .fi.focus), not the bare input */
