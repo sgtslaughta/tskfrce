@@ -11,8 +11,9 @@
 }
 
 [data-look='parent'] .p-auth-brand {
-  background: var(--p-ink);
-  color: var(--p-tfg);
+  /* fixed dark panel in both modes (mockup 06) */
+  background: #292928;
+  color: #f4f4f2;
   padding: 36px 40px 44px;
   display: flex;
   flex-direction: column;
@@ -49,7 +50,7 @@
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 2px solid var(--p-tfg);
+  border: 2px solid #f4f4f2;
   display: grid;
   place-items: center;
   font-style: normal;
@@ -61,21 +62,21 @@
   margin: auto 0 14px;
   letter-spacing: -0.02em;
   max-width: 380px;
-  color: var(--p-tfg);
+  color: #f4f4f2;
 }
 
 [data-look='parent'] .p-auth-headline em {
   font-style: normal;
   white-space: nowrap;
   background: var(--p-acc);
-  color: var(--p-ink);
+  color: #292928;
   padding: 0 8px;
   border-radius: 8px;
   display: inline-block;
 }
 
 [data-look='parent'] .p-auth-subtitle {
-  color: var(--p-sub);
+  color: #a8a8a4;
   max-width: 360px;
   margin: 0;
   font-size: 15px;
@@ -186,12 +187,18 @@
   width: 18px;
   height: 18px;
   border-radius: 6px;
-  background: var(--p-acc);
+  background: transparent;
+  border: 1.5px solid var(--p-sub);
   display: grid;
   place-items: center;
   color: var(--p-ink);
   font-style: normal;
-  border: 1px solid transparent;
+}
+
+[data-look='parent'] .p-auth-checkbox input:checked ~ i {
+  background: var(--p-acc);
+  border-color: var(--p-acc);
+  color: #292928;
 }
 
 [data-look='parent'] .p-auth-checkbox input:checked ~ i .ms {

@@ -19,7 +19,7 @@ interface IconProps {
 export const Icon: React.FC<IconProps> = ({
   name,
   fill = false,
-  size = 24,
+  size,
   label,
   className = ''
 }) => {
@@ -28,7 +28,7 @@ export const Icon: React.FC<IconProps> = ({
   return (
     <span
       className={classes}
-      style={{ fontSize: size }}
+      style={size ? { fontSize: size } : undefined}
       aria-hidden={!label}
       role={label ? 'img' : undefined}
       aria-label={label}
