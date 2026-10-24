@@ -14,7 +14,7 @@ export function AuthBrand() {
       <h2 className="p-auth-headline">
         Chores done. <em>Wi‑Fi on.</em>
       </h2>
-      <p className="p-auth-subtitle">Your family's chore chart, wired to the home network.</p>
+      <p className="p-auth-subtitle">Your family&apos;s chore chart, wired to the home network.</p>
     </div>
   )
 }
