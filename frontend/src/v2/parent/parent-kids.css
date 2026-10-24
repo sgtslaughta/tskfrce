@@ -82,3 +82,36 @@
 .p-kid-status {
   flex-shrink: 0;
 }
+
+.p-kid-expanded {
+  display: none;
+  width: 100%;
+  padding: 12px 0 0;
+  margin-top: 10px;
+  border-top: 1px solid var(--p-line);
+}
+
+.p-kid-card[data-selected="true"] .p-kid-expanded {
+  display: block;
+}
+
+.p-kid-facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  font-size: 11px;
+  color: var(--p-sub);
+  margin-top: 8px;
+}
+
+.p-kid-facts > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.p-kid-facts b {
+  display: block;
+  font-size: 12.5px;
+  color: var(--p-ink);
+  margin-top: 2px;
+}

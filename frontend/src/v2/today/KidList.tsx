@@ -51,6 +51,29 @@ export function KidList({ onSelectKid, selectedKid }: { onSelectKid: (kid: Today
                     </div>
                   </div>
                   <div className="p-kid-status">{stateChip(kid)}</div>
+                  {selectedKid?.id === kid.id && kid.progress && (
+                    <div className="p-kid-expanded">
+                      <div className="p-meter-bar" style={{ width: `${(kid.done ?? 0) / (kid.total ?? 1) * 100}%` }} />
+                      <div className="p-kid-facts">
+                        <div>
+                          <span>Points</span>
+                          <b>{kid.progress.points}</b>
+                        </div>
+                        <div>
+                          <span>Streak</span>
+                          <b>{kid.progress.streak || 0} days</b>
+                        </div>
+                        <div>
+                          <span>Next reward</span>
+                          <b>{kid.progress.next_reward_points} pts</b>
+                        </div>
+                        <div>
+                          <span>Locks at</span>
+                          <b>{kid.progress.locked_until || '—'}</b>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </button>
               ))}
             </div>
