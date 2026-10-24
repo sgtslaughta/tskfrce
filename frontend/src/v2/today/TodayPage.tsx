@@ -6,6 +6,8 @@ import { LoadError, LoadingCards } from "../components/States";
 import { StickerCard } from "../components/StickerCard";
 import { useToday } from "../hooks/useToday";
 import { KidList } from "./KidList";
+import { ChoreRow } from "./ChoreRow";
+import { ChatColumn } from "./ChatColumn";
 import type { TodayKid, TodayChore } from "../types";
 
 const dayName = (iso?: string) =>
@@ -46,58 +48,71 @@ export function TodayPage() {
       )}
       {data && kid && (
         <div className="p-today-detail">
-          <h2>{kid.name}&apos;s day</h2>
+          <div className="p-open-header">
+            <h2>{kid.name}&apos;s day</h2>
+            <div className="p-open-actions">
+              <Link href={`/kid?as=${kid.id}`} className="p-btn">
+                View as kid
+              </Link>
+              <Link href={`/kids?section=chores&kid=${kid.id}`} className="p-btn">
+                Add chore
+              </Link>
+            </div>
+          </div>
+
+          {kid.total !== undefined && kid.total > 0 && (
+            <div className="p-open-progress">
+              <div className="p-meter-bar" style={{ width: `${(kid.done ?? 0) / kid.total * 100}%` }} />
+              <span>{kid.done ?? 0} of {kid.total} done</span>
+            </div>
+          )}
+
           <div className="p-chores-list">
             {kid.chores.map((chore) => (
-              <div
+              <ChoreRow
                 key={chore.id}
-                data-testid="chore-row"
-                data-open={openChoreId === chore.id}
-                className="p-chore-row"
-              >
-                <button
-                  className="p-chore-header"
-                  onClick={() =>
-                    setOpenChoreId(
-                      openChoreId === chore.id ? null : chore.id
-                    )
-                  }
-                  style={
-                    chore.state === "done"
-                      ? { textDecoration: "line-through" }
-                      : {}
-                  }
-                >
-                  <span>{chore.title}</span>
-                  {chore.state === "done" && (
-                    <span style={{ fontSize: "0.9em", color: "#666" }}>
-                      Done 4:30 PM
-                    </span>
-                  )}
-                </button>
-                {openChoreId === chore.id && (
-                  <div className="p-chore-detail">
-                    <button onClick={() => setChatOpen(!chatOpen)}>
-                      Open chat
-                    </button>
-                    {chatOpen && (
-                      <div
-                        data-testid="chat-column"
-                        className="p-chat-column"
-                      >
-                        <button
-                          onClick={() => setChatOpen(false)}
-                          aria-label="Close chat"
-                        >
-                          Close
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                chore={chore}
+                isOpen={openChoreId === chore.id}
+                onToggle={() =>
+                  setOpenChoreId(
+                    openChoreId === chore.id ? null : chore.id
+                  )
+                }
+                onOpenChat={() => setChatOpen(!chatOpen)}
+              />
             ))}
           </div>
+
+          {openChoreId && (
+            <div className="p-chore-detail">
+              {chatOpen && (
+                <ChatColumn runId={openChoreId} onClose={() => setChatOpen(false)} />
+              )}
+            </div>
+          )}
+
+          {kid.progress && (
+            <div className="p-summary-strip" data-testid="summary-strip">
+              <div className="p-summary-item">
+                <span className="p-summary-label">Status</span>
+                <span className="p-summary-value">{kid.online_all ? "Online" : "Offline"}</span>
+              </div>
+              <div className="p-summary-item">
+                <span className="p-summary-label">Today</span>
+                <span className="p-summary-value">{kid.done ?? 0}/{kid.total ?? 0}</span>
+              </div>
+              <div className="p-summary-item">
+                <span className="p-summary-label">Earned</span>
+                <span className="p-summary-value">{kid.progress.xp}</span>
+              </div>
+              {kid.last_active && (
+                <div className="p-summary-item">
+                  <span className="p-summary-label">Last active</span>
+                  <span className="p-summary-value">{new Date(kid.last_active).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </ParentShell>

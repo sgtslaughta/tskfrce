@@ -112,11 +112,13 @@ describe('TodayPage', () => {
     expect(screen.getByRole('tab', { name: /needs you/i })).toBeInTheDocument()
   })
 
-  test('selecting a kid shows <Kid>\'s day', async () => {
+  test('selecting a kid shows <Kid>\'s day with View as kid and Add chore buttons', async () => {
     wrap(<TodayPage />)
     const kidButton = await screen.findByRole('button', { name: /kid1/i })
     await userEvent.click(kidButton)
     expect(await screen.findByText(/kid1.*s day/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /view as kid/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /add chore/i })).toBeInTheDocument()
   })
 
   test('chore rows start collapsed', async () => {
@@ -149,7 +151,7 @@ describe('TodayPage', () => {
         {
           ...kid(1),
           chores: [
-            { id: 11, title: 'Dishes', points: 10, state: 'done', due_time: null },
+            { id: 11, title: 'Dishes', points: 10, state: 'done', due_time: null, done_at: '2026-10-24T16:30:00Z' },
           ],
         },
       ],
@@ -163,6 +165,22 @@ describe('TodayPage', () => {
     const choreButton = await screen.findByRole('button', { name: /dishes/i })
     expect(choreButton).toHaveStyle('textDecoration: line-through')
     expect(await screen.findByText(/done \d+:\d+ [ap]m/i)).toBeInTheDocument()
+  })
+
+  test('progress meter shows chores done and total', async () => {
+    wrap(<TodayPage />)
+    await screen.findByRole('button', { name: /kid1/i })
+    const progressText = await screen.findByText(/0 of 2 done/i)
+    expect(progressText).toBeInTheDocument()
+  })
+
+  test('summary strip shows status, today, earned, and last active info', async () => {
+    wrap(<TodayPage />)
+    await screen.findByRole('button', { name: /kid1/i })
+    const summaryStrip = await screen.findByTestId('summary-strip')
+    expect(summaryStrip).toBeInTheDocument()
+    const statusLabels = screen.getAllByText(/^status$/i)
+    expect(statusLabels.length).toBeGreaterThan(0)
   })
 
   test('chat column appears only after reply and closing it removes it', async () => {

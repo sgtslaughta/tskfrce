@@ -87,6 +87,7 @@ export interface TodayChore {
   points: number
   state: ChoreState
   due_time?: string | null
+  done_at?: string | null
   mode?: 'each' | 'race' | 'team'
   subtasks_done?: number
   subtasks_total?: number

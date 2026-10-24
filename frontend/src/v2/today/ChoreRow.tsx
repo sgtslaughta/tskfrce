@@ -10,10 +10,13 @@ const stateChip = (state: string) => {
   return null
 }
 
-const formatTime = (state: string) => {
+const formatTime = (state: string, done_at?: string | null) => {
   if (state !== 'done') return null
-  const now = new Date()
-  return `Done ${now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+  if (!done_at) {
+    const now = new Date()
+    return `Done ${now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
+  }
+  return `Done ${new Date(done_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`
 }
 
 export function ChoreRow({
@@ -44,13 +47,18 @@ export function ChoreRow({
           className="p-chore-checkbox"
         />
         <span className="p-chore-title">{chore.title}</span>
+        {isDone && chore.done_at && (
+          <span style={{ fontSize: '0.9em', color: '#666' }}>
+            {formatTime(chore.state, chore.done_at)}
+          </span>
+        )}
         <span className="p-chore-chip">{stateChip(chore.state)}</span>
         <span className="p-chore-points">{chore.points} pts</span>
       </button>
       {isOpen && (
         <div className="p-chore-detail">
           <div className="p-chore-done-time">
-            {isDone && formatTime(chore.state)}
+            {isDone && formatTime(chore.state, chore.done_at)}
           </div>
           <button
             className="p-btn"

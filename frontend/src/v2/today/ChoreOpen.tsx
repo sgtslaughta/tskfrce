@@ -5,6 +5,7 @@ import { useApproveChore, useSendBack } from '../hooks/useToday'
 import { Chip } from '../parent/Chip'
 import { Icon } from '../parent/Icon'
 import { withUndo } from '../notify'
+import { ChatColumn } from './ChatColumn'
 
 export function ChoreOpen({
   chore,
@@ -101,24 +102,6 @@ export function ChoreOpen({
       {chatOpen && (
         <ChatColumn runId={chore.id} onClose={() => onOpenChat()} />
       )}
-    </div>
-  )
-}
-
-function ChatColumn({ runId, onClose }: { runId: number; onClose: () => void }) {
-  return (
-    <div data-testid="chat-column" className="p-chat-column">
-      <div className="p-chat-header">
-        <span>Chat</span>
-        <button className="p-chat-close" onClick={onClose} aria-label="Close chat">
-          <Icon name="close" />
-        </button>
-      </div>
-      <div className="p-chat-messages" />
-      <div className="p-chat-input">
-        <textarea placeholder="Type a message..." />
-        <button>Send</button>
-      </div>
     </div>
   )
 }
