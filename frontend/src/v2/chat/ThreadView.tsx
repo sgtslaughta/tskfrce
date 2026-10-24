@@ -15,6 +15,7 @@ import {
   type ChatMessage,
   type ThreadKind,
 } from '@/v2/hooks/useChat'
+import { useRunDetail } from '@/v2/hooks/useChores'
 import { LoadError, LoadingCards } from '@/v2/components/States'
 import { toastFail } from '@/v2/notify'
 import { useAuthImage } from '@/v2/today/PhotoViewer'
@@ -116,6 +117,7 @@ export function ThreadView({
   const wideLay = useMediaQuery('(min-width: 1250px)')
 
   const data = thread.data
+  const runDetail = useRunDetail(data?.run_id ?? null)
   const latest = data?.messages ?? []
   const lastId = latest.length ? latest[latest.length - 1].id : 0
   const messages = [...older.filter((o) => !latest.some((l) => l.id === o.id)), ...latest]
@@ -170,24 +172,47 @@ export function ThreadView({
   // For parent look, render with header and optional side panel
   if (!kid) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 12 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 0 }}>
         {/* Header with title and chips */}
         {data && (
-          <div style={{ paddingBottom: 12, borderBottom: '1.5px solid var(--p-line)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 8 }}>
+          <div style={{ paddingBottom: 16, borderBottom: '1px solid var(--p-line)', display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 0 }}>
+            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--p-acc)', color: '#292928', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Icon name={kind === 'chore' ? 'task' : kind === 'family' ? 'group' : 'mail'} size={24} />
-              <h2 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600 }}>{data.title}</h2>
             </div>
-            <HeaderChips items={kind === 'chore' ? [{ icon: 'info', text: 'Chore thread' }] : []} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--p-ink)', marginBottom: 6 }}>{data.title}</h2>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                {kind === 'chore' && (
+                  <>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-soft)', border: '1px solid var(--p-line)', color: 'var(--p-ink)', whiteSpace: 'nowrap' }}>
+                      <Icon name="category" size={15} />
+                      Chore
+                    </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-lav)', border: '1px solid var(--p-lav)', color: 'var(--p-lavink)', whiteSpace: 'nowrap' }}>
+                      <Icon name="hourglass_top" size={15} />
+                      Needs OK
+                    </span>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-soft)', border: '1px solid var(--p-line)', color: 'var(--p-ink)', whiteSpace: 'nowrap' }}>
+                      <Icon name="stars" size={15} />
+                      30 pts
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
             {kind === 'chore' && (
-              <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                <Button size="sm" variant="filled">
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                <Button size="sm" variant="filled" color="var(--p-acc)">
                   <Icon name="check" size={16} />
                   Approve
                 </Button>
                 <Button size="sm" variant="default">
                   <Icon name="undo" size={16} />
                   Send back
+                </Button>
+                <Button size="sm" variant="default" style={{ color: 'var(--p-red)' }}>
+                  <Icon name="remove_circle" size={16} />
+                  Deduct
                 </Button>
               </div>
             )}
@@ -267,10 +292,48 @@ export function ThreadView({
           </section>
 
           {/* Side panel for chore threads (hidden on narrow screens) */}
-          {wideLay && kind === 'chore' && (
-            <div style={{ width: 240, borderLeft: '1.5px solid var(--p-line)', paddingLeft: 12, overflowY: 'auto' }}>
-              <h3 style={{ fontSize: '0.9rem', fontWeight: 600, marginBottom: 8 }}>Steps</h3>
-              <p style={{ fontSize: '0.85rem', color: 'var(--p-sub)' }}>Side panel content</p>
+          {wideLay && kind === 'chore' && runDetail.data && (
+            <div style={{ width: 250, borderLeft: '1.5px solid var(--p-line)', paddingLeft: 12, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
+              {/* Steps card */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 8px 0', color: 'var(--p-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <Icon name="checklist" size={18} />
+                  Steps
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 0, fontSize: '13px', color: 'var(--p-sub)' }}>
+                  {runDetail.data.steps.map((step) => (
+                    <div key={step.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderTop: '1.5px solid var(--p-line)' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <Icon name={step.done ? 'check_circle' : 'radio_button_unchecked'} size={16} />
+                        {step.title}
+                      </span>
+                      {step.done_at && (
+                        <span style={{ fontSize: '12px' }}>
+                          {new Date(step.done_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Photos card */}
+              {runDetail.data.photos.length > 0 && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 8px 0', color: 'var(--p-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <Icon name="photo_library" size={18} />
+                    Photos
+                  </h3>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                    {runDetail.data.photos.map((photo) => (
+                      <div key={photo.id} style={{ width: 96, height: 70, borderRadius: 8, background: 'var(--p-soft)', overflow: 'hidden' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={proxyPath(photo.thumb_url)} alt="Chore photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

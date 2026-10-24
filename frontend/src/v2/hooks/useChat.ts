@@ -14,6 +14,7 @@ export interface ThreadSummary {
   last_author?: string | null
   /** one-line text of the newest message; "Photo" for a photo-only one */
   last_text?: string | null
+  has_note?: boolean
 }
 
 export interface ChatMessage {
@@ -32,6 +33,7 @@ export interface ThreadPage {
   title: string
   messages: ChatMessage[]
   has_more: boolean
+  run_id?: number
 }
 
 /** URL ref for a thread: chore task id, kid id, or "family". */
