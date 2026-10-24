@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button, Group } from '@mantine/core'
 import { useLook } from '../parent/useLook'
 import styles from './wizard.module.css'
@@ -33,7 +33,11 @@ export function WizardFrame({
   step, children, title, subtitle, onBack, onNext, nextLabel = 'Next', onSkip, onStepClick, busy
 }: Props) {
   useLook('parent')
-  const [minToOpen] = useState(step) // min step that's been reached
+  const [maxStepReached, setMaxStepReached] = useState(step)
+
+  useEffect(() => {
+    if (step > maxStepReached) setMaxStepReached(step)
+  }, [step, maxStepReached])
 
   const estimatedMinLeft = Math.max(1, 8 - step)
 
@@ -49,7 +53,7 @@ export function WizardFrame({
           {STEPS.map((s, i) => {
             const isDone = i + 1 < step
             const isActive = i + 1 === step
-            const canOpen = i + 1 <= minToOpen
+            const canOpen = i + 1 <= maxStepReached
             return (
               <div
                 key={s.num}

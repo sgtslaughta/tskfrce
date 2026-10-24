@@ -185,8 +185,7 @@ export default function SetupPage() {
           onSkip={step >= 3 && step <= LAST ? () => go(step + 1) : undefined}
           onStepClick={(n) => {
             if (n > step && n > step + 1) return // Can't skip ahead multiple steps
-            if (n < step) go(n)
-            else if (n === step) go(n)
+            go(n)
           }}
           busy={create.isPending || apply.isPending}
         >
