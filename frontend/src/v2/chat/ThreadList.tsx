@@ -127,7 +127,7 @@ export function ThreadList({
                   )}
                 </span>
                 {t.unread > 0 && (
-                  <span style={{ background: 'var(--p-tact)', color: 'var(--p-tbg)', padding: '2px 8px', borderRadius: 12, fontSize: '12px', fontWeight: 700, whiteSpace: 'nowrap' }} data-testid={`unread-${t.id}`} aria-label={`${t.unread} unread`}>
+                  <span style={{ background: 'var(--p-acc)', color: '#292928', padding: '2px 8px', borderRadius: 12, fontSize: '12px', fontWeight: 700, whiteSpace: 'nowrap' }} data-testid={`unread-${t.id}`} aria-label={`${t.unread} unread`}>
                     {t.unread}
                   </span>
                 )}

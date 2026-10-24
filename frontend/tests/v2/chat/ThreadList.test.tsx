@@ -148,4 +148,20 @@ describe('ThreadList', () => {
     expect(screen.getByTestId('unread-2')).toHaveTextContent('2')
     expect(screen.getByTestId('unread-3')).toHaveTextContent('1')
   })
+
+  it('unread badge has correct accent styling (--p-acc background with #292928 text)', () => {
+    render(
+      <ThreadList
+        threads={mockThreads}
+        selected={null}
+        onPick={() => {}}
+      />
+    )
+
+    const unreadBadge = screen.getByTestId('unread-2')
+    expect(unreadBadge).toHaveStyle({
+      background: 'var(--p-acc)',
+      color: '#292928',
+    })
+  })
 })
