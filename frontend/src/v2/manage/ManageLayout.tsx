@@ -9,6 +9,7 @@ export interface SectionDef<S extends string = string> {
   id: S
   label: string
   description?: string
+  icon?: string
 }
 export const SECTIONS: SectionDef<Section>[] = [
   { id: 'chores', label: 'Chores' },
@@ -50,12 +51,13 @@ export function ManageLayout<S extends string = Section>({
       ) : (
         <nav className="m-side" aria-label="Sections">
           {sections.map((s) => (
-            <Link key={s.id} href={`${path}?section=${s.id}`} aria-current={section === s.id ? 'page' : undefined}>
-              <div>
+            <Link key={s.id} href={`${path}?section=${s.id}`} aria-current={section === s.id ? 'page' : undefined} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              {s.icon && <span className="ms" style={{ fontSize: '20px', flexShrink: 0 }}>{s.icon}</span>}
+              <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontWeight: 500, fontSize: '14px' }}>{s.label}</div>
                 {s.description && <div className="m-meta">{s.description}</div>}
               </div>
-              {counts[s.id] !== undefined && <span className="m-n">{counts[s.id]}</span>}
+              {counts[s.id] !== undefined && <span className="m-n" style={{ flexShrink: 0 }}>{counts[s.id]}</span>}
             </Link>
           ))}
         </nav>

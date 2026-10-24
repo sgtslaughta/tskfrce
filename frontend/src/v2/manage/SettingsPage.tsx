@@ -13,11 +13,11 @@ import { toastFail, toastOk } from '@/v2/notify'
 
 type S = 'family' | 'hours' | 'look' | 'gifs' | 'parents'
 const SETTINGS_SECTIONS: SectionDef<S>[] = [
-  { id: 'family', label: 'Family', description: 'Name, time zone, points rules' },
-  { id: 'hours', label: 'Hours', description: 'School nights, weekends' },
-  { id: 'look', label: 'Appearance', description: 'Accent colour, dark mode' },
-  { id: 'gifs', label: 'GIFs', description: 'Chat GIF search' },
-  { id: 'parents', label: 'Parents', description: 'Invite and manage parents' },
+  { id: 'family', label: 'Family', description: 'Name, time zone, points rules', icon: 'home' },
+  { id: 'hours', label: 'Hours', description: 'School nights, weekends', icon: 'schedule' },
+  { id: 'look', label: 'Appearance', description: 'Accent colour, dark mode', icon: 'palette' },
+  { id: 'gifs', label: 'GIFs', description: 'Chat GIF search', icon: 'gif_box' },
+  { id: 'parents', label: 'Parents', description: 'Invite and manage parents', icon: 'supervisor_account' },
 ]
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
