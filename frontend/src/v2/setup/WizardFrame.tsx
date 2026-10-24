@@ -82,7 +82,7 @@ export function WizardFrame({
       <div className={styles.main}>
         {title && (
           <>
-            <div className={styles.eyebrow}>Step {step} of {STEPS.length}{step === 7 ? ' · optional' : ''}</div>
+            {step <= STEPS.length && <div className={styles.eyebrow}>Step {step} of {STEPS.length}{step === 7 ? ' · optional' : ''}</div>}
             <h2>{title}</h2>
             {subtitle && <div className={styles.s}>{subtitle}</div>}
           </>
