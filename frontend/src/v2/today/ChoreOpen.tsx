@@ -1,4 +1,7 @@
 import Link from 'next/link'
+import { useMediaQuery } from '@mantine/hooks'
+import { Drawer } from '@mantine/core'
+import { useState } from 'react'
 import type { TodayKid, TodayChore } from '../types'
 import { useRunDetail } from '../hooks/useChores'
 import { useApproveChore, useSendBack } from '../hooks/useToday'
@@ -21,10 +24,12 @@ export function ChoreOpen({
   const { data: runDetail } = useRunDetail(chore.id)
   const approve = useApproveChore()
   const sendBack = useSendBack()
+  const isMobile = useMediaQuery('(max-width: 768px)')
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   if (!runDetail) return null
 
-  const progressPercent = runDetail.steps.filter((s) => s.done).length / runDetail.steps.length * 100
+  const progressPercent = runDetail.steps.length > 0 ? runDetail.steps.filter((s) => s.done).length / runDetail.steps.length * 100 : 0
 
   return (
     <div className="p-chore-open">
@@ -99,8 +104,21 @@ export function ChoreOpen({
         </div>
       </div>
 
-      {chatOpen && (
-        <ChatColumn runId={chore.id} onClose={() => onOpenChat()} />
+      {isMobile ? (
+        <Drawer
+          opened={chatOpen}
+          onClose={() => onOpenChat()}
+          position="bottom"
+          size="58%"
+          title="Chat"
+          closeButtonProps={{ 'aria-label': 'Close chat' }}
+        >
+          <ChatColumn runId={chore.id} onClose={() => onOpenChat()} />
+        </Drawer>
+      ) : (
+        chatOpen && (
+          <ChatColumn runId={chore.id} onClose={() => onOpenChat()} />
+        )
       )}
     </div>
   )
