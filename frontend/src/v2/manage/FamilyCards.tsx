@@ -68,10 +68,18 @@ export function FamilyCard({ fam }: { fam: Family }) {
           />
           <TextInput
             type="time"
-            label="Reset time"
+            label="Day resets at"
             description="Chores start fresh at this time."
             value={val('reset_time')}
             onChange={(e) => set({ reset_time: e.currentTarget.value })}
+          />
+          <NumberInput
+            label="Early finish bonus cap"
+            min={0}
+            max={50}
+            allowDecimal={false}
+            value={val('early_bonus_cap')}
+            onChange={(v) => typeof v === 'number' && set({ early_bonus_cap: v })}
           />
           <Switch
             label="Block new devices until I assign them"
