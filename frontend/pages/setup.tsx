@@ -152,7 +152,7 @@ export default function SetupPage() {
           : [],
       )
     }
-    if (step === LAST) return void router.push('/')
+    if (step > LAST) return void router.push('/')
     if (step === 3 && kidDraft.trim()) return setTried(true)
     go(step + 1)
   }
@@ -177,12 +177,12 @@ export default function SetupPage() {
       <div className="f-shell" style={{ minHeight: '100vh' }}>
         <WizardFrame
           step={step}
-          title={step === LAST ? 'You\'re all set' : stepTitles[step as keyof typeof stepTitles].title}
-          subtitle={step === LAST ? finishInfo.counts : stepTitles[step as keyof typeof stepTitles].sub}
+          title={step > LAST ? 'You\'re all set' : stepTitles[step as keyof typeof stepTitles].title}
+          subtitle={step > LAST ? finishInfo.counts : stepTitles[step as keyof typeof stepTitles].sub}
           onBack={step > 2 ? () => go(step - 1) : undefined}
           onNext={next}
-          nextLabel={step === LAST ? 'Finish' : 'Next'}
-          onSkip={step >= 3 && step < LAST ? () => go(step + 1) : undefined}
+          nextLabel={step > LAST ? 'Finish' : 'Next'}
+          onSkip={step >= 3 && step <= LAST ? () => go(step + 1) : undefined}
           onStepClick={(n) => {
             if (n > step && n > step + 1) return // Can't skip ahead multiple steps
             if (n < step) go(n)
@@ -204,7 +204,7 @@ export default function SetupPage() {
           {step === 5 && <StepChores selected={chores} hasKids={kids.length > 0} onChange={setChores} />}
           {step === 6 && <StepWindows bedtime={bedtime} hasKids={kids.length > 0} onChange={setBedtime} />}
           {step === 7 && <StepRemote />}
-          {step === LAST && <StepFinish kids={kids.length} chores={chores.length} devices={0} schedules={0} />}
+          {step > LAST && <StepFinish kids={kids.length} chores={chores.length} devices={0} schedules={0} />}
           {err && <p role="alert">Something went wrong: {err} Try again.</p>}
         </WizardFrame>
       </div>

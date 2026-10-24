@@ -60,7 +60,7 @@ export function WizardFrame({
                 aria-current={isActive ? 'step' : undefined}
                 aria-label={`Step ${s.num}, ${s.title}`}
               >
-                <span className={styles.dot}>{isDone ? '✓' : s.num}</span>
+                <span className={styles.dot}>{isDone ? <span className="ms" aria-hidden="true">check</span> : s.num}</span>
                 <div>
                   {s.title}
                   <small>{s.sub}</small>
@@ -90,7 +90,7 @@ export function WizardFrame({
         {children}
         <Group mt="lg" justify="space-between" wrap="wrap" className={styles.nav}>
           {onBack ? (
-            <Button variant="subtle" onClick={onBack}>
+            <Button variant="subtle" onClick={onBack} leftSection={<span className="ms" aria-hidden="true">arrow_back</span>}>
               Back
             </Button>
           ) : (
@@ -102,7 +102,7 @@ export function WizardFrame({
                 Skip
               </Button>
             )}
-            <Button onClick={onNext} loading={busy}>
+            <Button onClick={onNext} loading={busy} leftSection={nextLabel === 'Finish' ? <span className="ms" aria-hidden="true">check</span> : <span className="ms" aria-hidden="true">arrow_forward</span>}>
               {nextLabel}
             </Button>
           </Group>
