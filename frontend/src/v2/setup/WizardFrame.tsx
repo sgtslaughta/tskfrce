@@ -1,3 +1,4 @@
+import { Icon } from '@/v2/parent/Icon'
 import type { ReactNode } from 'react'
 import { useState, useEffect } from 'react'
 import { Button, Group } from '@mantine/core'

@@ -28,6 +28,7 @@ export const Icon: React.FC<IconProps> = ({
   return (
     <span
       className={classes}
+      data-icon={name}
       style={size ? { fontSize: size } : undefined}
       aria-hidden={!label}
       role={label ? 'img' : undefined}
