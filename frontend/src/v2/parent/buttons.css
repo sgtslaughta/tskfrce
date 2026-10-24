@@ -1,0 +1,53 @@
+/**
+ * @fileoverview Button component styles
+ * Button variants and states for parent shell
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Buttons */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--p-line);
+  border-radius: 999px;
+  background: var(--p-card);
+  color: var(--p-ink);
+  font: 600 13px 'DM Sans', system-ui, sans-serif;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+[data-look='parent'] .p-btn:hover {
+  border-color: var(--p-ink);
+  background: var(--p-soft);
+}
+
+[data-look='parent'] .p-btn[data-variant='accent'] {
+  background: var(--p-acc);
+  border-color: var(--p-acc);
+  color: #292928;
+}
+
+[data-look='parent'] .p-btn[data-variant='accent']:hover {
+  opacity: 0.9;
+}
+
+[data-look='parent'] .p-btn[data-variant='red'] {
+  color: var(--p-red);
+  border-color: color-mix(in srgb, var(--p-red) 40%, var(--p-line));
+}
+
+[data-look='parent'] .p-btn[data-variant='red']:hover {
+  background: color-mix(in srgb, var(--p-red) 10%, transparent);
+}
+
+[data-look='parent'] .p-btn .ms {
+  font-size: 16px;
+}

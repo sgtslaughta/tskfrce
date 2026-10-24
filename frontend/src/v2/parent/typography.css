@@ -1,0 +1,155 @@
+/**
+ * @fileoverview Typography and utility component styles
+ * Typography, avatars, progress bars, empty states, and mobile tab bar
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Typography helpers */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-cap {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--p-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Progress bar and meter */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-meter-bar {
+  height: 8px;
+  border-radius: 8px;
+  background: var(--p-acc);
+  transition: width 0.3s ease;
+}
+
+[data-look='parent'] .p-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+[data-look='parent'] .p-progress .p-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 8px;
+  background: var(--p-soft);
+  border: 1px solid var(--p-line);
+  overflow: hidden;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Avatar and icon elements */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-av {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--p-ink);
+  color: var(--p-card);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex: none;
+}
+
+[data-look='parent'] .p-av-lg {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Empty and state messaging */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-empty,
+[data-look='parent'] .p-empty-state,
+[data-look='parent'] .p-error,
+[data-look='parent'] .p-skeleton {
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--p-sub);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+[data-look='parent'] .p-empty-state h2,
+[data-look='parent'] .p-error h2 {
+  color: var(--p-ink);
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Mobile tab bar */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-tabbar {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  padding: 8px 0;
+  border-top: 1px solid var(--p-line);
+  background: var(--p-card);
+  gap: 0;
+  order: 3;
+}
+
+[data-look='parent'] .p-tabbar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 12px;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--p-sub);
+  font-size: 10px;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  font: 500 10px 'DM Sans', system-ui, sans-serif;
+}
+
+[data-look='parent'] .p-tabbar-item[aria-current] {
+  color: var(--p-ink);
+  background: var(--p-soft);
+  border-radius: 12px 12px 0 0;
+}
+
+[data-look='parent'] .p-tabbar-item .ms {
+  font-size: 24px;
+}
+
+[data-look='parent'] .p-tabbar-label {
+  display: block;
+}
+
+[data-look='parent'] .p-tabbar-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--p-acc);
+  color: #292928;
+  font-size: 10px;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}

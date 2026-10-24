@@ -5,7 +5,23 @@
  * @version 1.0.0
  */
 
-import { saveLoginState, clearLoginState, getLoginState } from '../utils/cookies';
+import {
+  createSafeStorage,
+  storeTokens,
+  clearAllTokens,
+  SafeStorage
+} from './tokenStorage';
+import {
+  validateAccessToken,
+  canRefreshToken,
+  isAuthenticated as checkAuthenticated
+} from './tokenValidator';
+import { isRefreshTokenExpired } from './tokenConversion';
+import {
+  getAccessToken,
+  getRefreshToken,
+  getStoredRefreshExpiry
+} from './tokenStorage';
 
 /**
  * @description Token pair interface
@@ -60,24 +76,11 @@ export class TokenManager {
   private readonly REFRESH_BUFFER_TIME = 5 * 60 * 1000; // 5 minutes before expiry
   private readonly MAX_REFRESH_RETRIES = 3;
   private refreshRetryCount = 0;
+  private safeLocalStorage: SafeStorage;
 
-  /**
-   * @description Safe localStorage access that handles SSR
-   */
-  private safeLocalStorage = {
-    getItem: (key: string): string | null => {
-      if (typeof window === 'undefined') return null;
-      return localStorage.getItem(key);
-    },
-    setItem: (key: string, value: string): void => {
-      if (typeof window === 'undefined') return;
-      localStorage.setItem(key, value);
-    },
-    removeItem: (key: string): void => {
-      if (typeof window === 'undefined') return;
-      localStorage.removeItem(key);
-    }
-  };
+  private constructor() {
+    this.safeLocalStorage = createSafeStorage();
+  }
 
   /**
    * @description Get singleton instance
@@ -104,94 +107,30 @@ export class TokenManager {
    * @param userInfo - User information for login state
    */
   public setTokens(tokens: TokenPair, userInfo?: any): void {
-    try {
-      // Store tokens in localStorage (consider moving to secure httpOnly cookies in production)
-      this.safeLocalStorage.setItem('access_token', tokens.access_token);
-      this.safeLocalStorage.setItem('refresh_token', tokens.refresh_token);
-      
-      // Store expiration times
-      const accessExpiry = this.calculateTokenExpiry(tokens.access_token);
-      const refreshExpiry = tokens.refresh_expires_in 
-        ? Date.now() + (tokens.refresh_expires_in * 1000)
-        : null;
-      
-      this.safeLocalStorage.setItem('access_token_expiry', accessExpiry.getTime().toString());
-      if (refreshExpiry) {
-        this.safeLocalStorage.setItem('refresh_token_expiry', refreshExpiry.toString());
-      }
-
-      // Update login state if user info provided
-      if (userInfo) {
-        const loginState = getLoginState();
-        saveLoginState({
-          ...loginState,
-          ...userInfo,
-          token: tokens.access_token,
-          lastLogin: Date.now(),
-        });
-      }
-
-      // Schedule next refresh
-      this.scheduleTokenRefresh();
-      this.resetRefreshRetryCount();
-
-
-    } catch (error) {
-      console.error('❌ Failed to store tokens:', error);
-      throw new Error('Failed to store authentication tokens');
-    }
+    storeTokens(this.safeLocalStorage, tokens, userInfo);
+    this.scheduleTokenRefresh();
+    this.resetRefreshRetryCount();
   }
 
   /**
    * @description Get current access token
    */
   public getAccessToken(): string | null {
-    return this.safeLocalStorage.getItem('access_token');
+    return getAccessToken(this.safeLocalStorage);
   }
 
   /**
    * @description Get current refresh token
    */
   public getRefreshToken(): string | null {
-    return this.safeLocalStorage.getItem('refresh_token');
+    return getRefreshToken(this.safeLocalStorage);
   }
 
   /**
    * @description Validate current access token
    */
   public validateAccessToken(): TokenValidation {
-    const token = this.getAccessToken();
-    
-    if (!token) {
-      return {
-        isValid: false,
-        isExpired: true,
-        shouldRefresh: false
-      };
-    }
-
-    try {
-      const expiry = this.getTokenExpiry(token);
-      const now = new Date();
-      const timeUntilExpiry = expiry.getTime() - now.getTime();
-      const isExpired = timeUntilExpiry <= 0;
-      const shouldRefresh = timeUntilExpiry <= this.REFRESH_BUFFER_TIME;
-
-      return {
-        isValid: !isExpired,
-        isExpired,
-        expiresAt: expiry,
-        timeUntilExpiry: Math.max(0, timeUntilExpiry),
-        shouldRefresh: shouldRefresh && !isExpired
-      };
-    } catch (error) {
-      console.error('❌ Token validation failed:', error);
-      return {
-        isValid: false,
-        isExpired: true,
-        shouldRefresh: false
-      };
-    }
+    return validateAccessToken(this.safeLocalStorage);
   }
 
   /**
@@ -204,7 +143,7 @@ export class TokenManager {
     }
 
     this.isRefreshing = true;
-    
+
     const refreshToken = this.getRefreshToken();
     if (!refreshToken) {
       this.isRefreshing = false;
@@ -216,7 +155,8 @@ export class TokenManager {
     }
 
     // Check if refresh token is expired
-    if (this.isRefreshTokenExpired()) {
+    const refreshExpiry = getStoredRefreshExpiry(this.safeLocalStorage);
+    if (isRefreshTokenExpired(refreshExpiry)) {
       this.isRefreshing = false;
       this.emitEvent('expired');
       return {
@@ -228,7 +168,7 @@ export class TokenManager {
 
     this.refreshPromise = this.performTokenRefresh(refreshToken);
     const result = await this.refreshPromise;
-    
+
     this.isRefreshing = false;
     this.refreshPromise = null;
 
@@ -239,48 +179,34 @@ export class TokenManager {
    * @description Clear all tokens and auth state
    */
   public clearTokens(): void {
-    try {
-      // Clear localStorage
-      this.safeLocalStorage.removeItem('access_token');
-      this.safeLocalStorage.removeItem('refresh_token');
-      this.safeLocalStorage.removeItem('access_token_expiry');
-      this.safeLocalStorage.removeItem('refresh_token_expiry');
-      
-      // Clear login state cookies
-      clearLoginState();
-      
-      // Cancel any scheduled refresh
-      if (this.refreshTimeout) {
-        clearTimeout(this.refreshTimeout);
-        this.refreshTimeout = null;
-      }
+    clearAllTokens(this.safeLocalStorage);
 
-      // Reset state
-      this.isRefreshing = false;
-      this.refreshPromise = null;
-      this.resetRefreshRetryCount();
-
-
-      this.emitEvent('revoked');
-    } catch (error) {
-      console.error('❌ Failed to clear tokens:', error);
+    // Cancel any scheduled refresh
+    if (this.refreshTimeout) {
+      clearTimeout(this.refreshTimeout);
+      this.refreshTimeout = null;
     }
+
+    // Reset state
+    this.isRefreshing = false;
+    this.refreshPromise = null;
+    this.resetRefreshRetryCount();
+
+    this.emitEvent('revoked');
   }
 
   /**
    * @description Check if user has valid authentication
    */
   public isAuthenticated(): boolean {
-    const validation = this.validateAccessToken();
-    return validation.isValid || this.canRefreshToken();
+    return checkAuthenticated(this.safeLocalStorage);
   }
 
   /**
    * @description Check if refresh token is available and valid
    */
   public canRefreshToken(): boolean {
-    const refreshToken = this.getRefreshToken();
-    return !!refreshToken && !this.isRefreshTokenExpired();
+    return canRefreshToken(this.safeLocalStorage);
   }
 
   /**
@@ -327,49 +253,6 @@ export class TokenManager {
   }
 
   // Private methods
-
-  /**
-   * @description Calculate token expiry from JWT
-   */
-  private calculateTokenExpiry(token: string): Date {
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      return new Date(payload.exp * 1000);
-    } catch (error) {
-      throw new Error('Invalid token format');
-    }
-  }
-
-  /**
-   * @description Get token expiry from JWT or stored value
-   */
-  private getTokenExpiry(token: string): Date {
-    try {
-      // Try to get from stored expiry first (more reliable)
-      const storedExpiry = this.safeLocalStorage.getItem('access_token_expiry');
-      if (storedExpiry) {
-        return new Date(parseInt(storedExpiry));
-      }
-      
-      // Fallback to JWT parsing
-      return this.calculateTokenExpiry(token);
-    } catch (error) {
-      throw new Error('Cannot determine token expiry');
-    }
-  }
-
-  /**
-   * @description Check if refresh token is expired
-   */
-  private isRefreshTokenExpired(): boolean {
-    const refreshExpiry = this.safeLocalStorage.getItem('refresh_token_expiry');
-    if (!refreshExpiry) {
-      // If no expiry stored, assume it's still valid (depends on your backend)
-      return false;
-    }
-    
-    return Date.now() >= parseInt(refreshExpiry);
-  }
 
   /**
    * @description Perform actual token refresh API call

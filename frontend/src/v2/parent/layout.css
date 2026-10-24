@@ -1,0 +1,179 @@
+/**
+ * @fileoverview Main shell and layout structure
+ * Grid, content area, header, main, and list-detail layout
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Main shell layout and grid */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-shell {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  grid-template-rows: 1fr;
+  height: 100vh;
+  background: var(--p-bg);
+  color: var(--p-ink);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* the list + detail columns live inside .p-list-detail, so the shell stays rail + 1fr */
+[data-look='parent'] .p-shell.p-with-list {
+  grid-template-columns: 64px 1fr;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Content area with header and main */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-content {
+  display: flex;
+  flex-direction: column;
+  grid-column: 2;
+  overflow: hidden;
+}
+
+[data-look='parent'] .p-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--p-line);
+  background: var(--p-bg);
+  flex-wrap: wrap;
+}
+
+[data-look='parent'] .p-header h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--p-ink);
+  line-height: 1.2;
+}
+
+[data-look='parent'] .p-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  background: var(--p-bg);
+  position: relative;
+}
+
+/* Background grid for detail panel */
+[data-look='parent'] .p-main::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(var(--p-grid) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--p-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 10%, transparent 75%);
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 10%, transparent 75%);
+}
+
+[data-look='parent'] .p-main > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* List-detail layout */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-list-detail {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--p-bg);
+}
+
+[data-look='parent'] .p-list-column {
+  display: flex;
+  flex-direction: column;
+  background: var(--p-card);
+  border-right: 1px solid var(--p-line);
+  padding: 16px 12px;
+  gap: 8px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+[data-look='parent'] .p-detail-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 24px;
+}
+
+[data-look='parent'] .p-detail-column.p-grid {
+  position: relative;
+}
+
+[data-look='parent'] .p-detail-column.p-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(var(--p-grid) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--p-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 10%, transparent 75%);
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 10%, transparent 75%);
+}
+
+[data-look='parent'] .p-detail-column.p-grid > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mobile-only: detail-only view (when item is selected) */
+[data-look='parent'] .p-detail-only {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+[data-look='parent'] .p-back-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--p-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--p-line);
+  background: var(--p-card);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+[data-look='parent'] .p-back-link:hover {
+  background: var(--p-soft);
+}
+
+[data-look='parent'] .p-detail-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Mobile-only: list-only view (when no item is selected) */
+[data-look='parent'] .p-list-only {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+  background: var(--p-card);
+  overflow-y: auto;
+}

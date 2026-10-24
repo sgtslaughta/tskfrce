@@ -1,0 +1,126 @@
+/**
+ * @fileoverview Card and container component styles
+ * Cards, chips, popovers, and banners for parent shell
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Cards and containers */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-card {
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Chips */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex: none;
+}
+
+[data-look='parent'] .p-chip[data-tone='acc'] {
+  background: var(--p-acc);
+  color: #292928;
+}
+
+[data-look='parent'] .p-chip[data-tone='lav'] {
+  background: var(--p-lav);
+  color: var(--p-lavink);
+}
+
+[data-look='parent'] .p-chip[data-tone='red'] {
+  background: var(--p-redbg);
+  color: var(--p-red);
+}
+
+[data-look='parent'] .p-chip[data-tone='amb'] {
+  background: var(--p-amb);
+  color: var(--p-ambink);
+}
+
+[data-look='parent'] .p-chip[data-tone='grey'] {
+  background: var(--p-card);
+  color: var(--p-sub);
+  border: 1px solid var(--p-line);
+}
+
+[data-look='parent'] .p-chip .ms {
+  font-size: 12px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Header chips row */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-header-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+[data-look='parent'] .p-header-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--p-soft);
+  border: 1px solid var(--p-line);
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-header-chip .ms {
+  font-size: 14px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Popovers and menus */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-pop {
+  background: var(--p-card);
+  border: 2px solid var(--p-ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--p-acc);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Banners */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-banner {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid;
+  border-color: var(--p-sub);
+  background: transparent;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+[data-look='parent'] .p-banner-title {
+  font-weight: 600;
+  color: var(--p-ink);
+  margin-bottom: 4px;
+}
+
+[data-look='parent'] .p-banner-body {
+  color: var(--p-sub);
+}
