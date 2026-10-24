@@ -1,8 +1,7 @@
 """Add dismissed_tips table for tip tracking."""
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "g9c0d1e2f3g4"

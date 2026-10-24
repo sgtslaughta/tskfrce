@@ -1,9 +1,9 @@
 """Tests for the tips API."""
 
-import pytest
 
 from app.models.tips import DismissedTip
 from app.models.user import UserRole
+
 from tests.conftest import _headers, _make_user
 
 
