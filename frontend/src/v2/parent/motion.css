@@ -1,10 +1,12 @@
 /**
  * @fileoverview Motion layer for parent UI
  * Transitions and animations with reduced-motion support
+ * Duration tokens: --dur-1: 150ms, --dur-2: 250ms
+ * Easing: --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94)
  */
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/* Chore row expand/collapse */
+/* Chore row transitions */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 [data-look='parent'] .p-chore-row {
@@ -12,157 +14,24 @@
               border-color var(--dur-1) var(--ease-out);
 }
 
-[data-look='parent'] .p-chore-details {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height var(--dur-2) var(--ease-out),
-              padding var(--dur-2) var(--ease-out),
-              opacity var(--dur-1) var(--ease-out);
-  opacity: 0;
-}
-
-[data-look='parent'] .p-chore-row[data-expanded='true'] .p-chore-details {
-  max-height: 500px;
-  opacity: 1;
-  padding: 12px 0;
+[data-look='parent'] .p-chore-header {
+  transition: background var(--dur-1) var(--ease-out);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/* List-detail pane changes */
+/* List-detail panel transitions */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-[data-look='parent'] .p-detail-pane {
+[data-look='parent'] .p-detail-panel {
   transition: opacity var(--dur-1) var(--ease-out),
               transform var(--dur-1) var(--ease-out);
-  opacity: 1;
-  transform: translateX(0);
-}
-
-[data-look='parent'] .p-detail-pane[data-hidden='true'] {
-  opacity: 0;
-  transform: translateX(8px);
-  pointer-events: none;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/* Toasts in/out */
+/* Tabbar item transitions */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-[data-look='parent'] .p-toast {
-  animation: slideInUp var(--dur-2) var(--ease-out);
-}
-
-[data-look='parent'] .p-toast[data-exiting='true'] {
-  animation: slideOutDown var(--dur-1) var(--ease-out);
-}
-
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideOutDown {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── */
-/* Bell panel */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
-[data-look='parent'] .p-bell-panel {
-  transition: opacity var(--dur-1) var(--ease-out),
-              transform var(--dur-1) var(--ease-out),
-              visibility var(--dur-1) var(--ease-out);
-  opacity: 1;
-  transform: scale(1);
-  transform-origin: top right;
-  visibility: visible;
-}
-
-[data-look='parent'] .p-bell-panel[data-hidden='true'] {
-  opacity: 0;
-  transform: scale(0.95);
-  visibility: hidden;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── */
-/* Sheets/modals */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
-[data-look='parent'] .p-modal-overlay {
-  animation: fadeIn var(--dur-1) var(--ease-out);
-}
-
-[data-look='parent'] .p-modal-overlay[data-exiting='true'] {
-  animation: fadeOut var(--dur-1) var(--ease-out);
-}
-
-[data-look='parent'] .p-modal-content {
-  animation: slideUpModal var(--dur-2) var(--ease-out);
-}
-
-[data-look='parent'] .p-modal-overlay[data-exiting='true'] .p-modal-content {
-  animation: slideDownModal var(--dur-1) var(--ease-out);
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes slideUpModal {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes slideDownModal {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateY(16px);
-  }
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── */
-/* Tab bar */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
-[data-look='parent'] .p-tab-item {
+[data-look='parent'] .p-tabbar-item {
   transition: background-color var(--dur-1) var(--ease-out),
               color var(--dur-1) var(--ease-out);
 }
