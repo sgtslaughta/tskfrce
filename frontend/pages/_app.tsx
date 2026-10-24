@@ -10,6 +10,7 @@ import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@mantine/dates/styles.css';
 import 'material-symbols/rounded.css';
+import '../src/v2/parent/icons.css';
 import '../src/styles/mantine-fixes.css';
 import '../src/v2/fridge.css';
 import '../src/v2/parent/parent-tokens.css';
