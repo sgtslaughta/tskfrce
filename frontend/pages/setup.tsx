@@ -15,6 +15,7 @@ import { StepDevices } from '@/v2/setup/StepDevices'
 import { StepChores } from '@/v2/setup/StepChores'
 import { StepWindows } from '@/v2/setup/StepWindows'
 import { StepRemote } from '@/v2/setup/StepRemote'
+import { StepFinish } from '@/v2/setup/StepFinish'
 
 const LAST = 7
 
@@ -158,16 +159,35 @@ export default function SetupPage() {
 
   const err = (create.error && !conflict ? create.error.message : null) ?? apply.error?.message
 
+  const stepTitles = {
+    1: { title: 'Make your parent account', sub: "You'll use this to log in. You can invite another parent later." },
+    2: { title: 'Your family', sub: 'Shown on the kids\' screens and in notifications.' },
+    3: { title: 'Add your kids', sub: 'Add each child. You can add more later from Kids & chores.' },
+    4: { title: 'Pick some starter chores', sub: 'Tap to choose. Everything can be changed later.' },
+    5: { title: 'Whose devices are these?', sub: 'Devices show up as the home box sees them on your Wi-Fi. Tap a kid to give it to them, or mark it Guest so it\'s never blocked.' },
+    6: { title: 'When can devices be online?', sub: 'A starting schedule. Add holidays, summer and per-kid hours later in Settings.' },
+    7: { title: 'Reach it from anywhere', sub: 'Approve chores when you\'re not home, using Tailscale (free, private).' },
+  } as const
+
+  const finishInfo = { counts: `${kids.length} kids, ${chores.length} chores, 0 devices, 0 schedules` }
+
   return (
     <>
       <Head><title>Set up t@sk4ce</title></Head>
       <div className="f-shell" style={{ minHeight: '100vh' }}>
         <WizardFrame
           step={step}
+          title={step === LAST ? 'You\'re all set' : stepTitles[step as keyof typeof stepTitles].title}
+          subtitle={step === LAST ? finishInfo.counts : stepTitles[step as keyof typeof stepTitles].sub}
           onBack={step > 2 ? () => go(step - 1) : undefined}
           onNext={next}
           nextLabel={step === LAST ? 'Finish' : 'Next'}
           onSkip={step >= 3 && step < LAST ? () => go(step + 1) : undefined}
+          onStepClick={(n) => {
+            if (n > step && n > step + 1) return // Can't skip ahead multiple steps
+            if (n < step) go(n)
+            else if (n === step) go(n)
+          }}
           busy={create.isPending || apply.isPending}
         >
           {step === 1 && (
@@ -184,6 +204,7 @@ export default function SetupPage() {
           {step === 5 && <StepChores selected={chores} hasKids={kids.length > 0} onChange={setChores} />}
           {step === 6 && <StepWindows bedtime={bedtime} hasKids={kids.length > 0} onChange={setBedtime} />}
           {step === 7 && <StepRemote />}
+          {step === LAST && <StepFinish kids={kids.length} chores={chores.length} devices={0} schedules={0} />}
           {err && <p role="alert">Something went wrong: {err} Try again.</p>}
         </WizardFrame>
       </div>
