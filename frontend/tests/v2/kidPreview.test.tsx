@@ -55,7 +55,7 @@ describe('parent view-as-kid', () => {
   test('shows banner, loads with asKid, blocks mark-done', async () => {
     renderKid()
     expect(await screen.findByText('Dishes')).toBeInTheDocument()
-    expect(await screen.findByText('Viewing as Ana (preview)')).toBeInTheDocument()
+    expect(await screen.findByText(/Viewing as Ana · preview/)).toBeInTheDocument()
     expect(apiMock).toHaveBeenCalledWith('/kid/today', { asKid: 3 })
     expect(apiMock.mock.calls.some((c) => c[1]?.kid)).toBe(false)
     await userEvent.click(screen.getByRole('button', { name: /done/i }))
@@ -71,6 +71,12 @@ describe('parent view-as-kid', () => {
     renderKid()
     await userEvent.click(await screen.findByRole('button', { name: 'Back to parent' }))
     expect(push).toHaveBeenCalledWith('/kids')
+  })
+
+  test('preview bar has visibility icon and dark background', async () => {
+    renderKid()
+    const previewBar = await screen.findByRole('status')
+    expect(previewBar).toHaveStyle('backgroundColor: #292928')
   })
 
   test('non-parent ignores ?as and shows the normal kid flow', async () => {
