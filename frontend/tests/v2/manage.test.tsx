@@ -323,25 +323,6 @@ describe('settings', () => {
     expect(screen.getByText('08:00-09:00')).toBeInTheDocument()
   })
 
-  test('PATCH sends only changed fields', async () => {
-    mockRouter.query = { section: 'screen' }
-    render(wrap(<SettingsPage />))
-    await userEvent.click(await screen.findByRole('switch', { name: 'Kids can spend points on screen time' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
-    await waitFor(() =>
-      expect(calls('PATCH')[0]).toEqual(['/family', { method: 'PATCH', body: { points_unlock_early: true } }]),
-    )
-  })
-
-  test('saves screen_time_price', async () => {
-    mockRouter.query = { section: 'screen' }
-    render(wrap(<SettingsPage />))
-    const price = await screen.findByLabelText('Screen time price (points per 15 min)')
-    await userEvent.clear(price)
-    await userEvent.type(price, '30')
-    await userEvent.click(screen.getByRole('button', { name: 'Save settings' }))
-    await waitFor(() =>
-      expect(calls('PATCH')[0]).toEqual(['/family', { method: 'PATCH', body: { screen_time_price: 30 } }]),
-    )
-  })
+  // Screen time section removed from SettingsPage (moved to RewardsPages in Task 7)
+  // These tests are no longer relevant
 })
