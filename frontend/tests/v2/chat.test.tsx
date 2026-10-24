@@ -6,8 +6,10 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MantineProvider } from "@mantine/core";
 import { api } from "@/v2/api";
 import { ThreadView } from "@/v2/chat/ThreadView";
+import { ThreadList } from "@/v2/chat/ThreadList";
 import { KidCard } from "@/v2/today/KidCard";
 import type { TodayKid } from "@/v2/types";
+import * as mantineHooks from "@mantine/hooks";
 
 jest.mock("@/v2/api", () => ({ api: jest.fn() }));
 jest.mock("@mantine/notifications", () => ({ notifications: { show: jest.fn() } }));
@@ -31,6 +33,8 @@ beforeEach(() => {
     if (p === "/chat/threads") return threads;
     if (p.startsWith("/chat/threads/private/3?before=")) return { ...page, messages: [msg(1)], has_more: false };
     if (p.startsWith("/chat/threads/private/")) return page;
+    if (p.startsWith("/chat/threads/chore/3?before=")) return { ...page, kind: "chore", messages: [msg(1)], has_more: false };
+    if (p.startsWith("/chat/threads/chore/")) return { ...page, kind: "chore", title: "Chore task" };
     if (p.endsWith("/messages")) return msg(99, { author_id: 1 });
     if (init?.method === "POST") return { ok: true };
     return undefined;
@@ -115,4 +119,74 @@ test("Today chat box invites you to say hi when nothing was said", async () => {
   wrap(<KidCard kid={kid} />);
   expect(await screen.findByText("Nothing yet. Say hi to Maya.")).toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Say hi to Maya" })).toBeInTheDocument();
+});
+
+describe("Chat page (parent restyle)", () => {
+  test("search filters threads", async () => {
+    const sampleThreads = [
+      { id: 1, kind: "private" as const, task_id: null, kid_id: 3, title: "Maya chat", unread: 0, last_message_at: "2020-01-01T10:00:00Z", last_author: "Maya", last_text: "hello" },
+      { id: 2, kind: "chore" as const, task_id: 5, kid_id: null, title: "Dishes", unread: 0, last_message_at: "2020-01-02T10:00:00Z", last_author: "Maya", last_text: "looks good" },
+      { id: 3, kind: "family" as const, task_id: null, kid_id: null, title: "Family", unread: 0, last_message_at: "2020-01-03T10:00:00Z", last_author: "Sam", last_text: "family chat" },
+    ];
+    render(
+      <MantineProvider>
+        <ThreadList threads={sampleThreads} selected={null} onPick={() => {}} />
+      </MantineProvider>,
+    );
+    const searchBox = screen.getByLabelText("Search threads") as HTMLInputElement;
+
+    // Verify all threads are visible initially
+    expect(screen.getByText("Maya chat")).toBeInTheDocument();
+    expect(screen.getByText("Dishes")).toBeInTheDocument();
+    expect(screen.getByText("Family")).toBeInTheDocument();
+
+    // Search by title
+    await userEvent.type(searchBox, "Dishes");
+    expect(screen.getByText("Dishes")).toBeInTheDocument();
+    expect(screen.queryByText("Maya chat")).toBeNull();
+    expect(screen.queryByText("Family")).toBeNull();
+
+    // Clear and search by last_text
+    await userEvent.clear(searchBox);
+    await userEvent.type(searchBox, "family chat");
+    expect(screen.getByText("Family")).toBeInTheDocument();
+    expect(screen.queryByText("Dishes")).toBeNull();
+  });
+
+  test("chore thread header shows approve when needs OK", async () => {
+    page.messages = [msg(1)];
+    page.kind = "chore";
+    wrap(<ThreadView kind="chore" refId="3" meId={1} />);
+
+    // Wait for Approve button to appear
+    const approveButton = await screen.findByRole("button", { name: /Approve/i });
+    expect(approveButton).toBeInTheDocument();
+
+    // Check for Send back button
+    const sendBackButton = screen.getByRole("button", { name: /Send back/i });
+    expect(sendBackButton).toBeInTheDocument();
+  });
+
+  test("side panel hidden below 1250px", async () => {
+    // Mock useMediaQuery to return false for wide layout
+    jest.spyOn(mantineHooks, "useMediaQuery").mockReturnValue(false);
+
+    page.messages = [msg(1)];
+    wrap(<ThreadView kind="chore" refId="3" meId={1} />);
+
+    // Wait for component to render
+    await waitFor(() => expect(screen.getByTestId("msg-other")).toBeInTheDocument());
+
+    // Check that side panel is not rendered
+    const sidePanelHeading = screen.queryByText("Steps");
+    expect(sidePanelHeading).toBeNull();
+
+    jest.restoreAllMocks();
+  });
+
+  test("day separator renders", async () => {
+    page.messages = [msg(1)];
+    view();
+    expect(await screen.findByTestId("day-sep")).toBeInTheDocument();
+  });
 });
