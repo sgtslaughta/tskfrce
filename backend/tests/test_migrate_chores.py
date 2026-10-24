@@ -378,7 +378,9 @@ def test_drop_legacy_keeps_what_parents_and_lock_see(tmp_path):
                 Device(mac=f"aa:bb:cc:dd:ee:0{i}", name=f"d{i}", status="assigned", owners=[kid])
             )
         db.commit()
+    # Migrate to head to ensure all schema columns exist (including accent) before taking snapshot
+    _alembic(url, "head")
     before = _snapshot(url)
     assert before["needs_you"] and before["runs"] and before["blocked"]
-    _alembic(url, "head")
+    # Snapshot at final state should match
     assert _snapshot(url) == before
