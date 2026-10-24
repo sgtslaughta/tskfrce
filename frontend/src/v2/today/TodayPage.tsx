@@ -1,15 +1,15 @@
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/router";
 import { ParentShell } from "../parent/ParentShell";
 import { LoadError, LoadingCards } from "../components/States";
-import { Leaderboard } from "../components/Leaderboard";
-import { Sticker } from "../components/Sticker";
 import { StickerCard } from "../components/StickerCard";
-import { useLeaderboard } from "../hooks/useCommunity";
 import { useToday } from "../hooks/useToday";
-import { KidTabs } from "./KidTabs";
-import { NewDevicesBanner } from "./NewDevicesBanner";
-import { NeedsYou } from "./NeedsYou";
-import { PINsNudge } from "./PINsNudge";
+import { KidList } from "./KidList";
+import { ChoreRow } from "./ChoreRow";
+import { ChoreOpen } from "./ChoreOpen";
+import { ChatColumn } from "./ChatColumn";
+import type { TodayKid, TodayChore } from "../types";
 
 const dayName = (iso?: string) =>
   iso
@@ -18,33 +18,102 @@ const dayName = (iso?: string) =>
       })
     : "Today";
 
-/** Parent home: day, needs-you feed, new devices, one tab per kid. */
 export function TodayPage() {
   const { data, isError, error, refetch } = useToday();
-  const board = useLeaderboard().data;
-  const n = data?.pending_approvals ?? 0;
-  const sticker = n > 0 && (
-    <Sticker>{`${n} ${n === 1 ? "chore needs" : "chores need"} you`}</Sticker>
+  const router = useRouter();
+  const [selectedKid, setSelectedKid] = useState<TodayKid | undefined>();
+  const [openChoreId, setOpenChoreId] = useState<number | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+
+  const selectedKidFromUrl = data?.kids.find(
+    (k) => k.id === Number(router.query.item)
   );
+  const kid = selectedKidFromUrl || selectedKid || data?.kids[0];
 
   return (
-    <ParentShell title={dayName(data?.day)} actions={sticker || undefined}>
+    <ParentShell
+      title={dayName(data?.day)}
+      list={
+        data ? (
+          <KidList onSelectKid={setSelectedKid} selectedKid={kid} />
+        ) : null
+      }
+    >
       {isError && !data && <LoadError error={error} onRetry={() => refetch()} />}
       {!data && !isError && <LoadingCards n={3} h={140} />}
-      {data && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <NeedsYou items={data.needs_you ?? []} />
-          <PINsNudge nudges={data.shared_without_pin ?? []} />
-          <NewDevicesBanner devices={data.new_devices} />
-          {data.kids.length === 0 ? (
-            <StickerCard>
-              <p>Add your first kid to get started.</p>
-              <Link href="/kids">Add a kid</Link>
-            </StickerCard>
-          ) : (
-            <KidTabs kids={data.kids} />
+      {data && data.kids.length === 0 && (
+        <StickerCard>
+          <p>Add your first kid to get started.</p>
+          <Link href="/kids">Add a kid</Link>
+        </StickerCard>
+      )}
+      {data && kid && (
+        <div className="p-today-detail">
+          <div className="p-open-header">
+            <h2>{kid.name}&apos;s day</h2>
+            <div className="p-open-actions">
+              <Link href={`/kid?as=${kid.id}`} className="p-btn">
+                View as kid
+              </Link>
+              <Link href={`/kids?section=chores&kid=${kid.id}`} className="p-btn">
+                Add chore
+              </Link>
+            </div>
+          </div>
+
+          {kid.total !== undefined && kid.total > 0 && (
+            <div className="p-open-progress">
+              <div className="p-meter-bar" style={{ width: `${(kid.done ?? 0) / kid.total * 100}%` }} />
+              <span>{kid.done ?? 0} of {kid.total} done</span>
+            </div>
           )}
-          {board && <Leaderboard rows={board.rows} />}
+
+          <div className="p-chores-list">
+            {kid.chores.map((chore) => (
+              <ChoreRow
+                key={chore.id}
+                chore={chore}
+                isOpen={openChoreId === chore.id}
+                onToggle={() =>
+                  setOpenChoreId(
+                    openChoreId === chore.id ? null : chore.id
+                  )
+                }
+              />
+            ))}
+          </div>
+
+          {openChoreId && kid && (
+            <ChoreOpen
+              chore={kid.chores.find((c) => c.id === openChoreId)!}
+              kid={kid}
+              onOpenChat={() => setChatOpen(!chatOpen)}
+              chatOpen={chatOpen}
+            />
+          )}
+
+          {kid.progress && (
+            <div className="p-summary-strip" data-testid="summary-strip">
+              <div className="p-summary-item">
+                <span className="p-summary-label">Status</span>
+                <span className="p-summary-value">{kid.online_all ? "Online" : "Offline"}</span>
+              </div>
+              <div className="p-summary-item">
+                <span className="p-summary-label">Today</span>
+                <span className="p-summary-value">{kid.done ?? 0}/{kid.total ?? 0}</span>
+              </div>
+              <div className="p-summary-item">
+                <span className="p-summary-label">Earned</span>
+                <span className="p-summary-value">{kid.progress.xp}</span>
+              </div>
+              {kid.last_active && (
+                <div className="p-summary-item">
+                  <span className="p-summary-label">Last active</span>
+                  <span className="p-summary-value">{new Date(kid.last_active).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
     </ParentShell>

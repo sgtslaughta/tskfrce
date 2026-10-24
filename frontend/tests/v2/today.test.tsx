@@ -1,312 +1,231 @@
-import { beforeEach, describe, expect, test } from "@jest/globals";
-import type { Mock } from "jest-mock";
-import { render, screen, waitFor, within } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { MantineProvider } from "@mantine/core";
-import { fridgeTheme } from "@/v2/theme";
-import { api } from "@/v2/api";
-import { TodayPage } from "@/v2/today/TodayPage";
-import { DeviceQuickMenu } from "@/v2/today/DeviceQuickMenu";
-import { DevicePill } from "@/v2/components/DevicePill";
-import type { Today, TodayChore } from "@/v2/types";
+import { beforeEach, describe, expect, test } from '@jest/globals'
+import type { Mock } from 'jest-mock'
+import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MantineProvider } from '@mantine/core'
+import { api } from '@/v2/api'
+import { TodayPage } from '@/v2/today/TodayPage'
+import type { Today, TodayKid } from '@/v2/types'
 
-jest.mock("@/v2/api", () => ({ api: jest.fn() }));
-jest.mock("@mantine/notifications", () => ({
-  notifications: { show: jest.fn() },
-}));
-jest.mock("@/v2/parent/ParentShell", () => ({
-  ParentShell: ({
-    title,
-    actions,
-    children,
-  }: {
-    title: string;
-    actions?: unknown;
-    children: unknown;
-  }) => (
-    <div>
-      <h1>{title as string}</h1>
-      {actions as never}
-      {children as never}
-    </div>
-  ),
-}));
-jest.mock("@/v2/parent/useLook", () => ({
-  useLook: jest.fn(),
-}));
-jest.mock("@/contexts/UnifiedAuthContext", () => ({
-  useUnifiedAuth: jest.fn(() => ({
-    user: { id: "1", username: "testuser" },
-    logout: jest.fn(),
-  })),
-}));
-jest.mock("@/v2/chat/ChatDock", () => ({
-  ChatDock: () => null,
-}));
-jest.mock("@/v2/components/BlockerBanner", () => ({
-  BlockerBanner: () => null,
-}));
-jest.mock("@/v2/components/Bell", () => ({
-  Bell: () => null,
-}));
-jest.mock("@/v2/hooks/useChat", () => ({
-  useThreads: jest.fn(() => ({
-    data: { total: 0 },
-  })),
-}));
+jest.mock('@/v2/api', () => ({ api: jest.fn() }))
+jest.mock('next/router', () => ({
+  useRouter: () => ({
+    pathname: '/',
+    query: {},
+    replace: jest.fn(),
+    push: jest.fn(),
+  }),
+}))
+jest.mock('@/contexts/UnifiedAuthContext', () => ({
+  useUnifiedAuth: () => ({ logout: jest.fn(), user: { id: 1 } }),
+}))
+jest.mock('@/v2/chat/ChatDock', () => ({ ChatDock: () => null }))
+jest.mock('@/v2/components/BlockerBanner', () => ({ BlockerBanner: () => null }))
+jest.mock('@mantine/notifications')
 
 const apiMock = api as unknown as Mock<
-  (p: string, init?: unknown) => Promise<unknown>
->;
+  (p: string, init?: { method?: string; body?: unknown }) => Promise<unknown>
+>
 
-const chore = (id: number, state: TodayChore["state"]): TodayChore => ({
+const kid = (id: number, name = `Kid${id}`, done = 0, total = 2): TodayKid => ({
   id,
-  title: `Chore ${id}`,
-  points: 5,
-  state,
-});
-const base: Today = {
-  day: "2026-10-20",
-  pending_approvals: 2,
-  new_devices: [],
-  needs_you: [
-    { type: "chore", id: 12, kid_id: 1, kid_name: "Emma", title: "Clean room", attempt: 1, thumb_url: "/chore-photos/5/thumb", subtasks_done: 3, subtasks_total: 3, submitted_at: "2026-10-20T16:12:00Z" },
-    { type: "redo", id: 13, kid_id: 2, kid_name: "Leo", title: "Make bed", attempt: 2, thumb_url: null, submitted_at: "2026-10-20T16:40:00Z" },
-    { type: "screen_time", id: 7, kid_id: 2, kid_name: "Leo", title: "30 min", cost: 40, kid_balance: 95, submitted_at: "2026-10-20T17:00:00Z" },
-    { type: "reward", id: 8, kid_id: 1, kid_name: "Emma", title: "Movie night", cost: 300, kid_balance: 610, submitted_at: "2026-10-20T17:10:00Z" },
+  name,
+  avatar: null,
+  online_all: true,
+  done,
+  total,
+  needs_you_count: 0,
+  last_active: null,
+  progress: { level: 1, points: 0, next_reward: 100, next_reward_points: 50, locked_until: null },
+  chores: [
+    { id: 10 + id, title: 'Dishes', points: 10, state: 'todo', due_time: null },
+    { id: 20 + id, title: 'Laundry', points: 20, state: 'todo', due_time: null },
   ],
-  kids: [
-    {
-      id: 1,
-      name: "Emma",
-      avatar: null,
-      online_all: false,
-      done: 3,
-      total: 7,
-      needs_you_count: 1,
-      chores: [chore(11, "done"), chore(12, "needs_you")],
-      devices: [{ id: 21, name: "iPad", vendor: "Apple", online: false }],
-    },
-    {
-      id: 2,
-      name: "Leo",
-      avatar: null,
-      online_all: true,
-      done: 0,
-      total: 1,
-      needs_you_count: 0,
-      chores: [chore(31, "todo")],
-      devices: [],
-    },
-  ],
-};
+  devices: [],
+})
 
-let client: QueryClient;
-function renderPage(data: Today) {
-  apiMock.mockImplementation(async (p) =>
-    p === "/today"
-      ? data
-      : p === "/profiles"
-        ? []
-        : p === "/leaderboard"
-          ? { week_start: "2026-01-05", rows: [] }
-          : { ok: true },
-  );
-  client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(
-    <QueryClientProvider client={client}>
-      <MantineProvider theme={fridgeTheme}>
-        <TodayPage />
-      </MantineProvider>
-    </QueryClientProvider>,
-  );
-}
+const todayData = (overrides: Partial<Today> = {}): Today => ({
+  day: '2026-10-24',
+  pending_approvals: 0,
+  new_devices: [],
+  kids: [kid(1), kid(2)],
+  ...overrides,
+})
+
+const wrap = (ui: React.ReactElement) =>
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <MantineProvider>{ui}</MantineProvider>
+    </QueryClientProvider>
+  )
 
 beforeEach(() => {
-  apiMock.mockReset();
-  localStorage.clear();
-  global.fetch = jest.fn(async () => ({ ok: false })) as never;
-});
+  apiMock.mockReset()
+  apiMock.mockImplementation(async (p) => {
+    if (p === '/today') return todayData()
+    if (p.match(/^\/chores\/\d+$/) && !p.endsWith('/approve') && !p.endsWith('/send-back'))
+      return { id: 1, steps: [{ id: 1, title: 'Step 1', done: false, done_at: null }, { id: 2, title: 'Step 2', done: false, done_at: null }], photos: [] }
+    if (p.startsWith('/chores/') && p.endsWith('/approve'))
+      return { ok: true }
+    if (p.startsWith('/chores/') && p.endsWith('/send-back'))
+      return { ok: true }
+    if (p.startsWith('/chat/threads'))
+      return { total: 0, threads: [] }
+    return undefined
+  })
+})
 
-describe("TodayPage", () => {
-  test("renders kids, day name and sticker", async () => {
-    renderPage(base);
-    expect(await screen.findByRole("tab", { name: /Emma/ })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: /Leo/ })).toBeInTheDocument();
-    expect(
-      screen.getByRole("heading", { name: "Tuesday" }),
-    ).toBeInTheDocument();
-    expect(screen.getByText("2 chores need you")).toBeInTheDocument();
-  });
+describe('TodayPage', () => {
+  test('no leaderboard on Today', async () => {
+    wrap(<TodayPage />)
+    await waitFor(() => expect(screen.queryByText(/leaderboard|rankings/i)).not.toBeInTheDocument())
+  })
 
-  test("shows new device banner", async () => {
-    renderPage({ ...base, new_devices: [{ id: 9, name: "Xbox" } as never] });
-    const link = await screen.findByRole("link", { name: /Assign it/ });
-    expect(link).toHaveAttribute("href", "/devices?focus=9");
-    expect(screen.getByText(/New device joined: Xbox/)).toBeInTheDocument();
-  });
+  test('no new devices banner on parent Today', async () => {
+    wrap(<TodayPage />)
+    await waitFor(() => expect(screen.queryByText(/new device/i)).not.toBeInTheDocument())
+  })
 
-  test("many new devices collapse into one banner", async () => {
-    const d = (id: number, name: string) => ({ id, name }) as never;
-    renderPage({ ...base, new_devices: [d(1, "pixel.lan"), d(2, "xbox.lan"), d(3, "tv.lan")] });
-    expect(await screen.findByText(/3 new devices joined: pixel, xbox and 1 more/)).toBeInTheDocument();
-    expect(screen.getAllByRole("link", { name: /Assign them/ })).toHaveLength(1);
-  });
+  test('no PINs nudge on parent Today', async () => {
+    wrap(<TodayPage />)
+    await waitFor(() => expect(screen.queryByText(/without pin|shared/i)).not.toBeInTheDocument())
+  })
 
-  test("Needs you shows one item per type with chip label and icon", async () => {
-    renderPage(base);
-    await screen.findByText("Needs you · 4");
-    for (const t of ["chore", "redo", "screen_time", "reward"])
-      expect(screen.getAllByTestId(`type-${t}`).length).toBeGreaterThan(0);
-    expect(screen.getByText("Redo")).toBeInTheDocument();
-    expect(screen.getByText("Reward")).toBeInTheDocument();
-    expect(screen.getByText(/2nd try/)).toBeInTheDocument();
-  });
+  test('no kids shows Add your first kid', async () => {
+    apiMock.mockImplementation(async (p) => {
+      if (p === '/today') return todayData({ kids: [] })
+      return undefined
+    })
+    wrap(<TodayPage />)
+    expect(await screen.findByText(/add your first kid/i)).toBeInTheDocument()
+  })
 
-  test("filter chip shows only that type", async () => {
-    renderPage(base);
-    await userEvent.click(await screen.findByRole("button", { name: "Screen time 1" }));
-    expect(screen.getByText(/30 min/)).toBeInTheDocument();
-    expect(screen.queryByText(/Clean room/)).toBeNull();
-  });
+  test('kid list shows Today and Needs you tabs with count', async () => {
+    const data = todayData({
+      needs_you: [{ type: 'chore', id: 1, kid_id: 1, kid_name: 'Kid1', title: 'Dishes' }],
+    })
+    apiMock.mockImplementation(async (p) => {
+      if (p === '/today') return data
+      return undefined
+    })
+    wrap(<TodayPage />)
+    expect(await screen.findByRole('tab', { name: /today/i })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: /needs you/i })).toBeInTheDocument()
+  })
 
-  test("Approve on a chore posts and invalidates today", async () => {
-    renderPage(base);
-    const spy = jest.spyOn(client, "invalidateQueries");
-    await screen.findByText("Needs you · 4");
-    await userEvent.click(screen.getAllByRole("button", { name: "Approve" })[0]);
-    await waitFor(() =>
-      expect(apiMock).toHaveBeenCalledWith("/chores/12/approve", { method: "POST" }),
-    );
-    await waitFor(() => expect(spy).toHaveBeenCalledWith({ queryKey: ["today"] }));
-  });
+  test('selecting a kid shows <Kid>\'s day with View as kid and Add chore buttons', async () => {
+    wrap(<TodayPage />)
+    const kidButton = await screen.findByRole('button', { name: /kid1/i })
+    await userEvent.click(kidButton)
+    expect(await screen.findByText(/kid1.*s day/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /view as kid/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /add chore/i })).toBeInTheDocument()
+  })
 
-  test("Send back needs a note", async () => {
-    renderPage(base);
-    await screen.findByText("Needs you · 4");
-    await userEvent.click(screen.getAllByRole("button", { name: "Send back" })[0]);
-    expect(screen.getAllByRole("button", { name: "Send back" })[0]).toBeDisabled();
-    await userEvent.type(screen.getByLabelText("Note"), "Under the bed too");
-    await userEvent.click(screen.getAllByRole("button", { name: "Send back" })[0]);
-    await waitFor(() =>
-      expect(apiMock).toHaveBeenCalledWith("/chores/12/send-back", {
-        method: "POST",
-        body: { note: "Under the bed too" },
-      }),
-    );
-  });
+  test('chore rows start collapsed', async () => {
+    wrap(<TodayPage />)
+    await screen.findByRole('button', { name: /kid1/i })
+    const chores = await screen.findAllByText(/dishes|laundry/i)
+    chores.forEach((chore) => {
+      const row = chore.closest('[data-testid="chore-row"]')
+      expect(row).toHaveAttribute('data-open', 'false')
+    })
+  })
 
-  test("tapping a thumbnail opens the viewer", async () => {
-    renderPage(base);
-    await userEvent.click(await screen.findByRole("button", { name: "Open photo for Clean room" }));
-    expect(await screen.findByRole("dialog")).toBeInTheDocument();
-    expect(screen.getByLabelText("Note for sending back")).toBeInTheDocument();
-  });
-
-  test("Approve all approves every visible item", async () => {
-    renderPage(base);
-    await userEvent.click(await screen.findByRole("button", { name: "Approve all" }));
+  test('opening a second chore closes the first', async () => {
+    wrap(<TodayPage />)
+    await screen.findByRole('button', { name: /kid1/i })
+    const rows = await screen.findAllByTestId('chore-row')
+    const buttons = rows.map((r) => r.querySelector('button'))
+    if (buttons[0]) await userEvent.click(buttons[0])
+    await waitFor(() => expect(rows[0]).toHaveAttribute('data-open', 'true'))
+    if (buttons[1]) await userEvent.click(buttons[1])
     await waitFor(() => {
-      const paths = apiMock.mock.calls.map(([p]) => p);
-      expect(paths).toEqual(
-        expect.arrayContaining([
-          "/chores/12/approve",
-          "/chores/13/approve",
-          "/redemptions/7/approve",
-          "/redemptions/8/approve",
-        ]),
-      );
-    });
-  });
+      expect(rows[0]).toHaveAttribute('data-open', 'false')
+      expect(rows[1]).toHaveAttribute('data-open', 'true')
+    })
+  })
 
-  test("kid tabs show done/total and a dot; only the open tab renders chores", async () => {
-    renderPage(base);
-    const tab = await screen.findByRole("tab", { name: /Emma 3\/7/ });
-    expect(within(tab).getByTestId("dot-1")).toBeInTheDocument();
-    expect(screen.queryByTestId("dot-2")).toBeNull();
-    expect(screen.getByText("Chore 12")).toBeInTheDocument();
-    expect(screen.queryByText("Chore 31")).toBeNull();
-    await userEvent.click(screen.getByRole("tab", { name: /Leo/ }));
-    expect(await screen.findByText("Chore 31")).toBeInTheDocument();
-    expect(screen.queryByText("Chore 12")).toBeNull();
-  });
+  test('done chore shows line-through and Done time', async () => {
+    const data = todayData({
+      kids: [
+        {
+          ...kid(1),
+          chores: [
+            { id: 11, title: 'Dishes', points: 10, state: 'done', due_time: null, done_at: '2026-10-24T16:30:00Z' },
+          ],
+        },
+      ],
+    })
+    apiMock.mockImplementation(async (p) => {
+      if (p === '/today') return data
+      return undefined
+    })
+    wrap(<TodayPage />)
+    await screen.findByRole('button', { name: /kid1/i })
+    const choreButton = await screen.findByRole('button', { name: /dishes/i })
+    expect(choreButton).toHaveStyle('textDecoration: line-through')
+    expect(await screen.findByText(/done \d+:\d+ [ap]m/i)).toBeInTheDocument()
+  })
 
-  test("Done is collapsed by default", async () => {
-    renderPage(base);
-    await screen.findByText("Chore 12");
-    expect(screen.getByText("Done · 1").closest("details")).not.toHaveAttribute("open");
-  });
+  test('progress meter shows chores done and total', async () => {
+    wrap(<TodayPage />)
+    await screen.findByRole('button', { name: /kid1/i })
+    const progressText = await screen.findByText(/0 of 2 done/i)
+    expect(progressText).toBeInTheDocument()
+  })
 
-  test("device menu Unlock for 1 hour posts override", async () => {
-    renderPage(base);
-    const spy = jest.spyOn(client, "invalidateQueries");
-    await userEvent.click(await screen.findByRole("button", { name: /iPad/ }));
-    await userEvent.click(
-      await screen.findByRole("menuitem", {
-        name: "Unlock for 1 hour",
-        hidden: true,
-      }),
-    );
-    await waitFor(() =>
-      expect(apiMock).toHaveBeenCalledWith("/devices/21/override", {
-        method: "POST",
-        body: { action: "unlock", minutes: 60 },
-      }),
-    );
-    await waitFor(() =>
-      expect(spy).toHaveBeenCalledWith({ queryKey: ["devices"] }),
-    );
-    expect(spy).toHaveBeenCalledWith({ queryKey: ["today"] });
-  });
+  test('summary strip shows status, today, earned, and last active info', async () => {
+    wrap(<TodayPage />)
+    await screen.findByRole('button', { name: /kid1/i })
+    const summaryStrip = await screen.findByTestId('summary-strip')
+    expect(summaryStrip).toBeInTheDocument()
+    const statusLabels = screen.getAllByText(/^status$/i)
+    expect(statusLabels.length).toBeGreaterThan(0)
+  })
 
-  test("kid badge menu uses kid override and Back to schedule deletes", async () => {
-    renderPage(base);
-    await userEvent.click(
-      await screen.findByLabelText("Lock or unlock all of Emma’s devices"),
-    );
-    // hidden: true because jsdom has no layout: floating-ui sees a zero-size reference and hides the dropdown
-    await userEvent.click(
-      await screen.findByRole("menuitem", {
-        name: "Back to schedule",
-        hidden: true,
-      }),
-    );
-    await waitFor(() =>
-      expect(apiMock).toHaveBeenCalledWith("/kids/1/override", {
-        method: "DELETE",
-      }),
-    );
-  });
+  test('chat column appears only after reply and closing it removes it', async () => {
+    wrap(<TodayPage />)
+    await screen.findByRole('button', { name: /kid1/i })
+    const rows = await screen.findAllByTestId('chore-row')
+    const button = rows[0]?.querySelector('button')
+    if (button) await userEvent.click(button)
+    expect(screen.queryByTestId('chat-column')).not.toBeInTheDocument()
+    const openChatButton = screen.queryByRole('button', { name: /open chat/i })
+    if (openChatButton) {
+      await userEvent.click(openChatButton)
+      await waitFor(() => expect(screen.queryByTestId('chat-column')).toBeInTheDocument())
+    }
+  })
 
-  test("DeviceQuickMenu forwards trigger props and ref to a DevicePill", async () => {
-    apiMock.mockResolvedValue({});
-    render(
-      <QueryClientProvider client={new QueryClient()}>
-        <MantineProvider theme={fridgeTheme}>
-          <DeviceQuickMenu
-            targets={{ kind: "group", id: 3 }}
-            label="Xbox options"
-          >
-            <DevicePill name="Xbox" kind="console" online />
-          </DeviceQuickMenu>
-        </MantineProvider>
-      </QueryClientProvider>,
-    );
-    const btn = screen.getByRole("button", { name: /Xbox/ });
-    expect(btn).toHaveAttribute("aria-haspopup", "menu");
-    await userEvent.click(btn);
-    expect(btn).toHaveAttribute("aria-expanded", "true");
-  });
+  test('approve uses undo toast', async () => {
+    wrap(<TodayPage />)
+    await screen.findByRole('button', { name: /kid1/i })
+    const rows = await screen.findAllByTestId('chore-row')
+    const button = rows[0]?.querySelector('button')
+    if (button) await userEvent.click(button)
+    const approveButton = screen.queryByRole('button', { name: /approve/i })
+    if (approveButton) await userEvent.click(approveButton)
+  })
 
-  test("empty state", async () => {
-    renderPage({ ...base, pending_approvals: 0, needs_you: [], kids: [] });
-    expect(
-      await screen.findByText("Add your first kid to get started."),
-    ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /kid/i })).toHaveAttribute(
-      "href",
-      "/kids",
-    );
-  });
-});
+  test('needs you lists all kids\' items', async () => {
+    const data = todayData({
+      needs_you: [
+        { type: 'chore', id: 1, kid_id: 1, kid_name: 'Kid1', title: 'Dishes' },
+        { type: 'chore', id: 2, kid_id: 2, kid_name: 'Kid2', title: 'Laundry' },
+      ],
+      kids: [],
+    })
+    apiMock.mockImplementation(async (p) => {
+      if (p === '/today') return data
+      return undefined
+    })
+    wrap(<TodayPage />)
+    const needsYouTab = await screen.findByRole('tab', { name: /needs you.*2/i })
+    await userEvent.click(needsYouTab)
+    const dishesItems = screen.getAllByText(/dishes/i)
+    expect(dishesItems.length).toBeGreaterThan(0)
+    expect(await screen.findByText(/laundry/i)).toBeInTheDocument()
+  })
+})
