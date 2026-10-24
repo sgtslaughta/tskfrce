@@ -585,6 +585,13 @@
 }
 
 /* Material Symbols icon font - global for both parent and kid screens */
+@font-face {
+  font-family: 'Material Symbols Rounded';
+  src: url('/fonts/material-symbols-rounded.woff2') format('woff2');
+  font-display: block;
+  font-weight: 100 700;
+}
+
 .ms {
   font-family: 'Material Symbols Rounded';
   font-weight: normal;

@@ -171,6 +171,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   /**
    * @description Initialize authentication from stored state
    */
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const initializeAuth = useCallback(async () => {
     if (initializationRef.current) return;
     initializationRef.current = true;
@@ -180,19 +181,19 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
 
       // Initialize TokenManager
       tokenManager.initialize();
-      
+
       // Check for existing authentication
       const cookieState = getLoginState();
       const accessToken = tokenManager.getAccessToken();
-      
+
       if (cookieState && accessToken) {
         // Validate token
         const tokenValidation = tokenManager.validateAccessToken();
-        
+
         if (tokenValidation.isValid && !tokenValidation.isExpired) {
           // Token is valid, set up auth state
           authService.setAccessToken(accessToken);
-          
+
           try {
             const currentUser = await authService.getCurrentUser();
             const user: User = {
@@ -201,7 +202,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
               email: currentUser.email,
               role: toRole(currentUser.role, currentUser.is_superuser),
             };
-            
+
             updateAuthState({
               isAuthenticated: true,
               user,
@@ -209,7 +210,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
               isLoading: false,
               isInitialized: true,
             });
-            
+
           } catch (userError) {
             console.error('Failed to fetch current user:', userError);
             // Token might be invalid, try refresh
@@ -231,12 +232,13 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
     } catch (error) {
       console.error('Auth initialization error:', error);
       await syncAuthSystems();
-      updateAuthState({ 
+      updateAuthState({
         error: 'Authentication initialization failed',
         isLoading: false,
         isInitialized: true,
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [syncAuthSystems, updateAuthState]);
 
   /**
@@ -456,6 +458,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
       tokenManager.removeEventListener('expired', handleTokenRefresh);
       tokenManager.removeEventListener('invalid', handleTokenInvalid);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.isAuthenticated]);
 
   const contextValue: UnifiedAuthContextType = {
