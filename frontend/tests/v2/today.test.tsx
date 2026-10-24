@@ -169,6 +169,28 @@ describe('TodayPage', () => {
     expect(await screen.findByText(/done \d+:\d+ [ap]m/i)).toBeInTheDocument()
   })
 
+  test('done chore time uses CSS variable for color', async () => {
+    const data = todayData({
+      kids: [
+        {
+          ...kid(1),
+          chores: [
+            { id: 11, title: 'Dishes', points: 10, state: 'done', due_time: null, done_at: '2026-10-24T16:30:00Z' },
+          ],
+        },
+      ],
+    })
+    apiMock.mockImplementation(async (p) => {
+      if (p === '/today') return data
+      return undefined
+    })
+    wrap(<TodayPage />)
+    await screen.findByRole('button', { name: /kid1/i })
+    const doneTimeText = await screen.findByText(/done \d+:\d+ [ap]m/i)
+    const span = doneTimeText.closest('span')
+    expect(span?.style.color).toBe('var(--p-sub)')
+  })
+
   test('progress meter shows chores done and total', async () => {
     wrap(<TodayPage />)
     await screen.findByRole('button', { name: /kid1/i })

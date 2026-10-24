@@ -97,6 +97,18 @@ describe('PINsNudge', () => {
     expect(screen.queryByRole('button', { name: 'Set PINs' })).toBeNull()
     expect(screen.queryByText(/share/)).toBeNull()
   })
+
+  test('uses parent token CSS variables for colors', () => {
+    const { container } = render(wrap(<PINsNudge nudges={[nudge]} />))
+    const div = container.querySelector('div')
+    expect(div?.style.border).toContain('var(--p-line)')
+    expect(div?.style.backgroundColor).toContain('var(--p-soft)')
+    const p = container.querySelector('p')
+    expect(p?.style.color).toContain('var(--p-sub)')
+    const button = screen.getByRole('button', { name: 'Set PINs' })
+    expect(button).toHaveStyle('backgroundColor: var(--p-ink)')
+    expect(button).toHaveStyle('color: var(--p-card)')
+  })
 })
 
 describe('DeviceRow needs_pins note', () => {
@@ -112,6 +124,18 @@ describe('DeviceRow needs_pins note', () => {
   test('hidden when needs_pins is false', () => {
     row({ ...device, needs_pins: false })
     expect(screen.queryByRole('button', { name: 'Set PINs' })).toBeNull()
+  })
+
+  test('uses parent token CSS variables for colors', () => {
+    const { container } = row(device)
+    const noteDiv = container.querySelector('div[style*="border"]')
+    expect(noteDiv?.style.border).toContain('var(--p-line)')
+    expect(noteDiv?.style.backgroundColor).toContain('var(--p-soft)')
+    const p = screen.getByText(/share this device/)
+    expect(p).toHaveStyle('color: var(--p-sub)')
+    const button = screen.getByRole('button', { name: 'Set PINs' })
+    expect(button).toHaveStyle('backgroundColor: var(--p-ink)')
+    expect(button).toHaveStyle('color: var(--p-card)')
   })
 })
 

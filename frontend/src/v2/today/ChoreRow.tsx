@@ -47,7 +47,7 @@ export function ChoreRow({
         />
         <span className="p-chore-title">{chore.title}</span>
         {isDone && chore.done_at && (
-          <span style={{ fontSize: '0.9em', color: '#666' }}>
+          <span style={{ fontSize: '0.9em', color: 'var(--p-sub)' }}>
             {formatTime(chore.state, chore.done_at)}
           </span>
         )}
