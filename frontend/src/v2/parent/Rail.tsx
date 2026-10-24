@@ -39,7 +39,14 @@ export function Rail({ onLogout }: { onLogout?: () => void }) {
               @
             </Link>
           )
-        if (item.label === 'Bell') return <div key={idx} className="p-rail-bell"><Bell placement="rail" /></div>
+        if (item.label === 'Bell')
+          return (
+            <div key={idx} className="p-rail-bell">
+              <Tooltip label="Notifications" position="right" withArrow openDelay={400} closeDelay={100}>
+                <Bell placement="rail" />
+              </Tooltip>
+            </div>
+          )
         if (item.label === 'Log out')
           return (
             <Tooltip key={idx} label={item.label} position="right" withArrow openDelay={400} closeDelay={100}>
