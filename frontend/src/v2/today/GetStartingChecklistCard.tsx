@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Icon } from '../parent/Icon'
-import { useTips } from '../hooks/useTips'
+import { useTipsLocal } from '../hooks/useTips'
 import type { TodayKid } from '../types'
 
 interface Props {
@@ -9,7 +9,7 @@ interface Props {
 }
 
 export function GetStartingChecklistCard({ kids, devicesCount = 0 }: Props) {
-  const { isDismissed, dismiss } = useTips()
+  const { isDismissed, dismiss } = useTipsLocal()
 
   const items = [
     {

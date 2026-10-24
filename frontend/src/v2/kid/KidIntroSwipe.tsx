@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Button } from '@mantine/core'
-import { useTips } from '../hooks/useTips'
+import { useTipsLocal } from '../hooks/useTips'
 import { StickerCard } from '../components/StickerCard'
 import { Icon } from '../parent/Icon'
 
@@ -39,7 +39,7 @@ const wordsMap: Record<AgeGroup, Record<string, string>> = {
 }
 
 export function KidIntroSwipe({ onComplete, ageGroup = 'kid' }: Props) {
-  const { isDismissed, dismiss } = useTips()
+  const { isDismissed, dismiss } = useTipsLocal()
   const [step, setStep] = useState(0)
 
   if (isDismissed('onboard.kid')) return null
