@@ -74,7 +74,7 @@ export function ThreadList({
             key={tab}
             type="button"
             onClick={() => setFilter(tab)}
-            aria-selected={filter === tab}
+            aria-pressed={filter === tab}
             style={{
               padding: '8px 0',
               border: 'none',
