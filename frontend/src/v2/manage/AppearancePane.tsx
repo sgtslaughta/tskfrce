@@ -1,5 +1,7 @@
 import { Button, useComputedColorScheme, useMantineColorScheme } from '@mantine/core'
 import { ACCENTS, type AccentKey } from '@/v2/parent/accent'
+import { useResetTips } from '@/v2/hooks/useTips'
+import { toastOk } from '@/v2/notify'
 import type { Family } from '@/v2/types'
 
 interface AppearancePaneProps {
@@ -10,6 +12,7 @@ interface AppearancePaneProps {
 export function AppearancePane({ current, onChange }: AppearancePaneProps) {
   const { setColorScheme, colorScheme } = useMantineColorScheme()
   const computed = useComputedColorScheme('light', { getInitialValueInEffect: true })
+  const resetTips = useResetTips()
 
   return (
     <section aria-label="Appearance" className="f-card m-card">
@@ -82,6 +85,23 @@ export function AppearancePane({ current, onChange }: AppearancePaneProps) {
             <span className="preview-chip">Approved</span>
           </div>
         </div>
+      </div>
+
+      <div className="m-section">
+        <h3 className="m-subhead">Tips</h3>
+        <p className="m-help">Show helpful tips again on parent screens.</p>
+        <Button
+          onClick={() => {
+            resetTips.mutate(undefined, {
+              onSuccess: () => toastOk('Tips reset'),
+            })
+          }}
+          loading={resetTips.isPending}
+          disabled={resetTips.isPending}
+        >
+          <span className="ms">help</span>
+          Show tips again
+        </Button>
       </div>
     </section>
   )
