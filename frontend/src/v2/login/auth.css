@@ -399,9 +399,14 @@
   }
 }
 
-/* Form side always uses light colors for all nested elements */
-[data-look='parent'] .p-auth-form-side,
-[data-look='parent'] .p-auth-form-side * {
+/* Form side inherits parent tokens (respects dark mode) */
+[data-look='parent'] .p-auth-form-side {
+  background: var(--p-bg);
+  color: var(--p-ink);
+}
+
+/* Light mode form side colors */
+[data-look='parent']:not([data-mantine-color-scheme='dark']) .p-auth-form-side {
   --p-bg: #f8f8f8;
   --p-card: #ffffff;
   --p-ink: #292928;
@@ -410,6 +415,18 @@
   --p-acc: #c3f832;
   --p-redbg: #fde3e0;
   --p-red: #8f1d13;
+}
+
+/* Dark mode form side colors */
+[data-look='parent'][data-mantine-color-scheme='dark'] .p-auth-form-side {
+  --p-bg: #1c1c1b;
+  --p-card: #292928;
+  --p-ink: #f4f4f2;
+  --p-sub: #a8a8a4;
+  --p-line: #3d3d3b;
+  --p-acc: #c3f832;
+  --p-redbg: #3e2422;
+  --p-red: #ff9b8f;
 }
 
 /* Focus lives on the field wrapper (mockup 06 .fi.focus), not the bare input */
