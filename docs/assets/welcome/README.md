@@ -17,6 +17,7 @@ Use in a README (theme-aware):
 Rebuild after editing `welcome.html`:
 
 ```sh
-cd frontend && node ../docs/assets/welcome/render.mjs /tmp/welcome-frames 20
+cp docs/assets/welcome/render.mjs frontend/.render.mjs
+(cd frontend && node .render.mjs /tmp/welcome-frames 20 ../docs/assets/welcome/welcome.html; rm .render.mjs)
 python docs/assets/welcome/build.py /tmp/welcome-frames docs/assets/welcome
 ```

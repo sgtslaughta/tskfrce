@@ -1,10 +1,10 @@
-// Renders welcome.html to transparent PNG frames: node render.mjs <outDir> [fps]
-// Run from a directory where `playwright` resolves (e.g. frontend/).
+// Renders welcome.html to transparent PNG frames: node render.mjs <outDir> <fps> <welcome.html>
+// Copy into frontend/ first so `playwright` resolves (see README.md).
 import { chromium } from 'playwright'
 import path from 'path'
 import fs from 'fs'
 const out = process.argv[2], fps = +(process.argv[3] || 20), dur = 12000
-const src = 'file://' + path.join(path.dirname(new URL(import.meta.url).pathname), 'welcome.html')
+const src = 'file://' + path.resolve(process.argv[4])
 const b = await chromium.launch()
 for (const theme of ['light', 'dark']) {
   const dir = path.join(out, theme); fs.mkdirSync(dir, { recursive: true })
