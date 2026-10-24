@@ -142,7 +142,7 @@ export function LoginForm() {
                   <Icon name="checklist" />
                 </div>
                 <div>
-                  I'm a kid
+                  I&apos;m a kid
                   <small>Go to your checklist, no password</small>
                 </div>
                 <Icon name="chevron_right" size={20} className="p-auth-kid-icon" />
@@ -151,7 +151,7 @@ export function LoginForm() {
           ) : (
             <div className="p-auth-pane">
               <h3>Forgot your password?</h3>
-              <div className="p-subtitle">There's no email reset: the box is offline-first.</div>
+              <div className="p-subtitle">There&apos;s no email reset: the box is offline-first.</div>
               <div className="p-auth-invite">
                 <Icon name="supervisor_account" />
                 <div>

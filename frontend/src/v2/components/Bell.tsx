@@ -176,7 +176,7 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
                       {n.kind === 'new_device' && (
                         <button type="button" className="p-btn" onClick={() => handleView(n)}>
                           <Icon name="person_add" size={16} />
-                          Who's this?
+                          Who&apos;s this?
                         </button>
                       )}
                       {n.kind === 'device_resisting' && (

@@ -123,4 +123,38 @@ test.describe('every screen', () => {
       await own([])
     }
   })
+
+  test('kid page keeps fridge tokens', async ({ page }, info) => {
+    test.skip(info.project.name !== 'desktop-light', 'run once on desktop light')
+    const api = await parentApi()
+    const find = async () => {
+      const devs: { id: number; name: string }[] = await (await api.get('/api/proxy/devices')).json()
+      return devs.filter((d) => d.name.includes('e2e-run'))
+    }
+    let devs = await find()
+    for (let i = 0; i < 12 && !devs.length; i++) {
+      await page.waitForTimeout(5000)
+      devs = await find()
+    }
+    test.skip(!devs.length, 'e2e container device was not discovered by the blocker')
+    const kids: { id: number; full_name: string }[] = await (await api.get('/api/proxy/kids')).json()
+    const pat = kids.find((k) => k.full_name === 'Pat')!
+    const own = (ids: number[]) =>
+      Promise.all(devs.map((d) => api.patch(`/api/proxy/devices/${d.id}`, { data: { owner_ids: ids } })))
+    await own([pat.id])
+    try {
+      await page.goto('/kid')
+      await page.waitForLoadState('networkidle')
+      await page.keyboard.type('1234')
+      await page.waitForTimeout(1500)
+      // check fridge tokens are intact
+      const fridgeBg = await page.evaluate(() => {
+        const style = getComputedStyle(document.documentElement)
+        return style.getPropertyValue('--f-bg').trim()
+      })
+      expect(fridgeBg, 'kid page --f-bg should be #f4f7fa').toBe('#f4f7fa')
+    } finally {
+      await own([])
+    }
+  })
 })
