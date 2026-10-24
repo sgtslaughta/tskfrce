@@ -10,11 +10,15 @@ export function DevicesSection({
   kids,
   groups = [],
   focus,
+  tab = 'devices',
+  onTabChange,
 }: {
   devices: Device[]
   kids: Kid[]
   groups?: Group[]
   focus: number
+  tab?: 'devices' | 'groups'
+  onTabChange?: (tab: 'devices' | 'groups') => void
 }) {
   const router = useRouter()
   const selectedId = Number(first(router.query.item)) || null
@@ -22,15 +26,17 @@ export function DevicesSection({
   const handleSelectDevice = useCallback(
     (id: number) => {
       router.push({ pathname: router.pathname, query: { ...router.query, item: id } }, undefined, { shallow: true })
+      onTabChange?.('devices')
     },
-    [router],
+    [router, onTabChange],
   )
 
   const handleSelectGroup = useCallback(
     (id: number) => {
       router.push({ pathname: router.pathname, query: { ...router.query, item: id } }, undefined, { shallow: true })
+      onTabChange?.('groups')
     },
-    [router],
+    [router, onTabChange],
   )
 
   return (
@@ -39,8 +45,11 @@ export function DevicesSection({
       kids={kids}
       groups={groups}
       selectedDevice={selectedId}
+      selectedGroup={selectedId}
       onSelectDevice={handleSelectDevice}
       onSelectGroup={handleSelectGroup}
+      tab={tab}
+      onTabChange={onTabChange}
     />
   )
 }

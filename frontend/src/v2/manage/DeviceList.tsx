@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Icon } from '@/v2/parent/Icon'
 import { MakerLogo } from '@/v2/parent/MakerLogo'
 import { Chip, type ChipTone } from '@/v2/parent/Chip'
+import { ListHeader } from '@/v2/parent/ListHeader'
+import { SegmentedControl } from '@/v2/parent/SegmentedControl'
 import type { Device, Group as DeviceGroup, Kid } from '@/v2/types'
 
 interface Props {
@@ -12,6 +14,8 @@ interface Props {
   selectedGroup?: number | null
   onSelectDevice: (id: number) => void
   onSelectGroup?: (id: number) => void
+  tab?: 'devices' | 'groups'
+  onTabChange?: (tab: 'devices' | 'groups') => void
 }
 
 const statusChip = (status: string): { tone: ChipTone; text: string; icon: string } => {
@@ -88,8 +92,15 @@ export function DeviceList({
   selectedGroup,
   onSelectDevice,
   onSelectGroup,
+  tab: propTab = 'devices',
+  onTabChange,
 }: Props) {
-  const [tab, setTab] = useState<'devices' | 'groups'>('devices')
+  const [tab, setTab] = useState<'devices' | 'groups'>(propTab)
+
+  const handleTabChange = (newTab: 'devices' | 'groups') => {
+    setTab(newTab)
+    onTabChange?.(newTab)
+  }
   const unassigned = devices.filter((d) => d.status === 'unassigned')
   const assigned = devices.filter((d) => d.status !== 'unassigned')
 
@@ -97,141 +108,115 @@ export function DeviceList({
 
   return (
     <div role="region" aria-label="Devices and groups">
-      <div role="tablist" style={{ display: 'flex', gap: 4, borderBottom: '1px solid var(--p-line)', marginBottom: 16 }}>
-        <button
-          role="tab"
-          aria-selected={tab === 'devices'}
-          onClick={() => setTab('devices')}
-          style={{
-            padding: '8px 14px',
-            fontSize: 13,
-            fontWeight: 600,
-            color: tab === 'devices' ? 'var(--p-ink)' : 'var(--p-sub)',
-            cursor: 'pointer',
-            borderBottom: tab === 'devices' ? '2px solid var(--p-acc)' : '2px solid transparent',
-            marginBottom: -1,
-            background: 'transparent',
-            border: 'none',
-          }}
-        >
-          Devices · {devices.length}
-        </button>
-        <button
-          role="tab"
-          aria-selected={tab === 'groups'}
-          onClick={() => setTab('groups')}
-          style={{
-            padding: '8px 14px',
-            fontSize: 13,
-            fontWeight: 600,
-            color: tab === 'groups' ? 'var(--p-ink)' : 'var(--p-sub)',
-            cursor: 'pointer',
-            borderBottom: tab === 'groups' ? '2px solid var(--p-acc)' : '2px solid transparent',
-            marginBottom: -1,
-            background: 'transparent',
-            border: 'none',
-          }}
-        >
-          Groups · {groups.length}
-        </button>
-      </div>
+      <ListHeader title={tab === 'devices' ? 'Devices' : 'Groups'}>
+        <SegmentedControl
+          value={tab}
+          onChange={handleTabChange}
+          options={[
+            { value: 'devices', label: `Devices · ${devices.length}` },
+            { value: 'groups', label: `Groups · ${groups.length}` },
+          ]}
+        />
+      </ListHeader>
 
-      {/* Devices tab */}
-      <div role="tabpanel" style={{ display: tab === 'devices' ? 'block' : 'none' }}>
-        {sorted.length === 0 ? (
-          <div style={{ padding: 24, textAlign: 'center', color: 'var(--p-sub)', fontSize: 13 }}>
-            No devices yet.
-          </div>
-        ) : (
-          <div className="p-device-list">
-            {sorted.map((d) => {
-              const chip = statusChip(d.status)
-              const owner = ownerName(kids, d.owner_ids)
-              const deviceType = getDeviceType(d.name, d.vendor)
-              const isSelected = selectedDevice === d.id
-              const isUnassigned = d.status === 'unassigned'
+      <div className="p-list-items">
+        {/* Devices tab */}
+        <div role="tabpanel" style={{ display: tab === 'devices' ? 'block' : 'none' }}>
+          {sorted.length === 0 ? (
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--p-sub)', fontSize: 13 }}>
+              No devices yet.
+            </div>
+          ) : (
+            <div className="p-device-list">
+              {sorted.map((d) => {
+                const chip = statusChip(d.status)
+                const owner = ownerName(kids, d.owner_ids)
+                const deviceType = getDeviceType(d.name, d.vendor)
+                const isSelected = selectedDevice === d.id
+                const isUnassigned = d.status === 'unassigned'
 
-              return (
-                <button
-                  key={d.id}
-                  className="p-device-item"
-                  data-device={d.id}
-                  data-selected={isSelected}
-                  data-unassigned={isUnassigned}
-                  onClick={() => onSelectDevice(d.id)}
-                  style={{
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div className="p-device-icon">
-                    <Icon name={DEVICE_TYPE_ICON[deviceType]} size={18} />
-                    {d.vendor && (
-                      <div className="p-device-vendor">
-                        <MakerLogo vendor={d.vendor} size={12} />
+                return (
+                  <button
+                    key={d.id}
+                    className="p-device-item"
+                    data-device={d.id}
+                    data-selected={isSelected}
+                    data-unassigned={isUnassigned}
+                    onClick={() => onSelectDevice(d.id)}
+                    style={{
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div className="p-device-icon">
+                      <Icon name={DEVICE_TYPE_ICON[deviceType]} size={18} />
+                      {d.vendor && (
+                        <div className="p-device-vendor">
+                          <MakerLogo vendor={d.vendor} size={12} />
+                        </div>
+                      )}
+                    </div>
+                    <div className="p-device-info">
+                      <div className="p-device-name">{d.name}</div>
+                      <div className="p-device-meta">
+                        {owner} · {relativeTime(d.last_seen)}
                       </div>
-                    )}
-                  </div>
-                  <div className="p-device-info">
-                    <div className="p-device-name">{d.name}</div>
-                    <div className="p-device-meta">
-                      {owner} · {relativeTime(d.last_seen)}
                     </div>
-                  </div>
-                  <Chip tone={chip.tone} icon={chip.icon}>
-                    {chip.text}
-                  </Chip>
-                </button>
-              )
-            })}
-          </div>
-        )}
-      </div>
+                    <Chip tone={chip.tone} icon={chip.icon}>
+                      {chip.text}
+                    </Chip>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
 
-      {/* Groups tab */}
-      <div role="tabpanel" style={{ display: tab === 'groups' ? 'block' : 'none' }}>
-        {groups.length === 0 ? (
-          <div style={{ padding: 24, textAlign: 'center', color: 'var(--p-sub)', fontSize: 13 }}>
-            No groups yet.
-          </div>
-        ) : (
-          <div className="p-device-list">
-            {groups.map((g) => {
-              const groupOwners = ownerName(kids, g.owner_ids ?? [])
-              const deviceTypes = getGroupDeviceTypes(devices, g.device_ids)
-              const isSelected = selectedGroup === g.id
-              const firstDevice = devices.find((d) => d.id === g.device_ids[0])
-              const firstType = firstDevice ? getDeviceType(firstDevice.name, firstDevice.vendor) : 'other'
+        {/* Groups tab */}
+        <div role="tabpanel" style={{ display: tab === 'groups' ? 'block' : 'none' }}>
+          {groups.length === 0 ? (
+            <div style={{ padding: 24, textAlign: 'center', color: 'var(--p-sub)', fontSize: 13 }}>
+              No groups yet.
+            </div>
+          ) : (
+            <div className="p-device-list">
+              {groups.map((g) => {
+                const groupOwners = ownerName(kids, g.owner_ids ?? [])
+                const deviceTypes = getGroupDeviceTypes(devices, g.device_ids)
+                const isSelected = selectedGroup === g.id
+                const firstDevice = devices.find((d) => d.id === g.device_ids[0])
+                const firstType = firstDevice ? getDeviceType(firstDevice.name, firstDevice.vendor) : 'other'
 
-              return (
-                <button
-                  key={g.id}
-                  className="p-device-item"
-                  data-group={g.id}
-                  data-selected={isSelected}
-                  onClick={() => onSelectGroup?.(g.id)}
-                  style={{
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div className="p-device-icon">
-                    <Icon name={DEVICE_TYPE_ICON[firstType]} size={18} />
-                  </div>
-                  <div className="p-device-info">
-                    <div className="p-device-name">{g.name}</div>
-                    <div className="p-device-meta">
-                      {g.device_ids.length} {g.device_ids.length === 1 ? 'device' : 'devices'} · {groupOwners}
+                return (
+                  <button
+                    key={g.id}
+                    className="p-device-item"
+                    data-group={g.id}
+                    data-selected={isSelected}
+                    onClick={() => onSelectGroup?.(g.id)}
+                    style={{
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <div className="p-device-icon">
+                      <Icon name={DEVICE_TYPE_ICON[firstType]} size={18} />
                     </div>
-                  </div>
-                  <div className="p-group-stack">
-                    {deviceTypes.map((type) => (
-                      <Icon key={type} name={DEVICE_TYPE_ICON[type]} size={16} />
-                    ))}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        )}
+                    <div className="p-device-info">
+                      <div className="p-device-name">{g.name}</div>
+                      <div className="p-device-meta">
+                        {g.device_ids.length} {g.device_ids.length === 1 ? 'device' : 'devices'} · {groupOwners}
+                      </div>
+                    </div>
+                    <div className="p-group-stack">
+                      {deviceTypes.map((type) => (
+                        <Icon key={type} name={DEVICE_TYPE_ICON[type]} size={16} />
+                      ))}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   )

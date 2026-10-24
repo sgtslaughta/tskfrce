@@ -14,6 +14,7 @@ const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v
 
 function DevicesBody() {
   const { query } = useRouter()
+  const router = useRouter()
   const devices = useDevices()
   const kids = useKids()
   const groups = useGroups()
@@ -40,7 +41,14 @@ function DevicesBody() {
         devices.isPending ? (
           <LoadingCards />
         ) : (
-          <DevicesSection devices={all} kids={kids.data ?? []} groups={groups.data ?? []} focus={selectedId ?? 0} />
+          <DevicesSection
+            devices={all}
+            kids={kids.data ?? []}
+            groups={groups.data ?? []}
+            focus={selectedId ?? 0}
+            tab={tab}
+            onTabChange={setTab}
+          />
         )
       }
     >
