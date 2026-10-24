@@ -58,3 +58,13 @@ test('fridge tokens untouched', () => {
 test('lilac outlines needs-ok', () => {
   expect(css).toMatch(/\[data-accent='lilac'\][^{]*\.p-chip\[data-tone='lav'\][^{]*\{[^}]*background:\s*transparent/);
 });
+
+test('light and dark lav-ink and red match spec 2.2', () => {
+  const light = css.slice(0, css.indexOf("[data-mantine-color-scheme='dark']"));
+  expect(light).toMatch(/--p-lav-ink:\s*#4a2f8a/);
+  expect(light).toMatch(/--p-red:\s*#8f1d13/);
+
+  const dark = css.slice(css.indexOf("[data-mantine-color-scheme='dark']"));
+  expect(dark).toMatch(/--p-lav-ink:\s*#d8c8fb/);
+  expect(dark).toMatch(/--p-red:\s*#ff9b8f/);
+});

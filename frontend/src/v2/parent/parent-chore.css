@@ -196,8 +196,8 @@
 .p-step-reply {
   padding: 6px 12px;
   background: transparent;
-  color: var(--p-lavink);
-  border: 1px solid var(--p-lavink);
+  color: var(--p-lav-ink);
+  border: 1px solid var(--p-lav-ink);
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;

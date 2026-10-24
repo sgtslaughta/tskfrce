@@ -12,8 +12,8 @@
   --p-sub: #5f5f5c;
   --p-line: #e4e4e1;
   --p-lav: #e3d4fb;
-  --p-lavink: #5b3fa0;
-  --p-red: #b42318;
+  --p-lav-ink: #4a2f8a;
+  --p-red: #8f1d13;
   --p-redbg: #fde3e0;
   --p-amb: #ffefcc;
   --p-ambink: #5c3a00;
@@ -39,7 +39,7 @@
   --p-sub: #a8a8a4;
   --p-line: #3d3d3b;
   --p-lav: #3d3354;
-  --p-lavink: #d8c8fb;
+  --p-lav-ink: #d8c8fb;
   --p-red: #ff9b8f;
   --p-redbg: #3e2422;
   --p-amb: #3b2f17;
@@ -56,5 +56,5 @@
 [data-look='parent'][data-accent='lilac'] .p-chip[data-tone='lav'] {
   background: transparent;
   border: 1.5px solid var(--p-lav);
-  color: var(--p-lavink);
+  color: var(--p-lav-ink);
 }

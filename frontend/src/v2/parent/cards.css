@@ -39,7 +39,7 @@
 
 [data-look='parent'] .p-chip[data-tone='lav'] {
   background: var(--p-lav);
-  color: var(--p-lavink);
+  color: var(--p-lav-ink);
 }
 
 [data-look='parent'] .p-chip[data-tone='red'] {
