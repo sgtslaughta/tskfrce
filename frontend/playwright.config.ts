@@ -1,6 +1,6 @@
 import { defineConfig } from '@playwright/test'
 
-const size = { desktop: { width: 1280, height: 800 }, phone: { width: 360, height: 740 } }
+const size = { desktop: { width: 1280, height: 800 }, phone: { width: 390, height: 844 } }
 const projects = (['desktop', 'phone'] as const).flatMap((s) =>
   (['light', 'dark'] as const).map((colorScheme) => ({
     name: `${s}-${colorScheme}`,
