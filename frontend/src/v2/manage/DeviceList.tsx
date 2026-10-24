@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Icon } from '@/v2/parent/Icon'
+import { MakerLogo } from '@/v2/parent/MakerLogo'
 import { Chip, type ChipTone } from '@/v2/parent/Chip'
 import type { Device, Group as DeviceGroup, Kid } from '@/v2/types'
 
@@ -164,6 +165,11 @@ export function DeviceList({
                 >
                   <div className="p-device-icon">
                     <Icon name={DEVICE_TYPE_ICON[deviceType]} size={18} />
+                    {d.vendor && (
+                      <div className="p-device-vendor">
+                        <MakerLogo vendor={d.vendor} size={12} />
+                      </div>
+                    )}
                   </div>
                   <div className="p-device-info">
                     <div className="p-device-name">{d.name}</div>
