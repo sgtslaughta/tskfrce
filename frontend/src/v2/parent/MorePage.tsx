@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { HELP_URL } from '@/v2/components/AccountMenu'
 import { BlockerBanner } from '@/v2/components/BlockerBanner'
+import { useFamily } from '@/v2/hooks/useFamily'
+import { useBlocker } from '@/v2/hooks/useDevices'
 import { Icon } from './Icon'
 
 const SETTINGS_SECTIONS = [
@@ -14,6 +16,8 @@ const SETTINGS_SECTIONS = [
 
 export function MorePage({ onLogout }: { onLogout: () => void }) {
   const { user } = useUnifiedAuth()
+  const family = useFamily()
+  const blocker = useBlocker()
 
   return (
     <div className="p-more">
@@ -23,7 +27,21 @@ export function MorePage({ onLogout }: { onLogout: () => void }) {
         </div>
         <div className="p-more-info">
           <strong>{user?.username}</strong>
-          <p className="p-cap">Owner</p>
+          <p className="p-cap">
+            Owner {family.data?.name && `· ${family.data.name}`}
+          </p>
+          {blocker.data?.online === false && (
+            <div className="p-chip" data-tone="amb">
+              <Icon name="router" size={16} />
+              <span>Box offline</span>
+            </div>
+          )}
+          {blocker.data?.online !== false && (
+            <div className="p-chip" data-tone="acc">
+              <Icon name="check_circle" size={16} />
+              <span>Box healthy</span>
+            </div>
+          )}
         </div>
       </div>
       <BlockerBanner />
