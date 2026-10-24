@@ -51,10 +51,14 @@ export function ManageLayout<S extends string = Section>({
       ) : (
         <nav className="m-side" aria-label="Sections">
           {sections.map((s) => (
-            <Link key={s.id} href={`${path}?section=${s.id}`} aria-current={section === s.id ? 'page' : undefined} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              {s.icon && <span className="ms" style={{ fontSize: '20px', flexShrink: 0 }}>{s.icon}</span>}
+            <Link key={s.id} href={`${path}?section=${s.id}`} aria-current={section === s.id ? 'page' : undefined} className="m-link">
+              {s.icon && (
+                <div style={{ width: '36px', height: '36px', borderRadius: '12px', border: '1px solid var(--p-line)', background: 'var(--p-card)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <span className="ms" style={{ fontSize: '20px' }}>{s.icon}</span>
+                </div>
+              )}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 500, fontSize: '14px' }}>{s.label}</div>
+                <div style={{ fontWeight: 600, fontSize: '14.5px' }}>{s.label}</div>
                 {s.description && <div className="m-meta">{s.description}</div>}
               </div>
               {counts[s.id] !== undefined && <span className="m-n" style={{ flexShrink: 0 }}>{counts[s.id]}</span>}
