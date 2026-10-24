@@ -62,17 +62,24 @@ beforeEach(() => {
 const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 
 async function toParent(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText('Family name'), 'Smiths')
-  await user.click(screen.getByRole('button', { name: 'Next' }))
-  await user.type(await screen.findByLabelText('Your name'), 'Sam')
+  // Step 1: Parent account (Your name, Username, Password)
+  await user.type(screen.getByLabelText('Your name'), 'Sam')
   await user.type(screen.getByLabelText('Username'), 'sam')
+  // Password will be typed by caller
 }
 
 describe('setup wizard', () => {
-  test('step 1 shows the detected time zone', () => {
+  test('step 1 renders parent account form', () => {
     wrap()
-    expect(screen.getByRole('textbox', { name: 'Time zone' })).toHaveValue(tz)
+    expect(screen.getByLabelText('Your name')).toBeInTheDocument()
+    expect(screen.getByLabelText('Username')).toBeInTheDocument()
+  })
 
+  test('parent form has username and password fields', () => {
+    wrap()
+    expect(screen.getByLabelText('Your name')).toBeInTheDocument()
+    expect(screen.getByLabelText('Username')).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toBeInTheDocument()
   })
 
   test('short password blocks Next', async () => {
@@ -106,7 +113,7 @@ describe('setup wizard', () => {
     await user.type(screen.getByLabelText(/^Password/), 'longenough1')
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await waitFor(() => expect(loginWithToken).toHaveBeenCalledWith('t', 'r', 1800))
-    for (let i = 0; i < 4; i++) await user.click(await screen.findByRole('button', { name: 'Skip' }))
+    for (let i = 0; i < 5; i++) await user.click(await screen.findByRole('button', { name: 'Skip' }))
     await user.click(await screen.findByRole('button', { name: 'Finish' }))
     expect(push).toHaveBeenCalledWith('/')
     expect(replace).not.toHaveBeenCalled()
@@ -148,13 +155,14 @@ describe('setup wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Add kid' }))
     await screen.findByText(/Ava/)
     expect(posts('/kids')[0][1]).toEqual({ method: 'POST', body: { full_name: 'Ava', avatar: '🦊', pin: null } })
-    await user.click(screen.getByRole('button', { name: 'Next' }))
-    expect(await screen.findByText('No devices yet — you can add them later from Devices.')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('button', { name: 'Next' })) // Step 3 → 4 (Chores)
     await user.click(await screen.findByLabelText('Make bed'))
-    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(screen.getByRole('button', { name: 'Next' })) // Step 4 → 5 (Devices)
+    expect(await screen.findByText('No devices yet — you can add them later from Devices.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Next' })) // Step 5 → 6 (Windows)
     await user.click(await screen.findByLabelText(/Add bedtime/))
     await user.click(screen.getByRole('button', { name: 'Back' }))
+    await user.click(await screen.findByRole('button', { name: 'Next' }))
     await user.click(await screen.findByRole('button', { name: 'Next' }))
     await user.click(await screen.findByRole('button', { name: 'Next' }))
     await user.click(await screen.findByRole('button', { name: 'Finish' }))

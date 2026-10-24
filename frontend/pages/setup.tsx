@@ -15,6 +15,7 @@ import { StepDevices } from '@/v2/setup/StepDevices'
 import { StepChores } from '@/v2/setup/StepChores'
 import { StepWindows } from '@/v2/setup/StepWindows'
 import { StepRemote } from '@/v2/setup/StepRemote'
+import { StepFinish } from '@/v2/setup/StepFinish'
 
 const LAST = 7
 
@@ -96,18 +97,18 @@ export default function SetupPage() {
 
   const next = () => {
     if (step === 1) {
-      if (!family.name.trim()) return setTried(true)
-      return go(2)
-    }
-    if (step === 2) {
       if (loginFailed) return
-      if (accountDone) return go(3)
+      if (accountDone) return go(2)
       const e = parentErrors(parent)
       if (e.fullName || e.username || e.password) return setTried(true)
       setConflict(false)
       return create.mutate()
     }
-    if (step === 5) {
+    if (step === 2) {
+      if (!family.name.trim()) return setTried(true)
+      return go(3)
+    }
+    if (step === 4) {
       return apply.mutate(
         kids.length === 0
           ? []
@@ -151,12 +152,24 @@ export default function SetupPage() {
           : [],
       )
     }
-    if (step === LAST) return void router.push('/')
+    if (step > LAST) return void router.push('/')
     if (step === 3 && kidDraft.trim()) return setTried(true)
     go(step + 1)
   }
 
   const err = (create.error && !conflict ? create.error.message : null) ?? apply.error?.message
+
+  const stepTitles = {
+    1: { title: 'Make your parent account', sub: "You'll use this to log in. You can invite another parent later." },
+    2: { title: 'Your family', sub: 'Shown on the kids\' screens and in notifications.' },
+    3: { title: 'Add your kids', sub: 'Add each child. You can add more later from Kids & chores.' },
+    4: { title: 'Pick some starter chores', sub: 'Tap to choose. Everything can be changed later.' },
+    5: { title: 'Whose devices are these?', sub: 'Devices show up as the home box sees them on your Wi-Fi. Tap a kid to give it to them, or mark it Guest so it\'s never blocked.' },
+    6: { title: 'When can devices be online?', sub: 'A starting schedule. Add holidays, summer and per-kid hours later in Settings.' },
+    7: { title: 'Reach it from anywhere', sub: 'Approve chores when you\'re not home, using Tailscale (free, private).' },
+  } as const
+
+  const finishInfo = { counts: `${kids.length} kids, ${chores.length} chores, 0 devices, 0 schedules` }
 
   return (
     <>
@@ -164,26 +177,33 @@ export default function SetupPage() {
       <div className="f-shell" style={{ minHeight: '100vh' }}>
         <WizardFrame
           step={step}
+          title={step > LAST ? 'You\'re all set' : stepTitles[step as keyof typeof stepTitles].title}
+          subtitle={step > LAST ? finishInfo.counts : stepTitles[step as keyof typeof stepTitles].sub}
           onBack={step > 2 ? () => go(step - 1) : undefined}
           onNext={next}
-          nextLabel={step === LAST ? 'Finish' : 'Next'}
-          onSkip={step >= 3 && step < LAST ? () => go(step + 1) : undefined}
+          nextLabel={step > LAST ? 'Finish' : 'Next'}
+          onSkip={step >= 3 && step <= LAST ? () => go(step + 1) : undefined}
+          onStepClick={(n) => {
+            if (n > step && n > step + 1) return // Can't skip ahead multiple steps
+            go(n)
+          }}
           busy={create.isPending || apply.isPending}
         >
-          {step === 1 && (
+          {step === 1 && <StepParent value={parent} showError={tried} conflict={conflict} onChange={setParent} />}
+          {step === 1 && loginFailed && (
+            <p role="alert">Your account was created. <Link href="/login">Log in</Link> to continue.</p>
+          )}
+          {step === 2 && (
             <StepFamily name={family.name} tz={family.tz} showError={tried}
               onName={(name) => setFamily({ ...family, name })} onTz={(tz) => setFamily({ ...family, tz })} />
           )}
-          {step === 2 && <StepParent value={parent} showError={tried} conflict={conflict} onChange={setParent} />}
-          {step === 2 && loginFailed && (
-            <p role="alert">Your account was created. <Link href="/login">Log in</Link> to continue.</p>
-          )}
           {step === 3 && <StepKids kids={kids} name={kidDraft} onName={setKidDraft} onAdd={(k) => setKids([...kids, k])}
               draftError={tried && kidDraft.trim() ? `Add ${kidDraft.trim()} first or clear the field.` : undefined} />}
-          {step === 4 && <StepDevices kids={kids} />}
-          {step === 5 && <StepChores selected={chores} hasKids={kids.length > 0} onChange={setChores} />}
+          {step === 4 && <StepChores selected={chores} hasKids={kids.length > 0} onChange={setChores} />}
+          {step === 5 && <StepDevices kids={kids} />}
           {step === 6 && <StepWindows bedtime={bedtime} hasKids={kids.length > 0} onChange={setBedtime} />}
           {step === 7 && <StepRemote />}
+          {step > LAST && <StepFinish kids={kids.length} chores={chores.length} devices={0} schedules={0} />}
           {err && <p role="alert">Something went wrong: {err} Try again.</p>}
         </WizardFrame>
       </div>
