@@ -388,8 +388,8 @@
   word-break: break-all;
 }
 
-/* Responsive: stack layout below 900px */
-@media (max-width: 900px) {
+/* Responsive: stack layout below 600px */
+@media (max-width: 600px) {
   [data-look='parent'] .p-auth-container {
     grid-template-columns: 1fr;
   }
