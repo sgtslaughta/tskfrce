@@ -1,21 +1,24 @@
 import { Button, Group, Tabs, Text } from '@mantine/core'
 import { MakerLogo } from '@/v2/parent/MakerLogo'
 import { Chip } from '@/v2/parent/Chip'
-import type { Device, Kid } from '@/v2/types'
+import type { Device, Group as DeviceGroup, Kid } from '@/v2/types'
 
 interface Props {
   devices: Device[]
   kids: Kid[]
+  groups?: DeviceGroup[]
   selectedDevice?: number | null
+  selectedGroup?: number | null
   onSelectDevice: (id: number) => void
+  onSelectGroup?: (id: number) => void
 }
 
 const statusChip = (status: string) => {
-  if (status === 'open' || status === 'assigned') return { tone: 'acc' as const, text: 'Open' }
-  if (status === 'locked') return { tone: 'grey' as const, text: 'Locked' }
-  if (status === 'exempt') return { tone: 'lav' as const, text: 'Exempt' }
-  if (status === 'guest') return { tone: 'grey' as const, text: 'Guest' }
-  return { tone: 'amb' as const, text: "Who's this?" }
+  if (status === 'open' || status === 'assigned') return { tone: 'acc' as const, text: 'Open', icon: 'check' }
+  if (status === 'locked') return { tone: 'grey' as const, text: 'Locked', icon: 'lock' }
+  if (status === 'exempt') return { tone: 'lav' as const, text: 'Exempt', icon: 'shield' }
+  if (status === 'guest') return { tone: 'grey' as const, text: 'Guest', icon: 'user' }
+  return { tone: 'amb' as const, text: "Who's this?", icon: 'help' }
 }
 
 const ownerName = (kids: Kid[], ownerIds: number[]) => {
@@ -40,7 +43,15 @@ const relativeTime = (iso: string | null) => {
   return date.toLocaleDateString()
 }
 
-export function DeviceList({ devices, kids, selectedDevice, onSelectDevice }: Props) {
+export function DeviceList({
+  devices,
+  kids,
+  groups = [],
+  selectedDevice,
+  selectedGroup,
+  onSelectDevice,
+  onSelectGroup,
+}: Props) {
   const unassigned = devices.filter((d) => d.status === 'unassigned')
   const assigned = devices.filter((d) => d.status !== 'unassigned')
 
@@ -54,7 +65,7 @@ export function DeviceList({ devices, kids, selectedDevice, onSelectDevice }: Pr
             Devices · {devices.length}
           </Tabs.Tab>
           <Tabs.Tab value="groups" role="tab">
-            Groups · 0
+            Groups · {groups.length}
           </Tabs.Tab>
         </Tabs.List>
 
@@ -78,14 +89,14 @@ export function DeviceList({ devices, kids, selectedDevice, onSelectDevice }: Pr
                     <Group gap="xs" style={{ flex: 1 }}>
                       <MakerLogo vendor={d.vendor} />
                       <div style={{ flex: 1 }}>
-                        <Text weight={500}>{d.name}</Text>
+                        <Text fw={500}>{d.name}</Text>
                         <Text size="sm" color="dimmed">
                           {owner} · {relativeTime(d.last_seen)}
                         </Text>
                       </div>
                     </Group>
-                    <Chip tone={chip.tone} icon={chip.text === "Who's this?" ? 'help' : 'check'}>
-                      {chip.text === "Who's this?" ? "Who's this?" : chip.text}
+                    <Chip tone={chip.tone} icon={chip.icon}>
+                      {chip.text}
                     </Chip>
                   </Button>
                 )
@@ -95,7 +106,31 @@ export function DeviceList({ devices, kids, selectedDevice, onSelectDevice }: Pr
         </Tabs.Panel>
 
         <Tabs.Panel value="groups" pt="md">
-          <Text>Groups coming soon.</Text>
+          {groups.length === 0 ? (
+            <Text>No groups yet.</Text>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {groups.map((g) => (
+                <Button
+                  key={g.id}
+                  data-group={g.id}
+                  variant="subtle"
+                  justify="space-between"
+                  onClick={() => onSelectGroup?.(g.id)}
+                  style={{ textAlign: 'left', height: 'auto', padding: 12 }}
+                >
+                  <Group gap="xs" style={{ flex: 1 }}>
+                    <div style={{ flex: 1 }}>
+                      <Text fw={500}>{g.name}</Text>
+                      <Text size="sm" color="dimmed">
+                        {g.device_ids.length} {g.device_ids.length === 1 ? 'device' : 'devices'}
+                      </Text>
+                    </div>
+                  </Group>
+                </Button>
+              ))}
+            </div>
+          )}
         </Tabs.Panel>
       </Tabs>
     </div>

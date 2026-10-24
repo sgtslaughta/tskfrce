@@ -6,6 +6,8 @@ import { Icon } from '@/v2/parent/Icon'
 import { isPrivateMac } from './privateMac'
 import type { Device, Kid } from '@/v2/types'
 
+type HeaderChip = { text: string; vendor?: string; icon?: string; tone?: 'acc' | 'mono' | 'plain' }
+
 interface Props {
   device: Device
   kids: Kid[]
@@ -43,20 +45,21 @@ const ownerName = (kids: Kid[], ownerIds: number[]) => {
 export function DeviceDetail({ device, kids, isGroupOpen, onClose, onRequestOverride }: Props) {
   const [tab, setTab] = useState<string | null>('overview')
 
-  const headerChips = [
-    ...(device.vendor ? [{ text: device.vendor, logo: device.vendor }] : []),
+  const headerChips: HeaderChip[] = [
+    ...(device.vendor ? [{ text: device.vendor, vendor: device.vendor, icon: 'package' }] : []),
     {
       text: device.online ? 'Online now' : `Last seen ${relativeTime(device.last_seen)}`,
-      tone: device.online ? 'acc' : 'plain',
+      tone: device.online ? ('acc' as const) : ('plain' as const),
+      icon: device.online ? 'wifi' : 'clock',
     },
-    ...(device.ip ? [{ text: device.ip, tone: 'mono' }] : []),
-    { text: ownerName(kids, device.owner_ids) },
+    ...(device.ip ? [{ text: device.ip, tone: 'mono' as const, icon: 'lan' }] : []),
+    { text: ownerName(kids, device.owner_ids), icon: 'person' },
   ]
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16, padding: 16 }}>
       <div>
-        <Text weight={600} size="lg" mb="xs">
+        <Text fw={600} size="lg" mb="xs">
           {device.name}
         </Text>
         <HeaderChips items={headerChips} />
@@ -77,7 +80,7 @@ export function DeviceDetail({ device, kids, isGroupOpen, onClose, onRequestOver
         </Button>
       </div>
 
-      <Tabs value={tab} onTabChange={setTab}>
+      <Tabs value={tab} onChange={setTab}>
         <Tabs.List>
           <Tabs.Tab value="overview" role="tab">
             Overview
@@ -90,14 +93,14 @@ export function DeviceDetail({ device, kids, isGroupOpen, onClose, onRequestOver
         <Tabs.Panel value="overview" pt="md">
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
-              <Text weight={500} size="sm" mb={4}>
+              <Text fw={500} size="sm" mb={4}>
                 Details
               </Text>
               <TextInput label="Name" value={device.name} readOnly />
               <TextInput label="Owners" value={ownerName(kids, device.owner_ids)} readOnly mt="xs" />
             </div>
             <div>
-              <Text weight={500} size="sm" mb={4}>
+              <Text fw={500} size="sm" mb={4}>
                 Right now
               </Text>
               <Text>
@@ -113,7 +116,7 @@ export function DeviceDetail({ device, kids, isGroupOpen, onClose, onRequestOver
             {device.ip && <TextInput label="IPv4" value={device.ip} readOnly />}
             {device.ipv6 && device.ipv6.length > 0 && (
               <div>
-                <Text weight={500} size="sm" mb={4}>
+                <Text fw={500} size="sm" mb={4}>
                   IPv6
                 </Text>
                 {device.ipv6.map((ip, i) => (

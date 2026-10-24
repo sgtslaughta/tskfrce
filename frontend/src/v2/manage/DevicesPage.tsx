@@ -38,7 +38,7 @@ function DevicesBody() {
         devices.isPending ? (
           <LoadingCards />
         ) : (
-          <DevicesSection devices={all} kids={kids.data ?? []} focus={selectedId} />
+          <DevicesSection devices={all} kids={kids.data ?? []} groups={groups.data ?? []} focus={selectedId ?? 0} />
         )
       }
     >
@@ -47,7 +47,7 @@ function DevicesBody() {
         <DeviceDetail
           device={selectedDevice}
           kids={kids.data ?? []}
-          isGroupOpen={false}
+          isGroupOpen={tab === 'groups'}
           onClose={() => {}}
           onRequestOverride={handleRequestOverride}
         />

@@ -20,11 +20,6 @@ const ownerNames = (kids: Kid[], ownerIds: number[] | undefined) => {
     .join(', ')
 }
 
-const lockedCount = (devices: Device[]) => {
-  const groupDevices = devices.filter((d) => d.group_ids?.includes(0))
-  return groupDevices.filter((d) => d.status === 'locked').length
-}
-
 export function GroupDetail({ group, devices, kids, windows, onClose, onRequestOverride }: Props) {
   const groupDevices = devices.filter((d) => group.device_ids.includes(d.id))
   const locked = groupDevices.filter((d) => d.override?.action === 'lock').length
@@ -38,7 +33,7 @@ export function GroupDetail({ group, devices, kids, windows, onClose, onRequestO
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16, padding: 16 }}>
       <div>
-        <Text weight={600} size="lg" mb="xs">
+        <Text fw={600} size="lg" mb="xs">
           {group.name}
         </Text>
         <HeaderChips items={headerChips} />
@@ -68,14 +63,14 @@ export function GroupDetail({ group, devices, kids, windows, onClose, onRequestO
       <div style={{ flex: 1, overflowY: 'auto' }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div>
-            <Text weight={500} size="sm" mb={4}>
+            <Text fw={500} size="sm" mb={4}>
               Group name
             </Text>
             <TextInput value={group.name} readOnly />
           </div>
 
           <div>
-            <Text weight={500} size="sm" mb={4}>
+            <Text fw={500} size="sm" mb={4}>
               Devices in group
             </Text>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
@@ -95,7 +90,7 @@ export function GroupDetail({ group, devices, kids, windows, onClose, onRequestO
 
           {windows && (
             <div>
-              <Text weight={500} size="sm" mb={4}>
+              <Text fw={500} size="sm" mb={4}>
                 Hours for {group.name}
               </Text>
               <HoursTimeline label={`Hours for ${group.name}`} />
