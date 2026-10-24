@@ -15,7 +15,8 @@
 }
 
 [data-look='parent'] .p-chore-header {
-  transition: background var(--dur-1) var(--ease-out);
+  transition: background var(--dur-1) var(--ease-out),
+              color var(--dur-1) var(--ease-out);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -37,7 +38,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/* Hover/press states */
+/* Buttons and links - comprehensive transitions */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 [data-look='parent'] button,
@@ -48,15 +49,36 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/* Points count-up on kid screens */
+/* Input and form control transitions with focus states */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
-.f-shell .p-points {
+[data-look='parent'] input,
+[data-look='parent'] textarea,
+[data-look='parent'] select {
+  transition: border-color var(--dur-1) var(--ease-out),
+              box-shadow var(--dur-1) var(--ease-out),
+              background-color var(--dur-1) var(--ease-out);
+}
+
+/* Focus state for input fields with accent highlight at 60% opacity */
+[data-look='parent'] input:focus,
+[data-look='parent'] textarea:focus,
+[data-look='parent'] select:focus {
+  outline: none;
+  border-color: var(--p-ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-acc) 60%, transparent);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Points count-up on parent screens */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-points {
   transition: color var(--dur-2) var(--ease-out);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/* Skeleton shimmer */
+/* Skeleton shimmer animation */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 [data-look='parent'] .p-skeleton {
@@ -80,7 +102,36 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/* Reduced motion support */
+/* Progress bars and loading indicators */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-progress-bar {
+  transition: width var(--dur-2) var(--ease-out);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Modal and overlay transitions */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-modal,
+[data-look='parent'] .p-overlay {
+  transition: opacity var(--dur-1) var(--ease-out);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Card and chip state transitions */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-card,
+[data-look='parent'] .p-chip {
+  transition: background-color var(--dur-1) var(--ease-out),
+              border-color var(--dur-1) var(--ease-out),
+              color var(--dur-1) var(--ease-out),
+              box-shadow var(--dur-1) var(--ease-out);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Reduced motion support - disable all motion when preferred */
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
