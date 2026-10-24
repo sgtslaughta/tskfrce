@@ -62,6 +62,8 @@ const wrap = (ui: React.ReactElement) =>
 
 beforeEach(() => {
   apiMock.mockReset()
+  // Dismiss the onboarding card so tests are focused
+  localStorage.setItem('task4ce-tip:onboard.parent', '1')
   apiMock.mockImplementation(async (p) => {
     if (p === '/today') return todayData()
     if (p.match(/^\/chores\/\d+$/) && !p.endsWith('/approve') && !p.endsWith('/send-back'))

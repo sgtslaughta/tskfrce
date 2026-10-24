@@ -5,6 +5,7 @@ import { ParentShell } from "../parent/ParentShell";
 import { LoadError, LoadingCards } from "../components/States";
 import { StickerCard } from "../components/StickerCard";
 import { useToday } from "../hooks/useToday";
+import { GetStartingChecklistCard } from "./GetStartingChecklistCard";
 import { KidList } from "./KidList";
 import { ChoreRow } from "./ChoreRow";
 import { ChoreOpen } from "./ChoreOpen";
@@ -49,6 +50,7 @@ export function TodayPage() {
       )}
       {data && kid && (
         <div className="p-today-detail">
+          <GetStartingChecklistCard kids={data.kids} />
           <div className="p-open-header">
             <h2>{kid.name}&apos;s day</h2>
             <div className="p-open-actions">

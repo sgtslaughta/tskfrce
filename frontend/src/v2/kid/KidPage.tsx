@@ -19,6 +19,7 @@ import { useLook } from '../parent/useLook'
 import type { KidWhoami } from '../types'
 import { AwardOverlay } from './AwardOverlay'
 import { KidChecklist } from './KidChecklist'
+import { KidIntroSwipe } from './KidIntroSwipe'
 import { FamilySection } from './FamilySection'
 import { KidPicker } from './KidPicker'
 import { Locker } from './Locker'
@@ -44,6 +45,7 @@ const SwitchBtn = ({ onClick }: { onClick: () => void }) => (
 
 function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; avatar?: string | null; kidId?: number | null; onExit: () => void; canSwitch: boolean }) {
   const [lockerOpen, setLockerOpen] = useState(false)
+  const [introComplete, setIntroComplete] = useState(false)
   const preview = useAsKid() !== null
   const threads = useThreads(!preview)
   const today = useKidToday(onExit)
@@ -87,6 +89,7 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
     return (
       <>
         {head}
+        {!introComplete && !preview && <KidIntroSwipe onComplete={() => setIntroComplete(true)} />}
         <UnlockedView points={d.points_balance} done={d.chores.filter((c) => c.state === 'done').length} />
         <RewardsSection onExpired={onExit} />
         <FamilySection meId={kidId} />
