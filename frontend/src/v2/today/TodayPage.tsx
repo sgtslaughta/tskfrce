@@ -1,15 +1,12 @@
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/router";
 import { ParentShell } from "../parent/ParentShell";
 import { LoadError, LoadingCards } from "../components/States";
-import { Leaderboard } from "../components/Leaderboard";
-import { Sticker } from "../components/Sticker";
 import { StickerCard } from "../components/StickerCard";
-import { useLeaderboard } from "../hooks/useCommunity";
 import { useToday } from "../hooks/useToday";
-import { KidTabs } from "./KidTabs";
-import { NewDevicesBanner } from "./NewDevicesBanner";
-import { NeedsYou } from "./NeedsYou";
-import { PINsNudge } from "./PINsNudge";
+import { KidList } from "./KidList";
+import type { TodayKid, TodayChore } from "../types";
 
 const dayName = (iso?: string) =>
   iso
@@ -18,33 +15,89 @@ const dayName = (iso?: string) =>
       })
     : "Today";
 
-/** Parent home: day, needs-you feed, new devices, one tab per kid. */
 export function TodayPage() {
   const { data, isError, error, refetch } = useToday();
-  const board = useLeaderboard().data;
-  const n = data?.pending_approvals ?? 0;
-  const sticker = n > 0 && (
-    <Sticker>{`${n} ${n === 1 ? "chore needs" : "chores need"} you`}</Sticker>
+  const router = useRouter();
+  const [selectedKid, setSelectedKid] = useState<TodayKid | undefined>();
+  const [openChoreId, setOpenChoreId] = useState<number | null>(null);
+  const [chatOpen, setChatOpen] = useState(false);
+
+  const selectedKidFromUrl = data?.kids.find(
+    (k) => k.id === Number(router.query.item)
   );
+  const kid = selectedKidFromUrl || selectedKid || data?.kids[0];
 
   return (
-    <ParentShell title={dayName(data?.day)} actions={sticker || undefined}>
+    <ParentShell
+      title={dayName(data?.day)}
+      list={
+        data ? (
+          <KidList onSelectKid={setSelectedKid} selectedKid={kid} />
+        ) : null
+      }
+    >
       {isError && !data && <LoadError error={error} onRetry={() => refetch()} />}
       {!data && !isError && <LoadingCards n={3} h={140} />}
-      {data && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          <NeedsYou items={data.needs_you ?? []} />
-          <PINsNudge nudges={data.shared_without_pin ?? []} />
-          <NewDevicesBanner devices={data.new_devices} />
-          {data.kids.length === 0 ? (
-            <StickerCard>
-              <p>Add your first kid to get started.</p>
-              <Link href="/kids">Add a kid</Link>
-            </StickerCard>
-          ) : (
-            <KidTabs kids={data.kids} />
-          )}
-          {board && <Leaderboard rows={board.rows} />}
+      {data && data.kids.length === 0 && (
+        <StickerCard>
+          <p>Add your first kid to get started.</p>
+          <Link href="/kids">Add a kid</Link>
+        </StickerCard>
+      )}
+      {data && kid && (
+        <div className="p-today-detail">
+          <h2>{kid.name}&apos;s day</h2>
+          <div className="p-chores-list">
+            {kid.chores.map((chore) => (
+              <div
+                key={chore.id}
+                data-testid="chore-row"
+                data-open={openChoreId === chore.id}
+                className="p-chore-row"
+              >
+                <button
+                  className="p-chore-header"
+                  onClick={() =>
+                    setOpenChoreId(
+                      openChoreId === chore.id ? null : chore.id
+                    )
+                  }
+                  style={
+                    chore.state === "done"
+                      ? { textDecoration: "line-through" }
+                      : {}
+                  }
+                >
+                  <span>{chore.title}</span>
+                  {chore.state === "done" && (
+                    <span style={{ fontSize: "0.9em", color: "#666" }}>
+                      Done 4:30 PM
+                    </span>
+                  )}
+                </button>
+                {openChoreId === chore.id && (
+                  <div className="p-chore-detail">
+                    <button onClick={() => setChatOpen(!chatOpen)}>
+                      Open chat
+                    </button>
+                    {chatOpen && (
+                      <div
+                        data-testid="chat-column"
+                        className="p-chat-column"
+                      >
+                        <button
+                          onClick={() => setChatOpen(false)}
+                          aria-label="Close chat"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </ParentShell>
