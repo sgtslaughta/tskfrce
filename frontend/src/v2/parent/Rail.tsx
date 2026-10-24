@@ -8,7 +8,6 @@ interface RailItem {
   icon: string
   href?: string
   label: string
-  badge?: number | boolean
   dot?: boolean
 }
 
@@ -19,7 +18,7 @@ export function Rail({ onLogout }: { onLogout?: () => void }) {
 
   const items: RailItem[] = [
     { icon: '@', label: 'Logo' }, // Logo placeholder
-    { icon: 'notifications', label: 'Bell', badge: false }, // Bell with separate placement
+    { icon: 'notifications', label: 'Bell' }, // Bell with separate placement
     { icon: 'home', href: '/', label: 'Today' },
     { icon: 'devices', href: '/devices', label: 'Devices' },
     { icon: 'group', href: '/kids', label: 'Kids & chores' },
@@ -57,7 +56,6 @@ export function Rail({ onLogout }: { onLogout?: () => void }) {
           >
             <Icon name={item.icon} />
             {item.dot && <span className="p-rail-dot" aria-hidden="true" />}
-            {item.badge && <span className="p-rail-badge">{item.badge > 9 ? '9+' : item.badge}</span>}
           </Link>
         )
       })}
