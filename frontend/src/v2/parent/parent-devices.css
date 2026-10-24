@@ -23,7 +23,6 @@
   font: inherit;
   text-align: left;
   transition: background 0.15s ease-out, border-color 0.15s ease-out;
-  border: none;
   width: 100%;
 }
 
