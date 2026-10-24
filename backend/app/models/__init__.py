@@ -15,6 +15,7 @@ from .lock import Device, DeviceGroup, Override, TimeWindow
 from .password_reset import PasswordReset
 from .points import Points, PointsType
 from .reward import Redemption, Reward
+from .tips import DismissedTip
 from .user import UsedInvite, User
 
 __all__ = [
@@ -45,4 +46,5 @@ __all__ = [
     "Notification",
     "Reward",
     "Redemption",
+    "DismissedTip",
 ]

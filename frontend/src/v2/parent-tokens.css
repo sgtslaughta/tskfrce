@@ -1,0 +1,54 @@
+/* Parent app tokens (dashboard look). Apply to .p-shell and login/setup screens. */
+
+:root,
+[data-mantine-color-scheme='light'] {
+  /* Parent light mode */
+  --p-bg: #f8f8f8;
+  --p-card: #ffffff;
+  --p-soft: #f3f3f3;
+  --p-ink: #292928;
+  --p-sub: #5f5f5c;
+  --p-line: #e4e4e1;
+  --p-lav: #e3d4fb;
+  --p-lav-ink: #4a2f8a;
+  --p-red: #8f1d13;
+  --p-red-bg: #fde3e0;
+  --p-amber-bg: #ffefcc;
+  --p-amber-ink: #5c3a00;
+  --p-grid: rgba(41, 41, 40, 0.1);
+}
+
+[data-mantine-color-scheme='dark'] {
+  /* Parent dark mode */
+  --p-bg: #1c1c1b;
+  --p-card: #292928;
+  --p-soft: #323230;
+  --p-ink: #f4f4f2;
+  --p-sub: #a8a8a4;
+  --p-line: #3d3d3b;
+  --p-lav: #3d3354;
+  --p-lav-dark: #d8c8fb;
+  --p-red: #ff9b8f;
+  --p-red-bg: #3e2422;
+  --p-amber: #3b2f17;
+  --p-amber-dark: #ffd38a;
+  --p-grid: rgba(255, 255, 255, 0.07);
+}
+
+/* Accent colors (family setting, default neon) */
+:root {
+  --accent-neon: #c3f832;
+  --accent-sun: #ffd23f;
+  --accent-tangerine: #ffa94d;
+  --accent-bubblegum: #ff9ecd;
+  --accent-lilac: #c9b6ff;
+  --accent-sky: #7cc8ff;
+  --accent-aqua: #5eead4;
+  --accent-mint: #86efac;
+  --accent-peach: #ffc4a3;
+  --accent-ice: #b8f0ff;
+  --accent: var(--accent-neon); /* Set per family */
+}
+
+/* All accents must pass 7:1 contrast with dark text #292928 */
+/* Text on accent fills is always #292928 (parent dark ink) */

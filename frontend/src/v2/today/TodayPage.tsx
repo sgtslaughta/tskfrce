@@ -4,11 +4,13 @@ import { useRouter } from "next/router";
 import { ParentShell } from "../parent/ParentShell";
 import { LoadError, LoadingCards } from "../components/States";
 import { StickerCard } from "../components/StickerCard";
+import { TipsContainer } from "../components/TipsContainer";
 import { useToday } from "../hooks/useToday";
 import { KidList } from "./KidList";
 import { ChoreRow } from "./ChoreRow";
 import { ChoreOpen } from "./ChoreOpen";
 import { ChatColumn } from "./ChatColumn";
+import { getTipsToShow, PARENT_TIPS } from "../tips";
 import type { TodayKid, TodayChore } from "../types";
 
 const dayName = (iso?: string) =>
@@ -60,6 +62,8 @@ export function TodayPage() {
               </Link>
             </div>
           </div>
+
+          <TipsContainer tips={PARENT_TIPS} maxTips={2} />
 
           {kid.total !== undefined && kid.total > 0 && (
             <div className="p-open-progress">
