@@ -57,4 +57,17 @@ describe('RegisterForm', () => {
     wrap(undefined)
     expect(screen.getByRole('alert')).toHaveTextContent('missing its code')
   })
+
+  test('register form shows password strength indicator', () => {
+    wrap('tok')
+    const form = document.querySelector('.p-auth-form') as HTMLElement
+    const segments = form.querySelectorAll('.p-auth-strength i')
+    expect(segments.length).toBeGreaterThanOrEqual(4)
+  })
+
+  test('no hardcoded invite details shown', () => {
+    wrap('tok')
+    expect(screen.queryByText(/Dad invited you/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/The Garcias/)).not.toBeInTheDocument()
+  })
 })

@@ -7,7 +7,7 @@ import { Icon } from '@/v2/parent/Icon'
 import { AuthBrand } from '@/v2/components/AuthBrand'
 
 /** Redeem a parent's invite link. The username comes from the invite itself. */
-export function RegisterForm({ token, inviteData }: { token: string | undefined; inviteData?: any }) {
+export function RegisterForm({ token }: { token: string | undefined }) {
   useLook('parent')
   const router = useRouter()
   const { login } = useUnifiedAuth()
@@ -56,14 +56,6 @@ export function RegisterForm({ token, inviteData }: { token: string | undefined;
         {token ? (
           <form className="p-auth-form" onSubmit={submit}>
             <h3>Join the family</h3>
-            <div className="p-subtitle">Dad invited you to The Garcias.</div>
-            <div className="p-auth-invite">
-              <div className="av">D</div>
-              <div>
-                <b>Invite from Dad</b>
-                <small>Expires in 22 hours</small>
-              </div>
-            </div>
             {error && (
               <div className="p-auth-error" role="alert">
                 <Icon name="error" />
