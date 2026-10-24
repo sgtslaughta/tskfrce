@@ -1,0 +1,94 @@
+/**
+ * @fileoverview Motion layer for parent UI
+ * Transitions and animations with reduced-motion support
+ * Duration tokens: --dur-1: 150ms, --dur-2: 250ms
+ * Easing: --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94)
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Chore row transitions */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-chore-row {
+  transition: background-color var(--dur-1) var(--ease-out),
+              border-color var(--dur-1) var(--ease-out);
+}
+
+[data-look='parent'] .p-chore-header {
+  transition: background var(--dur-1) var(--ease-out);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* List-detail panel transitions */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-detail-panel {
+  transition: opacity var(--dur-1) var(--ease-out),
+              transform var(--dur-1) var(--ease-out);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Tabbar item transitions */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-tabbar-item {
+  transition: background-color var(--dur-1) var(--ease-out),
+              color var(--dur-1) var(--ease-out);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Hover/press states */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] button,
+[data-look='parent'] a {
+  transition: background-color var(--dur-1) var(--ease-out),
+              color var(--dur-1) var(--ease-out),
+              box-shadow var(--dur-1) var(--ease-out);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Points count-up on kid screens */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+.f-shell .p-points {
+  transition: color var(--dur-2) var(--ease-out);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Skeleton shimmer */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-skeleton {
+  animation: shimmer 2s infinite;
+  background: linear-gradient(
+    90deg,
+    var(--p-soft) 0%,
+    var(--p-card) 50%,
+    var(--p-soft) 100%
+  );
+  background-size: 200% 100%;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Reduced motion support */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-look='parent'] *,
+  [data-look='parent'] *::before,
+  [data-look='parent'] *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

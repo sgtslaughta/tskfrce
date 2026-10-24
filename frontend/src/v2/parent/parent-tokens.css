@@ -24,6 +24,11 @@
   --p-tfg: #f4f4f2;
   --p-tact: #c3f832;
   --p-acc: #c3f832;
+
+  /* Motion tokens */
+  --dur-1: 150ms;
+  --dur-2: 250ms;
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 [data-look='parent'][data-mantine-color-scheme='dark'] {

@@ -1,6 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import { useRouter } from 'next/router'
 import { ReactNode } from 'react'
+import { MantineProvider } from '@mantine/core'
 import { ParentShell } from '@/v2/parent/ParentShell'
 import { Rail } from '@/v2/parent/Rail'
 import { TabBar } from '@/v2/parent/TabBar'
@@ -90,14 +91,22 @@ describe('ParentShell', () => {
   })
 
   test('renders shell with correct structure', () => {
-    render(<ParentShell title="Test">Content</ParentShell>)
+    render(
+      <MantineProvider>
+        <ParentShell title="Test">Content</ParentShell>
+      </MantineProvider>
+    )
 
     const shell = document.querySelector('.p-shell')
     expect(shell).toBeInTheDocument()
   })
 
   test('displays title and children content', () => {
-    render(<ParentShell title="Test Page">Test Content</ParentShell>)
+    render(
+      <MantineProvider>
+        <ParentShell title="Test Page">Test Content</ParentShell>
+      </MantineProvider>
+    )
 
     expect(screen.getByText('Test Page')).toBeInTheDocument()
     expect(screen.getByText('Test Content')).toBeInTheDocument()
@@ -111,7 +120,11 @@ describe('ParentShell', () => {
       query: {},
     })
 
-    render(<ParentShell title="Test">Content</ParentShell>)
+    render(
+      <MantineProvider>
+        <ParentShell title="Test">Content</ParentShell>
+      </MantineProvider>
+    )
 
     const navs = screen.getAllByRole('navigation', { name: /main/i })
     let currentPageFound = false
@@ -128,9 +141,11 @@ describe('ParentShell', () => {
 
   test('renders with actions when provided', () => {
     render(
-      <ParentShell title="Test" actions={<button>Action</button>}>
-        Content
-      </ParentShell>
+      <MantineProvider>
+        <ParentShell title="Test" actions={<button>Action</button>}>
+          Content
+        </ParentShell>
+      </MantineProvider>
     )
 
     expect(screen.getByText('Action')).toBeInTheDocument()
@@ -138,9 +153,11 @@ describe('ParentShell', () => {
 
   test('renders shell with list and detail when list prop provided', () => {
     render(
-      <ParentShell title="Test" list={<div>List</div>}>
-        Detail Content
-      </ParentShell>
+      <MantineProvider>
+        <ParentShell title="Test" list={<div>List</div>}>
+          Detail Content
+        </ParentShell>
+      </MantineProvider>
     )
 
     expect(screen.getByText('List')).toBeInTheDocument()
@@ -160,7 +177,11 @@ describe('Rail', () => {
   })
 
   test('rail has 8 items in order with aria-labels', () => {
-    const { container } = render(<Rail />)
+    const { container } = render(
+      <MantineProvider>
+        <Rail />
+      </MantineProvider>
+    )
 
     const rail = container.querySelector('.p-rail')
     expect(rail).toBeInTheDocument()
@@ -185,7 +206,11 @@ describe('Rail', () => {
       data: { total: 3 },
     })
 
-    const { container } = render(<Rail />)
+    const { container } = render(
+      <MantineProvider>
+        <Rail />
+      </MantineProvider>
+    )
     const chatItem = Array.from(container.querySelectorAll('a[aria-label="Chat"]')).pop() as HTMLElement
     const dot = chatItem?.querySelector('.p-rail-dot')
 
@@ -200,7 +225,11 @@ describe('Rail', () => {
       query: {},
     })
 
-    const { container } = render(<Rail />)
+    const { container } = render(
+      <MantineProvider>
+        <Rail />
+      </MantineProvider>
+    )
     const devicesLink = container.querySelector('a[aria-label="Devices"]')
 
     expect(devicesLink).toHaveAttribute('aria-current', 'page')
@@ -212,7 +241,11 @@ describe('Rail', () => {
       data: { total: 3 },
     })
 
-    const { container } = render(<Rail />)
+    const { container } = render(
+      <MantineProvider>
+        <Rail />
+      </MantineProvider>
+    )
     const bellCount = container.querySelector('[data-testid="bell-count"]')
 
     expect(bellCount).toBeInTheDocument()
@@ -225,7 +258,11 @@ describe('Rail', () => {
       data: { total: 15 },
     })
 
-    const { container } = render(<Rail />)
+    const { container } = render(
+      <MantineProvider>
+        <Rail />
+      </MantineProvider>
+    )
     const bellCount = container.querySelector('[data-testid="bell-count"]')
 
     expect(bellCount).toBeInTheDocument()
@@ -341,7 +378,11 @@ describe('Rail log out', () => {
   it('calls onLogout when clicked', () => {
     ;(useRouter as jest.Mock).mockReturnValue({ pathname: '/', replace: jest.fn() })
     const onLogout = jest.fn()
-    render(<Rail onLogout={onLogout} />)
+    render(
+      <MantineProvider>
+        <Rail onLogout={onLogout} />
+      </MantineProvider>
+    )
     screen.getByRole('button', { name: 'Log out' }).click()
     expect(onLogout).toHaveBeenCalled()
   })
