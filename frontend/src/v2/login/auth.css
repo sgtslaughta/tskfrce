@@ -87,7 +87,8 @@
   align-items: center;
   justify-content: center;
   padding: 32px;
-  background: var(--p-bg);
+  background: #f8f8f8;
+  color: #292928;
 }
 
 [data-look='parent'] .p-auth-form {
@@ -396,6 +397,19 @@
   [data-look='parent'] .p-auth-brand {
     min-height: 280px;
   }
+}
+
+/* Form side always uses light colors for all nested elements */
+[data-look='parent'] .p-auth-form-side,
+[data-look='parent'] .p-auth-form-side * {
+  --p-bg: #f8f8f8;
+  --p-card: #ffffff;
+  --p-ink: #292928;
+  --p-sub: #5f5f5c;
+  --p-line: #e4e4e1;
+  --p-acc: #c3f832;
+  --p-redbg: #fde3e0;
+  --p-red: #8f1d13;
 }
 
 /* Focus lives on the field wrapper (mockup 06 .fi.focus), not the bare input */

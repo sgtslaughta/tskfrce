@@ -23,7 +23,7 @@
   height: 8px;
   border-radius: 8px;
   background: var(--p-acc);
-  transition: width 0.3s ease;
+  transition: width 200ms ease-out;
 }
 
 [data-look='parent'] .p-progress {

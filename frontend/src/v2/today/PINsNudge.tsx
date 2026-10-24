@@ -21,16 +21,16 @@ export function PINsNudge({ nudges }: PINsNudgeProps) {
   }
 
   return (
-    <div style={{ padding: 16, border: '1px solid #e0e0e0', borderRadius: 8, backgroundColor: '#f9f9f9' }}>
-      <p style={{ margin: '0 0 12px 0', fontSize: 14, color: '#666' }}>
+    <div style={{ padding: 16, border: '1px solid var(--p-line)', borderRadius: 8, backgroundColor: 'var(--p-soft)' }}>
+      <p style={{ margin: '0 0 12px 0', fontSize: 14, color: 'var(--p-sub)' }}>
         {kidNames} share {nudge.device_name}. Add PINs so they can&apos;t sign in as each other.
       </p>
       <button
         onClick={handleSetPINs}
         style={{
           padding: '8px 16px',
-          backgroundColor: '#0070f3',
-          color: 'white',
+          backgroundColor: 'var(--p-ink)',
+          color: 'var(--p-card)',
           border: 'none',
           borderRadius: 4,
           cursor: 'pointer',

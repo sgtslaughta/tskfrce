@@ -82,8 +82,8 @@ export function DeviceRow({ device, kids, focused, onDone }: Props) {
         }
       />
       {needsPins && (
-        <div style={{ padding: 12, border: '1px solid #e0e0e0', borderRadius: 4, backgroundColor: '#f9f9f9', marginTop: 12 }}>
-          <p style={{ margin: '0 0 8px 0', fontSize: 13, color: '#666' }}>
+        <div style={{ padding: 12, border: '1px solid var(--p-line)', borderRadius: 4, backgroundColor: 'var(--p-soft)', marginTop: 12 }}>
+          <p style={{ margin: '0 0 8px 0', fontSize: 13, color: 'var(--p-sub)' }}>
             {ownerNames.join(' and ')} share this device. Add PINs so they can&apos;t sign in as each other.
           </p>
           <button
@@ -93,8 +93,8 @@ export function DeviceRow({ device, kids, focused, onDone }: Props) {
             }}
             style={{
               padding: '6px 12px',
-              backgroundColor: '#0070f3',
-              color: 'white',
+              backgroundColor: 'var(--p-ink)',
+              color: 'var(--p-card)',
               border: 'none',
               borderRadius: 3,
               cursor: 'pointer',
