@@ -33,7 +33,7 @@ describe('ThreadList', () => {
     },
   ]
 
-  it('renders tabs: All, Chores, Family (no Notes)', () => {
+  it('renders tabs: All, Chores, Notes, Family', () => {
     render(
       <ThreadList
         threads={mockThreads}
@@ -44,8 +44,8 @@ describe('ThreadList', () => {
 
     expect(screen.getByText(/^All$/)).toBeInTheDocument()
     expect(screen.getByText(/^Chores/)).toBeInTheDocument()
+    expect(screen.getByText(/^Notes/)).toBeInTheDocument()
     expect(screen.getByText(/^Family$/)).toBeInTheDocument()
-    expect(screen.queryByText(/^Notes/)).not.toBeInTheDocument()
   })
 
   it('shows correct chore count in tab label', () => {
@@ -109,7 +109,7 @@ describe('ThreadList', () => {
       />
     )
 
-    const searchInput = screen.getByPlaceholderText('Search') as HTMLInputElement
+    const searchInput = screen.getByPlaceholderText('Search chats') as HTMLInputElement
     fireEvent.change(searchInput, { target: { value: 'milk' } })
 
     expect(screen.getByText('Buy groceries')).toBeInTheDocument()
