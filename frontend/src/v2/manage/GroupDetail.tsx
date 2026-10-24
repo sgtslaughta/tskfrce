@@ -7,6 +7,7 @@ interface Props {
   group: Group
   devices: Device[]
   kids: Kid[]
+  groups?: Group[]
   windows?: TimeWindow[]
   onClose: () => void
   onRequestOverride: (req: { kind: string; id: number; action: string }) => void
@@ -20,7 +21,7 @@ const ownerNames = (kids: Kid[], ownerIds: number[] | undefined) => {
     .join(', ')
 }
 
-export function GroupDetail({ group, devices, kids, windows, onClose, onRequestOverride }: Props) {
+export function GroupDetail({ group, devices, kids, groups, windows, onClose, onRequestOverride }: Props) {
   const groupDevices = devices.filter((d) => group.device_ids.includes(d.id))
   const locked = groupDevices.filter((d) => d.override?.action === 'lock').length
   const open = groupDevices.length - locked
@@ -95,7 +96,7 @@ export function GroupDetail({ group, devices, kids, windows, onClose, onRequestO
               <Text fw={500} size="sm" mb={4}>
                 Hours for {group.name}
               </Text>
-              <HoursTimeline label={`Hours for ${group.name}`} />
+              <HoursTimeline windows={windows ?? []} kids={kids} groups={groups ?? []} />
             </div>
           )}
         </div>

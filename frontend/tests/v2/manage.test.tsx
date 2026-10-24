@@ -320,3 +320,24 @@ describe('settings', () => {
     )
   })
 })
+
+describe('props passing', () => {
+  test('DevicesPage passes groups and windows props correctly', async () => {
+    const testGroup = { id: 1, name: 'Test Group', device_ids: [1], owner_ids: [7] }
+    const testWindow = { id: 1, kid_id: 7, start: '09:00', end: '17:00', kind: 'allowed' as const }
+    apiMock.mockImplementation(async (path) => {
+      if (path === '/devices') return [device]
+      if (path === '/kids') return kids
+      if (path === '/groups') return [testGroup]
+      if (path === '/windows') return [testWindow]
+      return {}
+    })
+    mockRouter.query = { item: '1' }
+    render(wrap(<DevicesPage />))
+    await waitFor(() => {
+      expect(apiMock).toHaveBeenCalledWith('/devices')
+      expect(apiMock).toHaveBeenCalledWith('/groups')
+      expect(apiMock).toHaveBeenCalledWith('/windows')
+    })
+  })
+})

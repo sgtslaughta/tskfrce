@@ -43,7 +43,7 @@ const ownerName = (kids: Kid[], ownerIds: number[]) => {
     .join(', ')
 }
 
-export function DeviceDetail({ device, kids, isGroupOpen, onClose, onRequestOverride }: Props) {
+export function DeviceDetail({ device, kids, groups, isGroupOpen, onClose, onRequestOverride }: Props) {
   const [tab, setTab] = useState<string | null>('overview')
 
   const headerChips: HeaderChip[] = [

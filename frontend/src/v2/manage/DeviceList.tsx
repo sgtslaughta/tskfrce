@@ -140,7 +140,7 @@ export function DeviceList({
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {groups.map((g) => {
-                const groupOwners = ownerName(kids, g.owner_ids)
+                const groupOwners = ownerName(kids, g.owner_ids ?? [])
                 const deviceTypes = getGroupDeviceTypes(devices, g.device_ids)
                 return (
                   <Button

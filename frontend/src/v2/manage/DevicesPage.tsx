@@ -5,6 +5,7 @@ import { LoadError, LoadingCards } from '@/v2/components/States'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useDevices, useGroups } from '@/v2/hooks/useDevices'
 import { useKids } from '@/v2/hooks/useKids'
+import { useWindows } from '@/v2/hooks/useWindows'
 import { DevicesSection } from './DevicesSection'
 import { DeviceDetail } from './DeviceDetail'
 import { GroupDetail } from './GroupDetail'
@@ -16,6 +17,7 @@ function DevicesBody() {
   const devices = useDevices()
   const kids = useKids()
   const groups = useGroups()
+  const windows = useWindows()
   const all = devices.data ?? []
   const selectedId = Number(first(query.item)) || null
   const [tab, setTab] = useState<'devices' | 'groups'>('devices')
@@ -47,6 +49,7 @@ function DevicesBody() {
         <DeviceDetail
           device={selectedDevice}
           kids={kids.data ?? []}
+          groups={groups.data ?? []}
           isGroupOpen={tab === 'groups'}
           onClose={() => {}}
           onRequestOverride={handleRequestOverride}
@@ -57,6 +60,8 @@ function DevicesBody() {
           group={selectedGroup}
           devices={all}
           kids={kids.data ?? []}
+          groups={groups.data ?? []}
+          windows={windows.data ?? []}
           onClose={() => {}}
           onRequestOverride={handleRequestOverride}
         />
