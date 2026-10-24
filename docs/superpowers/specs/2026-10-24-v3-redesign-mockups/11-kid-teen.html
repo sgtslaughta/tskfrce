@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#5a5a5a;font-family:Inter,sans-serif;padding:24px;color:#fff}
+.top{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;font-family:'DM Sans'}.top h1{font-size:22px;margin:0}.top p{margin:4px 0 0;opacity:.8;font-size:14px}
+.tg{margin-left:auto;background:#fff;color:#292928;border:0;border-radius:999px;padding:8px 14px;font:600 13px 'DM Sans';cursor:pointer}
+.cap{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin:22px 0 8px;font-family:'DM Sans'}
+.ms{font-family:"Material Symbols Rounded";font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;font-feature-settings:"liga";vertical-align:middle}
+.fill{font-variation-settings:"FILL" 1}
+.k{--bg:#f4f7fa;--card:#fff;--ink:#1d2b53;--sub:#4a5a80;--line:#dfe5ee;--soft:#eef1f6;--sun:#ffc93c;--green:#5cc46f;--coral:#ff6b4a;--amber:#ffb020;--blue:#dbe6ff;--lav:#e6dcff;--grid:rgba(29,43,83,.07)}
+.dark .k{--bg:#121828;--card:#1a2340;--ink:#eef2ff;--sub:#a9b6d8;--line:#2a3660;--soft:#222d52;--green:#6fd08a;--coral:#ff7a5c;--amber:#ffc04d;--blue:#26355f;--lav:#352c5c;--grid:rgba(255,255,255,.05)}
+.tab{width:1180px;max-width:100%;height:760px;border-radius:22px;border:12px solid #111;background:var(--bg);color:var(--ink);overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.4);display:grid;grid-template-columns:76px 1fr 380px;position:relative;isolation:isolate}
+.tab::before{content:'';position:absolute;inset:0;z-index:-1;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.rail{background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px}
+.me{width:44px;height:44px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-size:22px;margin-bottom:10px;border:2px solid var(--sun)}
+.nb{width:60px;padding:8px 0;border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;font-weight:700;color:var(--sub);position:relative;cursor:pointer}
+.nb .ms{font-size:24px}.nb.on{background:var(--soft);color:var(--ink)}.nb.on .ms{color:var(--ink)}
+.nb.on::before{content:'';position:absolute;left:-8px;top:10px;bottom:10px;width:4px;border-radius:0 4px 4px 0;background:var(--sun)}
+.nb .bd{position:absolute;top:4px;right:8px;min-width:18px;height:18px;border-radius:9px;background:var(--coral);color:#1d2b53;font-size:10.5px;font-weight:800;display:grid;place-items:center;padding:0 4px}
+.rail .sp{flex:1}
+.main{padding:20px 22px;overflow:auto;display:flex;flex-direction:column;gap:14px}
+.hd{display:flex;align-items:baseline;gap:10px}.hd h1{font-family:'Space Grotesk';font-size:26px;margin:0}.hd span{color:var(--sub);font-weight:600;font-size:14px}
+.strip{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr;gap:10px}
+.sc{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;align-items:center;gap:10px}
+.sc .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none}
+.sc b{display:block;font-family:'Space Grotesk';font-size:17px}.sc small{color:var(--sub);font-size:11.5px;font-weight:600}
+.ic.lock{background:var(--coral);color:#1d2b53}.ic.pts{background:var(--sun);color:#1d2b53}.ic.fire{background:var(--soft);color:var(--coral)}.ic.done{background:var(--green);color:#1d2b53}
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.f{font-size:12.5px;font-weight:700;padding:6px 12px;border-radius:999px;border:1px solid var(--line);color:var(--sub);background:var(--card)}
+.f.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.list{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.row{display:grid;grid-template-columns:28px 32px 1fr auto auto;gap:12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line);cursor:pointer}
+.row:first-child{border-top:0}
+.row:hover{background:var(--soft)}
+.row.sel{background:var(--soft);box-shadow:inset 3px 0 0 var(--sun)}
+.ck{width:22px;height:22px;border-radius:6px;border:2px solid var(--sub);display:grid;place-items:center}
+.done .ck{background:var(--green);border-color:var(--green)}.done .ck::after{content:'check';font-family:"Material Symbols Rounded";font-size:17px;color:#1d2b53}
+.ty{width:32px;height:32px;border-radius:9px;background:var(--soft);display:grid;place-items:center;color:var(--sub)}.ty .ms{font-size:18px}
+.nm{font-weight:700;font-size:15px}.nm small{display:block;color:var(--sub);font-weight:500;font-size:12.5px;margin-top:1px}
+.done .nm span{text-decoration:line-through;color:var(--sub)}
+.pts{font-family:'Space Grotesk';font-weight:700;color:var(--sub);font-size:14px;width:44px;text-align:right}
+/* status chips */
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:4px 8px;border-radius:6px;white-space:nowrap}
+.chip .ms{font-size:14px}
+.c-over{background:var(--coral);color:#1d2b53}
+.c-soon{background:var(--amber);color:#1d2b53}
+.c-today{background:var(--soft);color:var(--ink);border:1px solid var(--line)}
+.c-wait{background:var(--blue);color:var(--ink)}
+.c-back{background:transparent;color:var(--coraltx,#a8321a);border:1.5px solid currentColor}
+.dark .c-back{--coraltx:#ff9b85}
+.c-done{background:var(--green);color:#1d2b53}
+.c-new{background:var(--lav);color:var(--ink)}
+.c-later{background:transparent;color:var(--sub);border:1px dashed var(--line)}
+.detail{background:var(--card);border-left:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.dh{display:flex;gap:12px;align-items:center}.dh .ty{width:46px;height:46px;border-radius:12px;background:var(--sun);color:#1d2b53}.dh .ty .ms{font-size:26px}
+.dh h2{margin:0;font-family:'Space Grotesk';font-size:22px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.sect{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--sub);font-weight:800}
+.st{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:14px;border-top:1px solid var(--line)}.st:first-of-type{border-top:0}
+.st .n{width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--card);font-size:10.5px;font-weight:800;display:grid;place-items:center;flex:none}
+.st .ck{width:20px;height:20px}
+.st.done .t{text-decoration:line-through;color:var(--sub)}
+.st.lock{color:var(--sub)}.st.lock .ck{border-color:var(--line);background:var(--soft)}.st.lock .ck::after{content:'lock';font-family:"Material Symbols Rounded";font-size:14px;color:var(--sub)}.st.lock .n{background:var(--line);color:var(--sub)}
+.st .t{flex:1}
+.msg{background:var(--soft);border-radius:12px 12px 12px 4px;padding:8px 11px;font-size:13px}.msg small{display:block;color:var(--sub);font-size:11px;font-weight:600}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:auto}
+.btn{height:44px;border-radius:10px;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.btn .ms{font-size:19px}.btn.pri{grid-column:1/-1;background:var(--sun);border-color:var(--sun);color:#1d2b53}.btn.off{background:var(--soft);color:var(--sub);border-color:var(--line)}
+.legend{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;background:#fff;color:#1d2b53;border-radius:14px;padding:16px}
+.dark .legend{background:#1a2340;color:#eef2ff}
+.legend div{display:flex;align-items:center;gap:10px;font-size:13px}
+.ages{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;background:#fff;color:#292928;border-radius:14px;padding:16px;font-family:'DM Sans'}
+.ages div{border:1px solid #e4e4e1;border-radius:12px;padding:12px}.ages .on{border:2px solid #292928;box-shadow:3px 3px 0 #c3f832}
+.ages b{display:block;font-size:15px}.ages small{color:#5f5f5c;font-size:12.5px}
+</style></head><body class="dark">
+<div class="top"><div><h1>Kid view — older kids (13+)</h1><p>Same fridge colours, grown-up layout: slim rail, stats strip, a list with status chips, detail panel on the right. Sample data.</p></div>
+<button class="tg" onclick="document.body.classList.toggle('dark')">Toggle dark</button></div>
+
+<div class="k"><div class="tab">
+ <nav class="rail">
+  <div class="me">🐙</div>
+  <div class="nb on"><span class="ms fill">checklist</span>Chores<span class="bd">4</span></div>
+  <div class="nb"><span class="ms">redeem</span>Rewards</div>
+  <div class="nb"><span class="ms">forum</span>Chat<span class="bd">1</span></div>
+  <div class="nb"><span class="ms">notifications</span>Alerts<span class="bd">3</span></div>
+  <div class="sp"></div>
+  <div class="nb"><span class="ms">person</span>Me</div>
+ </nav>
+ <main class="main">
+  <div class="hd"><h1>Today</h1><span>Thursday · Mia</span></div>
+  <div class="strip">
+   <div class="sc"><span class="ic lock"><span class="ms fill">lock</span></span><div><b>Internet paused</b><small>3 chores left · night lock 9:00</small></div></div>
+   <div class="sc"><span class="ic done"><span class="ms">task_alt</span></span><div><b>2 / 6</b><small>done today</small></div></div>
+   <div class="sc"><span class="ic pts"><span class="ms fill">star</span></span><div><b>860</b><small>points</small></div></div>
+   <div class="sc"><span class="ic fire"><span class="ms fill">local_fire_department</span></span><div><b>6 days</b><small>streak</small></div></div>
+  </div>
+  <div class="filters"><span class="f on">All · 6</span><span class="f">To do · 4</span><span class="f">Waiting · 1</span><span class="f">Done · 1</span></div>
+  <div class="list">
+   <div class="row"><span class="ck"></span><span class="ty"><span class="ms">cleaning_services</span></span><div class="nm"><span>Clean bathroom</span><small>Was due 4:30 PM</small></div><span class="chip c-over"><span class="ms">alarm</span>Overdue</span><span class="pts">+40</span></div>
+   <div class="row sel"><span class="ck"></span><span class="ty"><span class="ms">school</span></span><div class="nm"><span>Homework</span><small>Step 2 of 4 · next by 5:00 PM</small></div><span class="chip c-soon"><span class="ms">hourglass_bottom</span>Due in 25 min</span><span class="pts">+30</span></div>
+   <div class="row"><span class="ck"></span><span class="ty"><span class="ms">music_note</span></span><div class="nm"><span>Practice piano</span><small>Due 7:30 PM</small></div><span class="chip c-today"><span class="ms">schedule</span>Due 7:30</span><span class="pts">+15</span></div>
+   <div class="row"><span class="ck"></span><span class="ty"><span class="ms">restaurant</span></span><div class="nm"><span>Load dishwasher</span><small>Dad: “plates face in”</small></div><span class="chip c-back"><span class="ms">undo</span>Sent back</span><span class="pts">+20</span></div>
+   <div class="row"><span class="ck"></span><span class="ty"><span class="ms">yard</span></span><div class="nm"><span>Mow front lawn</span><small>Added by Dad · due Sat</small></div><span class="chip c-new"><span class="ms">fiber_new</span>New</span><span class="pts">+60</span></div>
+   <div class="row done"><span class="ck"></span><span class="ty"><span class="ms">pets</span></span><div class="nm"><span>Feed the cat</span><small>Done 5:01 PM</small></div><span class="chip c-wait"><span class="ms">hourglass_top</span>Waiting for OK</span><span class="pts">+10</span></div>
+  </div>
+ </main>
+ <aside class="detail">
+  <div class="dh"><span class="ty"><span class="ms">school</span></span><div><h2>Homework</h2><div class="chips" style="margin-top:4px"><span class="chip c-soon"><span class="ms">hourglass_bottom</span>Due in 25 min</span><span class="chip c-today">+30 pts</span></div></div></div>
+  <div><div class="sect">Steps · in order 1 → 3</div>
+   <div class="st done"><span class="n">1</span><span class="ck"></span><span class="t">Math worksheet</span><span style="font-size:12px;color:var(--sub)">4:12</span></div>
+   <div class="st"><span class="n">2</span><span class="ck"></span><span class="t">Check answers with Mom</span><span class="chip c-soon">5:00</span></div>
+   <div class="st lock"><span class="n">3</span><span class="ck"></span><span class="t">Fix mistakes</span><span class="chip c-later">6:00</span></div>
+   <div class="st"><span class="n" style="background:transparent;border:1.5px dashed var(--line);color:var(--sub)">–</span><span class="ck"></span><span class="t">Pack backpack</span><span class="chip c-later">8:30</span></div>
+  </div>
+  <div><div class="sect" style="margin-bottom:6px">Latest</div><div class="msg"><small>Mom · 4:20 PM</small>Bring it to me when you're ready.</div></div>
+  <div class="acts"><div class="btn off pri"><span class="ms">task_alt</span>Mark done · finish steps first</div><div class="btn"><span class="ms">campaign</span>Tell Mom/Dad</div><div class="btn"><span class="ms">forum</span>Chat</div></div>
+ </aside>
+</div></div>
+
+<p class="cap">Status chips (both age modes)</p>
+<div class="k"><div class="legend">
+ <div><span class="chip c-over"><span class="ms">alarm</span>Overdue</span>Past its deadline</div>
+ <div><span class="chip c-soon"><span class="ms">hourglass_bottom</span>Due in 25 min</span>Due within the hour (time left)</div>
+ <div><span class="chip c-today"><span class="ms">schedule</span>Due 7:30</span>Due later today</div>
+ <div><span class="chip c-later">8:30</span>No rush / a later step</div>
+ <div><span class="chip c-new"><span class="ms">fiber_new</span>New</span>Just added</div>
+ <div><span class="chip c-back"><span class="ms">undo</span>Sent back</span>Parent wants changes</div>
+ <div><span class="chip c-wait"><span class="ms">hourglass_top</span>Waiting for OK</span>Done, parent checking</div>
+ <div><span class="chip c-done"><span class="ms">check</span>Approved</span>Points earned</div>
+</div></div>
+
+<p class="cap">Parent setting · Kids &amp; chores → Mia → Age group</p>
+<div class="ages">
+ <div><b>Little (5–8)</b><small>Big buttons, one chore at a time, pictures over words, read-aloud friendly.</small></div>
+ <div><b>Kid (9–12)</b><small>Big tiles, status banner, chips. (The simplified view.)</small></div>
+ <div class="on"><b>Teen (13+)</b><small>List + detail, stats, filters, smaller type. (This view.)</small></div>
+</div>
+</body></html>

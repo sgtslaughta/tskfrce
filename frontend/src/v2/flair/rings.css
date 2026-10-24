@@ -1,0 +1,34 @@
+/* Avatar rings. */
+.flair-ring {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #c9d3ee;
+  color: #1d2b53;
+  font-size: 22px;
+  line-height: 1;
+}
+.flair-ring-sm { width: 32px; height: 32px; font-size: 16px; }
+.flair-ring-lg { width: 64px; height: 64px; font-size: 30px; }
+
+.flair-ring-mint { box-shadow: 0 0 0 3px #7bd389; }
+.flair-ring-coral { box-shadow: 0 0 0 3px #ff6b4a; }
+.flair-ring-sun { box-shadow: 0 0 0 3px #ffc93c; }
+.flair-ring-glow-sun { box-shadow: 0 0 0 3px #ffc93c, 0 0 14px rgba(255, 201, 60, 0.7); }
+.flair-ring-glow-violet { box-shadow: 0 0 0 3px #b48cff, 0 0 14px rgba(180, 140, 255, 0.7); }
+.flair-ring-pulse { box-shadow: 0 0 0 3px #7bd3ff, 0 0 10px rgba(123, 211, 255, 0.6); }
+
+@keyframes flair-glow {
+  50% { filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.55)); }
+}
+@keyframes flair-pulse {
+  50% { transform: scale(1.06); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .flair-ring-glow-sun,
+  .flair-ring-glow-violet { animation: flair-glow 2.4s ease-in-out infinite; }
+  .flair-ring-pulse { animation: flair-pulse 1.8s ease-in-out infinite; }
+}

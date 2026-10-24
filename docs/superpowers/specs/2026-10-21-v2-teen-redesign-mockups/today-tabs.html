@@ -1,0 +1,91 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap');
+.tt { --ink:#1d2b53; --sun:#ffc93c; --red:#ff6b4a; --green:#7bd389; --bg:#f4f7fa; --card:#fff; --text:#1d2b53; --sub:#4a5a80; --line:#eef1f6; --edge:#c9d3e6; font-family:Inter; color:var(--text); }
+.tt .h { font-family:'Space Grotesk'; font-weight:700; }
+.tt .cap { text-transform:uppercase; letter-spacing:.08em; font-size:10.5px; font-weight:600; }
+.tt .mono { font-family:'JetBrains Mono'; font-weight:700; }
+.tt .scr { background:var(--bg); padding:16px; border-radius:10px; }
+.tt .r { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.tt .title { margin-bottom:12px; } .tt .title .h { font-size:24px; }
+.tt .needs { background:var(--card); border-radius:8px; box-shadow:0 6px 20px rgba(29,43,83,.08); border-top:4px solid var(--sun); padding:10px 14px; margin-bottom:16px; }
+.tt .needs .list { display:flex; gap:10px; overflow-x:auto; padding:6px 0 2px; }
+.tt .ni { flex:none; display:flex; gap:8px; align-items:center; border:1.5px solid var(--edge); border-radius:6px; padding:6px 8px; font-size:12px; }
+.tt .photo { width:38px; height:38px; border-radius:4px; background:linear-gradient(135deg,#9fb3d9,#5b6fb5); flex:none; }
+.tt .btn { font-family:'Space Grotesk'; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.06em; padding:6px 9px; background:var(--sun); color:var(--ink); clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px)); }
+.tt .btn.s { background:var(--edge); }
+.tt .tabs { display:flex; gap:2px; border-bottom:2px solid var(--line); overflow-x:auto; }
+.tt .tab { padding:10px 16px; font-size:13px; display:flex; gap:8px; align-items:center; color:var(--sub); border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; }
+.tt .tab.on { color:var(--text); border-bottom-color:var(--sun); font-weight:600; }
+.tt .tab .n { font-family:'JetBrains Mono'; font-size:11px; }
+.tt .tab .d { width:7px; height:7px; border-radius:50%; background:var(--red); }
+.tt .panel { display:grid; grid-template-columns:1.6fr 1fr; gap:12px; margin-top:12px; }
+@media (max-width:900px){ .tt .panel{grid-template-columns:1fr} }
+.tt .kid { background:var(--card); border-radius:8px; overflow:hidden; box-shadow:0 1px 2px rgba(29,43,83,.06),0 6px 20px rgba(29,43,83,.08); }
+.tt .head { background:var(--ink); color:#fff; padding:12px 14px; }
+.tt .tag { font-size:10px; padding:2px 7px; border-radius:4px; background:rgba(255,255,255,.14); color:#c6d0ee; }
+.tt .hs { color:#c6d0ee; font-size:12px; margin-top:6px; }
+.tt .track { height:6px; border-radius:99px; background:rgba(255,255,255,.16); overflow:hidden; margin-top:8px; }
+.tt .fill { height:100%; background:linear-gradient(90deg,var(--sun),#ffb020); }
+.tt .dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--green); margin-right:5px; }
+.tt .dot.off { background:#8f9cc4; }
+.tt .body { padding:4px 14px 12px; }
+.tt .sec { color:var(--sub); margin:10px 0 2px; display:flex; justify-content:space-between; }
+.tt .row { display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid var(--line); font-size:13px; }
+.tt .chk { width:15px; height:15px; flex:none; border:1.5px solid var(--edge); border-radius:3px; }
+.tt .ok { background:var(--green); border-color:var(--green); }
+.tt .meta { margin-left:auto; color:var(--sub); font-size:11.5px; display:flex; gap:6px; align-items:center; }
+.tt .pill { font-size:10px; padding:1px 6px; border-radius:4px; text-transform:uppercase; font-weight:700; background:rgba(255,107,74,.15); color:#c4401f; }
+.tt .side { display:grid; gap:12px; align-content:start; }
+.tt .box { background:var(--card); border-radius:8px; padding:12px 14px; box-shadow:0 1px 2px rgba(29,43,83,.06),0 6px 20px rgba(29,43,83,.08); font-size:12.5px; }
+.tt .box .row { font-size:12.5px; }
+.tt .msg { padding:6px 0; border-top:1px solid var(--line); }
+.tt .msg b { font-size:12px; }
+</style>
+
+<h2>Today: one tab per kid</h2>
+<p class="subtitle">"Needs you" stays at the top for every kid. Underneath, one tab per kid showing their progress, with a red dot when something of theirs needs you. The open tab has room for the full chore list, plus devices, activity and chat on the side.</p>
+
+<div class="tt"><div class="scr">
+  <div class="r title"><span class="h">Tuesday</span><span class="cap" style="color:var(--sub)">9 left · 3 need you</span></div>
+  <div class="needs">
+    <div class="r"><span class="cap">Needs you · 3</span><span class="cap" style="color:var(--sub)">Approve all ▸</span></div>
+    <div class="list">
+      <div class="ni"><span class="photo"></span><div><b>Maya</b> · Clean room<div style="color:var(--sub);font-size:11px">3/3 subtasks · 4:12pm</div></div><span class="btn">Approve</span><span class="btn s">Send back</span></div>
+      <div class="ni"><span class="photo"></span><div><b>Sam</b> · Wash car<div style="color:var(--sub);font-size:11px">Team · 4/4</div></div><span class="btn">Approve</span><span class="btn s">Send back</span></div>
+      <div class="ni"><div><b>Leo</b> · 30 min screen time<div style="color:var(--sub);font-size:11px">40 pts · has 95</div></div><span class="btn">Approve</span><span class="btn s">Deny</span></div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <span class="tab on">Maya <span class="n">3/7</span><span class="d"></span></span>
+    <span class="tab">Leo <span class="n">1/5</span><span class="d"></span></span>
+    <span class="tab">Sam <span class="n">4/4</span><span class="d"></span></span>
+  </div>
+
+  <div class="panel">
+    <div class="kid">
+      <div class="head"><div class="r"><span><span class="h" style="font-size:20px">Maya</span> <span class="tag cap">Lv 8 · Clutch</span></span><span class="mono" style="color:var(--sun);font-size:18px">240 <small style="font-family:Inter;font-weight:500;font-size:11px;color:#c6d0ee">pts</small></span></div>
+        <div class="track"><div class="fill" style="width:60%"></div></div>
+        <div class="r hs"><span><b class="mono">3/7</b> done today · <b class="mono" style="color:var(--red)">12</b> day streak · 62/100 XP</span><span><span class="dot"></span>Online</span></div></div>
+      <div class="body">
+        <div class="sec cap"><span>Still to do · 4</span></div>
+        <div class="row"><span class="chk"></span>Walk the dog<span class="meta"><span class="pill">Due 5pm</span><span class="mono">+15</span></span></div>
+        <div class="row"><span class="chk"></span>Take out trash<span class="meta">Race · <span class="mono">+20</span></span></div>
+        <div class="row"><span class="chk"></span>Practice piano<span class="meta"><span class="mono">+10</span></span></div>
+        <div class="row"><span class="chk"></span>Clean bathroom<span class="meta">0/4 subtasks · <span class="mono">+25</span></span></div>
+        <div class="sec cap"><span>Done · 3</span><span>▾</span></div>
+      </div>
+    </div>
+    <div class="side">
+      <div class="box"><div class="cap" style="color:var(--sub)">Devices</div>
+        <div class="row"><span class="dot"></span>iPad<span class="meta">online now</span></div>
+        <div class="row"><span class="dot off"></span>Laptop<span class="meta">2h ago · paused</span></div></div>
+      <div class="box"><div class="r"><span class="cap" style="color:var(--sub)">Chat with Maya</span><span class="cap" style="color:var(--sub)">Open ▸</span></div>
+        <div class="msg"><b>Maya</b> · can I swap piano for tomorrow?</div>
+        <div class="msg"><b>Maya</b> · 📷 clean room done</div></div>
+      <div class="box"><div class="cap" style="color:var(--sub)">Recent</div>
+        <div class="msg">Badge: On Fire · silver · today</div>
+        <div class="msg">Cashed in 30 min screen time · yesterday</div></div>
+    </div>
+  </div>
+</div></div>

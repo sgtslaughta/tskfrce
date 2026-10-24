@@ -20,6 +20,4 @@ Words we use:
 - **Paused**: a device cannot use the internet right now.
 - **Needs you**: the list of things waiting for your decision.
 
-Screenshots in this guide are listed in [img/SHOTS.md](img/SHOTS.md).
-
-Looking for the developer docs? See [engineering.md](../engineering.md).
+Looking for the developer docs? See [the engineering overview](../engineering.md).

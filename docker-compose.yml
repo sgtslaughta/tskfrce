@@ -1,0 +1,142 @@
+# Docker Compose configuration for TaaskMaaster
+# Note: version attribute is obsolete in newer Docker Compose versions
+
+# Environment variables with defaults
+x-common-env: &common-env
+  ENVIRONMENT: ${ENVIRONMENT:-development}
+  DEBUG: ${DEBUG:-true}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+    container_name: taaskmaaster-backend
+    ports:
+      - "${BACKEND_PORT:-127.0.0.1:8000}:8000"
+    environment:
+      <<: *common-env
+      DATA_DIR: /app/data
+      DISABLE_RATE_LIMITING: ${DISABLE_RATE_LIMITING:-false}
+      DISABLE_LOGIN_RATE_LIMIT: ${DISABLE_LOGIN_RATE_LIMIT:-true}
+      # Same token as the blocker (the backend would otherwise generate its own)
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?set INTERNAL_TOKEN in .env}
+      BOX_URL: ${BOX_URL:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://192.168.1.95:3000}
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,192.168.1.95,backend,taaskmaaster-backend}
+      # Only the frontend proxy (static IPs below) may set X-Real-IP
+      TRUSTED_PROXY_IPS: 127.0.0.1,::1,172.29.40.10,fd00:4ce::10
+    volumes:
+      - ./backend:/app
+      - task4ce_data:/app/data
+    networks:
+      - taaskmaaster-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Frontend Next.js Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - BUILDKIT_INLINE_CACHE=1
+        - NODE_ENV=${NODE_ENV:-development}
+    container_name: taaskmaaster-frontend
+    ports:
+      - "${FRONTEND_PORT:-0.0.0.0:3000}:3000"
+    environment:
+      <<: *common-env
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api/proxy}  # Now points to internal proxy
+      BACKEND_INTERNAL_URL: http://backend:8000  # Internal Docker network URL
+      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-TaaskMaaster}
+      NODE_ENV: ${NODE_ENV:-development}
+      # WebSocket and HMR configuration
+      WATCHPACK_POLLING: true
+      CHOKIDAR_USEPOLLING: true
+      # Node.js memory optimization
+      NODE_OPTIONS: "--max-old-space-size=2048 --max-semi-space-size=128"
+    volumes:
+      - ./frontend:/app
+      - frontend_next_cache:/app/.next
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      taaskmaaster-network:
+        ipv4_address: 172.29.40.10
+        ipv6_address: fd00:4ce::10
+    restart: unless-stopped
+    # Memory limits to prevent SIGBUS errors
+    mem_limit: 2g
+    memswap_limit: 2g
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # LAN blocker: pauses chosen devices' internet (see docs/blocker.md)
+  blocker:
+    build:
+      context: ./blocker
+      dockerfile: Dockerfile
+    container_name: taaskmaaster-blocker
+    # Host networking + only the two caps needed for L2 work; never privileged
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      # Host network: reach the app over loopback
+      BACKEND_URL: ${BLOCKER_BACKEND_URL:-http://127.0.0.1:8000}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?set INTERNAL_TOKEN in .env}
+      LAN_IFACE: ${LAN_IFACE:-eth0}
+      PORTAL_REDIRECT_URL: ${BOX_URL:-http://task4ce.local:3000}/kid
+    restart: unless-stopped
+
+  # PostgreSQL (optional, for production)
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: taaskmaaster-postgres
+  #   ports:
+  #     - "5432:5432"
+  #   environment:
+  #     - POSTGRES_DB=taaskmaaster
+  #     - POSTGRES_USER=taaskmaaster
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-taaskmaaster123}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - taaskmaaster-network
+  #   restart: unless-stopped
+  #   profiles:
+  #     - production
+
+volumes:
+  task4ce_data:
+  frontend_next_cache:  # Named volume for Next.js build cache
+  # postgres_data:  # Commented out since postgres is disabled
+
+networks:
+  taaskmaaster-network:
+    driver: bridge
+    # Internal network - containers can communicate but external access is limited
+    internal: false
+    # Enable IPv6 support
+    enable_ipv6: true
+    # Fixed subnets so the frontend proxy has a known IP (TRUSTED_PROXY_IPS)
+    ipam:
+      config:
+        - subnet: 172.29.40.0/24
+        - subnet: fd00:4ce::/64

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#5a5a5a;font-family:'DM Sans',sans-serif;padding:24px;color:#fff}
+.top{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}.top h1{font-size:22px;margin:0}.top p{margin:4px 0 0;opacity:.8;font-size:14px}
+.tg{margin-left:auto;background:#fff;color:#292928;border:0;border-radius:999px;padding:8px 14px;font:600 13px 'DM Sans';cursor:pointer}
+.ms{font-family:"Material Symbols Rounded";font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;font-feature-settings:"liga";vertical-align:middle}
+.t{--acc:#c3f832;--bg:#f8f8f8;--card:#fff;--soft:#f3f3f3;--ink:#292928;--sub:#6f6f6c;--line:#e4e4e1;--lav:#e3d4fb;--lavink:#5b3fa0;--amb:#fff1d6;--ambink:#8a5a00;--grid:rgba(41,41,40,.10)}
+.dark .t{--bg:#1c1c1b;--card:#292928;--soft:#323230;--ink:#f4f4f2;--sub:#a8a8a4;--line:#3d3d3b;--lav:#3d3354;--lavink:#d8c8fb;--amb:#3b2f17;--ambink:#ffd38a;--grid:rgba(255,255,255,.07)}
+.win{display:grid;grid-template-columns:300px 1fr;min-height:640px;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35);background:var(--bg);color:var(--ink)}
+.side{position:relative;background:#292928;color:#f4f4f2;padding:28px 22px 30px;display:flex;flex-direction:column;isolation:isolate}
+.side::before{content:'';position:absolute;inset:0;z-index:-1;background-image:linear-gradient(rgba(255,255,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.07) 1px,transparent 1px);background-size:24px 24px;-webkit-mask-image:radial-gradient(ellipse at 20% 0%,#000 15%,transparent 75%);mask-image:radial-gradient(ellipse at 20% 0%,#000 15%,transparent 75%)}
+.wm{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;margin-bottom:26px}.wm i{width:34px;height:34px;border-radius:50%;border:2px solid #f4f4f2;display:grid;place-items:center;font-style:normal}
+.steps{display:flex;flex-direction:column;gap:2px;position:relative}
+.st{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:12px;cursor:pointer;font-size:14px;font-weight:600;color:#a8a8a4;position:relative}
+.st:hover{background:#323230}
+.st .dot{width:28px;height:28px;border-radius:50%;border:2px solid #4a4a47;display:grid;place-items:center;font-size:12px;font-weight:700;flex:none;background:#292928}
+.st.done{color:#f4f4f2}.st.done .dot{background:var(--acc);border-color:var(--acc);color:#292928}
+.st.on{background:#323230;color:#f4f4f2}.st.on .dot{border-color:var(--acc);color:var(--acc)}
+.st small{display:block;font-weight:400;font-size:11.5px;color:#8a8a86}
+.st:not(:last-child)::after{content:'';position:absolute;left:23px;top:38px;width:2px;height:12px;background:#3d3d3b}
+.st.done:not(:last-child)::after{background:var(--acc)}
+.opt{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#8a8a86;margin-left:auto}
+.prog{margin-top:auto;font-size:12px;color:#a8a8a4}.pb{height:6px;border-radius:6px;background:#3d3d3b;margin-top:6px;overflow:hidden}.pb i{display:block;height:100%;background:var(--acc)}
+.main{position:relative;isolation:isolate;padding:30px 36px;display:flex;flex-direction:column;gap:16px}
+.main::before{content:'';position:absolute;inset:0;z-index:-1;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 70%)}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--sub)}
+.main h2{margin:0;font-size:30px;letter-spacing:-.01em}.main .s{color:var(--sub);font-size:14.5px;margin-top:-8px;max-width:560px}
+.pane{display:none;flex-direction:column;gap:16px;flex:1}.pane.on{display:flex}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+.card h3{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:6px}.card h3 .ms{font-size:18px;color:var(--sub)}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--sub);font-weight:600}
+.fi{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;font:500 14.5px 'DM Sans';color:var(--ink)}.fi .ms{font-size:18px;color:var(--sub)}
+.nav{display:flex;align-items:center;gap:10px;margin-top:auto;padding-top:10px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:10px 16px;font:700 14px 'DM Sans';display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.btn .ms{font-size:18px}.btn.pri{background:var(--ink);border-color:var(--ink);color:var(--card)}.btn.ghost{border-color:transparent;background:transparent;color:var(--sub)}
+.chip{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:6px;white-space:nowrap}
+.c-acc{background:var(--acc);color:#292928}.c-grey{border:1px solid var(--line);color:var(--sub)}.c-amb{background:var(--amb);color:var(--ambink)}.c-lav{background:var(--lav);color:var(--lavink)}
+.kidrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.kidrow:first-of-type{border-top:0}
+.av{width:36px;height:36px;border-radius:50%;background:var(--acc);color:#292928;display:grid;place-items:center;font-weight:700;flex:none}
+.kidrow .t2{flex:1;font-weight:600;font-size:14px}.kidrow .t2 small{display:block;color:var(--sub);font-weight:400;font-size:12px}
+.sc{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+.scc{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:var(--card);border-radius:14px;padding:10px 12px;cursor:pointer;font-size:13.5px;font-weight:600}
+.scc .ty{width:30px;height:30px;border-radius:9px;background:var(--soft);display:grid;place-items:center;color:var(--sub);flex:none}.scc .ty .ms{font-size:17px}
+.scc small{display:block;font-weight:400;color:var(--sub);font-size:11.5px}
+.scc .cb{margin-left:auto;width:20px;height:20px;border-radius:6px;border:1.5px solid var(--sub);display:grid;place-items:center;color:#292928}
+.scc.on{border-color:var(--ink)}.scc.on .cb{background:var(--acc);border-color:var(--acc)}.scc.on .cb::after{content:'check';font-family:"Material Symbols Rounded";font-size:15px}
+.scan{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--sub)}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 0 var(--acc);animation:p 1.6s infinite}
+@keyframes p{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 70%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
+.dv{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.dv:first-of-type{border-top:0}
+.dv .ic{width:36px;height:36px;border-radius:11px;background:var(--soft);display:grid;place-items:center;position:relative;color:var(--sub);flex:none}
+.dv .vb{position:absolute;right:-5px;bottom:-5px;width:18px;height:18px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink)}
+.vl{display:inline-block;width:10px;height:10px;background:currentColor;-webkit-mask:var(--u) center/contain no-repeat;mask:var(--u) center/contain no-repeat}
+.dv .t2{flex:1;font-weight:600;font-size:13.5px}.dv .t2 small{display:block;color:var(--sub);font-weight:400;font-size:11.5px;font-family:ui-monospace,monospace}
+.who{display:flex;gap:4px}.who span{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);display:grid;place-items:center;font-size:12px;font-weight:700;color:var(--sub);cursor:pointer}
+.who span.on{background:var(--acc);border-color:var(--acc);color:#292928}.who span.g{width:auto;padding:0 10px;border-radius:999px;font-size:11.5px}
+.pt{--pc:rgba(41,41,40,.38)}
+.pt-school{background:repeating-linear-gradient(45deg,var(--pc) 0 2px,transparent 2px 8px),var(--acc)}
+.pt-week{background:var(--acc)}
+.tl3{display:grid;grid-template-columns:130px 1fr;gap:8px 12px;align-items:center;font-size:12.5px;font-weight:600}
+.tr{height:26px;border-radius:8px;background:var(--soft);position:relative;overflow:hidden;border:1px solid var(--line)}
+.tr b{position:absolute;top:0;bottom:0;border-radius:7px;display:grid;place-items:center}.tr b em{font-style:normal;font-size:10.5px;font-weight:700;color:#292928;background:rgba(255,255,255,.85);border-radius:5px;padding:1px 5px}
+.ax3{display:flex;justify-content:space-between;font-size:10px;color:var(--sub);margin:4px 0 0 142px}
+.kv{display:flex;justify-content:space-between;align-items:center;font-size:13.5px;padding:9px 0;border-top:1px solid var(--line)}.kv:first-of-type{border-top:0}.kv>span:first-child{color:var(--sub)}
+.sw{width:38px;height:22px;border-radius:11px;background:var(--line);position:relative;flex:none}.sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--card)}.sw.on{background:var(--ink)}.sw.on::after{left:19px;background:var(--acc)}
+.tip{display:flex;gap:10px;align-items:flex-start;background:var(--amb);color:var(--ambink);border-radius:14px;padding:12px 14px;font-size:13px}
+.num{width:24px;height:24px;border-radius:50%;background:var(--ink);color:var(--card);display:grid;place-items:center;font-size:12px;font-weight:700;flex:none}
+.li{display:flex;gap:12px;align-items:flex-start;padding:10px 0;font-size:14px}.li small{display:block;color:var(--sub);font-size:12.5px;margin-top:2px}
+.done-hero{display:flex;flex-direction:column;align-items:flex-start;gap:12px}
+.big{width:64px;height:64px;border-radius:20px;background:var(--acc);color:#292928;display:grid;place-items:center}.big .ms{font-size:34px}
+@media(max-width:900px){.win{grid-template-columns:1fr}.side{padding-bottom:16px}.steps{flex-direction:row;overflow-x:auto}.st small,.opt,.st:not(:last-child)::after{display:none}.prog{display:none}.form{grid-template-columns:1fr}}
+.trw{display:flex;align-items:center;gap:6px}.trw .tr{flex:1}
+.ed{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;cursor:pointer;color:var(--sub);flex:none}.ed .ms{font-size:15px}.ed:hover{color:var(--ink);border-color:var(--ink)}
+.ax3{margin-right:34px}
+.wed{display:none;border:2px solid var(--ink);box-shadow:3px 3px 0 var(--acc)}.wed.on{display:block}
+.kinds{display:flex;gap:6px;flex-wrap:wrap}.kinds span{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer}.kinds span.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.sq{width:16px;height:16px;border-radius:5px;display:inline-block}
+.days{display:flex;gap:6px}.days span{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;border:1px solid var(--line);color:var(--sub);cursor:pointer}.days .on{background:var(--acc);border-color:var(--acc);color:#292928}
+.tw{display:flex;align-items:center;gap:8px;color:var(--sub);font-size:13px}.tw .fi{flex:1}.tw .x{cursor:pointer}
+.addt{display:inline-flex;align-items:center;gap:4px;font-size:13px;color:var(--ink);font-weight:600;cursor:pointer;margin-top:2px}
+</style></head><body class="dark">
+<div class="top"><div><h1>First-run setup wizard</h1><p>Seven steps, click any step on the left. Opens on step 5 (Devices), the one with live discovery. Sample data.</p></div>
+<button class="tg" onclick="document.body.classList.toggle('dark')">Toggle dark</button></div>
+<div class="t"><div class="win">
+ <div class="side">
+  <div class="wm"><i>@</i>t@sk4ce setup</div>
+  <div class="steps" id="steps">
+   <div class="st done" data-p="1"><span class="dot">1</span><div>You<small>Parent account</small></div></div>
+   <div class="st done" data-p="2"><span class="dot">2</span><div>Family<small>Name, time zone</small></div></div>
+   <div class="st done" data-p="3"><span class="dot">3</span><div>Kids<small>Names, PINs</small></div></div>
+   <div class="st done" data-p="4"><span class="dot">4</span><div>Chores<small>Pick starters</small></div></div>
+   <div class="st on" data-p="5"><span class="dot">5</span><div>Devices<small>Who owns what</small></div></div>
+   <div class="st" data-p="6"><span class="dot">6</span><div>Hours<small>Bedtime, school nights</small></div></div>
+   <div class="st" data-p="7"><span class="dot">7</span><div>Remote access<small>Tailscale</small></div><span class="opt">Optional</span></div>
+  </div>
+  <div class="prog">Step 5 of 7 · about 3 min left<div class="pb"><i style="width:64%"></i></div></div>
+ </div>
+ <div class="main">
+
+  <div class="pane" id="p1"><div class="eyebrow">Step 1 of 7</div><h2>Make your parent account</h2><div class="s">You'll use this to log in. You can invite another parent later.</div>
+   <div class="card"><div class="form"><label class="fld">Your name<div class="fi"><span class="ms">badge</span>Dad</div></label><label class="fld">Username<div class="fi"><span class="ms">person</span>dad</div></label><label class="fld">Password<div class="fi"><span class="ms">lock</span>••••••••••</div></label><label class="fld">Type it again<div class="fi"><span class="ms">lock</span>••••••••••</div></label></div></div>
+   <div class="nav"><span style="flex:1"></span><button class="btn pri">Next<span class="ms">arrow_forward</span></button></div></div>
+
+  <div class="pane" id="p2"><div class="eyebrow">Step 2 of 7</div><h2>Your family</h2><div class="s">Shown on the kids' screens and in notifications.</div>
+   <div class="card"><div class="form"><label class="fld">Family name<div class="fi"><span class="ms">home</span>The Garcias</div></label><label class="fld">Time zone<div class="fi"><span class="ms">public</span>America/New_York (detected)</div></label></div></div>
+   <div class="nav"><button class="btn ghost"><span class="ms">arrow_back</span>Back</button><span style="flex:1"></span><button class="btn pri">Next<span class="ms">arrow_forward</span></button></div></div>
+
+  <div class="pane" id="p3"><div class="eyebrow">Step 3 of 7</div><h2>Add your kids</h2><div class="s">Add each child. You can add more later from Kids &amp; chores.</div>
+   <div class="card"><div class="kidrow"><span class="av">M</span><div class="t2">Mia<small>PIN set</small></div><span class="chip c-acc">Added</span></div><div class="kidrow"><span class="av">L</span><div class="t2">Leo<small>No PIN</small></div><span class="chip c-acc">Added</span></div>
+    <div class="form" style="margin-top:10px"><label class="fld">Name<div class="fi"><span class="ms">badge</span>Ava</div></label><label class="fld">PIN (optional)<div class="fi"><span class="ms">pin</span>••••</div></label></div>
+    <button class="btn" style="margin-top:10px"><span class="ms">person_add</span>Add kid</button></div>
+   <div class="nav"><button class="btn ghost"><span class="ms">arrow_back</span>Back</button><span style="flex:1"></span><button class="btn pri">Next<span class="ms">arrow_forward</span></button></div></div>
+
+  <div class="pane" id="p4"><div class="eyebrow">Step 4 of 7</div><h2>Pick some starter chores</h2><div class="s">Tap to choose. Everything can be changed later.</div>
+   <div class="sc">
+    <div class="scc on"><span class="ty"><span class="ms">bed</span></span><div>Make bed<small>Personal · 10 pts · daily</small></div><span class="cb"></span></div>
+    <div class="scc on"><span class="ty"><span class="ms">restaurant</span></span><div>Unload dishwasher<small>Kitchen · 20 pts</small></div><span class="cb"></span></div>
+    <div class="scc on"><span class="ty"><span class="ms">school</span></span><div>Homework<small>Schoolwork · 30 pts</small></div><span class="cb"></span></div>
+    <div class="scc"><span class="ty"><span class="ms">pets</span></span><div>Feed the pet<small>Pets · 10 pts</small></div><span class="cb"></span></div>
+    <div class="scc on"><span class="ty"><span class="ms">cleaning_services</span></span><div>Tidy room<small>Cleaning · 25 pts</small></div><span class="cb"></span></div>
+    <div class="scc"><span class="ty"><span class="ms">delete</span></span><div>Take out trash<small>Kitchen · 15 pts</small></div><span class="cb"></span></div>
+    <div class="scc"><span class="ty"><span class="ms">yard</span></span><div>Water plants<small>Outdoor · 10 pts</small></div><span class="cb"></span></div>
+    <div class="scc"><span class="ty"><span class="ms">music_note</span></span><div>Practice instrument<small>Practice · 15 pts</small></div><span class="cb"></span></div>
+   </div>
+   <div class="nav"><button class="btn ghost"><span class="ms">arrow_back</span>Back</button><span style="flex:1"></span><span style="font-size:13px;color:var(--sub)">4 picked</span><button class="btn pri">Next<span class="ms">arrow_forward</span></button></div></div>
+
+  <div class="pane on" id="p5"><div class="eyebrow">Step 5 of 7</div><h2>Whose devices are these?</h2><div class="s">Devices show up as the home box sees them on your Wi-Fi. Tap a kid to give it to them, or mark it Guest so it's never blocked.</div>
+   <div class="card"><h3><span class="scan"><span class="pulse"></span>Looking for devices… 6 found</span><span style="margin-left:auto;font-size:12px;color:var(--sub);font-weight:500">Turn on each kid's devices now</span></h3>
+    <div class="dv"><div class="ic"><span class="ms">tablet_mac</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/apple.svg)"></span></span></div><div class="t2">Mias-iPad<small>Apple · 192.168.1.42</small></div><div class="who"><span class="on">M</span><span>L</span><span>A</span><span class="g">Guest</span></div></div>
+    <div class="dv"><div class="ic"><span class="ms">sports_esports</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/nintendoswitch.svg)"></span></span></div><div class="t2">Switch<small>Nintendo · 192.168.1.51</small></div><div class="who"><span class="on">M</span><span class="on">L</span><span>A</span><span class="g">Guest</span></div></div>
+    <div class="dv"><div class="ic"><span class="ms">smartphone</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/google.svg)"></span></span></div><div class="t2">Pixel-8<small>Google · 192.168.1.60</small></div><div class="who"><span>M</span><span>L</span><span class="on">A</span><span class="g">Guest</span></div></div>
+    <div class="dv"><div class="ic"><span class="ms">phone_iphone</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/apple.svg)"></span></span></div><div class="t2">Dads-iPhone<small>Apple · 192.168.1.12</small></div><div class="who"><span>M</span><span>L</span><span>A</span><span class="g on">Guest</span></div></div>
+    <div class="dv"><div class="ic"><span class="ms">device_unknown</span></div><div class="t2">Unknown device<small>Private address · 192.168.1.77</small></div><span class="chip c-amb">Private MAC</span><div class="who"><span>M</span><span>L</span><span>A</span><span class="g">Guest</span></div></div>
+    <div class="dv"><div class="ic"><span class="ms">tv</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/lg.svg)"></span></span></div><div class="t2">LG-webOS-TV<small>LG · 192.168.1.30</small></div><div class="who"><span>M</span><span>L</span><span>A</span><span class="g">Guest</span></div></div>
+   </div>
+   <div class="tip"><span class="ms">info</span><div><b>Not seeing a device?</b> Unlock it and open a web page so it talks to the network. iPhones and iPads: turn off “Private Wi-Fi Address” for your home Wi-Fi.</div></div>
+   <div class="nav"><button class="btn ghost"><span class="ms">arrow_back</span>Back</button><button class="btn ghost">Skip for now</button><span style="flex:1"></span><span style="font-size:13px;color:var(--sub)">4 of 6 assigned</span><button class="btn pri">Next<span class="ms">arrow_forward</span></button></div></div>
+
+  <div class="pane" id="p6"><div class="eyebrow">Step 6 of 7</div><h2>When can devices be online?</h2><div class="s">A starting schedule. Add holidays, summer and per-kid hours later in Settings.</div>
+   <div class="card"><h3><span class="ms">calendar_month</span>Allowed hours<button class="btn" style="margin-left:auto;padding:6px 12px;font-size:13px" onclick="document.getElementById('wed').classList.add('on')"><span class="ms">add</span>Add hours</button></h3><div class="tl3"><span>School nights</span><div class="trw"><div class="tr"><b class="pt pt-school" style="left:29%;width:8%"><em>6–8a</em></b><b class="pt pt-school" style="left:62%;width:21%"><em>3–8p</em></b></div><span class="ed" onclick="document.getElementById('wed').classList.add('on')"><span class="ms">edit</span></span></div><span>Weekends</span><div class="trw"><div class="tr"><b class="pt pt-week" style="left:33%;width:58%"><em>8a–10p</em></b></div><span class="ed" onclick="document.getElementById('wed').classList.add('on')"><span class="ms">edit</span></span></div></div><div class="ax3"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span></div></div>
+   <div class="card wed" id="wed"><h3><span class="ms">edit_calendar</span>Edit hours<span class="ms" style="margin-left:auto;cursor:pointer" onclick="this.closest('.wed').classList.remove('on')">close</span></h3>
+     <div class="form"><label class="fld">Name<div class="fi"><span class="ms">label</span>School nights</div></label>
+      <label class="fld">Kind<div class="kinds"><span class="on"><i class="sq pt pt-school"></i>School nights</span><span><i class="sq pt pt-week"></i>Weekends</span></div></label></div>
+     <label class="fld" style="margin-top:12px">Days<div class="days"><span class="on">S</span><span class="on">M</span><span class="on">T</span><span class="on">W</span><span class="on">T</span><span>F</span><span>S</span></div></label>
+     <div class="fld" style="margin-top:12px">Times online<div class="tw"><div class="fi"><span class="ms">schedule</span>6:00 AM</div><span>to</span><div class="fi">8:00 AM</div><span class="ms x">close</span></div><div class="tw"><div class="fi"><span class="ms">schedule</span>3:00 PM</div><span>to</span><div class="fi">8:00 PM</div><span class="ms x">close</span></div><a class="addt"><span class="ms">add</span>Add another time</a></div>
+     <div style="display:flex;gap:8px;margin-top:14px"><button class="btn ghost" onclick="this.closest('.wed').classList.remove('on')">Cancel</button><span style="flex:1"></span><button class="btn" style="color:#b42318">Delete</button><button class="btn pri" onclick="this.closest('.wed').classList.remove('on')"><span class="ms">check</span>Save</button></div></div>
+   <div class="card"><div class="kv"><span>Bedtime on school nights</span>8:00 PM</div><div class="kv"><span>Bedtime on weekends</span>10:00 PM</div><div class="kv"><span>Lock until today's chores are done</span><span class="sw on"></span></div></div>
+   <div class="nav"><button class="btn ghost"><span class="ms">arrow_back</span>Back</button><span style="flex:1"></span><button class="btn pri">Next<span class="ms">arrow_forward</span></button></div></div>
+
+  <div class="pane" id="p7"><div class="eyebrow">Step 7 of 7 · optional</div><h2>Reach it from anywhere</h2><div class="s">Approve chores when you're not home, using Tailscale (free, private).</div>
+   <div class="card"><div class="li"><span class="num">1</span><div>Install the free Tailscale app on the home box and on your phone.<small>tailscale.com/download</small></div></div><div class="li"><span class="num">2</span><div>Sign in to both with the same account.</div></div><div class="li"><span class="num">3</span><div>On your phone, open the home box's Tailscale address in your browser.<small>Full steps: docs/remote-access.md</small></div></div></div>
+   <div class="nav"><button class="btn ghost"><span class="ms">arrow_back</span>Back</button><button class="btn ghost">Skip</button><span style="flex:1"></span><button class="btn pri" onclick="show('done')">Finish<span class="ms">check</span></button></div></div>
+
+  <div class="pane" id="pdone"><div class="done-hero"><div class="big"><span class="ms">celebration</span></div><h2>You're all set</h2><div class="s">3 kids, 4 chores, 4 devices, 2 schedules. Locks start at the next lock time.</div>
+   <div style="display:flex;gap:8px"><button class="btn pri"><span class="ms">home</span>Go to Today</button><button class="btn"><span class="ms">notifications</span>Set up notifications</button></div></div></div>
+ </div>
+</div></div>
+<script>
+function show(p){document.querySelectorAll('.pane').forEach(x=>x.classList.toggle('on',x.id=='p'+p))}
+document.querySelectorAll('.st').forEach(s=>s.onclick=()=>{const n=+s.dataset.p;document.querySelectorAll('.st').forEach(x=>{const k=+x.dataset.p;x.classList.toggle('on',k==n);x.classList.toggle('done',k<n)});show(n);document.querySelector('.prog').firstChild.textContent='Step '+n+' of 7 · about '+Math.max(1,8-n)+' min left';document.querySelector('.pb i').style.width=(n/7*100-8)+'%'})
+document.querySelectorAll('.scc').forEach(c=>c.onclick=()=>c.classList.toggle('on'))
+document.querySelectorAll('.days span,.kinds span').forEach(d=>d.onclick=()=>d.classList.toggle('on'))
+document.querySelectorAll('.who span').forEach(w=>w.onclick=()=>w.classList.toggle('on'))
+</script>
+</body></html>

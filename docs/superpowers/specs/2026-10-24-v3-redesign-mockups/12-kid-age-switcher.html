@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#5a5a5a;font-family:'DM Sans',sans-serif;color:#fff}
+.bar{position:sticky;top:0;z-index:5;display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:14px 24px;background:#3e3e3e;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+.bar h1{font-size:18px;margin:0 12px 0 0}
+.seg{display:flex;background:#2a2a2a;border-radius:999px;padding:4px;gap:4px}
+.seg button{border:0;background:transparent;color:#ddd;font:700 14px 'DM Sans';padding:9px 16px;border-radius:999px;cursor:pointer}
+.seg button.on{background:#c3f832;color:#292928}
+.seg button small{display:block;font-weight:500;font-size:11px;opacity:.75}
+.note{font-size:13px;opacity:.85;flex-basis:100%;margin-top:2px}
+#host{padding:18px 24px}
+</style></head><body>
+<div class="bar"><h1>Kid view by age group</h1>
+ <div class="seg" id="age">
+  <button data-f="09-kid-little.html" data-n="Little: one chore at a time, picture first, three huge buttons. Stars show progress; words are short.">Little<small>5–8</small></button>
+  <button data-f="10-kid-kid.html" class="on" data-n="Kid: big tiles with status chips, one status banner, tap the Homework tile to open one chore.">Kid<small>9–12</small></button>
+  <button data-f="11-kid-teen.html" data-n="Teen: slim rail, stats strip, list with status chips and filters, detail panel. Chip legend and age setting below.">Teen<small>13+</small></button>
+ </div>
+ <div class="seg" id="mode"><button class="on" data-d="1">Dark</button><button data-d="0">Light</button></div>
+ <div class="note" id="note"></div>
+</div>
+<div id="host"></div>
+<script>
+const host=document.getElementById('host'),root=host.attachShadow({mode:'open'}),note=document.getElementById('note');
+let dark=true,cache={};
+async function load(f){
+  if(!cache[f]){const t=await (await fetch('./'+f)).text();const d=new DOMParser().parseFromString(t,'text/html');
+    d.querySelectorAll('script,.top').forEach(e=>e.remove());
+    cache[f]=[...d.head.querySelectorAll('style')].map(s=>s.outerHTML).join('')+'<div id="wrap">'+d.body.innerHTML+'</div>'}
+  root.innerHTML=cache[f];apply();
+}
+function apply(){const w=root.getElementById('wrap');if(w)w.classList.toggle('dark',dark)}
+// helpers used by the Kid mock's inline onclick
+window.openChore=()=>{root.getElementById('home').classList.remove('on');root.getElementById('chore').classList.add('on')};
+window.home=()=>{root.getElementById('chore').classList.remove('on');root.getElementById('home').classList.add('on')};
+document.querySelectorAll('#age button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#age button').forEach(x=>x.classList.toggle('on',x==b));note.textContent=b.dataset.n;load(b.dataset.f)});
+document.querySelectorAll('#mode button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#mode button').forEach(x=>x.classList.toggle('on',x==b));dark=b.dataset.d=='1';apply()});
+const first=document.querySelector('#age .on');note.textContent=first.dataset.n;load(first.dataset.f);
+</script>
+</body></html>

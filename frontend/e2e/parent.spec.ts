@@ -1,0 +1,132 @@
+import { expect, request, test } from '@playwright/test'
+import { loginUi, makeKid, parentApi } from './seed'
+
+test.describe('parent journeys', () => {
+  test.beforeEach(async ({ page }) => loginUi(page))
+
+  test('send back needs a note, approve clears the item', async ({ page }) => {
+    await page.goto('/')
+    const needs = page.getByRole('region', { name: 'Needs you' })
+    await expect(needs).toContainText('E2E sweep')
+
+    // photo viewer: send back stays disabled until a note is typed
+    await needs.getByRole('button', { name: /Open photo for E2E sweep/ }).click()
+    const viewer = page.getByRole('dialog')
+    const sendBack = viewer.getByRole('button', { name: 'Send back' })
+    await expect(sendBack).toBeDisabled()
+    await viewer.getByLabel('Note for sending back').fill('Under the couch too')
+    await expect(sendBack).toBeEnabled()
+    await sendBack.click()
+    await expect(needs.getByText('E2E sweep')).toHaveCount(0)
+
+    // approving the other one clears it too
+    const card = needs
+      .locator('div')
+      .filter({ hasText: 'E2E dishes' })
+      .filter({ has: page.getByRole('button', { name: 'Approve', exact: true }) })
+      .last()
+    await card.getByRole('button', { name: 'Approve', exact: true }).click()
+    await expect(needs.getByText('E2E dishes')).toHaveCount(0)
+  })
+
+  test('create a race chore with steps, copy it, edit it', async ({ page }) => {
+    const api = await parentApi()
+    const a = await makeKid(api, 'Race A')
+    const b = await makeKid(api, 'Race B')
+    try {
+      await page.goto('/kids?section=chores')
+      await page.getByRole('button', { name: 'New chore' }).click()
+      const drawer = page.getByRole('dialog')
+      await drawer.getByLabel('Chore', { exact: true }).fill('E2E race')
+      for (const s of ['First step', 'Second step']) {
+        await drawer.getByLabel('Add a step').fill(s)
+        await drawer.getByRole('button', { name: 'Add step' }).click()
+      }
+      await drawer.getByRole('button', { name: 'Save', exact: true }).click()
+
+      // saving a new chore opens it; assign it to both kids as a race
+      await drawer.getByRole('button', { name: 'Assign' }).click()
+      await drawer.getByText('Race A', { exact: true }).click()
+      await drawer.getByText('Race B', { exact: true }).click()
+      await drawer.getByText('Race', { exact: true }).click()
+      await drawer.getByRole('button', { name: 'Save', exact: true }).click()
+      await expect(drawer.getByText(/Race A, Race B · Every day · race/)).toBeVisible()
+      await drawer.getByRole('button', { name: 'Cancel' }).click()
+      const row = page.getByRole('button', { name: /^E2E race 2 steps/ })
+      await expect(row).toBeVisible()
+      await expect(row).toContainText('2 steps')
+
+      await row.click()
+      await page.getByRole('button', { name: 'Copy' }).click()
+      await expect(page.getByLabel('Chore', { exact: true })).toHaveValue('E2E race (copy)')
+      await page.getByLabel('Chore', { exact: true }).fill('E2E race edited')
+      await page.getByRole('button', { name: 'Save', exact: true }).click()
+      await expect(page.getByRole('button', { name: /E2E race edited/ })).toBeVisible()
+      await expect(page.getByRole('button', { name: /E2E race \(copy\)/ })).toHaveCount(0)
+    } finally {
+      const chores = await (await api.get('/api/proxy/chores/')).json()
+      for (const c of chores.filter((c: { title: string }) => c.title.startsWith('E2E race')))
+        await api.delete(`/api/proxy/chores/${c.id}`)
+      await a.undo()
+      await b.undo()
+      await api.dispose()
+    }
+  })
+
+  test('bell shows the kid submission, parent gives bonus points', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: /^Notifications/ }).click()
+    await expect(page.getByText(/Pat finished E2E/).first()).toBeVisible()
+    await page.keyboard.press('Escape')
+
+    const api = await parentApi()
+    const k = await makeKid(api, 'Bonus Kid')
+    try {
+      await page.goto('/kids?section=kids')
+      await page.getByRole('button', { name: /Bonus Kid/ }).click()
+      await page.getByRole('button', { name: 'Give bonus points' }).click()
+      await page.getByLabel(/Points \(1 to 500\)/).fill('5')
+      await page.getByLabel('Why?').fill('Great teamwork')
+      await page.getByRole('button', { name: 'Send points' }).click()
+      await expect(page.getByText(/Sent! Bonus Kid got \+5/)).toBeVisible()
+    } finally {
+      await k.undo()
+      await api.dispose()
+    }
+  })
+
+  test('change the screen time price', async ({ page }) => {
+    const api = await parentApi()
+    const before = (await (await api.get('/api/proxy/family')).json()).screen_time_price
+    try {
+      await page.goto('/settings?section=screen')
+      const price = page.getByLabel(/Screen time price/)
+      await price.fill(String(before + 1))
+      await page.getByRole('button', { name: 'Save settings' }).click()
+      await expect
+        .poll(async () => (await (await api.get('/api/proxy/family')).json()).screen_time_price)
+        .toBe(before + 1)
+    } finally {
+      await api.patch('/api/proxy/family', { data: { screen_time_price: before } })
+      await api.dispose()
+    }
+  })
+})
+
+// no browser login needed: only the proxy is under test
+test.describe('proxy', () => {
+  test('a photo upload through the Next proxy reaches the backend', async () => {
+    const api = await request.newContext({ baseURL: process.env.E2E_BASE_URL ?? 'http://10.99.0.5:3000' })
+    try {
+      const jpeg = Buffer.from(process.env.E2E_JPEG ?? '', 'base64')
+      const res = await api.post(`/api/proxy/kid/chores/${process.env.E2E_KID_RUN}/photos`, {
+        headers: { Authorization: `Bearer ${process.env.E2E_KID_TOKEN}` },
+        multipart: { file: { name: 'p.jpg', mimeType: 'image/jpeg', buffer: jpeg } },
+      })
+      expect(res.status()).toBe(200)
+      expect((await res.json()).id).toBeGreaterThan(0)
+    } finally {
+      await api.dispose()
+    }
+  })
+})

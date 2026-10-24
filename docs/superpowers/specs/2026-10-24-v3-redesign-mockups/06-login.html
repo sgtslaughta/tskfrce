@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#5a5a5a;font-family:'DM Sans',sans-serif;padding:24px;color:#fff}
+.top{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}.top h1{font-size:22px;margin:0}.top p{margin:4px 0 0;opacity:.8;font-size:14px}
+.tg{margin-left:auto;background:#fff;color:#292928;border:0;border-radius:999px;padding:8px 14px;font:600 13px 'DM Sans';cursor:pointer}
+.ms{font-family:"Material Symbols Rounded";font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;font-feature-settings:"liga";vertical-align:middle}
+.cap{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin:22px 0 8px}
+.t{--acc:#c3f832;--bg:#f8f8f8;--card:#fff;--soft:#f3f3f3;--ink:#292928;--sub:#6f6f6c;--line:#e4e4e1;--red:#b42318;--redbg:#fde8e6;--grid:rgba(41,41,40,.12)}
+.dark .t{--bg:#1c1c1b;--card:#292928;--soft:#323230;--ink:#f4f4f2;--sub:#a8a8a4;--line:#3d3d3b;--red:#ff9b8f;--redbg:#3e2422;--grid:rgba(255,255,255,.08)}
+.win{display:grid;grid-template-columns:1.05fr 1fr;min-height:600px;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35);background:var(--bg);color:var(--ink)}
+.brand{position:relative;background:#292928;color:#f4f4f2;padding:36px 40px 44px;display:flex;flex-direction:column;overflow:hidden;isolation:isolate}
+.brand::before{content:'';position:absolute;inset:0;z-index:-1;background-image:linear-gradient(rgba(255,255,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.08) 1px,transparent 1px);background-size:24px 24px;-webkit-mask-image:radial-gradient(ellipse at 30% 20%,#000 15%,transparent 75%);mask-image:radial-gradient(ellipse at 30% 20%,#000 15%,transparent 75%)}
+.wm{display:flex;align-items:center;gap:10px;font-weight:700;font-size:20px}
+.wm i{width:38px;height:38px;border-radius:50%;border:2px solid #f4f4f2;display:grid;place-items:center;font-style:normal}
+.brand h2{font-size:40px;line-height:1.05;margin:auto 0 14px;letter-spacing:-.02em;max-width:380px}
+.brand h2 em{font-style:normal;white-space:nowrap;background:var(--acc);color:#292928;padding:0 8px;border-radius:8px}
+.brand p{color:#a8a8a4;max-width:360px;margin:0;font-size:15px}
+.peek{display:flex;flex-direction:column;gap:8px;max-width:330px}
+.pk{display:flex;align-items:center;gap:10px;background:#323230;border:1px solid #3d3d3b;border-radius:14px;padding:10px 12px;font-size:13px;font-weight:600}
+.pk .ms{font-size:18px;color:#a8a8a4}.pk small{display:block;color:#a8a8a4;font-weight:400;font-size:11.5px}
+.pk .chip{margin-left:auto}
+.chip{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:6px;white-space:nowrap}
+.c-acc{background:var(--acc);color:#292928}.c-lav{background:#3d3354;color:#d8c8fb}
+.formside{display:flex;align-items:center;justify-content:center;padding:32px}
+.form{width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px}
+.form h3{font-size:28px;margin:0}.form .s{color:var(--sub);font-size:14px;margin:-8px 0 4px}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--sub);font-weight:600}
+.fi{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:11px 12px;font:500 15px 'DM Sans';color:var(--ink)}
+.fi .ms{font-size:18px;color:var(--sub)}.fi span.v{flex:1}
+.fi.focus{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--acc) 60%,transparent)}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:13px}
+.ck{display:flex;align-items:center;gap:8px;color:var(--ink)}.ck i{width:18px;height:18px;border-radius:6px;background:var(--acc);display:grid;place-items:center;color:#292928;font-style:normal}.ck i .ms{font-size:14px}
+.link{color:var(--ink);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line)}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:12px 16px;font:700 15px 'DM Sans';display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.btn.acc{background:var(--ink);border-color:var(--ink);color:var(--card)}
+.or{display:flex;align-items:center;gap:10px;color:var(--sub);font-size:12px}.or::before,.or::after{content:'';flex:1;border-top:1px solid var(--line)}
+.kid{display:flex;align-items:center;gap:12px;border:1.5px dashed var(--line);border-radius:16px;padding:12px 14px;font-weight:700;color:var(--ink)}
+.kid .bub{width:40px;height:40px;border-radius:12px;background:#ffc93c;color:#1d2b53;display:grid;place-items:center;border:2px solid #1d2b53;box-shadow:2px 2px 0 #1d2b53}
+.kid small{display:block;color:var(--sub);font-weight:400;font-size:12px}
+.kid .ms.go{margin-left:auto;color:var(--sub)}
+.err{display:flex;gap:8px;align-items:center;background:var(--redbg);color:var(--red);border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600}
+.err .ms{font-size:18px}
+.foot{font-size:12px;color:var(--sub);text-align:center}
+.minis{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px}
+.mini{background:var(--bg);color:var(--ink);border-radius:14px;padding:28px;box-shadow:0 10px 30px rgba(0,0,0,.35);position:relative;isolation:isolate;overflow:hidden}
+.mini::before{content:'';position:absolute;inset:0;z-index:-1;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 70%)}
+.mini .form{max-width:none}
+.inv{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:13px}
+.inv .av{width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--card);display:grid;place-items:center;font-weight:700}
+.inv small{display:block;color:var(--sub);font-size:11.5px}
+.str{display:flex;gap:4px}.str i{flex:1;height:5px;border-radius:3px;background:var(--line)}.str i.on{background:var(--acc)}
+.ok{display:flex;gap:8px;align-items:center;background:color-mix(in srgb,var(--acc) 25%,var(--card));border-radius:12px;padding:9px 12px;font-size:13px;font-weight:600}
+@media(max-width:900px){.win{grid-template-columns:1fr}.brand{min-height:280px}}
+</style></head><body class="dark">
+<div class="top"><div><h1>Log in, join, reset</h1><p>Shared front door: clean parent look, with a fridge-style sticker pointing kids to their checklist. Sample data.</p></div>
+<button class="tg" onclick="document.body.classList.toggle('dark')">Toggle dark</button></div>
+
+<p class="cap">Log in — desktop</p>
+<div class="t"><div class="win">
+ <div class="brand">
+  <div class="wm"><i>@</i>t@sk4ce</div>
+  <h2>Chores done. <em>Wi&#8209;Fi on.</em></h2>
+  <p>Your family's chore chart, wired to the home network.</p>
+ </div>
+ <div class="formside"><div class="form">
+  <h3>Welcome back</h3><div class="s">Parents, log in to manage chores and devices.</div>
+  <div class="err"><span class="ms">error</span>That username and password don't match.</div>
+  <label class="fld">Username<div class="fi focus"><span class="ms">person</span><span class="v">dad</span></div></label>
+  <label class="fld">Password<div class="fi"><span class="ms">lock</span><span class="v">••••••••••</span><span class="ms">visibility</span></div></label>
+  <div class="row"><span class="ck"><i><span class="ms">check</span></i>Keep me logged in</span><a class="link">Forgot password?</a></div>
+  <button class="btn acc">Log in<span class="ms">arrow_forward</span></button>
+  <div class="or">or</div>
+  <div class="kid"><span class="bub"><span class="ms">checklist</span></span><div>I'm a kid<small>Go to your checklist, no password</small></div><span class="ms go">chevron_right</span></div>
+  <div class="foot">t@sk4ce v2.0.0 · chores.local</div>
+ </div></div>
+</div></div>
+
+<p class="cap">Join (from an invite link) · Reset password</p>
+<div class="t minis">
+ <div class="mini"><div class="form">
+  <h3>Join the family</h3><div class="s">Dad invited you to The Garcias.</div>
+  <div class="inv"><span class="av">D</span><div><b>Invite from Dad</b><small>Expires in 22 hours</small></div></div>
+  <label class="fld">Your name<div class="fi"><span class="ms">badge</span><span class="v">Grandma</span></div></label>
+  <label class="fld">Username<div class="fi"><span class="ms">person</span><span class="v">grandma</span></div></label>
+  <label class="fld">Choose a password<div class="fi focus"><span class="ms">lock</span><span class="v">••••••••••••</span><span class="ms">visibility</span></div></label>
+  <div class="str"><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div>
+  <button class="btn acc">Join<span class="ms">arrow_forward</span></button>
+ </div></div>
+ <div class="mini"><div class="form">
+  <h3>Choose a new password</h3><div class="s">From the reset link another parent made for you.</div>
+  <label class="fld">New password<div class="fi"><span class="ms">lock</span><span class="v">••••••••••••</span></div></label>
+  <label class="fld">Type it again<div class="fi"><span class="ms">lock</span><span class="v">••••••••••••</span></div></label>
+  <button class="btn acc">Save password</button>
+  <div class="ok"><span class="ms">check_circle</span>Password saved. Log in with your new password.</div>
+  <a class="link" style="font-size:13px">Back to log in</a>
+ </div></div>
+ <div class="mini"><div class="form">
+  <h3>Forgot your password?</h3><div class="s">There's no email reset: the box is offline-first.</div>
+  <div class="inv"><span class="ms" style="color:var(--sub)">supervisor_account</span><div><b>Ask another parent</b><small>They can make you a reset link in Settings → Parents</small></div></div>
+  <div class="inv"><span class="ms" style="color:var(--sub)">terminal</span><div><b>Only parent?</b><small>On the box: <code>docker compose exec backend python -m app.cli reset-password &lt;you&gt;</code></small></div></div>
+  <a class="link" style="font-size:13px">Back to log in</a>
+ </div></div>
+</div>
+</body></html>

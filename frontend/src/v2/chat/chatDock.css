@@ -1,0 +1,33 @@
+.f-dock-btn {
+  position: fixed; right: 16px; bottom: 16px; z-index: 300;
+  width: 56px; height: 56px; border-radius: 50%; border: 0; padding: 0;
+  display: grid; place-items: center; cursor: pointer;
+  background: var(--f-sun); color: #1d2b53; box-shadow: var(--f-shadow);
+}
+.f-dock-btn:focus-visible { outline: 3px solid var(--f-ink); outline-offset: 3px; }
+.f-dock-badge {
+  position: absolute; top: -4px; right: -4px; min-width: 22px; height: 22px; padding: 0 5px;
+  border-radius: 11px; background: var(--f-red); color: #fff; font-size: 12px; font-weight: 700;
+  display: grid; place-items: center; box-sizing: border-box;
+}
+.f-dock {
+  position: fixed; right: 16px; bottom: 84px; z-index: 301;
+  width: 380px; height: 560px; max-height: calc(100vh - 100px);
+  display: flex; flex-direction: column; box-sizing: border-box;
+  background: var(--f-card); color: var(--f-ink); border: 1px solid var(--f-line);
+  border-radius: 8px; box-shadow: var(--f-shadow); overflow: hidden;
+  transform-origin: bottom right; animation: f-dock-in 120ms ease-out;
+}
+.f-dock-head {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+  border-bottom: 1px solid var(--f-line);
+}
+.f-dock-head h2 { flex: 1; margin: 0; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f-dock-body { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; }
+.f-dock-body > section { height: 100%; }
+@keyframes f-dock-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .f-dock { animation: none; } }
+@media (max-width: 767px) {
+  .f-dock { inset: 0; width: auto; height: auto; max-height: none; border-radius: 0; border: 0; }
+  .f-dock-open .f-dock-btn { display: none; }
+}

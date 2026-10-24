@@ -1,0 +1,67 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap');
+.nt { --ink:#1d2b53; --sun:#ffc93c; --red:#ff6b4a; --green:#7bd389; --peri:#5b6fb5; font-family:Inter; }
+.nt .light { --bg:#f4f7fa; --card:#fff; --text:#1d2b53; --sub:#4a5a80; --edge:#c9d3e6; --cg:#2f8a45; --cs:#3d4f99; --cr:#8a6400; --cm:#c4401f; }
+.nt .dark { --bg:#1e2026; --card:#18213f; --text:#e8eeff; --sub:#8f9cc4; --edge:#34416b; --cg:#7bd389; --cs:#a9b8f0; --cr:#ffc93c; --cm:#ff7a5c; }
+.nt .scr { background:var(--bg); color:var(--text); padding:14px; border-radius:10px; }
+.nt .h { font-family:'Space Grotesk'; font-weight:700; }
+.nt .cap { text-transform:uppercase; letter-spacing:.08em; font-size:10.5px; font-weight:600; }
+.nt .needs { background:var(--card); border-radius:8px; border-top:4px solid var(--sun); padding:10px 14px; box-shadow:0 6px 20px rgba(0,0,0,.08); }
+.nt .r { display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap; }
+.nt .filt { display:flex; gap:6px; flex-wrap:wrap; }
+.nt .f { display:inline-flex; gap:5px; align-items:center; font-size:11.5px; padding:4px 8px; border:1.5px solid var(--edge); border-radius:4px; color:var(--sub); }
+.nt .f.on { background:var(--text); color:var(--card); border-color:var(--text); }
+.nt .f b { font-family:'JetBrains Mono'; font-size:11px; }
+.nt .list { display:flex; gap:10px; overflow-x:auto; padding:10px 0 2px; }
+.nt .ni { flex:none; display:flex; gap:10px; align-items:center; border:1.5px solid var(--edge); border-radius:6px; padding:8px 10px; font-size:12.5px; border-left-width:4px; }
+.nt .ni.chore { border-left-color:var(--green); } .nt .ni.screen { border-left-color:var(--peri); } .nt .ni.reward { border-left-color:var(--sun); } .nt .ni.late { border-left-color:var(--red); }
+.nt .type { display:inline-flex; gap:4px; align-items:center; font-size:9.5px; font-weight:700; text-transform:uppercase; letter-spacing:.06em; padding:2px 6px; border-radius:4px; margin-bottom:3px; }
+.nt .t-chore { background:rgba(123,211,137,.18); color:var(--cg); }
+.nt .t-screen { background:rgba(91,111,181,.18); color:var(--cs); }
+.nt .t-reward { background:rgba(255,201,60,.2); color:var(--cr); }
+.nt .t-redo { background:rgba(255,107,74,.15); color:var(--cm); }
+.nt svg { width:13px; height:13px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+.nt .glyph { width:36px; height:36px; border-radius:6px; display:grid; place-items:center; flex:none; }
+.nt .glyph svg { width:18px; height:18px; }
+.nt .g-screen { background:rgba(91,111,181,.18); color:var(--cs); }
+.nt .g-reward { background:rgba(255,201,60,.2); color:var(--cr); }
+.nt .photo { width:36px; height:36px; border-radius:4px; background:linear-gradient(135deg,#9fb3d9,#5b6fb5); flex:none; }
+.nt .sub { color:var(--sub); font-size:11px; }
+.nt .btn { font-family:'Space Grotesk'; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:.06em; padding:6px 9px; background:var(--sun); color:#1d2b53; clip-path:polygon(0 0,calc(100% - 6px) 0,100% 6px,100% 100%,6px 100%,0 calc(100% - 6px)); }
+.nt .btn.s { background:var(--edge); color:var(--text); }
+.nt .pair { display:grid; gap:16px; }
+.nt .legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:14px; font-size:12px; }
+</style>
+
+<h2>"Needs you" item types</h2>
+<p class="subtitle">Each item gets a type chip with its icon (Tabler icons, already installed) and a colored left edge. The header chips filter by type and show counts. Chores show the photo if there is one, otherwise a checklist icon.</p>
+
+<svg style="display:none"><defs>
+<symbol id="i-chore" viewBox="0 0 24 24"><path d="M9 11l3 3l8 -8"/><path d="M20 12v6a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h9"/></symbol>
+<symbol id="i-screen" viewBox="0 0 24 24"><path d="M6.5 7h11"/><path d="M6.5 17h11"/><path d="M6 20v-2a6 6 0 1 1 12 0v2a1 1 0 0 1 -1 1h-10a1 1 0 0 1 -1 -1z"/><path d="M6 4v2a6 6 0 1 0 12 0v-2a1 1 0 0 0 -1 -1h-10a1 1 0 0 0 -1 1z"/></symbol>
+<symbol id="i-reward" viewBox="0 0 24 24"><path d="M3 8m0 1a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v2a1 1 0 0 1 -1 1h-16a1 1 0 0 1 -1 -1z"/><path d="M12 8l0 13"/><path d="M19 12v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0 -5a4.8 8 0 0 1 4.5 5a4.8 8 0 0 1 4.5 -5a2.5 2.5 0 0 1 0 5"/></symbol>
+<symbol id="i-redo" viewBox="0 0 24 24"><path d="M19.95 11a8 8 0 1 0 -.5 4m.5 5v-5h-5"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M5 7h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v9a2 2 0 0 1 -2 2h-14a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2"/><path d="M9 13a3 3 0 1 0 6 0a3 3 0 0 0 -6 0"/></symbol>
+</defs></svg>
+
+<div class="nt pair">
+<div class="light"><div class="scr"><div class="needs">
+  <div class="r"><span class="cap">Needs you · 4</span>
+    <span class="filt"><span class="f on">All <b>4</b></span><span class="f"><svg><use href="#i-chore"/></svg>Chores <b>2</b></span><span class="f"><svg><use href="#i-screen"/></svg>Screen time <b>1</b></span><span class="f"><svg><use href="#i-reward"/></svg>Rewards <b>1</b></span></span></div>
+  <div class="list">
+    <div class="ni chore"><span class="photo"></span><div><span class="type t-chore"><svg><use href="#i-chore"/></svg>Chore</span><div><b>Maya</b> · Clean room</div><div class="sub"><svg style="width:11px;height:11px;vertical-align:-1px"><use href="#i-camera"/></svg> photo · 3/3 · 4:12pm</div></div><span class="btn">Approve</span><span class="btn s">Send back</span></div>
+    <div class="ni chore"><span class="glyph" style="background:rgba(123,211,137,.18);color:var(--cg)"><svg><use href="#i-chore"/></svg></span><div><span class="type t-redo"><svg><use href="#i-redo"/></svg>Redo</span><div><b>Leo</b> · Make bed</div><div class="sub">2nd try · 4:40pm</div></div><span class="btn">Approve</span><span class="btn s">Send back</span></div>
+    <div class="ni screen"><span class="glyph g-screen"><svg><use href="#i-screen"/></svg></span><div><span class="type t-screen"><svg><use href="#i-screen"/></svg>Screen time</span><div><b>Leo</b> · 30 min</div><div class="sub">40 pts · has 95</div></div><span class="btn">Approve</span><span class="btn s">Deny</span></div>
+    <div class="ni reward"><span class="glyph g-reward"><svg><use href="#i-reward"/></svg></span><div><span class="type t-reward"><svg><use href="#i-reward"/></svg>Reward</span><div><b>Sam</b> · Movie night</div><div class="sub">300 pts · has 610</div></div><span class="btn">Approve</span><span class="btn s">Deny</span></div>
+  </div></div></div></div>
+
+<div class="dark"><div class="scr"><div class="needs">
+  <div class="r"><span class="cap">Needs you · 4</span>
+    <span class="filt"><span class="f on">All <b>4</b></span><span class="f"><svg><use href="#i-chore"/></svg>Chores <b>2</b></span><span class="f"><svg><use href="#i-screen"/></svg>Screen time <b>1</b></span><span class="f"><svg><use href="#i-reward"/></svg>Rewards <b>1</b></span></span></div>
+  <div class="list">
+    <div class="ni chore"><span class="photo"></span><div><span class="type t-chore"><svg><use href="#i-chore"/></svg>Chore</span><div><b>Maya</b> · Clean room</div><div class="sub">photo · 3/3 · 4:12pm</div></div><span class="btn">Approve</span><span class="btn s">Send back</span></div>
+    <div class="ni chore"><span class="glyph" style="background:rgba(123,211,137,.18);color:var(--cg)"><svg><use href="#i-chore"/></svg></span><div><span class="type t-redo"><svg><use href="#i-redo"/></svg>Redo</span><div><b>Leo</b> · Make bed</div><div class="sub">2nd try · 4:40pm</div></div><span class="btn">Approve</span><span class="btn s">Send back</span></div>
+    <div class="ni screen"><span class="glyph g-screen"><svg><use href="#i-screen"/></svg></span><div><span class="type t-screen"><svg><use href="#i-screen"/></svg>Screen time</span><div><b>Leo</b> · 30 min</div><div class="sub">40 pts · has 95</div></div><span class="btn">Approve</span><span class="btn s">Deny</span></div>
+    <div class="ni reward"><span class="glyph g-reward"><svg><use href="#i-reward"/></svg></span><div><span class="type t-reward"><svg><use href="#i-reward"/></svg>Reward</span><div><b>Sam</b> · Movie night</div><div class="sub">300 pts · has 610</div></div><span class="btn">Approve</span><span class="btn s">Deny</span></div>
+  </div></div></div></div>
+</div>
