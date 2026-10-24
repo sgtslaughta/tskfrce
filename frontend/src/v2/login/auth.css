@@ -397,3 +397,16 @@
     min-height: 280px;
   }
 }
+
+/* Focus lives on the field wrapper (mockup 06 .fi.focus), not the bare input */
+[data-look='parent'] .p-auth-input {
+  transition: border-color 150ms ease-out, box-shadow 150ms ease-out;
+}
+[data-look='parent'] .p-auth-input:focus-within {
+  border-color: var(--p-ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-acc) 60%, transparent);
+}
+[data-look='parent'] .p-auth-input input:focus,
+[data-look='parent'] .p-auth-input input:focus-visible {
+  outline: none;
+}
