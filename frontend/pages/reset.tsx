@@ -10,9 +10,7 @@ export default function Reset() {
       <Head>
         <title>t@sk4ce</title>
       </Head>
-      <div className="f-shell" style={{ minHeight: '100vh' }}>
-        <ResetForm token={token} />
-      </div>
+      <ResetForm token={token} />
     </>
   )
 }

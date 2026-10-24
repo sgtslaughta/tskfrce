@@ -10,9 +10,7 @@ export default function Register() {
       <Head>
         <title>t@sk4ce</title>
       </Head>
-      <div className="f-shell" style={{ minHeight: '100vh' }}>
-        <RegisterForm token={token} />
-      </div>
+      <RegisterForm token={token} />
     </>
   )
 }

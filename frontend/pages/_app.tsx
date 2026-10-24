@@ -13,6 +13,7 @@ import 'material-symbols/rounded.css';
 import '../src/styles/mantine-fixes.css';
 import '../src/v2/fridge.css';
 import '../src/v2/parent/parent.css';
+import '../src/v2/login/auth.css';
 import '../src/v2/controls.css';
 import '../src/v2/polish.css';
 import '../src/v2/chat/chatDock.css';
