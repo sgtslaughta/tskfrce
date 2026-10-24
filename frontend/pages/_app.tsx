@@ -13,7 +13,6 @@ import 'material-symbols/rounded.css';
 import '../src/styles/mantine-fixes.css';
 import '../src/v2/fridge.css';
 import '../src/v2/parent/parent-tokens.css';
-import '../src/v2/parent/parent.css';
 import '../src/v2/parent/shell.css';
 import '../src/v2/parent/parent-layout.css';
 import '../src/v2/parent/parent-chore.css';
