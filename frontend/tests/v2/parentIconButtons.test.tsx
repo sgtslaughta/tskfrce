@@ -77,13 +77,18 @@ describe('Parent UI motion and prefers-reduced-motion support', () => {
   test('motion tokens are defined in CSS', () => {
     wrap(<Rail />)
 
-    // Get computed style from a test element
+    // Verify that motion token definitions exist in the CSS
     const style = window.getComputedStyle(document.documentElement)
 
-    // Verify motion tokens are accessible
-    // Note: CSS custom properties must be defined on [data-look='parent']
-    // This test documents that motion tokens should exist
-    expect(style).toBeDefined()
+    // Check that CSS custom properties are defined
+    // Note: These are injected in jest.setup.js
+    const dur1 = style.getPropertyValue('--dur-1').trim()
+    const dur2 = style.getPropertyValue('--dur-2').trim()
+    const easeOut = style.getPropertyValue('--ease-out').trim()
+
+    expect(dur1).toBeTruthy()
+    expect(dur2).toBeTruthy()
+    expect(easeOut).toBeTruthy()
   })
 
   test('prefers-reduced-motion support is in place', () => {
@@ -107,7 +112,7 @@ describe('Parent UI motion and prefers-reduced-motion support', () => {
       }
     })
 
-    // Document the expectation: motion.css should have reduced-motion support
-    expect(hasReducedMotionRules || true).toBe(true)
+    // Verify that prefers-reduced-motion rules are actually present in CSS
+    expect(hasReducedMotionRules).toBe(true)
   })
 })
