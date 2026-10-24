@@ -1,0 +1,5 @@
+# braces 3.0.3 (via micromatch <- http-proxy-middleware, eslint-config-next).
+# No fixed release exists. Our only runtime use is the websocket proxy in
+# frontend/server.js with static path patterns, so attacker-controlled brace
+# patterns never reach it. Revisit when braces ships a fix.
+CVE-2026-93687
