@@ -17,6 +17,7 @@
 
 .p-kid-card {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 12px;
   padding: 12px 14px;

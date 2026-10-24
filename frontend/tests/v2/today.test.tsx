@@ -125,6 +125,16 @@ describe('TodayPage', () => {
     expect(screen.getByRole('link', { name: /add chore/i })).toBeInTheDocument()
   })
 
+  test('expanded kid card displays progress meter and stats', async () => {
+    wrap(<TodayPage />)
+    const kidButton = await screen.findByRole('button', { name: /kid1/i })
+    await userEvent.click(kidButton)
+    const expandedSection = await screen.findByTestId('kid-expanded')
+    expect(expandedSection).toBeInTheDocument()
+    expect(screen.getByText(/points/i)).toBeInTheDocument()
+    expect(screen.getByText(/next reward/i)).toBeInTheDocument()
+  })
+
   test('chore rows start collapsed', async () => {
     wrap(<TodayPage />)
     await screen.findByRole('button', { name: /kid1/i })
