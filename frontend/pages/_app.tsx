@@ -14,6 +14,7 @@ import '../src/v2/parent/icons.css';
 import '../src/styles/mantine-fixes.css';
 import '../src/v2/fridge.css';
 import '../src/v2/parent/parent-tokens.css';
+import '../src/v2/parent/motion.css';
 import '../src/v2/parent/shell.css';
 import '../src/v2/parent/layout.css';
 import '../src/v2/parent/rail.css';
