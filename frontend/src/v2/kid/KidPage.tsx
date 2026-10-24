@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { Button } from '@mantine/core'
 import { CANT_REACH } from '../api'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
+import { Icon } from '../parent/Icon'
 import { PreviewProvider, useAsKid } from '../hooks/usePreview'
 import { AuthBrand } from '../components/AuthBrand'
 import { ProgressHeader } from '../components/ProgressHeader'
@@ -14,6 +15,7 @@ import { openChat } from '../chat/dock'
 import { useThreads } from '../hooks/useChat'
 import { useKids } from '../hooks/useKids'
 import { useKidSession, useKidToday, useMarkDone, loginMessage } from '../hooks/useKid'
+import { useLook } from '../parent/useLook'
 import type { KidWhoami } from '../types'
 import { AwardOverlay } from './AwardOverlay'
 import { KidChecklist } from './KidChecklist'
@@ -130,6 +132,7 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
 
 /** Parent-only read-only look at a kid's screen (/kid?as=<id>). */
 function KidPreview({ id }: { id: number }) {
+  useLook('parent')
   const router = useRouter()
   const kids = useKids().data
   const kid = (kids ?? []).find((k) => k.id === id)
@@ -138,9 +141,12 @@ function KidPreview({ id }: { id: number }) {
     <PreviewProvider value={id}>
       <main className="f-shell" style={{ minHeight: '100vh' }}>
         <div className="f-main" style={{ maxWidth: 520 }}>
-          <div className="kid-preview-bar" role="status">
-            <b>{`Viewing as ${name} (preview)`}</b>
-            <Button size="xs" variant="default" onClick={() => router.push('/kids')}>
+          <div className="kid-preview-bar" role="status" style={{ backgroundColor: '#292928', color: '#f4f4f2', padding: '8px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 14 }}>
+              <span className="ms" style={{ fontSize: 20 }}>visibility</span>
+              {`Viewing as ${name} · preview`}
+            </span>
+            <Button size="xs" variant="filled" color="var(--p-acc)" style={{ color: '#292928' }} leftSection={<Icon name="arrow_back" size={14} />} onClick={() => router.push('/kids')}>
               Back to parent
             </Button>
           </div>
@@ -165,6 +171,7 @@ export function KidPage() {
 
 /** Kid screen: who is this, PIN if needed, then lock or unlocked view. Kid auth only. */
 function KidScreen() {
+  useLook('kid')
   const { ready, authed, kidId, whoami, login, logout } = useKidSession()
   const [picked, setPicked] = useState<K | null>(null)
   const tried = useRef(false)
