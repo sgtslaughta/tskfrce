@@ -97,18 +97,18 @@ export default function SetupPage() {
 
   const next = () => {
     if (step === 1) {
-      if (!family.name.trim()) return setTried(true)
-      return go(2)
-    }
-    if (step === 2) {
       if (loginFailed) return
-      if (accountDone) return go(3)
+      if (accountDone) return go(2)
       const e = parentErrors(parent)
       if (e.fullName || e.username || e.password) return setTried(true)
       setConflict(false)
       return create.mutate()
     }
-    if (step === 5) {
+    if (step === 2) {
+      if (!family.name.trim()) return setTried(true)
+      return go(3)
+    }
+    if (step === 4) {
       return apply.mutate(
         kids.length === 0
           ? []
@@ -189,18 +189,18 @@ export default function SetupPage() {
           }}
           busy={create.isPending || apply.isPending}
         >
-          {step === 1 && (
+          {step === 1 && <StepParent value={parent} showError={tried} conflict={conflict} onChange={setParent} />}
+          {step === 1 && loginFailed && (
+            <p role="alert">Your account was created. <Link href="/login">Log in</Link> to continue.</p>
+          )}
+          {step === 2 && (
             <StepFamily name={family.name} tz={family.tz} showError={tried}
               onName={(name) => setFamily({ ...family, name })} onTz={(tz) => setFamily({ ...family, tz })} />
           )}
-          {step === 2 && <StepParent value={parent} showError={tried} conflict={conflict} onChange={setParent} />}
-          {step === 2 && loginFailed && (
-            <p role="alert">Your account was created. <Link href="/login">Log in</Link> to continue.</p>
-          )}
           {step === 3 && <StepKids kids={kids} name={kidDraft} onName={setKidDraft} onAdd={(k) => setKids([...kids, k])}
               draftError={tried && kidDraft.trim() ? `Add ${kidDraft.trim()} first or clear the field.` : undefined} />}
-          {step === 4 && <StepDevices kids={kids} />}
-          {step === 5 && <StepChores selected={chores} hasKids={kids.length > 0} onChange={setChores} />}
+          {step === 4 && <StepChores selected={chores} hasKids={kids.length > 0} onChange={setChores} />}
+          {step === 5 && <StepDevices kids={kids} />}
           {step === 6 && <StepWindows bedtime={bedtime} hasKids={kids.length > 0} onChange={setBedtime} />}
           {step === 7 && <StepRemote />}
           {step > LAST && <StepFinish kids={kids.length} chores={chores.length} devices={0} schedules={0} />}
