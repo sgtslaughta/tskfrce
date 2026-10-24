@@ -1,8 +1,8 @@
 import { useState } from 'react'
-import { Button, Tabs, Text, TextInput, Switch } from '@mantine/core'
 import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
+import { SegmentedControl } from '@/v2/parent/SegmentedControl'
 import { isPrivateMac } from './privateMac'
 import type { Device, Kid, Group } from '@/v2/types'
 
@@ -58,146 +58,176 @@ export function DeviceDetail({ device, kids, groups, isGroupOpen, onClose, onReq
   ]
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16, padding: 16 }}>
+    <div className="p-detail-column p-grid" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       <div>
-        <Text fw={600} size="lg" mb="xs">
+        <h2 style={{ margin: '0 0 8px 0', fontSize: 20, fontWeight: 600, color: 'var(--p-ink)' }}>
           {device.name}
-        </Text>
+        </h2>
         <HeaderChips items={headerChips} />
       </div>
 
-      <div style={{ display: 'flex', gap: 8 }}>
-        <Button
-          data-variant="red"
-          onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'lock' })}
-        >
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <button className="p-btn" data-variant="red" onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'lock' })}>
+          <Icon name="lock" size={16} />
           Lock now
-        </Button>
-        <Button
-          data-variant="ghost"
-          onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'unlock' })}
-        >
+        </button>
+        <button className="p-btn" onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'unlock' })}>
+          <Icon name="lock_open" size={16} />
           Unlock 30 min
-        </Button>
+        </button>
       </div>
 
-      <Tabs value={tab} onChange={setTab}>
-        <Tabs.List>
-          <Tabs.Tab value="overview" role="tab">
-            Overview
-          </Tabs.Tab>
-          <Tabs.Tab value="network" role="tab">
-            Network
-          </Tabs.Tab>
-        </Tabs.List>
+      <SegmentedControl
+        value={tab || 'overview'}
+        onChange={setTab}
+        options={[
+          { value: 'overview', label: 'Overview' },
+          { value: 'network', label: 'Network' },
+        ]}
+      />
 
-        <Tabs.Panel value="overview" pt="md">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <div style={{ padding: 12, border: '1px solid var(--p-line)', borderRadius: 8, backgroundColor: 'var(--p-soft)' }}>
-              <Text fw={600} size="sm" mb={12}>
-                Details
-              </Text>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <div>
-                  <Text size="xs" color="dimmed" mb={4} fw={500}>
-                    Name
-                  </Text>
-                  <TextInput value={device.name} readOnly placeholder="—" />
-                </div>
-                <div>
-                  <Text size="xs" color="dimmed" mb={4} fw={500}>
-                    Owners
-                  </Text>
-                  <TextInput value={ownerName(kids, device.owner_ids)} readOnly placeholder="—" />
-                </div>
-                <div>
-                  <Text size="xs" color="dimmed" mb={4} fw={500}>
-                    Groups
-                  </Text>
-                  <TextInput
-                    value={
-                      groups
-                        ?.filter((g) => device.group_ids.includes(g.id))
-                        .map((g) => g.name)
-                        .join(', ') || '—'
-                    }
-                    readOnly
-                    placeholder="—"
-                  />
-                </div>
-                <div style={{ paddingTop: 8 }}>
-                  <Switch
-                    label={<Text size="sm">Guest</Text>}
-                    checked={device.status === 'guest'}
-                    readOnly
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div style={{ padding: 12, border: '1px solid var(--p-line)', borderRadius: 8, backgroundColor: 'var(--p-soft)' }}>
-              <Text fw={600} size="sm" mb={12}>
-                Right now
-              </Text>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div>
-                  <Text size="xs" color="dimmed" mb={2} fw={500}>
-                    Status
-                  </Text>
-                  <Text>
-                    {device.status === 'guest' ? 'Guest' : device.online ? 'Online' : 'Offline'}
-                  </Text>
-                </div>
-                {device.override && (
-                  <div>
-                    <Text size="xs" color="dimmed" mb={2} fw={500}>
-                      Override
-                    </Text>
-                    <Text>{device.override.action}</Text>
-                  </div>
-                )}
-                {device.override?.expires_at && (
-                  <div>
-                    <Text size="xs" color="dimmed" mb={2} fw={500}>
-                      Expires at
-                    </Text>
-                    <Text>{new Date(device.override.expires_at).toLocaleString()}</Text>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </Tabs.Panel>
-
-        <Tabs.Panel value="network" pt="md">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {device.ip && <TextInput label="IPv4" value={device.ip} readOnly />}
-            {device.ipv6 && device.ipv6.length > 0 && (
+      {tab === 'overview' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, overflowY: 'auto' }}>
+          <div className="p-card" style={{ padding: 16, borderRadius: 16, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>
+              Details
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
-                <Text fw={500} size="sm" mb={4}>
-                  IPv6
-                </Text>
-                {device.ipv6.map((ip, i) => (
-                  <TextInput key={i} value={ip} readOnly mb="xs" />
-                ))}
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+                  Name
+                </label>
+                <div style={{ padding: '8px 12px', background: 'var(--p-card)', border: '1px solid var(--p-line)', borderRadius: 8, fontSize: 13, color: 'var(--p-ink)' }}>
+                  {device.name}
+                </div>
               </div>
-            )}
-            <TextInput label="MAC" value={maskMac(device.mac)} readOnly />
-            {isPrivateMac(device.mac) && (
-              <Chip tone="amb" icon="wifi">
-                Yes, random
-              </Chip>
-            )}
-            {device.hostname && <TextInput label="Hostname" value={device.hostname} readOnly />}
-            {device.first_seen && (
-              <TextInput label="First seen" value={new Date(device.first_seen).toLocaleDateString()} readOnly />
-            )}
-            {device.last_seen && (
-              <TextInput label="Last seen" value={new Date(device.last_seen).toLocaleString()} readOnly />
-            )}
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+                  Owners
+                </label>
+                <div style={{ padding: '8px 12px', background: 'var(--p-card)', border: '1px solid var(--p-line)', borderRadius: 8, fontSize: 13, color: 'var(--p-ink)' }}>
+                  {ownerName(kids, device.owner_ids)}
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+                  Groups
+                </label>
+                <div style={{ padding: '8px 12px', background: 'var(--p-card)', border: '1px solid var(--p-line)', borderRadius: 8, fontSize: 13, color: 'var(--p-ink)' }}>
+                  {groups
+                    ?.filter((g) => device.group_ids.includes(g.id))
+                    .map((g) => g.name)
+                    .join(', ') || '—'}
+                </div>
+              </div>
+              <div style={{ paddingTop: 4 }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--p-ink)', fontWeight: 500 }}>
+                  <input type="checkbox" checked={device.status === 'guest'} disabled style={{ width: 16, height: 16 }} />
+                  Guest
+                </label>
+              </div>
+            </div>
           </div>
-        </Tabs.Panel>
-      </Tabs>
+
+          <div className="p-card" style={{ padding: 16, borderRadius: 16, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
+            <h3 style={{ margin: '0 0 12px 0', fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>
+              Right now
+            </h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+                  Status
+                </label>
+                <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>
+                  {device.status === 'guest' ? 'Guest' : device.online ? 'Online' : 'Offline'}
+                </div>
+              </div>
+              {device.override && (
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+                    Override
+                  </label>
+                  <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>{device.override.action}</div>
+                </div>
+              )}
+              {device.override?.expires_at && (
+                <div>
+                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+                    Expires at
+                  </label>
+                  <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>
+                    {new Date(device.override.expires_at).toLocaleString()}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'network' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, overflowY: 'auto' }}>
+          {device.ip && (
+            <div className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+                IPv4
+              </label>
+              <div style={{ fontSize: 13, color: 'var(--p-ink)', fontFamily: 'monospace' }}>{device.ip}</div>
+            </div>
+          )}
+          {device.ipv6 && device.ipv6.length > 0 && (
+            <div>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+                IPv6
+              </label>
+              {device.ipv6.map((ip, i) => (
+                <div key={i} className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)', marginBottom: 4, fontSize: 13, color: 'var(--p-ink)', fontFamily: 'monospace' }}>
+                  {ip}
+                </div>
+              ))}
+            </div>
+          )}
+          <div className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+              MAC
+            </label>
+            <div style={{ fontSize: 13, color: 'var(--p-ink)', fontFamily: 'monospace' }}>{maskMac(device.mac)}</div>
+          </div>
+          {isPrivateMac(device.mac) && (
+            <Chip tone="amb" icon="wifi">
+              Yes, random
+            </Chip>
+          )}
+          {device.hostname && (
+            <div className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+                Hostname
+              </label>
+              <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>{device.hostname}</div>
+            </div>
+          )}
+          {device.first_seen && (
+            <div className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+                First seen
+              </label>
+              <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>
+                {new Date(device.first_seen).toLocaleDateString()}
+              </div>
+            </div>
+          )}
+          {device.last_seen && (
+            <div className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
+                Last seen
+              </label>
+              <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>
+                {new Date(device.last_seen).toLocaleString()}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   )
 }
