@@ -13,6 +13,7 @@ export interface InboxItem {
   redemption_id: number | null
   device_id: number | null
   thread_id: number | null
+  points: number | null
 }
 
 export interface Inbox {

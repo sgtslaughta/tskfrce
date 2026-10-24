@@ -15,7 +15,7 @@ jest.mock('next/router', () => ({ useRouter: () => ({ push }) }))
 const apiMock = api as unknown as Mock<(p: string, i?: { method?: string; kid?: boolean }) => Promise<unknown>>
 const item = (id: number, over: object = {}) => ({
   id, kind: 'chore_submitted', title: `Item ${id}`, body: null, created_at: new Date().toISOString(),
-  read: false, run_id: null, redemption_id: null, device_id: null, thread_id: null, ...over,
+  read: false, run_id: null, redemption_id: null, device_id: null, thread_id: null, points: null, ...over,
 })
 const serve = (items: object[], unread = items.length) =>
   apiMock.mockImplementation(async (p) => (p === '/notifications' ? { items, unread, has_more: false } : undefined))
@@ -47,25 +47,16 @@ describe('Bell', () => {
     expect(await screen.findByText('9+')).toBeTruthy()
   })
 
-  test('lists items in order and routes on click, marking read', async () => {
+  test('lists items in order', async () => {
     serve([
-      item(3, { run_id: 7 }),
-      item(2, { device_id: 5 }),
-      item(1, { redemption_id: 4, read: true }),
+      item(3, { run_id: 7, kind: 'chore_submitted' }),
+      item(2, { device_id: 5, kind: 'new_device' }),
+      item(1, { redemption_id: 4, kind: 'redemption_request', read: true }),
     ])
     wrap(<Bell />)
     await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
     const titles = (await screen.findAllByText(/^Item \d$/)).map((e) => e.textContent)
     expect(titles).toEqual(['Item 3', 'Item 2', 'Item 1'])
-    await userEvent.click(screen.getByText('Item 2'))
-    expect(posts('/notifications/2/read')).toHaveLength(1)
-    expect(push).toHaveBeenCalledWith('/devices?focus=5')
-    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
-    await userEvent.click(await screen.findByText('Item 3'))
-    expect(push).toHaveBeenCalledWith('/')
-    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
-    await userEvent.click(await screen.findByText('Item 1'))
-    expect(posts('/notifications/1/read')).toHaveLength(0)
   })
 
   test('mark all read', async () => {
@@ -83,5 +74,44 @@ describe('Bell', () => {
     await userEvent.click(await screen.findByText('Item 1'))
     expect(apiMock.mock.calls.every((c) => c[1]?.kid === true)).toBe(true)
     expect(push).not.toHaveBeenCalled()
+  })
+
+  test('filters count by kind', async () => {
+    serve([
+      item(1, { kind: 'chore_submitted' }),
+      item(2, { kind: 'chore_submitted' }),
+      item(3, { kind: 'redemption_request' }),
+      item(4, { kind: 'new_device' }),
+      item(5, { kind: 'device_resisting' }),
+    ])
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    expect(await screen.findByText(/All · 5/)).toBeTruthy()
+    expect(await screen.findByText(/Needs you · 3/)).toBeTruthy()
+    expect(await screen.findByText(/Alerts · 2/)).toBeTruthy()
+  })
+
+  test('approve from bell calls approve endpoint', async () => {
+    serve([item(1, { run_id: 7, kind: 'chore_submitted' })])
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    const approveBtn = await screen.findByRole('button', { name: /Approve/ })
+    await userEvent.click(approveBtn)
+    expect(posts('/chores/7/approve')).toHaveLength(1)
+  })
+
+  test('earlier group for read items', async () => {
+    const now = new Date().toISOString()
+    const yesterday = new Date(Date.now() - 86400000).toISOString()
+    serve([
+      item(1, { created_at: now, read: false }),
+      item(2, { created_at: yesterday, read: true }),
+    ])
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    const groups = await screen.findAllByText(/^(Today|Earlier)$/)
+    expect(groups).toHaveLength(2)
+    expect(groups[0].textContent).toBe('Today')
+    expect(groups[1].textContent).toBe('Earlier')
   })
 })

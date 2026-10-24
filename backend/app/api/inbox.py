@@ -26,6 +26,7 @@ def _out(n: Notification) -> dict:
         "redemption_id": n.redemption_id,
         "device_id": n.device_id,
         "thread_id": n.thread_id,
+        "points": getattr(n, "points", None),
     }
 
 
