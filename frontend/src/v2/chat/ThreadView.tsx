@@ -213,7 +213,7 @@ export function ThreadView({
                       <Icon name="category" size={15} />
                       Chore
                     </span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-lav)', border: '1px solid var(--p-lav)', color: 'var(--p-lavink)', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-lav)', border: '1px solid var(--p-lav)', color: 'var(--p-lav-ink)', whiteSpace: 'nowrap' }}>
                       <Icon name="hourglass_top" size={15} />
                       Needs OK
                     </span>
