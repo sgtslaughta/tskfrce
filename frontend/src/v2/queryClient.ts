@@ -22,9 +22,10 @@ export function onUnreachableError(err: unknown): void {
   const panel = document.createElement('div')
   panel.style.cssText = 'background:white;padding:32px;borderRadius:8px;maxWidth:400px;textAlign:center'
 
-  const icon = document.createElement('div')
-  icon.style.cssText = 'color:#8f1d13;fontSize:24px;marginBottom:8px'
-  icon.textContent = '⚠️'
+  const icon = document.createElement('span')
+  icon.className = 'ms'
+  icon.style.cssText = 'color:#8f1d13;fontSize:24px;marginBottom:8px;display:block'
+  icon.textContent = 'wifi_off'
 
   const title = document.createElement('h3')
   title.style.cssText = 'margin:0 0 8px;color:#292928;fontSize:18px;fontWeight:600'

@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { Button } from '@mantine/core'
 import { CANT_REACH } from '../api'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
+import { Icon } from '../parent/Icon'
 import { PreviewProvider, useAsKid } from '../hooks/usePreview'
 import { AuthBrand } from '../components/AuthBrand'
 import { ProgressHeader } from '../components/ProgressHeader'
@@ -145,7 +146,7 @@ function KidPreview({ id }: { id: number }) {
               <span className="ms" style={{ fontSize: 20 }}>visibility</span>
               {`Viewing as ${name} · preview`}
             </span>
-            <Button size="xs" variant="filled" color="var(--p-acc)" style={{ color: '#292928' }} onClick={() => router.push('/kids')}>
+            <Button size="xs" variant="filled" color="var(--p-acc)" style={{ color: '#292928' }} leftSection={<Icon name="arrow_back" size={14} />} onClick={() => router.push('/kids')}>
               Back to parent
             </Button>
           </div>
