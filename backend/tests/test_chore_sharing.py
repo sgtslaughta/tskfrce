@@ -156,7 +156,7 @@ def test_kid_today_extras_and_taken_by(client, db, parent_headers):
     _create(client, parent_headers, [a, b], "race", steps=["x"], needs_photo=True)
     c = _chores(client, ha)[0]
     assert (c["mode"], c["needs_photo"], c["photo_count_current"]) == ("race", True, 0)
-    assert c["subtasks"] == [{"id": c["subtasks"][0]["id"], "title": "x", "done": False}]
+    assert c["subtasks"] == [{"id": c["subtasks"][0]["id"], "title": "x", "done": False, "done_at": None}]
     assert c["taken_by"] is None and c["last_note"] is None
     t = db.get(ChoreRun, c["id"])
     t.submitted_by_id = b.id

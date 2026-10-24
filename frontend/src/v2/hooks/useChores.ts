@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/v2/api'
-import type { Assignment, Chore, LibChore } from '@/v2/types'
+import type { Assignment, Chore, LibChore, RunDetail } from '@/v2/types'
 
 export type ChoreMode = Assignment['mode']
 export type Repeat = Assignment['repeat']
@@ -58,3 +58,11 @@ export const useSaveAssignment = () =>
   )
 export const useDeleteAssignment = () =>
   useChoreMutation((id: number) => api(`/assignments/${id}`, { method: 'DELETE' }))
+
+/** GET /chores/{run_id} - parent-only detailed view of a run with steps and photos. */
+export const useRunDetail = (runId: number | null) =>
+  useQuery({
+    queryKey: ['run', runId],
+    queryFn: () => api<RunDetail>(`/chores/${runId}`),
+    enabled: runId !== null,
+  })

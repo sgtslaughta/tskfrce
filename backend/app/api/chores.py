@@ -5,7 +5,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, StringConstraints
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db, require_parent
 from app.models.chores import ChoreRun
@@ -58,6 +58,34 @@ def today(db: Session = Depends(get_db), _: User = Depends(require_parent)):
     # Add nudge for shared devices without PINs
     out["shared_without_pin"] = _shared_devices_without_pin(db)
     return out
+
+
+@router.get("/{run_id}")
+def run_detail(run_id: int, db: Session = Depends(get_db), _: User = Depends(require_parent)):
+    r = (
+        db.query(ChoreRun)
+        .options(
+            selectinload(ChoreRun.assignment),
+            selectinload(ChoreRun.ticks),
+            selectinload(ChoreRun.photos),
+        )
+        .get(run_id)
+    )
+    if r is None:
+        raise HTTPException(404, "That chore doesn't exist.")
+
+    chore = svc.chore_of(r)
+    return {
+        "id": r.id,
+        "title": chore.title,
+        "points": chore.points or 0,
+        "state": svc.state(r),
+        "due_time": r.assignment.due_time,
+        "kid_ids": svc.run_kid_ids(r),
+        "steps": svc.steps_out(r),
+        "photos": [{"id": p.id, "thumb_url": f"/chore-photos/{p.id}/thumb"} for p in r.photos],
+        "thread_ref": f"run_{r.id}",
+    }
 
 
 @router.post("/{run_id}/approve")

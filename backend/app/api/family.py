@@ -35,6 +35,7 @@ def _fam_out(fam) -> dict:
         "screen_time_price": fam.screen_time_price,
         "gifs_enabled": fam.gifs_enabled,
         "gif_rating": fam.gif_rating,
+        "accent": fam.accent,
         "giphy_key_set": bool(fam.giphy_api_key),  # the key itself is never returned
     }
 

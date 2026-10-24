@@ -64,6 +64,8 @@ export interface TimeWindow {
 }
 
 /** GET/PATCH /family */
+export type AccentKey = 'neon' | 'sun' | 'tangerine' | 'bubblegum' | 'lilac' | 'sky' | 'aqua' | 'mint' | 'peach' | 'ice'
+
 export interface Family {
   name: string
   timezone: string
@@ -74,6 +76,7 @@ export interface Family {
   screen_time_price: number
   gifs_enabled: boolean
   gif_rating: 'g' | 'pg'
+  accent?: AccentKey
   giphy_key_set: boolean
 }
 
@@ -90,6 +93,19 @@ export interface TodayChore {
   attempt?: number
   last_note?: string | null
   taken_by?: string | null
+}
+
+/** GET /api/v1/chores/{run_id} - run detail with steps and photos */
+export interface RunDetail {
+  id: number
+  title: string
+  points: number
+  state: ChoreState
+  due_time: string | null
+  kid_ids: number[]
+  steps: Array<{ id: number; title: string; done: boolean; done_at: string | null }>
+  photos: Array<{ id: number; thumb_url: string }>
+  thread_ref: string
 }
 
 export interface TodayDevice {
