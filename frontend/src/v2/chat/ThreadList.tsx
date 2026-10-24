@@ -5,9 +5,9 @@ import { Icon } from '../parent/Icon'
 const when = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Nothing yet'
 
-const LABEL = { family: 'Family', private: 'Private', chore: 'Chore' } as const
+const LABEL = { family: 'Family', private: 'Private', chore: 'Chore', notes: 'Notes' } as const
 
-type FilterTab = 'all' | 'chores' | 'family'
+type FilterTab = 'all' | 'chores' | 'notes' | 'family'
 
 /** Threads with search, tabs, and unread badges; `selected` is "kind:ref". */
 export function ThreadList({
@@ -28,6 +28,8 @@ export function ThreadList({
     // Filter by tab
     if (filter === 'chores') {
       result = result.filter(t => t.kind === 'chore')
+    } else if (filter === 'notes') {
+      result = result.filter(t => t.kind === 'chore' && (t.last_text?.toLowerCase().includes('note') ?? false))
     } else if (filter === 'family') {
       result = result.filter(t => t.kind === 'family')
     }
@@ -71,29 +73,37 @@ export function ThreadList({
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 12, borderBottom: '1.5px solid var(--p-line)' }}>
-        {(['all', 'chores', 'family'] as const).map((tab) => (
-          <button
-            key={tab}
-            type="button"
-            onClick={() => setFilter(tab)}
-            aria-pressed={filter === tab}
-            style={{
-              padding: '8px 0',
-              border: 'none',
-              background: 'none',
-              color: filter === tab ? 'var(--p-ink)' : 'var(--p-sub)',
-              fontWeight: filter === tab ? 600 : 400,
-              cursor: 'pointer',
-              borderBottom: filter === tab ? '2px solid var(--p-acc)' : 'none',
-              font: 'inherit',
-              textTransform: 'capitalize',
-            }}
-          >
-            {tab === 'all' && 'All'}
-            {tab === 'chores' && `Chores · ${counts.chores}`}
-            {tab === 'family' && `Family · ${counts.family}`}
-          </button>
-        ))}
+        {(['all', 'chores', 'notes', 'family'] as const).map((tab) => {
+          let label = tab.charAt(0).toUpperCase() + tab.slice(1);
+          if (tab === 'chores') {
+            const choresCount = threads.filter(t => t.kind === 'chore').length;
+            label = `Chores · ${choresCount}`;
+          } else if (tab === 'notes') {
+            const notesCount = threads.filter(t => t.kind === 'chore' && (t.last_text?.toLowerCase().includes('note') ?? false)).length;
+            label = `Notes · ${notesCount}`;
+          }
+          return (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setFilter(tab)}
+              aria-pressed={filter === tab}
+              style={{
+                padding: '8px 0',
+                border: 'none',
+                background: 'none',
+                color: filter === tab ? 'var(--p-ink)' : 'var(--p-sub)',
+                fontWeight: filter === tab ? 600 : 400,
+                cursor: 'pointer',
+                borderBottom: filter === tab ? '2px solid var(--p-acc)' : 'none',
+                font: 'inherit',
+                textTransform: 'capitalize',
+              }}
+            >
+              {label}
+            </button>
+          );
+        })}
       </div>
 
       {/* Thread list */}
