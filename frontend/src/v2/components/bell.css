@@ -207,7 +207,7 @@
 
 .p-bell-icon.lv {
   background: var(--p-lav);
-  color: var(--p-lavink);
+  color: var(--p-lav-ink);
 }
 
 .p-bell-icon.ok {
