@@ -7,6 +7,7 @@ import { StickerCard } from "../components/StickerCard";
 import { useToday } from "../hooks/useToday";
 import { KidList } from "./KidList";
 import { ChoreRow } from "./ChoreRow";
+import { ChoreOpen } from "./ChoreOpen";
 import { ChatColumn } from "./ChatColumn";
 import type { TodayKid, TodayChore } from "../types";
 
@@ -78,17 +79,17 @@ export function TodayPage() {
                     openChoreId === chore.id ? null : chore.id
                   )
                 }
-                onOpenChat={() => setChatOpen(!chatOpen)}
               />
             ))}
           </div>
 
-          {openChoreId && (
-            <div className="p-chore-detail">
-              {chatOpen && (
-                <ChatColumn runId={openChoreId} onClose={() => setChatOpen(false)} />
-              )}
-            </div>
+          {openChoreId && kid && (
+            <ChoreOpen
+              chore={kid.chores.find((c) => c.id === openChoreId)!}
+              kid={kid}
+              onOpenChat={() => setChatOpen(!chatOpen)}
+              chatOpen={chatOpen}
+            />
           )}
 
           {kid.progress && (

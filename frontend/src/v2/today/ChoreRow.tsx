@@ -23,12 +23,10 @@ export function ChoreRow({
   chore,
   isOpen,
   onToggle,
-  onOpenChat,
 }: {
   chore: TodayChore
   isOpen: boolean
   onToggle: () => void
-  onOpenChat: () => void
 }) {
   const isDone = chore.state === 'done'
 
@@ -55,19 +53,6 @@ export function ChoreRow({
         <span className="p-chore-chip">{stateChip(chore.state)}</span>
         <span className="p-chore-points">{chore.points} pts</span>
       </button>
-      {isOpen && (
-        <div className="p-chore-detail">
-          <div className="p-chore-done-time">
-            {isDone && formatTime(chore.state, chore.done_at)}
-          </div>
-          <button
-            className="p-btn"
-            onClick={onOpenChat}
-          >
-            Open chat
-          </button>
-        </div>
-      )}
     </div>
   )
 }
