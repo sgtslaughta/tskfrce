@@ -55,7 +55,7 @@ function Photo({ url }: { url: string }) {
   )
 }
 
-function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
+function Bubble({ m, mine, reactions }: { m: ChatMessage; mine: boolean; reactions?: Array<{ icon: string; names: string[] }> }) {
   if (m.kind === 'system') {
     return (
       <div data-testid="msg-system" style={{ textAlign: 'center', margin: '8px 0', fontSize: '0.85rem', color: 'var(--p-sub)' }}>
@@ -71,19 +71,44 @@ function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
       style={{ alignSelf: mine ? 'flex-end' : 'flex-start', maxWidth: '80%', display: 'flex', flexDirection: 'column', gap: 4 }}
     >
       {!mine && <span style={{ fontSize: '0.85rem', color: 'var(--p-sub)' }}>{m.author_name ?? 'Someone'}</span>}
-      <div
-        style={{
-          padding: '8px 12px',
-          borderRadius: 10,
-          border: '1.5px solid var(--p-line)',
-          background: mine ? 'var(--p-acc)' : 'var(--p-card)',
-          color: mine ? '#292928' : 'inherit',
-          whiteSpace: 'pre-wrap',
-          overflowWrap: 'anywhere',
-        }}
-      >
-        {m.photo_url && <Photo url={m.photo_url} />}
-        {m.body}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <div
+          style={{
+            padding: '8px 12px',
+            borderRadius: 10,
+            border: '1.5px solid var(--p-line)',
+            background: mine ? 'var(--p-acc)' : 'var(--p-card)',
+            color: mine ? '#292928' : 'inherit',
+            whiteSpace: 'pre-wrap',
+            overflowWrap: 'anywhere',
+          }}
+        >
+          {m.photo_url && <Photo url={m.photo_url} />}
+          {m.body}
+        </div>
+        {/* Reactions - ponytail: placeholder for when reaction data arrives */}
+        {reactions && reactions.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, fontSize: '12px', flexWrap: 'wrap' }}>
+            {reactions.map((r, i) => (
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 4,
+                  padding: '2px 8px',
+                  borderRadius: 999,
+                  border: '1.5px solid var(--p-line)',
+                  background: 'var(--p-soft)',
+                  color: 'var(--p-ink)',
+                }}
+              >
+                <Icon name={r.icon} size={14} />
+                {r.names.join(', ')}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
       <span style={{ fontSize: '0.85rem', color: 'var(--p-sub)', alignSelf: mine ? 'flex-end' : 'flex-start' }}>{timeLabel(m.created_at)}</span>
     </div>
@@ -239,10 +264,21 @@ export function ThreadView({
                 return (
                   <div key={m.id} style={{ display: 'flex', flexDirection: 'column' }}>
                     {sep && <div data-testid="day-sep" style={{ textAlign: 'center', margin: '8px 0', fontSize: '0.85rem', color: 'var(--p-sub)', fontWeight: 600 }}>{d}</div>}
-                    <Bubble m={m} mine={m.author_id !== null && m.author_id === meId} />
+                    <Bubble m={m} mine={m.author_id !== null && m.author_id === meId} reactions={undefined} />
                   </div>
                 )
               })}
+              {/* Typing indicator - ponytail: placeholder for when typing data arrives */}
+              {false && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--p-sub)', fontSize: '0.85rem' }}>
+                  <div style={{ display: 'flex', gap: 2 }}>
+                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--p-sub)', animation: 'pulse 1.4s infinite' }} />
+                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--p-sub)', animation: 'pulse 1.4s infinite 0.2s' }} />
+                    <div style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--p-sub)', animation: 'pulse 1.4s infinite 0.4s' }} />
+                  </div>
+                  Someone is typing…
+                </div>
+              )}
               <div ref={endRef} />
             </div>
             <form
@@ -267,6 +303,15 @@ export function ThreadView({
                   GIF
                 </Button>
               )}
+              <Button
+                type="button"
+                variant="default"
+                aria-label="Mention someone"
+                onClick={() => setText((t) => t + '@')}
+                size="sm"
+              >
+                <Icon name="alternate_email" size={18} />
+              </Button>
               <textarea
                 aria-label="Message"
                 value={text}
@@ -288,6 +333,98 @@ export function ThreadView({
             </form>
             {gifsOn && data && (
               <GifPicker threadId={data.id} kid={kid} opened={gifOpen} onClose={() => setGifOpen(false)} onPicked={sendGif} />
+            )}
+
+            {/* Quick replies row (parent only) */}
+            {kind === 'chore' && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '8px 0', fontSize: '13px', borderTop: '1.5px solid var(--p-line)' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setText('Great job!')
+                    void send()
+                  }}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    border: '1.5px solid var(--p-acc)',
+                    background: 'var(--p-acc)',
+                    color: '#292928',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    font: 'inherit',
+                  }}
+                >
+                  <Icon name="check" size={14} />
+                  Great job!
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setText('Looks good')}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    border: '1.5px solid var(--p-line)',
+                    background: 'transparent',
+                    color: 'var(--p-ink)',
+                    cursor: 'pointer',
+                    font: 'inherit',
+                  }}
+                >
+                  Looks good
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setText('Can you redo this?')}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    border: '1.5px solid var(--p-line)',
+                    background: 'transparent',
+                    color: 'var(--p-ink)',
+                    cursor: 'pointer',
+                    font: 'inherit',
+                  }}
+                >
+                  Can you redo this?
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setText('Retake the photo')}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    border: '1.5px solid var(--p-line)',
+                    background: 'transparent',
+                    color: 'var(--p-ink)',
+                    cursor: 'pointer',
+                    font: 'inherit',
+                  }}
+                >
+                  Retake the photo
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: 999,
+                    border: '1.5px solid var(--p-line)',
+                    background: 'transparent',
+                    color: 'var(--p-ink)',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 4,
+                    font: 'inherit',
+                  }}
+                >
+                  <Icon name="edit" size={14} />
+                  Edit replies
+                </button>
+              </div>
             )}
           </section>
 
@@ -360,7 +497,7 @@ export function ThreadView({
           return (
             <div key={m.id} style={{ display: 'flex', flexDirection: 'column' }}>
               {sep && <div className="f-cap" data-testid="day-sep" style={{ textAlign: 'center', margin: '8px 0' }}>{d}</div>}
-              <Bubble m={m} mine={m.author_id !== null && m.author_id === meId} />
+              <Bubble m={m} mine={m.author_id !== null && m.author_id === meId} reactions={undefined} />
             </div>
           )
         })}
