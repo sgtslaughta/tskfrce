@@ -8,6 +8,7 @@
   grid-template-columns: 1.05fr 1fr;
   min-height: 100vh;
   background: var(--p-bg);
+  font-family: var(--font-parent, 'DM Sans', system-ui, sans-serif);
 }
 
 [data-look='parent'] .p-auth-brand {
