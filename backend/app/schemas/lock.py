@@ -92,5 +92,8 @@ class FamilyPatch(BaseModel):
     gifs_enabled: bool | None = None
     gif_rating: Literal["g", "pg"] | None = None
     giphy_api_key: str | None = Field(default=None, max_length=100)  # "" clears
+    accent: Literal[
+        "neon", "sun", "tangerine", "bubblegum", "lilac", "sky", "aqua", "mint", "peach", "ice"
+    ] | None = None
 
     _rt = field_validator("reset_time")(_hhmm)

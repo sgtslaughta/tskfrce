@@ -22,8 +22,8 @@ def mkdev(db, mac="aa:bb:cc:dd:ee:01", status="unassigned"):
     return d
 
 
-def mkchore(db, parent, kid, status="todo", approved=False, title="x"):
-    return make_run(db, parent, kid, status=status, approved=approved, title=title)
+def mkchore(db, parent, kid, status="todo", approved=False, title="x", steps=()):
+    return make_run(db, parent, kid, status=status, approved=approved, title=title, steps=steps)
 
 
 def setup_day(db):
@@ -353,3 +353,69 @@ def test_clear_pin(client, db, parent_headers):
     ).json()
     r = client.patch(f"/api/v1/kids/{k['id']}", json={"clear_pin": True}, headers=parent_headers)
     assert r.json()["has_pin"] is False
+
+
+# Task 2: Family accent + run detail
+
+def test_family_accent_default_neon(client, db, parent_headers):
+    r = client.get("/api/v1/family", headers=parent_headers)
+    assert r.status_code == 200
+    assert r.json()["accent"] == "neon"
+
+
+def test_patch_family_accent_rejects_unknown(client, db, parent_headers):
+    r = client.patch("/api/v1/family", json={"accent": "purple"}, headers=parent_headers)
+    assert r.status_code == 422
+
+
+def test_patch_family_accent_accepts_valid(client, db, parent_headers):
+    r = client.patch("/api/v1/family", json={"accent": "lilac"}, headers=parent_headers)
+    assert r.status_code == 200
+    assert r.json()["accent"] == "lilac"
+    r = client.get("/api/v1/family", headers=parent_headers)
+    assert r.json()["accent"] == "lilac"
+
+
+def test_run_detail_steps_have_done_at(client, db, parent, kid, parent_headers):
+    setup_day(db)
+    run = mkchore(db, parent, kid, status="submitted", steps=["Step 1", "Step 2"])
+    # Tick one step
+    step = run.assignment.chore.steps[0]
+    tick_obj = RunStepTick(run_id=run.id, step_id=step.id, done_by_id=kid.id, done_at=datetime.now(UTC))
+    db.add(tick_obj)
+    db.commit()
+
+    r = client.get(f"/api/v1/chores/{run.id}", headers=parent_headers)
+    assert r.status_code == 200
+    data = r.json()
+    steps = data["steps"]
+    assert len(steps) > 0
+    # First step should have done_at set
+    assert steps[0]["done_at"] is not None
+    # Other steps should be null
+    for step in steps[1:]:
+        assert step["done_at"] is None
+
+
+def test_run_detail_photos(client, db, parent, kid, parent_headers):
+    setup_day(db)
+    run = mkchore(db, parent, kid, status="submitted", steps=["Step 1"])
+    photo = ChorePhoto(
+        run_id=run.id, attempt=1, uploaded_by_id=kid.id, path="test.jpg", thumb_path="test_thumb.jpg"
+    )
+    db.add(photo)
+    db.commit()
+
+    r = client.get(f"/api/v1/chores/{run.id}", headers=parent_headers)
+    assert r.status_code == 200
+    data = r.json()
+    assert len(data["photos"]) == 1
+    assert "thumb_url" in data["photos"][0]
+
+
+def test_run_detail_kid_forbidden(client, db, parent, kid, kid_headers):
+    setup_day(db)
+    run = mkchore(db, parent, kid, status="submitted", steps=["Step 1"])
+
+    r = client.get(f"/api/v1/chores/{run.id}", headers=kid_headers)
+    assert r.status_code == 403

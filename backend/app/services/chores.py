@@ -107,8 +107,18 @@ def chore_out(run: ChoreRun) -> dict:
 
 
 def steps_out(run: ChoreRun) -> list[dict]:
-    done = {t.step_id for t in run.ticks}
-    return [{"id": s.id, "title": s.title, "done": s.id in done} for s in chore_of(run).steps]
+    ticks_by_step = {t.step_id: t for t in run.ticks}
+    return [
+        {
+            "id": s.id,
+            "title": s.title,
+            "done": s.id in ticks_by_step,
+            "done_at": (tick.done_at.isoformat() + "Z" if tick.done_at else None)
+            if (tick := ticks_by_step.get(s.id))
+            else None,
+        }
+        for s in chore_of(run).steps
+    ]
 
 
 def _add(db: Session, run: ChoreRun) -> bool:
