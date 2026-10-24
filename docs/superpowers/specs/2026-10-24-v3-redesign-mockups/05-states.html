@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#5a5a5a;font-family:'DM Sans',sans-serif;padding:24px;color:#fff}
+.top{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:6px}.top h1{font-size:22px;margin:0}.top p{margin:4px 0 0;opacity:.8;font-size:14px}
+.tg{margin-left:auto;background:#fff;color:#292928;border:0;border-radius:999px;padding:8px 14px;font:600 13px 'DM Sans';cursor:pointer}
+.ms{font-family:"Material Symbols Rounded";font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;font-feature-settings:"liga";vertical-align:middle}
+h2.sec{font-size:13px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin:26px 0 10px}
+.t{--acc:#c3f832;--bg:#f8f8f8;--card:#fff;--soft:#f3f3f3;--ink:#292928;--sub:#5f5f5c;--line:#e4e4e1;--lav:#e3d4fb;--lavink:#4a2f8a;--red:#8f1d13;--redbg:#fde3e0;--amb:#ffefcc;--ambink:#5c3a00;--meter:#292928;--track:#e4e4e1;--tbg:#292928;--tfg:#ffffff;--tact:#c3f832;--tline:transparent;--grid:rgba(41,41,40,.10)}
+.dark .t{--bg:#1c1c1b;--card:#292928;--soft:#323230;--ink:#f4f4f2;--sub:#a8a8a4;--line:#3d3d3b;--lav:#3d3354;--lavink:#d8c8fb;--red:#ff9b8f;--redbg:#3e2422;--amb:#3b2f17;--ambink:#ffd38a;--grid:rgba(255,255,255,.07);--meter:var(--acc);--track:#3d3d3b;--tbg:#f4f4f2;--tfg:#1c1c1b;--tact:#1c1c1b;--tline:#ffffff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:18px}
+.fr{background:var(--bg);color:var(--ink);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35);overflow:hidden;display:flex;flex-direction:column;min-height:300px;position:relative;isolation:isolate}
+.fr::before{content:'';position:absolute;inset:0;z-index:-1;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 70%)}
+.lbl{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--sub);padding:10px 14px;border-bottom:1px solid var(--line);background:var(--card);display:flex;gap:6px;align-items:center}
+.lbl .ms{font-size:15px}
+.in{flex:1;padding:18px;display:flex;flex-direction:column;gap:12px}
+.center{align-items:center;justify-content:center;text-align:center}
+.ill{width:64px;height:64px;border-radius:20px;display:grid;place-items:center;background:var(--soft);color:var(--sub);border:1px dashed var(--line)}
+.ill .ms{font-size:32px}
+.ill.acc{background:var(--acc);color:#292928;border:0}.ill.red{background:var(--redbg);color:var(--red);border:0}.ill.amb{background:var(--amb);color:var(--ambink);border:0}
+.in h3{margin:0;font-size:18px}.in p{margin:0;color:var(--sub);font-size:13.5px;max-width:300px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:9px 14px;font:700 13px 'DM Sans';display:inline-flex;align-items:center;gap:6px}
+.btn .ms{font-size:17px}.btn.pri{background:var(--ink);border-color:var(--ink);color:var(--card)}.btn.acc{background:var(--acc);border-color:var(--acc);color:#292928}
+.row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+/* skeleton */
+.sk{background:linear-gradient(90deg,var(--soft) 0%,var(--line) 50%,var(--soft) 100%);background-size:200% 100%;animation:sh 1.3s infinite linear;border-radius:8px}
+@keyframes sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.skrow{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px}
+.spin{width:18px;height:18px;border-radius:50%;border:2.5px solid currentColor;border-right-color:transparent;animation:sp .8s linear infinite;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+.banner{display:flex;gap:10px;align-items:center;border-radius:14px;padding:10px 12px;font-size:13px;font-weight:600}
+.banner .ms{font-size:18px}.banner small{display:block;font-weight:400;font-size:12px;opacity:.85}
+.banner.red{background:var(--redbg);color:var(--red)}.banner.amb{background:var(--amb);color:var(--ambink)}
+.banner .btn{margin-left:auto;padding:5px 10px;font-size:12px}
+.toast{display:flex;align-items:center;gap:10px;background:var(--ink);color:var(--card);border-radius:14px;padding:10px 12px;font-size:13px;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.toast .ms{font-size:18px}.toast .ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none}
+.toast .ok{background:var(--acc);color:#292928}.toast .bad{background:var(--red);color:#fff}
+.toast a{margin-left:auto;color:var(--acc);font-weight:700;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em}
+.toast .bar{position:absolute}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:12.5px;color:var(--sub);font-weight:600;text-align:left}
+.fi{border:1px solid var(--line);background:var(--card);border-radius:12px;padding:10px 12px;font:500 14px 'DM Sans';color:var(--ink)}
+.fi.err{border-color:var(--red);box-shadow:0 0 0 3px color-mix(in srgb,var(--red) 20%,transparent)}
+.em{color:var(--red);font-size:12px;font-weight:600;display:flex;gap:4px;align-items:center}.em .ms{font-size:15px}
+.big404{font-size:64px;font-weight:700;letter-spacing:-.04em;line-height:1}.big404 em{font-style:normal;background:var(--acc);color:#292928;border-radius:12px;padding:0 10px}
+.dots{display:flex;gap:6px}.dots i{width:8px;height:8px;border-radius:50%;background:var(--sub);animation:b 1s infinite}.dots i:nth-child(2){animation-delay:.15s}.dots i:nth-child(3){animation-delay:.3s}
+@keyframes b{0%,100%{opacity:.3}50%{opacity:1}}
+.pb{width:200px;height:6px;border-radius:6px;background:var(--soft);overflow:hidden}.pb i{display:block;height:100%;width:40%;background:var(--acc);border-radius:6px;animation:ld 1.4s ease-in-out infinite}
+@keyframes ld{0%{margin-left:-40%}100%{margin-left:100%}}
+.mini{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:13px;display:flex;gap:8px;align-items:center}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--acc);animation:p 1.6s infinite;flex:none}
+@keyframes p{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--acc) 70%,transparent)}100%{box-shadow:0 0 0 12px transparent}}
+code{font-family:ui-monospace,monospace;font-size:12px;background:var(--soft);border-radius:6px;padding:2px 6px;color:var(--ink)}
+
+/* contrast fixes */
+.banner{border:1px solid color-mix(in srgb,currentColor 30%,transparent)}
+.banner small{opacity:1;color:inherit;font-weight:500}
+.toast{background:var(--tbg);color:var(--tfg);border:1px solid var(--tline)}
+.toast a{color:var(--tact);text-decoration:underline;text-underline-offset:3px}
+.toast .ok{background:var(--acc);color:#292928;box-shadow:inset 0 0 0 1.5px #292928}
+.toast .bad{background:#b42318;color:#fff}
+.toast.err{background:#8f1d13;color:#fff;border-color:transparent}.toast.err a{color:#fff}
+.pb{background:var(--track)}.pb i{background:var(--meter)}
+.pulse{background:var(--meter)}
+.sk{background:linear-gradient(90deg,var(--track) 0%,var(--soft) 50%,var(--track) 100%);background-size:200% 100%}
+.spin{border-width:3px}
+.dots i{background:var(--ink)}
+.em{color:var(--red)}
+</style></head><body class="dark">
+<div class="top"><div><h1>Empty, loading, error &amp; redirect states</h1><p>Parent screens, clean look. Each card is one state. Sample data.</p></div>
+<button class="tg" onclick="document.body.classList.toggle('dark')">Toggle dark</button></div>
+
+<div class="t">
+<h2 class="sec">Empty</h2>
+<div class="grid">
+ <div class="fr"><div class="lbl"><span class="ms">home</span>Today · no kids yet</div><div class="in center"><div class="ill"><span class="ms">group_add</span></div><h3>Add your first kid</h3><p>Then give them chores and devices. Takes about a minute.</p><div class="row"><button class="btn pri"><span class="ms">person_add</span>Add a kid</button><button class="btn"><span class="ms">auto_fix_high</span>Run setup</button></div></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">checklist</span>Kid · no chores today</div><div class="in center"><div class="ill"><span class="ms">event_available</span></div><h3>Nothing for Mia today</h3><p>No chores are due today. Her devices follow the schedule only.</p><div class="row"><button class="btn pri"><span class="ms">add</span>Add a chore</button><button class="btn"><span class="ms">library_add</span>From starters</button></div></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">devices</span>Devices · none found</div><div class="in center"><div class="ill"><span class="ms">wifi_find</span></div><h3>Looking for devices…</h3><p>Turn on a kid's tablet and open a web page. It'll show up here.</p><div class="mini"><span class="pulse"></span>Scanning your Wi-Fi · 0 found</div><a style="font-size:13px;font-weight:600;color:var(--ink);text-decoration:underline">Not showing up?</a></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">done_all</span>All caught up</div><div class="in center"><div class="ill acc"><span class="ms">celebration</span></div><h3>All caught up</h3><p>Nothing needs your OK right now. Nice.</p></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">forum</span>Chat · no messages</div><div class="in center"><div class="ill"><span class="ms">chat_bubble</span></div><h3>No chats yet</h3><p>Chats start when a kid comments on a chore, or you can message anyone.</p><div class="row"><button class="btn pri"><span class="ms">edit_square</span>New message</button></div></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">policy</span>Device activity · clean</div><div class="in center"><div class="ill acc"><span class="ms">verified_user</span></div><h3>No attempts this week</h3><p>Mia's iPad hasn't tried to get around the lock or go online outside hours.</p></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">search</span>Search · no results</div><div class="in center"><div class="ill"><span class="ms">search_off</span></div><h3>No chats match “piano”</h3><p>Try a kid's name or a chore title.</p><div class="row"><button class="btn">Clear search</button></div></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">notifications</span>Bell · empty</div><div class="in center"><div class="ill"><span class="ms">notifications_off</span></div><h3>No notifications</h3><p>We'll ping you when a chore needs your OK.</p><div class="row"><button class="btn"><span class="ms">tune</span>Notification settings</button></div></div></div>
+</div>
+
+<h2 class="sec">Loading</h2>
+<div class="grid">
+ <div class="fr"><div class="lbl"><span class="ms">hourglass_top</span>First load · skeleton</div><div class="in">
+  <div class="sk" style="height:26px;width:55%"></div>
+  <div class="skrow"><div class="sk" style="width:36px;height:36px;border-radius:50%"></div><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="sk" style="height:12px;width:60%"></div><div class="sk" style="height:10px;width:40%"></div></div></div>
+  <div class="skrow"><div class="sk" style="width:36px;height:36px;border-radius:50%"></div><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="sk" style="height:12px;width:50%"></div><div class="sk" style="height:10px;width:30%"></div></div></div>
+  <div class="skrow"><div class="sk" style="width:36px;height:36px;border-radius:50%"></div><div style="flex:1;display:flex;flex-direction:column;gap:6px"><div class="sk" style="height:12px;width:65%"></div><div class="sk" style="height:10px;width:35%"></div></div></div>
+ </div></div>
+ <div class="fr"><div class="lbl"><span class="ms">sync</span>Buttons &amp; refresh</div><div class="in center" style="gap:14px">
+  <button class="btn acc"><span class="spin"></span>Approving…</button>
+  <button class="btn pri" style="opacity:.7"><span class="spin"></span>Saving</button>
+  <div class="mini"><span class="spin" style="width:14px;height:14px;color:var(--sub)"></span>Updating… <span style="color:var(--sub)">last updated 10s ago</span></div>
+  <p>Lists keep showing old data while refreshing; only the small line changes.</p></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">router</span>Box starting up</div><div class="in center"><div class="ill acc"><span class="ms">power_settings_new</span></div><h3>Starting your home box</h3><p>First start on a Raspberry Pi can take a few minutes.</p><div class="pb"><i></i></div><p style="font-size:12px">Checking database · 2 of 4</p></div></div>
+</div>
+
+<h2 class="sec">Errors</h2>
+<div class="grid">
+ <div class="fr"><div class="lbl"><span class="ms">cloud_off</span>Can't reach the box</div><div class="in center"><div class="ill red"><span class="ms">wifi_off</span></div><h3>Can't reach your home box</h3><p>Are you on the home Wi-Fi? If you're away, connect Tailscale first.</p><div class="row"><button class="btn pri"><span class="ms">refresh</span>Try again</button></div><p style="font-size:12px">Retrying in 8s…</p></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">warning</span>Banners on a page</div><div class="in">
+  <div class="banner red"><span class="ms">shield</span><div>Blocker is offline<small>Devices aren't being locked right now.</small></div><button class="btn">Details</button></div>
+  <div class="banner amb"><span class="ms">signal_wifi_statusbar_not_connected</span><div>You're offline<small>Showing what we had. Changes will wait.</small></div></div>
+  <div class="banner amb"><span class="ms">update</span><div>Update failed on the box<small>Still running v2.0.0.</small></div><button class="btn">Retry</button></div>
+ </div></div>
+ <div class="fr"><div class="lbl"><span class="ms">notifications</span>Toasts</div><div class="in" style="justify-content:center">
+  <div class="toast"><span class="ic ok"><span class="ms">check</span></span>Approved Homework · +30 for Mia<a>Undo</a></div>
+  <div class="toast err"><span class="ic bad"><span class="ms">error</span></span>Couldn't save. Check your connection.<a>Retry</a></div>
+  <div class="toast"><span class="ic ok"><span class="ms">lock</span></span>Locked Mia's iPad until you change it<a>Undo</a></div>
+ </div></div>
+ <div class="fr"><div class="lbl"><span class="ms">edit_note</span>Form errors</div><div class="in">
+  <label class="fld">Points<div class="fi err">-5</div><span class="em"><span class="ms">error</span>Points must be 0 or more.</span></label>
+  <label class="fld">PIN<div class="fi err">12a4</div><span class="em"><span class="ms">error</span>Use 4 numbers.</span></label>
+  <label class="fld">Step due by<div class="fi">8:30 PM</div><span class="em" style="color:var(--ambink)"><span class="ms">info</span>After the chore's 6:00 PM. Chore stays open until 8:30.</span></label>
+ </div></div>
+ <div class="fr"><div class="lbl"><span class="ms">bug_report</span>Something broke</div><div class="in center"><div class="ill red"><span class="ms">sentiment_dissatisfied</span></div><h3>Something went wrong</h3><p>This page hit an error. Your data is safe.</p><div class="row"><button class="btn pri"><span class="ms">refresh</span>Reload</button><button class="btn"><span class="ms">content_copy</span>Copy details</button></div></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">link_off</span>404</div><div class="in center"><div class="big404">4<em>0</em>4</div><h3>That page isn't here</h3><p>The link may be old, or the chore was deleted.</p><div class="row"><button class="btn pri"><span class="ms">home</span>Go to Today</button></div></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">key_off</span>Link expired</div><div class="in center"><div class="ill amb"><span class="ms">timer_off</span></div><h3>This invite has expired</h3><p>Invites last 24 hours and reset links 30 minutes. Ask a parent for a new one.</p><div class="row"><button class="btn">Back to log in</button></div></div></div>
+</div>
+
+<h2 class="sec">Redirects</h2>
+<div class="grid">
+ <div class="fr"><div class="lbl"><span class="ms">logout</span>Signing out</div><div class="in center"><div class="dots"><i></i><i></i><i></i></div><h3>Signing you out…</h3></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">lock_clock</span>Session expired → login</div><div class="in center"><div class="ill amb"><span class="ms">lock_clock</span></div><h3>Please log in again</h3><p>You were logged out after a while away. We'll bring you back to this page.</p><div class="row"><button class="btn pri">Log in<span class="ms">arrow_forward</span></button></div></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">auto_fix_high</span>Setup not finished</div><div class="in center"><div class="ill acc"><span class="ms">auto_fix_high</span></div><h3>Let's finish setting up</h3><p>Taking you to setup, step 5 of 7…</p><div class="pb"><i></i></div></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">child_care</span>Kid on a parent page</div><div class="in center"><div class="ill" style="background:#ffc93c;color:#1d2b53;border:2px solid #1d2b53;box-shadow:3px 3px 0 #1d2b53"><span class="ms">checklist</span></div><h3>This part is for parents</h3><p>Taking you to your checklist…</p><div class="row"><button class="btn pri">Go now<span class="ms">arrow_forward</span></button></div></div></div>
+ <div class="fr"><div class="lbl"><span class="ms">open_in_new</span>Link from a ping</div><div class="in center"><div class="dots"><i></i><i></i><i></i></div><h3>Opening Homework · Mia</h3><p>From your Signal notification</p></div></div>
+</div>
+</div>
+</body></html>

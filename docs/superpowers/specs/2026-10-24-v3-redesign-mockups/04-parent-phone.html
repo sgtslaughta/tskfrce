@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#5a5a5a;font-family:'DM Sans',sans-serif;padding:24px;color:#fff}
+.top{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:18px}.top h1{font-size:22px;margin:0}.top p{margin:4px 0 0;opacity:.8;font-size:14px}
+.tg{margin-left:auto;background:#fff;color:#292928;border:0;border-radius:999px;padding:8px 14px;font:600 13px 'DM Sans';cursor:pointer}
+.ms{font-family:"Material Symbols Rounded";font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;font-feature-settings:"liga";vertical-align:middle}
+.phones{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.cap{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin:0 0 8px}
+.ph{--acc:#c3f832;--bg:#f8f8f8;--card:#fff;--soft:#f3f3f3;--ink:#292928;--sub:#6f6f6c;--line:#e4e4e1;--lav:#e3d4fb;--lavink:#5b3fa0;--red:#b42318;--redbg:#fde8e6;--amb:#fff1d6;--ambink:#8a5a00;--grid:rgba(41,41,40,.10);
+ width:360px;height:740px;border-radius:38px;border:10px solid #111;background:var(--bg);color:var(--ink);position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 14px 40px rgba(0,0,0,.4)}
+.dark .ph{--bg:#1c1c1b;--card:#292928;--soft:#323230;--ink:#f4f4f2;--sub:#a8a8a4;--line:#3d3d3b;--lav:#3d3354;--lavink:#d8c8fb;--red:#ff9b8f;--redbg:#3e2422;--amb:#3b2f17;--ambink:#ffd38a;--grid:rgba(255,255,255,.07)}
+.sb{height:30px;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:12px;font-weight:600;flex:none}
+.hdr{display:flex;align-items:center;gap:10px;padding:6px 16px 10px;flex:none}
+.hdr h2{margin:0;font-size:22px;flex:1}
+.ib{width:36px;height:36px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;position:relative}
+.ib .dot{position:absolute;top:6px;right:7px;width:8px;height:8px;border-radius:50%;background:var(--acc);border:2px solid var(--card)}
+.body{flex:1;overflow:auto;padding:0 14px 14px;display:flex;flex-direction:column;gap:12px;position:relative;isolation:isolate}
+.body::before{content:'';position:absolute;inset:0;z-index:-1;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 70%);mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 70%)}
+.nav{display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);border-top:1px solid var(--line);padding:8px 6px 18px;flex:none}
+.nav span{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;color:var(--sub);font-weight:600;position:relative}
+.nav span .ms{width:52px;height:30px;border-radius:15px;display:grid;place-items:center}
+.nav span.on{color:var(--ink)}.nav span.on .ms{background:var(--acc);color:#292928}
+.nav .bdg{position:absolute;top:-2px;right:14px;background:var(--red);color:#fff;font-size:9px;border-radius:8px;padding:0 5px;font-weight:700}
+.kids{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 4px;flex:none}
+.kd{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;font-weight:600;min-width:56px}
+.kd i{width:48px;height:48px;border-radius:50%;background:var(--soft);border:2px solid var(--line);font-style:normal;font-size:18px;font-weight:700;display:grid;place-items:center;position:relative}
+.kd.on i{background:var(--acc);border-color:var(--ink);color:#292928}
+.kd i b{position:absolute;bottom:-3px;right:-3px;width:18px;height:18px;border-radius:50%;font-size:10px;display:grid;place-items:center;border:2px solid var(--bg)}
+.kd i b.w{background:var(--lav);color:var(--lavink)}.kd i b.d{background:var(--acc);color:#292928}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px}
+.sum{display:flex;align-items:center;gap:10px}
+.bar{height:8px;border-radius:8px;background:var(--soft);border:1px solid var(--line);overflow:hidden;margin:10px 0}.bar i{display:block;height:100%;background:var(--acc)}
+.facts{display:grid;grid-template-columns:repeat(4,1fr);font-size:10.5px;color:var(--sub)}.facts b{display:block;color:var(--ink);font-size:13px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.hc{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:600;padding:3px 9px 3px 7px;border-radius:999px;background:var(--soft);border:1px solid var(--line)}
+.hc .ms{font-size:14px;color:var(--sub)}.hc.on{background:var(--acc);border-color:var(--acc);color:#292928}.hc.on .ms{color:#292928}
+.box{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.row{display:flex;align-items:center;gap:10px;padding:12px;border-top:1px solid var(--line)}.row:first-child{border-top:0}
+.ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--sub);flex:none;display:grid;place-items:center;color:#292928}
+.done .ck{background:var(--acc);border-color:var(--acc)}.done .ck::after{content:'check';font-family:"Material Symbols Rounded";font-size:16px}
+.ty{width:28px;height:28px;border-radius:9px;background:var(--soft);display:grid;place-items:center;color:var(--sub);flex:none}.ty .ms{font-size:17px}
+.t{flex:1;min-width:0;font-weight:600;font-size:14px}.t small{display:block;color:var(--sub);font-weight:400;font-size:11.5px}
+.done .t>span{text-decoration:line-through;color:var(--sub)}
+.chip{font-size:9px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:3px 7px;border-radius:6px;white-space:nowrap}
+.c-acc{background:var(--acc);color:#292928}.c-lav{background:var(--lav);color:var(--lavink)}.c-grey{border:1px solid var(--line);color:var(--sub)}.c-amb{background:var(--amb);color:var(--ambink)}.c-red{background:var(--redbg);color:var(--red)}
+.open{background:var(--soft)}
+.exp{padding:0 12px 12px 12px;background:var(--soft)}
+.sub{display:flex;align-items:center;gap:8px;padding:6px 0 6px 12px;margin-left:12px;border-left:2px solid var(--line);font-size:13px}
+.sub .ck{width:18px;height:18px;border-radius:6px}.sub .ck::after{font-size:13px!important}
+.sub .t{font-weight:500;font-size:13px}
+.num{width:18px;height:18px;border-radius:50%;background:var(--ink);color:var(--card);font-size:10px;font-weight:700;display:grid;place-items:center;flex:none}
+.rp{width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;flex:none}.rp .ms{font-size:14px}
+.rp.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:10px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:9px 10px;font:600 12.5px 'DM Sans';display:inline-flex;align-items:center;justify-content:center;gap:4px;min-height:40px}
+.btn .ms{font-size:16px}.btn.acc{background:var(--acc);border-color:var(--acc);color:#292928}.btn.red{color:var(--red)}
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.45);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;height:58%;background:var(--card);border-radius:22px 22px 0 0;z-index:6;display:flex;flex-direction:column;border-top:1px solid var(--line)}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line);margin:8px auto 4px}
+.sh{display:flex;align-items:center;gap:8px;padding:4px 14px 10px;border-bottom:1px solid var(--line);font-size:13px;font-weight:600}.sh small{color:var(--sub);font-weight:400;display:block;font-size:11px}
+.msgs{flex:1;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:12px 14px;justify-content:flex-end}
+.msg{align-self:flex-start;background:var(--soft);border-radius:14px 14px 14px 4px;padding:7px 11px;font-size:13px;max-width:80%}.msg small{display:block;color:var(--sub);font-size:10.5px}
+.msg.me{align-self:flex-end;background:var(--ink);color:var(--card);border-radius:14px 14px 4px 14px}.msg.me small{color:inherit;opacity:.7}
+.note2{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;background:var(--amb);color:var(--ambink);border-radius:999px;padding:2px 8px;margin-bottom:3px}.note2 .ms{font-size:13px}
+.qr{display:flex;gap:6px;overflow-x:auto;padding:0 12px 8px}.qr span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:5px 10px;white-space:nowrap}.qr span.ok{background:var(--acc);border-color:var(--acc);color:#292928;font-weight:700}
+.reply{display:flex;gap:6px;align-items:center;margin:0 10px 18px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:4px 4px 4px 10px;font-size:13px;color:var(--sub)}
+.reply span.f{flex:1}.send{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--card);display:grid;place-items:center}.send .ms{font-size:16px}
+.dtabs{display:flex;background:var(--soft);border-radius:12px;padding:3px}.dtabs span{flex:1;text-align:center;padding:7px;font-size:12.5px;font-weight:600;color:var(--sub);border-radius:9px}.dtabs .on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.al{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line)}.al:first-of-type{border-top:0}
+.sev{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;flex:none}.sev .ms{font-size:17px}.sev.hi{background:var(--redbg);color:var(--red)}.sev.md{background:var(--amb);color:var(--ambink)}
+.al .t small{margin-top:2px}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}.kpi{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:11px;color:var(--sub)}.kpi b{display:block;font-size:20px;color:var(--ink)}.kpi.hi b{color:var(--red)}
+.big{width:52px;height:52px;border-radius:16px;background:var(--acc);color:#292928;display:grid;place-items:center;flex:none}.big .ms{font-size:28px}
+.vl{display:inline-block;width:13px;height:13px;background:currentColor;-webkit-mask:var(--u) center/contain no-repeat;mask:var(--u) center/contain no-repeat}
+.back{display:flex;align-items:center;gap:2px;font-size:14px;font-weight:600;color:var(--sub);padding:2px 16px 0}
+.sl .it{display:flex;align-items:center;gap:12px;padding:12px 4px;border-top:1px solid var(--line)}.sl .it:first-child{border-top:0}
+.sl .ic{width:36px;height:36px;border-radius:11px;background:var(--soft);display:grid;place-items:center;color:var(--sub);flex:none}
+.sl .nm{flex:1;font-weight:600;font-size:14px}.sl .nm small{display:block;color:var(--sub);font-weight:400;font-size:11.5px}
+.grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);font-weight:700;margin:4px 4px -4px}
+</style></head><body class="dark">
+<div class="top"><div><h1>Phone layout — parent screens</h1><p>Bottom tab bar replaces the icon sidebar. Kids become an avatar strip. Chat opens as a bottom sheet. Sample data.</p></div>
+<button class="tg" onclick="document.body.classList.toggle('dark')">Toggle dark</button></div>
+<div class="phones">
+
+<!-- 1 TODAY -->
+<div><p class="cap">1 · Today</p><div class="ph">
+ <div class="sb"><span>5:46</span><span><span class="ms" style="font-size:15px">signal_cellular_alt</span> <span class="ms" style="font-size:15px">wifi</span> <span class="ms" style="font-size:15px">battery_5_bar</span></span></div>
+ <div class="hdr"><h2>Today</h2><span class="ib"><span class="ms" style="font-size:18px">notifications</span><span class="dot"></span></span><span class="ib" style="font-weight:700;font-size:14px">D</span></div>
+ <div class="body">
+  <div class="kids"><div class="kd on"><i>M<b class="w">2</b></i>Mia</div><div class="kd"><i>A<b class="d"><span class="ms" style="font-size:12px">check</span></b></i>Ava</div><div class="kd"><i>L<b class="w">2</b></i>Leo</div><div class="kd"><i>S</i>Sam</div><div class="kd"><i style="border-style:dashed;color:var(--sub)"><span class="ms">add</span></i>Add</div></div>
+  <div class="card"><div class="sum"><div style="flex:1"><b style="font-size:17px">Mia's day</b><div class="chips" style="margin-top:6px"><span class="hc on"><span class="ms">wifi</span>Online</span><span class="hc"><span class="ms">military_tech</span>Lv 7</span><span class="hc"><span class="ms">local_fire_department</span>6 days</span></div></div><span class="ib"><span class="ms" style="font-size:18px">visibility</span></span></div>
+   <div class="bar"><i style="width:60%"></i></div>
+   <div class="facts"><div>Done<b>3 / 5</b></div><div>Points<b>860</b></div><div>Reward<b>40 away</b></div><div>Locks<b>8:00 PM</b></div></div></div>
+  <div class="box">
+   <div class="row done"><span class="ck"></span><span class="ty"><span class="ms">restaurant</span></span><div class="t"><span>Unload dishwasher</span><small>Done 4:12 PM</small></div><span class="chip c-acc">OK</span></div>
+   <div class="row done" style="background:color-mix(in srgb,var(--lav) 30%,transparent)"><span class="ck"></span><span class="ty"><span class="ms">school</span></span><div class="t"><span>Homework</span><small>Done 5:40 PM · 2 photos</small></div><span class="chip c-lav">Needs OK</span></div>
+   <div class="row" style="background:color-mix(in srgb,var(--amb) 45%,transparent)"><span class="ck"></span><span class="ty"><span class="ms">cleaning_services</span></span><div class="t"><span>Clean bathroom</span><small style="color:var(--ambink)">Note: Out of supplies</small></div><span class="chip c-amb">Note</span></div>
+   <div class="row"><span class="ck"></span><span class="ty"><span class="ms">cleaning_services</span></span><div class="t"><span>Tidy room</span><small>Due 7:00 PM · 2 of 4 steps</small></div><span class="chip c-grey">To do</span></div>
+   <div class="row"><span class="ck"></span><span class="ty"><span class="ms">music_note</span></span><div class="t"><span>Practice piano</span><small>Due 7:30 PM</small></div><span class="chip c-grey">To do</span></div>
+  </div>
+ </div>
+ <div class="nav"><span class="on"><span class="ms">home</span>Today</span><span><span class="ms">devices</span>Devices</span><span><span class="ms">group</span>Kids</span><span><span class="ms">forum</span>Chat<b class="bdg">3</b></span><span><span class="ms">more_horiz</span>More</span></div>
+</div></div>
+
+<!-- 2 CHORE OPEN + CHAT SHEET -->
+<div><p class="cap">2 · Chore open → chat sheet</p><div class="ph">
+ <div class="sb"><span>5:46</span><span></span></div>
+ <div class="hdr"><h2>Mia's day</h2><span class="ib"><span class="ms" style="font-size:18px">notifications</span></span></div>
+ <div class="body">
+  <div class="box">
+   <div class="row done open"><span class="ck"></span><span class="ty"><span class="ms">school</span></span><div class="t"><span>Homework</span><small>Done 5:40 PM · 3 of 3 steps</small></div><span class="chip c-lav">Needs OK</span></div>
+   <div class="exp">
+    <div class="sub done"><span class="num">1</span><span class="ck"></span><div class="t"><span>Math worksheet</span><small>Done 5:02 PM</small></div><span class="rp on"><span class="ms">chat_bubble</span></span></div>
+    <div class="sub done"><span class="num">2</span><span class="ck"></span><div class="t"><span>Check answers</span><small>Done 5:30 PM</small></div><span class="rp"><span class="ms">chat_bubble</span></span></div>
+    <div class="sub done"><span class="ck"></span><div class="t"><span>Pack backpack</span><small>Done 5:38 PM</small></div><span class="rp"><span class="ms">chat_bubble</span></span></div>
+    <div class="acts"><button class="btn acc"><span class="ms">check</span>Approve +30</button><button class="btn"><span class="ms">undo</span>Send back</button><button class="btn red"><span class="ms">remove_circle</span>Deduct</button><button class="btn"><span class="ms">chat</span>Chat</button></div>
+   </div>
+  </div>
+ </div>
+ <div class="scrim"></div>
+ <div class="sheet"><div class="grab"></div>
+  <div class="sh"><span class="ms" style="color:var(--sub)">subdirectory_arrow_right</span><div style="flex:1">Math worksheet<small>Homework · Mia</small></div><span class="ms" style="color:var(--sub)">open_in_full</span><span class="ms" style="color:var(--sub)">close</span></div>
+  <div class="msgs">
+   <div class="msg"><div class="note2"><span class="ms">school</span>Don't understand it</div><small>Mia · 5:04 PM</small>Stuck on #4, the fraction one</div>
+   <div class="msg me"><small>You · 5:06 PM</small>Flip the second fraction, then multiply.</div>
+   <div class="msg"><small>Mia · 5:12 PM</small>OHHH ok fixed it</div>
+  </div>
+  <div class="qr"><span class="ok">Approve + “Great job!”</span><span>Looks good</span><span>Redo #4?</span></div>
+  <div class="reply"><span class="ms">add_photo_alternate</span><span class="f">Reply on Math worksheet…</span><span class="send"><span class="ms">send</span></span></div>
+ </div>
+</div></div>
+
+<!-- 3 DEVICE -->
+<div><p class="cap">3 · Device → Activity</p><div class="ph">
+ <div class="sb"><span>5:46</span><span></span></div>
+ <div class="back"><span class="ms">chevron_left</span>Devices</div>
+ <div class="hdr" style="align-items:flex-start"><div class="big"><span class="ms">tablet_mac</span></div><div style="flex:1"><h2 style="font-size:20px">Mia's iPad</h2><div class="chips" style="margin-top:6px"><span class="hc"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/apple.svg)"></span>Apple</span><span class="hc on"><span class="ms">wifi</span>Online</span><span class="hc" style="font-family:ui-monospace,monospace;font-size:10.5px">192.168.1.42</span></div></div></div>
+ <div class="body">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn red"><span class="ms">lock</span>Lock now</button><button class="btn"><span class="ms">schedule</span>Unlock 30m</button></div>
+  <div class="dtabs"><span>Overview</span><span>Network</span><span class="on">Activity <span class="chip c-red">1</span></span></div>
+  <div class="kpis"><div class="kpi hi">Bypass · 7d<b>1</b></div><div class="kpi">Tries while locked<b>38</b></div><div class="kpi">Outside hours<b>5</b></div><div class="kpi">Wrong PINs<b>3</b></div></div>
+  <div class="card">
+   <div class="al"><div class="sev hi"><span class="ms">gpp_maybe</span></div><div class="t">Got around the lock for 6 min<small>Tue 9:14 PM · re-locked by the box</small><div style="display:flex;gap:6px;margin-top:8px"><button class="btn" style="min-height:32px;padding:5px 10px"><span class="ms">chat</span>Ask Mia</button><button class="btn" style="min-height:32px;padding:5px 10px">Mark OK</button></div></div></div>
+   <div class="al"><div class="sev md"><span class="ms">swap_horiz</span></div><div class="t">New address right after locking<small>Mon 8:02 PM · likely private MAC</small></div></div>
+   <div class="al"><div class="sev md"><span class="ms">schedule</span></div><div class="t">14 tries outside allowed hours<small>Mon 10:40–11:55 PM</small></div></div>
+  </div>
+ </div>
+ <div class="nav"><span><span class="ms">home</span>Today</span><span class="on"><span class="ms">devices</span>Devices</span><span><span class="ms">group</span>Kids</span><span><span class="ms">forum</span>Chat</span><span><span class="ms">more_horiz</span>More</span></div>
+</div></div>
+
+<!-- 4 MORE / SETTINGS -->
+<div><p class="cap">4 · More → Settings</p><div class="ph">
+ <div class="sb"><span>5:46</span><span></span></div>
+ <div class="hdr"><h2>More</h2></div>
+ <div class="body">
+  <div class="card" style="display:flex;align-items:center;gap:12px"><span class="ib" style="width:44px;height:44px;font-weight:700">D</span><div style="flex:1"><b>Dad</b><div style="font-size:12px;color:var(--sub)">Owner · The Garcias</div></div><span class="chip c-acc">Box healthy</span></div>
+  <div class="grp">Settings</div>
+  <div class="card sl" style="padding:2px 12px">
+   <div class="it"><span class="ic"><span class="ms">home</span></span><div class="nm">Family<small>Name, time zone, points</small></div><span class="ms" style="color:var(--sub)">chevron_right</span></div>
+   <div class="it"><span class="ic"><span class="ms">schedule</span></span><div class="nm">Hours<small>School nights, holidays, summer</small></div><span class="ms" style="color:var(--sub)">chevron_right</span></div>
+   <div class="it"><span class="ic"><span class="ms">timer</span></span><div class="nm">Screen time</div><span class="ms" style="color:var(--sub)">chevron_right</span></div>
+   <div class="it"><span class="ic"><span class="ms">category</span></span><div class="nm">Chore types<small>9 types</small></div><span class="ms" style="color:var(--sub)">chevron_right</span></div>
+   <div class="it"><span class="ic"><span class="ms">notifications</span></span><div class="nm">Notifications<small>Signal, Discord</small></div><span class="ms" style="color:var(--sub)">chevron_right</span></div>
+   <div class="it"><span class="ic"><span class="ms">palette</span></span><div class="nm">Appearance<small>Neon · match device</small></div><span class="ms" style="color:var(--sub)">chevron_right</span></div>
+   <div class="it"><span class="ic"><span class="ms">supervisor_account</span></span><div class="nm">Parents</div><span class="ms" style="color:var(--sub)">chevron_right</span></div>
+  </div>
+  <div class="card sl" style="padding:2px 12px">
+   <div class="it"><span class="ic"><span class="ms">help</span></span><div class="nm">Help &amp; guide</div><span class="ms" style="color:var(--sub)">open_in_new</span></div>
+   <div class="it"><span class="ic"><span class="ms">logout</span></span><div class="nm" style="color:var(--red)">Log out</div></div>
+  </div>
+ </div>
+ <div class="nav"><span><span class="ms">home</span>Today</span><span><span class="ms">devices</span>Devices</span><span><span class="ms">group</span>Kids</span><span><span class="ms">forum</span>Chat</span><span class="on"><span class="ms">more_horiz</span>More</span></div>
+</div></div>
+
+</div>
+</body></html>

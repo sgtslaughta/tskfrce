@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#5a5a5a;font-family:Inter,sans-serif;padding:24px;color:#fff}
+.ms{font-family:"Material Symbols Rounded";font-weight:normal;font-style:normal;font-size:24px;line-height:1;display:inline-block;font-feature-settings:"liga";vertical-align:middle}
+.fill{font-variation-settings:"FILL" 1}
+.k{--bg:#f4f7fa;--card:#fff;--ink:#1d2b53;--sub:#4a5a80;--line:#dfe5ee;--soft:#eef1f6;--sun:#ffc93c;--green:#5cc46f;--coral:#ff6b4a;--amber:#ffb020;--grid:rgba(29,43,83,.08);--shadow:5px 5px 0 var(--ink)}
+.dark .k{--bg:#141a2e;--card:#1d2747;--ink:#eef2ff;--sub:#a9b6d8;--line:#2e3b66;--soft:#25315a;--green:#6fd08a;--coral:#ff7a5c;--amber:#ffc04d;--grid:rgba(255,255,255,.06);--shadow:5px 5px 0 #000}
+.tab{width:1180px;max-width:100%;height:780px;border-radius:26px;border:12px solid #111;background:var(--bg);color:var(--ink);overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.4);display:grid;grid-template-rows:auto 1fr auto;position:relative;isolation:isolate}
+.tab::before{content:'';position:absolute;inset:0;z-index:-1;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:32px 32px}
+.disp{font-family:'Space Grotesk',sans-serif}
+.topb{display:flex;align-items:center;gap:18px;padding:20px 28px}
+.me{width:76px;height:76px;border-radius:50%;background:var(--sun);border:4px solid var(--ink);display:grid;place-items:center;font-size:42px}
+.hi{font-family:'Space Grotesk';font-size:40px;font-weight:700}
+.stars{margin-left:auto;display:flex;gap:10px}
+.stars i{width:58px;height:58px;border-radius:50%;border:4px solid var(--ink);display:grid;place-items:center;background:var(--card);font-style:normal}
+.stars i .ms{font-size:36px;color:var(--line)}
+.stars i.ok{background:var(--sun)}.stars i.ok .ms{color:#1d2b53}
+.wifi{display:flex;align-items:center;gap:10px;background:var(--coral);color:#1d2b53;border:4px solid #1d2b53;border-radius:999px;padding:10px 18px 10px 12px;font-family:'Space Grotesk';font-weight:700;font-size:20px}
+.wifi .ms{font-size:34px}
+.stage{display:grid;grid-template-columns:1fr 300px;gap:24px;padding:0 28px 18px;min-height:0}
+.now{background:var(--card);border:4px solid var(--ink);border-radius:32px;box-shadow:var(--shadow);padding:26px 30px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;position:relative}
+.label{font-family:'Space Grotesk';font-size:18px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--sub)}
+.pic{width:170px;height:170px;border-radius:40px;background:var(--sun);border:4px solid #1d2b53;display:grid;place-items:center;color:#1d2b53}
+.pic .ms{font-size:110px}
+.now h2{margin:0;font-family:'Space Grotesk';font-size:52px;line-height:1}
+.badge{display:inline-flex;align-items:center;gap:8px;font-family:'Space Grotesk';font-weight:700;font-size:22px;border-radius:999px;padding:8px 18px;border:3px solid #1d2b53;color:#1d2b53}
+.b-soon{background:var(--amber)}.b-pts{background:var(--sun)}
+.row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.done{height:96px;padding:0 44px;border-radius:28px;background:var(--green);border:4px solid #1d2b53;box-shadow:var(--shadow);font-family:'Space Grotesk';font-weight:700;font-size:34px;color:#1d2b53;display:flex;align-items:center;gap:14px;cursor:pointer}
+.done .ms{font-size:52px}
+.help{height:96px;width:96px;border-radius:28px;background:var(--card);border:4px solid var(--ink);display:grid;place-items:center;cursor:pointer;color:var(--ink)}
+.help .ms{font-size:46px}
+.queue{display:flex;flex-direction:column;gap:12px}
+.qh{font-family:'Space Grotesk';font-size:18px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--sub)}
+.q{display:flex;align-items:center;gap:12px;background:var(--card);border:3px solid var(--line);border-radius:20px;padding:12px}
+.q .qi{width:60px;height:60px;border-radius:16px;background:var(--soft);display:grid;place-items:center;flex:none}.q .qi .ms{font-size:36px}
+.q b{font-family:'Space Grotesk';font-size:22px}
+.q.over{border-color:#1d2b53;background:var(--coral);color:#1d2b53}.q.over .qi{background:#fff3}
+.q.ok{opacity:.6}.q.ok .qi{background:var(--green);color:#1d2b53}.q.ok b{text-decoration:line-through}
+.q small{display:flex;align-items:center;gap:4px;font-weight:800;font-size:15px}.q small .ms{font-size:18px}
+.nav{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:14px 28px 22px}
+.nb{height:84px;border-radius:24px;border:4px solid var(--line);background:var(--card);display:flex;align-items:center;justify-content:center;gap:12px;font-family:'Space Grotesk';font-weight:700;font-size:26px;color:var(--sub);position:relative}
+.nb .ms{font-size:42px}
+.nb.on{background:var(--sun);border-color:#1d2b53;color:#1d2b53;box-shadow:var(--shadow)}
+.nb .bd{position:absolute;top:-10px;right:-6px;width:36px;height:36px;border-radius:50%;background:var(--coral);color:#1d2b53;border:3px solid #1d2b53;font-size:18px;font-weight:800;display:grid;place-items:center}
+</style></head><body class="dark">
+<div class="k"><div class="tab">
+ <div class="topb">
+  <div class="me">🦁</div><div class="hi">Hi Leo!</div>
+  <div class="wifi"><span class="ms fill">wifi_off</span>No games yet</div>
+  <div class="stars"><i class="ok"><span class="ms fill">star</span></i><i><span class="ms fill">star</span></i><i><span class="ms fill">star</span></i><i><span class="ms fill">star</span></i></div>
+ </div>
+ <div class="stage">
+  <div class="now">
+   <div class="label">Do this now</div>
+   <div class="pic"><span class="ms">cleaning_services</span></div>
+   <h2>Tidy your room</h2>
+   <div class="row"><span class="badge b-soon"><span class="ms">hourglass_bottom</span>Hurry · 20 min</span><span class="badge b-pts"><span class="ms fill">star</span>25</span></div>
+   <div class="row"><div class="done"><span class="ms">check_circle</span>I did it!</div><div class="help" title="Tell Mom or Dad"><span class="ms">front_hand</span></div></div>
+  </div>
+  <div class="queue">
+   <div class="qh">Next</div>
+   <div class="q over"><div class="qi"><span class="ms">pets</span></div><div><b>Feed the dog</b><small><span class="ms">alarm</span>Late!</small></div></div>
+   <div class="q"><div class="qi"><span class="ms">bed</span></div><div><b>Make bed</b><small><span class="ms">schedule</span>By dinner</small></div></div>
+   <div class="q"><div class="qi"><span class="ms">yard</span></div><div><b>Water plants</b><small><span class="ms">fiber_new</span>New</small></div></div>
+   <div class="q ok"><div class="qi"><span class="ms">check</span></div><div><b>Brush teeth</b><small>Done</small></div></div>
+  </div>
+ </div>
+ <div class="nav"><div class="nb on"><span class="ms fill">checklist</span>Chores<span class="bd">3</span></div><div class="nb"><span class="ms">redeem</span>Prizes</div><div class="nb"><span class="ms">face</span>Me</div></div>
+</div></div>
+</body></html>

@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#5a5a5a;font-family:Inter,sans-serif;padding:24px;color:#fff}
+.top{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;font-family:'DM Sans'}.top h1{font-size:22px;margin:0}.top p{margin:4px 0 0;opacity:.8;font-size:14px}
+.tg{background:#fff;color:#292928;border:0;border-radius:999px;padding:8px 14px;font:600 13px 'DM Sans';cursor:pointer}
+.tgs{margin-left:auto;display:flex;gap:8px}
+.ms{font-family:"Material Symbols Rounded";font-weight:normal;font-style:normal;font-size:24px;line-height:1;display:inline-block;font-feature-settings:"liga";vertical-align:middle}
+.fill{font-variation-settings:"FILL" 1}
+/* fridge tokens */
+.k{--bg:#f4f7fa;--card:#fff;--ink:#1d2b53;--sub:#4a5a80;--line:#dfe5ee;--soft:#eef1f6;--sun:#ffc93c;--green:#5cc46f;--greenbg:#dff5e3;--coral:#ff6b4a;--coralbg:#ffe6df;--blue:#e4ecff;--grid:rgba(29,43,83,.08);--shadow:4px 4px 0 var(--ink);--onsun:#1d2b53}
+.dark .k{--bg:#141a2e;--card:#1d2747;--ink:#eef2ff;--sub:#a9b6d8;--line:#2e3b66;--soft:#25315a;--green:#6fd08a;--greenbg:#1d3b2b;--coral:#ff7a5c;--coralbg:#43251f;--blue:#26355f;--grid:rgba(255,255,255,.06);--shadow:4px 4px 0 #000}
+.tab{width:1180px;max-width:100%;height:780px;border-radius:26px;border:12px solid #111;background:var(--bg);color:var(--ink);overflow:hidden;box-shadow:0 14px 40px rgba(0,0,0,.4);display:grid;grid-template-columns:132px 1fr;position:relative;isolation:isolate}
+.tab::before{content:'';position:absolute;inset:0;z-index:-1;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:28px 28px}
+.disp{font-family:'Space Grotesk',sans-serif}
+/* nav rail */
+.rail{background:var(--card);border-right:2px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:10px;padding:18px 12px}
+.me{width:72px;height:72px;border-radius:50%;background:var(--sun);border:3px solid var(--ink);display:grid;place-items:center;font-size:38px;margin-bottom:8px}
+.nb{width:104px;height:92px;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-family:'Space Grotesk';font-weight:700;font-size:15px;color:var(--sub);cursor:pointer;position:relative;border:2px solid transparent}
+.nb .ms{font-size:34px}
+.nb:hover{background:var(--soft)}
+.nb.on{background:var(--sun);color:var(--onsun);border-color:var(--ink);box-shadow:var(--shadow)}
+.nb .bd{position:absolute;top:8px;right:14px;min-width:24px;height:24px;border-radius:12px;background:var(--coral);color:#1d2b53;font-family:Inter;font-size:13px;font-weight:800;display:grid;place-items:center;padding:0 6px;border:2px solid var(--card)}
+.rail .sp{flex:1}
+/* main */
+.main{padding:24px 28px;overflow:auto;display:flex;flex-direction:column;gap:20px}
+.view{display:none;flex-direction:column;gap:20px}.view.on{display:flex}
+.hi{font-family:'Space Grotesk';font-size:34px;font-weight:700;margin:0}
+.status{display:flex;align-items:center;gap:20px;background:var(--card);border:3px solid var(--ink);border-radius:20px;padding:18px 22px;box-shadow:var(--shadow)}
+.status .big{width:72px;height:72px;border-radius:50%;background:var(--coral);color:#1d2b53;border:3px solid #1d2b53;display:grid;place-items:center;flex:none}
+.status .big .ms{font-size:40px}
+.status.open .big{background:var(--green)}
+.st-t{font-family:'Space Grotesk';font-size:28px;font-weight:700;line-height:1.1}
+.st-s{font-size:17px;color:var(--sub);font-weight:600;margin-top:4px}
+.dots{display:flex;gap:10px;margin-left:auto}
+.dots i{width:34px;height:34px;border-radius:50%;border:3px solid var(--ink);display:grid;place-items:center;font-style:normal}
+.dots i.ok{background:var(--green)}.dots i.ok::after{content:'check';font-family:"Material Symbols Rounded";font-size:22px;color:#1d2b53}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:18px}
+.tile{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:20px;display:flex;gap:16px;align-items:center;cursor:pointer;min-height:122px;transition:transform .1s}
+.tile:hover{transform:translateY(-2px);border-color:var(--ink)}
+.ticon{width:72px;height:72px;border-radius:18px;background:var(--soft);display:grid;place-items:center;flex:none}
+.ticon .ms{font-size:40px}
+.tname{font-family:'Space Grotesk';font-size:24px;font-weight:700;line-height:1.1}
+.tmeta{display:flex;gap:8px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.tag{font-family:'Space Grotesk';font-weight:700;font-size:14px;border-radius:999px;padding:6px 12px;display:inline-flex;gap:5px;align-items:center}
+.tag .ms{font-size:18px}
+.t-pts{background:var(--sun);color:var(--onsun)}
+.t-due{background:var(--soft);color:var(--ink)}
+.t-late{background:var(--coral);color:#1d2b53}
+.t-wait{background:var(--blue);color:var(--ink)}
+.t-done{background:var(--green);color:#1d2b53}
+.tile .go{margin-left:auto;width:52px;height:52px;border-radius:50%;background:var(--ink);color:var(--card);display:grid;place-items:center;flex:none}
+.tile .go .ms{font-size:30px}
+.tile.done{opacity:.75}.tile.done .tname{text-decoration:line-through}
+.tile.done .ticon{background:var(--green);color:#1d2b53}
+.mini{height:10px;border-radius:6px;background:var(--soft);margin-top:10px;overflow:hidden;width:100%}.mini i{display:block;height:100%;background:var(--green)}
+/* chore view */
+.back{display:inline-flex;align-items:center;gap:6px;font-family:'Space Grotesk';font-weight:700;font-size:18px;color:var(--ink);background:var(--card);border:2px solid var(--line);border-radius:999px;padding:10px 18px 10px 12px;cursor:pointer;align-self:flex-start}
+.back .ms{font-size:26px}
+.chead{display:flex;align-items:center;gap:18px}
+.chead .ticon{width:88px;height:88px;background:var(--sun);color:#1d2b53;border:3px solid var(--ink)}
+.chead .ticon .ms{font-size:50px}
+.chead h2{margin:0;font-family:'Space Grotesk';font-size:40px;line-height:1}
+.steps{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:8px}
+.step{display:flex;align-items:center;gap:16px;padding:14px 16px;border-radius:14px;font-size:22px;font-weight:600}
+.step+.step{border-top:2px solid var(--soft)}
+.cb{width:48px;height:48px;border-radius:12px;border:3px solid var(--ink);display:grid;place-items:center;flex:none;background:var(--card);cursor:pointer}
+.step.done .cb{background:var(--green)}.step.done .cb::after{content:'check';font-family:"Material Symbols Rounded";font-size:34px;color:#1d2b53}
+.step.done .sx{text-decoration:line-through;color:var(--sub)}
+.step.next{background:color-mix(in srgb,var(--sun) 28%,transparent)}
+.step.next .cb{box-shadow:0 0 0 5px color-mix(in srgb,var(--sun) 80%,transparent)}
+.step.locked{color:var(--sub)}.step.locked .cb{border-color:var(--line);background:var(--soft)}.step.locked .cb::after{content:'lock';font-family:"Material Symbols Rounded";font-size:26px;color:var(--sub)}
+.sx{flex:1}.sx small{display:block;font-size:15px;color:var(--sub);font-weight:600}
+.num{width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--card);font-size:17px;font-weight:800;display:grid;place-items:center;flex:none}
+.step.locked .num{background:var(--line);color:var(--sub)}
+.bigacts{display:grid;grid-template-columns:2fr 1fr 1fr;gap:14px}
+.bb{height:78px;border-radius:18px;font-family:'Space Grotesk';font-weight:700;font-size:21px;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;border:3px solid var(--ink);background:var(--card);color:var(--ink)}
+.bb .ms{font-size:30px}
+.bb.sun{background:var(--sun);color:#1d2b53;box-shadow:var(--shadow)}
+.bb.off{background:var(--soft);color:var(--sub);border-color:var(--line);box-shadow:none}
+.hint{font-size:17px;color:var(--sub);font-weight:600;text-align:center;margin-top:-6px}
+.t-soon{background:#ffb020;color:#1d2b53}.t-new{background:#e6dcff;color:#1d2b53}.dark .t-new{background:#352c5c;color:#eef2ff}
+</style></head><body class="dark">
+<div class="top"><div><h1>Kid (9–12)</h1><p>One rail of big buttons. One status banner. Big chore tiles. Tap a tile to open one chore at a time. Sample data.</p></div>
+<div class="tgs"><button class="tg" onclick="document.body.classList.toggle('dark')">Toggle dark</button></div></div>
+
+<div class="k"><div class="tab">
+ <nav class="rail">
+  <div class="me">🦁</div>
+  <div class="nb on"><span class="ms fill">checklist</span>Chores<span class="bd">3</span></div>
+  <div class="nb"><span class="ms">redeem</span>Rewards</div>
+  <div class="nb"><span class="ms">chat</span>Chat<span class="bd">1</span></div>
+  <div class="nb"><span class="ms">notifications</span>Alerts<span class="bd">4</span></div>
+  <div class="sp"></div>
+  <div class="nb"><span class="ms">face</span>Me</div>
+ </nav>
+ <main class="main">
+
+  <section class="view on" id="home">
+   <h1 class="hi">Hi Leo!</h1>
+   <div class="status"><div class="big"><span class="ms fill">lock</span></div><div><div class="st-t">Internet is paused</div><div class="st-s">Finish 3 more chores to turn it on</div></div>
+    <div class="dots"><i class="ok"></i><i></i><i></i><i></i></div></div>
+   <div class="tiles">
+    <div class="tile" onclick="openChore()"><div class="ticon"><span class="ms">school</span></div><div style="flex:1"><div class="tname">Homework</div><div class="tmeta"><span class="tag t-pts"><span class="ms fill">star</span>30</span><span class="tag t-soon"><span class="ms">hourglass_bottom</span>Due in 25 min</span></div><div class="mini"><i style="width:25%"></i></div></div><span class="go"><span class="ms">arrow_forward</span></span></div>
+    <div class="tile"><div class="ticon"><span class="ms">cleaning_services</span></div><div style="flex:1"><div class="tname">Tidy the playroom</div><div class="tmeta"><span class="tag t-pts"><span class="ms fill">star</span>25</span><span class="tag t-late"><span class="ms">alarm</span>Overdue</span></div><div class="mini"><i style="width:50%"></i></div></div><span class="go"><span class="ms">arrow_forward</span></span></div>
+    <div class="tile"><div class="ticon"><span class="ms">yard</span></div><div style="flex:1"><div class="tname">Water plants</div><div class="tmeta"><span class="tag t-pts"><span class="ms fill">star</span>10</span><span class="tag t-new"><span class="ms">fiber_new</span>New</span><span class="tag t-due"><span class="ms">schedule</span>Due 7:00</span></div></div><span class="go"><span class="ms">arrow_forward</span></span></div>
+    <div class="tile done"><div class="ticon"><span class="ms">check</span></div><div style="flex:1"><div class="tname">Feed the dog</div><div class="tmeta"><span class="tag t-wait"><span class="ms">hourglass_top</span>Waiting for OK</span></div></div></div>
+   </div>
+  </section>
+
+  <section class="view" id="chore">
+   <div class="back" onclick="home()"><span class="ms">arrow_back</span>All chores</div>
+   <div class="chead"><div class="ticon"><span class="ms">school</span></div><div><h2>Homework</h2><div class="tmeta"><span class="tag t-pts"><span class="ms fill">star</span>30 points</span><span class="tag t-due"><span class="ms">format_list_numbered</span>Do steps 1 → 3 in order</span></div></div></div>
+   <div class="steps">
+    <div class="step done"><span class="num">1</span><span class="cb"></span><span class="sx">Math worksheet<small>Done at 4:12</small></span></div>
+    <div class="step next"><span class="num">2</span><span class="cb" onclick="this.parentElement.classList.toggle('done')"></span><span class="sx">Check answers with Mom<small>Do this next · by 5:00</small></span></div>
+    <div class="step locked"><span class="num">3</span><span class="cb"></span><span class="sx">Fix mistakes<small>Unlocks after step 2 · by 6:00</small></span></div>
+    <div class="step"><span class="num" style="background:transparent;border:3px dashed var(--line);color:var(--sub)">–</span><span class="cb" onclick="this.parentElement.classList.toggle('done')"></span><span class="sx">Pack backpack<small>Any time · by 8:30</small></span></div>
+   </div>
+   <div class="bigacts"><div class="bb off"><span class="ms">task_alt</span>I'm done!</div><div class="bb"><span class="ms">campaign</span>Tell Mom/Dad</div><div class="bb"><span class="ms">chat</span>Chat</div></div>
+   <div class="hint">Finish all the steps to press “I'm done!”</div>
+  </section>
+ </main>
+</div></div>
+<script>
+function openChore(){document.getElementById('home').classList.remove('on');document.getElementById('chore').classList.add('on')}
+function home(){document.getElementById('chore').classList.remove('on');document.getElementById('home').classList.add('on')}
+</script>
+</body></html>
