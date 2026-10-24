@@ -7,7 +7,7 @@ import { SettingsPage } from '@/v2/manage/SettingsPage'
 import { AppearancePane } from '@/v2/manage/AppearancePane'
 import { HoursTimeline } from '@/v2/manage/HoursTimeline'
 import { ACCENTS } from '@/v2/parent/accent'
-import type { Family, Kid, DeviceGroup, TimeWindow } from '@/v2/types'
+import type { Family, Kid, Group, TimeWindow } from '@/v2/types'
 
 jest.mock('@/v2/api')
 jest.mock('next/router', () => ({ useRouter: () => ({ query: {}, pathname: '/settings' }) }))
@@ -29,7 +29,6 @@ jest.mock('@/v2/hooks/useDevices', () => ({
 }))
 
 const mockFamily: Family = {
-  id: 1,
   name: 'The Garcias',
   timezone: 'America/New_York',
   reset_time: '04:00',
@@ -44,16 +43,15 @@ const mockFamily: Family = {
 }
 
 const mockKids: Kid[] = [
-  { id: 1, username: 'mia', full_name: 'Mia', initials: 'M' },
-  { id: 2, username: 'leo', full_name: 'Leo', initials: 'L' },
+  { id: 1, username: 'mia', full_name: 'Mia', avatar: null, has_pin: false },
+  { id: 2, username: 'leo', full_name: 'Leo', avatar: null, has_pin: true },
 ]
 
-const mockGroups: DeviceGroup[] = [
+const mockGroups: Group[] = [
   {
     id: 1,
     name: 'Living room',
-    icon: 'tv',
-    devices: [],
+    device_ids: [],
   },
 ]
 

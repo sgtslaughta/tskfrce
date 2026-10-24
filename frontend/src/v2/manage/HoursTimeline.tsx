@@ -1,10 +1,10 @@
 import { useMemo } from 'react'
-import type { Kid, DeviceGroup, TimeWindow } from '@/v2/types'
+import type { Kid, Group, TimeWindow } from '@/v2/types'
 
 interface HoursTimelineProps {
   windows: TimeWindow[]
   kids: Kid[]
-  groups: DeviceGroup[]
+  groups: Group[]
 }
 
 type TextureType = 'solid' | 'crosshatch' | 'horizontal'
@@ -23,11 +23,12 @@ function getWindowScope(window: TimeWindow): WindowScope {
   return 'family'
 }
 
-function getWindowLabel(window: TimeWindow, kids: Kid[], groups: DeviceGroup[]): string {
+function getWindowLabel(window: TimeWindow, kids: Kid[], groups: Group[]): string {
   if (window.kid_id) {
     const kid = kids.find((k) => k.id === window.kid_id)
+    const initials = kid?.full_name ? kid.full_name.charAt(0).toUpperCase() : '?'
     const kindLabel = window.kind === 'free' ? 'Free time' : 'Allowed'
-    return `${kindLabel} (${kid?.initials || '?'})`
+    return `${kindLabel} (${initials})`
   }
   if (window.group_id) {
     const group = groups.find((g) => g.id === window.group_id)
@@ -36,7 +37,7 @@ function getWindowLabel(window: TimeWindow, kids: Kid[], groups: DeviceGroup[]):
   return window.kind === 'free' ? 'Free time' : 'Allowed'
 }
 
-function TimelineRow({ window, kids, groups }: { window: TimeWindow; kids: Kid[]; groups: DeviceGroup[] }) {
+function TimelineRow({ window, kids, groups }: { window: TimeWindow; kids: Kid[]; groups: Group[] }) {
   const texture = getTextureForWindow(window)
   const label = getWindowLabel(window, kids, groups)
 

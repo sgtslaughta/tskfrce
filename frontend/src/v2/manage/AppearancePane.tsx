@@ -8,7 +8,7 @@ interface AppearancePaneProps {
 }
 
 export function AppearancePane({ current, onChange }: AppearancePaneProps) {
-  const { setColorScheme } = useMantineColorScheme()
+  const { setColorScheme, colorScheme } = useMantineColorScheme()
   const computed = useComputedColorScheme('light', { getInitialValueInEffect: true })
 
   return (
@@ -42,7 +42,7 @@ export function AppearancePane({ current, onChange }: AppearancePaneProps) {
         <h3 className="m-subhead">Mode</h3>
         <div className="mode-buttons">
           <Button
-            variant={computed === 'light' ? 'filled' : 'default'}
+            variant={colorScheme === 'light' ? 'filled' : 'default'}
             onClick={() => setColorScheme('light')}
             className="mode-btn"
           >
@@ -50,7 +50,7 @@ export function AppearancePane({ current, onChange }: AppearancePaneProps) {
             Light
           </Button>
           <Button
-            variant={computed === 'dark' ? 'filled' : 'default'}
+            variant={colorScheme === 'dark' ? 'filled' : 'default'}
             onClick={() => setColorScheme('dark')}
             className="mode-btn"
           >
@@ -58,7 +58,7 @@ export function AppearancePane({ current, onChange }: AppearancePaneProps) {
             Dark
           </Button>
           <Button
-            variant={computed === 'auto' || !['light', 'dark'].includes(computed) ? 'filled' : 'default'}
+            variant={colorScheme === 'auto' ? 'filled' : 'default'}
             onClick={() => setColorScheme('auto')}
             className="mode-btn"
           >
@@ -72,12 +72,12 @@ export function AppearancePane({ current, onChange }: AppearancePaneProps) {
         <h3 className="m-subhead">Preview</h3>
         <div className="preview-cards">
           <div className="preview-card light">
-            <div className="preview-header">Mia's day</div>
+            <div className="preview-header">Mia&apos;s day</div>
             <div className="preview-bar"></div>
             <span className="preview-chip">Approved</span>
           </div>
           <div className="preview-card dark">
-            <div className="preview-header">Mia's day</div>
+            <div className="preview-header">Mia&apos;s day</div>
             <div className="preview-bar"></div>
             <span className="preview-chip">Approved</span>
           </div>
