@@ -173,7 +173,7 @@ export function ThreadView({
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 0 }}>
         {/* Header with title and chips */}
         {data && (
-          <div style={{ paddingBottom: 16, borderBottom: '1.5px solid var(--p-line)', display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 0 }}>
+          <div style={{ paddingBottom: 16, borderBottom: '1px solid var(--p-line)', display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 0 }}>
             <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--p-acc)', color: '#292928', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Icon name={kind === 'chore' ? 'task' : kind === 'family' ? 'group' : 'mail'} size={24} />
             </div>
@@ -182,15 +182,15 @@ export function ThreadView({
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {kind === 'chore' && (
                   <>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-soft)', border: '1.5px solid var(--p-line)', color: 'var(--p-ink)', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-soft)', border: '1px solid var(--p-line)', color: 'var(--p-ink)', whiteSpace: 'nowrap' }}>
                       <Icon name="category" size={15} />
                       Chore
                     </span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-lav)', border: '1.5px solid var(--p-lav)', color: 'var(--p-lavink)', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-lav)', border: '1px solid var(--p-lav)', color: 'var(--p-lavink)', whiteSpace: 'nowrap' }}>
                       <Icon name="hourglass_top" size={15} />
                       Needs OK
                     </span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-soft)', border: '1.5px solid var(--p-line)', color: 'var(--p-ink)', whiteSpace: 'nowrap' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-soft)', border: '1px solid var(--p-line)', color: 'var(--p-ink)', whiteSpace: 'nowrap' }}>
                       <Icon name="stars" size={15} />
                       30 pts
                     </span>

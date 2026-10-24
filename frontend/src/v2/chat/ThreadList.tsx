@@ -56,7 +56,7 @@ export function ThreadList({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
       {/* Search box */}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '8px 12px', borderRadius: 8, border: '1.5px solid var(--p-line)', background: 'var(--p-card)', color: 'var(--p-sub)' }}>
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '8px 12px', borderRadius: 8, border: '1px solid var(--p-line)', background: 'var(--p-card)', color: 'var(--p-sub)' }}>
         <Icon name="search" size={16} />
         <input
           type="text"
@@ -76,7 +76,7 @@ export function ThreadList({
       </div>
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: 12, borderBottom: '1.5px solid var(--p-line)' }}>
+      <div style={{ display: 'flex', gap: 4, background: 'var(--p-soft)', borderRadius: 14, padding: 4 }}>
         {(['all', 'chores', 'notes', 'family'] as const).map((tab) => {
           let label = tab.charAt(0).toUpperCase() + tab.slice(1);
           if (tab === 'chores') {
@@ -91,16 +91,18 @@ export function ThreadList({
               onClick={() => setFilter(tab)}
               aria-pressed={filter === tab}
               style={{
-                padding: '8px 0',
+                flex: 1,
+                textAlign: 'center',
+                padding: '8px 4px',
+                borderRadius: 10,
                 border: 'none',
-                background: 'none',
-                color: filter === tab ? 'var(--p-ink)' : 'var(--p-sub)',
+                background: filter === tab ? 'var(--p-ink)' : 'transparent',
+                color: filter === tab ? 'var(--p-card)' : 'var(--p-sub)',
                 fontWeight: filter === tab ? 600 : 400,
                 cursor: 'pointer',
-                borderBottom: filter === tab ? '2px solid var(--p-acc)' : 'none',
                 font: 'inherit',
-                textTransform: 'capitalize',
                 fontSize: '13px',
+                transition: 'background-color 150ms ease-out, color 150ms ease-out',
               }}
             >
               {label}
