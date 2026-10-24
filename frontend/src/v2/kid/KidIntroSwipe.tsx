@@ -6,6 +6,7 @@ import { Icon } from '../parent/Icon'
 
 interface Props {
   onComplete: () => void
+  ageGroup?: 'little' | 'kid' | 'teen'
 }
 
 type AgeGroup = 'little' | 'kid' | 'teen'
@@ -37,9 +38,7 @@ const wordsMap: Record<AgeGroup, Record<string, string>> = {
   },
 }
 
-const ageGroup: AgeGroup = 'kid' // default; will be populated from data in integration
-
-export function KidIntroSwipe({ onComplete }: Props) {
+export function KidIntroSwipe({ onComplete, ageGroup = 'kid' }: Props) {
   const { isDismissed, dismiss } = useTips()
   const [step, setStep] = useState(0)
 
@@ -78,83 +77,53 @@ export function KidIntroSwipe({ onComplete }: Props) {
   }
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 16,
-        padding: 24,
-        minHeight: 400,
-        textAlign: 'center',
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 16,
-          flex: 1,
-        }}
-      >
-        <div
-          style={{
-            fontSize: 64,
-            marginTop: 'auto',
-          }}
-        >
-          <Icon name={cards[step].icon} size={64} />
+    <StickerCard>
+      <div className="f-intro-container" data-testid="kid-intro-swipe">
+        <div className="f-intro-content">
+          <div className="f-intro-icon" key={`icon-${step}`}>
+            <Icon name={cards[step].icon} size={64} />
+          </div>
+          <div className="f-intro-text">
+            <h2 className="f-intro-title" key={`title-${step}`}>
+              {cards[step].title}
+            </h2>
+            <p className="f-intro-desc" key={`desc-${step}`}>
+              {cards[step].desc}
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 style={{ margin: '0 0 8px', fontSize: 24 }}>
-            {cards[step].title}
-          </h2>
-          <p style={{ margin: 0, fontSize: 16, color: 'var(--f-sub)' }}>
-            {cards[step].desc}
-          </p>
+
+        <div className="f-intro-dots">
+          {cards.map((_, i) => (
+            <button
+              key={i}
+              className="f-intro-dot"
+              data-active={i === step}
+              onClick={() => setStep(i)}
+              aria-label={`Go to slide ${i + 1}`}
+              type="button"
+            />
+          ))}
+        </div>
+
+        <div className="f-intro-buttons">
+          <Button
+            variant="default"
+            size="md"
+            onClick={handleSkip}
+            fullWidth
+          >
+            Skip
+          </Button>
+          <Button
+            size="md"
+            onClick={handleNext}
+            fullWidth
+          >
+            {step === cards.length - 1 ? 'Done' : 'Next'}
+          </Button>
         </div>
       </div>
-
-      <div
-        style={{
-          display: 'flex',
-          gap: 4,
-          justifyContent: 'center',
-          margin: '16px 0',
-        }}
-      >
-        {cards.map((_, i) => (
-          <div
-            key={i}
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor: i === step ? 'var(--f-acc)' : 'var(--f-line)',
-            }}
-          />
-        ))}
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, width: '100%', marginTop: 'auto' }}>
-        <Button
-          variant="default"
-          size="md"
-          onClick={handleSkip}
-          style={{ flex: 1 }}
-        >
-          Skip
-        </Button>
-        <Button
-          size="md"
-          onClick={handleNext}
-          style={{ flex: 1 }}
-        >
-          {step === cards.length - 1 ? 'Done' : 'Next'}
-        </Button>
-      </div>
-    </div>
+    </StickerCard>
   )
 }
