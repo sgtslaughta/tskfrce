@@ -14,7 +14,7 @@
   height: 100vh;
   background: var(--p-bg);
   color: var(--p-ink);
-  font-family: 'DM Sans', system-ui, sans-serif;
+  font-family: var(--font-parent), system-ui, sans-serif;
   overflow: hidden;
 }
 

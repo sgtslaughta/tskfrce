@@ -121,7 +121,7 @@
   cursor: pointer;
   position: relative;
   transition: all 0.15s ease;
-  font: 500 10px 'DM Sans', system-ui, sans-serif;
+  font: 500 10px var(--font-parent), system-ui, sans-serif;
 }
 
 [data-look='parent'] .p-tabbar-item[aria-current] {

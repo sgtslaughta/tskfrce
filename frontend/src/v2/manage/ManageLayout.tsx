@@ -8,6 +8,8 @@ export type Section = 'chores' | 'kids' | 'rewards' | 'badges'
 export interface SectionDef<S extends string = string> {
   id: S
   label: string
+  description?: string
+  icon?: string
 }
 export const SECTIONS: SectionDef<Section>[] = [
   { id: 'chores', label: 'Chores' },
@@ -49,9 +51,17 @@ export function ManageLayout<S extends string = Section>({
       ) : (
         <nav className="m-side" aria-label="Sections">
           {sections.map((s) => (
-            <Link key={s.id} href={`${path}?section=${s.id}`} aria-current={section === s.id ? 'page' : undefined}>
-              {s.label}
-              {counts[s.id] !== undefined && <span className="m-n">{counts[s.id]}</span>}
+            <Link key={s.id} href={`${path}?section=${s.id}`} aria-current={section === s.id ? 'page' : undefined} className="m-link">
+              {s.icon && (
+                <div style={{ width: '36px', height: '36px', borderRadius: '12px', border: '1px solid var(--p-line)', background: 'var(--p-card)', display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                  <span className="ms" style={{ fontSize: '20px' }}>{s.icon}</span>
+                </div>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, fontSize: '14.5px' }}>{s.label}</div>
+                {s.description && <div className="m-meta">{s.description}</div>}
+              </div>
+              {counts[s.id] !== undefined && <span className="m-n" style={{ flexShrink: 0 }}>{counts[s.id]}</span>}
             </Link>
           ))}
         </nav>

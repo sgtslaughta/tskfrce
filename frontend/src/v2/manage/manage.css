@@ -12,6 +12,7 @@
 [data-look='fridge'] .m-side { background: #1d2b53; color: #c6d0ee; }
 
 .m-side a { display: flex; justify-content: space-between; align-items: center; min-height: 44px; padding: 0 16px; color: inherit; text-decoration: none; font-size: 14px; }
+.m-link { display: flex; align-items: center; gap: 12px; }
 [data-look='parent'] .m-side a:hover { background: var(--p-soft); }
 [data-look='parent'] .m-side a[aria-current='page'] { background: var(--p-soft); color: var(--p-ink); box-shadow: inset 3px 0 0 var(--p-acc); font-weight: 500; }
 [data-look='fridge'] .m-side a:hover { background: rgba(255, 255, 255, 0.05); }
