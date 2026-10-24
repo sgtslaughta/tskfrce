@@ -9,8 +9,10 @@ import React from 'react';
 import '@mantine/core/styles.css';
 import '@mantine/notifications/styles.css';
 import '@mantine/dates/styles.css';
+import 'material-symbols/rounded.css';
 import '../src/styles/mantine-fixes.css';
 import '../src/v2/fridge.css';
+import '../src/v2/parent/parent.css';
 import '../src/v2/controls.css';
 import '../src/v2/polish.css';
 import '../src/v2/chat/chatDock.css';
@@ -83,7 +85,7 @@ import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { fridgeTheme, colorSchemeManager } from '../src/v2/theme';
-import { display, body, mono } from '../src/v2/fonts';
+import { display, body, mono, parent } from '../src/v2/fonts';
 import { makeQueryClient } from '../src/v2/queryClient';
 import { UnifiedAuthProvider } from '../src/contexts/UnifiedAuthContext'
 import { ThemeProvider } from '../src/contexts/ThemeContext'
@@ -129,6 +131,7 @@ function AppContent({ Component, pageProps }: { Component: any; pageProps: any }
           --font-display: ${display.style.fontFamily};
           --font-body: ${body.style.fontFamily};
           --font-mono: ${mono.style.fontFamily};
+          --font-parent: ${parent.style.fontFamily};
         }
       `}</style>
       <MantineProvider

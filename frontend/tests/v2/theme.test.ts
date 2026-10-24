@@ -16,6 +16,8 @@ test('controls get gamer-cut classNames', () => {
   expect(c.Switch?.classNames).toMatchObject({ track: 'f-switch' })
   expect(c.Checkbox?.classNames).toMatchObject({ input: 'f-check' })
   expect(c.Chip?.classNames).toMatchObject({ label: 'f-chipctl' })
+  expect(c.Menu?.classNames).toMatchObject({ dropdown: 'p-pop' })
+  expect(c.Select?.classNames).toMatchObject({ dropdown: 'p-pop' })
 })
 
 test('drawers and modals use the themed sheet classes', () => {
