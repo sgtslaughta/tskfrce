@@ -8,6 +8,7 @@ export type Section = 'chores' | 'kids' | 'rewards' | 'badges'
 export interface SectionDef<S extends string = string> {
   id: S
   label: string
+  description?: string
 }
 export const SECTIONS: SectionDef<Section>[] = [
   { id: 'chores', label: 'Chores' },
@@ -50,7 +51,10 @@ export function ManageLayout<S extends string = Section>({
         <nav className="m-side" aria-label="Sections">
           {sections.map((s) => (
             <Link key={s.id} href={`${path}?section=${s.id}`} aria-current={section === s.id ? 'page' : undefined}>
-              {s.label}
+              <div>
+                <div style={{ fontWeight: 500, fontSize: '14px' }}>{s.label}</div>
+                {s.description && <div className="m-meta">{s.description}</div>}
+              </div>
               {counts[s.id] !== undefined && <span className="m-n">{counts[s.id]}</span>}
             </Link>
           ))}
