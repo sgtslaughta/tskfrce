@@ -6,6 +6,7 @@ import type { TodayKid, NeedsItem } from '../types'
 import { NeedsYouList } from './NeedsYouList'
 import { Chip } from '../parent/Chip'
 import { Icon } from '../parent/Icon'
+import { ListHeader } from '../parent/ListHeader'
 
 const stateChip = (kid: TodayKid) => {
   if (kid.online_all) return <Chip tone="acc" icon="cloud_done">Online</Chip>
@@ -21,42 +22,44 @@ export function KidList({ onSelectKid, selectedKid }: { onSelectKid: (kid: Today
   const needsYouCount = (data?.needs_you?.length ?? 0)
 
   return (
-    <div className="p-kid-list">
-      <Tabs value={tab} onChange={setTab}>
-        <Tabs.List>
-          <Tabs.Tab value="today">Today</Tabs.Tab>
-          <Tabs.Tab value="needs">
-            Needs you &middot; {needsYouCount}
-          </Tabs.Tab>
-        </Tabs.List>
-        <Tabs.Panel value="today">
-          <div className="p-kid-cards">
-            {(data?.kids ?? []).map((kid) => (
-              <button
-                key={kid.id}
-                className="p-kid-card"
-                data-selected={selectedKid?.id === kid.id}
-                onClick={() => {
-                  onSelectKid(kid)
-                  router.push(`/?item=${kid.id}`, undefined, { shallow: true })
-                }}
-              >
-                <div className="p-kid-avatar">{kid.avatar || kid.name?.[0] || '?'}</div>
-                <div className="p-kid-info">
-                  <div className="p-kid-name">{kid.name}</div>
-                  <div className="p-kid-progress">
-                    {kid.done ?? 0} of {kid.total ?? 0} chores
+    <ListHeader title="Kids">
+      <div className="p-segment-tabs">
+        <Tabs value={tab} onChange={setTab}>
+          <Tabs.List>
+            <Tabs.Tab value="today">Today</Tabs.Tab>
+            <Tabs.Tab value="needs">
+              Needs you · {needsYouCount}
+            </Tabs.Tab>
+          </Tabs.List>
+          <Tabs.Panel value="today">
+            <div className="p-kid-cards">
+              {(data?.kids ?? []).map((kid) => (
+                <button
+                  key={kid.id}
+                  className="p-kid-card"
+                  data-selected={selectedKid?.id === kid.id}
+                  onClick={() => {
+                    onSelectKid(kid)
+                    router.push(`/?item=${kid.id}`, undefined, { shallow: true })
+                  }}
+                >
+                  <div className="p-kid-avatar">{kid.avatar || kid.name?.[0] || '?'}</div>
+                  <div className="p-kid-info">
+                    <div className="p-kid-name">{kid.name}</div>
+                    <div className="p-kid-progress">
+                      {kid.done ?? 0} of {kid.total ?? 0} chores
+                    </div>
                   </div>
-                </div>
-                <div className="p-kid-status">{stateChip(kid)}</div>
-              </button>
-            ))}
-          </div>
-        </Tabs.Panel>
-        <Tabs.Panel value="needs">
-          <NeedsYouList items={data?.needs_you ?? []} />
-        </Tabs.Panel>
-      </Tabs>
-    </div>
+                  <div className="p-kid-status">{stateChip(kid)}</div>
+                </button>
+              ))}
+            </div>
+          </Tabs.Panel>
+          <Tabs.Panel value="needs">
+            <NeedsYouList items={data?.needs_you ?? []} />
+          </Tabs.Panel>
+        </Tabs>
+      </div>
+    </ListHeader>
   )
 }

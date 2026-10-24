@@ -116,11 +116,21 @@
 }
 
 [data-look='parent'] .p-banner-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-weight: 600;
   color: var(--p-ink);
   margin-bottom: 4px;
+  font-size: 13px;
+}
+
+[data-look='parent'] .p-banner-title .ms {
+  font-size: 18px;
+  color: var(--p-ink);
 }
 
 [data-look='parent'] .p-banner-body {
   color: var(--p-sub);
+  margin-left: 26px;
 }
