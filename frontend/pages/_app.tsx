@@ -24,6 +24,7 @@ import '../src/v2/parent/parent-layout.css';
 import '../src/v2/parent/parent-chore.css';
 import '../src/v2/parent/parent-chat.css';
 import '../src/v2/parent/parent-kids.css';
+import '../src/v2/parent/parent-devices.css';
 import '../src/v2/login/auth.css';
 import '../src/v2/controls.css';
 import '../src/v2/polish.css';

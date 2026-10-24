@@ -1,0 +1,143 @@
+/**
+ * @fileoverview Device and group list styling for parent UI
+ */
+
+/* Device list container */
+.p-device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Device list item */
+[data-look='parent'] .p-device-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--p-soft);
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  transition: background 0.15s ease-out, border-color 0.15s ease-out;
+  border: none;
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-look='parent'] .p-device-item {
+    transition: none;
+  }
+}
+
+[data-look='parent'] .p-device-item:hover {
+  border-color: var(--p-line);
+}
+
+[data-look='parent'] .p-device-item[data-selected='true'] {
+  background: var(--p-card);
+  border-color: var(--p-ink);
+  border-width: 1.5px;
+}
+
+/* Device item with amber background (unassigned/new device) */
+[data-look='parent'] .p-device-item[data-unassigned='true'] {
+  background: var(--p-amb);
+}
+
+[data-look='parent'] .p-device-item[data-unassigned='true'] .p-device-icon {
+  background: var(--p-ambink);
+  color: var(--p-amb);
+}
+
+/* Icon container with vendor logo */
+[data-look='parent'] .p-device-icon {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  display: grid;
+  place-items: center;
+  color: var(--p-sub);
+  position: relative;
+  font-size: 18px;
+}
+
+[data-look='parent'] .p-device-item[data-selected='true'] .p-device-icon {
+  background: var(--p-acc);
+  border-color: var(--p-acc);
+  color: #292928;
+}
+
+/* Vendor logo overlay */
+[data-look='parent'] .p-device-vendor {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--p-card);
+  border: 1px solid var(--p-card);
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  color: var(--p-ink);
+}
+
+/* Device info section */
+[data-look='parent'] .p-device-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+[data-look='parent'] .p-device-name {
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-device-meta {
+  font-size: 11.5px;
+  color: var(--p-sub);
+}
+
+/* Device status chip */
+[data-look='parent'] .p-device-chip {
+  flex-shrink: 0;
+}
+
+/* Group stacked icons */
+[data-look='parent'] .p-group-stack {
+  display: flex;
+  gap: -8px;
+  align-items: center;
+  margin-left: auto;
+}
+
+[data-look='parent'] .p-group-stack .ms {
+  font-size: 16px;
+  margin-left: -8px;
+}
+
+[data-look='parent'] .p-group-stack .ms:first-child {
+  margin-left: 0;
+}
+
+/* Tabs styling for device list - handled inline in component for now */
+
+/* Empty state */
+[data-look='parent'] .p-device-empty {
+  padding: 24px;
+  text-align: center;
+  color: var(--p-sub);
+  font-size: 13px;
+}
