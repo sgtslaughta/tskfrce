@@ -53,12 +53,18 @@ describe('CustomBadgesPanel', () => {
     await screen.findByRole('button', { name: 'Award Helper' })
     await userEvent.click(screen.getByRole('button', { name: 'New badge' }))
     await userEvent.type(await screen.findByLabelText('Badge name'), 'Kind')
-    await userEvent.click(screen.getByRole('button', { name: 'Emoji' }))
-    await userEvent.click(await screen.findByRole('button', { name: 'Pick 💛' }))
+    // With GlyphPicker, we need to click on a glyph option (e.g., 'star')
+    // The glyph picker renders buttons with the glyph name as the button text
+    const glyphButtons = await screen.findAllByRole('button', { name: 'star', hidden: true })
+    if (glyphButtons.length > 0) {
+      // Find the glyph picker button for 'star'
+      const starButton = glyphButtons.find(b => b.getAttribute('title') === 'star')
+      if (starButton) await userEvent.click(starButton)
+    }
     await userEvent.type(screen.getByLabelText('Description'), 'Was kind')
     await userEvent.click(screen.getByRole('button', { name: 'Add badge' }))
     expect(calls('/custom-badges').find((c) => c[1]?.method === 'POST')?.[1]).toMatchObject({
-      body: { name: 'Kind', icon: '💛', description: 'Was kind' },
+      body: { name: 'Kind', icon: 'star', description: 'Was kind' },
     })
   })
 

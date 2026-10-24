@@ -9,7 +9,7 @@ const usedBy = (c: LibChore) => Array.from(new Set(c.assignments.filter((a) => a
 
 function meta(c: LibChore) {
   const bits = c.steps.length ? [`${c.steps.length} ${c.steps.length === 1 ? 'step' : 'steps'}`] : []
-  if (c.needs_photo) bits.push('📷 photo')
+  if (c.needs_photo) bits.push('photo')
   return bits.join(' · ') || 'No steps'
 }
 
