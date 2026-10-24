@@ -69,6 +69,24 @@ describe('ResetForm', () => {
     wrap(<ResetForm token={undefined} />)
     expect(screen.getByRole('alert')).toHaveTextContent('missing its code')
   })
+
+  test('reset form has no status or activity elements', () => {
+    wrap(<ResetForm token="tok" />)
+    const container = document.querySelector('.p-auth-form-side') as HTMLElement
+    expect(container.textContent).not.toMatch(/\bstatus\b/i)
+    expect(container.textContent).not.toMatch(/\bactivity\b/i)
+  })
+
+  test('password fields support show/hide toggle', async () => {
+    wrap(<ResetForm token="tok" />)
+    const passwordInput = screen.getByLabelText(/New password/)
+    expect(passwordInput).toHaveAttribute('type', 'password')
+    const showButton = screen.getAllByRole('button').find((b) => b.className?.includes('p-auth-link'))
+    if (showButton) {
+      await userEvent.click(showButton)
+      expect(passwordInput).toHaveAttribute('type', 'text')
+    }
+  })
 })
 
 describe('ParentsList', () => {

@@ -1,16 +1,19 @@
 import { useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Button, PasswordInput } from '@mantine/core'
 import { api } from '@/v2/api'
+import { useLook } from '@/v2/parent/useLook'
+import { Icon } from '@/v2/parent/Icon'
 import { AuthBrand } from '@/v2/components/AuthBrand'
-import { StickerCard } from '@/v2/components/StickerCard'
 
 /** Set a new password from a parent's one-time reset link. */
 export function ResetForm({ token }: { token: string | undefined }) {
+  useLook('parent')
   const router = useRouter()
   const [password, setPassword] = useState('')
   const [again, setAgain] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [showAgain, setShowAgain] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
 
@@ -30,38 +33,77 @@ export function ResetForm({ token }: { token: string | undefined }) {
   }
 
   return (
-    <main className="f-main f-auth">
+    <div className="p-auth-container">
       <AuthBrand />
-      <StickerCard>
-        <h1 className="f-display" style={{ marginTop: 0 }}>Choose a new password</h1>
+      <div className="p-auth-form-side">
         {token ? (
-          <form onSubmit={submit}>
-            <PasswordInput
-              label="New password"
-              description="At least 8 characters."
-              autoComplete="new-password"
-              value={password}
-              onChange={(e) => setPassword(e.currentTarget.value)}
-            />
-            <PasswordInput
-              mt="md"
-              label="Type it again"
-              autoComplete="new-password"
-              value={again}
-              onChange={(e) => setAgain(e.currentTarget.value)}
-            />
-            {error && <p role="alert">{error}</p>}
-            <Button type="submit" mt="md" fullWidth loading={busy}>
+          <form className="p-auth-form" onSubmit={submit}>
+            <h3>Choose a new password</h3>
+            <div className="p-subtitle">From the reset link another parent made for you.</div>
+            {error && (
+              <div className="p-auth-error" role="alert">
+                <Icon name="error" />
+                {error}
+              </div>
+            )}
+            <div className="p-auth-form-field">
+              <label htmlFor="reset-password">New password</label>
+              <div className="p-auth-input">
+                <Icon name="lock" />
+                <input
+                  id="reset-password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.currentTarget.value)}
+                  autoComplete="new-password"
+                  placeholder="New password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="p-auth-link"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <Icon name={showPassword ? 'visibility' : 'visibility_off'} />
+                </button>
+              </div>
+            </div>
+            <div className="p-auth-form-field">
+              <label htmlFor="reset-again">Type it again</label>
+              <div className="p-auth-input">
+                <Icon name="lock" />
+                <input
+                  id="reset-again"
+                  type={showAgain ? 'text' : 'password'}
+                  value={again}
+                  onChange={(e) => setAgain(e.currentTarget.value)}
+                  autoComplete="new-password"
+                  placeholder="Type it again"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAgain(!showAgain)}
+                  className="p-auth-link"
+                  style={{ textDecoration: 'none' }}
+                >
+                  <Icon name={showAgain ? 'visibility' : 'visibility_off'} />
+                </button>
+              </div>
+            </div>
+            <button type="submit" className="p-auth-button primary" disabled={busy}>
               Save password
-            </Button>
+            </button>
           </form>
         ) : (
-          <p role="alert">This reset link is missing its code. Ask a parent to send it again.</p>
+          <div className="p-auth-form">
+            <h3>Choose a new password</h3>
+            <div className="p-auth-error" role="alert">
+              <Icon name="error" />
+              This reset link is missing its code. Ask a parent to send it again.
+            </div>
+          </div>
         )}
-        <p>
-          <Link href="/login">Back to log in</Link>
-        </p>
-      </StickerCard>
-    </main>
+      </div>
+    </div>
   )
 }

@@ -35,7 +35,7 @@ describe('RegisterForm', () => {
     wrap('tok')
     await userEvent.type(screen.getByLabelText('Your name'), 'Dad')
     await userEvent.type(screen.getByLabelText(/Choose a password/), 'longenough')
-    await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Join' }))
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/'))
     expect(apiMock).toHaveBeenCalledWith('/auth/register', {
       method: 'POST',
@@ -48,7 +48,7 @@ describe('RegisterForm', () => {
     apiMock.mockRejectedValue(new Error('Ask a parent to add you.'))
     wrap('tok')
     await userEvent.type(screen.getByLabelText(/Choose a password/), 'longenough')
-    await userEvent.click(screen.getByRole('button', { name: 'Create account' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Join' }))
     expect(await screen.findByRole('alert')).toHaveTextContent('Ask a parent to add you.')
     expect(replace).not.toHaveBeenCalled()
   })
@@ -56,5 +56,18 @@ describe('RegisterForm', () => {
   test('missing token explains itself', () => {
     wrap(undefined)
     expect(screen.getByRole('alert')).toHaveTextContent('missing its code')
+  })
+
+  test('register form shows password strength indicator', () => {
+    wrap('tok')
+    const form = document.querySelector('.p-auth-form') as HTMLElement
+    const segments = form.querySelectorAll('.p-auth-strength i')
+    expect(segments.length).toBeGreaterThanOrEqual(4)
+  })
+
+  test('no hardcoded invite details shown', () => {
+    wrap('tok')
+    expect(screen.queryByText(/Dad invited you/)).not.toBeInTheDocument()
+    expect(screen.queryByText(/The Garcias/)).not.toBeInTheDocument()
   })
 })

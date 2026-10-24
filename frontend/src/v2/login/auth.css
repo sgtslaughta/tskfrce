@@ -1,0 +1,392 @@
+/**
+ * @fileoverview Parent auth (login, register, reset) styling
+ * Split layout: dark left panel with branding, right side with form
+ */
+
+[data-look='parent'] .p-auth-container {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  min-height: 100vh;
+  background: var(--p-bg);
+}
+
+[data-look='parent'] .p-auth-brand {
+  background: var(--p-ink);
+  color: var(--p-tfg);
+  padding: 36px 40px 44px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Grid background on brand panel */
+[data-look='parent'] .p-auth-brand::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse at 30% 20%, #000 15%, transparent 75%);
+  mask-image: radial-gradient(ellipse at 30% 20%, #000 15%, transparent 75%);
+}
+
+[data-look='parent'] .p-auth-wordmark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 20px;
+  margin: 0;
+  margin-bottom: auto;
+}
+
+[data-look='parent'] .p-auth-wordmark i {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid var(--p-tfg);
+  display: grid;
+  place-items: center;
+  font-style: normal;
+}
+
+[data-look='parent'] .p-auth-headline {
+  font-size: 40px;
+  line-height: 1.05;
+  margin: auto 0 14px;
+  letter-spacing: -0.02em;
+  max-width: 380px;
+  color: var(--p-tfg);
+}
+
+[data-look='parent'] .p-auth-headline em {
+  font-style: normal;
+  white-space: nowrap;
+  background: var(--p-acc);
+  color: var(--p-ink);
+  padding: 0 8px;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+[data-look='parent'] .p-auth-subtitle {
+  color: var(--p-sub);
+  max-width: 360px;
+  margin: 0;
+  font-size: 15px;
+}
+
+[data-look='parent'] .p-auth-form-side {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  background: var(--p-bg);
+}
+
+[data-look='parent'] .p-auth-form {
+  width: 100%;
+  max-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+[data-look='parent'] .p-auth-form h3 {
+  font-size: 28px;
+  margin: 0;
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-auth-form .p-subtitle {
+  color: var(--p-sub);
+  font-size: 14px;
+  margin: -8px 0 4px;
+}
+
+[data-look='parent'] .p-auth-error {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: var(--p-redbg);
+  color: var(--p-red);
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+[data-look='parent'] .p-auth-error .ms {
+  font-size: 18px;
+}
+
+[data-look='parent'] .p-auth-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--p-sub);
+  font-weight: 600;
+}
+
+[data-look='parent'] .p-auth-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid var(--p-line);
+  background: var(--p-card);
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-size: 15px;
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-auth-input .ms {
+  font-size: 18px;
+  color: var(--p-sub);
+}
+
+[data-look='parent'] .p-auth-input input {
+  flex: 1;
+  border: none;
+  background: none;
+  color: var(--p-ink);
+  font-family: inherit;
+  font-size: inherit;
+}
+
+[data-look='parent'] .p-auth-input input::placeholder {
+  color: var(--p-sub);
+}
+
+[data-look='parent'] .p-auth-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+[data-look='parent'] .p-auth-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-auth-checkbox input {
+  display: none;
+}
+
+[data-look='parent'] .p-auth-checkbox i {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  background: var(--p-acc);
+  display: grid;
+  place-items: center;
+  color: var(--p-ink);
+  font-style: normal;
+  border: 1px solid transparent;
+}
+
+[data-look='parent'] .p-auth-checkbox input:checked ~ i .ms {
+  display: block;
+}
+
+[data-look='parent'] .p-auth-checkbox i .ms {
+  font-size: 14px;
+  display: none;
+}
+
+[data-look='parent'] .p-auth-link {
+  color: var(--p-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--p-line);
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+[data-look='parent'] .p-auth-button {
+  border: 1px solid var(--p-line);
+  background: var(--p-card);
+  color: var(--p-ink);
+  border-radius: 999px;
+  padding: 12px 16px;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+[data-look='parent'] .p-auth-button.primary {
+  background: var(--p-ink);
+  border-color: var(--p-ink);
+  color: var(--p-card);
+}
+
+[data-look='parent'] .p-auth-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--p-sub);
+  font-size: 12px;
+}
+
+[data-look='parent'] .p-auth-or::before,
+[data-look='parent'] .p-auth-or::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid var(--p-line);
+}
+
+[data-look='parent'] .p-auth-kid-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1.5px dashed var(--p-line);
+  border-radius: 16px;
+  padding: 12px 14px;
+  font-weight: 700;
+  color: var(--p-ink);
+  text-decoration: none;
+  cursor: pointer;
+  background: none;
+}
+
+[data-look='parent'] .p-auth-kid-bubble {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: #ffc93c;
+  color: #1d2b53;
+  display: grid;
+  place-items: center;
+  border: 2px solid #1d2b53;
+  box-shadow: 2px 2px 0 #1d2b53;
+}
+
+[data-look='parent'] .p-auth-kid-card small {
+  display: block;
+  color: var(--p-sub);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+[data-look='parent'] .p-auth-kid-icon {
+  margin-left: auto;
+  color: var(--p-sub);
+}
+
+[data-look='parent'] .p-auth-footer {
+  font-size: 12px;
+  color: var(--p-sub);
+  text-align: center;
+  margin-top: 16px;
+}
+
+[data-look='parent'] .p-auth-invite {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+[data-look='parent'] .p-auth-invite .av {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--p-ink);
+  color: var(--p-card);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+
+[data-look='parent'] .p-auth-invite small {
+  display: block;
+  color: var(--p-sub);
+  font-size: 11.5px;
+}
+
+[data-look='parent'] .p-auth-strength {
+  display: flex;
+  gap: 4px;
+}
+
+[data-look='parent'] .p-auth-strength i {
+  flex: 1;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--p-line);
+}
+
+[data-look='parent'] .p-auth-strength i.on {
+  background: var(--p-acc);
+}
+
+[data-look='parent'] .p-auth-success {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  background: color-mix(in srgb, var(--p-acc) 25%, var(--p-card));
+  border-radius: 12px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+[data-look='parent'] .p-auth-pane {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+[data-look='parent'] .p-auth-cli {
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+[data-look='parent'] .p-auth-cli .ms {
+  color: var(--p-sub);
+  font-size: 18px;
+}
+
+[data-look='parent'] .p-auth-cli small {
+  display: block;
+  color: var(--p-sub);
+  font-size: 11.5px;
+  font-family: 'Courier New', monospace;
+  word-break: break-all;
+}
+
+/* Responsive: stack layout below 900px */
+@media (max-width: 900px) {
+  [data-look='parent'] .p-auth-container {
+    grid-template-columns: 1fr;
+  }
+
+  [data-look='parent'] .p-auth-brand {
+    min-height: 280px;
+  }
+}

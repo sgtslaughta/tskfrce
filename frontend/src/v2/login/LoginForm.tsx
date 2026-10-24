@@ -1,12 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
-import { Button, PasswordInput, TextInput } from '@mantine/core'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api } from '@/v2/api'
+import { useLook } from '@/v2/parent/useLook'
+import { Icon } from '@/v2/parent/Icon'
 import type { SetupStatus } from '@/v2/types'
 import { AuthBrand } from '@/v2/components/AuthBrand'
-import { StickerCard } from '@/v2/components/StickerCard'
 
 /** Only same-site paths survive; anything a browser could reinterpret falls back to "/". */
 export const safeNext = (next: unknown): string => {
@@ -21,11 +21,15 @@ export const safeNext = (next: unknown): string => {
 
 /** Parent login. A wrong password shows inline and is never logged or thrown. */
 export function LoginForm() {
+  useLook('parent')
   const router = useRouter()
   const { login, isAuthenticated } = useUnifiedAuth()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [remember, setRemember] = useState(false)
   const [error, setError] = useState('')
+  const [showForgot, setShowForgot] = useState(false)
   const [busy, setBusy] = useState(false)
   const next = safeNext(router.query?.next)
 
@@ -47,6 +51,7 @@ export function LoginForm() {
     setBusy(true)
     setError('')
     try {
+      // TODO: Send remember: true to backend when checking remember box
       await login({ username: username.trim(), password }) // the effect above redirects
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Incorrect username or password')
@@ -55,37 +60,125 @@ export function LoginForm() {
   }
 
   return (
-    <main className="f-main f-auth">
+    <div className="p-auth-container">
       <AuthBrand />
-      <StickerCard>
-        <h1 className="f-display" style={{ marginTop: 0 }}>Welcome back</h1>
-        {router.query?.reset && <p role="status">Password saved. Log in with your new password.</p>}
-        <form onSubmit={submit}>
-          <TextInput
-            label="Username"
-            autoComplete="username"
-            required
-            value={username}
-            onChange={(e) => setUsername(e.currentTarget.value)}
-          />
-          <PasswordInput
-            mt="md"
-            label="Password"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.currentTarget.value)}
-          />
-          {error && <p role="alert">{error}</p>}
-          <Button type="submit" mt="md" fullWidth loading={busy}>
-            Log in
-          </Button>
+      <div className="p-auth-form-side">
+        <form className="p-auth-form" onSubmit={submit}>
+          {!showForgot ? (
+            <>
+              <h3>Welcome back</h3>
+              <div className="p-subtitle">Parents, log in to manage chores and devices.</div>
+              {error && (
+                <div className="p-auth-error" role="alert">
+                  <Icon name="error" />
+                  {error}
+                </div>
+              )}
+              {router.query?.reset && (
+                <div className="p-auth-success">
+                  <Icon name="check_circle" />
+                  Password saved. Log in with your new password.
+                </div>
+              )}
+              <div className="p-auth-form-field">
+                <label htmlFor="username">Username</label>
+                <div className="p-auth-input">
+                  <Icon name="person" />
+                  <input
+                    id="username"
+                    type="text"
+                    value={username}
+                    onChange={(e) => setUsername(e.currentTarget.value)}
+                    autoComplete="username"
+                    placeholder="Username"
+                  />
+                </div>
+              </div>
+              <div className="p-auth-form-field">
+                <label htmlFor="password">Password</label>
+                <div className="p-auth-input">
+                  <Icon name="lock" />
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.currentTarget.value)}
+                    autoComplete="current-password"
+                    placeholder="Password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="p-auth-link"
+                    style={{ textDecoration: 'none' }}
+                  >
+                    <Icon name={showPassword ? 'visibility' : 'visibility_off'} />
+                  </button>
+                </div>
+              </div>
+              <div className="p-auth-row">
+                <label className="p-auth-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={remember}
+                    onChange={(e) => setRemember(e.currentTarget.checked)}
+                  />
+                  <i>
+                    <Icon name="check" size={14} />
+                  </i>
+                  Keep me logged in
+                </label>
+                <button type="button" className="p-auth-link" onClick={() => setShowForgot(true)}>
+                  Forgot password?
+                </button>
+              </div>
+              <button type="submit" className="p-auth-button primary" disabled={busy}>
+                Log in
+                <Icon name="arrow_forward" size={20} />
+              </button>
+              <div className="p-auth-or">or</div>
+              <Link href="/kid" className="p-auth-kid-card">
+                <div className="p-auth-kid-bubble">
+                  <Icon name="checklist" />
+                </div>
+                <div>
+                  I'm a kid
+                  <small>Go to your checklist, no password</small>
+                </div>
+                <Icon name="chevron_right" size={20} className="p-auth-kid-icon" />
+              </Link>
+            </>
+          ) : (
+            <div className="p-auth-pane">
+              <h3>Forgot your password?</h3>
+              <div className="p-subtitle">There's no email reset: the box is offline-first.</div>
+              <div className="p-auth-invite">
+                <Icon name="supervisor_account" />
+                <div>
+                  <b>Ask another parent</b>
+                  <small>They can make you a reset link in Settings → Parents</small>
+                </div>
+              </div>
+              <div className="p-auth-cli">
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                  <Icon name="terminal" />
+                  <div>
+                    <b>Only parent?</b>
+                    <small>
+                      On the box:{' '}
+                      <code>docker compose exec backend python -m app.cli reset-password &lt;you&gt;</code>
+                    </small>
+                  </div>
+                </div>
+              </div>
+              <button type="button" className="p-auth-link" onClick={() => setShowForgot(false)}>
+                Back to log in
+              </button>
+            </div>
+          )}
+          <div className="p-auth-footer">t@sk4ce v2.0.0 · chores.local</div>
         </form>
-        <p className="m-help">Forgot your password? Ask another parent for a reset link.</p>
-        <p>
-          Are you a kid? <Link href="/kid">Go to your checklist</Link>
-        </p>
-      </StickerCard>
-    </main>
+      </div>
+    </div>
   )
 }

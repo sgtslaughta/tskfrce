@@ -79,4 +79,34 @@ describe('LoginForm', () => {
     expect(safeNext('https://evil.com')).toBe('/')
     expect(safeNext(undefined)).toBe('/')
   })
+
+  test('login panel has no status or activity', () => {
+    wrap()
+    const container = document.querySelector('.p-auth-form-side') as HTMLElement
+    expect(container.textContent).not.toMatch(/\bstatus\b/i)
+    expect(container.textContent).not.toMatch(/\bactivity\b/i)
+  })
+
+  test('headline wifi on is a single nowrap span', () => {
+    wrap()
+    const headline = screen.getByText(/Chores done/)
+    const em = headline.querySelector('em')
+    expect(em).toBeInTheDocument()
+    expect(em?.textContent).toContain('Wi‑Fi on')
+    expect(em?.className).not.toContain('break-all')
+  })
+
+  test('kid card links to /kid', () => {
+    wrap()
+    const kidCard = screen.getByRole('link', { name: /I'm a kid/ })
+    expect(kidCard).toHaveAttribute('href', '/kid')
+  })
+
+  test('forgot pane shows cli command', async () => {
+    wrap()
+    const forgotButton = screen.getByRole('button', { name: 'Forgot password?' })
+    await userEvent.click(forgotButton)
+    const cliText = await screen.findByText(/docker compose exec backend python -m app.cli reset-password/)
+    expect(cliText).toBeInTheDocument()
+  })
 })
