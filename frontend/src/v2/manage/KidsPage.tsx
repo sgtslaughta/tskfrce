@@ -1,5 +1,5 @@
 import { useRouter } from 'next/router'
-import { FridgeShell } from '@/v2/components/FridgeShell'
+import { ParentShell } from '@/v2/parent/ParentShell'
 import { LoadError, LoadingCards } from '@/v2/components/States'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useChoresToday, useLibrary } from '@/v2/hooks/useChores'
@@ -30,7 +30,7 @@ function KidsBody() {
     }
   })
   return (
-    <FridgeShell title="Kids & chores">
+    <ParentShell title="Kids & chores">
       {kids.isError && <LoadError error={kids.error} onRetry={() => kids.refetch()} />}
       <ManageLayout section={section} counts={{ chores: defs.length, kids: list.length }}>
         {kids.isPending && <LoadingCards />}
@@ -41,7 +41,7 @@ function KidsBody() {
         {section === 'rewards' && <RewardsSection />}
         {section === 'badges' && <CustomBadgesPanel />}
       </ManageLayout>
-    </FridgeShell>
+    </ParentShell>
   )
 }
 

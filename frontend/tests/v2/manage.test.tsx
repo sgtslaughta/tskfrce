@@ -23,11 +23,39 @@ jest.mock('@/v2/api', () => ({ api: jest.fn() }))
 jest.mock('@/v2/today/DeviceQuickMenu', () => ({
   DeviceQuickMenu: ({ children }: { children: ReactNode }) => <>{children}</>,
 }))
+jest.mock('@/v2/parent/ParentShell', () => ({
+  ParentShell: ({ children }: { children: ReactNode }) => <>{children}</>,
+}))
 jest.mock('@/v2/components/FridgeShell', () => ({
   FridgeShell: ({ children }: { children: ReactNode }) => <>{children}</>,
 }))
 jest.mock('@/v2/components/RequireParent', () => ({
   RequireParent: ({ children }: { children: ReactNode }) => <>{children}</>,
+  startSignOut: jest.fn(),
+  cancelSignOut: jest.fn(),
+}))
+jest.mock('@/v2/parent/useLook', () => ({
+  useLook: jest.fn(),
+}))
+jest.mock('@/contexts/UnifiedAuthContext', () => ({
+  useUnifiedAuth: jest.fn(() => ({
+    user: { id: '1', username: 'testuser' },
+    logout: jest.fn(),
+  })),
+}))
+jest.mock('@/v2/chat/ChatDock', () => ({
+  ChatDock: () => null,
+}))
+jest.mock('@/v2/components/BlockerBanner', () => ({
+  BlockerBanner: () => null,
+}))
+jest.mock('@/v2/components/Bell', () => ({
+  Bell: () => null,
+}))
+jest.mock('@/v2/hooks/useChat', () => ({
+  useThreads: jest.fn(() => ({
+    data: { total: 0 },
+  })),
 }))
 
 const apiMock = api as unknown as Mock<(p: string, init?: { method?: string; body?: unknown }) => Promise<unknown>>

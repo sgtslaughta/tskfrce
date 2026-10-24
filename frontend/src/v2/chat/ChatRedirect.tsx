@@ -1,7 +1,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { openChat } from '@/v2/chat/dock'
-import { FridgeShell } from '@/v2/components/FridgeShell'
+import { ParentShell } from '@/v2/parent/ParentShell'
 import { RequireParent } from '@/v2/components/RequireParent'
 import type { ThreadKind } from '@/v2/hooks/useChat'
 
@@ -23,9 +23,9 @@ function ChatBody() {
     if (kind && ref) setTimeout(() => openChat(kind, ref), 0)
   }, [kind, ref])
   return (
-    <FridgeShell title="Chat">
+    <ParentShell title="Chat">
       <p className="f-note">Chat lives in the button at the bottom right of every page.</p>
-    </FridgeShell>
+    </ParentShell>
   )
 }
 
