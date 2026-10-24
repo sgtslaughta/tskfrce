@@ -401,27 +401,36 @@
 }
 
 /* Form side always uses light colors regardless of global dark mode (mockup 06) */
-[data-look='parent'] .p-auth-form-side {
-  background: #f8f8f8;
-  color: #292928;
-}
-
-/* CRITICAL: Override parent dark tokens on login form in dark mode */
-[data-mantine-color-scheme='dark'] .p-auth-form-side {
-  background: #f8f8f8 !important;
-  color: #292928 !important;
-}
-
-[data-mantine-color-scheme='dark'] .p-auth-form-side,
-[data-mantine-color-scheme='dark'] .p-auth-form-side * {
+/* Override cascaded dark variables from parent by resetting to light on form-side */
+[data-look='parent'][data-mantine-color-scheme='dark'] .p-auth-form-side {
+  /* Light mode token overrides for form-side in dark mode */
   --p-bg: #f8f8f8 !important;
   --p-card: #ffffff !important;
+  --p-soft: #f3f3f3 !important;
   --p-ink: #292928 !important;
   --p-sub: #5f5f5c !important;
   --p-line: #e4e4e1 !important;
-  --p-acc: #c3f832 !important;
+  --p-lav: #e3d4fb !important;
+  --p-lavink: #5b3fa0 !important;
+  --p-red: #b42318 !important;
   --p-redbg: #fde3e0 !important;
-  --p-red: #8f1d13 !important;
+  --p-amb: #ffefcc !important;
+  --p-ambink: #5c3a00 !important;
+  --p-grid: rgba(41, 41, 40, 0.1) !important;
+  --p-meter: #292928 !important;
+  --p-track: #e4e4e1 !important;
+  --p-tbg: #292928 !important;
+  --p-tfg: #f4f4f2 !important;
+  --p-tact: #c3f832 !important;
+  --p-acc: #c3f832 !important;
+  background: var(--p-bg);
+  color: var(--p-ink);
+}
+
+/* Also reset form side in light mode for consistency */
+[data-look='parent']:not([data-mantine-color-scheme='dark']) .p-auth-form-side {
+  background: var(--p-bg);
+  color: var(--p-ink);
 }
 
 /* Focus lives on the field wrapper (mockup 06 .fi.focus), not the bare input */
