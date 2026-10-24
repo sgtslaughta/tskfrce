@@ -141,15 +141,11 @@
 .p-meter-bar {
   flex-shrink: 0;
   height: 6px;
-  background: var(--p-track);
+  background: var(--p-meter);
   border-radius: 3px;
   width: 120px;
   position: relative;
   overflow: hidden;
-}
-
-.p-meter-bar {
-  background: var(--p-meter);
 }
 
 .p-open-content {

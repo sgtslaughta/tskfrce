@@ -288,6 +288,9 @@ export interface Progress {
   next: number
   streak: number
   flair?: Flair
+  points?: number
+  next_reward_points?: number
+  locked_until?: string | null
 }
 
 export interface Badge {
