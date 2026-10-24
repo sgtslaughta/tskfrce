@@ -40,28 +40,24 @@ a:not([class]):hover {
   cursor: not-allowed;
 }
 
-/* directional glyphs nudge toward where the control goes */
-.ms:is([data-icon='arrow_forward'], [data-icon='chevron_right'], [data-icon='arrow_right_alt'],
-  [data-icon='east'], [data-icon='navigate_next'], [data-icon='open_in_new'], [data-icon='north_east']) {
-  transition: transform 180ms ease-out;
-}
-.ms:is([data-icon='arrow_back'], [data-icon='chevron_left'], [data-icon='west'], [data-icon='navigate_before']) {
-  transition: transform 180ms ease-out;
-}
+/* directional glyphs drift back and forth toward where the control goes, while hovered */
+@keyframes nudge-fwd { from { transform: translateX(0); } to { transform: translateX(3px); } }
+@keyframes nudge-back { from { transform: translateX(0); } to { transform: translateX(-3px); } }
+@keyframes nudge-out { from { transform: translate(0, 0); } to { transform: translate(2px, -2px); } }
 :is(button, a, [role='button']):hover .ms:is([data-icon='arrow_forward'], [data-icon='chevron_right'],
   [data-icon='arrow_right_alt'], [data-icon='east'], [data-icon='navigate_next']) {
-  transform: translateX(3px);
-}
-:is(button, a, [role='button']):hover .ms:is([data-icon='open_in_new'], [data-icon='north_east']) {
-  transform: translate(2px, -2px);
+  animation: nudge-fwd 450ms ease-in-out infinite alternate;
 }
 :is(button, a, [role='button']):hover .ms:is([data-icon='arrow_back'], [data-icon='chevron_left'],
   [data-icon='west'], [data-icon='navigate_before']) {
-  transform: translateX(-3px);
+  animation: nudge-back 450ms ease-in-out infinite alternate;
+}
+:is(button, a, [role='button']):hover .ms:is([data-icon='open_in_new'], [data-icon='north_east']) {
+  animation: nudge-out 450ms ease-in-out infinite alternate;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ms { transition: none !important; transform: none !important; }
+  .ms { animation: none !important; transform: none !important; }
   :is(button, [role='button'], a) {
     transition: none !important;
     transform: none !important;
