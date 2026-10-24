@@ -3,8 +3,3 @@
  * Split for maintainability and to keep each file under 500 lines
  */
 
-@import './parent-tokens.css';
-@import './parent-chore.css';
-@import './parent-chat.css';
-@import './parent-kids.css';
-@import './parent-layout.css';
