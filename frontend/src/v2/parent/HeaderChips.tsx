@@ -1,11 +1,11 @@
 import { Icon } from './Icon';
-import { MakerLogo, type MakerKey } from './MakerLogo';
+import { MakerLogo } from './MakerLogo';
 
 type HeaderChipTone = 'acc' | 'mono' | 'plain';
 
 interface HeaderChip {
   icon?: string;
-  logo?: MakerKey;
+  vendor?: string | null;
   text: string;
   tone?: HeaderChipTone;
 }
@@ -23,7 +23,7 @@ export function HeaderChips({ items }: HeaderChipsProps) {
     <div className="p-header-chips">
       {items.map((item, i) => (
         <span key={i} className="p-header-chip" data-tone={item.tone || 'plain'}>
-          {item.logo && <MakerLogo vendor={item.logo} />}
+          {item.vendor && <MakerLogo vendor={item.vendor} />}
           {item.icon && <Icon name={item.icon} size={16} />}
           {item.text}
         </span>

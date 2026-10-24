@@ -1,12 +1,49 @@
 import { notifications } from '@mantine/notifications'
+import { ReactNode } from 'react'
 import { errorText } from './errorText'
+
+/**
+ * Custom notification content component that displays a message with an optional action button.
+ */
+function NotificationContent({
+  message,
+  onAction,
+  actionLabel = 'Undo',
+}: {
+  message: string
+  onAction?: () => void
+  actionLabel?: string
+}): ReactNode {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'space-between', width: '100%' }}>
+      <span>{message}</span>
+      {onAction && (
+        <button
+          onClick={onAction}
+          style={{
+            marginLeft: 'auto',
+            background: 'none',
+            border: 'none',
+            color: 'inherit',
+            cursor: 'pointer',
+            fontWeight: 600,
+            fontSize: '12px',
+            textDecoration: 'underline',
+            padding: '2px 4px',
+          }}
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  )
+}
 
 /** Success toast reuses the action word ("Delete" -> "Deleted"). */
 export const toastOk = (message: string, options?: { undo?: () => void }) => {
   notifications.show({
-    message,
+    message: options?.undo ? <NotificationContent message={message} onAction={options.undo} /> : message,
     color: 'fridgeGreen',
-    action: options?.undo ? { label: 'Undo', onClick: options.undo } : undefined,
   })
 }
 
@@ -40,9 +77,8 @@ export function withUndo<T>(
   };
 
   notifications.show({
-    message,
+    message: <NotificationContent message={message} onAction={undo} />,
     color: 'fridgeGreen',
-    action: { label: 'Undo', onClick: undo },
   });
 
   timeoutId = setTimeout(async () => {

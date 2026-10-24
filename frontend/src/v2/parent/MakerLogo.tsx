@@ -47,7 +47,7 @@ interface MakerLogoProps {
  * Unknown vendors or null return null.
  */
 export function MakerLogo({ vendor, size = 16 }: MakerLogoProps): ReactNode {
-  const key = makerKey(vendor);
+  const key = makerKey(vendor || null);
   if (!key) return null;
 
   const icon = ICONS[key];
