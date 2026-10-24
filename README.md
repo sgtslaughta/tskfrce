@@ -1,10 +1,26 @@
 # t@sk4ce
 
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/welcome/welcome-dark.png">
+    <img alt="Animation: a messy room, the kids' devices lose Wi-Fi while the parent's laptop stays online, the chores get ticked off in the app, and the Wi-Fi comes back with a thumbs up. Chores done. Wi-Fi on." src="docs/assets/welcome/welcome-light.png" width="720">
+  </picture>
+</p>
+
+<p align="center"><b>Chores done. Wi-Fi on.</b></p>
+
 Chores first, then screens. t@sk4ce is a free family app where kids do their chores, parents approve them, and the home internet only switches on once the chores are done. It runs on a small computer in your home, so your family's data stays in your house.
 
 **Website and setup help: https://sgtslaughta.github.io/tskfrce/**
 
 **📖 [Full beginner's guide online](https://sgtslaughta.github.io/tskfrce/guide/) — step-by-step for parents, no technical knowledge needed.**
+
+## How it works
+
+1. **Mess.** Chores aren't done yet, so the kids' phones, tablets and consoles are paused. Parents' devices are never touched.
+2. **The app.** Each kid sees today's chores on their checklist.
+3. **Done.** Kids tick them off; a parent approves (or sends one back).
+4. **Wi-Fi on.** Once the chores are approved, their devices come straight back online.
 
 ![The Today screen: chores waiting for a parent to approve, and one tab for each kid](docs/guide/img/today.png)
 
