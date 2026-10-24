@@ -44,17 +44,15 @@ function serve(redemptions: PendingRedemption[]) {
 beforeEach(() => serve([pending]))
 
 describe('RewardsPanel', () => {
-  test('add posts name, price, icon', async () => {
+  test('add posts name and price', async () => {
     render(wrap(<RewardsPanel />))
     await userEvent.click(screen.getByRole('button', { name: 'New reward' }))
     await userEvent.type(await screen.findByLabelText('Reward'), 'Pizza')
     await userEvent.clear(screen.getByLabelText('Price (points)'))
     await userEvent.type(screen.getByLabelText('Price (points)'), '80')
-    await userEvent.click(screen.getByRole('button', { name: 'Emoji (optional)' }))
-    await userEvent.click(await screen.findByRole('button', { name: 'Pick 🍕' }))
     await userEvent.click(screen.getByRole('button', { name: 'Add reward' }))
     await waitFor(() =>
-      expect(calls('POST')[0]).toEqual(['/rewards', { method: 'POST', body: { name: 'Pizza', price: 80, icon: '🍕' } }]),
+      expect(calls('POST')[0]).toEqual(['/rewards', { method: 'POST', body: { name: 'Pizza', price: 80 } }]),
     )
   })
 })

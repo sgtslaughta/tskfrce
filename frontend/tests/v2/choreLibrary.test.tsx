@@ -239,9 +239,9 @@ describe('chore library', () => {
     await userEvent.click(within(d).getByText('Maya'))
     await userEvent.click(within(d).getByText('Leo'))
     expect(within(d).getByText(/own copy and their own points/)).toBeInTheDocument()
-    await userEvent.click(within(d).getByText('Race'))
+    await userEvent.click(within(d).getByText('First one wins'))
     expect(within(d).getByText(/first kid to finish/)).toBeInTheDocument()
-    await userEvent.click(within(d).getByText('Team'))
+    await userEvent.click(within(d).getByText('Team effort'))
     expect(within(d).getByText(/split evenly/)).toBeInTheDocument()
   })
 

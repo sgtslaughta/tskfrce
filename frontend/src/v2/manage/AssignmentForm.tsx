@@ -13,9 +13,9 @@ const REPEATS = [
   { value: 'once', label: 'One time' },
 ]
 const MODES: { value: ChoreMode; label: string; hint: string }[] = [
-  { value: 'each', label: 'Each', hint: 'Each kid gets their own copy and their own points.' },
-  { value: 'race', label: 'Race', hint: 'One chore for everyone. The first kid to finish it gets the points.' },
-  { value: 'team', label: 'Team', hint: 'One chore for everyone. Any kid can tick it, and the points are split evenly.' },
+  { value: 'each', label: 'Each does it', hint: 'Each kid gets their own copy and their own points.' },
+  { value: 'race', label: 'First one wins', hint: 'One chore for everyone. The first kid to finish it gets the points.' },
+  { value: 'team', label: 'Team effort', hint: 'One chore for everyone. Any kid can tick it, and the points are split evenly.' },
 ]
 
 interface Props {

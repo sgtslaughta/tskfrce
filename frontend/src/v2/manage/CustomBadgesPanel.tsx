@@ -1,12 +1,15 @@
 import { useState } from 'react'
 import { Button, Drawer, Select, TextInput } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
-import { EmojiPicker } from '@/v2/components/EmojiPicker'
+import { GlyphPicker } from '@/v2/parent/GlyphPicker'
+import { Icon } from '@/v2/parent/Icon'
 import { useAwardBadge, useCustomBadges, useDeleteBadge, useSaveBadge } from '@/v2/hooks/useCustomBadges'
 import { useKids } from '@/v2/hooks/useKids'
 import { TIER_NAMES } from '@/v2/tiers'
 import type { CustomBadge } from '@/v2/types'
 import { toastFail, toastOk } from '../notify'
+
+const BADGE_GLYPHS = ['military_tech', 'verified', 'star', 'favorite', 'emoji_events', 'trophy', 'celebration']
 
 /** Parent custom badges: list, add, edit, delete, and Award a kid (+1 tier). */
 export function CustomBadgesPanel() {
@@ -65,7 +68,7 @@ export function CustomBadgesPanel() {
         <div className="f-card m-list">
           {badges.data.map((b) => (
             <div key={b.id} className="m-rr">
-              <span className="m-ico">{b.icon}</span>
+              <span className="m-ico"><Icon name={b.icon} size={20} /></span>
               <span className="m-grow">
                 <b>{b.name}</b>
                 <span className="m-meta">{b.description}</span>
@@ -84,7 +87,10 @@ export function CustomBadgesPanel() {
       <Drawer opened={opened} onClose={() => setOpened(false)} position="right" size={small ? '100%' : 'md'} title={editing ? 'Edit badge' : 'New badge'}>
         <div className="m-form">
           <TextInput label="Badge name" value={name} maxLength={60} onChange={(e) => setName(e.currentTarget.value)} />
-          <EmojiPicker label="Emoji" value={icon} onChange={setIcon} />
+          <div>
+            <label htmlFor="badge-glyph" className="f-label">Icon</label>
+            <GlyphPicker value={icon} onChange={setIcon} choices={BADGE_GLYPHS} />
+          </div>
           <TextInput label="Description" value={description} maxLength={200} onChange={(e) => setDescription(e.currentTarget.value)} />
           <div className="m-actions">
             <Button onClick={submit} disabled={!name.trim() || !icon.trim()} loading={save.isPending}>
