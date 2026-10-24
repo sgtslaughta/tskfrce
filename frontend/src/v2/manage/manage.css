@@ -77,7 +77,7 @@
 
 /* Days and dots */
 .m-days { display: flex; gap: 3px; flex-wrap: wrap; }
-.m-d { font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 3px; text-transform: uppercase; border: 1px solid; color: var(--inherit); }
+.m-d { font-size: 10px; font-weight: 700; padding: 2px 5px; border-radius: 3px; text-transform: uppercase; border: 1px solid; }
 [data-look='parent'] .m-d { border-color: var(--p-line); color: var(--p-sub); }
 [data-look='parent'] .m-d[data-on] { background: var(--p-ink); border-color: var(--p-ink); color: var(--p-card); }
 [data-look='fridge'] .m-d { border-color: var(--f-line); color: var(--f-sub); }
