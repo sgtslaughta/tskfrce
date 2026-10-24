@@ -1,0 +1,106 @@
+import { Button, Text, TextInput } from '@mantine/core'
+import { HeaderChips } from '@/v2/parent/HeaderChips'
+import { HoursTimeline } from './HoursTimeline'
+import type { Device, Group, Kid, TimeWindow } from '@/v2/types'
+
+interface Props {
+  group: Group
+  devices: Device[]
+  kids: Kid[]
+  groups?: Group[]
+  windows?: TimeWindow[]
+  onClose: () => void
+  onRequestOverride: (req: { kind: string; id: number; action: string }) => void
+}
+
+const ownerNames = (kids: Kid[], ownerIds: number[] | undefined) => {
+  if (!ownerIds || ownerIds.length === 0) return 'No owners'
+  return kids
+    .filter((k) => ownerIds.includes(k.id))
+    .map((k) => k.full_name || k.username)
+    .join(', ')
+}
+
+export function GroupDetail({ group, devices, kids, groups, windows, onClose, onRequestOverride }: Props) {
+  const groupDevices = devices.filter((d) => group.device_ids.includes(d.id))
+  const locked = groupDevices.filter((d) => d.override?.action === 'lock').length
+  const open = groupDevices.length - locked
+
+  const headerChips = [
+    { text: `${groupDevices.length} devices` },
+    { text: `${open} open` },
+    { text: `${locked} locked` },
+    { text: ownerNames(kids, group.owner_ids) },
+  ]
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: 16, padding: 16 }}>
+      <div>
+        <Text fw={600} size="lg" mb="xs">
+          {group.name}
+        </Text>
+        <HeaderChips items={headerChips} />
+      </div>
+
+      <div style={{ display: 'flex', gap: 8 }}>
+        <Button
+          data-variant="red"
+          onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'lock' })}
+        >
+          Lock group
+        </Button>
+        <Button
+          data-variant="ghost"
+          onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'unlock' })}
+        >
+          Unlock 30 min
+        </Button>
+        <Button
+          data-variant="ghost"
+          onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'schedule' })}
+        >
+          Back to schedule
+        </Button>
+      </div>
+
+      <div style={{ flex: 1, overflowY: 'auto' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <Text fw={500} size="sm" mb={4}>
+              Group name
+            </Text>
+            <TextInput value={group.name} readOnly />
+          </div>
+
+          <div>
+            <Text fw={500} size="sm" mb={4}>
+              Devices in group
+            </Text>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {groupDevices.map((d) => (
+                <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text>{d.name}</Text>
+                  <Button size="xs" variant="subtle" onClick={() => {}}>
+                    Remove
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <Button mt="md" variant="ghost" onClick={() => {}}>
+              Add a device
+            </Button>
+          </div>
+
+          {windows && (
+            <div>
+              <Text fw={500} size="sm" mb={4}>
+                Hours for {group.name}
+              </Text>
+              <HoursTimeline windows={windows ?? []} kids={kids} groups={groups ?? []} />
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -1,18 +1,14 @@
 import { useRouter } from 'next/router'
+import { useCallback, useState } from 'react'
 import { ParentShell } from '@/v2/parent/ParentShell'
 import { LoadError, LoadingCards } from '@/v2/components/States'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useDevices, useGroups } from '@/v2/hooks/useDevices'
 import { useKids } from '@/v2/hooks/useKids'
+import { useWindows } from '@/v2/hooks/useWindows'
 import { DevicesSection } from './DevicesSection'
-import { GroupsPanel } from './GroupsPanel'
-import { ManageLayout, type SectionDef } from './ManageLayout'
-
-type S = 'devices' | 'groups'
-const DEVICE_SECTIONS: SectionDef<S>[] = [
-  { id: 'devices', label: 'Devices' },
-  { id: 'groups', label: 'Groups' },
-]
+import { DeviceDetail } from './DeviceDetail'
+import { GroupDetail } from './GroupDetail'
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
 
@@ -21,18 +17,55 @@ function DevicesBody() {
   const devices = useDevices()
   const kids = useKids()
   const groups = useGroups()
+  const windows = useWindows()
   const all = devices.data ?? []
-  const want = first(query.section)
-  const section: S = DEVICE_SECTIONS.some((s) => s.id === want) ? (want as S) : 'devices'
+  const selectedId = Number(first(query.item)) || null
+  const [tab, setTab] = useState<'devices' | 'groups'>('devices')
+
+  const selectedDevice = all.find((d) => d.id === selectedId && tab === 'devices')
+  const selectedGroup = (groups.data ?? []).find((g) => g.id === selectedId && tab === 'groups')
+
+  const handleRequestOverride = useCallback(
+    (req: { kind: string; id: number; action: string }) => {
+      console.log('Override requested:', req)
+      // This will be implemented by the parent component
+    },
+    [],
+  )
 
   return (
-    <ParentShell title="Devices">
+    <ParentShell
+      title="Devices"
+      list={
+        devices.isPending ? (
+          <LoadingCards />
+        ) : (
+          <DevicesSection devices={all} kids={kids.data ?? []} groups={groups.data ?? []} focus={selectedId ?? 0} />
+        )
+      }
+    >
       {devices.isError && <LoadError error={devices.error} onRetry={() => devices.refetch()} />}
-      <ManageLayout path="/devices" sections={DEVICE_SECTIONS} section={section} counts={{ devices: all.length, groups: groups.data?.length }}>
-        {devices.isPending && <LoadingCards />}
-        {section === 'devices' && !devices.isPending && <DevicesSection devices={all} kids={kids.data ?? []} focus={Number(first(query.focus))} />}
-        {section === 'groups' && <GroupsPanel devices={all} />}
-      </ManageLayout>
+      {!devices.isError && selectedDevice && (
+        <DeviceDetail
+          device={selectedDevice}
+          kids={kids.data ?? []}
+          groups={groups.data ?? []}
+          isGroupOpen={tab === 'groups'}
+          onClose={() => {}}
+          onRequestOverride={handleRequestOverride}
+        />
+      )}
+      {!devices.isError && selectedGroup && (
+        <GroupDetail
+          group={selectedGroup}
+          devices={all}
+          kids={kids.data ?? []}
+          groups={groups.data ?? []}
+          windows={windows.data ?? []}
+          onClose={() => {}}
+          onRequestOverride={handleRequestOverride}
+        />
+      )}
     </ParentShell>
   )
 }

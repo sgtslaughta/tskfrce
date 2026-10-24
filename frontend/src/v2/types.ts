@@ -28,6 +28,11 @@ export interface Device {
   last_seen: string | null
   resisting: boolean
   needs_pins?: boolean
+  ip?: string | null
+  ipv6?: string[]
+  hostname?: string | null
+  first_seen?: string | null
+  resisting_since?: string | null
 }
 
 /** GET /blocker: home box liveness */
@@ -41,6 +46,8 @@ export interface Group {
   id: number
   name: string
   device_ids: number[]
+  icon?: string
+  owner_ids?: number[]
 }
 
 /** GET /kids item */
