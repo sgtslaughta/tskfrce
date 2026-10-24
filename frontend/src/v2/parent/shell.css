@@ -19,8 +19,9 @@
   overflow: hidden;
 }
 
+/* the list + detail columns live inside .p-list-detail, so the shell stays rail + 1fr */
 [data-look='parent'] .p-shell.p-with-list {
-  grid-template-columns: 64px 320px 1fr;
+  grid-template-columns: 64px 1fr;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -611,10 +612,6 @@
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 @media (max-width: 1100px) {
-  [data-look='parent'] .p-shell.p-with-list {
-    grid-template-columns: 64px 280px 1fr;
-  }
-
   [data-look='parent'] .p-list-column {
     padding: 12px 8px;
   }
