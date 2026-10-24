@@ -24,7 +24,9 @@ function contrast(hex1: string, hex2: string): number {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-const css = readFileSync(join(__dirname, '../../src/v2/parent/parent.css'), 'utf8');
+const tokensCss = readFileSync(join(__dirname, '../../src/v2/parent/parent-tokens.css'), 'utf8');
+const choreCss = readFileSync(join(__dirname, '../../src/v2/parent/parent-chore.css'), 'utf8');
+const css = tokensCss + '\n' + choreCss;
 
 describe('useLook', () => {
   beforeEach(() => {

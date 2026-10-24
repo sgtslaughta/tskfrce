@@ -42,6 +42,7 @@ export function ChoreRow({
           type="checkbox"
           checked={isDone}
           onChange={(e) => e.stopPropagation()}
+          readOnly
           className="p-chore-checkbox"
         />
         <span className="p-chore-title">{chore.title}</span>

@@ -37,7 +37,7 @@ export function ChoreOpen({
         <div className="p-chore-steps">
           {runDetail.steps.map((step, idx) => (
             <div key={step.id} className="p-step">
-              <input type="checkbox" checked={step.done} className="p-step-checkbox" />
+              <input type="checkbox" checked={step.done} readOnly className="p-step-checkbox" />
               <span className="p-step-title">{step.title}</span>
               {step.done && step.done_at && (
                 <span className="p-step-time">
@@ -47,7 +47,7 @@ export function ChoreOpen({
                   })}
                 </span>
               )}
-              <button className="p-step-reply">Reply</button>
+              <button className="p-step-reply" aria-label={`Reply to step ${idx + 1}`}>Reply</button>
             </div>
           ))}
         </div>
@@ -64,6 +64,7 @@ export function ChoreOpen({
         <div className="p-action-panel">
           <button
             className="p-btn"
+            aria-label={`Approve chore and award ${chore.points} points`}
             onClick={() =>
               withUndo(() => approve.mutateAsync(chore.id), `Approved +${chore.points}`)
             }
@@ -72,12 +73,14 @@ export function ChoreOpen({
           </button>
           <button
             className="p-btn"
+            aria-label="Send chore back to child for revision"
             onClick={() => sendBack.mutateAsync({ id: chore.id, note: '' })}
           >
             Send back
           </button>
           <button
             className="p-btn"
+            aria-label="Open chat with child about this chore"
             onClick={onOpenChat}
           >
             Open chat
