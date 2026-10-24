@@ -23,9 +23,11 @@ const ownerNames = (kids: Kid[], ownerIds: number[] | undefined) => {
 export function GroupDetail({ group, devices, kids, windows, onClose, onRequestOverride }: Props) {
   const groupDevices = devices.filter((d) => group.device_ids.includes(d.id))
   const locked = groupDevices.filter((d) => d.override?.action === 'lock').length
+  const open = groupDevices.length - locked
 
   const headerChips = [
     { text: `${groupDevices.length} devices` },
+    { text: `${open} open` },
     { text: `${locked} locked` },
     { text: ownerNames(kids, group.owner_ids) },
   ]

@@ -1,6 +1,7 @@
 import { Button, Group, Tabs, Text } from '@mantine/core'
 import { MakerLogo } from '@/v2/parent/MakerLogo'
 import { Chip } from '@/v2/parent/Chip'
+import { Icon } from '@/v2/parent/Icon'
 import type { Device, Group as DeviceGroup, Kid } from '@/v2/types'
 
 interface Props {
@@ -41,6 +42,34 @@ const relativeTime = (iso: string | null) => {
   const days = Math.floor(hours / 24)
   if (days < 7) return `${days}d ago`
   return date.toLocaleDateString()
+}
+
+type DeviceType = 'phone' | 'console' | 'tv' | 'laptop' | 'other'
+
+const DEVICE_TYPE_ICON: Record<DeviceType, string> = {
+  phone: 'smartphone',
+  console: 'sports_esports',
+  tv: 'tv',
+  laptop: 'laptop',
+  other: 'device_unknown',
+}
+
+const getDeviceType = (name: string, vendor?: string | null): DeviceType => {
+  const text = `${name} ${vendor ?? ''}`
+  if (/xbox|playstation|\bps[345]\b|nintendo|switch|steam ?deck/i.test(text)) return 'console'
+  if (/\btv\b|roku|chromecast|fire ?stick|apple ?tv|shield|bravia/i.test(text)) return 'tv'
+  if (/laptop|macbook|chromebook|thinkpad|\bpc\b|desktop|imac/i.test(text)) return 'laptop'
+  if (/phone|ipad|tablet|pixel|galaxy|kindle|android/i.test(text)) return 'phone'
+  return 'other'
+}
+
+const getGroupDeviceTypes = (devices: Device[], groupDeviceIds: number[]): DeviceType[] => {
+  const groupDevices = devices.filter((d) => groupDeviceIds.includes(d.id))
+  const types = new Set<DeviceType>()
+  groupDevices.forEach((d) => {
+    types.add(getDeviceType(d.name, d.vendor))
+  })
+  return Array.from(types)
 }
 
 export function DeviceList({
@@ -110,25 +139,36 @@ export function DeviceList({
             <Text>No groups yet.</Text>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              {groups.map((g) => (
-                <Button
-                  key={g.id}
-                  data-group={g.id}
-                  variant="subtle"
-                  justify="space-between"
-                  onClick={() => onSelectGroup?.(g.id)}
-                  style={{ textAlign: 'left', height: 'auto', padding: 12 }}
-                >
-                  <Group gap="xs" style={{ flex: 1 }}>
-                    <div style={{ flex: 1 }}>
-                      <Text fw={500}>{g.name}</Text>
-                      <Text size="sm" color="dimmed">
-                        {g.device_ids.length} {g.device_ids.length === 1 ? 'device' : 'devices'}
-                      </Text>
-                    </div>
-                  </Group>
-                </Button>
-              ))}
+              {groups.map((g) => {
+                const groupOwners = ownerName(kids, g.owner_ids)
+                const deviceTypes = getGroupDeviceTypes(devices, g.device_ids)
+                return (
+                  <Button
+                    key={g.id}
+                    data-group={g.id}
+                    variant="subtle"
+                    justify="space-between"
+                    onClick={() => onSelectGroup?.(g.id)}
+                    style={{ textAlign: 'left', height: 'auto', padding: 12 }}
+                  >
+                    <Group gap="xs" style={{ flex: 1 }}>
+                      <div style={{ flex: 1 }}>
+                        <Text fw={500}>{g.name}</Text>
+                        <Text size="sm" color="dimmed">
+                          {g.device_ids.length} {g.device_ids.length === 1 ? 'device' : 'devices'} · {groupOwners}
+                        </Text>
+                      </div>
+                    </Group>
+                    <Group gap="xs">
+                      <div style={{ display: 'flex', gap: -8, alignItems: 'center' }}>
+                        {deviceTypes.map((type) => (
+                          <Icon key={type} name={DEVICE_TYPE_ICON[type]} size={20} label={`${type} in group`} />
+                        ))}
+                      </div>
+                    </Group>
+                  </Button>
+                )
+              })}
             </div>
           )}
         </Tabs.Panel>

@@ -1,16 +1,17 @@
 import { useState } from 'react'
-import { Button, Tabs, Text, TextInput } from '@mantine/core'
+import { Button, Tabs, Text, TextInput, Switch } from '@mantine/core'
 import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import { isPrivateMac } from './privateMac'
-import type { Device, Kid } from '@/v2/types'
+import type { Device, Kid, Group } from '@/v2/types'
 
 type HeaderChip = { text: string; vendor?: string; icon?: string; tone?: 'acc' | 'mono' | 'plain' }
 
 interface Props {
   device: Device
   kids: Kid[]
+  groups?: Group[]
   isGroupOpen: boolean
   onClose: () => void
   onRequestOverride: (req: { kind: string; id: number; action: string }) => void
@@ -91,22 +92,79 @@ export function DeviceDetail({ device, kids, isGroupOpen, onClose, onRequestOver
         </Tabs.List>
 
         <Tabs.Panel value="overview" pt="md">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <div>
-              <Text fw={500} size="sm" mb={4}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ padding: 12, border: '1px solid var(--p-line)', borderRadius: 8, backgroundColor: 'var(--p-soft)' }}>
+              <Text fw={600} size="sm" mb={12}>
                 Details
               </Text>
-              <TextInput label="Name" value={device.name} readOnly />
-              <TextInput label="Owners" value={ownerName(kids, device.owner_ids)} readOnly mt="xs" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <Text size="xs" color="dimmed" mb={4} fw={500}>
+                    Name
+                  </Text>
+                  <TextInput value={device.name} readOnly placeholder="—" />
+                </div>
+                <div>
+                  <Text size="xs" color="dimmed" mb={4} fw={500}>
+                    Owners
+                  </Text>
+                  <TextInput value={ownerName(kids, device.owner_ids)} readOnly placeholder="—" />
+                </div>
+                <div>
+                  <Text size="xs" color="dimmed" mb={4} fw={500}>
+                    Groups
+                  </Text>
+                  <TextInput
+                    value={
+                      groups
+                        ?.filter((g) => device.group_ids.includes(g.id))
+                        .map((g) => g.name)
+                        .join(', ') || '—'
+                    }
+                    readOnly
+                    placeholder="—"
+                  />
+                </div>
+                <div style={{ paddingTop: 8 }}>
+                  <Switch
+                    label={<Text size="sm">Guest</Text>}
+                    checked={device.status === 'guest'}
+                    readOnly
+                  />
+                </div>
+              </div>
             </div>
-            <div>
-              <Text fw={500} size="sm" mb={4}>
+
+            <div style={{ padding: 12, border: '1px solid var(--p-line)', borderRadius: 8, backgroundColor: 'var(--p-soft)' }}>
+              <Text fw={600} size="sm" mb={12}>
                 Right now
               </Text>
-              <Text>
-                Status: {device.status === 'guest' ? 'Guest' : device.online ? 'Online' : 'Offline'}
-              </Text>
-              {device.override && <Text>Override: {device.override.action}</Text>}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div>
+                  <Text size="xs" color="dimmed" mb={2} fw={500}>
+                    Status
+                  </Text>
+                  <Text>
+                    {device.status === 'guest' ? 'Guest' : device.online ? 'Online' : 'Offline'}
+                  </Text>
+                </div>
+                {device.override && (
+                  <div>
+                    <Text size="xs" color="dimmed" mb={2} fw={500}>
+                      Override
+                    </Text>
+                    <Text>{device.override.action}</Text>
+                  </div>
+                )}
+                {device.override?.expires_at && (
+                  <div>
+                    <Text size="xs" color="dimmed" mb={2} fw={500}>
+                      Expires at
+                    </Text>
+                    <Text>{new Date(device.override.expires_at).toLocaleString()}</Text>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </Tabs.Panel>
