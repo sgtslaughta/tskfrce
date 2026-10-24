@@ -12,7 +12,7 @@ interface RailItem {
   dot?: boolean
 }
 
-export function Rail() {
+export function Rail({ onLogout }: { onLogout?: () => void }) {
   const router = useRouter()
   const threads = useThreads()
   const unread = threads.data?.total ?? 0
@@ -42,7 +42,7 @@ export function Rail() {
         if (item.label === 'Bell') return <div key={idx} className="p-rail-bell"><Bell placement="rail" /></div>
         if (item.label === 'Log out')
           return (
-            <button key={idx} type="button" className="p-rail-item" aria-label="Log out">
+            <button key={idx} type="button" className="p-rail-item" aria-label="Log out" onClick={onLogout}>
               <Icon name="logout" />
             </button>
           )

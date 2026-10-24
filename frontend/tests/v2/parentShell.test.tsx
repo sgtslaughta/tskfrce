@@ -336,3 +336,13 @@ describe('MorePage', () => {
     expect(screen.getByText('Help & guide')).toBeInTheDocument()
   })
 })
+
+describe('Rail log out', () => {
+  it('calls onLogout when clicked', () => {
+    ;(useRouter as jest.Mock).mockReturnValue({ pathname: '/', replace: jest.fn() })
+    const onLogout = jest.fn()
+    render(<Rail onLogout={onLogout} />)
+    screen.getByRole('button', { name: 'Log out' }).click()
+    expect(onLogout).toHaveBeenCalled()
+  })
+})

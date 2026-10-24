@@ -41,7 +41,7 @@ export function ParentShell({
   if (list) {
     return (
       <div className="p-shell p-with-list">
-        {!small && <Rail />}
+        {!small && <Rail onLogout={logOut} />}
         <ListDetail list={list} detail={children} listTitle={title} />
         {small && <TabBar />}
         <ChatDock meId={user ? Number(user.id) : null} />
@@ -51,7 +51,7 @@ export function ParentShell({
 
   return (
     <div className="p-shell">
-      {!small && <Rail />}
+      {!small && <Rail onLogout={logOut} />}
       <div className="p-content">
         <header className="p-header">
           <h1>{title}</h1>
