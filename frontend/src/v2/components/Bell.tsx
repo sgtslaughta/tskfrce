@@ -141,7 +141,7 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
                 const sev = severityIcon(n)
                 return (
                   <div key={n.id} className={`p-bell-item ${!n.read ? 'unread' : ''}`}>
-                    <div className={`p-bell-icon hi md lv ok`.split(' ').includes(sev.tone) ? `p-bell-icon ${sev.tone}` : 'p-bell-icon'}>
+                    <div className={`p-bell-icon ${sev.tone}`}>
                       <Icon name={sev.name} />
                     </div>
                     <div className="p-bell-text">
@@ -153,7 +153,7 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
                         <>
                           <button type="button" className="p-btn" onClick={() => handleApprove(n)}>
                             <Icon name="check" size={16} />
-                            Approve
+                            Approve {n.points ? `+${n.points}` : ''}
                           </button>
                           <button type="button" className="p-btn" onClick={() => handleSendBack(n)}>
                             <Icon name="undo" size={16} />
@@ -213,10 +213,6 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
         </div>
       )}
       <div className="p-bell-footer">
-        <span>
-          <Icon name="tune" size={18} />
-          Notification settings
-        </span>
         <span>
           See all <Icon name="chevron_right" size={18} />
         </span>

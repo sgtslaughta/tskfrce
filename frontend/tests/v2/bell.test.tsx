@@ -15,7 +15,7 @@ jest.mock('next/router', () => ({ useRouter: () => ({ push }) }))
 const apiMock = api as unknown as Mock<(p: string, i?: { method?: string; kid?: boolean }) => Promise<unknown>>
 const item = (id: number, over: object = {}) => ({
   id, kind: 'chore_submitted', title: `Item ${id}`, body: null, created_at: new Date().toISOString(),
-  read: false, run_id: null, redemption_id: null, device_id: null, thread_id: null, ...over,
+  read: false, run_id: null, redemption_id: null, device_id: null, thread_id: null, points: null, ...over,
 })
 const serve = (items: object[], unread = items.length) =>
   apiMock.mockImplementation(async (p) => (p === '/notifications' ? { items, unread, has_more: false } : undefined))
