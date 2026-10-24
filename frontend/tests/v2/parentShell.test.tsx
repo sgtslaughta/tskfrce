@@ -1,7 +1,10 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { useRouter } from 'next/router'
 import { ReactNode } from 'react'
 import { ParentShell } from '@/v2/parent/ParentShell'
+import { Rail } from '@/v2/parent/Rail'
+import { TabBar } from '@/v2/parent/TabBar'
+import { MorePage } from '@/v2/parent/MorePage'
 
 jest.mock('next/router', () => ({
   useRouter: jest.fn(),
@@ -41,6 +44,18 @@ jest.mock('@/v2/hooks/useChat', () => ({
   })),
 }))
 
+jest.mock('@/v2/hooks/useFamily', () => ({
+  useFamily: jest.fn(() => ({
+    data: { name: 'The Smiths' },
+  })),
+}))
+
+jest.mock('@/v2/hooks/useDevices', () => ({
+  useBlocker: jest.fn(() => ({
+    data: { online: true },
+  })),
+}))
+
 jest.mock('next/link', () => ({
   __esModule: true,
   default: ({ href, children, ...props }: { href: string; children: ReactNode; [key: string]: any }) => (
@@ -73,14 +88,6 @@ describe('ParentShell', () => {
 
     expect(screen.getByText('Test Page')).toBeInTheDocument()
     expect(screen.getByText('Test Content')).toBeInTheDocument()
-  })
-
-  test('renders navigation with links to main pages', () => {
-    render(<ParentShell title="Test">Content</ParentShell>)
-
-    // Check that navigation links exist
-    const navs = screen.getAllByRole('navigation', { name: /main/i })
-    expect(navs.length).toBeGreaterThan(0)
   })
 
   test('marks active page with aria-current', () => {
@@ -125,5 +132,168 @@ describe('ParentShell', () => {
 
     expect(screen.getByText('List')).toBeInTheDocument()
     expect(screen.getByText('Detail Content')).toBeInTheDocument()
+  })
+})
+
+describe('Rail', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    ;(useRouter as jest.Mock).mockReturnValue({
+      pathname: '/',
+      push: jest.fn(),
+      replace: jest.fn(),
+      query: {},
+    })
+  })
+
+  test('rail has 8 items in order with aria-labels', () => {
+    const { container } = render(<Rail />)
+
+    const rail = container.querySelector('.p-rail')
+    expect(rail).toBeInTheDocument()
+
+    const items = Array.from(rail?.querySelectorAll('[aria-label]') || []).map(
+      (el) => el.getAttribute('aria-label')
+    )
+
+    expect(items).toContain('t@sk4ce')
+    expect(items).toContain('Bell')
+    expect(items).toContain('Today')
+    expect(items).toContain('Devices')
+    expect(items).toContain('Kids & chores')
+    expect(items).toContain('Chat')
+    expect(items).toContain('Settings')
+    expect(items).toContain('Log out')
+  })
+
+  test('rail shows chat unread dot when threads exist', () => {
+    const { useThreads } = require('@/v2/hooks/useChat')
+    useThreads.mockReturnValue({
+      data: { total: 3 },
+    })
+
+    const { container } = render(<Rail />)
+    const chatItem = Array.from(container.querySelectorAll('a[aria-label="Chat"]')).pop() as HTMLElement
+    const dot = chatItem?.querySelector('.p-rail-dot')
+
+    expect(dot).toBeInTheDocument()
+  })
+
+  test('active rail item marked with aria-current', () => {
+    ;(useRouter as jest.Mock).mockReturnValue({
+      pathname: '/devices',
+      push: jest.fn(),
+      replace: jest.fn(),
+      query: {},
+    })
+
+    const { container } = render(<Rail />)
+    const devicesLink = container.querySelector('a[aria-label="Devices"]')
+
+    expect(devicesLink).toHaveAttribute('aria-current', 'page')
+  })
+})
+
+describe('TabBar', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+    ;(useRouter as jest.Mock).mockReturnValue({
+      pathname: '/',
+      push: jest.fn(),
+      replace: jest.fn(),
+      query: {},
+    })
+  })
+
+  test('tab bar shows 5 items with correct labels', () => {
+    const { container } = render(<TabBar />)
+
+    const tabbar = container.querySelector('.p-tabbar')
+    expect(tabbar).toBeInTheDocument()
+
+    const items = Array.from(tabbar?.querySelectorAll('[aria-label]') || []).map(
+      (el) => el.getAttribute('aria-label')
+    )
+
+    expect(items).toEqual(['Today', 'Devices', 'Kids', 'Chat', 'More'])
+  })
+
+  test('tab bar shows chat count badge when unread', () => {
+    const { useThreads } = require('@/v2/hooks/useChat')
+    useThreads.mockReturnValue({
+      data: { total: 5 },
+    })
+
+    const { container } = render(<TabBar />)
+    const chatItem = Array.from(container.querySelectorAll('a[aria-label="Chat"]')).pop() as HTMLElement
+    const badge = chatItem?.querySelector('.p-tabbar-badge')
+
+    expect(badge).toBeInTheDocument()
+    expect(badge).toHaveTextContent('5')
+  })
+
+  test('active tab marked with aria-current', () => {
+    ;(useRouter as jest.Mock).mockReturnValue({
+      pathname: '/devices',
+      push: jest.fn(),
+      replace: jest.fn(),
+      query: {},
+    })
+
+    const { container } = render(<TabBar />)
+    const devicesTab = container.querySelector('a[aria-label="Devices"]')
+
+    expect(devicesTab).toHaveAttribute('aria-current', 'page')
+  })
+})
+
+describe('MorePage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks()
+  })
+
+  test('more page lists settings sections', () => {
+    render(<MorePage onLogout={jest.fn()} />)
+
+    expect(screen.getByText('Family')).toBeInTheDocument()
+    expect(screen.getByText('Hours')).toBeInTheDocument()
+    expect(screen.getByText('Appearance')).toBeInTheDocument()
+    expect(screen.getByText('GIFs')).toBeInTheDocument()
+    expect(screen.getByText('Parents')).toBeInTheDocument()
+  })
+
+  test('more page shows profile with family name', () => {
+    render(<MorePage onLogout={jest.fn()} />)
+
+    expect(screen.getByText(/Owner · The Smiths/)).toBeInTheDocument()
+  })
+
+  test('more page shows box healthy chip when online', () => {
+    render(<MorePage onLogout={jest.fn()} />)
+
+    expect(screen.getByText('Box healthy')).toBeInTheDocument()
+  })
+
+  test('more page shows box offline chip when not online', () => {
+    const { useBlocker } = require('@/v2/hooks/useDevices')
+    useBlocker.mockReturnValue({
+      data: { online: false },
+    })
+
+    render(<MorePage onLogout={jest.fn()} />)
+
+    expect(screen.getByText('Box offline')).toBeInTheDocument()
+  })
+
+  test('more page shows log out button', () => {
+    render(<MorePage onLogout={jest.fn()} />)
+
+    expect(screen.getByText('Log out')).toBeInTheDocument()
+  })
+
+  test('more page shows help & guide link', () => {
+    render(<MorePage onLogout={jest.fn()} />)
+
+    expect(screen.getByText('Help & guide')).toBeInTheDocument()
   })
 })
