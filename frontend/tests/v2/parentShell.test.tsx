@@ -26,7 +26,20 @@ jest.mock('@/v2/components/BlockerBanner', () => ({
 }))
 
 jest.mock('@/v2/components/Bell', () => ({
-  Bell: () => null,
+  Bell: ({ placement, kid }: { placement?: string; kid?: boolean }) => {
+    const { useThreads } = require('@/v2/hooks/useChat')
+    const threads = useThreads()
+    const unread = threads.data?.total ?? 0
+    if (placement === 'rail') {
+      return (
+        <div className="f-bell" data-testid="rail-bell">
+          <button aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'} />
+          {unread > 0 && <span className="f-bell-count" data-testid="bell-count">{unread > 9 ? '9+' : unread}</span>}
+        </div>
+      )
+    }
+    return null
+  },
 }))
 
 jest.mock('@/v2/components/RequireParent', () => ({
@@ -157,7 +170,7 @@ describe('Rail', () => {
     )
 
     expect(items).toContain('t@sk4ce')
-    expect(items).toContain('Bell')
+    expect(items).toContain('Notifications')
     expect(items).toContain('Today')
     expect(items).toContain('Devices')
     expect(items).toContain('Kids & chores')
@@ -191,6 +204,32 @@ describe('Rail', () => {
     const devicesLink = container.querySelector('a[aria-label="Devices"]')
 
     expect(devicesLink).toHaveAttribute('aria-current', 'page')
+  })
+
+  test('rail bell shows count badge when threads have unread messages', () => {
+    const { useThreads } = require('@/v2/hooks/useChat')
+    useThreads.mockReturnValue({
+      data: { total: 3 },
+    })
+
+    const { container } = render(<Rail />)
+    const bellCount = container.querySelector('[data-testid="bell-count"]')
+
+    expect(bellCount).toBeInTheDocument()
+    expect(bellCount).toHaveTextContent('3')
+  })
+
+  test('rail bell shows 9+ when unread count exceeds 9', () => {
+    const { useThreads } = require('@/v2/hooks/useChat')
+    useThreads.mockReturnValue({
+      data: { total: 15 },
+    })
+
+    const { container } = render(<Rail />)
+    const bellCount = container.querySelector('[data-testid="bell-count"]')
+
+    expect(bellCount).toBeInTheDocument()
+    expect(bellCount).toHaveTextContent('9+')
   })
 })
 

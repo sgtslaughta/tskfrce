@@ -59,6 +59,12 @@ export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; pla
   const [opened, setOpened] = useState(false)
   const small = useMediaQuery('(max-width: 767px)')
   const unread = useInbox(kid).data?.unread ?? 0
+
+  // On mobile, don't render bell for rail placement (header only)
+  if (placement === 'rail' && small) {
+    return null
+  }
+
   const btn = (
     <button
       type="button"

@@ -56,7 +56,7 @@ export function ParentShell({
         <header className="p-header">
           <h1>{title}</h1>
           {actions}
-          <Bell placement="header" />
+          {small && <Bell placement="header" />}
         </header>
         <BlockerBanner />
         <main className="p-main">{children}</main>

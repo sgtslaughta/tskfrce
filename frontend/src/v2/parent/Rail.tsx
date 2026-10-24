@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useThreads } from '@/v2/hooks/useChat'
+import { Bell } from '@/v2/components/Bell'
 import { Icon } from './Icon'
 
 interface RailItem {
@@ -38,7 +39,7 @@ export function Rail() {
               @
             </Link>
           )
-        if (item.label === 'Bell') return <div key={idx} className="p-rail-bell" aria-label="Bell" />
+        if (item.label === 'Bell') return <div key={idx} className="p-rail-bell"><Bell placement="rail" /></div>
         if (item.label === 'Log out')
           return (
             <button key={idx} type="button" className="p-rail-item" aria-label="Log out">
