@@ -5,9 +5,9 @@ import { Icon } from '../parent/Icon'
 const when = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Nothing yet'
 
-const LABEL = { family: 'Family', private: 'Private', chore: 'Chore', notes: 'Notes' } as const
+const LABEL = { family: 'Family', private: 'Private', chore: 'Chore' } as const
 
-type FilterTab = 'all' | 'chores' | 'notes' | 'family'
+type FilterTab = 'all' | 'chores' | 'family'
 
 /** Threads with search, tabs, and unread badges; `selected` is "kind:ref". */
 export function ThreadList({
@@ -28,8 +28,6 @@ export function ThreadList({
     // Filter by tab
     if (filter === 'chores') {
       result = result.filter(t => t.kind === 'chore')
-    } else if (filter === 'notes') {
-      result = result.filter(t => t.kind === 'chore' && (t.last_text?.toLowerCase().includes('note') ?? false))
     } else if (filter === 'family') {
       result = result.filter(t => t.kind === 'family')
     }
@@ -46,10 +44,10 @@ export function ThreadList({
     return result
   }, [threads, filter, search])
 
-  const counts = {
+  const counts = useMemo(() => ({
     chores: threads.filter(t => t.kind === 'chore').length,
     family: threads.filter(t => t.kind === 'family').length,
-  }
+  }), [threads])
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minHeight: 0 }}>
@@ -73,14 +71,10 @@ export function ThreadList({
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 12, borderBottom: '1.5px solid var(--p-line)' }}>
-        {(['all', 'chores', 'notes', 'family'] as const).map((tab) => {
+        {(['all', 'chores', 'family'] as const).map((tab) => {
           let label = tab.charAt(0).toUpperCase() + tab.slice(1);
           if (tab === 'chores') {
-            const choresCount = threads.filter(t => t.kind === 'chore').length;
-            label = `Chores · ${choresCount}`;
-          } else if (tab === 'notes') {
-            const notesCount = threads.filter(t => t.kind === 'chore' && (t.last_text?.toLowerCase().includes('note') ?? false)).length;
-            label = `Notes · ${notesCount}`;
+            label = `Chores · ${counts.chores}`;
           }
           return (
             <button
