@@ -22,7 +22,30 @@ Chores first, then screens. t@sk4ce is a free family app where kids do their cho
 3. **Done.** Kids tick them off; a parent approves (or sends one back).
 4. **Wi-Fi on.** Once the chores are approved, their devices come straight back online.
 
-![The Today screen: chores waiting for a parent to approve, and one tab for each kid](docs/guide/img/today.png)
+## A look inside
+
+<sub>Screens from the v3 design, with sample data.</sub>
+
+### For kids
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/kids-dark.png">
+  <img alt="Kid screens: a tablet in dark mode showing chores and 'Internet is paused', a phone with a chore broken into steps, and a phone with the 'Tell Mom or Dad' note sheet." src="docs/assets/readme/kids-light.png" width="900">
+</picture>
+
+### For parents
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/parents-dark.png">
+  <img alt="Parent Today screen with numbered callouts: every kid at a glance, steps in order with photos, approve or send back or deduct points, reply on any chore or step, see what your kid sees, plus the same screen on a phone." src="docs/assets/readme/parents-light.png" width="900">
+</picture>
+
+### How devices work
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/readme/devices-dark.png">
+  <img alt="Four steps: the home box spots new devices, you say whose each one is, it follows that kid's chores and allowed hours, and it tells you about tricks. Below, the Kids tablets group screen and a phone showing device activity and bypass alerts." src="docs/assets/readme/devices-light.png" width="900">
+</picture>
 
 ## What you get
 

@@ -1,6 +1,6 @@
 // Renders welcome.html to transparent PNG frames: node render.mjs <outDir> <fps> <welcome.html>
-// Copy into frontend/ first so `playwright` resolves (see README.md).
-import { chromium } from 'playwright'
+// Copy into frontend/ first so `@playwright/test` resolves (see README.md).
+import { chromium } from '@playwright/test'
 import path from 'path'
 import fs from 'fs'
 const out = process.argv[2], fps = +(process.argv[3] || 20), dur = 12000
