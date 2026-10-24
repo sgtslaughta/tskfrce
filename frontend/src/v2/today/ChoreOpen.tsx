@@ -33,25 +33,6 @@ export function ChoreOpen({
 
   return (
     <div className="p-chore-open">
-      <div className="p-open-header">
-        <h2>
-          {kid.name}&apos;s day
-        </h2>
-        <div className="p-open-actions">
-          <Link href={`/kid?as=${kid.id}`} className="p-btn">
-            View as kid
-          </Link>
-          <Link href={`/kids?section=chores&kid=${kid.id}`} className="p-btn">
-            Add chore
-          </Link>
-        </div>
-      </div>
-
-      <div className="p-open-progress">
-        <div className="p-meter-bar" style={{ width: `${progressPercent}%` }} />
-        <span>{runDetail.steps.filter((s) => s.done).length} of {runDetail.steps.length} done</span>
-      </div>
-
       <div className="p-open-content">
         <div className="p-chore-steps">
           {runDetail.steps.map((step, idx) => (
