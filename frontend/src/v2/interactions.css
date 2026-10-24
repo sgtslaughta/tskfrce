@@ -1,0 +1,48 @@
+/*
+ * Shared hover / press / focus feedback for every clickable thing,
+ * parent and kid looks. A translucent overlay via background-image keeps
+ * each control's own background colour and works in light and dark.
+ * Mantine Button/ActionIcon keep their built-in states.
+ */
+:root {
+  --hover-tint: rgba(128, 128, 128, 0.14);
+  --press-tint: rgba(128, 128, 128, 0.26);
+}
+
+:is(button, [role='button'], a[class*='p-'], a[class*='f-']):not(.mantine-Button-root):not(.mantine-ActionIcon-root):not(:disabled):not([aria-disabled='true']) {
+  cursor: pointer;
+  transition: transform 120ms ease-out, box-shadow 150ms ease-out, color 150ms ease-out,
+    border-color 150ms ease-out, filter 150ms ease-out;
+}
+
+:is(button, [role='button'], a[class*='p-'], a[class*='f-']):not(.mantine-Button-root):not(.mantine-ActionIcon-root):not(:disabled):not([aria-disabled='true']):hover {
+  background-image: linear-gradient(var(--hover-tint), var(--hover-tint));
+}
+
+:is(button, [role='button'], a[class*='p-'], a[class*='f-']):not(.mantine-Button-root):not(.mantine-ActionIcon-root):not(:disabled):not([aria-disabled='true']):active {
+  background-image: linear-gradient(var(--press-tint), var(--press-tint));
+  transform: translateY(1px);
+}
+
+:is(button, [role='button'], a, input, select, textarea):focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* text links: underline firms up on hover */
+.p-auth-link:hover,
+a:not([class]):hover {
+  text-decoration-color: currentColor;
+}
+
+:is(button, a):disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(button, [role='button'], a) {
+    transition: none !important;
+    transform: none !important;
+  }
+}
