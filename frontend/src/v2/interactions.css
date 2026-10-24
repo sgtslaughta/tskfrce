@@ -40,6 +40,12 @@ a:not([class]):hover {
   cursor: not-allowed;
 }
 
+/* Pulse animation for typing indicators and other subtle motion */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
 /* directional glyphs drift back and forth toward where the control goes, while hovered */
 @keyframes nudge-fwd { from { transform: translateX(0); } to { transform: translateX(3px); } }
 @keyframes nudge-back { from { transform: translateX(0); } to { transform: translateX(-3px); } }

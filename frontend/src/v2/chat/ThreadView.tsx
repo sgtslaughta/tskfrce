@@ -303,15 +303,6 @@ export function ThreadView({
                   GIF
                 </Button>
               )}
-              <Button
-                type="button"
-                variant="default"
-                aria-label="Mention someone"
-                onClick={() => setText((t) => t + '@')}
-                size="sm"
-              >
-                <Icon name="alternate_email" size={18} />
-              </Button>
               <textarea
                 aria-label="Message"
                 value={text}
@@ -333,98 +324,6 @@ export function ThreadView({
             </form>
             {gifsOn && data && (
               <GifPicker threadId={data.id} kid={kid} opened={gifOpen} onClose={() => setGifOpen(false)} onPicked={sendGif} />
-            )}
-
-            {/* Quick replies row (parent only) */}
-            {kind === 'chore' && (
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', padding: '8px 0', fontSize: '13px', borderTop: '1.5px solid var(--p-line)' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setText('Great job!')
-                    void send()
-                  }}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 999,
-                    border: '1.5px solid var(--p-acc)',
-                    background: 'var(--p-acc)',
-                    color: '#292928',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    font: 'inherit',
-                  }}
-                >
-                  <Icon name="check" size={14} />
-                  Great job!
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setText('Looks good')}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 999,
-                    border: '1.5px solid var(--p-line)',
-                    background: 'transparent',
-                    color: 'var(--p-ink)',
-                    cursor: 'pointer',
-                    font: 'inherit',
-                  }}
-                >
-                  Looks good
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setText('Can you redo this?')}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 999,
-                    border: '1.5px solid var(--p-line)',
-                    background: 'transparent',
-                    color: 'var(--p-ink)',
-                    cursor: 'pointer',
-                    font: 'inherit',
-                  }}
-                >
-                  Can you redo this?
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setText('Retake the photo')}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 999,
-                    border: '1.5px solid var(--p-line)',
-                    background: 'transparent',
-                    color: 'var(--p-ink)',
-                    cursor: 'pointer',
-                    font: 'inherit',
-                  }}
-                >
-                  Retake the photo
-                </button>
-                <button
-                  type="button"
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: 999,
-                    border: '1.5px solid var(--p-line)',
-                    background: 'transparent',
-                    color: 'var(--p-ink)',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 4,
-                    font: 'inherit',
-                  }}
-                >
-                  <Icon name="edit" size={14} />
-                  Edit replies
-                </button>
-              </div>
             )}
           </section>
 
