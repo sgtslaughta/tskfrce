@@ -98,10 +98,62 @@
   flex-direction: column;
   background: var(--p-card);
   border-right: 1px solid var(--p-line);
-  padding: 16px 12px;
-  gap: 8px;
+  padding: 0;
+  gap: 0;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+[data-look='parent'] .p-list-header {
+  flex: 0 0 auto;
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--p-line);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+[data-look='parent'] .p-list-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+[data-look='parent'] .p-list-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--p-ink);
+  flex: 1;
+  min-width: 0;
+}
+
+[data-look='parent'] .p-list-header-top button {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid var(--p-line);
+  background: var(--p-card);
+  color: var(--p-ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+[data-look='parent'] .p-list-header-top button:hover {
+  background: var(--p-soft);
+}
+
+[data-look='parent'] .p-list-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px;
 }
 
 [data-look='parent'] .p-detail-column {
@@ -176,4 +228,40 @@
   gap: 8px;
   background: var(--p-card);
   overflow-y: auto;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Segmented control styling for list headers */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-segment-tabs .mantine-Tabs-list {
+  display: flex;
+  gap: 4px;
+  background: var(--p-soft);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 0;
+}
+
+[data-look='parent'] .p-segment-tabs .mantine-Tabs-tab {
+  flex: 1;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 4px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--p-sub);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+[data-look='parent'] .p-segment-tabs .mantine-Tabs-tab:hover {
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-segment-tabs .mantine-Tabs-tab[data-active] {
+  background: var(--p-card);
+  color: var(--p-ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 }

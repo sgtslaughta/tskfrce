@@ -22,7 +22,7 @@ const renderWith = (status: object) => {
 
 test("warns when the home box is offline", async () => {
   renderWith({ online: false, last_seen: "2026-10-21T12:00:00Z" });
-  expect(await screen.findByText(/home box went quiet/)).toBeInTheDocument();
+  expect(await screen.findByText(/Went quiet/)).toBeInTheDocument();
 });
 
 test("silent while the home box is online", async () => {

@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  
-  
+  devIndicators: false,
+
   // Suppress HMR warnings in development
   onDemandEntries: {
     // period (in ms) where the server will keep pages in the buffer
