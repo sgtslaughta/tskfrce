@@ -37,6 +37,7 @@ from app.api.password_reset import router as password_reset_router
 from app.api.rewards import redemptions_router
 from app.api.rewards import router as rewards_router
 from app.api.setup import router as setup_router
+from app.api.tips import router as tips_router
 from app.api.windows import router as windows_router
 from app.core.logging import configure_logging, get_logger
 from app.core.monitoring import (
@@ -147,6 +148,7 @@ fastapi_app.include_router(badges_router)
 fastapi_app.include_router(community_router)
 fastapi_app.include_router(flair_router)
 fastapi_app.include_router(redemptions_router)
+fastapi_app.include_router(tips_router)
 
 # Create the final app with ASGI middleware
 app = MetricsMiddleware(fastapi_app)
