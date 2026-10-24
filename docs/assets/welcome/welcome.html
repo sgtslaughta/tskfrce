@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<!-- t@sk4ce welcome animation (source). Render with render.mjs; ?theme=dark for dark pages. -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&display=block" rel="stylesheet">
+<style>html,body{margin:0;background:transparent}
+.ms{font-family:'Material Symbols Rounded';font-weight:600;font-variation-settings:'FILL' 1;line-height:1;display:inline-block}
+
+.stage{--ink:#292928;--paper:#ffffff;--soft:#f1f0ea;--muted:#b9b9b3;--sub:#7a7a75;--off:#8d8d88;--ring:#f4f4f2;--line:#d8d8d3;background:transparent!important;color:var(--ink)}
+.stage.dark{--ink:#f4f4f2;--paper:#292928;--soft:#363634;--muted:#6e6e6a;--sub:#a8a8a4;--off:#8d8d88;--ring:#1c1c1b;--line:#4a4a47}
+/* ---------- stage ---------- */
+:root{--T:12s}
+.stage{position:relative;width:720px;height:400px;border-radius:20px;overflow:hidden;font-family:'DM Sans',sans-serif}
+.c{position:absolute;left:50%;top:50%}
+
+/* beat 1: mess */
+.mess{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r));font-size:var(--s,96px);color:var(--ink);animation:mess var(--T) infinite}
+@keyframes mess{
+  0%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y) - 30px)) rotate(var(--r)) scale(.6)}
+  4%{opacity:1;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r)) scale(1)}
+  8%{transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(calc(var(--r) * -1)) scale(1)}
+  12%{opacity:1;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r)) scale(1)}
+  17%,100%{opacity:0;transform:translate(-50%,-50%) rotate(180deg) scale(.1)}}
+.junk{font-size:44px;color:var(--muted);transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) rotate(var(--r));animation:junk var(--T) infinite}
+@keyframes junk{0%{opacity:0}4%,12%{opacity:1}16%,100%{opacity:0}}
+.grump{transform:translate(-50%,-50%) translate(250px,110px);font-size:70px;color:var(--ink);animation:grump var(--T) infinite}
+.grump .ms{font-size:70px}
+@keyframes grump{0%,3%{opacity:0;transform:translate(-50%,-50%) translate(250px,130px)}7%,13%{opacity:1;transform:translate(-50%,-50%) translate(250px,110px)}16%,100%{opacity:0;transform:translate(-50%,-50%) translate(250px,110px)}}
+
+/* beat 2-3: app checklist */
+.app{width:310px;height:262px;transform:translate(-50%,-50%);background:var(--paper);border:4px solid var(--ink);border-radius:26px;padding:16px 18px;animation:app var(--T) infinite}
+@keyframes app{0%,34%{opacity:0;transform:translate(-50%,-50%) scale(.85)}37%{opacity:1;transform:translate(-50%,-50%) scale(1.03)}38%,62%{opacity:1;transform:translate(-50%,-50%) scale(1)}68%,100%{opacity:0;transform:translate(-50%,-50%) scale(.7)}}
+.app .head{display:flex;justify-content:space-between;align-items:center;font-weight:800;font-size:18px;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:800;padding:5px 10px;border-radius:999px;background:var(--ink);color:var(--paper);text-transform:uppercase;letter-spacing:.04em}
+.chip .ms{font-size:16px}
+.chip.off{animation:chipOff var(--T) infinite}.chip.on{position:absolute;right:18px;top:16px;background:#c3f832;color:#292928;opacity:0;animation:chipOn var(--T) infinite}
+@keyframes chipOff{0%,34%{opacity:0}36%,58%{opacity:1}60%,100%{opacity:0}}
+@keyframes chipOn{0%,58%{opacity:0;transform:scale(.6)}61%{opacity:1;transform:scale(1.15)}63%,100%{opacity:1;transform:scale(1)}}
+.row{display:flex;align-items:center;gap:12px;height:58px;border-radius:14px;background:var(--soft);padding:0 12px;margin-bottom:10px;font-weight:700;font-size:17px}
+.row .ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#ffd23f}.row .ico .ms{font-size:24px}
+.row:nth-of-type(2) .ico{background:#ff9ecd}.row:nth-of-type(3) .ico{background:#7cc8ff}
+.row .box{margin-left:auto;width:34px;height:34px;border-radius:10px;border:3px solid var(--ink);display:grid;place-items:center;background:var(--paper)}
+.row .box .ms{font-size:26px;opacity:0;transform:scale(.2)}
+.row .name{position:relative}
+.row .name::after{content:'';position:absolute;left:0;top:52%;height:3px;width:0;background:var(--ink);animation:strike var(--T) infinite;animation-delay:inherit}
+.r1 .box{animation:boxOn var(--T) infinite 0s}.r1 .box .ms{animation:tick var(--T) infinite 0s}.r1 .name::after{animation-delay:0s}
+.r2 .box{animation:boxOn var(--T) infinite .5s}.r2 .box .ms{animation:tick var(--T) infinite .5s}.r2 .name::after{animation-delay:.5s}
+.r3 .box{animation:boxOn var(--T) infinite 1s}.r3 .box .ms{animation:tick var(--T) infinite 1s}.r3 .name::after{animation-delay:1s}
+@keyframes tick{0%,40%{opacity:0;transform:scale(.2)}43%{opacity:1;transform:scale(1.3)}45%,100%{opacity:1;transform:scale(1)}}
+@keyframes boxOn{0%,40%{background:var(--paper)}42%,100%{background:#c3f832}}
+@keyframes strike{0%,41%{width:0}45%,100%{width:100%}}
+
+/* beat 1b: wifi off (shrinks into the Paused chip) */
+.woff{transform:translate(-50%,-50%);width:220px;height:220px;animation:woff var(--T) infinite}
+.woff .ms{font-size:220px;color:var(--muted);position:absolute;left:0;top:-10px}
+.woff i{position:absolute;left:50%;top:50%;height:22px;width:0;background:#ff5a47;border-radius:12px;box-shadow:0 0 0 6px var(--ring);transform:translate(-50%,-50%) rotate(-45deg);animation:slash var(--T) infinite}
+@keyframes woff{0%,14%{opacity:0;transform:translate(-50%,-50%) scale(.3)}17%{opacity:1;transform:translate(-50%,-50%) scale(1.1)}19%{opacity:1;transform:translate(-50%,-50%) scale(1)}21%,33%{opacity:1;transform:translate(-50%,-50%) translate(0,-80px) scale(.55)}36%{opacity:1;transform:translate(-50%,-50%) translate(95px,-105px) scale(.1)}37%,100%{opacity:0;transform:translate(-50%,-50%) translate(95px,-105px) scale(.1)}}
+@keyframes slash{0%,16%{width:0}18.5%,100%{width:260px}}
+
+/* devices: kids cut off, parent still online */
+.dev{transform:translate(-50%,-50%) translate(var(--x),75px);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;animation:dev var(--T) infinite;animation-delay:var(--d)}
+.dev .body{position:relative;font-size:var(--s,78px);color:var(--ink)}
+.dev .badge{position:absolute;right:-12px;top:-6px;width:34px;height:34px;border-radius:50%;background:#ff5a47;color:#fff;display:grid;place-items:center;font-size:20px;box-shadow:0 0 0 4px var(--ring)}
+.dev.parent-dev .badge{background:#c3f832;color:#292928}
+.dev.parent-dev .body{color:var(--off)}
+.dev small{font-weight:800;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--sub)}
+.divider{transform:translate(-50%,-50%) translate(118px,72px);width:3px;height:110px;border-radius:2px;background:var(--line);opacity:0;animation:dev var(--T) infinite;animation-delay:.25s}
+@keyframes dev{0%,19%{opacity:0;transform:translate(-50%,-50%) translate(var(--x),95px) scale(.6)}21.5%{opacity:1;transform:translate(-50%,-50%) translate(var(--x),75px) scale(1.06)}23%,32%{opacity:1;transform:translate(-50%,-50%) translate(var(--x),75px) scale(1)}33.5%,100%{opacity:0;transform:translate(-50%,-50%) translate(var(--x),75px) scale(.8)}}
+
+/* beat 4: wifi on */
+.wifi{transform:translate(-50%,-50%);font-size:210px;color:#292928;animation:wifi var(--T) infinite}
+@keyframes wifi{0%,66%{opacity:0;transform:translate(-50%,-50%) translate(-105px,-30px) scale(.2)}72%{opacity:1;transform:translate(-50%,-50%) translate(-105px,-30px) scale(.9)}75%,95%{opacity:1;transform:translate(-50%,-50%) translate(-105px,-30px) scale(.8)}100%{opacity:0;transform:translate(-50%,-50%) translate(-105px,-30px) scale(.8)}}
+.burst{width:240px;height:240px;border-radius:50%;transform:translate(-50%,-50%) scale(.2);background:#c3f832;animation:burst var(--T) infinite}
+@keyframes burst{0%,66%{opacity:0;transform:translate(-50%,-50%) translate(-105px,-30px) scale(.2)}72%{opacity:1;transform:translate(-50%,-50%) translate(-105px,-30px) scale(.9)}75%,95%{opacity:1;transform:translate(-50%,-50%) translate(-105px,-30px) scale(.8)}100%{opacity:0;transform:translate(-50%,-50%) translate(-105px,-30px) scale(.8)}}
+
+/* beat 5: parent happy */
+.parent{transform:translate(-50%,-50%) translate(120px,-30px);display:flex;align-items:center;gap:6px;animation:parent var(--T) infinite}
+.parent .face{font-size:150px}
+.parent .thumb{font-size:136px;background:#c3f832;border-radius:50%;padding:28px;animation:thumb var(--T) infinite}
+@keyframes parent{0%,66%{opacity:0;transform:translate(-50%,-50%) translate(105px,-30px) scale(.2)}72%{opacity:1;transform:translate(-50%,-50%) translate(105px,-30px) scale(1.1)}75%,95%{opacity:1;transform:translate(-50%,-50%) translate(105px,-30px) scale(1)}100%{opacity:0}}
+@keyframes thumb{0%,66%{transform:rotate(-40deg)}72%{transform:rotate(12deg)}75%,100%{transform:rotate(0)}}
+.tag{position:absolute;left:0;right:0;bottom:26px;text-align:center;font-weight:800;font-size:36px;letter-spacing:-.02em;color:var(--ink);animation:tag var(--T) infinite}
+.tag em{font-style:normal;color:#292928;background:#c3f832;padding:0 10px;border-radius:10px}
+@keyframes tag{0%,66%{opacity:0;transform:translateY(16px) scale(.9)}72%{opacity:1;transform:scale(1.05)}75%,95%{opacity:1;transform:none}100%{opacity:0}}
+/* small beat captions */
+.cap{position:absolute;left:24px;top:20px;font-weight:800;font-size:15px;letter-spacing:.06em;text-transform:uppercase;color:#7a7a75;opacity:0}
+.cap1{animation:cap1 var(--T) infinite}.cap2{animation:cap2 var(--T) infinite}.cap3{animation:cap3 var(--T) infinite}
+@keyframes cap1{0%,2%{opacity:0}5%,13%{opacity:1}15%,100%{opacity:0}}
+.cap1b{animation:cap1b var(--T) infinite}
+@keyframes cap1b{0%,15%{opacity:0}17%,32%{opacity:1}33.5%,100%{opacity:0}}
+@keyframes cap2{0%,34%{opacity:0}37%,58%{opacity:1}61%,100%{opacity:0}}
+@keyframes cap3{0%,62%{opacity:0}64%{opacity:1}66%,100%{opacity:0}}
+.nocap .cap{display:none}
+@media(prefers-reduced-motion:reduce){.stage *{animation-play-state:paused!important}}
+.stage .row .ico,.stage .row .box .ms,.stage .parent .thumb,.stage .burst+.wifi{color:#292928}
+</style></head><body>
+<div class="stage" id="hero">
+ 
+ <span class="ms junk c" style="--x:-40px;--y:-120px;--r:-15deg">delete</span>
+ <span class="ms junk c" style="--x:120px;--y:120px;--r:20deg">sports_esports</span>
+ <span class="ms junk c" style="--x:-250px;--y:110px;--r:10deg">local_drink</span>
+ <span class="ms mess c" style="--x:-200px;--y:-60px;--r:-18deg;--ex:-110px;--ey:-40px">checkroom</span>
+ <span class="ms mess c" style="--x:190px;--y:-90px;--r:22deg;--ex:-110px;--ey:28px">restaurant</span>
+ <span class="ms mess c" style="--x:-30px;--y:70px;--r:14deg;--ex:-110px;--ey:96px">toys</span>
+ <div class="woff c"><span class="ms">wifi</span><i></i></div>
+ <div class="dev c" style="--x:-200px;--d:0s"><span class="body"><span class="ms">smartphone</span><span class="ms badge">wifi_off</span></span></div>
+ <div class="dev c" style="--x:-90px;--d:.08s"><span class="body"><span class="ms">tablet_android</span><span class="ms badge">wifi_off</span></span><small>Kids</small></div>
+ <div class="dev c" style="--x:25px;--d:.16s"><span class="body"><span class="ms">sports_esports</span><span class="ms badge">wifi_off</span></span></div>
+ <div class="divider c" style="--x:118px"></div>
+ <div class="dev c parent-dev" style="--x:215px;--d:.3s"><span class="body"><span class="ms">laptop_mac</span><span class="ms badge">wifi</span></span><small>Parents</small></div>
+ <div class="grump c"><span class="ms">sentiment_dissatisfied</span></div>
+ <div class="app c">
+  <div class="head">Today <span class="chip off"><span class="ms">wifi_off</span>Paused</span><span class="chip on"><span class="ms">wifi</span>On</span></div>
+  <div class="row r1"><span class="ico"><span class="ms">checkroom</span></span><span class="name">Laundry</span><span class="box"><span class="ms">check</span></span></div>
+  <div class="row r2"><span class="ico"><span class="ms">restaurant</span></span><span class="name">Dishes</span><span class="box"><span class="ms">check</span></span></div>
+  <div class="row r3"><span class="ico"><span class="ms">toys</span></span><span class="name">Toys away</span><span class="box"><span class="ms">check</span></span></div>
+ </div>
+ <div class="burst c"></div>
+ <span class="ms wifi c">wifi</span>
+ <div class="parent c"><span class="ms thumb">thumb_up</span></div>
+ <div class="tag">Chores done. <em>Wi-Fi on.</em></div>
+</div>
+<script>if(new URLSearchParams(location.search).get('theme')==='dark')document.getElementById('hero').classList.add('dark')</script>
+</body></html>

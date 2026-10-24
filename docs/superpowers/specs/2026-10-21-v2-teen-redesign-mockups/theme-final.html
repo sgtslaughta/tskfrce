@@ -1,0 +1,67 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap');
+.tf { --ink:#1d2b53; --sun:#ffc93c; --red:#ff6b4a; --green:#7bd389; font-family:Inter; }
+.tf .light { --bg:#f4f7fa; --grid:rgba(29,43,83,.12); --card:#fff; --text:#1d2b53; --sub:#4a5a80; --line:#eef1f6; --chk:#b6c1d8; --head:#1d2b53; --htext:#fff; --hsub:#c6d0ee; --track:rgba(255,255,255,.16); --num:var(--sun); --stripe:transparent; --nav:#4a5a80; --ghost:#b6c1d8; --tagbg:#ffe9e3; --tagfg:#c4401f; --okfg:#2f8a45; --shadow:0 1px 2px rgba(29,43,83,.06),0 6px 20px rgba(29,43,83,.08); }
+.tf .dark  { --bg:#1e2026; --grid:rgba(255,255,255,.08); --card:#18213f; --text:#e8eeff; --sub:#8f9cc4; --line:#232f57; --chk:#4b5a8c; --head:#e8eeff; --htext:#1d2b53; --hsub:#4a5a80; --track:#c9d3ee; --num:#1d2b53; --stripe:var(--sun); --nav:#9aa0ae; --ghost:#4b5a8c; --tagbg:rgba(255,107,74,.15); --tagfg:#ff7a5c; --okfg:var(--green); --shadow:0 6px 20px rgba(0,0,0,.45); }
+.tf .scr { background-color:var(--bg); color:var(--text); padding:16px; border-radius:10px; position:relative; overflow:hidden; }
+.tf .scr::before { content:""; position:absolute; inset:0; background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px); background-size:24px 24px; -webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 75%); mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 75%); }
+.tf .scr > * { position:relative; }
+.tf .h { font-family:'Space Grotesk'; font-weight:700; }
+.tf .cap { text-transform:uppercase; letter-spacing:.08em; font-size:11px; font-weight:600; }
+.tf .bar { display:flex; align-items:center; gap:16px; margin-bottom:14px; }
+.tf .bar .h { font-size:18px; }
+.tf .bar a { color:var(--nav); text-decoration:none; }
+.tf .bar a.on { color:var(--text); border-bottom:2px solid var(--sun); padding-bottom:2px; }
+.tf .title { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:12px; }
+.tf .title .h { font-size:26px; }
+.tf .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.tf .kid { background:var(--card); border-radius:8px; overflow:hidden; box-shadow:var(--shadow); }
+.tf .head { background:var(--head); color:var(--htext); padding:12px 14px; border-top:4px solid var(--stripe); }
+.tf .body { padding:2px 14px 14px; }
+.tf .top { display:flex; justify-content:space-between; align-items:baseline; }
+.tf .name { font-size:20px; }
+.tf .num { font-family:'JetBrains Mono'; font-weight:700; font-size:18px; color:var(--num); }
+.tf .num small { font-family:Inter; font-weight:500; font-size:11px; margin-left:4px; color:var(--hsub); }
+.tf .lvl { display:flex; justify-content:space-between; margin:8px 0 5px; color:var(--hsub); }
+.tf .track { height:6px; border-radius:99px; background:var(--track); overflow:hidden; }
+.tf .fill { height:100%; border-radius:99px; background:linear-gradient(90deg,var(--sun),#ffb020); }
+.tf .streak { font-size:12px; margin-top:8px; color:var(--hsub); }
+.tf .streak b { color:var(--red); font-family:'JetBrains Mono'; }
+.tf .row { display:flex; align-items:center; gap:8px; padding:9px 0; font-size:13px; border-top:1px solid var(--line); }
+.tf .row:first-child { border-top:none; }
+.tf .chk { width:15px; height:15px; flex:none; border:1.5px solid var(--chk); border-radius:3px; }
+.tf .done { background:var(--green); border-color:var(--green); }
+.tf .meta { margin-left:auto; font-family:'JetBrains Mono'; font-size:12px; color:var(--sub); }
+.tf .tag { font-size:10px; padding:2px 6px; border-radius:4px; margin-left:4px; background:var(--tagbg); color:var(--tagfg); text-transform:uppercase; letter-spacing:.04em; font-weight:600; }
+.tf .tag.ok { background:rgba(123,211,137,.18); color:var(--okfg); }
+.tf .btn { margin-top:8px; padding:8px 12px; font-family:'Space Grotesk'; font-weight:700; display:inline-block; background:var(--sun); color:var(--ink); border-radius:6px; text-transform:uppercase; letter-spacing:.06em; font-size:11px; }
+.tf .btn.ghost { background:transparent; color:var(--text); box-shadow:inset 0 0 0 1.5px var(--ghost); margin-left:6px; }
+.tf .split { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:900px){ .tf .split{grid-template-columns:1fr} }
+</style>
+
+<h2>The theme so far</h2>
+<p class="subtitle">Space Grotesk + Inter. Sharp-edged soft cards. A fading grid background. Light mode: navy card header. Dark mode: charcoal page, pale header with a yellow stripe, and the navy chore area kept.</p>
+
+<div class="tf"><div class="split">
+<div class="mockup"><div class="mockup-header">Light</div><div class="mockup-body light"><div class="scr">
+  <div class="bar"><span class="h">t@sk4ce</span><a class="on cap" href="#">Today</a><a class="cap" href="#">Devices</a><a class="cap" href="#">Kids</a><a class="cap" href="#">Settings</a></div>
+  <div class="title"><span class="h">Tuesday</span><span class="cap" style="color:var(--sub)">1 chore needs you</span></div>
+  <div class="grid">
+    <div class="kid"><div class="head"><div class="top"><span class="name h">Maya</span><span class="num">240<small>pts</small></span></div><div class="lvl cap"><span>Level 7</span><span>62 / 100 XP</span></div><div class="track"><div class="fill" style="width:62%"></div></div><div class="streak"><b>12</b> day streak</div></div>
+      <div class="body"><div class="row"><span class="chk done"></span>Unload dishwasher<span class="tag ok">Waiting</span><span class="meta">+10</span></div><div class="row"><span class="chk"></span>Walk the dog<span class="tag">5pm</span><span class="meta">+15</span></div><span class="btn">Approve</span><span class="btn ghost">Pause</span></div></div>
+    <div class="kid"><div class="head"><div class="top"><span class="name h">Leo</span><span class="num">95<small>pts</small></span></div><div class="lvl cap"><span>Level 3</span><span>18 / 60 XP</span></div><div class="track"><div class="fill" style="width:30%"></div></div><div class="streak"><b>3</b> day streak</div></div>
+      <div class="body"><div class="row"><span class="chk done"></span>Make bed<span class="meta">+5</span></div><div class="row"><span class="chk"></span>Homework<span class="meta">+20</span></div><span class="btn ghost" style="margin-left:0">Pause</span></div></div>
+  </div>
+</div></div></div>
+<div class="mockup"><div class="mockup-header">Dark</div><div class="mockup-body dark"><div class="scr">
+  <div class="bar"><span class="h">t@sk4ce</span><a class="on cap" href="#">Today</a><a class="cap" href="#">Devices</a><a class="cap" href="#">Kids</a><a class="cap" href="#">Settings</a></div>
+  <div class="title"><span class="h">Tuesday</span><span class="cap" style="color:var(--sub)">1 chore needs you</span></div>
+  <div class="grid">
+    <div class="kid"><div class="head"><div class="top"><span class="name h">Maya</span><span class="num">240<small>pts</small></span></div><div class="lvl cap"><span>Level 7</span><span>62 / 100 XP</span></div><div class="track"><div class="fill" style="width:62%"></div></div><div class="streak"><b>12</b> day streak</div></div>
+      <div class="body"><div class="row"><span class="chk done"></span>Unload dishwasher<span class="tag ok">Waiting</span><span class="meta">+10</span></div><div class="row"><span class="chk"></span>Walk the dog<span class="tag">5pm</span><span class="meta">+15</span></div><span class="btn">Approve</span><span class="btn ghost">Pause</span></div></div>
+    <div class="kid"><div class="head"><div class="top"><span class="name h">Leo</span><span class="num">95<small>pts</small></span></div><div class="lvl cap"><span>Level 3</span><span>18 / 60 XP</span></div><div class="track"><div class="fill" style="width:30%"></div></div><div class="streak"><b>3</b> day streak</div></div>
+      <div class="body"><div class="row"><span class="chk done"></span>Make bed<span class="meta">+5</span></div><div class="row"><span class="chk"></span>Homework<span class="meta">+20</span></div><span class="btn ghost" style="margin-left:0">Pause</span></div></div>
+  </div>
+</div></div></div>
+</div></div>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<!-- README collage source (kids / parents / devices). Render: see README.md here. ?theme=light for light. -->
+<html><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400..700,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:transparent;color:#f4f4f2;font-family:'DM Sans',sans-serif;padding:20px}
+h1{margin:0 0 4px;font-size:22px}.sub{margin:0 0 22px;color:#a8a8a4;font-size:14px;max-width:900px}
+h2.sec{font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:#a8a8a4;margin:30px 0 12px}
+.canvas{position:relative;width:1200px;border-radius:18px;overflow:hidden}
+.shot{display:block;width:100%;box-shadow:0 18px 50px rgba(0,0,0,.55)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:15px;padding:7px 14px;border-radius:999px;background:#c3f832;color:#292928}
+.pill.ghost{background:#292928;color:#f4f4f2;border:1px solid #3d3d3b}
+.title{font-weight:800;letter-spacing:-.02em}
+.title em{font-style:normal;background:#c3f832;color:#292928;padding:0 8px;border-radius:8px}
+
+/* K2 v2: dark tablet centre, light phones fanned either side */
+.k2{height:760px;background:radial-gradient(ellipse at 50% 35%,#2e2e2c,#141413 72%)}
+.k2 .title{position:absolute;top:24px;left:0;right:0;text-align:center;font-size:28px}
+.tablet{position:absolute;left:300px;top:110px;width:600px;padding:14px;border-radius:30px;background:#0b0b0a;box-shadow:0 24px 60px rgba(0,0,0,.6),inset 0 0 0 2px #2a2a28;z-index:2}
+.tablet img{border-radius:16px;box-shadow:none}
+.k2 .ph{position:absolute;top:140px;width:230px;z-index:3}
+.k2 .ph img{border-radius:32px}
+.k2 .pa{left:110px;transform:rotate(-8deg)}
+.k2 .pc{left:860px;transform:rotate(8deg)}
+.k2 .lab{position:absolute;bottom:22px;z-index:6;left:0;right:0;display:flex;justify-content:center;gap:14px}
+
+/* P1 v2: one desktop with pinned callouts + phone overlay */
+.p1{height:720px;background:radial-gradient(ellipse at 30% 25%,#2e2e2c,#141413 75%)}
+.p1 .title{position:absolute;left:40px;top:24px;font-size:26px}
+.hero{position:absolute;left:40px;top:84px;width:900px}
+.hero img{border-radius:14px}
+.pin{position:absolute;transform:translate(-50%,-50%);width:30px;height:30px;border-radius:50%;background:#c3f832;color:#292928;font-weight:800;font-size:15px;display:grid;place-items:center;box-shadow:0 0 0 5px rgba(195,248,50,.28),0 6px 16px rgba(0,0,0,.5);z-index:4}
+.p1 .phone{position:absolute;right:46px;top:150px;width:250px;z-index:5}
+.p1 .phone img{border-radius:30px}
+.legend{position:absolute;right:316px;bottom:26px;left:40px;display:flex;flex-wrap:wrap;gap:8px 16px;z-index:6}
+.legend span{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;background:rgba(20,20,19,.85);padding:6px 12px 6px 6px;border-radius:999px;border:1px solid #3d3d3b}
+.legend b{width:22px;height:22px;border-radius:50%;background:#c3f832;color:#292928;display:grid;place-items:center;font-size:12px}
+.phlab{position:absolute;right:76px;top:112px;z-index:6}
+
+/* D1: how devices work */
+.d1{height:820px;background:radial-gradient(ellipse at 40% 30%,#2e2e2c,#141413 75%)}
+.d1 .title{position:absolute;left:40px;top:24px;font-size:26px}
+.flow{position:absolute;left:40px;right:40px;top:80px;display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.step{position:relative;display:flex;gap:12px;align-items:center;background:#292928;border:1px solid #3d3d3b;border-radius:16px;padding:12px 14px}
+.step .ic{flex:none;width:44px;height:44px;border-radius:12px;background:#c3f832;color:#292928;display:grid;place-items:center}
+.step .ic .ms{font-size:26px}
+.step b{display:block;font-size:15px}.step span{color:#a8a8a4;font-size:12.5px;line-height:1.3;display:block}
+.step:not(:last-child)::after{content:'';position:absolute;right:-12px;top:50%;width:10px;height:10px;border-top:3px solid #c3f832;border-right:3px solid #c3f832;transform:translate(0,-50%) rotate(45deg);z-index:2}
+.d1 .hero{top:200px;width:880px}
+.d1 .phone{position:absolute;right:46px;top:250px;width:250px;z-index:5}
+.d1 .phone img{border-radius:30px}
+.d1 .phlab{top:212px}
+.d1 .legend{right:316px}
+.ms{font-family:'Material Symbols Rounded';font-weight:600;font-variation-settings:'FILL' 1;line-height:1;display:inline-block}
+
+.canvas.light{background:radial-gradient(ellipse at 40% 30%,#ffffff,#eeeee9 75%);color:#292928}
+.canvas.light .step{background:#fff;border-color:#e4e4e1;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.canvas.light .step span{color:#5f5f5c}
+.canvas.light .step:not(:last-child)::after{border-color:#292928}
+.canvas.light .shot{box-shadow:0 18px 44px rgba(0,0,0,.18)}
+.canvas.light .legend span{background:#fff;border-color:#e4e4e1;color:#292928}
+.canvas.light .legend b{background:#292928;color:#c3f832}
+.canvas.light .pin{background:#292928;color:#c3f832;box-shadow:0 0 0 5px rgba(41,41,40,.18),0 6px 16px rgba(0,0,0,.25)}
+.canvas.light .pill.phlab{background:#292928;color:#c3f832}
+
+.canvas{margin-bottom:30px}
+.k2.light{background:radial-gradient(ellipse at 50% 35%,#ffffff,#eeeee9 72%)}
+.canvas.light .title{color:#292928}
+.canvas.light .pill.ghost{background:#fff;color:#292928;border-color:#e4e4e1}
+.canvas.light .lab .pill:not(.ghost){background:#292928;color:#c3f832}
+.p1.light{background:radial-gradient(ellipse at 30% 25%,#ffffff,#eeeee9 75%)}
+.canvas.light .title em{background:#c3f832;color:#292928}
+</style></head><body>
+<div class="canvas k2" id="kids">
+ <div class="title">Kids see <em>exactly what's next.</em></div>
+ <div class="tablet"><img class="shot" src="src/k-kid-d-c.png"></div>
+ <div class="ph pa"><img class="shot" src="src/k-phone1-l-t.png"></div>
+ <div class="ph pc"><img class="shot" src="src/k-phone2-l-t.png"></div>
+ <div class="lab"><span class="pill ghost">Chores, step by step</span><span class="pill">Tablet · dark mode</span><span class="pill ghost">Tell Mom or Dad</span></div>
+</div><div class="canvas p1" id="parents">
+ <div class="title">Everything that needs you, <em>on one screen.</em></div>
+ <div class="hero"><img class="shot" src="src/p-today-d-c.png">
+  <div class="pin" style="left:7%;top:20%">1</div>
+  <div class="pin" style="left:30%;top:31%">2</div>
+  <div class="pin" style="left:34%;top:69%">3</div>
+  <div class="pin" style="left:66%;top:31%">4</div>
+  <div class="pin" style="left:79.5%;top:5.5%">5</div>
+ </div>
+ <span class="pill phlab">6 · On your phone too</span>
+ <div class="phone"><img class="shot" src="src/p-phone1-d-t.png"></div>
+ <div class="legend">
+  <span><b>1</b>Every kid at a glance</span>
+  <span><b>2</b>Steps in order, with photos</span>
+  <span><b>3</b>Approve, send back or deduct</span>
+  <span><b>4</b>Reply on any chore or step</span>
+  <span><b>5</b>See what your kid sees</span>
+ </div>
+</div><div class="canvas d1" id="devices">
+ <div class="title">Only the kids' devices wait <em>for the chores.</em></div>
+ <div class="flow">
+  <div class="step"><div class="ic"><span class="ms">router</span></div><div><b>Spots new devices</b><span>The home box sees every phone, tablet and console that joins your Wi-Fi.</span></div></div>
+  <div class="step"><div class="ic"><span class="ms">person_add</span></div><div><b>You say whose it is</b><span>Give it to a kid, put it in a group, or mark it as yours or a guest's.</span></div></div>
+  <div class="step"><div class="ic"><span class="ms">checklist</span></div><div><b>Follows their chores</b><span>Paused until that kid's chores are approved, and only during allowed hours.</span></div></div>
+  <div class="step"><div class="ic"><span class="ms">shield</span></div><div><b>Tells you about tricks</b><span>Notices new addresses, hotspots and tries while locked.</span></div></div>
+ </div>
+ <div class="hero"><img class="shot" src="src/p-groups-d-c.png">
+  <div class="pin" style="left:5.2%;top:17%">1</div>
+  <div class="pin" style="left:34.8%;top:1.5%">2</div>
+  <div class="pin" style="left:66.5%;top:1.5%">3</div>
+  <div class="pin" style="left:93%;top:45%">4</div>
+  <div class="pin" style="left:62%;top:72%">5</div>
+ </div>
+ <span class="pill phlab">6 · Activity &amp; bypass alerts</span>
+ <div class="phone"><img class="shot" src="src/p-phone3-d-t.png"></div>
+ <div class="legend">
+  <span><b>1</b>Group devices</span>
+  <span><b>2</b>Who's online, open or locked</span>
+  <span><b>3</b>Pause now or unlock 30 min</span>
+  <span><b>4</b>Locks with the kids' chores</span>
+  <span><b>5</b>Allowed hours</span>
+ </div>
+</div>
+<script>
+if (new URLSearchParams(location.search).get('theme') === 'light') {
+  document.querySelectorAll('.canvas').forEach(c => c.classList.add('light'))
+  document.querySelectorAll('#parents img, #devices img').forEach(i => { i.src = i.src.replace('-d-', '-l-') })
+}
+</script>
+</body></html>

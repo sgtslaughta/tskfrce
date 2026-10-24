@@ -1,0 +1,36 @@
+/* Name colors and effects. Cards are always dark, so these are tuned for dark. */
+.flair-name {
+  font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.1;
+}
+.flair-card-sm .flair-name { font-size: 16px; }
+.flair-card-lg .flair-name { font-size: 26px; }
+.flair-ellipsis { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.flair-name-sun { color: #ffc93c; }
+.flair-name-mint { color: #7bd389; }
+.flair-name-coral { color: #ff8a70; }
+.flair-name-gold,
+.flair-name-holo,
+.flair-name-flame {
+  color: transparent;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+.flair-name-gold { background-image: linear-gradient(90deg, #ffc93c, #ff9a3c, #ffc93c); background-size: 200% 100%; }
+.flair-name-holo {
+  background-image: linear-gradient(90deg, #7bd3ff, #c58bff, #ff9ad5, #7bd3ff);
+  background-size: 200% 100%;
+}
+.flair-name-flame { background-image: linear-gradient(90deg, #ff6b4a, #ffc93c, #ff6b4a); background-size: 200% 100%; }
+
+.flair-emblem { flex: none; font-size: 1.1em; line-height: 1; }
+
+@keyframes flair-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: no-preference) {
+  .flair-name-gold,
+  .flair-name-holo,
+  .flair-name-flame { animation: flair-shimmer 4s linear infinite; }
+}

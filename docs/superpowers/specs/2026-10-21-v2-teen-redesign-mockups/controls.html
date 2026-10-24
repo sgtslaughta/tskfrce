@@ -1,0 +1,113 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap');
+.ck { --ink:#1d2b53; --sun:#ffc93c; --red:#ff6b4a; --green:#7bd389; font-family:Inter; }
+.ck .light { --bg:#f4f7fa; --card:#fff; --text:#1d2b53; --sub:#4a5a80; --field:#eef2f8; --edge:#c9d3e6; --ghost:#b6c1d8; }
+.ck .dark  { --bg:#1e2026; --card:#18213f; --text:#e8eeff; --sub:#8f9cc4; --field:#101833; --edge:#34416b; --ghost:#4b5a8c; }
+.ck .pane { background:var(--bg); color:var(--text); padding:14px; border-radius:10px; }
+.ck .panel { background:var(--card); border-radius:8px; padding:14px; display:grid; gap:12px; }
+.ck .h { font-family:'Space Grotesk'; font-weight:700; }
+.ck label { display:block; text-transform:uppercase; letter-spacing:.08em; font-size:10px; font-weight:600; color:var(--sub); margin-bottom:5px; }
+.ck .in { width:100%; box-sizing:border-box; font:inherit; font-size:14px; color:var(--text); padding:10px 12px; outline:none; }
+.ck .row2 { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.ck .btns { display:flex; gap:8px; flex-wrap:wrap; }
+.ck .b { font-family:'Space Grotesk'; font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:.06em; padding:10px 14px; border:none; cursor:pointer; }
+.ck .seg { display:flex; padding:3px; gap:3px; }
+.ck .seg span { flex:1; text-align:center; font-size:12px; font-weight:600; padding:7px 0; cursor:pointer; }
+.ck .tog { display:flex; align-items:center; justify-content:space-between; font-size:13px; }
+.ck .sw { width:38px; height:22px; border-radius:99px; background:var(--green); position:relative; }
+.ck .sw::after { content:""; position:absolute; right:3px; top:3px; width:16px; height:16px; border-radius:50%; background:#fff; }
+.ck .pair { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media (max-width:900px){ .ck .pair{grid-template-columns:1fr} }
+
+/* A: filled fields */
+.va .in { background:var(--field); border:1.5px solid transparent; border-radius:6px; }
+.va .in:focus,.va .in.f { border-color:var(--sun); box-shadow:0 0 0 3px rgba(255,201,60,.25); }
+.va .b.p { background:var(--sun); color:var(--ink); border-radius:6px; box-shadow:0 2px 0 #d9a520; }
+.va .b.s { background:transparent; color:var(--text); border-radius:6px; box-shadow:inset 0 0 0 1.5px var(--ghost); }
+.va .b.d { background:transparent; color:var(--red); border-radius:6px; }
+.va .seg { background:var(--field); border-radius:6px; } .va .seg .on { background:var(--card); border-radius:4px; box-shadow:0 1px 3px rgba(0,0,0,.15); }
+
+/* B: underline fields */
+.vb .in { background:transparent; border:none; border-bottom:2px solid var(--edge); border-radius:0; padding-left:0; }
+.vb .in:focus,.vb .in.f { border-bottom-color:var(--sun); }
+.vb .b.p { background:var(--text); color:var(--card); border-radius:2px; }
+.vb .b.s { background:transparent; color:var(--text); border-radius:2px; box-shadow:inset 0 0 0 1.5px var(--text); }
+.vb .b.d { background:transparent; color:var(--red); border-radius:2px; text-decoration:underline; }
+.vb .seg { border-bottom:2px solid var(--edge); padding:0; } .vb .seg span { border-bottom:2px solid transparent; margin-bottom:-2px; } .vb .seg .on { border-bottom-color:var(--sun); }
+
+/* C: outlined, notched corner */
+.vc .in { background:var(--card); border:1.5px solid var(--edge); border-radius:4px; }
+.vc .in:focus,.vc .in.f { border-color:var(--text); box-shadow:3px 3px 0 var(--sun); }
+.vc .b.p { background:var(--sun); color:var(--ink); clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px)); }
+.vc .b.s { background:var(--edge); color:var(--text); clip-path:polygon(0 0,calc(100% - 10px) 0,100% 10px,100% 100%,10px 100%,0 calc(100% - 10px)); }
+.vc .b.d { background:transparent; color:var(--red); }
+.vc .seg { border:1.5px solid var(--edge); border-radius:4px; } .vc .seg .on { background:var(--text); color:var(--card); border-radius:2px; }
+</style>
+
+<h2>Form controls: which style?</h2>
+<p class="subtitle">One "Add chore" form in each style. The first field shows its focused state. Try clicking into the fields.</p>
+
+<div class="ck options" style="display:block">
+<div class="option" data-choice="a" onclick="toggleSelect(this)" style="display:block;margin-bottom:20px">
+<h3>A. Soft filled</h3>
+<div class="pair va">
+  <div class="light"><div class="pane"><div class="panel">
+    <div><label>Chore</label><input class="in f" value="Walk the dog"></div>
+    <div class="row2"><div><label>Points</label><input class="in" value="15"></div><div><label>Due by</label><input class="in" value="5:00 PM"></div></div>
+    <div><label>Repeat</label><div class="seg"><span>Once</span><span class="on">Daily</span><span>Weekdays</span></div></div>
+    <div class="tog">Early finish bonus<span class="sw"></span></div>
+    <div class="btns"><button class="b p">Add chore</button><button class="b s">Cancel</button><button class="b d">Delete</button></div>
+  </div></div></div>
+  <div class="dark"><div class="pane"><div class="panel">
+    <div><label>Chore</label><input class="in f" value="Walk the dog"></div>
+    <div class="row2"><div><label>Points</label><input class="in" value="15"></div><div><label>Due by</label><input class="in" value="5:00 PM"></div></div>
+    <div><label>Repeat</label><div class="seg"><span>Once</span><span class="on">Daily</span><span>Weekdays</span></div></div>
+    <div class="tog">Early finish bonus<span class="sw"></span></div>
+    <div class="btns"><button class="b p">Add chore</button><button class="b s">Cancel</button><button class="b d">Delete</button></div>
+  </div></div></div>
+</div>
+<p class="subtitle" style="margin-top:6px">Tinted fields with no border until focused, then a yellow ring. The main button has a slight 3D edge. Modern app feel.</p>
+</div>
+
+<div class="option" data-choice="b" onclick="toggleSelect(this)" style="display:block;margin-bottom:20px">
+<h3>B. Minimal underline</h3>
+<div class="pair vb">
+  <div class="light"><div class="pane"><div class="panel">
+    <div><label>Chore</label><input class="in f" value="Walk the dog"></div>
+    <div class="row2"><div><label>Points</label><input class="in" value="15"></div><div><label>Due by</label><input class="in" value="5:00 PM"></div></div>
+    <div><label>Repeat</label><div class="seg"><span>Once</span><span class="on">Daily</span><span>Weekdays</span></div></div>
+    <div class="tog">Early finish bonus<span class="sw"></span></div>
+    <div class="btns"><button class="b p">Add chore</button><button class="b s">Cancel</button><button class="b d">Delete</button></div>
+  </div></div></div>
+  <div class="dark"><div class="pane"><div class="panel">
+    <div><label>Chore</label><input class="in f" value="Walk the dog"></div>
+    <div class="row2"><div><label>Points</label><input class="in" value="15"></div><div><label>Due by</label><input class="in" value="5:00 PM"></div></div>
+    <div><label>Repeat</label><div class="seg"><span>Once</span><span class="on">Daily</span><span>Weekdays</span></div></div>
+    <div class="tog">Early finish bonus<span class="sw"></span></div>
+    <div class="btns"><button class="b p">Add chore</button><button class="b s">Cancel</button><button class="b d">Delete</button></div>
+  </div></div></div>
+</div>
+<p class="subtitle" style="margin-top:6px">Underline-only fields and tabs. Square, monochrome buttons. Editorial and calm.</p>
+</div>
+
+<div class="option" data-choice="c" onclick="toggleSelect(this)" style="display:block">
+<h3>C. Gamer-cut</h3>
+<div class="pair vc">
+  <div class="light"><div class="pane"><div class="panel">
+    <div><label>Chore</label><input class="in f" value="Walk the dog"></div>
+    <div class="row2"><div><label>Points</label><input class="in" value="15"></div><div><label>Due by</label><input class="in" value="5:00 PM"></div></div>
+    <div><label>Repeat</label><div class="seg"><span>Once</span><span class="on">Daily</span><span>Weekdays</span></div></div>
+    <div class="tog">Early finish bonus<span class="sw"></span></div>
+    <div class="btns"><button class="b p">Add chore</button><button class="b s">Cancel</button><button class="b d">Delete</button></div>
+  </div></div></div>
+  <div class="dark"><div class="pane"><div class="panel">
+    <div><label>Chore</label><input class="in f" value="Walk the dog"></div>
+    <div class="row2"><div><label>Points</label><input class="in" value="15"></div><div><label>Due by</label><input class="in" value="5:00 PM"></div></div>
+    <div><label>Repeat</label><div class="seg"><span>Once</span><span class="on">Daily</span><span>Weekdays</span></div></div>
+    <div class="tog">Early finish bonus<span class="sw"></span></div>
+    <div class="btns"><button class="b p">Add chore</button><button class="b s">Cancel</button><button class="b d">Delete</button></div>
+  </div></div></div>
+</div>
+<p class="subtitle" style="margin-top:6px">Outlined fields with a yellow offset shadow on focus. Buttons with cut corners, like a game menu. Ties into the Steam / CS name-card vibe.</p>
+</div>
+</div>

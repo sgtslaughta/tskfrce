@@ -1,0 +1,46 @@
+const { chromium } = require('/w/node_modules/playwright')
+const B = 'http://127.0.0.1:3777', API = 'http://127.0.0.1:8777'
+const seen = (mac, ip, hostname, vendor) => fetch(API + '/api/v1/internal/devices/seen', { method: 'POST',
+  headers: { 'content-type': 'application/json', 'x-internal-token': 'shottoken' }, body: JSON.stringify({ mac, ip, hostname, vendor }) }).then(r => r.json())
+;(async () => {
+  const br = await chromium.launch()
+  const ctx = await br.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: 'light' })
+  const page = await ctx.newPage()
+  const ping = () => fetch(API + '/api/v1/internal/state', { headers: { 'x-internal-token': 'shottoken' } })
+  const shot = async (p) => { await ping(); await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' }); await page.screenshot({ path: p }) }
+  const out = (n) => `/s/shots/${n}.png`
+  const next = () => page.getByRole('button', { name: 'Next', exact: true }).click()
+  await page.goto(B + '/setup'); await page.waitForLoadState('networkidle')
+  await page.getByLabel('Family name').fill('The Riveras'); await page.waitForTimeout(400)
+  await shot(out('setup-family'))
+  await next()
+  await page.getByLabel('Your name').fill('Sam Rivera')
+  await page.getByLabel('Username').fill('sam')
+  await page.getByLabel('Password').fill('rivera-demo-2026')
+  await next(); await page.getByRole('heading', { name: 'Add kids' }).waitFor()
+  for (const [i, n] of ['Maya', 'Leo', 'Ava'].entries()) {
+    await page.getByLabel('Name', { exact: true }).fill(n)
+    await page.getByRole('button', { name: `Avatar`, exact: false }).nth(i * 2).click()
+    await page.getByRole('button', { name: 'Add kid' }).click()
+    await page.getByText(n, { exact: false }).first().waitFor()
+  }
+  await seen('02:aa:00:00:00:01', '127.0.0.1', "Maya's iPhone", 'Apple')
+  await seen('02:aa:00:00:00:02', '192.168.1.23', "Leo's Switch", 'Nintendo')
+  await seen('02:aa:00:00:00:03', '192.168.1.40', 'Living Room TV', 'Samsung')
+  await seen('02:aa:00:00:00:04', '192.168.1.31', "Family iPad", 'Apple')
+  await next(); await page.getByRole('heading', { name: 'Devices' }).waitFor()
+  await page.getByText("Maya's iPhone").waitFor()
+  const fs = (n) => page.locator('fieldset').filter({ hasText: n })
+  await fs("Maya's iPhone").getByText('Maya', { exact: false }).last().click()
+  await page.waitForTimeout(600)
+  await fs('Living Room TV').getByText('Guest').click()
+  await page.waitForTimeout(1200)
+  await shot(out('setup-devices'))
+  // skip the rest
+  for (let i = 0; i < 3; i++) await page.getByRole('button', { name: 'Skip' }).click()
+  await page.getByRole('heading', { name: 'Remote access' }).waitFor()
+  await page.getByRole('button', { name: 'Finish' }).click()
+  await page.waitForURL(B + '/'); await page.waitForLoadState('networkidle'); await page.waitForTimeout(1500)
+  await shot(out('today-empty'))
+  await br.close()
+})().catch(e => { console.error(e); process.exit(1) })

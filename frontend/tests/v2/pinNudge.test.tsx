@@ -1,0 +1,109 @@
+import { beforeAll, beforeEach, describe, expect, test } from '@jest/globals'
+import type { Mock } from 'jest-mock'
+import type { ReactNode } from 'react'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MantineProvider } from '@mantine/core'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { fridgeTheme } from '@/v2/theme'
+import { api } from '@/v2/api'
+import { PINsNudge } from '@/v2/today/PINsNudge'
+import { DeviceRow } from '@/v2/manage/DeviceRow'
+import { KidsPage } from '@/v2/manage/KidsPage'
+import type { Device, Kid, SharedDeviceNudge } from '@/v2/types'
+
+const push = jest.fn()
+let query: Record<string, string> = {}
+jest.mock('next/router', () => ({ useRouter: () => ({ query, push, replace: jest.fn() }) }))
+jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
+jest.mock('@/v2/api', () => ({ api: jest.fn() }))
+jest.mock('@/v2/today/DeviceQuickMenu', () => ({
+  DeviceQuickMenu: ({ children }: { children: ReactNode }) => <>{children}</>,
+}))
+jest.mock('@/v2/components/FridgeShell', () => ({
+  FridgeShell: ({ children }: { children: ReactNode }) => <>{children}</>,
+}))
+jest.mock('@/v2/components/RequireParent', () => ({
+  RequireParent: ({ children }: { children: ReactNode }) => <>{children}</>,
+}))
+
+const apiMock = api as unknown as Mock<(p: string) => Promise<unknown>>
+const kids: Kid[] = [
+  { id: 7, full_name: 'Maya', username: 'kid-maya', avatar: null, has_pin: false },
+  { id: 8, full_name: 'Leo', username: 'kid-leo', avatar: null, has_pin: false },
+]
+const nudge: SharedDeviceNudge = { device_id: 1, device_name: 'Family iPad', kid_ids: [7, 8], kid_names: ['Maya', 'Leo'] }
+const device: Device = {
+  id: 1, name: 'Family iPad', mac: 'aa:bb', vendor: null, status: 'assigned', owner_ids: [7, 8],
+  group_ids: [], online: false, override: null, last_seen: null, resisting: false, needs_pins: true,
+}
+const wrap = (ui: ReactNode) => (
+  <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+    <MantineProvider theme={fridgeTheme}>{ui}</MantineProvider>
+  </QueryClientProvider>
+)
+const TEXT = "Maya and Leo share Family iPad. Add PINs so they can't sign in as each other."
+
+beforeAll(() => {
+  window.matchMedia ??= ((q: string) => ({ matches: false, media: q, addEventListener() {}, removeEventListener() {} })) as never
+  global.ResizeObserver ??= class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  Element.prototype.scrollIntoView = jest.fn()
+})
+beforeEach(() => {
+  push.mockReset()
+  query = {}
+  apiMock.mockReset().mockImplementation(async (path) => (path === '/kids' ? kids : path === '/chores/' ? [] : {}))
+})
+
+describe('PINsNudge', () => {
+  test('renders names and device, and Set PINs opens the first kid PIN editor', async () => {
+    render(wrap(<PINsNudge nudges={[nudge]} />))
+    expect(screen.getByText(TEXT)).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: 'Set PINs' }))
+    expect(push).toHaveBeenCalledWith('/kids?section=kids&kid=7&pin=1')
+  })
+
+  test('hidden when list is empty', () => {
+    render(wrap(<PINsNudge nudges={[]} />))
+    expect(screen.queryByRole('button', { name: 'Set PINs' })).toBeNull()
+    expect(screen.queryByText(/share/)).toBeNull()
+  })
+})
+
+describe('DeviceRow needs_pins note', () => {
+  const row = (d: Device) => render(wrap(<DeviceRow device={d} kids={kids} />))
+
+  test('shows note and Set PINs navigates to the first owner', async () => {
+    row(device)
+    expect(screen.getByText("Maya and Leo share this device. Add PINs so they can't sign in as each other.")).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: 'Set PINs' }))
+    expect(push).toHaveBeenCalledWith('/kids?section=kids&kid=7&pin=1')
+  })
+
+  test('hidden when needs_pins is false', () => {
+    row({ ...device, needs_pins: false })
+    expect(screen.queryByRole('button', { name: 'Set PINs' })).toBeNull()
+  })
+})
+
+describe('deep link target', () => {
+  test('?section=kids&kid=7&pin=1 opens that kid drawer with the PIN field focused', async () => {
+    query = { section: 'kids', kid: '7', pin: '1' }
+    render(wrap(<KidsPage />))
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog.textContent).toContain('Edit kid')
+    const pin = await screen.findByLabelText('PIN (4 digits)')
+    expect(document.activeElement).toBe(pin)
+  })
+
+  test('no kid param leaves the drawer closed', async () => {
+    query = { section: 'kids' }
+    render(wrap(<KidsPage />))
+    await screen.findByText('Maya')
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
+})

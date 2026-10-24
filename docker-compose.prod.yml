@@ -1,0 +1,81 @@
+# t@sk4ce home-box stack (used by install.sh). No source mounts, production builds.
+# Settings come from .env next to this file (install.sh writes it).
+
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "${BACKEND_PORT:-127.0.0.1:8000}:8000"  # loopback only: the blocker reaches it here
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      DATA_DIR: /app/data
+      SECRET_KEY: ${SECRET_KEY:?run install.sh or set SECRET_KEY in .env}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?run install.sh or set INTERNAL_TOKEN in .env}
+      BOX_URL: ${BOX_URL:-}
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,backend}
+      CORS_ORIGINS: ${BOX_URL:-http://localhost:3000}
+      # Only the frontend proxy may set X-Real-IP
+      TRUSTED_PROXY_IPS: 127.0.0.1,::1,${TASK4CE_FRONTEND_IP:-172.29.50.10}
+    volumes:
+      - task4ce_data:/app/data
+    networks:
+      - task4ce
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        NODE_ENV: production
+    ports:
+      - "${FRONTEND_PORT:-0.0.0.0:3000}:3000"
+    environment:
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: /api/proxy
+      BACKEND_INTERNAL_URL: http://backend:8000
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      task4ce:
+        ipv4_address: ${TASK4CE_FRONTEND_IP:-172.29.50.10}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Pauses chosen devices' internet (docs/blocker.md). Host network, two capabilities, never privileged.
+  blocker:
+    build:
+      context: ./blocker
+    profiles: ["blocker"]  # .env sets COMPOSE_PROFILES=blocker; install.sh can skip it
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    environment:
+      BACKEND_URL: ${BLOCKER_BACKEND_URL:-http://127.0.0.1:8000}
+      INTERNAL_TOKEN: ${INTERNAL_TOKEN:?run install.sh or set INTERNAL_TOKEN in .env}
+      LAN_IFACE: ${LAN_IFACE:-}
+      PORTAL_REDIRECT_URL: ${BOX_URL:-http://task4ce.local:3000}/kid
+    restart: unless-stopped
+
+volumes:
+  task4ce_data:
+
+networks:
+  task4ce:
+    ipam:
+      config:
+        - subnet: ${TASK4CE_SUBNET:-172.29.50.0/24}
