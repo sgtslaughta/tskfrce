@@ -33,8 +33,7 @@ const PENDING = new Set(
   `p-all-badges p-badges-grid p-badges-pages p-banner-text p-catalogue p-custom-badges p-glyph-grid
   p-glyph-item p-glyph-label p-glyph-picker p-glyph-search p-history p-kid-actions p-kid-detail
   p-kid-header p-kid-meta p-list p-list-badges p-list-content p-list-item p-list-meta p-list-selected
-  p-list-title p-list-value p-more p-more-avatar p-more-info p-more-link p-more-list p-more-logout
-  p-more-profile p-more-section p-recent-awards p-request-actions p-request-balance p-request-card
+  p-list-title p-list-value p-recent-awards p-request-actions p-request-balance p-request-card
   p-request-cost p-request-header p-request-kid p-request-name p-requests p-reward-card p-reward-grid
   p-reward-icon p-reward-name p-reward-price p-rewards-pages p-screen-time p-state-actions p-state-body
   p-state-icon p-state-title p-thread-row`.split(/\s+/),
