@@ -87,6 +87,20 @@ describe('PointsForm', () => {
     await waitFor(() => expect(onClose).toHaveBeenCalled())
   })
 
+  test('deduct presets −5 / −10 / −20 fill the amount; Custom clears it', async () => {
+    await setup('deduct')
+    await userEvent.click(screen.getByRole('button', { name: '−20' }))
+    expect(screen.getByLabelText(/Points/)).toHaveValue('20')
+    await userEvent.click(screen.getByRole('button', { name: 'Custom' }))
+    expect(screen.getByLabelText(/Points/)).toHaveValue('')
+    await userEvent.click(screen.getByRole('button', { name: '−10' }))
+    await userEvent.type(screen.getByLabelText('Why?'), 'Broke a rule')
+    await userEvent.click(screen.getByRole('button', { name: 'Take points' }))
+    await waitFor(() =>
+      expect(apiMock).toHaveBeenCalledWith('/kids/3/deduct', { method: 'POST', body: { amount: 10, note: 'Broke a rule' } }),
+    )
+  })
+
   test('deduct posts to /deduct and reports what was taken', async () => {
     apiMock.mockResolvedValue({ balance: 5, deducted: 10 })
     await setup('deduct')

@@ -132,6 +132,7 @@
 [data-look='parent'] .pk-hint { color: var(--p-sub); font-size: 12px; line-height: 1.45; }
 [data-look='parent'] .pk-error { color: var(--p-red); font-size: 12px; font-weight: 600; }
 [data-look='parent'] .pk-row2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+[data-look='parent'] .pk-presets { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 
 [data-look='parent'] .pk-input {
   width: 100%;

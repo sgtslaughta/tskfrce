@@ -27,6 +27,11 @@ export interface ChatMessage {
   photo_url: string | null
   created_at: string
   edited_at?: string | null
+  /** chore threads: the step this answers */
+  step_id?: number | null
+  step_title?: string | null
+  /** a kid's ready-made note ("Out of supplies") */
+  note_label?: string | null
 }
 
 export interface ThreadPage {
@@ -98,10 +103,10 @@ export const useUploadChatPhoto = (kid = false) =>
 export const usePost = (kid = false) => {
   const refresh = useRefresh(kid)
   return useMutation({
-    mutationFn: ({ threadId, body, photoId }: { threadId: number; body?: string; photoId?: number }) =>
+    mutationFn: ({ threadId, body, photoId, stepId }: { threadId: number; body?: string; photoId?: number; stepId?: number }) =>
       api<ChatMessage>(`/chat/threads/${Number(threadId)}/messages`, {
         method: 'POST',
-        body: { body: body || null, photo_id: photoId ?? null },
+        body: { body: body || null, photo_id: photoId ?? null, ...(stepId ? { step_id: stepId } : {}) },
         kid,
       }),
     onSuccess: refresh,

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Button } from '@mantine/core'
 import { IconArrowLeft, IconMessage, IconX } from '@tabler/icons-react'
 import { refOf, useThread, useThreads, validRef, type ThreadKind } from '@/v2/hooks/useChat'
-import { OPEN_CHAT_EVENT } from './dock'
+import { OPEN_CHAT_EVENT, type ChatReply } from './dock'
 import { LoadError, LoadingCards } from '@/v2/components/States'
 import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { ThreadList } from './ThreadList'
@@ -32,6 +32,7 @@ function save(open: boolean, pick: Pick | null) {
 export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: number | null; meName?: string }) {
   const [open, setOpen] = useState(false)
   const [pick, setPick] = useState<Pick | null>(null)
+  const [reply, setReply] = useState<{ to: ChatReply; n: number } | null>(null) // n remounts the composer per request
   const launcher = useRef<HTMLButtonElement>(null)
   const panel = useRef<HTMLDivElement>(null)
   const threads = useThreads(kid)
@@ -45,9 +46,10 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
   }, [])
   useEffect(() => {
     const on = (e: Event) => {
-      const d = (e as CustomEvent<Pick>).detail
+      const d = (e as CustomEvent<Pick & { reply?: ChatReply }>).detail
       if (!d || !validRef(d.kind, d.ref)) return
       setPick({ kind: d.kind, ref: d.ref })
+      setReply((r) => (d.reply ? { to: d.reply, n: (r?.n ?? 0) + 1 } : null))
       setOpen(true)
       save(true, { kind: d.kind, ref: d.ref })
     }
@@ -62,6 +64,7 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
   const set = (o: boolean, p: Pick | null) => {
     setOpen(o)
     setPick(p)
+    if (p !== pick) setReply(null)
     save(o, p)
   }
   const close = () => {
@@ -121,7 +124,15 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
           </div>
           <div className="f-dock-body">
             {pick ? (
-              <ThreadView key={`${pick.kind}:${pick.ref}`} kind={pick.kind} refId={pick.ref} meId={meId} kid={kid} bare />
+              <ThreadView
+                key={`${pick.kind}:${pick.ref}:${reply?.n ?? 0}`}
+                kind={pick.kind}
+                refId={pick.ref}
+                meId={meId}
+                kid={kid}
+                bare
+                reply={reply?.to}
+              />
             ) : (
               <>
                 {threads.isError && !kid && <ErrorPanel kind="unreachable" error={threads.error} onRetry={() => threads.refetch()} />}

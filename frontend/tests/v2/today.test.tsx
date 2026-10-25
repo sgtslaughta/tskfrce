@@ -187,7 +187,7 @@ describe('TodayPage', () => {
     await userEvent.type(screen.getByLabelText('Reason'), 'Left plates')
     await userEvent.click(screen.getByRole('button', { name: /^deduct$/i }))
     await waitFor(() =>
-      expect(apiMock).toHaveBeenCalledWith('/kids/1/deduct', { method: 'POST', body: { amount: 20, note: 'Left plates' } }),
+      expect(apiMock).toHaveBeenCalledWith('/chores/11/deduct', { method: 'POST', body: { kid_id: 1, amount: 20, note: 'Left plates' } }),
     )
   })
 

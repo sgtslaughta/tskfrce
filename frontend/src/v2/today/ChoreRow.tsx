@@ -2,14 +2,10 @@ import type { TodayChore, TodayKid } from '../types'
 import { Chip } from '../parent/Chip'
 import { Icon } from '../parent/Icon'
 import { ChoreOpen } from './ChoreOpen'
+import { ChoreNote, NoteLine } from './ChoreNote'
 import { choreIcon } from './choreIcon'
-import { useClock } from './useClock'
-
-const stateChip = (state: string) => {
-  if (state === 'done') return <Chip tone="acc" icon="check">Approved</Chip>
-  if (state === 'needs_you') return <Chip tone="lav" icon="hourglass_top">Needs OK</Chip>
-  return <Chip tone="grey" icon="radio_button_unchecked">To do</Chip>
-}
+import { statusChip } from './statusChip'
+import { useClock, useNow } from './useClock'
 
 const wall = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
@@ -21,6 +17,7 @@ export function choreSub(c: TodayChore, clock: (iso: string) => string = (i) => 
   if (c.state === 'done') bits.push('approved')
   if ((c.subtasks_total ?? 0) > 1) bits.push(`${c.subtasks_done ?? 0} of ${c.subtasks_total} steps`)
   if (c.taken_by) bits.push(`by ${c.taken_by}`)
+  if (c.deducted) bits.push(`−${c.deducted} deducted`)
   return bits.join(' · ')
 }
 
@@ -36,10 +33,12 @@ export function ChoreRow({
   isOpen: boolean
   onToggle: () => void
 }) {
-  const ticked = chore.state !== 'todo'
+  const ticked = chore.state === 'done' || chore.state === 'needs_you'
   const sub = choreSub(chore, useClock())
+  const chips = statusChip(chore, useNow())
+  const kept = Math.max(0, chore.points - (chore.deducted ?? 0))
   return (
-    <div data-testid="chore-row" data-open={isOpen} data-state={chore.state} className="pt-chore">
+    <div data-testid="chore-row" data-open={isOpen} data-state={chore.state} data-flag={!!chore.note} className="pt-chore">
       <button className="pt-row" onClick={onToggle} aria-expanded={isOpen}>
         <span className="pt-car" aria-hidden>
           <Icon name="chevron_right" size={20} />
@@ -48,15 +47,32 @@ export function ChoreRow({
           {ticked && <Icon name="check" size={16} />}
         </span>
         <span className="pt-ty" aria-hidden>
-          <Icon name={choreIcon(chore.title)} size={18} />
+          <Icon name={chore.type?.glyph ?? choreIcon(chore.title)} size={18} />
         </span>
         <span className="pt-t">
           <span className="pt-title">{chore.title}</span>
           {sub && <small>{sub}</small>}
+          <NoteLine chore={chore} />
         </span>
-        {stateChip(chore.state)}
-        <span className="pt-pts">+{chore.points}</span>
+        <span className="pt-chips">
+          {chips.map((c) => (
+            <Chip key={c.label} tone={c.tone} icon={c.icon}>
+              {c.label}
+            </Chip>
+          ))}
+        </span>
+        <span className="pt-pts">
+          {chore.deducted ? (
+            <>
+              <s>+{chore.points}</s>
+              {kept}
+            </>
+          ) : (
+            `+${chore.points}`
+          )}
+        </span>
       </button>
+      <ChoreNote chore={chore} />
       {isOpen && <ChoreOpen chore={chore} kid={kid} />}
     </div>
   )

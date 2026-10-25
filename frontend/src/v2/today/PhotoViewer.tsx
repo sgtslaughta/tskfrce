@@ -4,6 +4,7 @@ import { Button, Modal, Textarea } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { tokenManager } from "@/services/tokenManager";
 import type { NeedsItem } from "../types";
+import { Icon } from "../parent/Icon";
 
 /** Fetch an authed image through the proxy and expose it as a blob URL. */
 export function useAuthImage(path: string | null | undefined) {
@@ -53,6 +54,7 @@ export function PhotoViewer({
     <Modal
       opened={!!item}
       onClose={close}
+      zIndex={400}
       fullScreen={!!phone}
       transitionProps={{ duration: 0 }}
       title={item ? `${item.kid_name ?? "A kid"} · ${item.title}` : ""}
@@ -90,12 +92,14 @@ export function PhotoViewer({
         {item && (
           <Button
             variant="subtle"
+            leftSection={<Icon name="chat" size={17} />}
             onClick={() => {
-              openChat("chore", String(item.id));
+              const photo = Number(item.thumb_url?.match(/(\d+)\/thumb$/)?.[1]) || undefined;
+              openChat("chore", String(item.id), { photo_id: photo, label: "Photo" });
               close();
             }}
           >
-            Discuss
+            Reply
           </Button>
         )}
       </div>

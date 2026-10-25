@@ -6,21 +6,15 @@ import { Chip } from '@/v2/parent/Chip'
 import { useToday } from '@/v2/hooks/useToday'
 import { useAuthImage } from '@/v2/today/PhotoViewer'
 import { KidFacts, initial } from '@/v2/today/KidFacts'
+import { statusChip } from '@/v2/today/statusChip'
+import { useNow } from '@/v2/today/useClock'
+import { noteText } from '@/v2/today/ChoreNote'
 import type { RunDetail, TodayKid } from '@/v2/types'
 import { proxyPath } from './ChatPhoto'
 
 const clock = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 const wall = (hhmm: string) => new Date(`2000-01-01T${hhmm}`).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 const MODE = { each: 'Each kid', race: 'Race (first one wins)', team: 'Team (points split)' }
-
-const stateChip = (state: string) =>
-  state === 'done' ? (
-    <Chip tone="acc" icon="check">Approved</Chip>
-  ) : state === 'needs_you' ? (
-    <Chip tone="lav" icon="hourglass_top">Needs OK</Chip>
-  ) : (
-    <Chip tone="grey" icon="radio_button_unchecked">To do</Chip>
-  )
 
 function PhotoTile({ path }: { path: string }) {
   const src = useAuthImage(path)
@@ -85,6 +79,7 @@ export function ThreadSidePanel({ run, kidIds }: { run?: RunDetail; kidIds: numb
   const mine = kids.filter((k) => kidIds.includes(k.id))
   // the Today row carries what the run detail lacks (mode, attempt, note, done time)
   const row = run && mine.flatMap((k) => k.chores).find((c) => c.id === run.id)
+  const now = useNow()
   return (
     <aside className="pc-side" aria-label="Details">
       {run && (
@@ -93,13 +88,35 @@ export function ThreadSidePanel({ run, kidIds }: { run?: RunDetail; kidIds: numb
             <Icon name="assignment" size={18} />
             Chore
           </h3>
-          <Kv k="Status">{stateChip(run.state)}</Kv>
+          <Kv k="Status">
+            <span className="pc-chips">
+              {statusChip({ ...run, deducted: row?.deducted }, now).map((c) => (
+                <Chip key={c.label} tone={c.tone} icon={c.icon}>
+                  {c.label}
+                </Chip>
+              ))}
+            </span>
+          </Kv>
+          {run.type && (
+            <Kv k="Type">
+              <span className="pc-type">
+                <Icon name={run.type.glyph} size={16} />
+                {run.type.name}
+              </span>
+            </Kv>
+          )}
           <Kv k="Points">+{run.points}</Kv>
           {run.due_time && <Kv k="Due">{wall(run.due_time)}</Kv>}
-          {row?.mode && <Kv k="Type">{MODE[row.mode]}</Kv>}
+          {row?.mode && <Kv k="Mode">{MODE[row.mode]}</Kv>}
           {row?.done_at && <Kv k="Done">{clock(row.done_at)}</Kv>}
           {row?.taken_by && <Kv k="Done by">{row.taken_by}</Kv>}
           {(row?.attempt ?? 1) > 1 && <Kv k="Try">{row!.attempt}</Kv>}
+          {run.note && (
+            <p className="pc-note" data-tone="amb">
+              <Icon name="flag" size={16} />
+              {noteText(run.note, clock)}
+            </p>
+          )}
           {row?.last_note && <p className="pc-note">Sent back: {row.last_note}</p>}
           <div className="pc-links">
             <Link href={`/?chore=${run.id}`} className="p-btn">

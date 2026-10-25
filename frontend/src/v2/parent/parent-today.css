@@ -67,7 +67,8 @@
 [data-look='parent'] .pt-chore[data-open='true'] .pt-ty { background: var(--p-card); }
 
 [data-look='parent'] .pt-t { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
-[data-look='parent'] .pt-row > :is(.p-chip, .pt-pts) { flex: none; }
+[data-look='parent'] .pt-row > :is(.p-chip, .pt-pts, .pt-chips) { flex: none; }
+[data-look='parent'] .pt-chips { display: flex; gap: 6px; }
 [data-look='parent'] .pt-t small { display: block; margin-top: 1px; color: var(--p-sub); font-weight: 400; font-size: 12px; }
 [data-look='parent'] .pt-chore[data-state='done'] > .pt-row .pt-title,
 [data-look='parent'] .pt-chore[data-state='needs_you'] > .pt-row .pt-title,
@@ -102,6 +103,18 @@
 
 [data-look='parent'] .pt-photos { display: flex; gap: 8px; flex-wrap: wrap; }
 [data-look='parent'] .pt-photos img { width: 80px; height: 60px; object-fit: cover; border-radius: 10px; border: 1px solid var(--p-line); }
+[data-look='parent'] .pt-photo { position: relative; display: block; }
+[data-look='parent'] .pt-photo .pt-rp { position: absolute; right: -5px; bottom: -5px; width: 22px; height: 22px; }
+
+/* kid note flag (mockup 03): amber wash over the row and its actions */
+[data-look='parent'] .pt-chore[data-flag='true'] { background: color-mix(in srgb, var(--p-amb) 55%, transparent); }
+[data-look='parent'] .pt-chore[data-flag='true'] > .pt-row:hover,
+[data-look='parent'] .pt-chore[data-flag='true'][data-open='true'] > .pt-row { background: color-mix(in srgb, var(--p-amb) 80%, transparent); }
+[data-look='parent'] .pt-note { display: flex; align-items: center; gap: 8px; margin-top: 6px; font-size: 12.5px; font-weight: 600; color: var(--p-ambink); }
+[data-look='parent'] .pt-note .ms { flex: none; }
+[data-look='parent'] .pt-note-acts { display: flex; flex-wrap: wrap; gap: 8px; padding: 0 16px 14px 124px; }
+[data-look='parent'] .pt-pts s { opacity: 0.6; margin-right: 3px; }
+[data-look='parent'] .pt-step > .p-chip { flex: none; }
 
 [data-look='parent'] .pt-acts {
   display: flex;
@@ -120,7 +133,7 @@
   gap: 8px;
   padding: 12px;
   border-radius: 14px;
-  border: 1px solid color-mix(in srgb, var(--p-red) 30%, var(--p-line));
+  background: var(--p-redbg);
   font-size: 13px;
 }
 [data-look='parent'] .pt-ded b { width: 100%; color: var(--p-red); }
@@ -137,7 +150,9 @@
   font-weight: 600;
 }
 [data-look='parent'] .pt-amt { cursor: pointer; }
-[data-look='parent'] .pt-amt[data-on='true'] { background: var(--p-redbg); border-color: var(--p-red); color: var(--p-red); }
+[data-look='parent'] .pt-amt { border-color: color-mix(in srgb, var(--p-red) 40%, transparent); color: var(--p-red); font-weight: 700; }
+[data-look='parent'] .pt-amt[data-on='true'] { background: var(--p-red); border-color: var(--p-red); color: var(--p-card); }
+[data-look='parent'] .pt-ded-kids { display: contents; }
 [data-look='parent'] .pt-amt-custom { width: 76px; }
 [data-look='parent'] .pt-ded input:not(.pt-amt-custom) { flex: 1; min-width: 160px; font-weight: 400; }
 
@@ -167,6 +182,8 @@
   [data-look='parent'] .pt-row { padding: 12px; gap: 10px; }
   [data-look='parent'] .pt-pts,
   [data-look='parent'] .pt-car { display: none; }
+  [data-look='parent'] .pt-note-acts { padding: 0 12px 12px 84px; }
+  [data-look='parent'] .pt-chips { flex-direction: column; align-items: flex-end; gap: 4px; }
 }
 
 /* phone: avatar strip and the kid's facts (desktop has them on the kid card) */
@@ -225,7 +242,7 @@
   [data-look='parent'] .p-today-detail { padding: 12px 16px 24px; }
 }
 [data-look='parent'] .pt-photo-ph { width: 80px; height: 60px; border-radius: 10px; background: var(--p-soft); }
-[data-look='parent'] .pt-ded[data-tone='ink'] { border-color: var(--p-line); }
+[data-look='parent'] .pt-ded[data-tone='ink'] { background: var(--p-soft); border: 1px solid var(--p-line); }
 [data-look='parent'] .pt-ded[data-tone='ink'] b { color: var(--p-ink); }
 
 /* phone chat bottom sheet: messages scroll, reply box stays pinned */
@@ -238,7 +255,7 @@
   outline-offset: 2px;
 }
 [data-look='parent'] .pt-strip-kid:focus-visible { border-radius: 8px; }
-[data-look='parent'] :is(.pt-rp, .pt-amt):hover { background: var(--p-soft); }
+[data-look='parent'] :is(.pt-rp, .pt-amt:not([data-on='true'])):hover { background: var(--p-soft); }
 [data-look='parent'] .pt-chat-head button { border-radius: 6px; }
 [data-look='parent'] .pt-chat-head button:hover { color: var(--p-ink); }
 [data-look='parent'] .pt-amt:active { transform: scale(0.96); }

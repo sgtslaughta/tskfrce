@@ -35,7 +35,7 @@ export function ParentBubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
     )
   }
   return (
-    <div className="pc-msg" data-mine={mine} data-testid={mine ? 'msg-mine' : 'msg-other'}>
+    <div className="pc-msg" data-mine={mine} data-note={!!m.note_label} data-testid={mine ? 'msg-mine' : 'msg-other'}>
       <MessageActions m={m} mine={mine} kid={false} onEdit={() => setEditing(true)}>
         <small>
           {mine ? 'You' : (m.author_name ?? 'Someone')} · {timeLabel(m.created_at)}
@@ -45,7 +45,14 @@ export function ParentBubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
               <span>edited</span>
             </>
           )}
+          {m.note_label && ` · note: ${m.note_label}`}
         </small>
+        {m.step_title && (
+          <span className="pc-quote">
+            <Icon name="subdirectory_arrow_right" size={14} />
+            {m.step_title}
+          </span>
+        )}
         {m.photo_url && <Photo url={m.photo_url} className="pc-photo" />}
         {editing ? <EditBox m={m} kid={false} onDone={() => setEditing(false)} /> : m.body}
       </MessageActions>

@@ -79,6 +79,14 @@ describe('ChatDock', () => {
     expect(apiMock.mock.calls.some(([p]) => p === '/chat/threads/private/3')).toBe(true)
   })
 
+  test('openChat with a reply target shows a removable Replying to bar', async () => {
+    wrap(<ChatDock meId={1} />)
+    act(() => openChat('private', '3', { label: 'Photo' }))
+    expect(await screen.findByTestId('replying')).toHaveTextContent('Replying to Photo')
+    await userEvent.click(screen.getByRole('button', { name: 'Stop replying' }))
+    expect(screen.queryByTestId('replying')).toBeNull()
+  })
+
   test('openChat with an invalid ref does nothing', () => {
     wrap(<ChatDock meId={1} />)
     act(() => openChat('private', '../x'))

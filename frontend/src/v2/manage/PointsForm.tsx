@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useBonus, useDeduct } from '@/v2/hooks/useKids'
 import { Icon } from '@/v2/parent/Icon'
 import type { Kid } from '@/v2/types'
 import { intError, nameOf } from './choreMeta'
 import { useSingle } from './useSingle'
 import { toastOk } from '../notify'
+import { DEDUCT_PRESETS } from '../today/DeductForm'
 
 /** Parent gives (bonus) or takes (deduct) points with a short note the kid sees. */
 export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | 'deduct'; onClose: () => void }) {
@@ -13,6 +14,8 @@ export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | '
   const deduct = useDeduct()
   const deductOnce = useSingle(deduct)
   const [amount, setAmount] = useState('')
+  const input = useRef<HTMLInputElement>(null)
+  const custom = amount !== '' && !DEDUCT_PRESETS.map(String).includes(amount)
   const [note, setNote] = useState('')
   const n = Number(amount)
   const err = intError(amount, 1, 500)
@@ -50,6 +53,24 @@ export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | '
         <Icon name={give ? 'add_circle' : 'remove_circle'} size={18} />
         {give ? 'Give bonus points' : 'Deduct points'}
       </h3>
+      {!give && (
+        <div className="pk-presets" role="group" aria-label="Amount">
+          {DEDUCT_PRESETS.map((a) => (
+            <button type="button" key={a} className="pt-amt" data-on={amount === String(a)} aria-pressed={amount === String(a)} onClick={() => setAmount(String(a))}>
+              −{a}
+            </button>
+          ))}
+          <button
+            type="button"
+            className="pt-amt"
+            data-on={custom}
+            aria-pressed={custom}
+            onClick={() => (setAmount(''), input.current?.focus())}
+          >
+            Custom
+          </button>
+        </div>
+      )}
       <div className="pk-row2">
         <label className="pk-field">
           <span className="pk-label">Points (1 to 500)</span>
@@ -57,7 +78,8 @@ export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | '
             className="pk-input"
             inputMode="numeric"
             aria-label="Points (1 to 500)"
-            autoFocus
+            ref={input}
+            autoFocus={give}
             value={amount}
             aria-invalid={amount !== '' && !!err}
             aria-describedby={amount !== '' && err ? 'pts-err' : undefined}

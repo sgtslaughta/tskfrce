@@ -205,3 +205,30 @@
 [data-look='parent'] .pc-caret-dot { position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--p-acc); }
 [data-look='parent'] .pc-sub { margin: 6px 0 0 18px; padding: 0 0 0 10px; border-left: 2px solid var(--p-line); overflow: visible; }
 [data-look='parent'] .pc-sub .pc-row { padding: 8px 10px; }
+
+/* replies: step quote line, kid note bubble, composer target chip */
+[data-look='parent'] .pc-quote { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 600; opacity: 0.8; }
+[data-look='parent'] .pc-msg[data-note='true'] { background: var(--p-amb); color: var(--p-ambink); }
+[data-look='parent'] .pc-msg[data-note='true'] small { color: inherit; opacity: 0.8; }
+[data-look='parent'] .pc-q {
+  flex: none;
+  max-width: 45%;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 4px 3px 8px;
+  border: 1px solid var(--p-line);
+  border-radius: 999px;
+  background: var(--p-card);
+  color: var(--p-sub);
+  font-size: 11px;
+  white-space: nowrap;
+}
+[data-look='parent'] .pc-q > span { overflow: hidden; text-overflow: ellipsis; }
+[data-look='parent'] .pc-q button { border: 0; background: none; color: inherit; cursor: pointer; display: grid; padding: 0; border-radius: 50%; }
+[data-look='parent'] .pc-q button:hover { color: var(--p-ink); }
+[data-look='parent'] .pc-chips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
+[data-look='parent'] .pc-type { display: inline-flex; align-items: center; gap: 6px; color: var(--p-ink); }
+[data-look='parent'] .pc-note[data-tone='amb'] { display: flex; align-items: center; gap: 6px; background: var(--p-amb); color: var(--p-ambink); font-weight: 600; }
+[data-look='parent'] .pc-reply textarea::placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useRef, useState } from 'react'
-import { Button } from '@mantine/core'
+import { Button, VisuallyHidden } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { IconPhoto } from '@tabler/icons-react'
 import { GifPicker } from '@/v2/chat/GifPicker'
@@ -24,6 +24,7 @@ import { EditBox, MessageActions } from './MessageActions'
 import { DaySep, ParentBubble, dayName } from './ParentBubble'
 import { ThreadHead } from './ThreadHead'
 import { ThreadSidePanel } from './ThreadSidePanel'
+import type { ChatReply } from './dock'
 
 const dayLabel = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
@@ -84,12 +85,15 @@ export function ThreadView({
   meId,
   kid = false,
   bare = false,
+  reply: replyIn,
 }: {
   kind: ThreadKind
   refId: string
   meId: number | null
   kid?: boolean
   bare?: boolean
+  /** start the composer answering this step/photo; the parent remounts (key) for a new one */
+  reply?: ChatReply
 }) {
   const thread = useThread(kind, refId, kid)
   const post = usePost(kid)
@@ -101,6 +105,7 @@ export function ThreadView({
   const [hasMore, setHasMore] = useState<boolean | null>(null)
   const [text, setText] = useState('')
   const [photoId, setPhotoId] = useState<number | null>(null)
+  const [reply, setReply] = useState<ChatReply | undefined>(replyIn)
   const fileRef = useRef<HTMLInputElement>(null)
   const endRef = useRef<HTMLDivElement>(null)
   const wideLay = useMediaQuery('(min-width: 1250px)')
@@ -137,9 +142,11 @@ export function ThreadView({
     once(async () => {
       if (!canSend || !data) return
       try {
-        await post.mutateAsync({ threadId: data.id, body: text.trim(), photoId: photoId ?? undefined })
+        // ponytail: a photo reply sends only the text; the API takes chat photos, not chore proof ids
+        await post.mutateAsync({ threadId: data.id, body: text.trim(), photoId: photoId ?? undefined, stepId: reply?.step_id })
         setText('')
         setPhotoId(null)
+        setReply(undefined)
       } catch (e) {
         toastFail(e)
       }
@@ -199,6 +206,18 @@ export function ThreadView({
               void send()
             }}
           >
+            {reply && (
+              <span className="pc-q" data-testid="replying" title={`Replying to ${reply.label}`}>
+                <Icon name="subdirectory_arrow_right" size={14} />
+                <span>
+                  <VisuallyHidden component="span">Replying to </VisuallyHidden>
+                  {reply.label}
+                </span>
+                <button type="button" aria-label="Stop replying" title="Stop replying" onClick={() => setReply(undefined)}>
+                  <Icon name="close" size={14} />
+                </button>
+              </span>
+            )}
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden aria-label="Photo file" onChange={(e) => pick(e.target.files?.[0])} />
             <button type="button" className="pc-ib" data-on={!!photoId} aria-label={photoId ? 'Photo added' : 'Add photo'} title={photoId ? 'Photo added' : 'Add photo'} disabled={upload.isPending} onClick={() => fileRef.current?.click()}>
               <Icon name={photoId ? 'image' : 'add_photo_alternate'} size={20} />
@@ -213,7 +232,7 @@ export function ThreadView({
               value={text}
               rows={1}
               maxLength={2000}
-              placeholder={data ? `Message ${data.title}…` : 'Write a message'}
+              placeholder={reply ? `Reply on ${reply.label}…` : data ? `Message ${data.title}…` : 'Write a message'}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
