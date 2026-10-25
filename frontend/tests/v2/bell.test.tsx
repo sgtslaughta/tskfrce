@@ -163,4 +163,39 @@ describe('Bell', () => {
     expect(groups[0].textContent).toBe('Today')
     expect(groups[1].textContent).toBe('Earlier')
   })
+
+  test('Show older fetches the next page before the last id and appends it', async () => {
+    apiMock.mockImplementation(async (p) =>
+      p === '/notifications'
+        ? { items: [item(9), item(8)], unread: 0, has_more: true }
+        : p === '/notifications?before=8'
+          ? { items: [item(7)], unread: 0, has_more: false }
+          : { kids: [], needs_you: [] },
+    )
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    expect(await screen.findByRole('button', { name: /^All · 2\+$/, hidden: true })).toBeTruthy()
+    await userEvent.click(await screen.findByRole('button', { name: 'Show older', hidden: true }))
+    expect(await screen.findByText('Item 7')).toBeTruthy()
+    expect(apiMock).toHaveBeenCalledWith('/notifications?before=8', { kid: false })
+    expect(screen.queryByRole('button', { name: 'Show older', hidden: true })).toBeNull()
+  })
+
+  test('a failed approve toasts the error and a double click sends one request', async () => {
+    const { notifications } = jest.requireMock('@mantine/notifications') as { notifications: { show: Mock } }
+    apiMock.mockImplementation(async (p, i) => {
+      if (p === '/notifications') return { items: [item(1, { run_id: 7, kind: 'chore_submitted' })], unread: 1, has_more: false }
+      if (p === '/today') return { kids: [], needs_you: [{ type: 'chore', id: 7 }] }
+      if (p === '/chores/7/approve' && i?.method === 'POST') {
+        await new Promise((r) => setTimeout(r, 100))
+        throw new Error("This chore isn't waiting for approval.")
+      }
+      return undefined
+    })
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    await userEvent.dblClick(await screen.findByRole('button', { name: /Approve/, hidden: true }))
+    await waitFor(() => expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: "This chore isn't waiting for approval." })))
+    expect(posts('/chores/7/approve')).toHaveLength(1)
+  })
 })

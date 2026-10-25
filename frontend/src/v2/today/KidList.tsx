@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useRouter } from 'next/router'
 import { Tabs } from '@mantine/core'
 import { useToday } from '../hooks/useToday'
 import type { TodayKid } from '../types'
@@ -19,7 +18,6 @@ const pct = (done = 0, total = 0) => (total ? (done / total) * 100 : 0)
 
 export function KidList({ onSelectKid, selectedKid }: { onSelectKid: (kid: TodayKid) => void; selectedKid?: TodayKid }) {
   const { data } = useToday()
-  const router = useRouter()
   const [tab, setTab] = useState<string | null>('today')
   const needsYouCount = (data?.needs_you?.length ?? 0)
 
@@ -40,17 +38,14 @@ export function KidList({ onSelectKid, selectedKid }: { onSelectKid: (kid: Today
                   key={kid.id}
                   className="p-kid-card"
                   data-selected={selectedKid?.id === kid.id}
-                  onClick={() => {
-                    onSelectKid(kid)
-                    router.push(`/?item=${kid.id}`, undefined, { shallow: true })
-                  }}
+                  onClick={() => onSelectKid(kid)}
                 >
                   <div className="p-kid-avatar">{initial(kid.name)}</div>
                   <div className="p-kid-info">
                     <div className="p-kid-name">{kid.name}</div>
                     <div className="p-kid-progress">
                       <span>{kid.done ?? 0} of {kid.total ?? 0} chores</span>
-                      {kid.progress && <span> · Level {kid.progress.level}</span>}
+                      {kid.progress && <span>Level {kid.progress.level}</span>}
                     </div>
                   </div>
                   <div className="p-kid-status">{stateChip(kid)}</div>

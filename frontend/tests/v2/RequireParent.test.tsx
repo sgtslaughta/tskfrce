@@ -74,12 +74,12 @@ describe('RequireParent', () => {
   })
 
   test('setup check failure shows a retry message', async () => {
-    apiMock.mockRejectedValueOnce(new Error('down')).mockResolvedValue({ needed: false })
+    apiMock.mockRejectedValueOnce(new TypeError('down')).mockResolvedValue({ needed: false })
     auth({})
     renderGuard()
-    expect(await screen.findByRole('heading', { name: "Can't reach your home box" })).toBeTruthy()
+    expect(await screen.findByText("Can't reach your home box")).toBeTruthy()
     expect(replace).not.toHaveBeenCalled()
-    await userEvent.click(screen.getByRole('button', { name: /try again/i }))
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('secret')).toBeTruthy()
   })
 

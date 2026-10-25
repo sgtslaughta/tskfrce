@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { Tooltip } from '@mantine/core'
 import type { NeedsItem } from '../types'
 import { useApproveChore, useSendBack } from '../hooks/useToday'
@@ -7,8 +8,11 @@ import { openChat } from '../chat/dock'
 import { Chip } from '../parent/Chip'
 import { Icon } from '../parent/Icon'
 import { EmptyState } from '../parent/states'
+import { notifications } from '@mantine/notifications'
+import { errorText } from '../errorText'
 import { toastFail, toastOk } from '../notify'
 import { PhotoViewer, useAuthImage } from './PhotoViewer'
+import { useClock } from './useClock'
 
 const KIND: Record<NeedsItem['type'], { label: string; icon: string; tone: 'lav' | 'red' | 'amb' | 'acc' }> = {
   chore: { label: 'Needs OK', icon: 'hourglass_top', tone: 'lav' },
@@ -17,7 +21,6 @@ const KIND: Record<NeedsItem['type'], { label: string; icon: string; tone: 'lav'
   reward: { label: 'Reward', icon: 'redeem', tone: 'amb' },
 }
 const isChore = (i: NeedsItem) => i.type === 'chore' || i.type === 'redo'
-const clock = (iso?: string | null) => (iso ? new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) : '')
 const ordinal = (n: number) => (n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`)
 
 function Thumb({ item, onOpen }: { item: NeedsItem; onOpen: () => void }) {
@@ -32,6 +35,9 @@ function Thumb({ item, onOpen }: { item: NeedsItem; onOpen: () => void }) {
 
 /** "Needs you": chores, redos, screen time and reward requests waiting on a parent, all kids. */
 export function NeedsYouList({ items }: { items: NeedsItem[] }) {
+  const clock = useClock()
+  const qc = useQueryClient()
+  const refresh = () => qc.invalidateQueries({ queryKey: ['today'] }) // a failed item may be gone or already handled
   const approve = useApproveChore()
   const sendBack = useSendBack()
   const decide = useDecideRedemption()
@@ -39,39 +45,58 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
   const [sending, setSending] = useState<number | null>(null)
   const [note, setNote] = useState('')
   const [busy, setBusy] = useState<string | null>(null)
+  const lock = useRef(false) // synchronous guard: Enter-mashing fires before React re-renders
 
   if (items.length === 0) {
     return <EmptyState icon="celebration" tone="acc" title="All caught up" body="Nothing needs your OK right now. Nice." />
   }
 
   const approveOne = (i: NeedsItem) => (isChore(i) ? approve.mutateAsync(i.id) : decide.mutateAsync({ id: i.id, approve: true }))
-  const run = (p: Promise<unknown>, ok: string, key?: string) => {
-    if (key) setBusy(key)
-    return p.then(() => toastOk(ok), toastFail).finally(() => setBusy(null))
+  const run = (go: () => Promise<unknown>, ok: string, key?: string) => {
+    if (lock.current) return Promise.resolve()
+    lock.current = true
+    setBusy(key ?? 'x')
+    return go()
+      .then(() => (toastOk(ok), true), (e) => (toastFail(e), refresh(), false))
+      .finally(() => ((lock.current = false), setBusy(null)))
   }
+  /** Approve every item, one by one; a failure doesn't stop the rest and the toast counts both. */
   const approveAll = async () => {
+    if (lock.current) return
+    lock.current = true
+    setBusy('all')
     let n = 0
+    let failed: unknown[] = []
     for (const i of items) {
       try {
         await approveOne(i)
         n++
       } catch (e) {
-        toastFail(e)
-        break
+        failed = [...failed, e]
       }
     }
+    lock.current = false
+    setBusy(null)
+    if (failed.length) refresh()
     if (n) toastOk(n === 1 ? 'Approved' : `Approved ${n} items`)
+    if (failed.length) {
+      notifications.show({
+        title: `${failed.length} ${failed.length === 1 ? 'item' : 'items'} not approved`,
+        message: errorText(failed[0]),
+        color: 'fridgeRed',
+      })
+    }
   }
-  const submitSendBack = (id: number, text: string) => {
-    setSending(null)
-    setNote('')
-    return run(sendBack.mutateAsync({ id, note: text }), 'Sent back')
+  /** The note box stays open (with its text) if the request fails. */
+  const submitSendBack = async (id: number, text: string) => {
+    const ok = await run(() => sendBack.mutateAsync({ id, note: text }), 'Sent back', `s${id}`)
+    if (ok) (setSending(null), setNote(''))
   }
 
   return (
     <section className="p-needs-list" aria-label="Needs you">
       {items.length > 1 && (
-        <button type="button" className="p-btn" data-variant="accent" data-loading={busy === 'all'} onClick={async () => { setBusy('all'); await approveAll(); setBusy(null) }}>
+        <button type="button" className="p-btn" data-variant="accent" disabled={!!busy} data-loading={busy === 'all'} onClick={approveAll}>
           <Icon name="done_all" size={17} />
           Approve all {items.length}
         </button>
@@ -114,13 +139,13 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
               />
             )}
             <div className="p-needs-actions">
-              <button type="button" className="p-btn" data-variant="accent" data-loading={busy === `a${i.type}${i.id}`} onClick={() => run(approveOne(i), 'Approved', `a${i.type}${i.id}`)}>
+              <button type="button" className="p-btn" data-variant="accent" disabled={!!busy} data-loading={busy === `a${i.type}${i.id}`} onClick={() => run(() => approveOne(i), 'Approved', `a${i.type}${i.id}`)}>
                 <Icon name="check" size={16} />
                 Approve
               </button>
               {chore ? (
                 sending === i.id ? (
-                  <button type="button" className="p-btn" disabled={!note.trim() || sendBack.isPending} data-loading={sendBack.isPending} onClick={() => submitSendBack(i.id, note.trim())}>
+                  <button type="button" className="p-btn" disabled={!note.trim() || !!busy} data-loading={busy === `s${i.id}`} onClick={() => submitSendBack(i.id, note.trim())}>
                     <Icon name="undo" size={16} />
                     Send back
                   </button>
@@ -131,7 +156,7 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
                   </button>
                 )
               ) : (
-                <button type="button" className="p-btn" data-variant="red" data-loading={busy === `d${i.id}`} onClick={() => run(decide.mutateAsync({ id: i.id, approve: false }), 'Declined', `d${i.id}`)}>
+                <button type="button" className="p-btn" data-variant="red" disabled={!!busy} data-loading={busy === `d${i.id}`} onClick={() => run(() => decide.mutateAsync({ id: i.id, approve: false }), 'Declined', `d${i.id}`)}>
                   <Icon name="close" size={16} />
                   Decline
                 </button>
@@ -150,7 +175,7 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
       <PhotoViewer
         item={viewing}
         onClose={() => setViewing(null)}
-        onApprove={(id) => run(approve.mutateAsync(id), 'Approved')}
+        onApprove={(id) => run(() => approve.mutateAsync(id), 'Approved', `p${id}`)}
         onSendBack={submitSendBack}
       />
     </section>

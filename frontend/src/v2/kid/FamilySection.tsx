@@ -15,7 +15,7 @@ export function FamilySection({ meId }: { meId?: number | null }) {
   if (!board && !sibs.length) return null
   return (
     <StickerCard>
-      <section aria-label="Family" style={{ display: 'grid', gap: 12 }}>
+      <section aria-label="Family" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 12 }}>
         <h2 style={{ margin: 0 }}>Family</h2>
         {board && <Leaderboard rows={board.rows} kid={kidAuth} bare />}
         {sibs.map((p) => (
@@ -26,7 +26,7 @@ export function FamilySection({ meId }: { meId?: number | null }) {
             style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center', width: '100%', minHeight: 48, borderTop: '1px solid var(--f-line)' }}
           >
             <span aria-hidden>{p.avatar}</span>
-            <b style={{ flex: 1 }}>{p.name}</b>
+            <b style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{p.name}</b>
             <span className="f-pill">{`Lv ${p.level} · ${p.title}`}</span>
           </button>
         ))}

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
 import { Drawer, Tooltip } from '@mantine/core'
 import type { TodayKid, TodayChore } from '../types'
@@ -7,11 +7,12 @@ import { useApproveChore, useSendBack } from '../hooks/useToday'
 import { useDeduct } from '../hooks/useKids'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { Icon } from '../parent/Icon'
-import { withUndo } from '../notify'
+import { errorText } from '../errorText'
+import { toastFail, toastOk, withUndo } from '../notify'
 import { ThreadView } from '../chat/ThreadView'
 import { useAuthImage } from './PhotoViewer'
+import { useClock } from './useClock'
 
-const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 const AMOUNTS = [5, 10, 20]
 
 function AuthImg({ path, alt }: { path: string; alt: string }) {
@@ -22,10 +23,11 @@ function AuthImg({ path, alt }: { path: string; alt: string }) {
 
 /** Open chore: steps, photos and actions on the left; the chore's chat on the right when open. */
 export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) {
-  const { data: run } = useRunDetail(chore.id)
+  const { data: run, isError, error, refetch } = useRunDetail(chore.id)
   const approve = useApproveChore()
   const sendBack = useSendBack()
   const deduct = useDeduct()
+  const clock = useClock()
   const meId = Number(useUnifiedAuth().user?.id) || null
   const isMobile = useMediaQuery('(max-width: 768px)')
   const [chat, setChat] = useState(false)
@@ -35,7 +37,21 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
   const [why, setWhy] = useState('')
   const [back, setBack] = useState(false)
   const [note, setNote] = useState('')
+  const [approving, setApproving] = useState(false)
+  const sending = useRef(false) // synchronous guard: a double click or Enter-mash fires before React re-renders
 
+  if (!run && isError)
+    return (
+      <div className="pt-open" role="alert">
+        <div className="pt-open-err">
+          <span>{errorText(error)}</span>
+          <button type="button" className="p-btn" onClick={() => refetch()}>
+            <Icon name="refresh" size={16} />
+            Try again
+          </button>
+        </div>
+      </div>
+    )
   if (!run) return null
   const name = kid.name ?? 'your kid'
   const take = amount ?? Number(custom)
@@ -79,9 +95,17 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
               <button
                 className="p-btn"
                 data-variant="accent"
-                disabled={approve.isPending}
-                data-loading={approve.isPending}
-                onClick={() => withUndo(() => approve.mutateAsync(chore.id), `Approved +${chore.points}`)}
+                disabled={approving || approve.isPending}
+                data-loading={approving || approve.isPending}
+                onClick={() => {
+                  if (sending.current) return
+                  sending.current = true
+                  setApproving(true)
+                  void withUndo(() => approve.mutateAsync(chore.id), `Approved +${chore.points}`).finally(() => {
+                    sending.current = false
+                    setApproving(false)
+                  })
+                }}
               >
                 <Icon name="check" size={17} />
                 Approve +{chore.points}
@@ -108,7 +132,16 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
             data-tone="ink"
             onSubmit={(e) => {
               e.preventDefault()
-              sendBack.mutate({ id: chore.id, note: note.trim() }, { onSuccess: () => setBack(false) })
+              if (sending.current || !note.trim()) return
+              sending.current = true
+              sendBack.mutate(
+                { id: chore.id, note: note.trim() },
+                {
+                  onSuccess: () => (setBack(false), setNote(''), toastOk('Sent back')),
+                  onError: toastFail,
+                  onSettled: () => (sending.current = false),
+                },
+              )
             }}
           >
             <b>What should {name} fix?</b>
@@ -124,7 +157,15 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
             className="pt-ded"
             onSubmit={(e) => {
               e.preventDefault()
-              deduct.mutate({ id: kid.id, amount: take, note: why }, { onSuccess: () => setDed(false) })
+              if (sending.current || !(take > 0) || !why.trim()) return
+              sending.current = true
+              deduct.mutate(
+                { id: kid.id, amount: take, note: why.trim() },
+                {
+                  onSuccess: () => (setDed(false), setWhy(''), setCustom(''), setAmount(10), toastOk(`Deducted ${take} from ${name}`)),
+                  onSettled: () => (sending.current = false),
+                },
+              )
             }}
           >
             <b>Deduct for {chore.title}</b>

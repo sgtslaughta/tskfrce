@@ -26,7 +26,6 @@ export function cancelSignOut(): void {
 /** Parent-only route guard: first-run setup → /setup, logged out → /login?next=, kid → /kid. */
 export function RequireParent({ children }: { children: ReactNode }) {
   const router = useRouter()
-  useLook('parent')
   const { isInitialized, isAuthenticated, user } = useUnifiedAuth()
   const setup = useQuery({
     queryKey: SETUP_KEY,
@@ -58,19 +57,27 @@ export function RequireParent({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target])
 
-  if (setup.isError) {
-    return (
-      <main className="p-gate">
-        <ErrorPanel kind="unreachable" onRetry={() => setup.refetch()} />
-      </main>
-    )
-  }
-  if (target !== '') {
-    return (
-      <main className="p-gate" role="status" aria-label="Loading">
-        <span className="p-gate-spin" />
-      </main>
-    )
-  }
+  if (setup.isError) return <Unreachable error={setup.error} onRetry={() => setup.refetch()} />
+  if (target !== '') return <Checking />
   return <>{children}</>
+}
+
+/** Deciding where to go (setup / login / kid): a quiet spinner in the parent look. */
+function Checking() {
+  useLook('parent')
+  return (
+    <main className="p-guard-state" role="status" aria-label="Loading">
+      <span className="p-gate-spin" />
+    </main>
+  )
+}
+
+/** The home box didn't answer the very first request: the mockup-05 panel, in the parent look. */
+function Unreachable({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+  useLook('parent')
+  return (
+    <main className="p-guard-state">
+      <ErrorPanel kind="unreachable" error={error instanceof TypeError ? undefined : error} onRetry={onRetry} />
+    </main>
+  )
 }

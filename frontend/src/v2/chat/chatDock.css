@@ -33,7 +33,7 @@
   background: var(--p-acc); color: var(--p-ink); box-shadow: 0 2px 12px rgba(0,0,0,0.15);
 }
 [data-look='parent'] .f-dock-btn:focus-visible { outline: 3px solid var(--p-ink); }
-[data-look='parent'] .f-dock-badge { background: var(--p-red); color: white; }
+[data-look='parent'] .f-dock-badge { background: var(--p-red); color: var(--p-card); }
 [data-look='parent'] .f-dock {
   background: var(--p-card); color: var(--p-ink); border: 1px solid var(--p-line);
   box-shadow: 0 4px 16px rgba(0,0,0,0.12);

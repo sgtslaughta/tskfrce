@@ -84,7 +84,7 @@ export function KidChecklist({
             style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', minHeight: 56 }}
           >
             <ChoreChip state={c.state} />
-            <span className="f-display" style={{ flex: '1 1 140px', fontSize: 22, fontWeight: 600 }}>
+            <span className="f-display" style={{ flex: '1 1 140px', minWidth: 0, overflowWrap: 'anywhere', fontSize: 22, fontWeight: 600 }}>
               {c.title}
               {c.mode === 'team' && (
                 <span style={{ marginLeft: 8, fontSize: 14, fontWeight: 800, color: 'var(--f-sub)' }}>Team</span>

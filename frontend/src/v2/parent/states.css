@@ -64,7 +64,6 @@
 }
 
 /* route guard: full-page error / loading before the shell mounts */
-[data-look='parent'] .p-gate { min-height: 100vh; display: grid; place-items: center; background: var(--p-bg); color: var(--p-ink); }
 [data-look='parent'] .p-gate-spin {
   width: 28px;
   height: 28px;
@@ -76,3 +75,5 @@
   [data-look='parent'] .p-gate-spin { animation: p-gate-spin 0.8s linear infinite; }
 }
 @keyframes p-gate-spin { to { transform: rotate(360deg); } }
+/* full-page error before the shell exists (route guard) */
+[data-look='parent'] .p-guard-state { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--p-bg); }
