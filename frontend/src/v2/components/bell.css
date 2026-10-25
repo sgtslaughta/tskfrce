@@ -160,8 +160,9 @@
 }
 
 .p-bell-item {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 0 10px;
   padding: 10px 8px;
   border-radius: 12px;
   position: relative;
@@ -216,7 +217,7 @@
 }
 
 .p-bell-text {
-  flex: 1;
+  min-width: 0;
   font-size: 13px;
   font-weight: 600;
   padding-right: 14px;
@@ -237,10 +238,22 @@
 }
 
 .p-bell-actions {
+  grid-column: 2;
   display: flex;
   gap: 6px;
-  margin-top: 7px;
   flex-wrap: wrap;
+}
+.p-bell-actions:not(:empty) { margin-top: 7px; }
+.p-bell-actions .p-btn { padding: 5px 11px; font-size: 12px; }
+.p-bell-note {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--p-line);
+  background: var(--p-card);
+  color: var(--p-ink);
+  font: inherit;
+  font-size: 12.5px;
 }
 
 .p-bell-footer {

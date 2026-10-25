@@ -4,14 +4,18 @@ import { useRouter } from 'next/router'
 import { Button, Drawer, Popover } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { useInbox, useMarkAllRead, useMarkRead, type InboxItem } from '../hooks/useInbox'
-import { useApproveChore, useSendBack } from '../hooks/useToday'
+import { useApproveChore, useSendBack, useToday } from '../hooks/useToday'
 import { useDecideRedemption } from '../hooks/useRewards'
 import { Icon } from '../parent/Icon'
 
 type FilterKind = 'all' | 'needs-you' | 'alerts'
 
-const isNeedsYou = (n: InboxItem): boolean =>
-  n.kind === 'chore_submitted' || n.kind === 'redemption_request'
+/** Chore runs and redemptions still waiting on a parent (a stale notification gets no buttons). */
+type Pending = { runs: Set<number>; redemptions: Set<number> }
+
+const isNeedsYou = (n: InboxItem, p: Pending): boolean =>
+  (n.kind === 'chore_submitted' && !!n.run_id && p.runs.has(n.run_id)) ||
+  (n.kind === 'redemption_request' && !!n.redemption_id && p.redemptions.has(n.redemption_id))
 
 const isAlert = (n: InboxItem): boolean =>
   n.kind === 'new_device' || n.kind === 'device_resisting'
@@ -47,16 +51,26 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
   const approve = useApproveChore()
   const sendBack = useSendBack()
   const decideRedemption = useDecideRedemption()
+  const today = useToday(!kid).data
+  const pending = useMemo<Pending>(() => {
+    const needs = today?.needs_you ?? []
+    return {
+      runs: new Set(needs.filter((i) => i.type === 'chore' || i.type === 'redo').map((i) => i.id)),
+      redemptions: new Set(needs.filter((i) => i.type === 'reward' || i.type === 'screen_time').map((i) => i.id)),
+    }
+  }, [today?.needs_you])
   const items = useMemo(() => inbox.data?.items ?? [], [inbox.data?.items])
   const [filter, setFilter] = useState<FilterKind>('all')
+  const [sending, setSending] = useState<number | null>(null)
+  const [note, setNote] = useState('')
 
   const filtered = useMemo(() => {
     return items.filter((n) => {
-      if (filter === 'needs-you') return isNeedsYou(n)
+      if (filter === 'needs-you') return isNeedsYou(n, pending)
       if (filter === 'alerts') return isAlert(n)
       return true
     })
-  }, [items, filter])
+  }, [items, filter, pending])
 
   const byGroup = useMemo(() => {
     const today: InboxItem[] = []
@@ -70,10 +84,10 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
 
   const counts = useMemo(() => {
     const all = items.length
-    const needsYou = items.filter(isNeedsYou).length
+    const needsYou = items.filter((n) => isNeedsYou(n, pending)).length
     const alerts = items.filter(isAlert).length
     return { all, needsYou, alerts }
-  }, [items])
+  }, [items, pending])
 
   const handleApprove = (n: InboxItem) => {
     if (!n.read) read.mutate(n.id)
@@ -82,7 +96,14 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
 
   const handleSendBack = (n: InboxItem) => {
     if (!n.read) read.mutate(n.id)
-    if (n.run_id) sendBack.mutate({ id: n.run_id, note: '' })
+    if (n.run_id && note.trim()) sendBack.mutate({ id: n.run_id, note: note.trim() })
+    setSending(null)
+    setNote('')
+  }
+
+  const handleRedeem = (n: InboxItem) => {
+    if (!n.read) read.mutate(n.id)
+    if (n.redemption_id) decideRedemption.mutate({ id: n.redemption_id, approve: true })
   }
 
   const handleDecline = (n: InboxItem) => {
@@ -156,21 +177,37 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
                       {n.body && <div className="p-bell-sub">{n.body}</div>}
                     </div>
                     <div className="p-bell-actions">
-                      {n.kind === 'chore_submitted' && (
+                      {isNeedsYou(n, pending) && n.kind === 'chore_submitted' && (
                         <>
-                          <button type="button" className="p-btn" onClick={() => handleApprove(n)}>
+                          {sending === n.id && (
+                            <input
+                              className="p-bell-note"
+                              aria-label="Note for sending back"
+                              placeholder="What should they fix?"
+                              value={note}
+                              maxLength={500}
+                              autoFocus
+                              onChange={(e) => setNote(e.target.value)}
+                            />
+                          )}
+                          <button type="button" className="p-btn" data-variant="accent" onClick={() => handleApprove(n)}>
                             <Icon name="check" size={16} />
                             Approve {n.points ? `+${n.points}` : ''}
                           </button>
-                          <button type="button" className="p-btn" onClick={() => handleSendBack(n)}>
+                          <button
+                            type="button"
+                            className="p-btn"
+                            disabled={sending === n.id && !note.trim()}
+                            onClick={() => (sending === n.id ? handleSendBack(n) : (setSending(n.id), setNote('')))}
+                          >
                             <Icon name="undo" size={16} />
                             Send back
                           </button>
                         </>
                       )}
-                      {n.kind === 'redemption_request' && (
+                      {isNeedsYou(n, pending) && n.kind === 'redemption_request' && (
                         <>
-                          <button type="button" className="p-btn" onClick={() => handleApprove(n)}>
+                          <button type="button" className="p-btn" data-variant="accent" onClick={() => handleRedeem(n)}>
                             <Icon name="check" size={16} />
                             Approve
                           </button>
@@ -219,11 +256,6 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
           )}
         </div>
       )}
-      <div className="p-bell-footer">
-        <span>
-          See all <Icon name="chevron_right" size={18} />
-        </span>
-      </div>
     </div>
   )
 }
