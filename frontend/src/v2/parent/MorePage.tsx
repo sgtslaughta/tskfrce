@@ -7,7 +7,7 @@ import { Icon } from './Icon'
 
 const SETTINGS_SECTIONS = [
   { href: '/settings?section=family', label: 'Family', sub: 'Name, time zone, points', icon: 'home' },
-  { href: '/settings?section=screen', label: 'Screen time', sub: 'Price, daily cap, early unlock', icon: 'timer' },
+  { href: '/settings?section=screen', label: 'Screen time', sub: 'Price and early unlock', icon: 'timer' },
   { href: '/settings?section=hours', label: 'Hours', sub: 'When devices can be online', icon: 'schedule' },
   { href: '/settings?section=look', label: 'Appearance', sub: 'Accent colour, light or dark', icon: 'palette' },
   { href: '/settings?section=gifs', label: 'GIFs', sub: 'GIF search in chat', icon: 'gif_box' },
