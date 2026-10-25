@@ -69,7 +69,8 @@ export function ReactBar({ m, kid, onOpen }: { m: ChatMessage; kid: boolean; onO
           ))}
           <Popover
             opened={picker}
-            onChange={(o) => (o ? setPicker(true) : close())}
+            // closing the picker (e.g. a click on a quick emoji) leaves the quick row open
+            onChange={(o) => (o ? setPicker(true) : (setPicker(false), setQ('')))}
             position="bottom-end"
             zIndex={400}
             withinPortal
@@ -84,6 +85,8 @@ export function ReactBar({ m, kid, onOpen }: { m: ChatMessage; kid: boolean; onO
                 title="More reactions"
                 aria-expanded={picker}
                 onMouseEnter={() => later(() => setPicker(true))}
+                // passing over "+" on the way to a quick emoji must not open the picker
+                onMouseLeave={() => !picker && cancel()}
                 onClick={() => (cancel(), setPicker(true))}
               >
                 <Icon name="add" size={18} />

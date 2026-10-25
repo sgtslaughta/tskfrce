@@ -67,6 +67,15 @@ describe('reaction toolbar', () => {
     expect(screen.queryByRole('button', { name: 'React 👍' })).toBeNull()
   })
 
+  test('a quick emoji still works after the picker opened on the way past "+"', async () => {
+    wrap(<ParentBubble m={msg()} mine />)
+    await userEvent.click(screen.getByRole('button', { name: 'Add reaction' }))
+    await userEvent.click(screen.getByRole('button', { name: 'More reactions' }))
+    expect(await screen.findByRole('textbox', { name: 'Search emoji' })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'React 👍' }))
+    await posted('👍')
+  })
+
   test('hovering the reaction button opens the quick row', async () => {
     wrap(<ParentBubble m={msg()} mine />)
     await userEvent.hover(screen.getByRole('button', { name: 'Add reaction' }))
