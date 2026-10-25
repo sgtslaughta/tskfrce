@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import type { InboxItem } from './hooks/useInbox'
+import { toastOk } from './notify'
 
 /** Where a parent notification leads: the device, the chore on Today, or the Needs you list. */
 export const dest = (n: InboxItem): string | null =>
@@ -16,7 +17,14 @@ const can = () => typeof window !== 'undefined' && 'Notification' in window // n
 /** Ask for OS notification permission on the first click anywhere (browsers want a user gesture). */
 export function askOnFirstClick(): void {
   if (!can() || Notification.permission !== 'default') return
-  const ask = () => void Notification.requestPermission().catch(() => {})
+  const ask = () =>
+    void Notification.requestPermission()
+      .then((p) => {
+        if (p !== 'granted') return
+        toastOk('Notifications on')
+        new Notification('Notifications on', { body: "We'll ping you here when something needs you." })
+      })
+      .catch(() => {})
   document.addEventListener('pointerdown', ask, { once: true })
 }
 

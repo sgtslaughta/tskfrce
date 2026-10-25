@@ -27,3 +27,16 @@ test('dest links devices, chores and reward requests', () => {
   expect(dest(item(1, { kind: 'redemption_request', redemption_id: 3 }))).toBe('/?tab=needs')
   expect(dest(item(1, { kind: 'level_up' }))).toBeNull()
 })
+
+test('granting permission confirms with an OS notification', async () => {
+  const { askOnFirstClick } = await import('@/v2/osNotify')
+  const made: string[] = []
+  ;(window as unknown as { Notification: unknown }).Notification = Object.assign(
+    function (title: string) { made.push(title) },
+    { permission: 'default', requestPermission: () => Promise.resolve('granted') },
+  )
+  askOnFirstClick()
+  document.dispatchEvent(new Event('pointerdown'))
+  await new Promise((r) => setTimeout(r, 0))
+  expect(made).toEqual(['Notifications on'])
+})
