@@ -58,7 +58,7 @@ function SettingsBody() {
         {section === 'hours' && (
           <InfoBlock
             icon="schedule"
-            text="Outside these hours a kid's devices stay off, even with every chore done. Inside them, devices come on once today's chores are approved."
+            text="Outside these hours a kid's devices stay off, even with every chore done. Inside them, devices come on once today's chores are approved, or any time in a free-time slot."
           />
         )}
         {section === 'hours' && <HoursSection />}

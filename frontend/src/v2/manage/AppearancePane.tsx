@@ -75,12 +75,12 @@ export function AppearancePane({ current, onChange }: AppearancePaneProps) {
         <h3 className="m-subhead">Preview</h3>
         <div className="preview-cards">
           <div className="preview-card light">
-            <div className="preview-header">Mia&apos;s day</div>
+            <div className="preview-header">Today</div>
             <div className="preview-bar"></div>
             <span className="preview-chip">Approved</span>
           </div>
           <div className="preview-card dark">
-            <div className="preview-header">Mia&apos;s day</div>
+            <div className="preview-header">Today</div>
             <div className="preview-bar"></div>
             <span className="preview-chip">Approved</span>
           </div>

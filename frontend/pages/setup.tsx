@@ -5,7 +5,7 @@ import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api, ApiError } from '@/v2/api'
-import type { Kid, SetupStatus } from '@/v2/types'
+import type { Device, Kid, SetupStatus } from '@/v2/types'
 import { markSetupDone } from '@/v2/components/RequireParent'
 import { WizardFrame } from '@/v2/setup/WizardFrame'
 import { StepFamily, detectTz } from '@/v2/setup/StepFamily'
@@ -90,6 +90,7 @@ export default function SetupPage() {
   })
 
   const go = (n: number) => {
+    setTried(false)
     create.reset()
     apply.reset()
     setStep(n)
@@ -97,16 +98,17 @@ export default function SetupPage() {
 
   const next = () => {
     if (step === 1) {
-      if (loginFailed) return
-      if (accountDone) return go(2)
       const e = parentErrors(parent)
       if (e.fullName || e.username || e.password) return setTried(true)
+      return go(2)
+    }
+    // The family name goes in the same POST /setup that makes the account.
+    if (step === 2) {
+      if (loginFailed) return
+      if (!family.name.trim()) return setTried(true)
+      if (accountDone) return go(3)
       setConflict(false)
       return create.mutate()
-    }
-    if (step === 2) {
-      if (!family.name.trim()) return setTried(true)
-      return go(3)
     }
     if (step === 4) {
       return apply.mutate(
@@ -169,7 +171,8 @@ export default function SetupPage() {
     7: { title: 'Reach it from anywhere', sub: 'Approve chores when you\'re not home, using Tailscale (free, private).' },
   } as const
 
-  const finishInfo = { counts: `${kids.length} kids, ${chores.length} chores, 0 devices, 0 schedules` }
+  const devices = (qc.getQueryData<Device[]>(['setup-devices']) ?? []).filter((d) => d.status !== 'unassigned').length
+  const schedules = bedtime ? kids.length : 0
 
   return (
     <>
@@ -178,8 +181,8 @@ export default function SetupPage() {
         <WizardFrame
           step={step}
           title={step > LAST ? 'You\'re all set' : stepTitles[step as keyof typeof stepTitles].title}
-          subtitle={step > LAST ? finishInfo.counts : stepTitles[step as keyof typeof stepTitles].sub}
-          onBack={step > 2 ? () => go(step - 1) : undefined}
+          subtitle={step > LAST ? 'Everything can be changed later in Settings.' : stepTitles[step as keyof typeof stepTitles].sub}
+          onBack={step > 2 || (step === 2 && !accountDone) ? () => go(step - 1) : undefined}
           onNext={next}
           nextLabel={step > LAST ? 'Finish' : 'Next'}
           onSkip={step >= 3 && step <= LAST ? () => go(step + 1) : undefined}
@@ -189,13 +192,16 @@ export default function SetupPage() {
           }}
           busy={create.isPending || apply.isPending}
         >
-          {step === 1 && <StepParent value={parent} showError={tried} conflict={conflict} onChange={setParent} />}
-          {step === 1 && loginFailed && (
-            <p role="alert">Your account was created. <Link href="/login">Log in</Link> to continue.</p>
-          )}
+          {step === 1 && <StepParent value={parent} showError={tried} onChange={setParent} />}
           {step === 2 && (
             <StepFamily name={family.name} tz={family.tz} showError={tried}
               onName={(name) => setFamily({ ...family, name })} onTz={(tz) => setFamily({ ...family, tz })} />
+          )}
+          {step === 2 && conflict && (
+            <p role="alert">Setup is already done. <Link href="/login">Log in</Link> instead.</p>
+          )}
+          {step === 2 && loginFailed && (
+            <p role="alert">Your account was created. <Link href="/login">Log in</Link> to continue.</p>
           )}
           {step === 3 && <StepKids kids={kids} name={kidDraft} onName={setKidDraft} onAdd={(k) => setKids([...kids, k])}
               draftError={tried && kidDraft.trim() ? `Add ${kidDraft.trim()} first or clear the field.` : undefined} />}
@@ -203,7 +209,7 @@ export default function SetupPage() {
           {step === 5 && <StepDevices kids={kids} />}
           {step === 6 && <StepWindows bedtime={bedtime} hasKids={kids.length > 0} onChange={setBedtime} />}
           {step === 7 && <StepRemote />}
-          {step > LAST && <StepFinish kids={kids.length} chores={chores.length} devices={0} schedules={0} />}
+          {step > LAST && <StepFinish kids={kids.length} chores={chores.length} devices={devices} schedules={schedules} />}
           {err && <p role="alert">Something went wrong: {err} Try again.</p>}
         </WizardFrame>
       </div>

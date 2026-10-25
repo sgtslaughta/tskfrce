@@ -61,6 +61,7 @@ export function ResetForm({ token }: { token: string | undefined }) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                   className="p-auth-link"
                   style={{ textDecoration: 'none' }}
                 >
@@ -83,10 +84,11 @@ export function ResetForm({ token }: { token: string | undefined }) {
                 <button
                   type="button"
                   onClick={() => setShowAgain(!showAgain)}
+                  aria-label={showAgain ? 'Hide password again' : 'Show password again'}
                   className="p-auth-link"
                   style={{ textDecoration: 'none' }}
                 >
-                  <Icon name={showAgain ? 'visibility' : 'visibility_off'} />
+                  <Icon name={showAgain ? 'visibility_off' : 'visibility'} />
                 </button>
               </div>
             </div>

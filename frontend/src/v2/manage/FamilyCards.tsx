@@ -75,6 +75,7 @@ export function FamilyCard({ fam }: { fam: Family }) {
           />
           <NumberInput
             label="Early finish bonus cap"
+            description="Most bonus points a kid can earn for finishing chores early."
             min={0}
             max={50}
             allowDecimal={false}
@@ -95,7 +96,7 @@ export function FamilyCard({ fam }: { fam: Family }) {
 
 export function ScreenTimeCard({ fam }: { fam: Family }) {
   return (
-    <Card title="Screen time & bonuses" fam={fam}>
+    <Card title="Screen time" fam={fam}>
       {({ val, set }) => (
         <>
           <Switch
@@ -103,7 +104,7 @@ export function ScreenTimeCard({ fam }: { fam: Family }) {
             checked={val('points_unlock_early')}
             onChange={(e) => set({ points_unlock_early: e.currentTarget.checked })}
           />
-          <Help>Lets kids trade points for extra time outside their allowed hours.</Help>
+          <Help>Lets kids trade points for Wi-Fi time before their chores are done, inside their allowed hours.</Help>
           <NumberInput
             label="Screen time price (points per 15 min)"
             min={1}
@@ -113,15 +114,6 @@ export function ScreenTimeCard({ fam }: { fam: Family }) {
             onChange={(v) => typeof v === 'number' && set({ screen_time_price: v })}
           />
           <Help>How many points 15 minutes of extra time costs.</Help>
-          <NumberInput
-            label="Early finish bonus cap"
-            min={0}
-            max={50}
-            allowDecimal={false}
-            value={val('early_bonus_cap')}
-            onChange={(v) => typeof v === 'number' && set({ early_bonus_cap: v })}
-          />
-          <Help>The most bonus points a kid can earn for finishing chores early.</Help>
         </>
       )}
     </Card>
