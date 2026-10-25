@@ -15,7 +15,8 @@ export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | '
   const deductOnce = useSingle(deduct)
   const [amount, setAmount] = useState('')
   const input = useRef<HTMLInputElement>(null)
-  const custom = amount !== '' && !DEDUCT_PRESETS.map(String).includes(amount)
+  const [customMode, setCustomMode] = useState(false)
+  const custom = customMode || (amount !== '' && !DEDUCT_PRESETS.map(String).includes(amount))
   const [note, setNote] = useState('')
   const n = Number(amount)
   const err = intError(amount, 1, 500)
@@ -28,6 +29,7 @@ export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | '
     const vars = { id: kid.id, amount: n, note: note.trim() }
     const done = () => {
       setAmount('')
+      setCustomMode(false)
       setNote('')
       onClose()
     }
@@ -56,7 +58,7 @@ export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | '
       {!give && (
         <div className="pk-presets" role="group" aria-label="Amount">
           {DEDUCT_PRESETS.map((a) => (
-            <button type="button" key={a} className="pt-amt" data-on={amount === String(a)} aria-pressed={amount === String(a)} onClick={() => setAmount(String(a))}>
+            <button type="button" key={a} className="pt-amt" data-on={!customMode && amount === String(a)} aria-pressed={!customMode && amount === String(a)} onClick={() => (setAmount(String(a)), setCustomMode(false))}>
               −{a}
             </button>
           ))}
@@ -65,7 +67,7 @@ export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | '
             className="pt-amt"
             data-on={custom}
             aria-pressed={custom}
-            onClick={() => (setAmount(''), input.current?.focus())}
+            onClick={() => (setAmount(''), setCustomMode(true), input.current?.focus())}
           >
             Custom
           </button>

@@ -231,4 +231,3 @@
 [data-look='parent'] .pc-chips { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 4px; }
 [data-look='parent'] .pc-type { display: inline-flex; align-items: center; gap: 6px; color: var(--p-ink); }
 [data-look='parent'] .pc-note[data-tone='amb'] { display: flex; align-items: center; gap: 6px; background: var(--p-amb); color: var(--p-ambink); font-weight: 600; }
-[data-look='parent'] .pc-reply textarea::placeholder { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

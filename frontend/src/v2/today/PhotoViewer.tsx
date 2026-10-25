@@ -94,8 +94,7 @@ export function PhotoViewer({
             variant="subtle"
             leftSection={<Icon name="chat" size={17} />}
             onClick={() => {
-              const photo = Number(item.thumb_url?.match(/(\d+)\/thumb$/)?.[1]) || undefined;
-              openChat("chore", String(item.id), { photo_id: photo, label: "Photo" });
+              openChat("chore", String(item.id), { label: "Photo" }); // text-only reply: the API takes chat photos, not proof
               close();
             }}
           >

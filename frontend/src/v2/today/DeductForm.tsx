@@ -50,20 +50,22 @@ export function DeductForm({
       {kidIds.length > 1 && (
         <span className="pt-ded-kids" role="group" aria-label="Kid">
           {kidIds.map((id) => (
-            <button type="button" key={id} className="pt-amt" data-on={who === id} aria-pressed={who === id} onClick={() => setWho(id)}>
+            <button type="button" key={id} className="pt-amt" data-tone="kid" data-on={who === id} aria-pressed={who === id} onClick={() => setWho(id)}>
               {nameOf(id)}
             </button>
           ))}
         </span>
       )}
-      {DEDUCT_PRESETS.map((a) => (
+      <span className="pt-ded-amts" role="group" aria-label="Amount">
+        {DEDUCT_PRESETS.map((a) => (
         <button type="button" key={a} className="pt-amt" data-on={amount === a} aria-pressed={amount === a} onClick={() => setAmount(a)}>
           −{a}
         </button>
       ))}
       <button type="button" className="pt-amt" data-on={amount === null} aria-pressed={amount === null} onClick={() => setAmount(null)}>
         Custom
-      </button>
+        </button>
+      </span>
       {amount === null && (
         <input
           className="pt-amt-custom"

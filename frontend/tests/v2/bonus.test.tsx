@@ -93,6 +93,7 @@ describe('PointsForm', () => {
     expect(screen.getByLabelText(/Points/)).toHaveValue('20')
     await userEvent.click(screen.getByRole('button', { name: 'Custom' }))
     expect(screen.getByLabelText(/Points/)).toHaveValue('')
+    expect(screen.getByRole('button', { name: 'Custom' })).toHaveAttribute('aria-pressed', 'true')
     await userEvent.click(screen.getByRole('button', { name: '−10' }))
     await userEvent.type(screen.getByLabelText('Why?'), 'Broke a rule')
     await userEvent.click(screen.getByRole('button', { name: 'Take points' }))

@@ -232,7 +232,7 @@ export function ThreadView({
               value={text}
               rows={1}
               maxLength={2000}
-              placeholder={reply ? `Reply on ${reply.label}…` : data ? `Message ${data.title}…` : 'Write a message'}
+              placeholder={reply ? 'Reply…' : 'Message…'}
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {

@@ -80,6 +80,7 @@ describe('ChoreOpen', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Reply on Make bed' }))
     expect(await screen.findByTestId('chat-column')).toBeInTheDocument()
     expect(screen.getByTestId('replying')).toHaveTextContent('Replying to Make bed')
+    expect(screen.getByLabelText('Message')).toHaveAttribute('placeholder', 'Reply…')
     await userEvent.type(await screen.findByLabelText('Message'), 'Corners too{Enter}')
     await waitFor(() =>
       expect(apiMock).toHaveBeenCalledWith('/chat/threads/5/messages', {
@@ -93,6 +94,7 @@ describe('ChoreOpen', () => {
   test('Deduct with the −10 preset posts kid, amount and reason', async () => {
     open()
     await userEvent.click(await screen.findByRole('button', { name: /deduct points/i }))
+    expect(screen.getByRole('group', { name: 'Amount' })).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: '−10' }))
     await userEvent.type(screen.getByLabelText('Reason'), 'Left plates')
     await userEvent.click(screen.getByRole('button', { name: /^deduct$/i }))

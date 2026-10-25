@@ -152,7 +152,10 @@
 [data-look='parent'] .pt-amt { cursor: pointer; }
 [data-look='parent'] .pt-amt { border-color: color-mix(in srgb, var(--p-red) 40%, transparent); color: var(--p-red); font-weight: 700; }
 [data-look='parent'] .pt-amt[data-on='true'] { background: var(--p-red); border-color: var(--p-red); color: var(--p-card); }
-[data-look='parent'] .pt-ded-kids { display: contents; }
+[data-look='parent'] .pt-ded-kids,
+[data-look='parent'] .pt-ded-amts { display: contents; }
+[data-look='parent'] .pt-amt[data-tone='kid'] { border-color: var(--p-line); color: var(--p-ink); }
+[data-look='parent'] .pt-amt[data-tone='kid'][data-on='true'] { background: var(--p-tbg); border-color: var(--p-tbg); color: var(--p-tfg); }
 [data-look='parent'] .pt-amt-custom { width: 76px; }
 [data-look='parent'] .pt-ded input:not(.pt-amt-custom) { flex: 1; min-width: 160px; font-weight: 400; }
 

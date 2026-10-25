@@ -7,7 +7,7 @@ import { useToday } from '@/v2/hooks/useToday'
 import { useAuthImage } from '@/v2/today/PhotoViewer'
 import { KidFacts, initial } from '@/v2/today/KidFacts'
 import { statusChip } from '@/v2/today/statusChip'
-import { useNow } from '@/v2/today/useClock'
+import { useClock, useNow } from '@/v2/today/useClock'
 import { noteText } from '@/v2/today/ChoreNote'
 import type { RunDetail, TodayKid } from '@/v2/types'
 import { proxyPath } from './ChatPhoto'
@@ -80,6 +80,7 @@ export function ThreadSidePanel({ run, kidIds }: { run?: RunDetail; kidIds: numb
   // the Today row carries what the run detail lacks (mode, attempt, note, done time)
   const row = run && mine.flatMap((k) => k.chores).find((c) => c.id === run.id)
   const now = useNow()
+  const familyClock = useClock()
   return (
     <aside className="pc-side" aria-label="Details">
       {run && (
@@ -114,7 +115,7 @@ export function ThreadSidePanel({ run, kidIds }: { run?: RunDetail; kidIds: numb
           {run.note && (
             <p className="pc-note" data-tone="amb">
               <Icon name="flag" size={16} />
-              {noteText(run.note, clock)}
+              {noteText(run.note, familyClock)}
             </p>
           )}
           {row?.last_note && <p className="pc-note">Sent back: {row.last_note}</p>}
