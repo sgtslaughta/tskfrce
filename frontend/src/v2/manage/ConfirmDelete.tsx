@@ -10,7 +10,7 @@ interface ConfirmProps {
 
 export function ConfirmDelete({ opened, title, body, onConfirm, onClose }: ConfirmProps) {
   return (
-    <Modal opened={opened} onClose={onClose} title={title} centered>
+    <Modal opened={opened} onClose={onClose} title={title} centered styles={{ title: { fontWeight: 700, color: 'var(--p-ink)' } }}>
       <Text mb="md">{body}</Text>
       <div className="pk-actions">
         <button type="button" className="p-btn" onClick={onClose}>

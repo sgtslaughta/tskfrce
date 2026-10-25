@@ -157,3 +157,47 @@
 [data-look='parent'] .pk-note { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--p-soft); }
 [data-look='parent'] .pk-note p { color: var(--p-sub); font-size: 13px; line-height: 1.45; }
 [data-look='parent'] .pk-head-t .pk-chips { margin-top: 8px; }
+
+/* ── craft + a11y (pass 2) ───────────────────────────────────────────────── */
+
+/* one clear ring on every interactive element in the devices screens */
+[data-look='parent'] .p-device-item:focus-visible,
+[data-look='parent'] .pk-detail .p-btn:focus-visible,
+[data-look='parent'] .pk-pill:focus-visible,
+[data-look='parent'] .pk-new:focus-visible,
+[data-look='parent'] .p-segmented-button:focus-visible {
+  outline: 2px solid var(--p-ink);
+  outline-offset: 2px;
+}
+
+/* press + hover feedback, on the shared motion tokens */
+[data-look='parent'] .pk-pill,
+[data-look='parent'] .p-device-item,
+[data-look='parent'] .pk-detail .p-btn {
+  transition: background-color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out), opacity var(--dur-1) var(--ease-out);
+}
+[data-look='parent'] .pk-pill:hover:not(:disabled):not([aria-pressed='true']) { border-color: var(--p-ink); background: var(--p-soft); }
+[data-look='parent'] .p-device-item:active,
+[data-look='parent'] .pk-pill:active:not(:disabled),
+[data-look='parent'] .pk-detail .p-btn:active:not(:disabled) { transform: scale(0.98); }
+[data-look='parent'] .pk-switch button[aria-disabled='true'] { opacity: 0.5; cursor: progress; }
+[data-look='parent'] .pk-pill[aria-disabled='true'] { opacity: 0.6; cursor: progress; }
+[data-look='parent'] .pk-detail .p-btn[aria-busy='true'] { opacity: 0.75; cursor: progress; }
+
+/* spinner (progress_activity icon) */
+[data-look='parent'] .p-spin { animation: p-spin 0.9s linear infinite; }
+@keyframes p-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  [data-look='parent'] .p-spin { animation: none; }
+  [data-look='parent'] .pk-pill,
+  [data-look='parent'] .pk-detail .p-btn { transition: none; }
+  [data-look='parent'] .p-device-item:active,
+  [data-look='parent'] .pk-pill:active,
+  [data-look='parent'] .pk-detail .p-btn:active { transform: none; }
+}
+
+/* header actions: one row on desktop, tidy 2x2 grid on phone (Lock / Unlock on top) */
+@media (max-width: 767px) {
+  [data-look='parent'] .pk-head .pk-actions-grid { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  [data-look='parent'] .pk-actions-grid .p-btn { width: 100%; }
+}

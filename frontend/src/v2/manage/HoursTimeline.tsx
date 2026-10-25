@@ -64,6 +64,7 @@ function TimelineRow({ window, kids, groups }: { window: TimeWindow; kids: Kid[]
             key={from}
             className="timeline-bar"
             style={{ left: `${from}%`, width: `${to - from}%` }}
+            role="img"
             aria-label={`${window.start} to ${window.end}`}
           >
             {initial && <b>{initial}</b>}

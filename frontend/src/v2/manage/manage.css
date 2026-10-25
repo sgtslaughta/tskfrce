@@ -115,13 +115,13 @@
 
 /* Hours timeline */
 .hours-timeline { display: flex; flex-direction: column; gap: 24px; margin: 16px 0; }
-.timeline-header { display: grid; grid-template-columns: 200px 1fr; gap: 12px; align-items: center; }
+.timeline-header { display: grid; grid-template-columns: 220px 1fr; gap: 12px; align-items: center; }
 .timeline-label-area { /* Spacer for alignment */ }
 .timeline-axis { display: flex; justify-content: space-between; gap: 0; position: relative; height: 20px; font-size: 11px; font-weight: 500; color: var(--p-sub); }
 .timeline-tick { display: flex; align-items: center; }
 .timeline-rows { display: flex; flex-direction: column; gap: 12px; }
-.timeline-row { display: grid; grid-template-columns: 200px 1fr; gap: 12px; align-items: center; padding: 8px 0; }
-.timeline-label { font-size: 13px; font-weight: 500; color: var(--p-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.timeline-row { display: grid; grid-template-columns: 220px 1fr; gap: 12px; align-items: center; padding: 8px 0; }
+.timeline-label { font-size: 13px; font-weight: 500; line-height: 1.35; color: var(--p-ink); overflow: hidden; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow-wrap: anywhere; }
 .timeline-bars { position: relative; height: 28px; background: var(--p-track); border-radius: 4px; overflow: hidden; display: flex; align-items: center; }
 .timeline-bar { position: absolute; height: 24px; background: var(--p-acc); border-radius: 2px; top: 2px; }
 
