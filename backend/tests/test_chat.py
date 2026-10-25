@@ -1,7 +1,7 @@
 import io
 from datetime import date, datetime, timedelta
 
-from app.models.chat import ThreadMessage
+from app.models.chat import MessageReaction, ThreadMessage
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, ChoreStep
 from app.models.family import get_family
@@ -327,3 +327,70 @@ def test_step_reply(client, db, parent_headers):
         headers=parent_headers,
     )
     assert r.status_code == 422
+
+
+def _react(client, h, mid, emoji="👍"):
+    return client.post(f"{C}/messages/{mid}/reactions", json={"emoji": emoji}, headers=h)
+
+
+def test_reaction_toggles_and_aggregates(client, db, parent_headers):
+    leo, maya, lh, mh, _ = _world(db, client, parent_headers)
+    tid = _tid(client, lh, "family", "family")
+    mid = _say(client, lh, tid).json()["id"]
+    r = _react(client, lh, mid)  # kids may react, own messages included
+    assert r.status_code == 200, r.text
+    assert r.json()["reactions"] == [{"emoji": "👍", "count": 1, "mine": True, "names": ["Leo"]}]
+    _react(client, mh, mid)
+    _react(client, mh, mid, "❤️")
+    msgs = client.get(f"{C}/threads/family/family", headers=parent_headers).json()["messages"]
+    assert msgs[-1]["reactions"] == [
+        {"emoji": "👍", "count": 2, "mine": False, "names": ["Leo", "Maya"]},
+        {"emoji": "❤️", "count": 1, "mine": False, "names": ["Maya"]},
+    ]
+    r = _react(client, lh, mid)  # same emoji again removes it
+    assert r.json()["reactions"][0] == {"emoji": "👍", "count": 1, "mine": False, "names": ["Maya"]}
+    assert db.query(MessageReaction).count() == 2
+
+
+def test_reaction_rules(client, db, parent_headers):
+    leo, maya, lh, mh, chore = _world(db, client, parent_headers)
+    mid = _say(client, lh, _tid(client, lh, "private", leo.id)).json()["id"]
+    assert _react(client, mh, mid).status_code == 404  # sibling can't see the thread
+    for bad in ["", "ok", "👍 ", "1", "👍" * 17]:
+        assert _react(client, lh, mid, bad).status_code == 422, bad
+    sysm = ThreadMessage(thread_id=_tid(client, lh, "family", "family"), kind="system", body="x")
+    db.add(sysm)
+    db.commit()
+    r = _react(client, lh, sysm.id)
+    assert r.status_code == 422 and r.json()["detail"] == "You can't react to that."
+
+
+def test_reactions_cascade_with_message(client, db, parent_headers):
+    leo, maya, lh, mh, _ = _world(db, client, parent_headers)
+    tid = _tid(client, lh, "family", "family")
+    mid = _say(client, lh, tid).json()["id"]
+    _react(client, mh, mid)
+    _react(client, parent_headers, mid, "😂")
+    assert client.delete(f"{C}/messages/{mid}", headers=parent_headers).status_code == 204
+    db.expire_all()
+    assert db.query(MessageReaction).count() == 0
+
+
+def test_reactions_load_in_one_query(client, db, parent_headers):
+    from sqlalchemy import event
+
+    leo, maya, lh, mh, _ = _world(db, client, parent_headers)
+    tid = _tid(client, lh, "family", "family")
+
+    def count():
+        seen = []
+        hook = lambda *a: seen.append(a[2])  # noqa: E731
+        event.listen(db.get_bind(), "before_cursor_execute", hook)
+        client.get(f"{C}/threads/family/family", headers=parent_headers)
+        event.remove(db.get_bind(), "before_cursor_execute", hook)
+        return sum("message_reactions" in s for s in seen)
+
+    for _ in range(4):
+        mid = _say(client, lh, tid).json()["id"]
+        _react(client, mh, mid)
+    assert count() == 1

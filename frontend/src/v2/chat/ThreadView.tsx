@@ -21,6 +21,7 @@ import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { toastFail } from '@/v2/notify'
 import { Photo } from './ChatPhoto'
 import { EditBox, MessageActions } from './MessageActions'
+import { ReactionChips } from './Reactions'
 import { DaySep, ParentBubble, dayName } from './ParentBubble'
 import { ThreadHead } from './ThreadHead'
 import { ThreadSidePanel } from './ThreadSidePanel'
@@ -65,6 +66,7 @@ function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
         </div>
         </MessageActions>
       </div>
+      <ReactionChips m={m} kid mine={mine} />
       <span style={{ fontSize: '0.85rem', color: 'var(--p-sub)', alignSelf: mine ? 'flex-end' : 'flex-start' }}>
         {timeLabel(m.created_at)}
         {m.edited_at && (
@@ -114,6 +116,8 @@ export function ThreadView({
   const runDetail = useRunDetail(kind === 'chore' ? Number(refId) : null)
   const latest = data?.messages ?? []
   const lastId = latest.length ? latest[latest.length - 1].id : 0
+  // the last bubble growing a chip row would otherwise push it below the fold
+  const lastChips = !!latest[latest.length - 1]?.reactions?.length
   const messages = [...older.filter((o) => !latest.some((l) => l.id === o.id)), ...latest]
 
   // opening (and every new message while open) marks the thread read
@@ -123,7 +127,7 @@ export function ThreadView({
   }, [data?.id, lastId, mutate])
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: 'end' })
-  }, [lastId])
+  }, [lastId, lastChips])
 
   const loadEarlier = async () => {
     if (!messages.length) return

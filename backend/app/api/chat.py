@@ -6,7 +6,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile
 from fastapi.responses import FileResponse
-from pydantic import BaseModel, StringConstraints, model_validator
+from pydantic import BaseModel, StringConstraints, field_validator, model_validator
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_active_user, get_db
@@ -45,7 +45,7 @@ def _thread(db: Session, user: User, thread_id: int) -> Thread:
     return t
 
 
-def _msg(t: Thread, m: ThreadMessage) -> dict:
+def _msg(t: Thread, m: ThreadMessage, reactions: dict[int, list[dict]] | None = None) -> dict:
     return {
         "id": m.id,
         "author_id": m.author_id,
@@ -58,6 +58,7 @@ def _msg(t: Thread, m: ThreadMessage) -> dict:
         "photo_url": chat.photo_url(t, m),
         "created_at": utc_z(m.created_at),
         "edited_at": utc_z(m.edited_at) if m.edited_at else None,
+        "reactions": (reactions or {}).get(m.id, []),
     }
 
 
@@ -85,12 +86,13 @@ def thread(
     if before is not None:
         q = q.filter(ThreadMessage.id < before)
     rows = q.order_by(ThreadMessage.id.desc()).limit(PAGE + 1).all()
+    rx = chat.reactions(db, [m.id for m in rows[:PAGE]], user)
     out = {
         "id": t.id,
         "kind": t.kind,
         "title": chat.title(db, t),
         "who": chat.who(db, t),
-        "messages": [_msg(t, m) for m in reversed(rows[:PAGE])],
+        "messages": [_msg(t, m, rx) for m in reversed(rows[:PAGE])],
         "has_more": len(rows) > PAGE,
     }
     db.commit()  # lazily created thread
@@ -222,7 +224,38 @@ def edit_message(
     m.body = body.body
     m.edited_at = datetime.utcnow()
     db.commit()
-    return _msg(t, m)
+    return _msg(t, m, chat.reactions(db, [m.id], user))
+
+
+class ReactionIn(BaseModel):
+    emoji: Annotated[str, StringConstraints(min_length=1, max_length=16)]
+
+    @field_validator("emoji")
+    @classmethod
+    def _emoji_only(cls, v: str) -> str:
+        # ponytail: cheap guard against arbitrary text, not a full emoji grammar check
+        if any(c.isascii() and (c.isalnum() or c.isspace()) for c in v) or v.isspace():
+            raise ValueError("Pick an emoji.")
+        return v
+
+
+@router.post("/messages/{message_id}/reactions")
+def react(
+    message_id: int,
+    body: ReactionIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    """Toggle the current user's emoji on a message. Never marks unread or notifies."""
+    m = db.get(ThreadMessage, message_id)
+    t = db.get(Thread, m.thread_id) if m else None
+    if t is None or not chat.can_access(db, user, t):
+        raise HTTPException(404, "We couldn't find that message.")
+    if m.kind != "user":
+        raise HTTPException(422, "You can't react to that.")
+    chat.toggle_reaction(db, m, user, body.emoji)
+    db.commit()
+    return _msg(t, m, chat.reactions(db, [m.id], user))
 
 
 @router.delete("/messages/{message_id}", status_code=204, response_class=Response)

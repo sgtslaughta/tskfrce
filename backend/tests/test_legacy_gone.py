@@ -50,7 +50,7 @@ LEGACY_TABLES = {
     "conversation_settings",
     "direct_messages",
     "direct_message_media",
-    "message_reactions",
+    # "message_reactions" is reused by v3 chat reactions (j3c4d5e6f7a8)
     "message_read_receipts",
     "task_chat_messages",
     "task_chat_message_media",

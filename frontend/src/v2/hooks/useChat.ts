@@ -32,6 +32,15 @@ export interface ChatMessage {
   step_title?: string | null
   /** a kid's ready-made note ("Out of supplies") */
   note_label?: string | null
+  reactions?: Reaction[]
+}
+
+/** One emoji on a message: how many, whether I'm one of them, and who. */
+export interface Reaction {
+  emoji: string
+  count: number
+  mine: boolean
+  names: string[]
 }
 
 export interface ThreadPage {
@@ -126,6 +135,16 @@ export const useDeleteMessage = (kid = false) => {
   const refresh = useRefresh(kid)
   return useMutation({
     mutationFn: (id: number) => api(`/chat/messages/${Number(id)}`, { method: 'DELETE', kid }),
+    onSuccess: refresh,
+  })
+}
+
+/** Toggle my emoji on a message (adds it, or takes it off if already there). */
+export const useReact = (kid = false) => {
+  const refresh = useRefresh(kid)
+  return useMutation({
+    mutationFn: ({ id, emoji }: { id: number; emoji: string }) =>
+      api<ChatMessage>(`/chat/messages/${Number(id)}/reactions`, { method: 'POST', body: { emoji }, kid }),
     onSuccess: refresh,
   })
 }

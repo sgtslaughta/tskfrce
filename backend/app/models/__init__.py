@@ -5,7 +5,7 @@ This package contains all SQLAlchemy models for the application.
 """
 
 from .badge import BadgeAward, CustomBadge
-from .chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
+from .chat import ChatPhoto, MessageReaction, Thread, ThreadMessage, ThreadRead
 from .chore_extra import ChorePhoto
 from .chore_type import ChoreType, ChoreTypeNote
 from .chores import Chore, ChoreAssignment, ChoreRun, ChoreStep, RunStepTick
@@ -24,6 +24,7 @@ __all__ = [
     "KidFlair",
     "CustomBadge",
     "ChatPhoto",
+    "MessageReaction",
     "Thread",
     "ThreadMessage",
     "ThreadRead",

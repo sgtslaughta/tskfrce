@@ -47,11 +47,40 @@
 }
 .f-dock-who { font-size: 13px; font-weight: 500; opacity: 0.7; }
 
-/* message actions: shown on hover, focus-within, or long-press */
+/* message actions: a pill on the bubble's top edge (Teams-style), shown on hover, focus-within,
+   long-press, or while a reaction menu is open. Mine anchor upper-right, others upper-left so the
+   expanded quick row grows into the column instead of off its edge. --msg-pad-* = bubble padding. */
 .msg-act { position: relative; display: flex; flex-direction: column; gap: 4px; }
-.msg-act-tools { position: absolute; top: 50%; transform: translateY(-50%); right: calc(100% + 6px); display: flex; gap: 4px; opacity: 0; transition: opacity 120ms; }
-.msg-act[data-mine='false'] .msg-act-tools { right: auto; left: calc(100% + 6px); }
-.msg-act-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; padding: 0; cursor: pointer; background: rgba(128, 128, 128, 0.25); color: var(--p-ink, inherit); line-height: 1; }
+.pc-msg .msg-act { --msg-pad-y: 8px; --msg-pad-x: 12px; }
+.msg-act-tools {
+  position: absolute; z-index: 2; top: calc(-20px - var(--msg-pad-y, 0px)); right: calc(8px - var(--msg-pad-x, 0px));
+  display: flex; align-items: center; gap: 2px; padding: 2px; border-radius: 999px;
+  background: var(--p-card, #fff); border: 1px solid var(--p-line, rgba(128,128,128,.3)); box-shadow: 0 2px 8px rgba(0,0,0,.14);
+  opacity: 0; pointer-events: none; transition: opacity 120ms; white-space: nowrap;
+}
+.msg-act[data-mine='false'] .msg-act-tools { right: auto; left: calc(8px - var(--msg-pad-x, 0px)); }
+.msg-act[data-mine='false'] .msg-react-bar { flex-direction: row-reverse; }
+.msg-act:hover .msg-act-tools, .msg-act:focus-within .msg-act-tools, .msg-act[data-pressed='true'] .msg-act-tools, .msg-act[data-open='true'] .msg-act-tools { opacity: 1; pointer-events: auto; }
+.msg-react-bar, .msg-quick { display: flex; align-items: center; gap: 2px; }
+.msg-act-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; padding: 0; cursor: pointer; background: transparent; color: var(--p-ink, inherit); line-height: 1; }
+.msg-act-btn:hover, .msg-act-btn[aria-expanded='true'] { background: var(--p-soft, rgba(128,128,128,.18)); }
+.msg-act-btn:focus-visible { outline: 2px solid var(--p-ink, currentColor); outline-offset: -2px; }
 .msg-act-btn[data-danger]:hover { background: var(--p-redbg, #fde3e0); color: var(--p-red, #8f1d13); }
-.msg-act:hover .msg-act-tools, .msg-act:focus-within .msg-act-tools, .msg-act[data-pressed='true'] .msg-act-tools { opacity: 1; }
+.msg-emoji { font-size: 18px; transition: transform 100ms; }
+.msg-emoji:hover { transform: scale(1.2); background: transparent; }
+@media (prefers-reduced-motion: reduce) { .msg-emoji:hover { transform: none; } }
+.msg-picker { width: 288px; max-width: calc(100vw - 32px); padding: 8px; }
+.msg-pick-scroll { max-height: 240px; overflow-y: auto; margin-top: 8px; }
+.msg-pick-cat { font-size: 11px; font-weight: 600; opacity: .7; margin: 6px 2px 2px; }
+.msg-pick-grid { display: grid; grid-template-columns: repeat(8, 1fr); }
+.msg-pick-cell { font-size: 20px; height: 32px; border: 0; border-radius: 6px; background: transparent; cursor: pointer; padding: 0; }
+.msg-pick-cell:hover, .msg-pick-cell:focus-visible { background: var(--p-soft, rgba(128,128,128,.18)); }
+.msg-pick-none { margin: 8px 2px; font-size: 13px; opacity: .7; }
+/* reaction chips under a bubble */
+.msg-reacts { display: flex; flex-wrap: wrap; gap: 4px; align-self: flex-start; margin-top: -4px; }
+.msg-reacts[data-mine='true'] { align-self: flex-end; justify-content: flex-end; }
+.msg-react { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 999px; cursor: pointer; font: inherit; font-size: 13px; background: var(--p-card, transparent); color: var(--p-ink, inherit); border: 1px solid var(--p-line, rgba(128,128,128,.4)); }
+.msg-react span { font-size: 12px; font-weight: 600; }
+.msg-react[aria-pressed='true'] { background: var(--p-soft, rgba(128,128,128,.18)); border-color: var(--p-ink, currentColor); }
+.msg-react:focus-visible { outline: 2px solid var(--p-ink, currentColor); outline-offset: 1px; }
 .msg-edit { width: 100%; min-width: 220px; resize: none; font: inherit; padding: 6px; border-radius: 8px; border: 1.5px solid currentColor; background: transparent; color: inherit; }

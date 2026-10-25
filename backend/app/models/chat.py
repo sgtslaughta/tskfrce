@@ -2,7 +2,16 @@
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import backref, relationship
 
 from app.core.database import Base
@@ -47,6 +56,23 @@ class ThreadMessage(Base):
 
     author = relationship("User", foreign_keys=[author_id])
     step = relationship("ChoreStep", lazy="joined")
+
+
+class MessageReaction(Base):
+    """One user's emoji on one message; the DB cascades it away with the message or user."""
+
+    __tablename__ = "message_reactions"
+    __table_args__ = (
+        UniqueConstraint("message_id", "user_id", "emoji", name="uq_message_reaction"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    message_id = Column(
+        Integer, ForeignKey("thread_messages.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    emoji = Column(String(16), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
 class ThreadRead(Base):

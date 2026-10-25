@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload, selectinload
 
-from app.models.chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
+from app.models.chat import ChatPhoto, MessageReaction, Thread, ThreadMessage, ThreadRead
 from app.models.chores import ChoreAssignment, ChoreRun
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
@@ -273,5 +273,40 @@ def purge_kid(db: Session, kid_id: int) -> None:
         db.query(ThreadRead).filter(ThreadRead.thread_id == t.id).delete()
         db.delete(t)
     db.query(ThreadRead).filter(ThreadRead.user_id == kid_id).delete()
+    db.query(MessageReaction).filter(MessageReaction.user_id == kid_id).delete()
     db.query(ThreadMessage).filter(ThreadMessage.author_id == kid_id).update({"author_id": None})
     db.query(ChatPhoto).filter(ChatPhoto.uploaded_by_id == kid_id).update({"uploaded_by_id": None})
+
+
+def toggle_reaction(db: Session, m: ThreadMessage, user: User, emoji: str) -> None:
+    """Add `user`'s `emoji` to `m`, or take it off if already there. Flushes, never commits."""
+    q = db.query(MessageReaction).filter_by(message_id=m.id, user_id=user.id, emoji=emoji)
+    if not q.delete():
+        db.add(MessageReaction(message_id=m.id, user_id=user.id, emoji=emoji))
+    db.flush()
+
+
+def reactions(db: Session, message_ids: list[int], me: User) -> dict[int, list[dict]]:
+    """{message id: [{emoji, count, mine, names}]} for a page of messages, in one query."""
+    rows = (
+        db.query(
+            MessageReaction.message_id,
+            MessageReaction.emoji,
+            User.id,
+            User.full_name,
+            User.username,
+        )
+        .join(User, User.id == MessageReaction.user_id)
+        .filter(MessageReaction.message_id.in_(message_ids))
+        .order_by(MessageReaction.id)
+        .all()
+    )
+    out: dict[int, dict[str, dict]] = {}
+    for mid, emoji, uid, full, username in rows:
+        r = out.setdefault(mid, {}).setdefault(
+            emoji, {"emoji": emoji, "count": 0, "mine": False, "names": []}
+        )
+        r["count"] += 1
+        r["mine"] = r["mine"] or uid == me.id
+        r["names"].append(full or username)
+    return {mid: list(by.values()) for mid, by in out.items()}

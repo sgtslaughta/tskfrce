@@ -4,6 +4,7 @@ import { Icon } from '@/v2/parent/Icon'
 import { ConfirmDelete } from '@/v2/manage/ConfirmDelete'
 import { useDeleteMessage, useEditMessage, type ChatMessage } from '@/v2/hooks/useChat'
 import { toastFail, toastOk } from '@/v2/notify'
+import { ReactBar } from './Reactions'
 
 const WINDOW_MS = 5 * 60_000 // mirrors the server's DELETE_WINDOW; the server stays the authority
 
@@ -14,7 +15,10 @@ export function allowed(m: ChatMessage, mine: boolean, kid: boolean) {
   return { edit: mine && fresh, del: (mine && fresh) || !kid }
 }
 
-/** Hover / focus / long-press wrapper showing Edit (pencil) and Delete (trash) buttons. */
+/**
+ * Hover / focus / long-press wrapper: a Teams-style pill on the bubble's top edge with
+ * React, Edit and Delete (the last two only when allowed). Upper-right for mine, upper-left for others.
+ */
 export function MessageActions({
   m,
   mine,
@@ -31,9 +35,10 @@ export function MessageActions({
   const del = useDeleteMessage(kid)
   const [asking, setAsking] = useState(false)
   const [pressed, setPressed] = useState(false)
+  const [reacting, setReacting] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const can = allowed(m, mine, kid)
-  if (!can.edit && !can.del) return <>{children}</>
+  if (m.kind !== 'user') return <>{children}</>
 
   const press = () => {
     timer.current = setTimeout(() => setPressed(true), 500)
@@ -48,6 +53,7 @@ export function MessageActions({
       className="msg-act"
       data-mine={mine}
       data-pressed={pressed}
+      data-open={reacting}
       onTouchStart={press}
       onTouchEnd={release}
       onTouchMove={release}
@@ -55,9 +61,12 @@ export function MessageActions({
       onBlur={(e) => {
         if (!e.currentTarget.contains(e.relatedTarget)) setPressed(false)
       }}
+      // portaled dialogs/pickers still bubble React events here: their Escape must not close the chat dock
+      onKeyDown={(e) => e.key === 'Escape' && !e.currentTarget.contains(e.target as Node) && e.stopPropagation()}
     >
       {children}
-      <span className="msg-act-tools">
+      <span className="msg-act-tools" role="toolbar" aria-label="Message actions">
+        <ReactBar m={m} kid={kid} onOpen={setReacting} />
         {can.edit && (
           <button type="button" className="msg-act-btn" aria-label="Edit message" title="Edit" onClick={() => (setPressed(false), onEdit())}>
             <Icon name="edit" size={16} />
@@ -136,7 +145,10 @@ export function EditBox({ m, kid, onDone }: { m: ChatMessage; kid: boolean; onDo
         if (e.key === 'Enter' && !e.shiftKey) {
           e.preventDefault()
           save()
-        } else if (e.key === 'Escape') onDone()
+        } else if (e.key === 'Escape') {
+          e.stopPropagation() // cancel the edit, not the chat dock around it
+          onDone()
+        }
       }}
     />
   )

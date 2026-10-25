@@ -105,7 +105,7 @@ describe('kid rules', () => {
       </QueryClientProvider>,
     )
 
-  test('kid: own fresh message has actions; old or others have none', () => {
+  test('kid: own fresh message has Edit', () => {
     kidBubble(msg(), true)
     expect(screen.getByRole('button', { name: 'Edit message' })).toBeInTheDocument()
   })
