@@ -38,25 +38,25 @@
 
   [data-look='parent'] .p-content {
     grid-column: 1;
-    grid-row: 1;
+    grid-row: 1 / 3;
+    min-height: 0;
   }
 
   [data-look='parent'] .p-list-detail {
     display: none;
   }
 
-  [data-look='parent'] .p-list-only {
-    display: flex;
-    grid-column: 1;
-    grid-row: 2;
-    max-height: 100%;
-  }
-
+  [data-look='parent'] .p-list-only,
   [data-look='parent'] .p-detail-only {
     display: flex;
-    grid-column: 1;
-    grid-row: 2;
-    max-height: 100%;
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  /* the phone header already names the screen */
+  [data-look='parent'] .p-list-header-top h2 {
+    display: none;
   }
 
   [data-look='parent'] .p-tabbar {

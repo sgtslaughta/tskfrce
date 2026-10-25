@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useMediaQuery } from '@mantine/hooks'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
@@ -16,8 +17,11 @@ export function ParentShell({
   list,
   children,
   actions,
+  phone,
 }: {
   title: string
+  /** phone only: shown instead of the list (e.g. Today's avatar strip above the day) */
+  phone?: ReactNode
   list?: ReactNode
   children: ReactNode
   actions?: ReactNode
@@ -38,13 +42,33 @@ export function ParentShell({
     router.replace('/login')
   }
 
+  // phone: the Chat tab replaces the floating chat button
+  const dock = small ? null : <ChatDock meId={user ? Number(user.id) : null} />
+  const initial = (user?.username ?? '?').charAt(0).toUpperCase()
+  const phoneTools = (
+    <>
+      <Bell placement="header" />
+      <Link href="/more" className="p-head-me" aria-label="Account and settings">
+        {initial}
+      </Link>
+    </>
+  )
+
   if (list) {
     return (
       <div className="p-shell p-with-list">
         {!small && <Rail onLogout={logOut} />}
-        <ListDetail list={list} detail={children} listTitle={title} />
+        <div className="p-content">
+          {small && (
+            <header className="p-header">
+              <h1>{title}</h1>
+              {phoneTools}
+            </header>
+          )}
+          <ListDetail list={list} detail={children} listTitle={title} phone={phone} />
+        </div>
         {small && <TabBar />}
-        <ChatDock meId={user ? Number(user.id) : null} />
+        {dock}
       </div>
     )
   }
@@ -56,13 +80,13 @@ export function ParentShell({
         <header className="p-header">
           <h1>{title}</h1>
           {actions}
-          {small && <Bell placement="header" />}
+          {small && phoneTools}
         </header>
         <BlockerBanner />
         <main className="p-main">{children}</main>
       </div>
       {small && <TabBar />}
-      <ChatDock meId={user ? Number(user.id) : null} />
+      {dock}
     </div>
   )
 }

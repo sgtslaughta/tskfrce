@@ -8,17 +8,12 @@ import { TipsContainer } from "../components/TipsContainer";
 import { useToday } from "../hooks/useToday";
 import { GetStartingChecklistCard } from "./GetStartingChecklistCard";
 import { KidList } from "./KidList";
+import { KidStrip } from "./KidStrip";
+import { KidFacts } from "./KidFacts";
 import { ChoreRow } from "./ChoreRow";
 import { Icon } from "../parent/Icon";
 import { getTipsToShow, PARENT_TIPS } from "../tips";
 import type { TodayKid, TodayChore } from "../types";
-
-const dayName = (iso?: string) =>
-  iso
-    ? new Date(`${iso}T00:00:00`).toLocaleDateString("en-US", {
-        weekday: "long",
-      })
-    : "Today";
 
 export function TodayPage() {
   const { data, isError, error, refetch } = useToday();
@@ -33,11 +28,16 @@ export function TodayPage() {
 
   return (
     <ParentShell
-      title={dayName(data?.day)}
+      title="Today"
       list={
         data ? (
           <KidList onSelectKid={setSelectedKid} selectedKid={kid} />
         ) : null
+      }
+      phone={
+        data?.kids.length ? (
+          <KidStrip kids={data.kids} selected={kid?.id} onSelect={setSelectedKid} />
+        ) : undefined
       }
     >
       {isError && !data && <LoadError error={error} onRetry={() => refetch()} />}
@@ -70,6 +70,10 @@ export function TodayPage() {
               <i style={{ width: `${kid.total ? ((kid.done ?? 0) / kid.total) * 100 : 0}%` }} />
             </div>
             {kid.done ?? 0} of {kid.total ?? 0} done
+          </div>
+          {/* desktop shows these on the selected kid card */}
+          <div className="pt-phone-facts">
+            <KidFacts kid={kid} />
           </div>
 
           <TipsContainer tips={PARENT_TIPS} maxTips={1} />

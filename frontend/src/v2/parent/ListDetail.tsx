@@ -7,14 +7,26 @@ export function ListDetail({
   list,
   detail,
   listTitle,
+  phone,
 }: {
   list: ReactNode
   detail: ReactNode
   listTitle: ReactNode
+  /** phone only: replaces list-then-detail with this strip plus the detail */
+  phone?: ReactNode
 }) {
   const router = useRouter()
   const small = useMediaQuery('(max-width: 767px)')
   const selectedItem = router.query.item
+
+  if (small && phone) {
+    return (
+      <div className="p-detail-only">
+        {phone}
+        <div className="p-detail-panel">{detail}</div>
+      </div>
+    )
+  }
 
   if (small && selectedItem) {
     return (

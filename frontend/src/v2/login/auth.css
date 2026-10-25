@@ -165,6 +165,8 @@
 
 [data-look='parent'] .p-auth-input input::placeholder {
   color: var(--p-sub);
+  font-weight: 400;
+  opacity: 0.8;
 }
 
 [data-look='parent'] .p-auth-row {

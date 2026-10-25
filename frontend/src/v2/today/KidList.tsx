@@ -6,6 +6,7 @@ import type { TodayKid } from '../types'
 import { NeedsYouList } from './NeedsYouList'
 import { Chip } from '../parent/Chip'
 import { ListHeader } from '../parent/ListHeader'
+import { KidFacts, initial } from './KidFacts'
 
 const stateChip = (kid: TodayKid) => {
   if (kid.online_all) return <Chip tone="acc" icon="cloud_done">Online</Chip>
@@ -14,15 +15,7 @@ const stateChip = (kid: TodayKid) => {
   return <Chip tone="grey" icon="lock">Locked</Chip>
 }
 
-const initial = (name: string | null) => (name?.trim()[0] ?? '?').toUpperCase()
 const pct = (done = 0, total = 0) => (total ? (done / total) * 100 : 0)
-const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
-
-/** Schedule end time; "Locked" when the kid's devices are already off. */
-const locksAt = (kid: TodayKid) => {
-  if (kid.locks_at) return clock(kid.locks_at)
-  return kid.devices.length && !kid.devices.some((d) => d.online) ? 'Locked' : '—'
-}
 
 export function KidList({ onSelectKid, selectedKid }: { onSelectKid: (kid: TodayKid) => void; selectedKid?: TodayKid }) {
   const { data } = useToday()
@@ -66,24 +59,7 @@ export function KidList({ onSelectKid, selectedKid }: { onSelectKid: (kid: Today
                       <div className="p-track">
                         <div className="p-meter-bar" style={{ width: `${pct(kid.done, kid.total)}%` }} />
                       </div>
-                      <div className="p-kid-facts">
-                        <div>
-                          <span>Points</span>
-                          <b>{kid.points ?? 0}</b>
-                        </div>
-                        <div>
-                          <span>Streak</span>
-                          <b>{kid.progress?.streak ?? 0} days</b>
-                        </div>
-                        <div>
-                          <span>Next reward</span>
-                          <b>{kid.next_reward != null ? `${kid.next_reward} pts` : '—'}</b>
-                        </div>
-                        <div>
-                          <span>Locks at</span>
-                          <b>{locksAt(kid)}</b>
-                        </div>
-                      </div>
+                      <KidFacts kid={kid} />
                     </div>
                   )}
                 </button>

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
@@ -182,9 +182,8 @@ describe('TodayPage', () => {
     const kidButton = await screen.findByRole('button', { name: /kid1/i })
     await userEvent.click(kidButton)
     const expandedSection = await screen.findByTestId('kid-expanded')
-    expect(expandedSection).toBeInTheDocument()
-    expect(screen.getByText(/points/i)).toBeInTheDocument()
-    expect(screen.getByText(/next reward/i)).toBeInTheDocument()
+    expect(within(expandedSection).getByText(/points/i)).toBeInTheDocument()
+    expect(within(expandedSection).getByText(/next reward/i)).toBeInTheDocument()
   })
 
   test('meter bar in expanded card has track container with proper structure', async () => {

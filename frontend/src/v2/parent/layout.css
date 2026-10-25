@@ -46,6 +46,7 @@
 }
 
 [data-look='parent'] .p-header h1 {
+  flex: 1;
   margin: 0;
   font-size: 28px;
   font-weight: 500;
@@ -88,7 +89,8 @@
   display: grid;
   grid-template-columns: 320px 1fr;
   gap: 0;
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   overflow: hidden;
   background: var(--p-bg);
 }
@@ -275,14 +277,13 @@
   flex-direction: column;
   gap: 12px;
   padding: 12px;
-  height: 100%;
-  overflow-y: auto;
-  background: var(--p-bg);
   color: var(--p-ink);
 }
+[data-look='parent'] .p-more > * { flex-shrink: 0; }
 
 [data-look='parent'] .p-more-profile {
   display: flex;
+  align-items: center;
   gap: 12px;
   padding: 12px;
   background: var(--p-card);
@@ -372,10 +373,19 @@
 }
 
 [data-look='parent'] .p-more-link .ms {
-  font-size: 18px;
   color: var(--p-sub);
   flex-shrink: 0;
 }
+[data-look='parent'] .p-more-ic {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--p-soft);
+}
+[data-look='parent'] .p-more-t { flex: 1; min-width: 0; font-weight: 600; }
+[data-look='parent'] .p-more-t small { display: block; font-size: 12px; font-weight: 400; color: var(--p-sub); }
 
 [data-look='parent'] .p-more-logout {
   display: flex;
@@ -394,4 +404,18 @@
 
 [data-look='parent'] .p-more-logout:hover {
   background: var(--p-soft);
+}
+
+/* phone header: account initial, opens More */
+[data-look='parent'] .p-head-me {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--p-line);
+  background: var(--p-card);
+  color: var(--p-ink);
+  font-weight: 700;
+  text-decoration: none;
 }

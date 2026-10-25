@@ -341,7 +341,7 @@ describe('MorePage', () => {
   test('more page shows profile with family name', () => {
     render(<MorePage onLogout={jest.fn()} />)
 
-    expect(screen.getByText(/Owner · The Smiths/)).toBeInTheDocument()
+    expect(screen.getByText(/Parent · The Smiths/)).toBeInTheDocument()
   })
 
   test('more page shows box healthy chip when online', () => {

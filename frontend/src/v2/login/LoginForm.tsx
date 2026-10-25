@@ -113,7 +113,7 @@ export function LoginForm() {
                     className="p-auth-link"
                     style={{ textDecoration: 'none' }}
                   >
-                    <Icon name={showPassword ? 'visibility' : 'visibility_off'} />
+                    <Icon name={showPassword ? 'visibility_off' : 'visibility'} />
                   </button>
                 </div>
               </div>
