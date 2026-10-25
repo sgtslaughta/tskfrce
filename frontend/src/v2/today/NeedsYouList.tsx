@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Tooltip } from '@mantine/core'
 import type { NeedsItem } from '../types'
 import { useApproveChore, useSendBack } from '../hooks/useToday'
 import { useDecideRedemption } from '../hooks/useRewards'
@@ -37,13 +38,17 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
   const [viewing, setViewing] = useState<NeedsItem | null>(null)
   const [sending, setSending] = useState<number | null>(null)
   const [note, setNote] = useState('')
+  const [busy, setBusy] = useState<string | null>(null)
 
   if (items.length === 0) {
     return <EmptyState icon="celebration" tone="acc" title="All caught up" body="Nothing needs your OK right now. Nice." />
   }
 
   const approveOne = (i: NeedsItem) => (isChore(i) ? approve.mutateAsync(i.id) : decide.mutateAsync({ id: i.id, approve: true }))
-  const run = (p: Promise<unknown>, ok: string) => p.then(() => toastOk(ok), toastFail)
+  const run = (p: Promise<unknown>, ok: string, key?: string) => {
+    if (key) setBusy(key)
+    return p.then(() => toastOk(ok), toastFail).finally(() => setBusy(null))
+  }
   const approveAll = async () => {
     let n = 0
     for (const i of items) {
@@ -66,7 +71,7 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
   return (
     <section className="p-needs-list" aria-label="Needs you">
       {items.length > 1 && (
-        <button type="button" className="p-btn" data-variant="accent" onClick={approveAll}>
+        <button type="button" className="p-btn" data-variant="accent" data-loading={busy === 'all'} onClick={async () => { setBusy('all'); await approveAll(); setBusy(null) }}>
           <Icon name="done_all" size={17} />
           Approve all {items.length}
         </button>
@@ -109,13 +114,13 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
               />
             )}
             <div className="p-needs-actions">
-              <button type="button" className="p-btn" data-variant="accent" onClick={() => run(approveOne(i), 'Approved')}>
+              <button type="button" className="p-btn" data-variant="accent" data-loading={busy === `a${i.type}${i.id}`} onClick={() => run(approveOne(i), 'Approved', `a${i.type}${i.id}`)}>
                 <Icon name="check" size={16} />
                 Approve
               </button>
               {chore ? (
                 sending === i.id ? (
-                  <button type="button" className="p-btn" disabled={!note.trim()} onClick={() => submitSendBack(i.id, note.trim())}>
+                  <button type="button" className="p-btn" disabled={!note.trim() || sendBack.isPending} data-loading={sendBack.isPending} onClick={() => submitSendBack(i.id, note.trim())}>
                     <Icon name="undo" size={16} />
                     Send back
                   </button>
@@ -126,15 +131,17 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
                   </button>
                 )
               ) : (
-                <button type="button" className="p-btn" data-variant="red" onClick={() => run(decide.mutateAsync({ id: i.id, approve: false }), 'Declined')}>
+                <button type="button" className="p-btn" data-variant="red" data-loading={busy === `d${i.id}`} onClick={() => run(decide.mutateAsync({ id: i.id, approve: false }), 'Declined', `d${i.id}`)}>
                   <Icon name="close" size={16} />
                   Decline
                 </button>
               )}
               {chore && (
-                <button type="button" className="p-btn" aria-label={`Chat about ${i.title}`} onClick={() => openChat('chore', String(i.id))}>
-                  <Icon name="chat" size={16} />
-                </button>
+                <Tooltip label="Open chat" openDelay={400}>
+                  <button type="button" className="p-btn" aria-label={`Chat about ${i.title}`} onClick={() => openChat('chore', String(i.id))}>
+                    <Icon name="chat" size={16} />
+                  </button>
+                </Tooltip>
               )}
             </div>
           </div>

@@ -161,7 +161,7 @@ function AppContent({ Component, pageProps }: { Component: any; pageProps: any }
         colorSchemeManager={colorSchemeManager}
       >
         <FaviconManager />
-        <Notifications />
+        <Notifications position="bottom-center" />
         <UnifiedAuthProvider>
           <Component {...pageProps} />
         </UnifiedAuthProvider>

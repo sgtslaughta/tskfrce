@@ -7,6 +7,7 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding-bottom: 80px; /* clears the floating chat button */
 }
 
 /* Chores list styling */
@@ -46,6 +47,12 @@
   font-size: 14px;
   font-weight: 600;
   color: var(--p-ink);
+}
+
+/* toasts sit bottom-centre so neither they nor the floating chat button cover each other;
+   on phones they clear the tab bar */
+@media (max-width: 767px) {
+  .mantine-Notifications-root[data-position='bottom-center'] { bottom: calc(76px + env(safe-area-inset-bottom)); }
 }
 
 /* Needs you list styling */

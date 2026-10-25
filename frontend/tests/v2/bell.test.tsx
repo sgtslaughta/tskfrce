@@ -137,6 +137,18 @@ describe('Bell', () => {
     expect(apiMock).toHaveBeenCalledWith('/chores/7/send-back', expect.objectContaining({ method: 'POST', body: { note: 'redo it' } }))
   })
 
+  test('Escape closes the popover and the bell advertises it', async () => {
+    serve([item(1, { run_id: 7 })])
+    wrap(<Bell />)
+    const bell = await screen.findByRole('button', { name: /Notifications/ })
+    await userEvent.click(bell)
+    expect(await screen.findByText('Item 1')).toBeTruthy()
+    expect(bell.getAttribute('aria-expanded')).toBe('true')
+    await userEvent.keyboard('{Escape}')
+    await waitFor(() => expect(screen.queryByText('Item 1')).toBeNull())
+    expect(bell.getAttribute('aria-expanded')).toBe('false')
+  })
+
   test('earlier group for read items', async () => {
     const now = new Date().toISOString()
     const yesterday = new Date(Date.now() - 86400000).toISOString()

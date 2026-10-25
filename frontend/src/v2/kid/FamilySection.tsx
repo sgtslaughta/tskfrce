@@ -23,7 +23,6 @@ export function FamilySection({ meId }: { meId?: number | null }) {
             key={p.kid_id}
             type="button"
             onClick={() => setOpen(p.kid_id)}
-            aria-label={`See ${p.name}'s profile`}
             style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center', width: '100%', minHeight: 48, borderTop: '1px solid var(--f-line)' }}
           >
             <span aria-hidden>{p.avatar}</span>

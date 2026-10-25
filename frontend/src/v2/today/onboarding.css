@@ -98,8 +98,8 @@
   }
 }
 
-[data-look='parent'] .p-onboard-item[data-done='true'] a {
-  opacity: 0.5;
+[data-look='parent'] .p-onboard-item[data-done='true'] .p-onboard-label {
+  color: var(--p-sub);
 }
 
 [data-look='parent'] .p-onboard-icon {

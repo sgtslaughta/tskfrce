@@ -79,6 +79,8 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
               <button
                 className="p-btn"
                 data-variant="accent"
+                disabled={approve.isPending}
+                data-loading={approve.isPending}
                 onClick={() => withUndo(() => approve.mutateAsync(chore.id), `Approved +${chore.points}`)}
               >
                 <Icon name="check" size={17} />
@@ -111,7 +113,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
           >
             <b>What should {name} fix?</b>
             <input aria-label="Note for sending back" value={note} maxLength={500} autoFocus onChange={(e) => setNote(e.target.value)} />
-            <button className="p-btn" disabled={!note.trim() || sendBack.isPending}>
+            <button className="p-btn" disabled={!note.trim() || sendBack.isPending} data-loading={sendBack.isPending}>
               Send back
             </button>
           </form>
@@ -147,7 +149,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
               maxLength={100}
               onChange={(e) => setWhy(e.target.value)}
             />
-            <button className="p-btn" data-variant="red" disabled={!why.trim() || !(take > 0) || deduct.isPending}>
+            <button className="p-btn" data-variant="red" disabled={!why.trim() || !(take > 0) || deduct.isPending} data-loading={deduct.isPending}>
               Deduct
             </button>
           </form>
@@ -164,9 +166,11 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
             <div className="pt-chat-head">
               <Icon name="subdirectory_arrow_right" size={16} />
               <span className="pt-chat-title">{chore.title}</span>
-              <button aria-label="Close chat" onClick={() => setChat(false)}>
-                <Icon name="close" size={18} />
-              </button>
+              <Tooltip label="Close chat" openDelay={400}>
+                <button aria-label="Close chat" onClick={() => setChat(false)}>
+                  <Icon name="close" size={18} />
+                </button>
+              </Tooltip>
             </div>
             {thread}
           </div>

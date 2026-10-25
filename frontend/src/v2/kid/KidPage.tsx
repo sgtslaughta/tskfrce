@@ -140,6 +140,11 @@ function KidPreview({ id }: { id: number }) {
   const kids = useKids().data
   const kid = (kids ?? []).find((k) => k.id === id)
   const name = kid?.full_name ?? 'kid'
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && !document.querySelector('[role=dialog]') && router.push(`/?item=${id}`)
+    window.addEventListener('keydown', esc)
+    return () => window.removeEventListener('keydown', esc)
+  }, [router, id])
   return (
     <PreviewProvider value={id}>
       <main className="f-shell" style={{ minHeight: '100vh' }}>
@@ -149,7 +154,7 @@ function KidPreview({ id }: { id: number }) {
               <span className="ms" style={{ fontSize: 20 }}>visibility</span>
               {`Viewing as ${name} · preview`}
             </span>
-            <Button size="xs" variant="filled" color="var(--p-acc)" style={{ color: '#292928' }} leftSection={<Icon name="arrow_back" size={14} />} onClick={() => router.push(`/?item=${id}`)}>
+            <Button size="xs" variant="filled" color="var(--p-acc)" style={{ color: '#292928', flex: 'none' }} leftSection={<Icon name="arrow_back" size={14} />} onClick={() => router.push(`/?item=${id}`)}>
               Back to parent
             </Button>
           </div>

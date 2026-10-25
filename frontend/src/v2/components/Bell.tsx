@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { EmptyState, ErrorPanel } from '@/v2/parent/states'
 import { useRouter } from 'next/router'
-import { Button, Drawer, Popover } from '@mantine/core'
+import { Drawer, Popover, Tooltip } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { useInbox, useMarkAllRead, useMarkRead, type InboxItem } from '../hooks/useInbox'
 import { useApproveChore, useSendBack, useToday } from '../hooks/useToday'
@@ -43,7 +43,7 @@ const ago = (iso: string) => {
   return m < 1 ? 'now' : m < 60 ? `${m} min` : m < 1440 ? `${Math.round(m / 60)} h` : `${Math.round(m / 1440)} d`
 }
 
-function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
+function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: boolean }) {
   const router = useRouter()
   const inbox = useInbox(kid)
   const read = useMarkRead(kid)
@@ -122,7 +122,7 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
   return (
     <div className="p-bell-list">
       <div className="p-bell-head">
-        <strong>Notifications</strong>
+        {sheet ? <span /> : <strong>Notifications</strong>}
         {(inbox.data?.unread ?? 0) > 0 && (
           <button type="button" className="p-bell-mark-read" onClick={() => readAll.mutate(undefined)}>
             Mark all read
@@ -190,7 +190,7 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
                               onChange={(e) => setNote(e.target.value)}
                             />
                           )}
-                          <button type="button" className="p-btn" data-variant="accent" onClick={() => handleApprove(n)}>
+                          <button type="button" className="p-btn" data-variant="accent" data-loading={approve.isPending && approve.variables === n.run_id} onClick={() => handleApprove(n)}>
                             <Icon name="check" size={16} />
                             Approve {n.points ? `+${n.points}` : ''}
                           </button>
@@ -266,6 +266,14 @@ export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; pla
   const small = useMediaQuery('(max-width: 767px)')
   const unread = useInbox(kid).data?.unread ?? 0
 
+  // Escape closes the desktop popover wherever focus is (focus stays on the bell)
+  useEffect(() => {
+    if (!opened) return
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpened(false) }
+    window.addEventListener('keydown', esc, true)
+    return () => window.removeEventListener('keydown', esc, true)
+  }, [opened])
+
   // On mobile, don't render bell for rail placement (header only)
   if (placement === 'rail' && small) {
     return null
@@ -287,15 +295,25 @@ export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; pla
     return (
       <>
         {btn}
-        <Drawer opened={opened} onClose={close} position="bottom" size="100%" title="Notifications">
-          <List kid={kid} onGo={close} />
+        <Drawer
+          opened={opened}
+          onClose={close}
+          position="bottom"
+          size="100%"
+          title="Notifications"
+          closeButtonProps={{ 'aria-label': 'Close notifications' }}
+          classNames={{ title: 'p-bell-drawer-title', header: 'p-bell-drawer-header', content: 'p-bell-drawer-content', close: 'p-bell-drawer-close' }}
+        >
+          <List kid={kid} onGo={close} sheet />
         </Drawer>
       </>
     )
   return (
     <Popover opened={opened} onChange={setOpened} position="bottom-end" width={400} shadow="md">
-      <Popover.Target>{btn}</Popover.Target>
-      <Popover.Dropdown className={kid ? 'f-bell-pop' : 'p-pop p-bell-pop'}>
+      <Tooltip label="Notifications" openDelay={400} disabled={opened}>
+        <Popover.Target>{btn}</Popover.Target>
+      </Tooltip>
+      <Popover.Dropdown aria-label="Notifications" className={kid ? 'f-bell-pop' : 'p-pop p-bell-pop'}>
         <List kid={kid} onGo={close} />
       </Popover.Dropdown>
     </Popover>

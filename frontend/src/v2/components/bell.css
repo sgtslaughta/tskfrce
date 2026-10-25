@@ -265,3 +265,12 @@
   color: var(--p-sub);
   font-weight: 600;
 }
+
+/* phone sheet: title in the parent face (the list's own header is hidden there) */
+[data-look='parent'] .p-bell-drawer-title { font: 700 18px var(--font-parent), system-ui, sans-serif; color: var(--p-ink); text-transform: none; letter-spacing: 0; }
+[data-look='parent'] .p-bell-drawer-header { background: var(--p-card); border-bottom: 1px solid var(--p-line); }
+[data-look='parent'] .p-bell-drawer-content { background: var(--p-card); }
+[data-look='parent'] .p-bell-drawer-close { color: var(--p-ink); }
+[data-look='parent'] .p-bell-drawer-close:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+.p-bell-tab, .p-bell-mark-read { transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+.p-bell-tab:not(.on):hover { background: var(--p-soft); color: var(--p-ink); }

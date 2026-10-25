@@ -8,6 +8,7 @@ jest.mock('@/v2/parent/Icon', () => ({
   Icon: ({ name }: { name: string; size?: number }) => <span>{name}</span>,
 }))
 jest.mock('@mantine/core', () => ({
+  Tooltip: ({ children }: { children: React.ReactNode }) => children,
   ActionIcon: ({
     children,
     onClick,
