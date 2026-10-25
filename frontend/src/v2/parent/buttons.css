@@ -51,3 +51,28 @@
 [data-look='parent'] .p-btn .ms {
   font-size: 16px;
 }
+
+/* keyboard focus, pressed, disabled and in-flight states (shared by every .p-btn) */
+[data-look='parent'] .p-btn:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+[data-look='parent'] .p-btn:active:not(:disabled) { transform: scale(0.97); }
+[data-look='parent'] .p-btn:disabled {
+  background: var(--p-soft);
+  border-color: var(--p-line);
+  color: var(--p-sub);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+[data-look='parent'] .p-btn[data-loading='true'] { position: relative; pointer-events: none; color: transparent; }
+[data-look='parent'] .p-btn[data-loading='true'] > * { opacity: 0; }
+[data-look='parent'] .p-btn[data-loading='true']::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--p-ink);
+  border-right-color: transparent;
+  animation: p-spin 0.7s linear infinite;
+}
+@keyframes p-spin { to { transform: rotate(360deg); } }
+[data-look='parent'] .p-btn[data-variant='accent'][data-loading='true']::after { border-color: #292928; border-right-color: transparent; }
