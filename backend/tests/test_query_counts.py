@@ -19,7 +19,9 @@ from tests.conftest import _headers, _make_user
 from tests.factories import DAY, api_chore
 
 LIMIT = 15
-LIMITS = {"/api/v1/today": 17}  # per-device lock facts and per-kid progress are batched
+LIMITS = {
+    "/api/v1/today": 18
+}  # per-device lock facts and per-kid progress are batched; +1 reward prices
 
 
 class QueryCounter:

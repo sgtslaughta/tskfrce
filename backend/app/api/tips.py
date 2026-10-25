@@ -36,9 +36,11 @@ def dismiss_tip(
         raise HTTPException(400, "Invalid tip key format.")
 
     # Check if already dismissed
-    existing = db.query(DismissedTip).filter(
-        and_(DismissedTip.user_id == user.id, DismissedTip.tip_key == tip_key)
-    ).first()
+    existing = (
+        db.query(DismissedTip)
+        .filter(and_(DismissedTip.user_id == user.id, DismissedTip.tip_key == tip_key))
+        .first()
+    )
 
     if not existing:
         db.add(DismissedTip(user_id=user.id, tip_key=tip_key))
@@ -48,9 +50,7 @@ def dismiss_tip(
 
 
 @router.delete("/tips")
-def reset_tips(
-    db: Session = Depends(get_db), user: User = Depends(get_current_user)
-) -> dict:
+def reset_tips(db: Session = Depends(get_db), user: User = Depends(get_current_user)) -> dict:
     """Clear all dismissed tips for the current user."""
     db.query(DismissedTip).filter(DismissedTip.user_id == user.id).delete()
     db.commit()

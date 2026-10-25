@@ -1,6 +1,5 @@
 """Tests for the tips API."""
 
-
 from app.models.tips import DismissedTip
 from app.models.user import UserRole
 

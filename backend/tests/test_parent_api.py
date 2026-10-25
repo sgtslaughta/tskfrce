@@ -174,6 +174,9 @@ def test_today_shape(client, db, parent, kid, parent_headers):
     assert set(k) == {
         "id",
         "name",
+        "points",
+        "next_reward",
+        "locks_at",
         "avatar",
         "online_all",
         "done",
@@ -357,6 +360,7 @@ def test_clear_pin(client, db, parent_headers):
 
 # Task 2: Family accent + run detail
 
+
 def test_family_accent_default_neon(client, db, parent_headers):
     r = client.get("/api/v1/family", headers=parent_headers)
     assert r.status_code == 200
@@ -381,7 +385,9 @@ def test_run_detail_steps_have_done_at(client, db, parent, kid, parent_headers):
     run = mkchore(db, parent, kid, status="submitted", steps=["Step 1", "Step 2"])
     # Tick one step
     step = run.assignment.chore.steps[0]
-    tick_obj = RunStepTick(run_id=run.id, step_id=step.id, done_by_id=kid.id, done_at=datetime.now(UTC))
+    tick_obj = RunStepTick(
+        run_id=run.id, step_id=step.id, done_by_id=kid.id, done_at=datetime.now(UTC)
+    )
     db.add(tick_obj)
     db.commit()
 
@@ -401,7 +407,11 @@ def test_run_detail_photos(client, db, parent, kid, parent_headers):
     setup_day(db)
     run = mkchore(db, parent, kid, status="submitted", steps=["Step 1"])
     photo = ChorePhoto(
-        run_id=run.id, attempt=1, uploaded_by_id=kid.id, path="test.jpg", thumb_path="test_thumb.jpg"
+        run_id=run.id,
+        attempt=1,
+        uploaded_by_id=kid.id,
+        path="test.jpg",
+        thumb_path="test_thumb.jpg",
     )
     db.add(photo)
     db.commit()

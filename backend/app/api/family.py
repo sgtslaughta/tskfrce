@@ -10,12 +10,13 @@ from app.api.deps import get_db, require_parent
 from app.api.devices import device_out
 from app.api.rewards import redemption_name
 from app.lock.loop import trigger
+from app.lock.schedule import Window, local_now, window_end
 from app.lock.state import Prefetch
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import ChoreRun
 from app.models.family import get_family
 from app.models.lock import Device
-from app.models.reward import Redemption
+from app.models.reward import Redemption, Reward
 from app.models.user import User, UserRole
 from app.schemas.lock import FamilyPatch
 from app.services import chores as svc
@@ -144,6 +145,18 @@ def _chore_out(r: ChoreRun, names: dict[int, str]) -> dict:
     }
 
 
+def _next_reward(prices: list[int], balance: int) -> int | None:
+    """Points still needed for the cheapest reward the kid can't afford yet."""
+    return next((p - balance for p in prices if p > balance), None)
+
+
+def _locks_at(pre: Prefetch, kid_id: int, now_local: datetime) -> str | None:
+    """End of the kid's current allowed hours today (their own windows, not groups')."""
+    rows = pre.windows.get(("kid_id", kid_id), [])
+    end = window_end([Window.from_row(r) for r in rows if r.kind == "allowed"], now_local)
+    return _iso(end.astimezone(UTC).replace(tzinfo=None)) if end else None
+
+
 @router.get("/today")
 def today(db: Session = Depends(get_db)):
     fam, now = get_family(db), datetime.now(UTC)
@@ -165,6 +178,8 @@ def today(db: Session = Depends(get_db)):
     prog = progression.progress_many(db, kid_rows, fam, balances)
     names = {k.id: k.full_name for k in kid_rows}
     needs = _needs_you(db, tasks, names, balances)
+    prices = sorted(p for (p,) in db.query(Reward.price).filter(Reward.active.is_(True)))
+    now_local = local_now(fam.timezone, now)
     kids = []
     for k in kid_rows:
         devs = [device_out(db, d, fam, now, pre) for d in kid_devs[k.id]]
@@ -181,6 +196,9 @@ def today(db: Session = Depends(get_db)):
                 "needs_you_count": sum(n["kid_id"] == k.id for n in needs),
                 "last_active": _iso(max(seen)) if seen else None,
                 "progress": prog[k.id],
+                "points": balances.get(k.id, 0),
+                "next_reward": _next_reward(prices, balances.get(k.id, 0)),
+                "locks_at": _locks_at(pre, k.id, now_local),
                 "chores": [_chore_out(t, names) for t in mine],
                 "devices": [
                     {"id": d["id"], "name": d["name"], "vendor": d["vendor"], "online": d["online"]}
