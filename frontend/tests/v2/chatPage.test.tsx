@@ -31,7 +31,7 @@ const threads = [
 
 beforeEach(() => {
   apiMock.mockReset().mockImplementation(async (p) =>
-    p === '/chat/threads' ? { total: 2, threads } : { id: 1, kind: 'x', title: 't', messages: [], has_more: false },
+    p === '/chat/threads' ? { total: 2, threads } : p === '/today' ? { kids: [] } : { id: 1, kind: 'x', title: 't', messages: [], has_more: false },
   )
   router.query = {}
   router.push.mockClear()

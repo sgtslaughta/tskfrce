@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
-import { Button, Modal } from '@mantine/core'
+import { Fragment, useEffect, useRef, useState } from 'react'
+import { Button } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
 import { IconPhoto } from '@tabler/icons-react'
 import { GifPicker } from '@/v2/chat/GifPicker'
 import { Icon } from '@/v2/parent/Icon'
-import { HeaderChips } from '@/v2/parent/HeaderChips'
 import {
   fetchEarlier,
   useMarkRead,
@@ -18,42 +17,14 @@ import {
 import { useRunDetail } from '@/v2/hooks/useChores'
 import { LoadError, LoadingCards } from '@/v2/components/States'
 import { toastFail } from '@/v2/notify'
-import { useAuthImage } from '@/v2/today/PhotoViewer'
-
-/** Server photo paths are `/api/v1/...`; the proxy wants them without that prefix. */
-const proxyPath = (url: string) => url.replace(/^\/api\/v1/, '')
+import { Photo } from './ChatPhoto'
+import { DaySep, ParentBubble, dayName } from './ParentBubble'
+import { ThreadHead } from './ThreadHead'
+import { ThreadSidePanel } from './ThreadSidePanel'
 
 const dayLabel = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
 const timeLabel = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
-
-function Photo({ url }: { url: string }) {
-  const [open, setOpen] = useState(false)
-  const path = proxyPath(url)
-  const thumb = useAuthImage(`${path}/thumb`)
-  const full = useAuthImage(open ? path : null)
-  return (
-    <>
-      <button
-        type="button"
-        aria-label="Open photo"
-        onClick={() => setOpen(true)}
-        style={{ display: 'block', width: 160, height: 120, padding: 0, border: 0, borderRadius: 6, overflow: 'hidden', background: 'var(--f-mute)', cursor: 'pointer' }}
-      >
-        {thumb && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={thumb} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-        )}
-      </button>
-      <Modal opened={open} onClose={() => setOpen(false)} title="Photo" size="lg" transitionProps={{ duration: 0 }}>
-        {full && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={full} alt="Chat photo" style={{ width: '100%', borderRadius: 6 }} />
-        )}
-      </Modal>
-    </>
-  )
-}
 
 function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
   if (m.kind === 'system') {
@@ -121,7 +92,7 @@ export function ThreadView({
   const wideLay = useMediaQuery('(min-width: 1250px)')
 
   const data = thread.data
-  const runDetail = useRunDetail(data?.run_id ?? null)
+  const runDetail = useRunDetail(kind === 'chore' ? Number(refId) : null)
   const latest = data?.messages ?? []
   const lastId = latest.length ? latest[latest.length - 1].id : 0
   const messages = [...older.filter((o) => !latest.some((l) => l.id === o.id)), ...latest]
@@ -173,140 +144,76 @@ export function ThreadView({
 
   let day = ''
 
-  // Parent look: header, then messages and composer
+  // Parent look: header, messages, composer, side panel
   if (!kid) {
+    const run = kind === 'chore' ? runDetail.data : undefined
+    const sideKid = kind === 'private' ? Number(refId) : (run?.kid_ids[0] ?? null)
+    const side = wideLay && !bare && ((kind === 'chore' && !!run) || kind === 'private')
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 0 }}>
-        {/* Header: icon + title (hidden when embedded under a chore on Today) */}
-        {data && !bare && (
-          <div style={{ paddingBottom: 16, borderBottom: '1px solid var(--p-line)', display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 0 }}>
-            <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--p-acc)', color: '#292928', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Icon name={kind === 'chore' ? 'task' : kind === 'family' ? 'group' : 'mail'} size={24} />
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--p-ink)', marginBottom: 6 }}>{data.title}</h2>
-            </div>
-          </div>
-        )}
-
-        {/* Messages and composer */}
-        <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0 }}>
-          {/* Messages column */}
-          <section aria-label={data?.title ?? 'Conversation'} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>
-            {thread.isError && <LoadError error={thread.error} onRetry={() => thread.refetch()} />}
-            {thread.isPending && !thread.isError && <LoadingCards n={3} h={48} />}
-            <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 2px', minHeight: 240 }}>
-              {(hasMore ?? data?.has_more) && (
-                <Button variant="default" size="xs" onClick={loadEarlier} style={{ alignSelf: 'center' }}>
-                  Load earlier
-                </Button>
-              )}
-              {data && messages.length === 0 && <p style={{ color: 'var(--p-sub)', fontStyle: 'italic' }}>Nothing here yet. Say hi!</p>}
-              {messages.map((m) => {
-                const d = dayLabel(m.created_at)
-                const sep = d !== day
-                day = d
-                return (
-                  <div key={m.id} style={{ display: 'flex', flexDirection: 'column' }}>
-                    {sep && <div data-testid="day-sep" style={{ textAlign: 'center', margin: '8px 0', fontSize: '0.85rem', color: 'var(--p-sub)', fontWeight: 600 }}>{d}</div>}
-                    <Bubble m={m} mine={m.author_id !== null && m.author_id === meId} />
-                  </div>
-                )
-              })}
-              <div ref={endRef} />
-            </div>
-            <form
-              style={{ flexWrap: 'nowrap', alignItems: 'flex-end', paddingTop: 8, position: 'sticky', bottom: 0, background: 'var(--p-bg, transparent)', display: 'flex', gap: 8 }}
-              onSubmit={(e) => {
-                e.preventDefault()
-                void send()
-              }}
-            >
-              <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden aria-label="Photo file" onChange={(e) => pick(e.target.files?.[0])} />
-              <Button
-                variant={photoId ? 'filled' : 'default'}
-                aria-label={photoId ? 'Photo added' : 'Add photo'}
-                onClick={() => fileRef.current?.click()}
-                loading={upload.isPending}
-                size="sm"
-              >
-                <IconPhoto size={18} />
+      <div className="pc-grid" data-side={side} data-bare={bare}>
+        <section className="pc-thread" aria-label={data?.title ?? 'Conversation'}>
+          {data && !bare && <ThreadHead kind={kind} title={data.title} run={run} />}
+          {thread.isError && <LoadError error={thread.error} onRetry={() => thread.refetch()} />}
+          {thread.isPending && !thread.isError && <LoadingCards n={3} h={48} />}
+          <div className="pc-msgs">
+            {(hasMore ?? data?.has_more) && (
+              <Button variant="default" size="xs" onClick={loadEarlier} style={{ alignSelf: 'center' }}>
+                Load earlier
               </Button>
-              {gifsOn && (
-                <Button variant="default" aria-label="Add GIF" onClick={() => setGifOpen(true)} size="sm">
-                  GIF
-                </Button>
-              )}
-              <textarea
-                aria-label="Message"
-                value={text}
-                rows={1}
-                maxLength={2000}
-                placeholder="Write a message"
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault()
-                    void send()
-                  }
-                }}
-                style={{ flex: 1, minWidth: 0, resize: 'none', font: 'inherit', padding: 8, borderRadius: 6, border: '1.5px solid var(--p-line)', background: 'var(--p-card)', color: 'var(--p-ink)' }}
-              />
-              <Button type="submit" disabled={!canSend} size="sm">
-                Send
-              </Button>
-            </form>
-            {gifsOn && data && (
-              <GifPicker threadId={data.id} kid={kid} opened={gifOpen} onClose={() => setGifOpen(false)} onPicked={sendGif} />
             )}
-          </section>
-
-          {/* Side panel for chore threads (hidden on narrow screens) */}
-          {wideLay && kind === 'chore' && runDetail.data && (
-            <div style={{ width: 250, borderLeft: '1.5px solid var(--p-line)', paddingLeft: 12, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 14 }}>
-              {/* Steps card */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 8px 0', color: 'var(--p-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <Icon name="checklist" size={18} />
-                  Steps
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 0, fontSize: '13px', color: 'var(--p-sub)' }}>
-                  {runDetail.data.steps.map((step) => (
-                    <div key={step.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderTop: '1.5px solid var(--p-line)' }}>
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Icon name={step.done ? 'check_circle' : 'radio_button_unchecked'} size={16} />
-                        {step.title}
-                      </span>
-                      {step.done_at && (
-                        <span style={{ fontSize: '12px' }}>
-                          {new Date(step.done_at).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Photos card */}
-              {runDetail.data.photos.length > 0 && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <h3 style={{ fontSize: '14px', fontWeight: 600, margin: '0 0 8px 0', color: 'var(--p-ink)', display: 'flex', alignItems: 'center', gap: 6 }}>
-                    <Icon name="photo_library" size={18} />
-                    Photos
-                  </h3>
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                    {runDetail.data.photos.map((photo) => (
-                      <div key={photo.id} style={{ width: 96, height: 70, borderRadius: 8, background: 'var(--p-soft)', overflow: 'hidden' }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={proxyPath(photo.thumb_url)} alt="Chore photo" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+            {data && messages.length === 0 && <p className="pc-empty">Nothing here yet. Say hi!</p>}
+            {messages.map((m) => {
+              const d = dayName(m.created_at)
+              const sep = d !== day
+              day = d
+              return (
+                <Fragment key={m.id}>
+                  {sep && <DaySep label={d} />}
+                  <ParentBubble m={m} mine={m.author_id !== null && m.author_id === meId} />
+                </Fragment>
+              )
+            })}
+            <div ref={endRef} />
+          </div>
+          <form
+            className="pc-reply"
+            onSubmit={(e) => {
+              e.preventDefault()
+              void send()
+            }}
+          >
+            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden aria-label="Photo file" onChange={(e) => pick(e.target.files?.[0])} />
+            <button type="button" className="pc-ib" data-on={!!photoId} aria-label={photoId ? 'Photo added' : 'Add photo'} disabled={upload.isPending} onClick={() => fileRef.current?.click()}>
+              <Icon name={photoId ? 'image' : 'add_photo_alternate'} size={20} />
+            </button>
+            {gifsOn && (
+              <button type="button" className="pc-ib" aria-label="Add GIF" onClick={() => setGifOpen(true)}>
+                <Icon name="gif_box" size={20} />
+              </button>
+            )}
+            <textarea
+              aria-label="Message"
+              value={text}
+              rows={1}
+              maxLength={2000}
+              placeholder={data ? `Message ${data.title}…` : 'Write a message'}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  void send()
+                }
+              }}
+            />
+            <button type="submit" className="pc-send" aria-label="Send" disabled={!canSend}>
+              <Icon name="send" size={16} />
+            </button>
+          </form>
+          {gifsOn && data && (
+            <GifPicker threadId={data.id} kid={kid} opened={gifOpen} onClose={() => setGifOpen(false)} onPicked={sendGif} />
           )}
-        </div>
+        </section>
+        {side && <ThreadSidePanel run={run} kidId={sideKid} />}
       </div>
     )
   }

@@ -174,20 +174,18 @@ describe('ThreadList', () => {
     expect(screen.getByTestId('unread-3')).toHaveTextContent('1')
   })
 
-  it('unread badge has correct accent styling (--p-acc background with #292928 text)', () => {
-    render(
-      <ThreadList
-        threads={mockThreads}
-        selected={null}
-        onPick={() => {}}
-      />
-    )
+  it('shows the unread count in a badge and "You:" on own last lines', () => {
+    render(<ThreadList threads={mockThreads} selected={null} onPick={() => {}} meName="Dad" />)
 
     const unreadBadge = screen.getByTestId('unread-2')
-    expect(unreadBadge).toHaveStyle({
-      background: 'var(--p-acc)',
-      color: '#292928',
-    })
+    expect(unreadBadge).toHaveClass('pc-badge')
+    expect(unreadBadge).toHaveTextContent('2')
+    expect(screen.getByText('You: Check this out')).toBeInTheDocument()
+    expect(screen.getByText('Mom: Milk needed')).toBeInTheDocument()
   })
 
+  it('marks the selected row', () => {
+    render(<ThreadList threads={mockThreads} selected="family:family" onPick={() => {}} />)
+    expect(screen.getByRole('button', { name: /Family photo/ })).toHaveAttribute('aria-current', 'true')
+  })
 })
