@@ -15,6 +15,7 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
   const [name, setName] = useState(kid?.full_name ?? '')
   const [avatar, setAvatar] = useState(kid?.avatar ?? '')
   const [pin, setPin] = useState('')
+  const [letters, setLetters] = useState(false)
   const [confirm, { open, close }] = useDisclosure(false)
   const label = kid?.full_name ?? kid?.username ?? 'this kid'
 
@@ -31,6 +32,7 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
       onSuccess: (res: unknown) => {
         toastOk(kid ? 'Saved' : 'Added')
         setPin('')
+        setLetters(false)
         if (!kid) onCreated?.((res as Kid).id)
       },
     }
@@ -47,7 +49,7 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
       <div className="pk-form">
         <label className="pk-field">
           <span className="pk-label">Name</span>
-          <input className="pk-input" value={name} onChange={(e) => setName(e.currentTarget.value)} />
+          <input className="pk-input" value={name} maxLength={100} onChange={(e) => setName(e.currentTarget.value)} />
         </label>
         <EmojiPicker label="Avatar (an emoji)" value={avatar} onChange={setAvatar} />
         <label className="pk-field">
@@ -59,10 +61,13 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
             value={pin}
             inputMode="numeric"
             maxLength={4}
-            onChange={(e) => setPin(e.currentTarget.value.replace(/\D/g, ''))}
+            onChange={(e) => {
+              setLetters(/\D/.test(e.currentTarget.value))
+              setPin(e.currentTarget.value.replace(/\D/g, ''))
+            }}
           />
           {kid?.has_pin && !pinBad && <span className="pk-hint">A PIN is set. Enter a new one to change it.</span>}
-          {pinBad && <span className="pk-error">Use exactly 4 digits.</span>}
+          {(pinBad || letters) && <span className="pk-error">{letters ? 'A PIN is digits only, exactly 4.' : 'Use exactly 4 digits.'}</span>}
         </label>
         <div className="pk-actions">
           <button
@@ -98,7 +103,7 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
           opened={confirm}
           title={`Delete ${label}?`}
           body={`Deleting ${label} removes their chores and frees their devices.`}
-          onConfirm={() => del.mutate(kid.id, { onError: toastFail, onSuccess: onDone })}
+          onConfirm={() => del.mutate(kid.id, { onSuccess: onDone })}
           onClose={close}
         />
       )}

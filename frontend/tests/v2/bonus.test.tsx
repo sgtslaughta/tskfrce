@@ -45,6 +45,27 @@ describe('PointsForm', () => {
     expect(send.disabled).toBe(true)
   })
 
+  test.each([['0', 'Must be at least 1.'], ['-5', 'Must be at least 1.'], ['501', 'Must be 500 or less.'], ['2.5', 'Use a whole number.'], ['abc', 'Numbers only.']])(
+    'amount "%s" shows "%s" inline and sends nothing',
+    async (value, msg) => {
+      await setup()
+      await userEvent.type(screen.getByLabelText(/Points/), value)
+      await userEvent.type(screen.getByLabelText('Why?'), 'Helped out')
+      expect(screen.getByText(msg)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Send points' })).toBeDisabled()
+      expect(apiMock).not.toHaveBeenCalled()
+    },
+  )
+
+  test('a failed send shows exactly one error toast', async () => {
+    apiMock.mockRejectedValue(new Error('boom'))
+    await setup()
+    await userEvent.type(screen.getByLabelText(/Points/), '25')
+    await userEvent.type(screen.getByLabelText('Why?'), 'Helped out')
+    await userEvent.click(screen.getByRole('button', { name: 'Send points' }))
+    await waitFor(() => expect(notifications.show).toHaveBeenCalledTimes(1))
+  })
+
   test('posts the exact body and confirms', async () => {
     await setup()
     await userEvent.type(screen.getByLabelText(/Points/), '25')
