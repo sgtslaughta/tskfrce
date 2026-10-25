@@ -47,11 +47,11 @@ export function DeviceDetail({ device, kids, groups, isGroupOpen, onClose, onReq
   const [tab, setTab] = useState<string | null>('overview')
 
   const headerChips: HeaderChip[] = [
-    ...(device.vendor ? [{ text: device.vendor, vendor: device.vendor, icon: 'package' }] : []),
+    ...(device.vendor ? [{ text: device.vendor, vendor: device.vendor }] : []),
     {
       text: device.online ? 'Online now' : `Last seen ${relativeTime(device.last_seen)}`,
       tone: device.online ? ('acc' as const) : ('plain' as const),
-      icon: device.online ? 'wifi' : 'clock',
+      icon: device.online ? 'wifi' : 'schedule',
     },
     ...(device.ip ? [{ text: device.ip, tone: 'mono' as const, icon: 'lan' }] : []),
     { text: ownerName(kids, device.owner_ids), icon: 'person' },
