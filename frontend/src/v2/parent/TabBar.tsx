@@ -31,13 +31,16 @@ export function TabBar() {
           href={item.href}
           className="p-tabbar-item"
           aria-current={router.pathname === item.href ? 'page' : undefined}
-          aria-label={item.label}
-          role="tab"
-          aria-selected={router.pathname === item.href}
         >
           <Icon name={item.icon} />
-          {item.badge && <span className="p-tabbar-badge">{item.badge > 9 ? '9+' : item.badge}</span>}
           <span className="p-tabbar-label">{item.label}</span>
+          {/* after the label so the name reads "Chat 3 unread"; the badge is positioned in CSS */}
+          {item.badge && (
+            <span className="p-tabbar-badge">
+              {item.badge > 9 ? '9+' : item.badge}
+              <span className="p-sr"> unread</span>
+            </span>
+          )}
         </Link>
       ))}
     </nav>

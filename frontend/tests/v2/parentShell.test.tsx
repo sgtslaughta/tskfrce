@@ -281,46 +281,26 @@ describe('TabBar', () => {
     })
   })
 
-  test('tab bar shows 5 items with correct labels', () => {
-    const { container } = render(<TabBar />)
-
-    const tabbar = container.querySelector('.p-tabbar')
-    expect(tabbar).toBeInTheDocument()
-
-    const items = Array.from(tabbar?.querySelectorAll('[aria-label]') || []).map(
-      (el) => el.getAttribute('aria-label')
-    )
-
-    expect(items).toEqual(['Today', 'Devices', 'Kids', 'Chat', 'More'])
+  test('tab bar is a nav of 5 links named by their text', () => {
+    render(<TabBar />)
+    const nav = screen.getByRole('navigation', { name: 'Main' })
+    expect(within(nav).getAllByRole('link')).toHaveLength(5)
+    for (const name of ['Today', 'Devices', 'Kids', 'Chat', 'More']) expect(within(nav).getByRole('link', { name })).toBeInTheDocument()
   })
 
-  test('tab bar shows chat count badge when unread', () => {
+  test('chat link carries the unread count in its name', () => {
     const { useThreads } = require('@/v2/hooks/useChat')
-    useThreads.mockReturnValue({
-      data: { total: 5 },
-    })
-
-    const { container } = render(<TabBar />)
-    const chatItem = Array.from(container.querySelectorAll('a[aria-label="Chat"]')).pop() as HTMLElement
-    const badge = chatItem?.querySelector('.p-tabbar-badge')
-
-    expect(badge).toBeInTheDocument()
-    expect(badge).toHaveTextContent('5')
+    useThreads.mockReturnValue({ data: { total: 5 } })
+    render(<TabBar />)
+    expect(screen.getByRole('link', { name: 'Chat 5 unread' })).toBeInTheDocument()
   })
 
   test('active tab marked with aria-current', () => {
-    ;(useRouter as jest.Mock).mockReturnValue({
-      pathname: '/devices',
-      push: jest.fn(),
-      replace: jest.fn(),
-      query: {},
-    })
-
-    const { container } = render(<TabBar />)
-    const devicesTab = container.querySelector('a[aria-label="Devices"]')
-
-    expect(devicesTab).toHaveAttribute('aria-current', 'page')
+    ;(useRouter as jest.Mock).mockReturnValue({ pathname: '/devices', push: jest.fn(), replace: jest.fn(), query: {} })
+    render(<TabBar />)
+    expect(screen.getByRole('link', { name: 'Devices' })).toHaveAttribute('aria-current', 'page')
   })
+
 })
 
 describe('MorePage', () => {
