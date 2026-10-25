@@ -1,16 +1,17 @@
 import type { TodayKid } from '../types'
+import { useClock } from './useClock'
 
 export const initial = (name: string | null) => (name?.trim()[0] ?? '?').toUpperCase()
-const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
 /** Schedule end time; "Locked" when the kid's devices are already off. */
-const locksAt = (kid: TodayKid) => {
+const locksAt = (kid: TodayKid, clock: (iso: string) => string) => {
   if (kid.locks_at) return clock(kid.locks_at)
   return kid.devices.length && !kid.devices.some((d) => d.online) ? 'Locked' : '—'
 }
 
 /** Points / streak / next reward / locks-at, shared by the desktop kid card and phone Today. */
 export function KidFacts({ kid }: { kid: TodayKid }) {
+  const clock = useClock()
   return (
     <div className="p-kid-facts">
       <div>
@@ -27,7 +28,7 @@ export function KidFacts({ kid }: { kid: TodayKid }) {
       </div>
       <div>
         <span>Locks at</span>
-        <b>{locksAt(kid)}</b>
+        <b>{locksAt(kid, clock)}</b>
       </div>
     </div>
   )

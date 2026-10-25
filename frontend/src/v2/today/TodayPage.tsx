@@ -10,6 +10,7 @@ import { KidList } from "./KidList";
 import { KidStrip } from "./KidStrip";
 import { KidFacts } from "./KidFacts";
 import { ChoreRow } from "./ChoreRow";
+import { useClock } from "./useClock";
 import { Icon } from "../parent/Icon";
 import { getTipsToShow, PARENT_TIPS } from "../tips";
 import type { TodayKid, TodayChore } from "../types";
@@ -17,13 +18,17 @@ import type { TodayKid, TodayChore } from "../types";
 export function TodayPage() {
   const { data, isError, error, refetch } = useToday();
   const router = useRouter();
-  const [selectedKid, setSelectedKid] = useState<TodayKid | undefined>();
+  const clock = useClock();
+  // keep the id, not the object: the kid is looked up in every poll so the page never shows stale numbers
+  const [selectedId, setSelectedId] = useState<number | undefined>();
+  const setSelectedKid = (k: TodayKid) => {
+    setSelectedId(k.id);
+    router.push(`/?item=${k.id}`, undefined, { shallow: true }); // deep link + back button follow the choice
+  };
   const [openChoreId, setOpenChoreId] = useState<number | null>(null);
 
-  const selectedKidFromUrl = data?.kids.find(
-    (k) => k.id === Number(router.query.item)
-  );
-  const kid = selectedKidFromUrl || selectedKid || data?.kids[0];
+  const kidById = (id?: number) => data?.kids.find((k) => k.id === id);
+  const kid = kidById(Number(router.query.item)) || kidById(selectedId) || data?.kids[0];
 
   return (
     <ParentShell
@@ -41,6 +46,17 @@ export function TodayPage() {
     >
       {isError && !data && <ErrorPanel kind="unreachable" error={error} onRetry={() => refetch()} />}
       {!data && !isError && <Skeleton rows={4} />}
+      {isError && data && (
+        <div className="p-banner pt-stale" role="alert">
+          <span>
+            <b>Can&apos;t reach your home box.</b> Showing what we saw last.
+          </span>
+          <button type="button" className="p-btn" onClick={() => refetch()}>
+            <Icon name="refresh" size={16} />
+            Try again
+          </button>
+        </div>
+      )}
       {data && data.kids.length === 0 && (
         <EmptyState
           icon="person_add"
@@ -121,7 +137,7 @@ export function TodayPage() {
               {kid.last_active && (
                 <div className="p-summary-item">
                   <span className="p-summary-label">Last active</span>
-                  <span className="p-summary-value">{new Date(kid.last_active).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+                  <span className="p-summary-value">{clock(kid.last_active)}</span>
                 </div>
               )}
             </div>
