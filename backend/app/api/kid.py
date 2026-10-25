@@ -134,7 +134,7 @@ def _names(db: Session, ids: set[int]) -> dict[int, User]:
     return {u.id: u for u in db.query(User).filter(User.id.in_(ids))} if ids else {}
 
 
-def _kid_extras(run: ChoreRun, fam, takers: dict[int, User], deds: list[dict]) -> dict:
+def _kid_extras(run: ChoreRun, fam, takers: dict[int, User], deds: list[dict], texts: dict) -> dict:
     """Fields the kid screen needs beyond the basics."""
     c, mode = svc.chore_of(run), svc.mode_of(run)
     taker = takers.get(run.submitted_by_id)
@@ -147,6 +147,7 @@ def _kid_extras(run: ChoreRun, fam, takers: dict[int, User], deds: list[dict]) -
         "due_at": svc.iso_z(svc.due_at(run, fam)),
         "type": svc.type_out(c),
         "notes": svc.notes_out(run),
+        "note": svc.note_out(run, texts),
         "sent_back": svc.sent_back(run),
         "deductions": deds,
         "taken_by": (taker.full_name or taker.username) if taker and mode == "race" else None,
@@ -176,6 +177,7 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(v
     takers = _names(db, {r.submitted_by_id for r in runs} - {None, kid.id})
     done = sum(svc.state(r) == "done" for r in runs)
     deds = svc.deductions(db, runs)
+    texts = svc.note_texts(db, runs)
     return {
         "locked": _locked(
             db,
@@ -191,7 +193,7 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(v
                 "points": svc.chore_of(r).points or 0,
                 "state": svc.state(r),
                 "due_time": r.assignment.due_time,
-                **_kid_extras(r, fam, takers, _mine(deds.get(r.id, []), kid.id)),
+                **_kid_extras(r, fam, takers, _mine(deds.get(r.id, []), kid.id), texts),
             }
             for r in runs
         ],

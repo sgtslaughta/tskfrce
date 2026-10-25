@@ -20,6 +20,7 @@ from app.models.flair import KidFlair
 from app.models.lock import Override, TimeWindow, device_owners
 from app.models.points import Points, PointsType
 from app.models.reward import Redemption
+from app.models.tips import DismissedTip
 from app.models.user import User, UserRole
 from app.schemas.lock import KidCreate, KidPatch, OverrideIn
 from app.services import chat, economy
@@ -132,6 +133,7 @@ def delete_kid(kid_id: int, db: Session = Depends(get_db)):
     db.query(Redemption).filter(Redemption.kid_id == kid.id).delete()
     db.query(BadgeAward).filter(BadgeAward.kid_id == kid.id).delete()
     db.query(KidFlair).filter(KidFlair.kid_id == kid.id).delete()
+    db.query(DismissedTip).filter(DismissedTip.user_id == kid.id).delete()
     db.flush()
     db.expire_all()
     for d in owned:

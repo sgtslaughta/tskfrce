@@ -41,6 +41,8 @@ def test_note_flags_and_notifies(client, db, parent_headers):
     chores = client.get("/api/v1/today", headers=parent_headers).json()["kids"][0]["chores"]
     n = chores[0]["note"]
     assert (n["label"], n["text"], n["kid_name"]) == ("Out of supplies", "no spray", kid.full_name)
+    seen = client.get("/api/v1/kid/today", headers=kh).json()["chores"][0]["note"]
+    assert (seen["label"], seen["text"]) == ("Out of supplies", "no spray")
     assert db.query(Notification).filter(Notification.kind == "chore_note").count() >= 1
     assert (
         db.query(ThreadMessage).filter(ThreadMessage.note_label == "Out of supplies").count() == 1

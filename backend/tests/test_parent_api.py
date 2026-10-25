@@ -8,6 +8,7 @@ from app.models.family import get_family
 from app.models.lock import Device, DeviceGroup, Override, TimeWindow
 from app.models.points import Points, PointsType
 from app.models.reward import Redemption
+from app.models.tips import DismissedTip
 from app.services import chores as svc
 
 from tests.factories import api_chore, make_run
@@ -264,8 +265,10 @@ def test_delete_kid_removes_points_and_requests(client, db, parent, kid, parent_
     db.add(Points(user_id=kid.id, points_type=PointsType.BONUS, amount=5))
     db.add(Redemption(kid_id=kid.id, kind="screen_time", minutes=15, cost=5))
     db.add(BadgeAward(kid_id=kid.id, badge_key="first_blood", tier=1))
+    db.add(DismissedTip(user_id=kid.id, tip_key="kid.intro"))
     db.commit()
     assert client.delete(f"/api/v1/kids/{kid.id}", headers=parent_headers).status_code == 200
+    assert db.query(DismissedTip).count() == 0
     assert db.query(Points).count() == 0
     assert db.query(Redemption).count() == 0
     assert db.query(BadgeAward).count() == 0
