@@ -418,3 +418,13 @@
   font-weight: 700;
   text-decoration: none;
 }
+
+/* Desktop: the floating chat button (56px at bottom-right 16px) sits over the scroll areas;
+   leave room so the last row and footer actions (Save chore, Send…) scroll clear of it.
+   Phones have no floating button. */
+@media (min-width: 768px) {
+  [data-look='parent'] .p-main,
+  [data-look='parent'] .p-detail-column {
+    padding-bottom: 88px;
+  }
+}
