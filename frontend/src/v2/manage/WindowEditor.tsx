@@ -53,7 +53,7 @@ export function WindowEditor({ target, label }: Props) {
     )
 
   return (
-    <section aria-label={`${label} hours`} className="m-grid2">
+    <section aria-label={`${label} schedule`} className="m-grid2">
       {KINDS.map(({ kind, title, add: addLabel, empty }) => {
         const rows = mine.filter((w) => w.kind === kind)
         return (
