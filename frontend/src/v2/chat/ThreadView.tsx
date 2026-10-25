@@ -98,11 +98,13 @@ export function ThreadView({
   refId,
   meId,
   kid = false,
+  bare = false,
 }: {
   kind: ThreadKind
   refId: string
   meId: number | null
   kid?: boolean
+  bare?: boolean
 }) {
   const thread = useThread(kind, refId, kid)
   const post = usePost(kid)
@@ -171,57 +173,23 @@ export function ThreadView({
 
   let day = ''
 
-  // For parent look, render with header and optional side panel
+  // Parent look: header, then messages and composer
   if (!kid) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%', gap: 0 }}>
-        {/* Header with title and chips */}
-        {data && (
+        {/* Header: icon + title (hidden when embedded under a chore on Today) */}
+        {data && !bare && (
           <div style={{ paddingBottom: 16, borderBottom: '1px solid var(--p-line)', display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 0 }}>
             <div style={{ width: 40, height: 40, borderRadius: 12, background: 'var(--p-acc)', color: '#292928', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Icon name={kind === 'chore' ? 'task' : kind === 'family' ? 'group' : 'mail'} size={24} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
               <h2 style={{ margin: 0, fontSize: '15px', fontWeight: 600, color: 'var(--p-ink)', marginBottom: 6 }}>{data.title}</h2>
-              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                {kind === 'chore' && (
-                  <>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-soft)', border: '1px solid var(--p-line)', color: 'var(--p-ink)', whiteSpace: 'nowrap' }}>
-                      <Icon name="category" size={15} />
-                      Chore
-                    </span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-lav)', border: '1px solid var(--p-lav)', color: 'var(--p-lav-ink)', whiteSpace: 'nowrap' }}>
-                      <Icon name="hourglass_top" size={15} />
-                      Needs OK
-                    </span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: '12px', fontWeight: 600, padding: '4px 10px 4px 8px', borderRadius: 999, background: 'var(--p-soft)', border: '1px solid var(--p-line)', color: 'var(--p-ink)', whiteSpace: 'nowrap' }}>
-                      <Icon name="stars" size={15} />
-                      30 pts
-                    </span>
-                  </>
-                )}
-              </div>
             </div>
-            {kind === 'chore' && (
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                <Button size="sm" variant="filled" color="var(--p-acc)">
-                  <Icon name="check" size={16} />
-                  Approve
-                </Button>
-                <Button size="sm" variant="default">
-                  <Icon name="undo" size={16} />
-                  Send back
-                </Button>
-                <Button size="sm" variant="default" style={{ color: 'var(--p-red)' }}>
-                  <Icon name="remove_circle" size={16} />
-                  Deduct
-                </Button>
-              </div>
-            )}
           </div>
         )}
 
-        {/* Main content with optional side panel */}
+        {/* Messages and composer */}
         <div style={{ display: 'flex', gap: 12, flex: 1, minHeight: 0 }}>
           {/* Messages column */}
           <section aria-label={data?.title ?? 'Conversation'} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, flex: 1 }}>

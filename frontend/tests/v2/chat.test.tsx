@@ -129,20 +129,6 @@ describe("Chat page (parent restyle)", () => {
     expect(screen.queryByText("Dishes")).toBeNull();
   });
 
-  test("chore thread header shows approve when needs OK", async () => {
-    page.messages = [msg(1)];
-    page.kind = "chore";
-    wrap(<ThreadView kind="chore" refId="3" meId={1} />);
-
-    // Wait for Approve button to appear
-    const approveButton = await screen.findByRole("button", { name: /Approve/i });
-    expect(approveButton).toBeInTheDocument();
-
-    // Check for Send back button
-    const sendBackButton = screen.getByRole("button", { name: /Send back/i });
-    expect(sendBackButton).toBeInTheDocument();
-  });
-
   test("side panel hidden below 1250px", async () => {
     // Mock useMediaQuery to return false for wide layout
     jest.spyOn(mantineHooks, "useMediaQuery").mockReturnValue(false);

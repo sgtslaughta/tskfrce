@@ -30,7 +30,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
   if (!run) return null
   const name = kid.name ?? 'your kid'
   const take = amount ?? Number(custom)
-  const thread = <ThreadView kind="chore" refId={String(chore.id)} meId={meId} />
+  const thread = <ThreadView kind="chore" refId={String(chore.id)} meId={meId} bare />
 
   return (
     <div className="pt-open" data-chat={chat && !isMobile}>
