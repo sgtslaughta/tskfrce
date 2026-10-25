@@ -174,13 +174,60 @@
 [data-look='parent'] .pk-switch button:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
 
 /* steps */
-[data-look='parent'] .pk-step { display: flex; align-items: center; gap: 4px; padding: 6px 6px 6px 14px; border-radius: 12px; background: var(--p-soft); font-size: 14px; font-weight: 500; color: var(--p-ink); }
-[data-look='parent'] .pk-step > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+[data-look='parent'] .pk-steps { display: flex; flex-direction: column; gap: 6px; }
+[data-look='parent'] .pk-step { display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; border: 1px solid var(--p-line); border-radius: 12px; background: var(--p-soft); font-size: 13.5px; font-weight: 500; color: var(--p-ink); }
+[data-look='parent'] .pk-step-t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+[data-look='parent'] .pk-step .ms { color: var(--p-sub); }
+[data-look='parent'] .pk-grab { display: grid; cursor: grab; touch-action: none; }
+/* ↑/↓ are for keyboard users (pointer users drag the handle): shown only while the keyboard is in the row */
+[data-look='parent'] .pk-step:not(:has(:focus-visible)) .pk-move { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+[data-look='parent'] .pk-num { flex: none; width: 22px; height: 22px; display: inline-grid; place-items: center; border-radius: 50%; background: var(--p-ink); color: var(--p-card); font-size: 11px; font-weight: 700; }
+[data-look='parent'] .pk-num[data-free='true'] { background: transparent; border: 1.5px dashed var(--p-line); color: var(--p-sub); }
+[data-look='parent'] .pk-due { flex: none; display: inline-flex; align-items: center; gap: 3px; padding: 3px 8px; border: 1px solid var(--p-line); border-radius: 999px; background: var(--p-card); color: var(--p-ink); font: 600 11.5px var(--font-parent), system-ui, sans-serif; cursor: pointer; }
+[data-look='parent'] .pk-due[data-none='true'] { border-style: dashed; color: var(--p-sub); }
+[data-look='parent'] .pk-link { display: flex; align-items: center; gap: 6px; height: 22px; margin: -6px 0 -6px 20px; padding: 0; border: 0; background: none; color: var(--p-sub); font: 500 11px var(--font-parent), system-ui, sans-serif; cursor: pointer; }
+[data-look='parent'] .pk-link::before { content: ''; align-self: stretch; width: 2px; margin-right: 6px; background: var(--p-line); }
+[data-look='parent'] .pk-link[aria-pressed='true'] { color: var(--p-ink); font-weight: 600; }
+[data-look='parent'] .pk-link[aria-pressed='true']::before { background: var(--p-ink); }
+[data-look='parent'] .pk-legend { display: flex; flex-wrap: wrap; gap: 14px; color: var(--p-sub); font-size: 11px; }
+[data-look='parent'] .pk-legend > span { display: inline-flex; align-items: center; gap: 4px; }
+[data-look='parent'] .pk-legend .pk-num { width: 16px; height: 16px; font-size: 9px; }
+[data-look='parent'] .pk-warn { display: flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; background: var(--p-amb); color: var(--p-ambink); font-size: 11.5px; }
 [data-look='parent'] .pk-ib { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--p-sub); cursor: pointer; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
 [data-look='parent'] .pk-ib:hover:not(:disabled) { background: var(--p-card); color: var(--p-ink); }
 [data-look='parent'] .pk-ib:disabled { opacity: 0.35; cursor: default; }
 [data-look='parent'] .pk-add { display: flex; gap: 8px; }
 [data-look='parent'] .pk-add .pk-input { flex: 1; min-width: 0; background: transparent; border: 1.5px dashed var(--p-line); }
+
+/* chore type chips (selected = accent with a pencil) and the notes a kid can send */
+[data-look='parent'] .pk-types { display: flex; flex-wrap: wrap; gap: 6px; }
+[data-look='parent'] .pk-type { display: inline-flex; align-items: center; border: 1px solid var(--p-line); border-radius: 999px; background: var(--p-card); color: var(--p-ink); }
+[data-look='parent'] .pk-type button { display: inline-flex; align-items: center; gap: 5px; padding: 6px 11px 6px 8px; border: 0; border-radius: 999px; background: none; color: inherit; font: 600 12.5px var(--font-parent), system-ui, sans-serif; cursor: pointer; }
+[data-look='parent'] .pk-type .ms { color: var(--p-sub); }
+[data-look='parent'] .pk-type[data-on='true'] { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
+[data-look='parent'] .pk-type[data-on='true'] .ms { color: #292928; }
+[data-look='parent'] .pk-type[data-on='true'] button:first-child { padding-right: 2px; }
+[data-look='parent'] .pk-type .pk-type-edit { padding: 6px 8px 6px 4px; }
+[data-look='parent'] .pk-type[data-new] { border-style: dashed; color: var(--p-sub); }
+[data-look='parent'] .pk-type button:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 1px; }
+[data-look='parent'] .pk-hint-tight { margin-top: -4px; }
+[data-look='parent'] .pk-notes { display: flex; flex-wrap: wrap; gap: 4px; }
+[data-look='parent'] .pk-np { padding: 3px 9px; border: 1px solid var(--p-line); border-radius: 999px; color: var(--p-ink); font-size: 11.5px; }
+[data-look='parent'] .pk-np[data-universal] { border-style: dashed; color: var(--p-sub); }
+
+/* New chore type side panel (Mantine Drawer) */
+html[data-look='parent'] .pk-sheet { background: var(--p-card); color: var(--p-ink); }
+html[data-look='parent'] .mantine-Drawer-content.pk-sheet { border-left: 1px solid var(--p-line); }
+html[data-look='parent'] .pk-sheet-title { font-size: 18px; font-weight: 700; color: var(--p-ink); }
+html[data-look='parent'] .pk-sheet .mantine-Drawer-close { color: var(--p-sub); }
+[data-look='parent'] .pk-type-icons .p-glyph-grid { grid-template-columns: repeat(8, 1fr); }
+[data-look='parent'] .pk-type-icons .p-glyph-item { aspect-ratio: 1; padding: 0; justify-content: center; color: var(--p-sub); }
+[data-look='parent'] .pk-type-icons .p-glyph-item .ms { font-size: 20px !important; }
+[data-look='parent'] .pk-type-icons .p-glyph-item.selected { color: #292928; }
+[data-look='parent'] .pk-type-icons .p-glyph-label { display: none; }
+[data-look='parent'] .pk-note-row { background: transparent; font-size: 13px; }
+[data-look='parent'] .pk-note-row[data-universal] { padding: 7px 10px; border-style: dashed; color: var(--p-sub); }
+[data-look='parent'] .pk-foot .pk-foot-start { margin-right: auto; }
 
 /* kid pills, weekday circles */
 [data-look='parent'] .pk-pills { display: flex; flex-wrap: wrap; gap: 8px; }

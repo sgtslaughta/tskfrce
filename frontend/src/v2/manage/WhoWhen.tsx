@@ -9,7 +9,7 @@ export function WhoWhen({ chore, kids }: { chore: LibChore; kids: Kid[] }) {
   const [adding, setAdding] = useState(false)
   const has = chore.assignments.length > 0
   return (
-    <section className="pk-panel pk-span" aria-label="Who and when">
+    <section className="pk-panel" aria-label="Who and when">
       <h3>
         <Icon name="group" size={18} />
         Who & when

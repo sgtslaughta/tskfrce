@@ -91,7 +91,7 @@ const serve = (over: Record<string, unknown> = {}) =>
     if (path === '/chores/') return defs
     if (path === '/today') return { kids: [{ id: 8, name: 'Leo', points: 42, progress: { level: 3 } }] }
     if (path === '/devices') return [{ id: 1, name: 'Leo iPad', owner_ids: [8], online: true }]
-    if (path === '/rewards' || path === '/custom-badges') return []
+    if (path === '/rewards' || path === '/custom-badges' || path === '/chore-types') return []
     return {}
   })
 
@@ -173,7 +173,7 @@ describe('chore detail', () => {
     await waitFor(() =>
       expect(calls('POST')[0]).toEqual([
         '/chores/',
-        { method: 'POST', body: { title: 'Laundry', points: 10, needs_photo: true, steps: [{ title: 'Fold clothes' }, { title: 'Make bed' }] } },
+        { method: 'POST', body: { title: 'Laundry', points: 10, needs_photo: true, steps: [{ title: 'Fold clothes', due_time: null, after_previous: false }, { title: 'Make bed', due_time: null, after_previous: false }] } },
       ]),
     )
     await waitFor(() => expect(push).toHaveBeenCalledWith(...nav({ section: 'chores', item: 20 })))

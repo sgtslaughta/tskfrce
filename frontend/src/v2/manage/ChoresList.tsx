@@ -1,7 +1,7 @@
 import { Icon } from '@/v2/parent/Icon'
-import { choreIcon, choreType } from '@/v2/today/choreIcon'
+import { useChoreTypes } from '@/v2/hooks/useChoreTypes'
 import { Fold } from '@/v2/parent/Fold'
-import type { Kid, LibChore } from '@/v2/types'
+import type { ChoreType, Kid, LibChore } from '@/v2/types'
 import { choreLine, initial, nameOf, usedBy } from './choreMeta'
 
 const MAX_AVATARS = 4
@@ -16,13 +16,25 @@ interface Props {
 /** Chore cards (icon tile, name, summary line, assignee avatars) and the dashed "New chore" card. */
 export function ChoresList({ chores, kids, selected, onSelect }: Props) {
   const byId = new Map(kids.map((k) => [k.id, k]))
-  const types = Array.from(new Set(chores.map((c) => choreType(c.title)))).sort((a, b) => (a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)))
+  const all = useChoreTypes().data ?? []
+  // type position order, Other last; chores whose type isn't loaded yet fall in an untitled group at the end
+  const isOther = (t: ChoreType) => t.builtin && t.name === 'Other'
+  const order = [...all.filter((t) => !isOther(t)), ...all.filter(isOther)]
+  const known = new Set(all.map((t) => t.id))
+  const groups: { key: string; name: string; glyph: string; list: LibChore[] }[] = order.map((t) => ({
+    key: String(t.id),
+    name: t.name,
+    glyph: t.glyph,
+    list: chores.filter((c) => c.type_id === t.id),
+  }))
+  groups.push({ key: 'rest', name: 'Other', glyph: 'task_alt', list: chores.filter((c) => !known.has(c.type_id)) })
+  const glyphOf = new Map(all.map((t) => [t.id, t.glyph]))
   const card = (c: LibChore) => {
         const ids = usedBy(c)
         return (
           <button key={c.id} type="button" className="pk-card" data-selected={selected === String(c.id)} onClick={() => onSelect(c.id)}>
             <span className="pk-tile">
-              <Icon name={choreIcon(c.title)} size={20} />
+              <Icon name={glyphOf.get(c.type_id) ?? 'task_alt'} size={20} />
             </span>
             <span className="pk-card-t">
               <b>{c.title}</b>
@@ -45,14 +57,13 @@ export function ChoresList({ chores, kids, selected, onSelect }: Props) {
   }
   return (
     <div className="pk-items">
-      {types.map((t) => {
-        const list = chores.filter((c) => choreType(c.title) === t)
-        return (
-          <Fold key={t} title={t} icon={choreIcon(list[0].title)} count={list.length} open={list.some((c) => selected === String(c.id))}>
+      {groups
+        .filter((g) => g.list.length)
+        .map(({ key, name, glyph, list }) => (
+          <Fold key={key} title={name} icon={glyph} count={list.length} open={list.some((c) => selected === String(c.id))}>
             {list.map(card)}
           </Fold>
-        )
-      })}
+        ))}
       <button type="button" className="pk-card pk-new" data-selected={selected === 'new'} onClick={() => onSelect('new')}>
         <Icon name="add" size={18} />
         New chore

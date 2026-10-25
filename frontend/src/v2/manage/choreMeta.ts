@@ -41,3 +41,18 @@ export function intError(raw: string, min: number, max?: number) {
   if (max !== undefined && n > max) return `Must be ${max} or less.`
   return ''
 }
+
+/** "20:30" → "8:30 PM" */
+export const wallTime = (hhmm: string) =>
+  new Date(`2000-01-01T${hhmm.slice(0, 5)}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+
+/** "Maya", "Maya & Leo", "Maya, Leo & Ava" */
+export const joinNames = (names: string[]) =>
+  names.length < 2 ? (names[0] ?? '') : `${names.slice(0, -1).join(', ')} & ${names[names.length - 1]}`
+
+/** Notes every chore type gets on top of its own (the API does not return these). */
+export const UNIVERSAL_NOTES = [
+  { label: 'Need help', glyph: 'help' },
+  { label: 'Ran out of time', glyph: 'schedule' },
+  { label: "Can't do it today", glyph: 'block' },
+]

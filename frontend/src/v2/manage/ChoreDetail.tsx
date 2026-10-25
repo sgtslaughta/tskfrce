@@ -1,14 +1,17 @@
 import { useEffect, useState } from 'react'
 import { useDisclosure } from '@mantine/hooks'
 import { useCopyChore, useDeleteChore, useSaveChore } from '@/v2/hooks/useChores'
+import { useChoreTypes } from '@/v2/hooks/useChoreTypes'
 import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
-import { choreIcon } from '@/v2/today/choreIcon'
 import type { Kid, LibChore } from '@/v2/types'
+import { ChoreSteps, type Step } from './ChoreSteps'
+import { ChoreTypePanel } from './ChoreTypePanel'
+import { ChoreTypePicker } from './ChoreTypePicker'
 import { ConfirmDelete } from './ConfirmDelete'
 import { useSingle } from './useSingle'
 import { WhoWhen } from './WhoWhen'
-import { intError, schedules } from './choreMeta'
+import { intError, joinNames, nameOf, schedules, UNIVERSAL_NOTES, usedBy } from './choreMeta'
 import { toastFail, toastOk } from '../notify'
 
 interface Props {
@@ -19,14 +22,17 @@ interface Props {
   onSelect: (id: number | null) => void
 }
 
-const MAX_STEPS = 20 // backend limit
-interface Draft { title: string; points: string; steps: string[]; next: string; photo: boolean }
+interface Draft { title: string; points: string; typeId?: number; steps: Step[]; next: string; photo: boolean }
 /** Unsaved edits per chore id ('new' for a chore not saved yet), kept while the editor is unmounted. */
 const drafts = new Map<string, Draft>()
 /** Forget all kept drafts (tests). */
 export const clearChoreDrafts = () => drafts.clear()
 
-/** Chore editor laid out as cards: header, Basics, Steps and Who & when. */
+const stepsOf = (c?: LibChore): Step[] =>
+  c?.steps.map((s) => ({ title: s.title, due_time: s.due_time ?? null, after_previous: s.after_previous ?? false })) ?? []
+const sameSteps = (a: Step[], b: Step[]) => JSON.stringify(a) === JSON.stringify(b)
+
+/** Chore editor laid out as cards: header, Basics, Steps, Who & when and Notes. */
 export function ChoreDetail({ kids, chore, onSelect }: Props) {
   const save = useSaveChore()
   const saveOnce = useSingle(save)
@@ -35,43 +41,37 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
   const copy = useCopyChore()
   const copyOnce = useSingle(copy)
   const [confirm, { open, close }] = useDisclosure(false)
+  const types = useChoreTypes().data ?? []
+  // 'new' = creating a type, a type id = editing it, null = panel closed
+  const [panel, setPanel] = useState<'new' | number | null>(null)
   const key = String(chore?.id ?? 'new')
   const kept = drafts.get(key)
   const [restored] = useState(!!kept)
   const [title, setTitle] = useState(kept?.title ?? chore?.title ?? '')
   const [points, setPoints] = useState(kept?.points ?? String(chore?.points ?? 10))
-  const [steps, setSteps] = useState<string[]>(kept?.steps ?? chore?.steps.map((s) => s.title) ?? [])
+  // picked type; unset = the chore's saved type (or Other for a new chore)
+  const [picked, setPicked] = useState<number | undefined>(kept?.typeId)
+  const [steps, setSteps] = useState<Step[]>(kept?.steps ?? stepsOf(chore))
   const [next, setNext] = useState(kept?.next ?? '')
   const [photo, setPhoto] = useState(kept?.photo ?? chore?.needs_photo ?? false)
   const pointsErr = intError(points, 0)
-  const full = steps.length >= MAX_STEPS
+  const typeId = picked ?? chore?.type_id ?? types.find((t) => t.builtin && t.name === 'Other')?.id
+  const type = types.find((t) => t.id === typeId)
 
-  const addStep = () => {
-    if (next.trim() && !full) setSteps([...steps, next.trim()])
-    setNext('')
-  }
   const discard = () => {
     setTitle(chore?.title ?? '')
     setPoints(String(chore?.points ?? 10))
-    setSteps(chore?.steps.map((s) => s.title) ?? [])
+    setPicked(undefined)
+    setSteps(stepsOf(chore))
     setNext('')
     setPhoto(chore?.needs_photo ?? false)
   }
-  const move = (i: number, d: number) => {
-    const s = [...steps]
-    ;[s[i], s[i + d]] = [s[i + d], s[i]]
-    setSteps(s)
-  }
 
-  /** Keep an existing step's deadline and chaining (the backend resets them when omitted). */
-  const stepBody = (title: string) => {
-    const old = chore?.steps.find((o) => o.title === title)
-    return old ? { title, due_time: old.due_time ?? null, after_previous: old.after_previous ?? false } : { title }
-  }
-
+  // the first step has nothing above it to wait for
+  const stepBody = steps.map((s, i) => ({ ...s, after_previous: i > 0 && s.after_previous }))
   const submit = () =>
     saveOnce(
-      { id: chore?.id, body: { title: title.trim(), points: Number(points), needs_photo: photo, steps: steps.map(stepBody) } },
+      { id: chore?.id, body: { title: title.trim(), points: Number(points), needs_photo: photo, type_id: typeId, steps: stepBody } },
       {
         onError: toastFail,
         onSuccess: (c) => {
@@ -95,14 +95,15 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
     ? title.trim() !== chore.title ||
       !!pointsErr || Number(points) !== chore.points ||
       photo !== chore.needs_photo ||
-      steps.join('\n') !== chore.steps.map((s) => s.title).join('\n')
-    : !!(title.trim() || steps.length))
+      (picked !== undefined && picked !== chore.type_id) ||
+      !sameSteps(steps, stepsOf(chore))
+    : !!(title.trim() || steps.length || picked !== undefined))
 
   // Switching tabs or chores unmounts this editor: keep what was typed so it isn't lost silently.
   useEffect(() => {
-    if (dirty) drafts.set(key, { title, points, steps, next, photo })
+    if (dirty) drafts.set(key, { title, points, typeId: picked, steps, next, photo })
     else drafts.delete(key)
-  }, [dirty, key, title, points, steps, next, photo])
+  }, [dirty, key, title, points, picked, steps, next, photo])
   useEffect(() => {
     if (!dirty) return
     const warn = (e: BeforeUnloadEvent) => e.preventDefault()
@@ -111,16 +112,24 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
   }, [dirty])
 
   const when = chore ? schedules(chore).join(' + ') : ''
+  const choreDue = chore?.assignments.map((a) => a.due_time?.slice(0, 5)).filter((t): t is string => !!t).sort().pop() ?? null
+  const byId = new Map(kids.map((k) => [k.id, k]))
+  const doers = joinNames((chore ? usedBy(chore) : []).flatMap((id) => (byId.has(id) ? [nameOf(byId.get(id)!)] : [])))
 
   return (
     <div className="pk-detail">
       <header className="pk-head">
         <span className="pk-tile pk-tile-lg">
-          <Icon name={choreIcon(title)} size={30} />
+          <Icon name={type?.glyph ?? 'task_alt'} size={30} />
         </span>
         <div className="pk-head-t">
           <h2>{title.trim() || 'New chore'}</h2>
           <div className="pk-chips">
+            {type && (
+              <Chip tone="grey" icon="category">
+                {type.name}
+              </Chip>
+            )}
             <Chip tone="acc" icon="stars">
               {pointsErr ? 0 : Number(points)} pts
             </Chip>
@@ -167,6 +176,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
             <span className="pk-label">Chore</span>
             <input className="pk-input" value={title} maxLength={100} onChange={(e) => setTitle(e.currentTarget.value)} />
           </label>
+          <ChoreTypePicker types={types} value={typeId} onPick={setPicked} onEdit={() => setPanel(typeId ?? null)} onNew={() => setPanel('new')} />
           <label className="pk-field">
             <span className="pk-label">Points</span>
             <input
@@ -186,50 +196,12 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
           </div>
         </section>
 
-        <section className="pk-panel" aria-label="Steps">
-          <h3>
-            <Icon name="checklist" size={18} />
-            Steps
-          </h3>
-          {steps.map((s, i) => (
-            <div key={`${i}-${s}`} className="pk-step">
-              <span>{s}</span>
-              <button type="button" className="pk-ib" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move up ${s}`} title="Move up">
-                <Icon name="arrow_upward" size={16} />
-              </button>
-              <button type="button" className="pk-ib" disabled={i === steps.length - 1} onClick={() => move(i, 1)} aria-label={`Move down ${s}`} title="Move down">
-                <Icon name="arrow_downward" size={16} />
-              </button>
-              <button type="button" className="pk-ib" onClick={() => setSteps(steps.filter((_, j) => j !== i))} aria-label={`Remove ${s}`} title="Remove step">
-                <Icon name="close" size={16} />
-              </button>
-            </div>
-          ))}
-          <div className="pk-add">
-            <input
-              className="pk-input"
-              aria-label="Add a step"
-              placeholder={full ? `${MAX_STEPS} steps is the most` : 'Add a step'}
-              value={next}
-              maxLength={100}
-              disabled={full}
-              onChange={(e) => setNext(e.currentTarget.value)}
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addStep())}
-            />
-            <button type="button" className="p-btn" onClick={addStep} disabled={!next.trim() || full}>
-              <Icon name="add" />
-              Add step
-            </button>
-          </div>
-          <span className="pk-hint">
-            Every step must be ticked before the chore goes to you for approval. {steps.length} of {MAX_STEPS} steps.
-          </span>
-        </section>
+        <ChoreSteps steps={steps} onChange={setSteps} next={next} onNext={setNext} choreDue={choreDue} />
 
         {chore ? (
           <WhoWhen chore={chore} kids={kids} />
         ) : (
-          <section className="pk-panel pk-span" aria-label="Who and when">
+          <section className="pk-panel" aria-label="Who and when">
             <h3>
               <Icon name="group" size={18} />
               Who & when
@@ -237,7 +209,35 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
             <p className="pk-hint">Save the chore first, then choose who does it and when.</p>
           </section>
         )}
+
+        <section className="pk-panel" aria-label="Notes">
+          <h3>
+            <Icon name="sms" size={18} />
+            Notes {doers || 'a kid'} can send
+          </h3>
+          {type && <p className="pk-hint">From the {type.name} type.</p>}
+          <div className="pk-notes">
+            {type?.notes.map((n) => (
+              <span key={n.id} className="pk-np">
+                {n.label}
+              </span>
+            ))}
+            {UNIVERSAL_NOTES.map((n) => (
+              <span key={n.label} className="pk-np" data-universal>
+                {n.label}
+              </span>
+            ))}
+          </div>
+        </section>
       </div>
+
+      <ChoreTypePanel
+        opened={panel !== null}
+        type={typeof panel === 'number' ? types.find((t) => t.id === panel) : undefined}
+        onClose={() => setPanel(null)}
+        onSaved={(t) => setPicked(t.id)}
+        onDeleted={() => setPicked(undefined)}
+      />
 
       <div className="pk-foot">
         {dirty && (

@@ -14,9 +14,3 @@ const RULES: [RegExp, string][] = [
 
 export const choreIcon = (title: string) => RULES.find(([re]) => re.test(title))?.[1] ?? 'task_alt'
 
-// ponytail: chore type guessed from the icon until chores.type_id lands (Plan B); then group by that
-const TYPE: Record<string, string> = {
-  restaurant: 'Kitchen', school: 'Schoolwork', pets: 'Pets', music_note: 'Practice', yard: 'Outdoor',
-  bed: 'Cleaning', mop: 'Cleaning', local_laundry_service: 'Cleaning', delete: 'Cleaning', shower: 'Personal',
-}
-export const choreType = (title: string) => TYPE[choreIcon(title)] ?? 'Other'

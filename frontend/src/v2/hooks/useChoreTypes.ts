@@ -10,7 +10,7 @@ export interface ChoreTypeBody {
 
 export const useChoreTypes = () => useQuery({ queryKey: ['chore-types'], queryFn: () => api<ChoreType[]>('/chore-types') })
 
-function useTypeMutation<V>(fn: (v: V) => Promise<unknown>) {
+function useTypeMutation<V, R>(fn: (v: V) => Promise<R>) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: fn,
