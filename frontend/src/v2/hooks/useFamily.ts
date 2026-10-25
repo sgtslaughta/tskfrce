@@ -2,7 +2,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/v2/api'
 import type { Family } from '@/v2/types'
 
-export const useFamily = () => useQuery({ queryKey: ['family'], queryFn: () => api<Family>('/family') })
+/** Polled so a change made on another tab or by the other parent shows up without a reload. */
+export const useFamily = () =>
+  useQuery({ queryKey: ['family'], queryFn: () => api<Family>('/family'), refetchInterval: 20_000 })
 
 export function usePatchFamily() {
   const qc = useQueryClient()

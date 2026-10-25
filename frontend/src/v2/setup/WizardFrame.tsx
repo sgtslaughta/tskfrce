@@ -114,7 +114,7 @@ export function WizardFrame({
           ) : (
             <span />
           )}
-          <Group>
+          <Group ml="auto">
             {onSkip && (
               <Button variant="subtle" onClick={onSkip}>
                 Skip

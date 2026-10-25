@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { Button, NativeSelect, NumberInput, PasswordInput, SegmentedControl, Switch, Text, TextInput } from '@mantine/core'
 import { usePatchFamily } from '@/v2/hooks/useFamily'
+import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import type { Family } from '@/v2/types'
 import { toastFail, toastOk } from '../notify'
 
@@ -26,14 +27,17 @@ function Card({ title, fam, children }: { title: string; fam: Family; children: 
     Object.entries(draft).filter(([k, v]) => v !== (fam as Fields)[k as keyof Fields]),
   ) as Partial<Fields>
   const dirty = Object.keys(changed).length > 0
+  const once = useSingleFlight()
   const save = () =>
-    patch.mutate(changed, {
-      onError: toastFail,
-      onSuccess: () => {
-        toastOk('Saved')
-        setDraft({})
-      },
-    })
+    once(() =>
+      patch.mutateAsync(changed).then(
+        () => {
+          toastOk('Saved')
+          setDraft({})
+        },
+        toastFail,
+      ),
+    )
   return (
     <section aria-label={title} className="f-card m-card">
       <h2 className="f-display">{title}</h2>

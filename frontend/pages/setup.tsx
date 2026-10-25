@@ -7,6 +7,7 @@ import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api, ApiError } from '@/v2/api'
 import type { Device, Kid, SetupStatus } from '@/v2/types'
 import { markSetupDone } from '@/v2/components/RequireParent'
+import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import { WizardFrame } from '@/v2/setup/WizardFrame'
 import { StepFamily, detectTz } from '@/v2/setup/StepFamily'
 import { StepParent, parentErrors, type ParentForm } from '@/v2/setup/StepParent'
@@ -30,6 +31,7 @@ export default function SetupPage() {
   const [loginFailed, setLoginFailed] = useState(false)
   const [kidDraft, setKidDraft] = useState('')
   const justCreated = useRef(false)
+  const once = useSingleFlight()
   const [family, setFamily] = useState({ name: '', tz: 'UTC' })
   useEffect(() => setFamily((f) => ({ ...f, tz: detectTz() })), []) // after mount: server renders UTC
   const [parent, setParent] = useState<ParentForm>({ username: '', password: '', fullName: '' })
@@ -96,6 +98,10 @@ export default function SetupPage() {
     setStep(n)
   }
 
+  // one request per click even on a double-click; failures show via apply.error
+  const run = (jobs: { key: string; run: () => Promise<unknown> }[]) =>
+    void once(() => apply.mutateAsync(jobs).catch(() => {}))
+
   const next = () => {
     if (step === 1) {
       const e = parentErrors(parent)
@@ -108,10 +114,10 @@ export default function SetupPage() {
       if (!family.name.trim()) return setTried(true)
       if (accountDone) return go(3)
       setConflict(false)
-      return create.mutate()
+      return void once(() => create.mutateAsync().catch(() => {})) // errors show via create.error
     }
     if (step === 4) {
-      return apply.mutate(
+      return run(
         kids.length === 0
           ? []
           : chores.map((title) => ({
@@ -141,7 +147,7 @@ export default function SetupPage() {
       )
     }
     if (step === 6) {
-      return apply.mutate(
+      return run(
         bedtime
           ? kids.map((k) => ({
               key: `window:${k.id}`,

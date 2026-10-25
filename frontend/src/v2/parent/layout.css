@@ -307,7 +307,9 @@
 [data-look='parent'] .p-more-info {
   flex: 1;
   min-width: 0;
+  overflow-wrap: anywhere; /* a long family name must wrap inside the card */
 }
+[data-look='parent'] .p-more-profile .p-chip { flex: none; }
 
 [data-look='parent'] .p-more-info > strong {
   display: block;

@@ -177,14 +177,21 @@
 }
 
 [data-look='parent'] .p-auth-checkbox {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 8px;
   color: var(--p-ink);
 }
 
+/* visually hidden, not display:none, so the keyboard can still reach it */
 [data-look='parent'] .p-auth-checkbox input {
-  display: none;
+  position: absolute;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  opacity: 0;
 }
 
 [data-look='parent'] .p-auth-checkbox i {
@@ -223,7 +230,9 @@
   border: none;
   background: none;
   cursor: pointer;
-  padding: 0;
+  /* 32px tap target; the negative margin keeps the layout where it was */
+  padding: 7px;
+  margin: -7px;
   font-family: inherit;
 }
 

@@ -215,6 +215,10 @@
   max-width: 560px;
 }
 
+.main li {
+  overflow-wrap: anywhere; /* a long kid name wraps instead of being clipped */
+}
+
 .nav {
   margin-top: auto;
   padding-top: 10px;
@@ -223,9 +227,12 @@
 @media (max-width: 900px) {
   .wizard {
     grid-template-columns: minmax(0, 1fr);
-    min-height: auto;
+    min-height: 100vh;
+    min-height: 100dvh;
+    grid-template-rows: auto 1fr;
     margin: 0;
     border-radius: 0;
+    box-shadow: none;
   }
 
   /* grid items default to min-width: auto, so the scrolling step row widened the page */
@@ -240,7 +247,7 @@
   }
 
   .main {
-    border-radius: 0 0 14px 14px;
+    border-radius: 0;
   }
 
   .steps {

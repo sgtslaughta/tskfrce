@@ -17,7 +17,7 @@ import { toastFail, toastOk } from '@/v2/notify'
 type S = 'family' | 'screen' | 'hours' | 'look' | 'gifs' | 'parents'
 const SETTINGS_SECTIONS: SettingsSection<S>[] = [
   { id: 'family', label: 'Family', description: 'Name, time zone, points rules', icon: 'home' },
-  { id: 'screen', label: 'Screen time', description: 'Price, daily cap, early unlock', icon: 'timer' },
+  { id: 'screen', label: 'Screen time', description: 'Price and early unlock', icon: 'timer' },
   { id: 'hours', label: 'Hours', description: 'School nights, weekends', icon: 'schedule' },
   { id: 'look', label: 'Appearance', description: 'Accent colour, dark mode', icon: 'palette' },
   { id: 'gifs', label: 'GIFs', description: 'Chat GIF search', icon: 'gif_box' },

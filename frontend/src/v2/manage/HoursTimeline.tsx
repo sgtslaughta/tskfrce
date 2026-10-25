@@ -114,7 +114,7 @@ export function HoursTimeline({ windows, kids, groups }: HoursTimelineProps) {
 
       {usedTextures.length > 0 && (
         <div className="timeline-legend" role="region" aria-label="Legend">
-          <h4>Legend</h4>
+          <h3>Legend</h3>
           <div className="legend-items">
             {usedTextures.map((texture) => (
               <div key={texture} className={`legend-item texture-${texture}`}>

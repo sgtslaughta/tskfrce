@@ -84,9 +84,9 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 8px 2px;
-  flex: 1;
-  min-width: 0;
+  padding: 8px 4px;
+  flex: 1 1 0;
+  min-width: 0; /* five tabs must fit a 320px phone; More holds Settings and Log out */
   border: 0;
   background: transparent;
   color: var(--p-sub);
@@ -110,6 +110,10 @@
   padding: 3px 18px;
   border-radius: 999px;
   transition: background var(--dur-1) var(--ease-out);
+}
+
+@media (max-width: 360px) {
+  [data-look='parent'] .p-tabbar-item .ms { padding: 3px 12px; }
 }
 
 [data-look='parent'] .p-tabbar-item[aria-current] .ms {

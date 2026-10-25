@@ -59,7 +59,7 @@
   background: var(--p-soft);
   border-color: var(--p-line);
   color: var(--p-sub);
-  opacity: 0.7;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 [data-look='parent'] .p-btn[data-loading='true'] { position: relative; pointer-events: none; color: transparent; }
@@ -76,3 +76,16 @@
 }
 @keyframes p-spin { to { transform: rotate(360deg); } }
 [data-look='parent'] .p-btn[data-variant='accent'][data-loading='true']::after { border-color: #292928; border-right-color: transparent; }
+
+/* shared interactive states: one focus ring, pill + day hover/press/disabled (all parent screens) */
+[data-look='parent'] :is(.p-segmented-button, .pk-pill, .pk-day, .pk-ib, .pk-new, .pk-pick-btn, .pk-pick-cell, .p-glyph-item, .p-glyph-search, .p-device-item):focus-visible,
+.mantine-Modal-content :is(.p-btn, button):focus-visible {
+  outline: 2px solid var(--p-ink, #292928);
+  outline-offset: 2px;
+}
+[data-look='parent'] .pk-ib:focus-visible { outline-offset: 0; }
+[data-look='parent'] .p-btn[aria-busy='true'] { cursor: progress; }
+[data-look='parent'] .pk-pill:hover:not(:disabled) { border-color: var(--p-ink); }
+[data-look='parent'] .pk-pill:active:not(:disabled),
+[data-look='parent'] .pk-day:active { transform: scale(0.96); }
+[data-look='parent'] .pk-pill:disabled { opacity: 0.5; cursor: not-allowed; }

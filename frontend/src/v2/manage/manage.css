@@ -144,7 +144,7 @@
 .timeline-row[data-kind='free'] .timeline-bar { opacity: 0.75; }
 
 .timeline-legend { border-top: 1px solid var(--p-line); padding-top: 12px; margin-top: 12px; }
-.timeline-legend h4 { font-size: 12px; font-weight: 600; margin: 0 0 8px 0; color: var(--p-sub); text-transform: uppercase; letter-spacing: 0.5px; }
+.timeline-legend h3 { font-size: 12px; font-weight: 600; margin: 0 0 8px 0; color: var(--p-sub); text-transform: uppercase; letter-spacing: 0.5px; }
 .legend-items { display: flex; flex-wrap: wrap; gap: 16px; }
 .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .legend-sample { width: 24px; height: 12px; border-radius: 2px; background: var(--p-acc); }
@@ -156,3 +156,9 @@
   .timeline-header, .timeline-row { grid-template-columns: 1fr; gap: 4px; }
   .timeline-label-area { display: none; }
 }
+
+/* kid/group chips: a very long name truncates instead of poking out of the card */
+.m-chips .mantine-Chip-root { display: flex; max-width: 100%; min-width: 0; }
+.m-chips .mantine-Chip-label { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.m-chips .mantine-Chip-label > span:not([class*="iconWrapper"]) { display: block; min-width: 0; max-width: 100%; }
+.m-chip-t { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -25,6 +25,7 @@ export function cancelSignOut(): void {
 
 /** Parent-only route guard: first-run setup → /setup, logged out → /login?next=, kid → /kid. */
 export function RequireParent({ children }: { children: ReactNode }) {
+  useLook('parent')
   const router = useRouter()
   const { isInitialized, isAuthenticated, user } = useUnifiedAuth()
   const setup = useQuery({
