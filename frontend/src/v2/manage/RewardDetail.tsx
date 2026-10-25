@@ -1,8 +1,11 @@
 import { useState } from 'react'
+import { useDisclosure } from '@mantine/hooks'
+import { EmojiPicker } from '@/v2/components/EmojiPicker'
 import { useDeleteReward, useSaveReward } from '@/v2/hooks/useRewards'
 import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import type { Reward } from '@/v2/types'
+import { ConfirmDelete } from './ConfirmDelete'
 import { toastFail, toastOk } from '../notify'
 
 /** Add or edit one reward in the catalogue. `reward` omitted = new. */
@@ -11,15 +14,17 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
   const del = useDeleteReward()
   const [name, setName] = useState(reward?.name ?? '')
   const [price, setPrice] = useState(String(reward?.price ?? 50))
+  const [icon, setIcon] = useState(reward?.icon ?? '')
+  const [confirm, { open, close }] = useDisclosure(false)
 
   const submit = () =>
     save.mutate(
-      { id: reward?.id, body: { name: name.trim(), price: Number(price) || 0 } },
+      { id: reward?.id, body: { name: name.trim(), price: Number(price) || 0, ...(icon !== (reward?.icon ?? '') && { icon }) } },
       {
         onError: toastFail,
-        onSuccess: () => {
+        onSuccess: (r) => {
           toastOk(reward ? 'Saved' : 'Added')
-          if (!reward) onSelect(null)
+          if (!reward) onSelect((r as { id: number }).id)
         },
       },
     )
@@ -28,7 +33,7 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
     <div className="pk-detail">
       <header className="pk-head">
         <span className="pk-tile pk-tile-lg">
-          <Icon name="redeem" size={30} />
+          {icon || <Icon name="redeem" size={30} />}
         </span>
         <div className="pk-head-t">
           <h2>{name.trim() || 'New reward'}</h2>
@@ -45,11 +50,18 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
               className="p-btn"
               data-variant="red"
               disabled={del.isPending}
-              onClick={() => del.mutate(reward.id, { onError: toastFail, onSuccess: () => (toastOk('Deleted'), onSelect(null)) })}
+              onClick={open}
             >
               <Icon name="delete" />
               Delete reward
             </button>
+            <ConfirmDelete
+              opened={confirm}
+              title={`Delete ${reward.name}?`}
+              body="Kids won't see it any more. Requests already made stay in history."
+              onConfirm={() => del.mutate(reward.id, { onError: toastFail, onSuccess: () => (toastOk('Deleted'), onSelect(null)) })}
+              onClose={close}
+            />
           </div>
         )}
       </header>
@@ -66,6 +78,7 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
           <span className="pk-label">Price (points)</span>
           <input className="pk-input" type="number" min={1} max={100000} value={price} onChange={(e) => setPrice(e.currentTarget.value)} />
         </label>
+        <EmojiPicker label="Icon (an emoji kids see)" value={icon} onChange={setIcon} />
         <div className="pk-actions">
           <button
             type="button"

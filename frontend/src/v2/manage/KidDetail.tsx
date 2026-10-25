@@ -48,7 +48,7 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
                 Level {t.progress.level}
               </Chip>
             )}
-            <Chip tone={kid.has_pin ? 'grey' : 'amb'} icon={kid.has_pin ? 'lock' : 'lock_open'}>
+            <Chip tone={kid.has_pin ? 'grey' : 'lav'} icon={kid.has_pin ? 'lock' : 'lock_open'}>
               {kid.has_pin ? 'PIN set' : 'No PIN'}
             </Chip>
           </div>
@@ -122,7 +122,7 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
             {chores.map((c) => (
               <span key={c.id} className="pk-tag">
                 <Icon name={choreIcon(c.title)} size={16} />
-                {[c.title, ...schedules(c)].join(' · ')}
+                {[c.title, ...schedules(c, kid.id)].join(' · ')}
               </span>
             ))}
           </div>

@@ -29,12 +29,15 @@ export const usePatchKid = () =>
   useKidMutation(({ id, body }: { id: number; body: KidBody }) => api(`/kids/${id}`, { method: 'PATCH', body }))
 export const useDeleteKid = () => useKidMutation((id: number) => api(`/kids/${id}`, { method: 'DELETE' }), 'Deleted')
 
-export const useBonus = () =>
-  useMutation({
+export const useBonus = () => {
+  const qc = useQueryClient()
+  return useMutation({
     mutationFn: ({ id, amount, note }: { id: number; amount: number; note: string }) =>
       api<{ balance: number }>(`/kids/${id}/points`, { method: 'POST', body: { amount, note } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['today'] }),
     onError: toastFail,
   })
+}
 
 export const useDeduct = () => {
   const qc = useQueryClient()
