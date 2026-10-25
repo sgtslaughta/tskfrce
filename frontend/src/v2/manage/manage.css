@@ -44,27 +44,12 @@
 [data-look='parent'] .m-rr:first-child, [data-look='fridge'] .m-rr:first-child { border-top: 0; }
 .m-rr .m-grow { flex: 1; min-width: 0; }
 
-.m-ico { font-size: 22px; width: 32px; text-align: center; }
 .m-row b { display: block; }
-.m-avs { display: flex; }
 
-/* Avatar styling */
-.m-av { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 14px; font-weight: 700; border: 2px solid; margin-left: -6px; }
-[data-look='parent'] .m-av { background: var(--p-soft); color: var(--p-ink); border-color: var(--p-card); }
-[data-look='fridge'] .m-av { background: var(--f-mute); color: var(--f-ink); border-color: var(--f-card); }
-.m-av:first-child { margin-left: 0; }
 
-/* Mode badge */
-.m-mode { font-size: 10px; padding: 2px 7px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
-[data-look='parent'] .m-mode { background: var(--p-soft); color: var(--p-sub); }
-[data-look='fridge'] .m-mode { background: var(--f-mute); color: var(--f-sub); }
-.m-mode[data-mode='race'] { background: rgba(255, 107, 74, 0.2); color: var(--f-red); }
-.m-mode[data-mode='team'] { background: rgba(123, 211, 137, 0.25); color: var(--f-green); }
 
-.m-sub { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
-.m-sub span { flex: 1; }
 
-@media (max-width: 767px) { .m-row { grid-template-columns: 1fr auto; } .m-row .m-avs { display: none; } }
+@media (max-width: 767px) { .m-row { grid-template-columns: 1fr auto; } }
 
 /* Meta display */
 .m-rr .m-meta { display: block; }

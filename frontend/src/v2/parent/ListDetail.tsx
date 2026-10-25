@@ -31,7 +31,7 @@ export function ListDetail({
   if (small && selectedItem) {
     return (
       <div className="p-detail-only">
-        <Link href={router.pathname} className="p-back-link">
+        <Link href={{ pathname: router.pathname, query: { ...router.query, item: undefined } }} className="p-back-link">
           ← {listTitle}
         </Link>
         <div className="p-detail-panel">{detail}</div>

@@ -2,12 +2,6 @@
  * @fileoverview Kid list and selection styling for parent UI
  */
 
-/* Kid list styling */
-.p-kid-list {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
 
 .p-kid-cards {
   display: flex;

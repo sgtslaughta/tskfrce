@@ -6,7 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
 import { api } from '@/v2/api'
-import { BonusForm } from '@/v2/manage/BonusForm'
+import { PointsForm } from '@/v2/manage/PointsForm'
 
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
@@ -20,18 +20,19 @@ beforeEach(() => {
   ;(notifications.show as unknown as Mock).mockReset()
 })
 
-const setup = async () => {
+const onClose = jest.fn()
+const setup = async (kind: 'bonus' | 'deduct' = 'bonus') => {
+  onClose.mockReset()
   render(
     <QueryClientProvider client={new QueryClient()}>
       <MantineProvider>
-        <BonusForm kid={kid} />
+        <PointsForm kid={kid} kind={kind} onClose={onClose} />
       </MantineProvider>
     </QueryClientProvider>,
   )
-  await userEvent.click(screen.getByRole('button', { name: 'Give bonus points' }))
 }
 
-describe('BonusForm', () => {
+describe('PointsForm', () => {
   test('needs amount 1-500 and a note', async () => {
     await setup()
     const send = screen.getByRole('button', { name: 'Send points' }) as HTMLButtonElement
@@ -54,6 +55,28 @@ describe('BonusForm', () => {
     )
     await waitFor(() =>
       expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Sent! Maya got +25' })),
+    )
+  })
+
+  test('closes after a successful send', async () => {
+    await setup()
+    await userEvent.type(screen.getByLabelText(/Points/), '25')
+    await userEvent.type(screen.getByLabelText('Why?'), 'Helped out')
+    await userEvent.click(screen.getByRole('button', { name: 'Send points' }))
+    await waitFor(() => expect(onClose).toHaveBeenCalled())
+  })
+
+  test('deduct posts to /deduct and reports what was taken', async () => {
+    apiMock.mockResolvedValue({ balance: 5, deducted: 10 })
+    await setup('deduct')
+    await userEvent.type(screen.getByLabelText(/Points/), '30')
+    await userEvent.type(screen.getByLabelText('Why?'), 'Broke a rule')
+    await userEvent.click(screen.getByRole('button', { name: 'Take points' }))
+    await waitFor(() =>
+      expect(apiMock).toHaveBeenCalledWith('/kids/3/deduct', { method: 'POST', body: { amount: 30, note: 'Broke a rule' } }),
+    )
+    await waitFor(() =>
+      expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Maya lost 10 points' })),
     )
   })
 })

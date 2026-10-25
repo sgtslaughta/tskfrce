@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { Button, PasswordInput, TextInput } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useCreateKid, useDeleteKid, usePatchKid, type KidBody } from '@/v2/hooks/useKids'
+import { Icon } from '@/v2/parent/Icon'
 import type { Kid } from '@/v2/types'
 import { EmojiPicker } from '@/v2/components/EmojiPicker'
-import { BonusForm } from './BonusForm'
 import { ConfirmDelete } from './ConfirmDelete'
 import { toastFail, toastOk } from '../notify'
 
@@ -43,38 +42,59 @@ export function KidEditor({ kid, onDone, focusPin }: { kid?: Kid; onDone?: () =>
   }
 
   return (
-    <div className="m-form">
-      <TextInput label="Name" value={name} onChange={(e) => setName(e.currentTarget.value)} />
-      <EmojiPicker label="Avatar (an emoji)" value={avatar} onChange={setAvatar} />
-      <PasswordInput
-        data-autofocus={focusPin || undefined}
-        label={kid?.has_pin ? 'New PIN (4 digits)' : 'PIN (4 digits)'}
-        value={pin}
-        inputMode="numeric"
-        maxLength={4}
-        onChange={(e) => setPin(e.currentTarget.value.replace(/\D/g, ''))}
-        description={kid?.has_pin ? 'A PIN is set. Enter a new one to change it.' : undefined}
-        error={pinBad ? 'Use exactly 4 digits.' : undefined}
-      />
-      <div className="m-actions">
-        <Button onClick={save} disabled={!name.trim() || pinBad} loading={create.isPending || patch.isPending}>
-          {kid ? 'Save kid' : 'Add kid'}
-        </Button>
-        {kid?.has_pin && (
-          <Button
-            variant="default"
-            onClick={() => patch.mutate({ id: kid.id, body: { clear_pin: true } }, { onError: toastFail, onSuccess: () => toastOk('PIN removed') })}
+    <section className="pk-panel pk-span" aria-label={kid ? 'Edit kid' : 'Add a kid'}>
+      <h3>
+        <Icon name={kid ? 'edit' : 'person_add'} size={18} />
+        {kid ? 'Edit kid' : 'Add a kid'}
+      </h3>
+      <div className="pk-form">
+        <label className="pk-field">
+          <span className="pk-label">Name</span>
+          <input className="pk-input" value={name} onChange={(e) => setName(e.currentTarget.value)} />
+        </label>
+        <EmojiPicker label="Avatar (an emoji)" value={avatar} onChange={setAvatar} />
+        <label className="pk-field">
+          <span className="pk-label">{kid?.has_pin ? 'New PIN (4 digits)' : 'PIN (4 digits)'}</span>
+          <input
+            className="pk-input"
+            type="password"
+            autoFocus={focusPin}
+            value={pin}
+            inputMode="numeric"
+            maxLength={4}
+            onChange={(e) => setPin(e.currentTarget.value.replace(/\D/g, ''))}
+          />
+          {kid?.has_pin && !pinBad && <span className="pk-hint">A PIN is set. Enter a new one to change it.</span>}
+          {pinBad && <span className="pk-error">Use exactly 4 digits.</span>}
+        </label>
+        <div className="pk-actions">
+          <button
+            type="button"
+            className="p-btn"
+            data-variant="accent"
+            onClick={save}
+            disabled={!name.trim() || pinBad || create.isPending || patch.isPending}
           >
-            Remove PIN
-          </Button>
-        )}
-        {kid && (
-          <Button className="m-push" color="fridgeRed" variant="subtle" onClick={open}>
-            Delete kid
-          </Button>
-        )}
+            <Icon name="check" />
+            {kid ? 'Save kid' : 'Add kid'}
+          </button>
+          {kid?.has_pin && (
+            <button
+              type="button"
+              className="p-btn"
+              onClick={() => patch.mutate({ id: kid.id, body: { clear_pin: true } }, { onError: toastFail, onSuccess: () => toastOk('PIN removed') })}
+            >
+              Remove PIN
+            </button>
+          )}
+          {kid && (
+            <button type="button" className="p-btn pk-push" data-variant="red" onClick={open}>
+              <Icon name="delete" />
+              Delete kid
+            </button>
+          )}
+        </div>
       </div>
-      {kid && <BonusForm kid={kid} />}
       {kid && (
         <ConfirmDelete
           opened={confirm}
@@ -84,6 +104,6 @@ export function KidEditor({ kid, onDone, focusPin }: { kid?: Kid; onDone?: () =>
           onClose={close}
         />
       )}
-    </div>
+    </section>
   )
 }
