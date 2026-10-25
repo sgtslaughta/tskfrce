@@ -71,3 +71,21 @@ def test_backfill_type_by_title(tmp_path):
         ("Unload dishwasher", "Kitchen"),
         ("Mystery", "Other"),
     ]
+
+
+def test_seed_matches_expected():
+    from app.services.chore_types import SEED
+
+    assert [(n, g) for n, g, _ in SEED] == SEEDED
+    assert sum(len(notes) for _, _, notes in SEED) == 19
+
+
+def test_other_id_survives_rename(db):
+    from app.models.chore_type import ChoreType
+    from app.services.chore_types import other_id
+
+    oid = other_id(db)
+    db.query(ChoreType).filter_by(id=oid).update({"name": "Misc"})
+    db.commit()
+    assert other_id(db) == oid
+    assert db.get(ChoreType, oid).glyph == "task_alt"

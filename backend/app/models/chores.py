@@ -106,8 +106,10 @@ class ChoreAssignment(Base):
 class ChoreRun(Base):
     __tablename__ = "chore_runs"
     __table_args__ = (
-        CheckConstraint("status IN ('todo','submitted','done','cancelled','skipped')",
-            name="ck_run_status",),
+        CheckConstraint(
+            "status IN ('todo','submitted','done','cancelled','skipped')",
+            name="ck_run_status",
+        ),
         Index(
             "uq_run_kid_day",
             "assignment_id",

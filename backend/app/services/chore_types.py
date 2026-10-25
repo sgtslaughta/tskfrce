@@ -6,7 +6,11 @@ from app.models.chore_type import ChoreType, ChoreTypeNote
 
 # (name, glyph, notes); the note glyph is its type's glyph. Position = list order.
 SEED: list[tuple[str, str, list[str]]] = [
-    ("Cleaning", "cleaning_services", ["Out of supplies", "Did part of it", "Too messy for one go"]),
+    (
+        "Cleaning",
+        "cleaning_services",
+        ["Out of supplies", "Did part of it", "Too messy for one go"],
+    ),
     ("Schoolwork", "school", ["Don't understand it", "Left it at school", "Need the computer"]),
     ("Pets", "pets", ["Out of pet food", "Pet seems sick", "Someone already did it"]),
     ("Kitchen", "restaurant", ["Out of supplies", "Dishwasher still full", "Something broke"]),
@@ -28,12 +32,20 @@ def seed(db: Session) -> None:
                 glyph=glyph,
                 builtin=True,
                 position=i,
-                notes=[ChoreTypeNote(label=n, glyph=glyph, position=j) for j, n in enumerate(notes)],
+                notes=[
+                    ChoreTypeNote(label=n, glyph=glyph, position=j) for j, n in enumerate(notes)
+                ],
             )
         )
     db.flush()
 
 
 def other_id(db: Session) -> int:
-    """Id of the builtin "Other" type (the default for new chores)."""
-    return db.query(ChoreType.id).filter_by(name="Other", builtin=True).scalar()
+    """Id of the default type: the last builtin (seeded last; never keyed on its renamable name)."""
+    return (
+        db.query(ChoreType.id)
+        .filter_by(builtin=True)
+        .order_by(ChoreType.id.desc())
+        .limit(1)
+        .scalar()
+    )

@@ -19,7 +19,11 @@ depends_on: str | Sequence[str] | None = None
 
 # Copy of app.services.chore_types.SEED (migrations import nothing from app).
 SEED = [
-    ("Cleaning", "cleaning_services", ["Out of supplies", "Did part of it", "Too messy for one go"]),
+    (
+        "Cleaning",
+        "cleaning_services",
+        ["Out of supplies", "Did part of it", "Too messy for one go"],
+    ),
     ("Schoolwork", "school", ["Don't understand it", "Left it at school", "Need the computer"]),
     ("Pets", "pets", ["Out of pet food", "Pet seems sick", "Someone already did it"]),
     ("Kitchen", "restaurant", ["Out of supplies", "Dishwasher still full", "Something broke"]),
@@ -35,7 +39,10 @@ GUESS = [
     ("Schoolwork", r"homework|read|study|math|school|book"),
     ("Pets", r"pet|cat|dog|fish|feed"),
     ("Practice", r"piano|music|guitar|violin|practice"),
-    ("Cleaning", r"bed\b|make bed|tidy|clean|room|vacuum|sweep|dust|laundry|clothes|wash|trash|garbage|recycl|bin"),
+    (
+        "Cleaning",
+        r"bed\b|make bed|tidy|clean|room|vacuum|sweep|dust|laundry|clothes|wash|trash|garbage|recycl|bin",
+    ),
     ("Personal", r"teeth|brush|shower|bath"),
     ("Outdoor", r"yard|garden|plant|water|lawn"),
 ]
@@ -58,7 +65,7 @@ def _in(col: str, vals) -> str:
     return f"{col} IN (" + ",".join(f"'{v}'" for v in vals) + ")"
 
 
-def _tables(conn) -> dict[str, int]:
+def _tables() -> dict[str, int]:
     types = op.create_table(
         "chore_types",
         sa.Column("id", sa.Integer(), primary_key=True),
@@ -117,7 +124,7 @@ def _chores(conn, ids: dict[str, int]) -> None:
 
 def upgrade() -> None:
     conn = op.get_bind()
-    _chores(conn, _tables(conn))
+    _chores(conn, _tables())
     with op.batch_alter_table("chore_steps") as b:
         b.add_column(
             sa.Column("after_previous", sa.Boolean(), nullable=False, server_default=sa.text("0"))

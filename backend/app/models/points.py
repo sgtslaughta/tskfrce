@@ -33,7 +33,7 @@ class Points(Base):
         points_type: Type of points transaction
         amount: Points amount (positive or negative)
         description: Transaction description
-        reason: Machine-read kind (chore, early_bonus, team_share, redemption, bonus, adjustment)
+        reason: Machine-read kind (chore, early_bonus, team_share, redemption, bonus, adjustment, deduction)
         created_at: Creation timestamp
     """
 
