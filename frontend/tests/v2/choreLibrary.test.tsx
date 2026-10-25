@@ -137,9 +137,9 @@ describe('tabs and list', () => {
     expect(push).toHaveBeenLastCalledWith(...nav({ section: 'chores', item: 'new' }))
   })
 
-  test('nothing selected shows a prompt', async () => {
+  test('desktop opens the first chore when nothing is picked', async () => {
     await show({})
-    expect(detail()).toHaveTextContent('Pick a chore to see its details.')
+    expect(detail()).toHaveTextContent('Clean room')
   })
 })
 
