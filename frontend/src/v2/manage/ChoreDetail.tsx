@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDisclosure } from '@mantine/hooks'
 import { useCopyChore, useDeleteChore, useSaveChore } from '@/v2/hooks/useChores'
 import { Chip } from '@/v2/parent/Chip'
@@ -6,8 +6,9 @@ import { Icon } from '@/v2/parent/Icon'
 import { choreIcon } from '@/v2/today/choreIcon'
 import type { Kid, LibChore } from '@/v2/types'
 import { ConfirmDelete } from './ConfirmDelete'
+import { useSingle } from './useSingle'
 import { WhoWhen } from './WhoWhen'
-import { schedules } from './choreMeta'
+import { intError, schedules } from './choreMeta'
 import { toastFail, toastOk } from '../notify'
 
 interface Props {
@@ -18,21 +19,43 @@ interface Props {
   onSelect: (id: number | null) => void
 }
 
+const MAX_STEPS = 20 // backend limit
+interface Draft { title: string; points: string; steps: string[]; next: string; photo: boolean }
+/** Unsaved edits per chore id ('new' for a chore not saved yet), kept while the editor is unmounted. */
+const drafts = new Map<string, Draft>()
+/** Forget all kept drafts (tests). */
+export const clearChoreDrafts = () => drafts.clear()
+
 /** Chore editor laid out as cards: header, Basics, Steps and Who & when. */
 export function ChoreDetail({ kids, chore, onSelect }: Props) {
   const save = useSaveChore()
+  const saveOnce = useSingle(save)
   const del = useDeleteChore()
+  const delOnce = useSingle(del)
   const copy = useCopyChore()
+  const copyOnce = useSingle(copy)
   const [confirm, { open, close }] = useDisclosure(false)
-  const [title, setTitle] = useState(chore?.title ?? '')
-  const [points, setPoints] = useState(String(chore?.points ?? 10))
-  const [steps, setSteps] = useState<string[]>(chore?.steps.map((s) => s.title) ?? [])
-  const [next, setNext] = useState('')
-  const [photo, setPhoto] = useState(chore?.needs_photo ?? false)
+  const key = String(chore?.id ?? 'new')
+  const kept = drafts.get(key)
+  const [restored] = useState(!!kept)
+  const [title, setTitle] = useState(kept?.title ?? chore?.title ?? '')
+  const [points, setPoints] = useState(kept?.points ?? String(chore?.points ?? 10))
+  const [steps, setSteps] = useState<string[]>(kept?.steps ?? chore?.steps.map((s) => s.title) ?? [])
+  const [next, setNext] = useState(kept?.next ?? '')
+  const [photo, setPhoto] = useState(kept?.photo ?? chore?.needs_photo ?? false)
+  const pointsErr = intError(points, 0)
+  const full = steps.length >= MAX_STEPS
 
   const addStep = () => {
-    if (next.trim()) setSteps([...steps, next.trim()])
+    if (next.trim() && !full) setSteps([...steps, next.trim()])
     setNext('')
+  }
+  const discard = () => {
+    setTitle(chore?.title ?? '')
+    setPoints(String(chore?.points ?? 10))
+    setSteps(chore?.steps.map((s) => s.title) ?? [])
+    setNext('')
+    setPhoto(chore?.needs_photo ?? false)
   }
   const move = (i: number, d: number) => {
     const s = [...steps]
@@ -41,11 +64,12 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
   }
 
   const submit = () =>
-    save.mutate(
-      { id: chore?.id, body: { title: title.trim(), points: Number(points) || 0, needs_photo: photo, steps } },
+    saveOnce(
+      { id: chore?.id, body: { title: title.trim(), points: Number(points), needs_photo: photo, steps } },
       {
         onError: toastFail,
         onSuccess: (c) => {
+          drafts.delete(key)
           toastOk(chore ? 'Saved' : 'Added. Now choose who does it.')
           if (!chore) onSelect(c.id)
         },
@@ -53,7 +77,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
     )
 
   const duplicate = () =>
-    copy.mutate(chore!.id, {
+    copyOnce(chore!.id, {
       onError: toastFail,
       onSuccess: (c) => {
         toastOk('Copied')
@@ -61,12 +85,24 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
       },
     })
 
-  const dirty = chore
+  const dirty = !!next.trim() || (chore
     ? title.trim() !== chore.title ||
-      (Number(points) || 0) !== chore.points ||
+      !!pointsErr || Number(points) !== chore.points ||
       photo !== chore.needs_photo ||
       steps.join('\n') !== chore.steps.map((s) => s.title).join('\n')
-    : !!(title.trim() || steps.length)
+    : !!(title.trim() || steps.length))
+
+  // Switching tabs or chores unmounts this editor: keep what was typed so it isn't lost silently.
+  useEffect(() => {
+    if (dirty) drafts.set(key, { title, points, steps, next, photo })
+    else drafts.delete(key)
+  }, [dirty, key, title, points, steps, next, photo])
+  useEffect(() => {
+    if (!dirty) return
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault()
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty])
 
   const when = chore ? schedules(chore).join(' + ') : ''
 
@@ -80,7 +116,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
           <h2>{title.trim() || 'New chore'}</h2>
           <div className="pk-chips">
             <Chip tone="acc" icon="stars">
-              {Number(points) || 0} pts
+              {pointsErr ? 0 : Number(points)} pts
             </Chip>
             {when && (
               <Chip tone="grey" icon="calendar_month">
@@ -108,7 +144,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
               opened={confirm}
               title={`Delete ${chore.title}?`}
               body="Chores already done stay in history."
-              onConfirm={() => del.mutate(chore.id, { onError: toastFail, onSuccess: () => onSelect(null) })}
+              onConfirm={() => delOnce(chore.id, { onError: toastFail, onSuccess: () => onSelect(null) })}
               onClose={close}
             />
           </div>
@@ -123,11 +159,20 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
           </h3>
           <label className="pk-field">
             <span className="pk-label">Chore</span>
-            <input className="pk-input" value={title} onChange={(e) => setTitle(e.currentTarget.value)} />
+            <input className="pk-input" value={title} maxLength={100} onChange={(e) => setTitle(e.currentTarget.value)} />
           </label>
           <label className="pk-field">
             <span className="pk-label">Points</span>
-            <input className="pk-input" type="number" min={0} value={points} onChange={(e) => setPoints(e.currentTarget.value)} />
+            <input
+              className="pk-input"
+              inputMode="numeric"
+              aria-label="Points"
+              value={points}
+              aria-invalid={!!pointsErr}
+              aria-describedby={pointsErr ? 'chore-pts-err' : undefined}
+              onChange={(e) => setPoints(e.currentTarget.value)}
+            />
+            {pointsErr && <span id="chore-pts-err" className="pk-error">{pointsErr}</span>}
           </label>
           <div className="pk-switch">
             <span id="photo-label">Needs a photo</span>
@@ -158,17 +203,21 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
             <input
               className="pk-input"
               aria-label="Add a step"
-              placeholder="Add a step"
+              placeholder={full ? `${MAX_STEPS} steps is the most` : 'Add a step'}
               value={next}
+              maxLength={100}
+              disabled={full}
               onChange={(e) => setNext(e.currentTarget.value)}
               onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addStep())}
             />
-            <button type="button" className="p-btn" onClick={addStep} disabled={!next.trim()}>
+            <button type="button" className="p-btn" onClick={addStep} disabled={!next.trim() || full}>
               <Icon name="add" />
               Add step
             </button>
           </div>
-          <span className="pk-hint">Every step must be ticked before the chore goes to you for approval.</span>
+          <span className="pk-hint">
+            Every step must be ticked before the chore goes to you for approval. {steps.length} of {MAX_STEPS} steps.
+          </span>
         </section>
 
         {chore ? (
@@ -188,15 +237,20 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
         {dirty && (
           <span className="pk-dirty" role="status">
             <Icon name="edit_note" size={16} />
-            Unsaved changes
+            {restored ? 'Unsaved changes (restored)' : 'Unsaved changes'}
           </span>
         )}
+        {dirty && (
+          <button type="button" className="p-btn" onClick={discard}>
+            Discard
+          </button>
+        )}
         {!chore && (
-          <button type="button" className="p-btn" onClick={() => onSelect(null)}>
+          <button type="button" className="p-btn" onClick={() => (drafts.delete(key), onSelect(null))}>
             Cancel
           </button>
         )}
-        <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!title.trim() || save.isPending} aria-busy={save.isPending}>
+        <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!title.trim() || !!pointsErr || save.isPending} aria-busy={save.isPending}>
           <Icon name={save.isPending ? 'progress_activity' : 'check'} className={save.isPending ? 'pk-spin' : ''} />
           {save.isPending ? 'Saving…' : 'Save chore'}
         </button>

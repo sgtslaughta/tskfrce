@@ -6,6 +6,7 @@ import { Icon } from '@/v2/parent/Icon'
 import { SegmentedControl } from '@/v2/parent/SegmentedControl'
 import type { Assignment, Kid } from '@/v2/types'
 import { ConfirmDelete } from './ConfirmDelete'
+import { useSingle } from './useSingle'
 import { initial, nameOf } from './choreMeta'
 import { toastFail, toastOk } from '../notify'
 
@@ -36,7 +37,9 @@ interface Props {
 /** Who does a chore, how often and by when. Add or edit one assignment. */
 export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissable }: Props) {
   const save = useSaveAssignment()
+  const saveOnce = useSingle(save)
   const del = useDeleteAssignment()
+  const delOnce = useSingle(del)
   const [confirm, { open, close }] = useDisclosure(false)
   const [who, setWho] = useState<string[]>(a?.kid_ids.map(String) ?? [])
   const [mode, setMode] = useState<ChoreMode>(a?.mode ?? 'each')
@@ -48,7 +51,7 @@ export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissa
   const ready = who.length > 0 && (repeat !== 'weekly' || days.length > 0) && (repeat !== 'once' || !!date)
 
   const submit = () =>
-    save.mutate(
+    saveOnce(
       {
         choreId,
         id: a?.id,
@@ -156,7 +159,7 @@ export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissa
               title="Remove this assignment?"
               confirmLabel="Remove"
               body="The chore stays in the library. Chores already done stay in history."
-              onConfirm={() => del.mutate(a.id, { onError: toastFail, onSuccess: onClose })}
+              onConfirm={() => delOnce(a.id, { onError: toastFail, onSuccess: onClose })}
               onClose={close}
             />
           </>

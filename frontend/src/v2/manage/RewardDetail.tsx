@@ -6,20 +6,25 @@ import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import type { Reward } from '@/v2/types'
 import { ConfirmDelete } from './ConfirmDelete'
+import { useSingle } from './useSingle'
+import { intError } from './choreMeta'
 import { toastFail, toastOk } from '../notify'
 
 /** Add or edit one reward in the catalogue. `reward` omitted = new. */
 export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: (id: number | null) => void }) {
   const save = useSaveReward()
+  const saveOnce = useSingle(save)
   const del = useDeleteReward()
+  const delOnce = useSingle(del)
   const [name, setName] = useState(reward?.name ?? '')
   const [price, setPrice] = useState(String(reward?.price ?? 50))
   const [icon, setIcon] = useState(reward?.icon ?? '')
   const [confirm, { open, close }] = useDisclosure(false)
+  const priceErr = intError(price, 1, 100000)
 
   const submit = () =>
-    save.mutate(
-      { id: reward?.id, body: { name: name.trim(), price: Number(price) || 0, ...(icon !== (reward?.icon ?? '') && { icon }) } },
+    saveOnce(
+      { id: reward?.id, body: { name: name.trim(), price: Number(price), ...(icon !== (reward?.icon ?? '') && { icon }) } },
       {
         onError: toastFail,
         onSuccess: (r) => {
@@ -39,7 +44,7 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
           <h2>{name.trim() || 'New reward'}</h2>
           <div className="pk-chips">
             <Chip tone="acc" icon="stars">
-              {Number(price) || 0} pts
+              {priceErr ? 0 : Number(price)} pts
             </Chip>
           </div>
         </div>
@@ -59,7 +64,7 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
               opened={confirm}
               title={`Delete ${reward.name}?`}
               body="Kids won't see it any more. Requests already made stay in history."
-              onConfirm={() => del.mutate(reward.id, { onError: toastFail, onSuccess: () => (toastOk('Deleted'), onSelect(null)) })}
+              onConfirm={() => delOnce(reward.id, { onError: toastFail, onSuccess: () => (toastOk('Deleted'), onSelect(null)) })}
               onClose={close}
             />
           </div>
@@ -76,7 +81,8 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
         </label>
         <label className="pk-field">
           <span className="pk-label">Price (points)</span>
-          <input className="pk-input" type="number" min={1} max={100000} value={price} onChange={(e) => setPrice(e.currentTarget.value)} />
+          <input className="pk-input" aria-label="Price (points)" inputMode="numeric" value={price} aria-invalid={!!priceErr} aria-describedby={priceErr ? 'rw-err' : undefined} onChange={(e) => setPrice(e.currentTarget.value)} />
+          {priceErr && <span id="rw-err" className="pk-error">{priceErr}</span>}
         </label>
         <EmojiPicker label="Icon (an emoji kids see)" value={icon} onChange={setIcon} />
         <div className="pk-actions">
@@ -85,7 +91,7 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
             className="p-btn"
             data-variant="accent"
             onClick={submit}
-            disabled={!name.trim() || !(Number(price) >= 1) || save.isPending}
+            disabled={!name.trim() || !!priceErr || save.isPending}
             aria-busy={save.isPending}
           >
             <Icon name={save.isPending ? 'progress_activity' : 'check'} className={save.isPending ? 'pk-spin' : ''} />

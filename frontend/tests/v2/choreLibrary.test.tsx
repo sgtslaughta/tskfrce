@@ -1,13 +1,14 @@
 import { beforeAll, beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
 import type { ReactNode } from 'react'
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fridgeTheme } from '@/v2/theme'
 import { api } from '@/v2/api'
 import { KidsPage } from '@/v2/manage/KidsPage'
+import { clearChoreDrafts } from '@/v2/manage/ChoreDetail'
 import type { Kid } from '@/v2/types'
 
 let query: Record<string, string> = {}
@@ -96,6 +97,7 @@ const serve = (over: Record<string, unknown> = {}) =>
 
 beforeEach(() => {
   query = {}
+  clearChoreDrafts()
   push.mockReset()
   replace.mockReset()
   serve()
@@ -186,6 +188,41 @@ describe('chore detail', () => {
       '/chores/5',
       { method: 'PATCH', body: { title: 'Clean room', points: 15, needs_photo: false, steps: ['Make bed', 'Fold clothes'] } },
     ])
+  })
+
+  test.each([['-3', 'Cannot be negative.'], ['2.5', 'Use a whole number.'], ['abc', 'Numbers only.'], ['', 'Enter a number.']])(
+    'points "%s" shows "%s" inline and blocks Save without a request',
+    async (value, msg) => {
+      await show({ item: '5' })
+      const pts = within(detail()).getByLabelText('Points')
+      await userEvent.clear(pts)
+      if (value) await userEvent.type(pts, value)
+      expect(within(detail()).getByText(msg)).toBeInTheDocument()
+      expect(within(detail()).getByRole('button', { name: 'Save chore' })).toBeDisabled()
+      expect(calls('PATCH')).toHaveLength(0)
+    },
+  )
+
+  test('a 21st step is refused (backend allows 20) and the 100-char step limit is set', async () => {
+    const steps = Array.from({ length: 20 }, (_, i) => ({ id: i + 1, title: `S${i}`, position: i }))
+    serve({ '/chores/': [{ ...defs[0], steps }, ...defs.slice(1)] })
+    await show({ item: String(defs[0].id) })
+    expect(within(detail()).getByLabelText('Add a step')).toBeDisabled()
+    expect(within(detail()).getByRole('button', { name: 'Add step' })).toBeDisabled()
+    expect(within(detail()).getByText(/20 of 20 steps/)).toBeInTheDocument()
+  })
+
+  test('a half-typed new chore survives switching away and back, and is gone after Cancel', async () => {
+    await show({ item: 'new' })
+    await userEvent.type(within(detail()).getByLabelText('Chore'), 'Water plants')
+    cleanup()
+    await show({ item: 'new' })
+    expect(within(detail()).getByLabelText('Chore')).toHaveValue('Water plants')
+    expect(within(detail()).getByText('Unsaved changes (restored)')).toBeInTheDocument()
+    await userEvent.click(within(detail()).getByRole('button', { name: 'Cancel' }))
+    cleanup()
+    await show({ item: 'new' })
+    expect(within(detail()).getByLabelText('Chore')).toHaveValue('')
   })
 
   test('Enter in "Add a step" adds it and flags unsaved changes; step buttons have tooltips', async () => {
@@ -312,6 +349,35 @@ describe('kids', () => {
     await waitFor(() => expect(calls('PATCH')[0]).toEqual(['/kids/8', { method: 'PATCH', body: { clear_pin: true } }]))
   })
 
+  test('PIN: letters are refused with a message, 3 digits are refused, nothing is sent', async () => {
+    query = { section: 'kids', item: '8' }
+    render(wrap(<KidsPage />))
+    await userEvent.click(await within(detail()).findByRole('button', { name: 'Edit' }))
+    const pin = within(detail()).getByLabelText(/PIN \(4 digits\)/)
+    await userEvent.type(pin, 'ab')
+    expect(within(detail()).getByText('A PIN is digits only, exactly 4.')).toBeInTheDocument()
+    await userEvent.type(pin, '1234')
+    expect(within(detail()).queryByText('A PIN is digits only, exactly 4.')).toBeNull()
+    await userEvent.clear(pin)
+    await userEvent.type(pin, '123')
+    expect(within(detail()).getByText('Use exactly 4 digits.')).toBeInTheDocument()
+    expect(within(detail()).getByRole('button', { name: 'Save kid' })).toBeDisabled()
+    expect(calls('PATCH')).toHaveLength(0)
+  })
+
+  test('a double-click on Send points posts once', async () => {
+    serve({ '/kids/8/points': { balance: 50 } })
+    query = { section: 'kids', item: '8' }
+    render(wrap(<KidsPage />))
+    await userEvent.click(await within(detail()).findByRole('button', { name: 'Bonus' }))
+    await userEvent.type(within(detail()).getByLabelText(/Points/), '8')
+    await userEvent.type(within(detail()).getByLabelText('Why?'), 'Helped out')
+    const send = within(detail()).getByRole('button', { name: 'Send points' })
+    fireEvent.click(send)
+    fireEvent.click(send)
+    await waitFor(() => expect(calls('POST')).toHaveLength(1))
+  })
+
   test('Bonus POSTs /points and Deduct POSTs /deduct with amount and note', async () => {
     serve({ '/kids/8/points': { balance: 50 }, '/kids/8/deduct': { balance: 10, deducted: 5 } })
     query = { section: 'kids', item: '8' }
@@ -382,7 +448,7 @@ describe('rewards and badges', () => {
     render(wrap(<KidsPage />))
     expect(await within(list()).findByRole('button', { name: /Movie night/ })).toHaveTextContent('150 pts')
     expect(within(list()).getByRole('button', { name: 'New reward' })).toBeInTheDocument()
-    expect(within(detail()).getByLabelText('Price (points)')).toHaveValue(150)
+    expect(within(detail()).getByLabelText('Price (points)')).toHaveValue('150')
   })
 
   test('new reward posts name and price', async () => {

@@ -6,6 +6,7 @@ import { useAwardBadge, useDeleteBadge, useSaveBadge } from '@/v2/hooks/useCusto
 import { TIER_NAMES } from '@/v2/tiers'
 import type { CustomBadge, Kid } from '@/v2/types'
 import { ConfirmDelete } from './ConfirmDelete'
+import { useSingle } from './useSingle'
 import { initial, nameOf } from './choreMeta'
 import { toastFail, toastOk } from '../notify'
 
@@ -15,8 +16,11 @@ const BADGE_GLYPHS = ['military_tech', 'verified', 'star', 'favorite', 'emoji_ev
 /** Add or edit one custom badge, and award it to a kid (+1 tier). `badge` omitted = new. */
 export function BadgeDetail({ badge, kids, onSelect }: { badge?: CustomBadge; kids: Kid[]; onSelect: (id: number | null) => void }) {
   const save = useSaveBadge()
+  const saveOnce = useSingle(save)
   const del = useDeleteBadge()
+  const delOnce = useSingle(del)
   const award = useAwardBadge()
+  const awardOnce = useSingle(award)
   const [name, setName] = useState(badge?.name ?? '')
   const [icon, setIcon] = useState(badge?.icon ?? '')
   const [description, setDescription] = useState(badge?.description ?? '')
@@ -24,7 +28,7 @@ export function BadgeDetail({ badge, kids, onSelect }: { badge?: CustomBadge; ki
   const [confirm, { open, close }] = useDisclosure(false)
 
   const submit = () =>
-    save.mutate(
+    saveOnce(
       { id: badge?.id, body: { name: name.trim(), icon: icon.trim(), description: description.trim() } },
       {
         onError: toastFail,
@@ -35,7 +39,7 @@ export function BadgeDetail({ badge, kids, onSelect }: { badge?: CustomBadge; ki
       },
     )
   const give = () =>
-    award.mutate(
+    awardOnce(
       { id: badge!.id, kid_id: kid! },
       { onError: toastFail, onSuccess: (r) => toastOk(`${badge!.name}: ${tierName(r.tier)}`) },
     )
@@ -65,7 +69,7 @@ export function BadgeDetail({ badge, kids, onSelect }: { badge?: CustomBadge; ki
               opened={confirm}
               title={`Delete ${badge.name}?`}
               body="Kids who earned it lose it."
-              onConfirm={() => del.mutate(badge.id, { onError: toastFail, onSuccess: () => (toastOk('Deleted'), onSelect(null)) })}
+              onConfirm={() => delOnce(badge.id, { onError: toastFail, onSuccess: () => (toastOk('Deleted'), onSelect(null)) })}
               onClose={close}
             />
           </div>

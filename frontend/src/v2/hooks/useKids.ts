@@ -19,7 +19,7 @@ function useKidMutation<V>(fn: (v: V) => Promise<unknown>, done?: string) {
     onError: done ? toastFail : undefined,
     onSuccess: () => {
       if (done) toastOk(done)
-      return Promise.all(['kids', 'devices', 'today'].map((k) => qc.invalidateQueries({ queryKey: [k] })))
+      return Promise.all(['kids', 'devices', 'today', 'chore-lib', 'chores-today'].map((k) => qc.invalidateQueries({ queryKey: [k] })))
     },
   })
 }

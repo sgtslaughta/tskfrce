@@ -29,3 +29,15 @@ export function choreLine(c: LibChore) {
   if (c.needs_photo) bits.push('photo')
   return bits.join(' · ')
 }
+
+/** Inline message for a whole-number field, or empty when valid. Empty counts as invalid. */
+export function intError(raw: string, min: number, max?: number) {
+  const s = raw.trim()
+  if (s === '') return 'Enter a number.'
+  const n = Number(s)
+  if (!/^-?\d+(\.\d+)?$/.test(s)) return 'Numbers only.'
+  if (!Number.isInteger(n)) return 'Use a whole number.'
+  if (n < min) return min === 0 ? 'Cannot be negative.' : `Must be at least ${min}.`
+  if (max !== undefined && n > max) return `Must be ${max} or less.`
+  return ''
+}
