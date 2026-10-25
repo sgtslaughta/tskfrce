@@ -11,7 +11,7 @@ import { KidFacts, initial } from './KidFacts'
 const stateChip = (kid: TodayKid) => {
   if (kid.online_all) return <Chip tone="acc" icon="cloud_done">Online</Chip>
   if ((kid.needs_you_count ?? 0) > 0) return <Chip tone="lav" icon="hourglass_top">Needs OK</Chip>
-  if (kid.done === kid.total) return <Chip tone="grey" icon="check_circle">All done</Chip>
+  if (kid.total && kid.done === kid.total) return <Chip tone="grey" icon="check_circle">All done</Chip>
   return <Chip tone="grey" icon="lock">Locked</Chip>
 }
 

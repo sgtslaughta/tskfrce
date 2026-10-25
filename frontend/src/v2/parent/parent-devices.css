@@ -102,6 +102,10 @@
   font-weight: 600;
   font-size: 14.5px;
   color: var(--p-ink);
+  /* raw hostnames can be very long: one line, ellipsis (full name in title) */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 [data-look='parent'] .p-device-meta {

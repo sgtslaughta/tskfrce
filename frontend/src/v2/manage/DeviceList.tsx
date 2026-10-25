@@ -136,7 +136,7 @@ export function DeviceList({
                       )}
                     </div>
                     <div className="p-device-info">
-                      <div className="p-device-name">{d.name}</div>
+                      <div className="p-device-name" title={d.name}>{d.name}</div>
                       <div className="p-device-meta">
                         {owner} · {relativeTime(d.last_seen)}
                       </div>
