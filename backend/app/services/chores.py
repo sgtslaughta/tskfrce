@@ -6,16 +6,20 @@ status and history; title, points, steps and photo rule are read from its chore.
 
 from datetime import UTC, date, datetime
 
+from fastapi import HTTPException
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.lock.reset import current_chore_day
 from app.lock.schedule import occurs_on
+from app.models.chore_type import ChoreType
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, RunStepTick, run_kids
 from app.models.family import get_family
 from app.models.user import User, UserRole
 from app.schemas.chore import ChoreOut
+from app.services.chore_types import notes_for
+from app.services.economy import deadline_utc
 
 # API status names stay what the frontend already reads
 API_STATUS = {"submitted": "submitted_for_approval"}
@@ -60,9 +64,10 @@ def state(run: ChoreRun) -> str:
     return "needs_you" if run.status == "submitted" else "todo"
 
 
-def day_runs(db: Session, day: date):
-    """Query: the day's runs, cancelled ones excluded."""
-    return db.query(ChoreRun).filter(ChoreRun.day == day, ChoreRun.status != "cancelled")
+def day_runs(db: Session, day: date, skipped: bool = False):
+    """Query: the day's runs, cancelled (and, unless asked for, skipped) ones excluded."""
+    gone = ["cancelled"] if skipped else ["cancelled", "skipped"]
+    return db.query(ChoreRun).filter(ChoreRun.day == day, ChoreRun.status.notin_(gone))
 
 
 def with_detail(q, kids: bool = True, photos: bool = True):
@@ -70,6 +75,10 @@ def with_detail(q, kids: bool = True, photos: bool = True):
     return q.options(
         *([selectinload(ChoreRun.kids)] if kids else []),
         joinedload(ChoreRun.assignment).joinedload(ChoreAssignment.chore).selectinload(Chore.steps),
+        joinedload(ChoreRun.assignment)
+        .joinedload(ChoreAssignment.chore)
+        .joinedload(Chore.type)
+        .joinedload(ChoreType.notes),
         joinedload(ChoreRun.approved_by),
         selectinload(ChoreRun.ticks),
         *([selectinload(ChoreRun.photos)] if photos else []),
@@ -87,7 +96,7 @@ def counts(db: Session, kid_id: int, day: date) -> tuple[int, int]:
     return sum(state(r) == "done" for r in runs), len(runs)
 
 
-def chore_out(run: ChoreRun) -> dict:
+def chore_out(run: ChoreRun, fam) -> dict:
     a, c = run.assignment, chore_of(run)
     return ChoreOut(
         id=run.id,
@@ -103,22 +112,53 @@ def chore_out(run: ChoreRun) -> dict:
         attempt=run.attempt or 1,
         last_note=run.last_note,
         submitted_by_id=run.submitted_by_id,
+        due_at=iso_z(due_at(run, fam)),
+        type=type_out(c),
+        sent_back=sent_back(run),
     ).model_dump()
 
 
-def steps_out(run: ChoreRun) -> list[dict]:
+def iso_z(dt: datetime | None) -> str | None:
+    return dt.isoformat() + "Z" if dt else None
+
+
+def type_out(c: Chore) -> dict:
+    return {"id": c.type.id, "name": c.type.name, "glyph": c.type.glyph}
+
+
+def notes_out(run: ChoreRun) -> list[dict]:
+    return notes_for(chore_of(run).type)
+
+
+def sent_back(run: ChoreRun) -> bool:
+    return (run.attempt or 1) > 1 and run.status == "todo"
+
+
+def due_at(run: ChoreRun, fam) -> datetime | None:
+    """Latest of the chore deadline and its step deadlines (the chore stays open until then)."""
+    times = [run.assignment.due_time] + [s.due_time for s in chore_of(run).steps]
+    return max(filter(None, (deadline_utc(fam, run.day, t) for t in times)), default=None)
+
+
+def steps_out(run: ChoreRun, fam) -> list[dict]:
     ticks_by_step = {t.step_id: t for t in run.ticks}
-    return [
-        {
-            "id": s.id,
-            "title": s.title,
-            "done": s.id in ticks_by_step,
-            "done_at": (tick.done_at.isoformat() + "Z" if tick.done_at else None)
-            if (tick := ticks_by_step.get(s.id))
-            else None,
-        }
-        for s in chore_of(run).steps
-    ]
+    out, prev_done = [], True
+    for s in chore_of(run).steps:
+        tick = ticks_by_step.get(s.id)
+        out.append(
+            {
+                "id": s.id,
+                "title": s.title,
+                "done": tick is not None,
+                "done_at": iso_z(tick.done_at) if tick else None,
+                "due_time": s.due_time,
+                "after_previous": bool(s.after_previous),
+                "due_at": iso_z(deadline_utc(fam, run.day, s.due_time)),
+                "locked": bool(s.after_previous) and not prev_done,
+            }
+        )
+        prev_done = tick is not None
+    return out
 
 
 def _add(db: Session, run: ChoreRun) -> bool:
@@ -167,7 +207,7 @@ def generate(db: Session, day: date) -> list[ChoreRun]:
 def run_reset(db: Session, day: date) -> int:
     """Cancel unfinished older runs, create today's, retire past one-time assignments."""
     for r in db.query(ChoreRun).filter(
-        ChoreRun.day < day, ChoreRun.status.notin_(["done", "cancelled"])
+        ChoreRun.day < day, ChoreRun.status.notin_(["done", "cancelled", "skipped"])
     ):
         r.status = "cancelled"
     created = len(generate(db, day))
@@ -199,6 +239,14 @@ def photo_count(run: ChoreRun) -> int:
 
 
 def tick_step(db: Session, run: ChoreRun, step_id: int, kid: User, done: bool) -> None:
+    steps = chore_of(run).steps
+    i = next(i for i, s in enumerate(steps) if s.id == step_id)
+    ticked = {t.step_id for t in run.ticks}
+    if done and steps[i].after_previous and steps[i - 1].id not in ticked:
+        raise HTTPException(409, "Do the step before this one first.")
+    nxt = steps[i + 1] if i + 1 < len(steps) else None
+    if not done and nxt and nxt.after_previous and nxt.id in ticked:
+        raise HTTPException(409, "Untick the step after it first.")
     row = db.get(RunStepTick, (run.id, step_id))
     if done and row is None:
         db.add(

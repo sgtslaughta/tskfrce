@@ -3,10 +3,12 @@ from datetime import date, datetime
 import pytest
 from app.core.auth import AuthService
 from app.main import app
+from app.models.chore_type import ChoreType
 from app.models.family import get_family
 from app.models.lock import Device
 from app.models.points import Points, PointsType
 from app.models.user import User, UserRole
+from app.services import chores as svc
 from fastapi.testclient import TestClient
 
 from tests.factories import make_run
@@ -262,3 +264,66 @@ def test_parent_preview_writes_403(client, db, parent, kid, parent_headers):
     r = client.post("/api/v1/kid/redeem", headers=h, json={"kind": "screen_time", "minutes": 15})
     assert r.status_code == 403
     assert client.post("/api/v1/kid/celebrations/x/seen", headers=h).status_code == 403
+
+
+def _chain_run(db, parent, kid, **kw):
+    r = mkchore(db, parent, kid, steps=["A", "B"], **kw)
+    get_family(db).last_reset_date = DAY.date()
+    steps = svc.chore_of(r).steps
+    steps[1].after_previous = True
+    db.commit()
+    return r, [s.id for s in steps]
+
+
+def _tick(client, h, rid, sid, done=True):
+    return client.post(f"/api/v1/kid/chores/{rid}/subtasks/{sid}", json={"done": done}, headers=h)
+
+
+def test_chained_step_order(client, db, parent, kid, kid_headers):
+    r, (a, b) = _chain_run(db, parent, kid)
+    steps = client.get("/api/v1/kid/today", headers=kid_headers).json()["chores"][0]["subtasks"]
+    assert [s["locked"] for s in steps] == [False, True]
+    x = _tick(client, kid_headers, r.id, b)
+    assert x.status_code == 409 and x.json()["detail"] == "Do the step before this one first."
+    assert _tick(client, kid_headers, r.id, a).status_code == 200
+    assert _tick(client, kid_headers, r.id, b).status_code == 200
+
+
+def test_untick_blocked_by_chained_next(client, db, parent, kid, kid_headers):
+    r, (a, b) = _chain_run(db, parent, kid)
+    _tick(client, kid_headers, r.id, a)
+    _tick(client, kid_headers, r.id, b)
+    x = _tick(client, kid_headers, r.id, a, False)
+    assert x.status_code == 409 and x.json()["detail"] == "Untick the step after it first."
+    assert _tick(client, kid_headers, r.id, b, False).status_code == 200
+    assert _tick(client, kid_headers, r.id, a, False).status_code == 200
+
+
+def test_due_at_uses_family_tz(client, db, parent, kid, kid_headers):
+    get_family(db).timezone = "America/New_York"
+    r = mkchore(db, parent, kid, due_time="19:00", steps=["A"])
+    get_family(db).last_reset_date = DAY.date()
+    svc.chore_of(r).steps[0].due_time = "20:30"
+    db.commit()
+    c = client.get("/api/v1/kid/today", headers=kid_headers).json()["chores"][0]
+    assert c["due_at"] == "2026-10-21T00:30:00Z"
+    assert c["subtasks"][0]["due_at"] == "2026-10-21T00:30:00Z"
+    assert c["sent_back"] is False
+
+
+def test_today_has_type_and_notes(client, db, parent, kid, kid_headers):
+    r = mkchore(db, parent, kid)
+    get_family(db).last_reset_date = DAY.date()
+    pets = db.query(ChoreType).filter_by(name="Pets").one()
+    svc.chore_of(r).type_id = pets.id
+    db.commit()
+    c = client.get("/api/v1/kid/today", headers=kid_headers).json()["chores"][0]
+    assert c["type"] == {"id": pets.id, "name": "Pets", "glyph": "pets"}
+    assert [n["label"] for n in c["notes"]] == [
+        "Out of pet food",
+        "Pet seems sick",
+        "Someone already did it",
+        "Need help",
+        "Ran out of time",
+        "Can't do it today",
+    ]

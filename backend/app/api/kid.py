@@ -128,7 +128,7 @@ def _names(db: Session, ids: set[int]) -> dict[int, User]:
     return {u.id: u for u in db.query(User).filter(User.id.in_(ids))} if ids else {}
 
 
-def _kid_extras(run: ChoreRun, kid: User, takers: dict[int, User]) -> dict:
+def _kid_extras(run: ChoreRun, fam, takers: dict[int, User]) -> dict:
     """Fields the kid screen needs beyond the basics."""
     c, mode = svc.chore_of(run), svc.mode_of(run)
     taker = takers.get(run.submitted_by_id)
@@ -137,7 +137,11 @@ def _kid_extras(run: ChoreRun, kid: User, takers: dict[int, User]) -> dict:
         "needs_photo": bool(c.needs_photo),
         "photo_count_current": svc.photo_count(run),
         "last_note": run.last_note,
-        "subtasks": svc.steps_out(run),
+        "subtasks": svc.steps_out(run, fam),
+        "due_at": svc.iso_z(svc.due_at(run, fam)),
+        "type": svc.type_out(c),
+        "notes": svc.notes_out(run),
+        "sent_back": svc.sent_back(run),
         "taken_by": (taker.full_name or taker.username) if taker and mode == "race" else None,
     }
 
@@ -151,8 +155,9 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(v
         .order_by(ChoreRun.id)
         .all()
     )
+    fam = get_family(db)
     balances: dict = {}
-    prog = progression.progress(db, kid, get_family(db), balances)
+    prog = progression.progress(db, kid, fam, balances)
     takers = _names(db, {r.submitted_by_id for r in runs} - {None, kid.id})
     done = sum(svc.state(r) == "done" for r in runs)
     return {
@@ -170,7 +175,7 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(v
                 "points": svc.chore_of(r).points or 0,
                 "state": svc.state(r),
                 "due_time": r.assignment.due_time,
-                **_kid_extras(r, kid, takers),
+                **_kid_extras(r, fam, takers),
             }
             for r in runs
         ],

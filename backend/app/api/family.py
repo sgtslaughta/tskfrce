@@ -72,7 +72,11 @@ def _iso(dt: datetime | None) -> str | None:
 
 
 def _needs_you(
-    db: Session, runs: list[ChoreRun], names: dict[int, str], balances: dict[int, int] | None = None
+    db: Session,
+    runs: list[ChoreRun],
+    names: dict[int, str],
+    fam,
+    balances: dict[int, int] | None = None,
 ) -> list[dict]:
     """Submitted chores and pending requests, oldest first."""
     sub = [r for r in runs if r.status == "submitted"]
@@ -89,7 +93,7 @@ def _needs_you(
     for r in sub:
         kid_id = r.submitted_by_id or (svc.run_kid_ids(r) or [None])[0]
         pid = photos.get((r.id, r.attempt))
-        steps = svc.steps_out(r)
+        steps = svc.steps_out(r, fam)
         items.append(
             {
                 "type": "redo" if r.attempt > 1 else "chore",
@@ -126,9 +130,9 @@ def _needs_you(
     return sorted(items, key=lambda x: x["submitted_at"] or "")
 
 
-def _chore_out(r: ChoreRun, names: dict[int, str]) -> dict:
+def _chore_out(r: ChoreRun, names: dict[int, str], fam) -> dict:
     c, st, mode = svc.chore_of(r), svc.state(r), svc.mode_of(r)
-    steps = svc.steps_out(r)
+    steps = svc.steps_out(r, fam)
     taken = mode == "race" and st != "todo" and r.submitted_by_id
     return {
         "id": r.id,
@@ -136,6 +140,9 @@ def _chore_out(r: ChoreRun, names: dict[int, str]) -> dict:
         "points": c.points or 0,
         "state": st,
         "due_time": r.assignment.due_time,
+        "due_at": svc.iso_z(svc.due_at(r, fam)),
+        "type": svc.type_out(c),
+        "sent_back": svc.sent_back(r),
         "mode": mode,
         "subtasks_done": sum(s["done"] for s in steps),
         "subtasks_total": len(steps),
@@ -177,7 +184,7 @@ def today(db: Session = Depends(get_db)):
     balances: dict = {}
     prog = progression.progress_many(db, kid_rows, fam, balances)
     names = {k.id: k.full_name for k in kid_rows}
-    needs = _needs_you(db, tasks, names, balances)
+    needs = _needs_you(db, tasks, names, fam, balances)
     prices = sorted(p for (p,) in db.query(Reward.price).filter(Reward.active.is_(True)))
     now_local = local_now(fam.timezone, now)
     kids = []
@@ -199,7 +206,7 @@ def today(db: Session = Depends(get_db)):
                 "points": balances.get(k.id, 0),
                 "next_reward": _next_reward(prices, balances.get(k.id, 0)),
                 "locks_at": _locks_at(pre, k.id, now_local),
-                "chores": [_chore_out(t, names) for t in mine],
+                "chores": [_chore_out(t, names, fam) for t in mine],
                 "devices": [
                     {"id": d["id"], "name": d["name"], "vendor": d["vendor"], "online": d["online"]}
                     for d in devs

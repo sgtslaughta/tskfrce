@@ -344,6 +344,7 @@ def _snapshot(url: str) -> dict:
     from app.api.family import _needs_you
     from app.lock.state import desired_blocked
     from app.models.chores import ChoreRun
+    from app.models.family import get_family
     from app.models.user import User
     from app.services import chores as svc
     from sqlalchemy import create_engine
@@ -353,7 +354,7 @@ def _snapshot(url: str) -> dict:
         runs = svc.day_runs(db, date(2026, 10, 21)).order_by(ChoreRun.id).all()
         names = {u.id: u.full_name for u in db.query(User)}
         return {
-            "needs_you": _needs_you(db, runs, names),
+            "needs_you": _needs_you(db, runs, names, get_family(db)),
             "runs": [(r.id, r.attempt, r.last_note, r.status, svc.run_kid_ids(r)) for r in runs],
             "blocked": desired_blocked(db, datetime(2026, 10, 21, 12, 0, tzinfo=UTC)),
         }

@@ -99,7 +99,11 @@ def chore_days_many(db: Session, kid_ids: list[int], today: date) -> dict[int, d
     rows = (
         db.query(kid, ChoreRun.day, ChoreRun.status)
         .outerjoin(run_kids, run_kids.c.run_id == ChoreRun.id)
-        .filter(kid.in_(kid_ids), ChoreRun.status != "cancelled", ChoreRun.day >= start)
+        .filter(
+            kid.in_(kid_ids),
+            ChoreRun.status.notin_(["cancelled", "skipped"]),
+            ChoreRun.day >= start,
+        )
         .all()
     )
     for kid_id, d, status in rows:

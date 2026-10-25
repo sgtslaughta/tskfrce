@@ -118,3 +118,6 @@ class ChoreOut(BaseModel):
     attempt: int = 1
     last_note: str | None = None
     submitted_by_id: int | None = None
+    due_at: str | None = None
+    type: dict | None = None
+    sent_back: bool = False

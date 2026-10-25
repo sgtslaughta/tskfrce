@@ -53,9 +53,10 @@ def _waiting(db: Session, run_id: int) -> ChoreRun:
 @router.get("/today")
 def today(db: Session = Depends(get_db), _: User = Depends(require_parent)):
     out: dict[str, list | list[dict]] = {}
-    for r in svc.day_runs(db, svc.today(db)).order_by(ChoreRun.id):
+    fam = get_family(db)
+    for r in svc.with_detail(svc.day_runs(db, svc.today(db)), kids=True).order_by(ChoreRun.id):
         for kid_id in svc.run_kid_ids(r):
-            out.setdefault(str(kid_id), []).append(svc.chore_out(r))
+            out.setdefault(str(kid_id), []).append(svc.chore_out(r, fam))
     # Add nudge for shared devices without PINs
     out["shared_without_pin"] = _shared_devices_without_pin(db)
     return out
@@ -75,7 +76,7 @@ def run_detail(run_id: int, db: Session = Depends(get_db), _: User = Depends(req
     if r is None:
         raise HTTPException(404, "That chore doesn't exist.")
 
-    chore = svc.chore_of(r)
+    chore, fam = svc.chore_of(r), get_family(db)
     return {
         "id": r.id,
         "title": chore.title,
@@ -83,7 +84,10 @@ def run_detail(run_id: int, db: Session = Depends(get_db), _: User = Depends(req
         "state": svc.state(r),
         "due_time": r.assignment.due_time,
         "kid_ids": svc.run_kid_ids(r),
-        "steps": svc.steps_out(r),
+        "steps": svc.steps_out(r, fam),
+        "due_at": svc.iso_z(svc.due_at(r, fam)),
+        "type": svc.type_out(chore),
+        "sent_back": svc.sent_back(r),
         "photos": [{"id": p.id, "thumb_url": f"/chore-photos/{p.id}/thumb"} for p in r.photos],
     }
 
@@ -99,7 +103,7 @@ def approve(run_id: int, db: Session = Depends(get_db), parent: User = Depends(r
     chat.system(db, r, f"Approved · +{pts}")
     badges.check_for_run(db, r, fam)
     db.commit()
-    return svc.chore_out(r)
+    return svc.chore_out(r, fam)
 
 
 @router.post("/{run_id}/done")
@@ -137,7 +141,7 @@ def mark_not_done(run_id: int, db: Session = Depends(get_db), _: User = Depends(
     r.submitted_at = r.submitted_by_id = None
     chat.system(db, r, "Marked not done")
     db.commit()
-    return svc.chore_out(r)
+    return svc.chore_out(r, get_family(db))
 
 
 class SendBack(BaseModel):
@@ -158,4 +162,4 @@ def send_back(
     r.submitted_at = r.submitted_by_id = None
     chat.system(db, r, f"Sent back: {body.note}")
     db.commit()
-    return svc.chore_out(r)
+    return svc.chore_out(r, get_family(db))
