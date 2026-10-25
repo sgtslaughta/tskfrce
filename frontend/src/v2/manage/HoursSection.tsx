@@ -28,10 +28,10 @@ export function HoursSection() {
       <h2 className="f-display">Hours</h2>
       {items.length === 0 && <p className="m-empty">Add a kid first, then set when they can be online.</p>}
       <Chip.Group value={cur?.value ?? ''} onChange={(v) => setSel(String(v))}>
-        <div className="f-row">
+        <div className="f-row m-chips">
           {items.map((i) => (
             <Chip key={i.value} value={i.value}>
-              {i.label}
+              <span className="m-chip-t">{i.label}</span>
             </Chip>
           ))}
         </div>

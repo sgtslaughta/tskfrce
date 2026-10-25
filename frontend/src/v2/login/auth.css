@@ -230,7 +230,9 @@
   border: none;
   background: none;
   cursor: pointer;
-  padding: 0;
+  /* 32px tap target; the negative margin keeps the layout where it was */
+  padding: 7px;
+  margin: -7px;
   font-family: inherit;
 }
 

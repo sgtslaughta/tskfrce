@@ -156,3 +156,9 @@
   .timeline-header, .timeline-row { grid-template-columns: 1fr; gap: 4px; }
   .timeline-label-area { display: none; }
 }
+
+/* kid/group chips: a very long name truncates instead of poking out of the card */
+.m-chips .mantine-Chip-root { display: flex; max-width: 100%; min-width: 0; }
+.m-chips .mantine-Chip-label { min-width: 0; max-width: 100%; box-sizing: border-box; }
+.m-chips .mantine-Chip-label > span:not([class*="iconWrapper"]) { display: block; min-width: 0; max-width: 100%; }
+.m-chip-t { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
