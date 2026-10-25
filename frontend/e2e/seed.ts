@@ -8,8 +8,8 @@ export async function loginUi(page: Page, next = '/') {
   await page.goto(`/login?next=${encodeURIComponent(next)}`)
   // login is rate limited (10/min): when a burst of screens hits it, wait it out and retry
   for (let attempt = 0; attempt < 4; attempt++) {
-    await page.getByLabel('Username').fill(PARENT.username)
-    await page.getByLabel('Password').fill(PARENT.password)
+    await page.getByLabel('Username', { exact: true }).fill(PARENT.username)
+    await page.getByLabel('Password', { exact: true }).fill(PARENT.password)
     await page.getByRole('button', { name: 'Log in' }).click()
     try {
       await page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 15_000 })
