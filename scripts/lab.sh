@@ -23,6 +23,8 @@ _mac_of() {
 TOKEN_FILE="${XDG_RUNTIME_DIR:-/tmp}/task4ce-lab.token"
 _token() {
   local t
+  # access tokens live 30 min: log in again once the cached one is 20 min old
+  find "$TOKEN_FILE" -mmin +20 -delete 2>/dev/null || true
   t=$(cat "$TOKEN_FILE" 2>/dev/null || true)
   if [ -z "$t" ] || [ "$t" = null ]; then
     t=$(_curl_parent -X POST "$API/api/v1/auth/login" -H 'Content-Type: application/json' \
