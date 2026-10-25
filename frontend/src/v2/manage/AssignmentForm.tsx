@@ -1,10 +1,12 @@
 import { useState } from 'react'
-import { Button, Chip, SegmentedControl, TextInput } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useDeleteAssignment, useSaveAssignment, type ChoreMode } from '@/v2/hooks/useChores'
 import { DAYS } from '@/v2/days'
+import { Icon } from '@/v2/parent/Icon'
+import { SegmentedControl } from '@/v2/parent/SegmentedControl'
 import type { Assignment, Kid } from '@/v2/types'
 import { ConfirmDelete } from './ConfirmDelete'
+import { initial, nameOf } from './choreMeta'
 import { toastFail, toastOk } from '../notify'
 
 const REPEATS = [
@@ -18,15 +20,19 @@ const MODES: { value: ChoreMode; label: string; hint: string }[] = [
   { value: 'team', label: 'Team effort', hint: 'One chore for everyone. Any kid can tick it, and the points are split evenly.' },
 ]
 
+const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
+
 interface Props {
   kids: Kid[]
   choreId: number
   assignment?: Assignment
-  onClose: () => void
+  /** Called after a save or remove, and by Cancel (shown only when this form can be dismissed). */
+  onClose?: () => void
+  dismissable?: boolean
 }
 
 /** Who does a chore, how often and by when. Add or edit one assignment. */
-export function AssignmentForm({ kids, choreId, assignment: a, onClose }: Props) {
+export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissable }: Props) {
   const save = useSaveAssignment()
   const del = useDeleteAssignment()
   const [confirm, { open, close }] = useDisclosure(false)
@@ -59,69 +65,89 @@ export function AssignmentForm({ kids, choreId, assignment: a, onClose }: Props)
         onError: toastFail,
         onSuccess: () => {
           toastOk(a ? 'Saved' : 'Assigned')
-          onClose()
+          onClose?.()
         },
       },
     )
 
   return (
-    <div className="m-form">
-      <div>
-        <div className="f-label">Assign to</div>
-        <Chip.Group multiple value={who} onChange={setWho}>
-          <div className="f-row">
-            {kids.map((k) => (
-              <Chip key={k.id} value={String(k.id)}>
-                {k.full_name ?? k.username}
-              </Chip>
-            ))}
-          </div>
-        </Chip.Group>
+    <div className="pk-form">
+      <div className="pk-field">
+        <span className="pk-label" id={`who-${a?.id ?? 'new'}`}>Assign to</span>
+        <div className="pk-pills" role="group" aria-labelledby={`who-${a?.id ?? 'new'}`}>
+          {kids.map((k) => (
+            <button
+              key={k.id}
+              type="button"
+              className="pk-pill"
+              aria-pressed={who.includes(String(k.id))}
+              onClick={() => setWho(toggle(who, String(k.id)))}
+            >
+              <span className="pk-av" aria-hidden="true">{initial(nameOf(k))}</span>
+              {nameOf(k)}
+            </button>
+          ))}
+        </div>
       </div>
       {who.length > 1 && (
-        <div>
-          <div className="f-label">When more than one kid</div>
-          <SegmentedControl
-            fullWidth
-            aria-label="Mode"
-            data={MODES.map(({ value, label }) => ({ value, label }))}
-            value={mode}
-            onChange={(v) => setMode(v as ChoreMode)}
-          />
-          <div className="m-meta">{MODES.find((m) => m.value === mode)?.hint}</div>
+        <div className="pk-field">
+          <span className="pk-label">With more than one kid</span>
+          <div className="pk-seg">
+            <SegmentedControl label="Mode" options={MODES} value={mode} onChange={setMode} />
+          </div>
+          <span className="pk-hint">{MODES.find((m) => m.value === mode)?.hint}</span>
         </div>
       )}
-      <div>
-        <div className="f-label">Repeat</div>
-        <SegmentedControl fullWidth aria-label="Repeat" data={REPEATS} value={repeat} onChange={setRepeat} />
+      <div className="pk-field">
+        <span className="pk-label">Repeat</span>
+        <div className="pk-seg">
+          <SegmentedControl label="Repeat" options={REPEATS} value={repeat} onChange={setRepeat} />
+        </div>
       </div>
       {repeat === 'weekly' && (
-        <Chip.Group multiple value={days} onChange={setDays}>
-          <div className="f-row">
-            {DAYS.map((d, i) => (
-              <Chip key={d} value={String(i)}>
-                {d}
-              </Chip>
-            ))}
-          </div>
-        </Chip.Group>
+        <div className="pk-days" role="group" aria-label="Days">
+          {DAYS.map((d, i) => (
+            <button
+              key={d}
+              type="button"
+              className="pk-day"
+              aria-label={d}
+              aria-pressed={days.includes(String(i))}
+              onClick={() => setDays(toggle(days, String(i)))}
+            >
+              {d[0]}
+            </button>
+          ))}
+        </div>
       )}
-      {repeat === 'once' && (
-        <TextInput type="date" label="Date" value={date} onChange={(e) => setDate(e.currentTarget.value)} />
-      )}
-      <TextInput type="time" label="Due by (optional)" value={due} onChange={(e) => setDue(e.currentTarget.value)} />
-      <div className="m-actions">
-        <Button onClick={submit} disabled={!ready} loading={save.isPending}>
+      <div className="pk-row2">
+        {repeat === 'once' && (
+          <label className="pk-field">
+            <span className="pk-label">Date</span>
+            <input className="pk-input" type="date" value={date} onChange={(e) => setDate(e.currentTarget.value)} />
+          </label>
+        )}
+        <label className="pk-field">
+          <span className="pk-label">Due by (optional)</span>
+          <input className="pk-input" type="time" value={due} onChange={(e) => setDue(e.currentTarget.value)} />
+        </label>
+      </div>
+      <div className="pk-actions">
+        <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!ready || save.isPending}>
+          <Icon name="check" />
           Save
-        </Button>
-        <Button variant="default" onClick={onClose}>
-          Back
-        </Button>
+        </button>
+        {dismissable && (
+          <button type="button" className="p-btn" onClick={onClose}>
+            Cancel
+          </button>
+        )}
         {a && (
           <>
-            <Button className="m-push" color="fridgeRed" variant="subtle" onClick={open}>
+            <button type="button" className="p-btn pk-push" data-variant="red" onClick={open}>
+              <Icon name="person_remove" />
               Remove
-            </Button>
+            </button>
             <ConfirmDelete
               opened={confirm}
               title="Remove this assignment?"

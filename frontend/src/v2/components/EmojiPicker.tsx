@@ -20,20 +20,20 @@ export function EmojiPicker({ value, onChange, label, placeholder = '＋' }: Pro
   const [open, setOpen] = useState(false)
   return (
     <div>
-      <div className="f-pick-label f-label">{label}</div>
+      <div className="pk-label">{label}</div>
       <Popover opened={open} onChange={setOpen} position="bottom-start" withArrow trapFocus>
         <Popover.Target>
-          <button type="button" className="f-pick-btn" aria-label={label} onClick={() => setOpen((o) => !o)}>
+          <button type="button" className="pk-pick-btn" aria-label={label} onClick={() => setOpen((o) => !o)}>
             {value || placeholder}
           </button>
         </Popover.Target>
-        <Popover.Dropdown className="f-pick-pop">
-          <div className="f-pick-grid">
+        <Popover.Dropdown className="pk-pick-pop">
+          <div className="pk-pick-grid">
             {EMOJIS.map((e) => (
               <button
                 key={e}
                 type="button"
-                className="f-pick-cell"
+                className="pk-pick-cell"
                 aria-label={`Pick ${e}`}
                 data-on={e === value || undefined}
                 onClick={() => {

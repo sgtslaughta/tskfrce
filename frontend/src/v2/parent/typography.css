@@ -44,29 +44,6 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/* Avatar and icon elements */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
-[data-look='parent'] .p-av {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  background: var(--p-ink);
-  color: var(--p-card);
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-  font-size: 14px;
-  flex: none;
-}
-
-[data-look='parent'] .p-av-lg {
-  width: 48px;
-  height: 48px;
-  font-size: 18px;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── */
 /* Empty and state messaging */
 /* ─────────────────────────────────────────────────────────────────────────── */
 

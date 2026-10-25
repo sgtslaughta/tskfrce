@@ -1,0 +1,231 @@
+/**
+ * @fileoverview Kids & chores (/kids): list cards, detail header, panels, form controls.
+ * Ported from mockup 02-parent-screens.html (Kids & chores). Classes are pk-*.
+ */
+
+/* ── list column ─────────────────────────────────────────────────────────── */
+[data-look='parent'] .pk-tabs .p-segmented-control { width: 100%; }
+[data-look='parent'] .pk-tabs .p-segmented-button { flex: 1; padding: 7px 4px; font-size: 12px; }
+
+[data-look='parent'] .pk-items { display: flex; flex-direction: column; gap: 8px; padding: 12px; }
+
+[data-look='parent'] .pk-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--p-soft);
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  color: var(--p-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+}
+[data-look='parent'] .pk-card:hover { border-color: var(--p-line); }
+[data-look='parent'] .pk-card[data-selected='true'] { background: var(--p-card); border-color: var(--p-ink); }
+[data-look='parent'] .pk-card:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+
+[data-look='parent'] .pk-card-t { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+[data-look='parent'] .pk-card-t b { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-look='parent'] .pk-card-t small { margin-top: 2px; color: var(--p-sub); font-size: 12px; font-weight: 400; }
+
+[data-look='parent'] .pk-new {
+  justify-content: center;
+  gap: 6px;
+  background: transparent;
+  border: 1.5px dashed var(--p-line);
+  color: var(--p-sub);
+  font-size: 13px;
+  font-weight: 600;
+}
+[data-look='parent'] .pk-new:hover { border-color: var(--p-ink); color: var(--p-ink); }
+[data-look='parent'] .pk-new[data-selected='true'] { background: var(--p-card); border-style: solid; color: var(--p-ink); }
+
+/* icon tile: accent when its card is selected (neon only as a filled tile, dark glyph) */
+[data-look='parent'] .pk-tile {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: var(--p-card);
+  color: var(--p-sub);
+}
+[data-look='parent'] .pk-card[data-selected='true'] .pk-tile,
+[data-look='parent'] .pk-tile-lg { background: var(--p-acc); color: #292928; }
+[data-look='parent'] .pk-tile-lg { width: 58px; height: 58px; border-radius: 18px; }
+
+/* letter avatars, overlapped in a row on chore cards */
+[data-look='parent'] .pk-avs { display: flex; flex: none; }
+[data-look='parent'] .pk-av {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--p-ink);
+  color: var(--p-card);
+  border: 2px solid var(--p-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+[data-look='parent'] .pk-avs .pk-av + .pk-av { margin-left: -7px; }
+[data-look='parent'] .pk-card[data-selected='true'] .pk-av { border-color: var(--p-card); }
+[data-look='parent'] .pk-av[data-size='lg'] { width: 36px; height: 36px; font-size: 14px; border: 0; }
+[data-look='parent'] .pk-card[data-selected='true'] .pk-av[data-size='lg'] { background: var(--p-acc); color: #292928; }
+[data-look='parent'] .pk-av[data-size='xl'] { width: 58px; height: 58px; font-size: 24px; border: 0; background: var(--p-acc); color: #292928; }
+
+/* ── detail ──────────────────────────────────────────────────────────────── */
+[data-look='parent'] .pk-detail { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding-bottom: 72px; }
+
+[data-look='parent'] .pk-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+[data-look='parent'] .pk-head-t { flex: 1; min-width: 200px; }
+[data-look='parent'] .pk-head-t h2 { margin: 0 0 6px; font-size: 28px; font-weight: 700; color: var(--p-ink); overflow-wrap: anywhere; }
+[data-look='parent'] .pk-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+[data-look='parent'] .pk-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 16px; align-items: start; }
+[data-look='parent'] .pk-span { grid-column: 1 / -1; }
+[data-look='parent'] .pk-narrow { max-width: 520px; }
+
+[data-look='parent'] .pk-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  padding: 18px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: 18px;
+}
+[data-look='parent'] .pk-panel h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 14px; font-weight: 700; color: var(--p-ink); }
+[data-look='parent'] .pk-panel p { margin: 0; }
+[data-look='parent'] .pk-sub { display: flex; flex-direction: column; gap: 12px; padding: 14px; border-radius: 14px; background: var(--p-soft); }
+[data-look='parent'] .pk-kv { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--p-line); font-size: 13.5px; }
+[data-look='parent'] .pk-kv:last-child { border-bottom: 0; padding-bottom: 0; }
+[data-look='parent'] .pk-kv span { color: var(--p-sub); }
+[data-look='parent'] .pk-kv b { font-weight: 600; color: var(--p-ink); text-align: right; }
+[data-look='parent'] .pk-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+[data-look='parent'] .pk-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border: 1px solid var(--p-line); border-radius: 999px; background: var(--p-soft); color: var(--p-ink); font-size: 12.5px; font-weight: 500; }
+[data-look='parent'] .pk-line { display: flex; align-items: center; gap: 12px; }
+
+[data-look='parent'] .pk-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+[data-look='parent'] .pk-actions .pk-push { margin-left: auto; }
+[data-look='parent'] .pk-actions .p-btn[aria-pressed='true'] { border-color: var(--p-ink); background: var(--p-soft); }
+[data-look='parent'] .pk-foot { display: flex; justify-content: flex-end; gap: 8px; }
+[data-look='parent'] .p-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── forms ───────────────────────────────────────────────────────────────── */
+[data-look='parent'] .pk-form { display: flex; flex-direction: column; gap: 14px; }
+[data-look='parent'] .pk-field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+[data-look='parent'] .pk-label { color: var(--p-sub); font-size: 12.5px; font-weight: 600; }
+[data-look='parent'] .pk-hint { color: var(--p-sub); font-size: 12px; line-height: 1.45; }
+[data-look='parent'] .pk-error { color: var(--p-red); font-size: 12px; font-weight: 600; }
+[data-look='parent'] .pk-row2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+
+[data-look='parent'] .pk-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--p-line);
+  border-radius: 12px;
+  background: var(--p-soft);
+  color: var(--p-ink);
+  font: 500 14px var(--font-parent), system-ui, sans-serif;
+}
+[data-look='parent'] .pk-input::placeholder { color: var(--p-sub); }
+[data-look='parent'] .pk-input:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 1px; }
+
+[data-look='parent'] .pk-switch { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--p-line); font-size: 13.5px; color: var(--p-ink); }
+[data-look='parent'] .pk-switch button {
+  position: relative;
+  width: 40px;
+  height: 24px;
+  padding: 0;
+  border: 1.5px solid var(--p-sub);
+  border-radius: 999px;
+  background: var(--p-soft);
+  cursor: pointer;
+}
+[data-look='parent'] .pk-switch button::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--p-sub);
+  transition: transform var(--dur-1) var(--ease-out);
+}
+[data-look='parent'] .pk-switch button[aria-checked='true'] { background: var(--p-acc); border-color: var(--p-acc); }
+[data-look='parent'] .pk-switch button[aria-checked='true']::after { background: #292928; transform: translateX(16px); }
+[data-look='parent'] .pk-switch button:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+
+/* steps */
+[data-look='parent'] .pk-step { display: flex; align-items: center; gap: 4px; padding: 6px 6px 6px 14px; border-radius: 12px; background: var(--p-soft); font-size: 14px; font-weight: 500; color: var(--p-ink); }
+[data-look='parent'] .pk-step > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+[data-look='parent'] .pk-ib { width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--p-sub); cursor: pointer; }
+[data-look='parent'] .pk-ib:hover:not(:disabled) { background: var(--p-card); color: var(--p-ink); }
+[data-look='parent'] .pk-ib:disabled { opacity: 0.35; cursor: default; }
+[data-look='parent'] .pk-add { display: flex; gap: 8px; }
+[data-look='parent'] .pk-add .pk-input { flex: 1; min-width: 0; background: transparent; border: 1.5px dashed var(--p-line); }
+
+/* kid pills, weekday circles */
+[data-look='parent'] .pk-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+[data-look='parent'] .pk-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 14px 4px 4px;
+  border: 1px solid var(--p-line);
+  border-radius: 999px;
+  background: var(--p-card);
+  color: var(--p-ink);
+  font: 600 13px var(--font-parent), system-ui, sans-serif;
+  cursor: pointer;
+}
+[data-look='parent'] .pk-pill .pk-av { width: 26px; height: 26px; border: 0; background: var(--p-soft); color: var(--p-ink); }
+[data-look='parent'] .pk-pill[aria-pressed='true'] { border: 1.5px solid var(--p-ink); padding: 3.5px 13.5px 3.5px 3.5px; }
+[data-look='parent'] .pk-pill[aria-pressed='true'] .pk-av { background: var(--p-acc); color: #292928; }
+
+[data-look='parent'] .pk-days { display: flex; gap: 8px; flex-wrap: wrap; }
+[data-look='parent'] .pk-day {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--p-line);
+  border-radius: 50%;
+  background: var(--p-card);
+  color: var(--p-sub);
+  font: 700 13px var(--font-parent), system-ui, sans-serif;
+  cursor: pointer;
+}
+[data-look='parent'] .pk-day[aria-pressed='true'] { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
+
+[data-look='parent'] .pk-seg .p-segmented-control { width: 100%; }
+[data-look='parent'] .pk-seg .p-segmented-button { flex: 1; }
+[data-look='parent'] .pk-sub .pk-seg .p-segmented-button[data-active='true'] { background: var(--p-card); }
+
+/* emoji picker (kid avatar field) and glyph picker (badge icon) */
+[data-look='parent'] .pk-pick-btn { width: 48px; height: 48px; border: 1px solid var(--p-line); border-radius: 12px; background: var(--p-soft); color: var(--p-ink); font-size: 22px; cursor: pointer; }
+.pk-pick-pop { background: var(--p-card, #fff); }
+.pk-pick-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; }
+.pk-pick-cell { width: 34px; height: 34px; border: 1px solid transparent; border-radius: 8px; background: transparent; font-size: 20px; cursor: pointer; }
+.pk-pick-cell:hover, .pk-pick-cell[data-on] { border-color: var(--p-ink, #292928); }
+
+[data-look='parent'] .p-glyph-picker { display: flex; flex-direction: column; gap: 8px; }
+[data-look='parent'] .p-glyph-search { padding: 8px 12px; border: 1px solid var(--p-line); border-radius: 12px; background: var(--p-soft); color: var(--p-ink); font: 500 13px var(--font-parent), system-ui, sans-serif; }
+[data-look='parent'] .p-glyph-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 6px; }
+[data-look='parent'] .p-glyph-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border: 1px solid var(--p-line); border-radius: 12px; background: var(--p-card); color: var(--p-ink); cursor: pointer; }
+[data-look='parent'] .p-glyph-item.selected { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
+[data-look='parent'] .p-glyph-label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9.5px; }
+
+@media (max-width: 767px) {
+  [data-look='parent'] .pk-head-t h2 { font-size: 24px; }
+  [data-look='parent'] .pk-grid { grid-template-columns: 1fr; }
+  [data-look='parent'] .pk-items { padding: 12px 16px; }
+}

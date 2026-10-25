@@ -25,6 +25,7 @@ import '../src/v2/parent/responsive.css';
 import '../src/v2/parent/parent-layout.css';
 import '../src/v2/parent/parent-today.css';
 import '../src/v2/parent/parent-kids.css';
+import '../src/v2/parent/parent-manage.css';
 import '../src/v2/parent/parent-devices.css';
 import '../src/v2/today/onboarding.css';
 import '../src/v2/login/auth.css';

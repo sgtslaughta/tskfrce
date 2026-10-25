@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
 import type { ReactNode } from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -13,8 +13,9 @@ import { KidsPage } from '@/v2/manage/KidsPage'
 import type { Device, Kid, SharedDeviceNudge } from '@/v2/types'
 
 const push = jest.fn()
+const replace = jest.fn()
 let query: Record<string, string> = {}
-jest.mock('next/router', () => ({ useRouter: () => ({ query, push, replace: jest.fn() }) }))
+jest.mock('next/router', () => ({ useRouter: () => ({ query, push, replace }) }))
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
 jest.mock('@/v2/today/DeviceQuickMenu', () => ({
@@ -80,8 +81,9 @@ beforeAll(() => {
 })
 beforeEach(() => {
   push.mockReset()
+  replace.mockReset()
   query = {}
-  apiMock.mockReset().mockImplementation(async (path) => (path === '/kids' ? kids : path === '/chores/' ? [] : {}))
+  apiMock.mockReset().mockImplementation(async (path) => (path === '/kids' ? kids : path === '/today' ? { kids: [] } : ['/chores/', '/rewards', '/custom-badges', '/devices'].includes(path) ? [] : {}))
 })
 
 describe('PINsNudge', () => {
@@ -140,19 +142,24 @@ describe('DeviceRow needs_pins note', () => {
 })
 
 describe('deep link target', () => {
-  test('?section=kids&kid=7&pin=1 opens that kid drawer with the PIN field focused', async () => {
-    query = { section: 'kids', kid: '7', pin: '1' }
+  test('?section=kids&item=7&pin=1 opens that kid editor with the PIN field focused', async () => {
+    query = { section: 'kids', item: '7', pin: '1' }
     render(wrap(<KidsPage />))
-    const dialog = await screen.findByRole('dialog')
-    expect(dialog.textContent).toContain('Edit kid')
+    expect(await screen.findByRole('region', { name: 'Edit kid' })).toBeInTheDocument()
     const pin = await screen.findByLabelText('PIN (4 digits)')
     expect(document.activeElement).toBe(pin)
   })
 
-  test('no kid param leaves the drawer closed', async () => {
-    query = { section: 'kids' }
+  test('?kid=7&pin=1 (links from Today and Devices) is rewritten to ?item=7 so phones show the detail', async () => {
+    query = { section: 'kids', kid: '7', pin: '1' }
     render(wrap(<KidsPage />))
-    await screen.findByText('Maya')
-    expect(screen.queryByRole('dialog')).toBeNull()
+    await waitFor(() => expect(replace).toHaveBeenCalledWith({ pathname: '/kids', query: { section: 'kids', item: '7', pin: '1' } }))
+  })
+
+  test('a selected kid without pin=1 leaves the editor closed', async () => {
+    query = { section: 'kids', item: '7' }
+    render(wrap(<KidsPage />))
+    await screen.findByRole('heading', { name: 'Maya' })
+    expect(screen.queryByLabelText('PIN (4 digits)')).toBeNull()
   })
 })

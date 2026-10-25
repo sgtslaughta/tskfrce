@@ -1,4 +1,4 @@
-import { Button, Group, Modal, Text } from '@mantine/core'
+import { Modal, Text } from '@mantine/core'
 
 interface ConfirmProps {
   opened: boolean
@@ -12,20 +12,22 @@ export function ConfirmDelete({ opened, title, body, onConfirm, onClose }: Confi
   return (
     <Modal opened={opened} onClose={onClose} title={title} centered>
       <Text mb="md">{body}</Text>
-      <Group justify="flex-end">
-        <Button variant="default" onClick={onClose}>
+      <div className="pk-actions">
+        <button type="button" className="p-btn" onClick={onClose}>
           Keep
-        </Button>
-        <Button
-          color="fridgeRed"
+        </button>
+        <button
+          type="button"
+          className="p-btn"
+          data-variant="red"
           onClick={() => {
             onConfirm()
             onClose()
           }}
         >
           Delete
-        </Button>
-      </Group>
+        </button>
+      </div>
     </Modal>
   )
 }
