@@ -55,8 +55,8 @@ const lib = (over = {}) => ({
   points: 15,
   needs_photo: false,
   steps: [
-    { id: 1, title: 'Fold clothes' },
-    { id: 2, title: 'Make bed' },
+    { id: 1, title: 'Fold clothes', due_time: null, after_previous: false },
+    { id: 2, title: 'Make bed', due_time: null, after_previous: false },
   ],
   assignments: [asg()],
   archived: false,
@@ -186,7 +186,25 @@ describe('chore detail', () => {
     await waitFor(() => expect(calls('PATCH')).toHaveLength(1))
     expect(calls('PATCH')[0]).toEqual([
       '/chores/5',
-      { method: 'PATCH', body: { title: 'Clean room', points: 15, needs_photo: false, steps: [{ title: 'Make bed' }, { title: 'Fold clothes' }] } },
+      { method: 'PATCH', body: { title: 'Clean room', points: 15, needs_photo: false, steps: [{ title: 'Make bed', due_time: null, after_previous: false }, { title: 'Fold clothes', due_time: null, after_previous: false }] } },
+    ])
+  })
+
+  test('saving keeps existing step deadlines and chaining', async () => {
+    const steps = [
+      { id: 1, title: 'A', due_time: '16:30', after_previous: false },
+      { id: 2, title: 'B', after_previous: true },
+    ]
+    serve({ '/chores/': [{ ...defs[0], steps }, ...defs.slice(1)] })
+    await show({ item: String(defs[0].id) })
+    const pts = within(detail()).getByLabelText('Points')
+    await userEvent.clear(pts)
+    await userEvent.type(pts, '20')
+    await userEvent.click(within(detail()).getByRole('button', { name: 'Save chore' }))
+    await waitFor(() => expect(calls('PATCH')).toHaveLength(1))
+    expect(calls('PATCH')[0][1].body.steps).toEqual([
+      { title: 'A', due_time: '16:30', after_previous: false },
+      { title: 'B', due_time: null, after_previous: true },
     ])
   })
 

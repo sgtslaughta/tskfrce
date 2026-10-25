@@ -42,6 +42,6 @@ export const useMoveChore = () => useChoreAction((id: number) => api(`/chores/${
 /** Skip today; Undo (useMarkNotDone) un-skips. */
 export const useSkipChore = () => useChoreAction((id: number) => api(`/chores/${id}/skip`, { method: 'POST' }))
 export const useDeductChore = () =>
-  useChoreAction(({ id, ...body }: { id: number; kid_id: number; amount: number; note?: string }) =>
+  useChoreAction(({ id, ...body }: { id: number; kid_id: number; amount: number; note: string }) =>
     api(`/chores/${id}/deduct`, { method: 'POST', body }),
   )

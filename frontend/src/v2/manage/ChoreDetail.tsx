@@ -63,9 +63,15 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
     setSteps(s)
   }
 
+  /** Keep an existing step's deadline and chaining (the backend resets them when omitted). */
+  const stepBody = (title: string) => {
+    const old = chore?.steps.find((o) => o.title === title)
+    return old ? { title, due_time: old.due_time ?? null, after_previous: old.after_previous ?? false } : { title }
+  }
+
   const submit = () =>
     saveOnce(
-      { id: chore?.id, body: { title: title.trim(), points: Number(points), needs_photo: photo, steps: steps.map((title) => ({ title })) } },
+      { id: chore?.id, body: { title: title.trim(), points: Number(points), needs_photo: photo, steps: steps.map(stepBody) } },
       {
         onError: toastFail,
         onSuccess: (c) => {

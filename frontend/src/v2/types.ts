@@ -150,6 +150,11 @@ export interface RunDetail {
   due_time: string | null
   kid_ids: number[]
   steps: RunStep[]
+  due_at: string | null
+  type: { id: number; name: string; glyph: string }
+  sent_back: boolean
+  note: { label: string; text: string | null; at: string; kid_name: string | null } | null
+  can_move: boolean
   photos: Array<{ id: number; thumb_url: string }>
 }
 
@@ -245,7 +250,7 @@ export interface LibChore {
   title: string
   points: number
   needs_photo: boolean
-  type_id?: number
+  type_id: number
   steps: { id: number; title: string; due_time: string | null; after_previous: boolean }[]
   assignments: Assignment[]
   archived: boolean
