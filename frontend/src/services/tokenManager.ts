@@ -9,6 +9,7 @@ import {
   createSafeStorage,
   storeTokens,
   clearAllTokens,
+  dropIfSessionEnded,
   SafeStorage
 } from './tokenStorage';
 import {
@@ -80,6 +81,7 @@ export class TokenManager {
 
   private constructor() {
     this.safeLocalStorage = createSafeStorage();
+    dropIfSessionEnded(this.safeLocalStorage);
   }
 
   /**

@@ -121,3 +121,23 @@ export function getStoredTokenExpiry(storage: SafeStorage): string | null {
 export function getStoredRefreshExpiry(storage: SafeStorage): string | null {
   return storage.getItem('refresh_token_expiry');
 }
+
+// "Keep me logged in" off: tokens stay in localStorage (shared by tabs) but a flag says to
+// drop them once the browser closes, detected by a session cookie that dies with the browser.
+const FORGET_KEY = 'task4ce-forget'
+const ALIVE_COOKIE = 'task4ce-alive=1'
+
+export function setRemember(remember: boolean): void {
+  if (typeof window === 'undefined') return
+  if (remember) localStorage.removeItem(FORGET_KEY)
+  else localStorage.setItem(FORGET_KEY, '1')
+  document.cookie = `${ALIVE_COOKIE}; path=/; SameSite=Lax`
+}
+
+/** Clears tokens when the last login said "don't keep me" and the browser has since restarted. */
+export function dropIfSessionEnded(storage: SafeStorage): void {
+  if (typeof window === 'undefined') return
+  if (localStorage.getItem(FORGET_KEY) !== '1' || document.cookie.includes(ALIVE_COOKIE)) return
+  clearAllTokens(storage)
+  localStorage.removeItem(FORGET_KEY)
+}

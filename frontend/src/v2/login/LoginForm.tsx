@@ -7,6 +7,7 @@ import { useLook } from '@/v2/parent/useLook'
 import { Icon } from '@/v2/parent/Icon'
 import type { SetupStatus } from '@/v2/types'
 import { AuthBrand } from '@/v2/components/AuthBrand'
+import { setRemember as keepSession } from '@/services/tokenStorage'
 
 /** Only same-site paths survive; anything a browser could reinterpret falls back to "/". */
 export const safeNext = (next: unknown): string => {
@@ -27,7 +28,7 @@ export function LoginForm() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
-  const [remember, setRemember] = useState(false)
+  const [remember, setRemember] = useState(true)
   const [error, setError] = useState('')
   const [showForgot, setShowForgot] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -51,7 +52,7 @@ export function LoginForm() {
     setBusy(true)
     setError('')
     try {
-      // TODO: Send remember: true to backend when checking remember box
+      keepSession(remember)
       await login({ username: username.trim(), password }) // the effect above redirects
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Incorrect username or password')
