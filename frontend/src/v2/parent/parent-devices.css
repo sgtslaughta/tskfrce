@@ -150,7 +150,6 @@
 [data-look='parent'] .pk-empty { padding: 8px 4px; text-align: center; }
 [data-look='parent'] .pk-pill-plain { padding: 8px 14px; }
 [data-look='parent'] .pk-pill-plain[aria-pressed='true'] { padding: 7.5px 13.5px; background: var(--p-acc); border-color: var(--p-ink); color: #292928; }
-[data-look='parent'] .pk-pill:disabled { opacity: 0.5; cursor: not-allowed; }
 [data-look='parent'] .pk-panel[data-tone='amber'] { background: var(--p-amb); border-color: transparent; }
 [data-look='parent'] .pk-panel[data-tone='amber'] h3,
 [data-look='parent'] .pk-panel[data-tone='amber'] .pk-hint { color: var(--p-ambink); }
@@ -159,16 +158,6 @@
 [data-look='parent'] .pk-head-t .pk-chips { margin-top: 8px; }
 
 /* ── craft + a11y (pass 2) ───────────────────────────────────────────────── */
-
-/* one clear ring on every interactive element in the devices screens */
-[data-look='parent'] .p-device-item:focus-visible,
-[data-look='parent'] .pk-detail .p-btn:focus-visible,
-[data-look='parent'] .pk-pill:focus-visible,
-[data-look='parent'] .pk-new:focus-visible,
-[data-look='parent'] .p-segmented-button:focus-visible {
-  outline: 2px solid var(--p-ink);
-  outline-offset: 2px;
-}
 
 /* press + hover feedback, on the shared motion tokens */
 [data-look='parent'] .pk-pill,
