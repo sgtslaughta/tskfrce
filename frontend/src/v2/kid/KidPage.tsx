@@ -111,7 +111,7 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
         <h2 style={{ margin: '0 0 8px' }}>{d.progress || !name ? 'Your chores' : name}</h2>
         <KidChecklist
           chores={d.chores}
-          onDone={(id) => done.mutate(id)}
+          onDone={preview ? undefined : (id) => done.mutate(id)}
           busyId={done.isPending ? done.variables : null}
           unread={preview ? undefined : unread}
           onChat={preview ? undefined : (id) => openChat('chore', String(id))}
@@ -149,7 +149,7 @@ function KidPreview({ id }: { id: number }) {
               <span className="ms" style={{ fontSize: 20 }}>visibility</span>
               {`Viewing as ${name} · preview`}
             </span>
-            <Button size="xs" variant="filled" color="var(--p-acc)" style={{ color: '#292928' }} leftSection={<Icon name="arrow_back" size={14} />} onClick={() => router.push('/kids')}>
+            <Button size="xs" variant="filled" color="var(--p-acc)" style={{ color: '#292928' }} leftSection={<Icon name="arrow_back" size={14} />} onClick={() => router.push(`/?item=${id}`)}>
               Back to parent
             </Button>
           </div>
