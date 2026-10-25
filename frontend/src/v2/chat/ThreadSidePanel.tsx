@@ -17,7 +17,7 @@ export function ThreadSidePanel({ run, kidId }: { run?: RunDetail; kidId: number
   const kid = useToday().data?.kids.find((k) => k.id === kidId)
   return (
     <aside className="pc-side" aria-label="Details">
-      {run && (
+      {run && run.steps.length > 0 && (
         <div className="pc-card">
           <h3>
             <Icon name="checklist" size={18} />

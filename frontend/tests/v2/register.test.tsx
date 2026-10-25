@@ -53,6 +53,16 @@ describe('RegisterForm', () => {
     expect(replace).not.toHaveBeenCalled()
   })
 
+  test('shows who the invite is for and when it expires, from the token itself', () => {
+    const exp = Math.floor(Date.now() / 1000) + 5 * 3600 + 60
+    const payload = btoa(JSON.stringify({ sub: 'grandma', exp })).replace(/=+$/, '')
+    wrap(`h.${payload}.s`)
+    expect(screen.getByText('Invite for grandma')).toBeInTheDocument()
+    expect(screen.getByText('Expires in 5 hours')).toBeInTheDocument()
+    expect(screen.getByLabelText('Username')).toHaveValue('grandma')
+    expect(screen.getByLabelText('Username')).toHaveAttribute('readonly')
+  })
+
   test('missing token explains itself', () => {
     wrap(undefined)
     expect(screen.getByRole('alert')).toHaveTextContent('missing its code')

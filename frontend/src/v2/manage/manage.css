@@ -97,6 +97,7 @@
 /* Mode buttons and preview */
 [data-look='parent'] .mode-buttons { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
 [data-look='parent'] .mode-btn { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 120px; }
+[data-look='parent'] .m-card .mantine-Button-label { display: inline-flex; align-items: center; gap: 8px; }
 [data-look='parent'] .preview-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 12px 0; }
 [data-look='parent'] .preview-card { padding: 16px; border-radius: 12px; border: 1px solid var(--p-line); background: var(--p-soft); }
 [data-look='parent'] .preview-card.light { background: #f3f3f3; border-color: #e4e4e1; color: #292928; }

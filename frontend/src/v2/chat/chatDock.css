@@ -38,6 +38,7 @@
   background: var(--p-card); color: var(--p-ink); border: 1px solid var(--p-line);
   box-shadow: 0 4px 16px rgba(0,0,0,0.12);
 }
+[data-look='parent'] .f-dock .p-list-header-top { display: none; }
 [data-look='parent'] .f-dock-head { border-bottom: 1px solid var(--p-line); }
 
 @media (max-width: 767px) {

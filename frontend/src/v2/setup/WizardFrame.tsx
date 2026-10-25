@@ -54,7 +54,7 @@ export function WizardFrame({
           {STEPS.map((s, i) => {
             const isDone = i + 1 < step
             const isActive = i + 1 === step
-            const canOpen = i + 1 <= maxStepReached
+            const canOpen = i + 1 <= Math.min(maxStepReached, step + 1) // the page only goes back or one ahead
             return (
               <div
                 key={s.num}
@@ -76,9 +76,9 @@ export function WizardFrame({
           })}
         </div>
         <div className={styles.prog}>
-          Step {step} of {STEPS.length} · about {estimatedMinLeft} min left
+          {step > STEPS.length ? 'All steps done' : `Step ${step} of ${STEPS.length} · about ${estimatedMinLeft} min left`}
           <div className={styles.pb}>
-            <i style={{ width: `${(step / STEPS.length) * 100}%` }} />
+            <i style={{ width: `${(Math.min(step, STEPS.length) / STEPS.length) * 100}%` }} />
           </div>
         </div>
       </aside>

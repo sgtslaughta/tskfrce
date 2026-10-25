@@ -68,6 +68,14 @@ async function toParent(user: ReturnType<typeof userEvent.setup>) {
   // Password will be typed by caller
 }
 
+/** Parent step 1, then the family step; the next Next click creates the account. */
+async function toFamily(user: ReturnType<typeof userEvent.setup>) {
+  await toParent(user)
+  await user.type(screen.getByLabelText(/^Password/), 'longenough1')
+  await user.click(screen.getByRole('button', { name: 'Next' }))
+  await user.type(await screen.findByLabelText('Family name'), 'The Sams')
+}
+
 describe('setup wizard', () => {
   test('step 1 renders parent account form', () => {
     wrap()
@@ -99,8 +107,7 @@ describe('setup wizard', () => {
     })
     const user = userEvent.setup()
     wrap()
-    await toParent(user)
-    await user.type(screen.getByLabelText(/^Password/), 'longenough1')
+    await toFamily(user)
     await user.click(screen.getByRole('button', { name: 'Next' }))
     const link = await screen.findByRole('link', { name: 'Log in' })
     expect(link).toHaveAttribute('href', '/login')
@@ -109,8 +116,7 @@ describe('setup wizard', () => {
   test('skipping steps 3 to 6 reaches Finish', async () => {
     const user = userEvent.setup()
     wrap()
-    await toParent(user)
-    await user.type(screen.getByLabelText(/^Password/), 'longenough1')
+    await toFamily(user)
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await waitFor(() => expect(loginWithToken).toHaveBeenCalledWith('t', 'r', 1800))
     for (let i = 0; i < 5; i++) await user.click(await screen.findByRole('button', { name: 'Skip' }))
@@ -120,13 +126,30 @@ describe('setup wizard', () => {
   })
 
   const finishAccount = async (user: ReturnType<typeof userEvent.setup>) => {
-    await toParent(user)
-    await user.type(screen.getByLabelText(/^Password/), 'longenough1')
+    await toFamily(user)
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await screen.findByLabelText('Name')
   }
   const posts = (path: string) =>
     apiMock.mock.calls.filter(([p, i]) => p === path && i?.method === 'POST')
+
+  test('empty family name blocks Next; the account POST carries the family name and time zone', async () => {
+    const user = userEvent.setup()
+    wrap()
+    await toParent(user)
+    await user.type(screen.getByLabelText(/^Password/), 'longenough1')
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await user.click(await screen.findByRole('button', { name: 'Next' }))
+    expect(await screen.findByText('Enter a family name.')).toBeInTheDocument()
+    expect(posts('/setup')).toHaveLength(0)
+    await user.type(screen.getByLabelText('Family name'), 'The Sams')
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByLabelText('Name')
+    expect(posts('/setup')[0][1]).toEqual({
+      method: 'POST',
+      body: { family_name: 'The Sams', timezone: tz, parent: { username: 'sam', password: 'longenough1', full_name: 'Sam' } },
+    })
+  })
 
   test('already set up redirects to /login', async () => {
     apiMock.mockImplementation(async () => ({ needed: false }))
@@ -138,8 +161,7 @@ describe('setup wizard', () => {
     loginWithToken.mockImplementation(() => Promise.reject(new Error('nope')))
     const user = userEvent.setup()
     wrap()
-    await toParent(user)
-    await user.type(screen.getByLabelText(/^Password/), 'longenough1')
+    await toFamily(user)
     await user.click(screen.getByRole('button', { name: 'Next' }))
     expect(await screen.findByText(/Your account was created/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login')

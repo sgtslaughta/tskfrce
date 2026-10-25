@@ -4,6 +4,7 @@ import { useRouter } from 'next/router'
 import { useMediaQuery } from '@mantine/hooks'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { useLook } from './useLook'
+import { useFamily } from '@/v2/hooks/useFamily'
 import { Rail } from './Rail'
 import { TabBar } from './TabBar'
 import { ListDetail } from './ListDetail'
@@ -29,7 +30,7 @@ export function ParentShell({
   const { logout, user } = useUnifiedAuth()
   const router = useRouter()
   const small = useMediaQuery('(max-width: 767px)')
-  useLook('parent')
+  useLook('parent', useFamily().data?.accent)
 
   const logOut = async () => {
     startSignOut()
@@ -43,7 +44,7 @@ export function ParentShell({
   }
 
   // floating chat button: not on phone (Chat tab) or on the Chat page (it covered Send)
-  const dock = small || router.pathname === '/chat' ? null : <ChatDock meId={user ? Number(user.id) : null} />
+  const dock = small || router.pathname === '/chat' ? null : <ChatDock meId={user ? Number(user.id) : null} meName={user?.username} />
   const initial = (user?.username ?? '?').charAt(0).toUpperCase()
   const phoneTools = (
     <>

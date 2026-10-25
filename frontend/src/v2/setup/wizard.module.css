@@ -7,7 +7,7 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   background: var(--p-bg);
   color: var(--p-ink);
-  margin: 0 auto;
+  margin: 24px auto;
   max-width: 1200px;
 }
 
@@ -211,8 +211,10 @@
 
 @media (max-width: 900px) {
   .wizard {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     min-height: auto;
+    margin: 0;
+    border-radius: 0;
   }
 
   .side {
@@ -225,6 +227,7 @@
   }
 
   .steps {
+    min-width: 0;
     flex-direction: row;
     overflow-x: auto;
     gap: 0;

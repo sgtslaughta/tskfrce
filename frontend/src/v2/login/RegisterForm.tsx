@@ -6,16 +6,27 @@ import { useLook } from '@/v2/parent/useLook'
 import { Icon } from '@/v2/parent/Icon'
 import { AuthBrand } from '@/v2/components/AuthBrand'
 
+/** Username and expiry from the invite token (JWT `sub`, `exp`); display only, the server checks them itself. */
+function readInvite(token: string | undefined): { name: string; hoursLeft: number } | null {
+  try {
+    const part = (token ?? '').split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
+    const { sub, exp } = JSON.parse(atob(part))
+    return { name: String(sub), hoursLeft: Math.max(0, Math.round((exp * 1000 - Date.now()) / 3_600_000)) }
+  } catch {
+    return null
+  }
+}
+
 /** Redeem a parent's invite link. The username comes from the invite itself. */
 export function RegisterForm({ token }: { token: string | undefined }) {
   useLook('parent')
   const router = useRouter()
   const { login } = useUnifiedAuth()
   const [fullName, setFullName] = useState('')
-  const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
+  const invite = readInvite(token)
   const [busy, setBusy] = useState(false)
 
   // Calculate password strength (simple: count character types)
@@ -56,6 +67,15 @@ export function RegisterForm({ token }: { token: string | undefined }) {
         {token ? (
           <form className="p-auth-form" onSubmit={submit}>
             <h3>Join the family</h3>
+            {invite && (
+              <div className="p-auth-invite">
+                <div className="av">{invite.name.charAt(0).toUpperCase()}</div>
+                <div>
+                  <b>Invite for {invite.name}</b>
+                  <small>Expires in {invite.hoursLeft} {invite.hoursLeft === 1 ? 'hour' : 'hours'}</small>
+                </div>
+              </div>
+            )}
             {error && (
               <div className="p-auth-error" role="alert">
                 <Icon name="error" />
@@ -82,9 +102,8 @@ export function RegisterForm({ token }: { token: string | undefined }) {
                 <input
                   id="reg-username"
                   type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.currentTarget.value)}
-                  placeholder="Username"
+                  value={invite?.name ?? ''}
+                  readOnly
                 />
               </div>
             </div>
@@ -103,6 +122,7 @@ export function RegisterForm({ token }: { token: string | undefined }) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                   className="p-auth-link"
                   style={{ textDecoration: 'none' }}
                 >

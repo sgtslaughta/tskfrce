@@ -32,12 +32,15 @@ export function LoginForm() {
   const [error, setError] = useState('')
   const [showForgot, setShowForgot] = useState(false)
   const [busy, setBusy] = useState(false)
+  const [host, setHost] = useState('')
   const next = safeNext(router.query?.next)
 
   useEffect(() => {
     if (isAuthenticated) router.replace(next)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, next])
+
+  useEffect(() => setHost(window.location.host), [])
 
   useEffect(() => {
     // first run: nobody can log in yet
@@ -110,6 +113,7 @@ export function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                     className="p-auth-link"
                     style={{ textDecoration: 'none' }}
                   >
@@ -177,7 +181,7 @@ export function LoginForm() {
               </button>
             </div>
           )}
-          <div className="p-auth-footer">t@sk4ce v2.0.0 · chores.local</div>
+          <div className="p-auth-footer">t@sk4ce{host && ` · ${host}`}</div>
         </form>
       </div>
     </div>

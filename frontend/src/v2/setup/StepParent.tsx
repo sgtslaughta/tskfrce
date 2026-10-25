@@ -1,5 +1,4 @@
 import type { ChangeEvent } from 'react'
-import Link from 'next/link'
 import { PasswordInput, TextInput } from '@mantine/core'
 
 export interface ParentForm { username: string; password: string; fullName: string }
@@ -15,11 +14,10 @@ export const parentErrors = (p: ParentForm) => ({
 interface Props {
   value: ParentForm
   showError: boolean
-  conflict: boolean
   onChange: (v: ParentForm) => void
 }
 
-export function StepParent({ value, showError, conflict, onChange }: Props) {
+export function StepParent({ value, showError, onChange }: Props) {
   const err = parentErrors(value)
   const set = (k: keyof ParentForm) => (e: ChangeEvent<HTMLInputElement>) =>
     onChange({ ...value, [k]: e.currentTarget.value })
@@ -30,9 +28,6 @@ export function StepParent({ value, showError, conflict, onChange }: Props) {
         error={showError ? err.username : undefined} />
       <PasswordInput mt="md" label="Password" value={value.password} onChange={set('password')} autoComplete="new-password"
         description="At least 8 characters." error={showError ? err.password : undefined} />
-      {conflict && (
-        <p role="alert">Setup is already done. <Link href="/login">Log in</Link> instead.</p>
-      )}
     </>
   )
 }

@@ -28,7 +28,7 @@ function save(open: boolean, pick: Pick | null) {
 }
 
 /** Always-present floating chat: launcher button plus a thread list / thread panel. */
-export function ChatDock({ kid = false, meId }: { kid?: boolean; meId: number | null }) {
+export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: number | null; meName?: string }) {
   const [open, setOpen] = useState(false)
   const [pick, setPick] = useState<Pick | null>(null)
   const launcher = useRef<HTMLButtonElement>(null)
@@ -115,7 +115,7 @@ export function ChatDock({ kid = false, meId }: { kid?: boolean; meId: number | 
           </div>
           <div className="f-dock-body">
             {pick ? (
-              <ThreadView key={`${pick.kind}:${pick.ref}`} kind={pick.kind} refId={pick.ref} meId={meId} kid={kid} />
+              <ThreadView key={`${pick.kind}:${pick.ref}`} kind={pick.kind} refId={pick.ref} meId={meId} kid={kid} bare />
             ) : (
               <>
                 {threads.isError && <LoadError error={threads.error} onRetry={() => threads.refetch()} />}
@@ -123,6 +123,7 @@ export function ChatDock({ kid = false, meId }: { kid?: boolean; meId: number | 
                 <ThreadList
                   threads={threads.data?.threads ?? []}
                   selected={null}
+                  meName={meName}
                   onPick={(t) => set(true, { kind: t.kind, ref: refOf(t) })}
                 />
               </>

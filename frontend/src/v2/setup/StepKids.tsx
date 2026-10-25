@@ -28,7 +28,6 @@ export function StepKids({ kids, name, onName, draftError, onAdd }: Props) {
   })
   return (
     <>
-      <p>Add each child. You can add more later from Kids &amp; chores.</p>
       {kids.length > 0 && (
         <ul aria-label="Kids added" style={{ paddingLeft: 20 }}>
           {kids.map((k) => <li key={k.id}>{k.avatar} {k.full_name}{k.has_pin ? ' (has a PIN)' : ''}</li>)}
