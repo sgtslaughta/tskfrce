@@ -203,3 +203,19 @@
   [data-look='parent'] .pk-actions-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   [data-look='parent'] .pk-actions-grid .p-btn { white-space: normal; line-height: 1.2; }
 }
+
+/* device list: internet state as a colour-coded glyph (words live in the tooltip) */
+[data-look='parent'] .p-device-state {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--p-soft);
+  color: var(--p-sub);
+}
+[data-look='parent'] .p-device-state[data-tone='acc'] { background: var(--p-acc); color: #292928; }
+[data-look='parent'] .p-device-state[data-tone='red'] { background: var(--p-redbg); color: var(--p-red); }
+[data-look='parent'] .p-device-state[data-tone='amb'] { background: var(--p-amb); color: var(--p-ambink); }
+[data-look='parent'] .p-device-item .p-device-state[data-tone='grey'] { background: var(--p-card); }

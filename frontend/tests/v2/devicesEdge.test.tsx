@@ -109,22 +109,29 @@ describe('DeviceDetail', () => {
   })
 })
 
-describe('DeviceList status chip', () => {
+describe('DeviceList status glyph', () => {
   const list = (devices: Device[]) => render(wrap(<DeviceList devices={devices} kids={kids} onSelectDevice={() => {}} />))
 
-  test('a lock you pressed shows Locked, an expired one shows Open again', () => {
+  const glyph = (row: RegExp) => within(screen.getByRole('button', { name: row })).getByRole('img').getAttribute('aria-label')
+
+  test('a lock you pressed shows Locked, an expired one shows the real internet state again', () => {
     const future = new Date(Date.now() + 600000).toISOString()
     const past = new Date(Date.now() - 600000).toISOString()
-    list([dev({ id: 1, name: 'Locked one', override: { action: 'lock', expires_at: future } }), dev({ id: 2, name: 'Was locked', override: { action: 'lock', expires_at: past } })])
-    expect(within(screen.getByRole('button', { name: /Locked one/ })).getByText('Locked')).toBeTruthy()
-    expect(within(screen.getByRole('button', { name: /Was locked/ })).getByText('Open')).toBeTruthy()
+    list([dev({ id: 1, name: 'Locked one', online: true, override: { action: 'lock', expires_at: future } }), dev({ id: 2, name: 'Was locked', online: true, override: { action: 'lock', expires_at: past } })])
+    expect(glyph(/Locked one/)).toBe('Locked by you')
+    expect(glyph(/Was locked/)).toBe('Internet on')
+  })
+
+  test('a kid device cut off by hours or chores shows Internet off, not Open', () => {
+    list([dev({ id: 1, name: 'Blocked', online: false })])
+    expect(glyph(/Blocked/)).toBe('Internet off · hours or chores')
   })
 
   test("unknown devices say Who's this? and sort first", () => {
     list([dev({ id: 1, name: 'Known' }), dev({ id: 2, name: 'Mystery', status: 'unassigned', owner_ids: [] })])
     const names = screen.getAllByRole('button').filter((b) => b.hasAttribute('data-device')).map((b) => b.getAttribute('data-device'))
     expect(names).toEqual(['2', '1'])
-    expect(within(screen.getByRole('button', { name: /Mystery/ })).getByText("Who's this?")).toBeTruthy()
+    expect(glyph(/Mystery/)).toMatch(/^Who's this\?/)
   })
 })
 

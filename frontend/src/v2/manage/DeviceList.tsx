@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Icon } from '@/v2/parent/Icon'
 import { Fold } from '@/v2/parent/Fold'
 import { MakerLogo } from '@/v2/parent/MakerLogo'
-import { Chip, type ChipTone } from '@/v2/parent/Chip'
+import { Tooltip } from '@mantine/core'
 import { ListHeader } from '@/v2/parent/ListHeader'
 import { SegmentedControl } from '@/v2/parent/SegmentedControl'
 import type { Device, Group as DeviceGroup, Kid } from '@/v2/types'
@@ -20,13 +20,17 @@ interface Props {
   onTabChange?: (tab: 'devices' | 'groups') => void
 }
 
-const statusChip = (d: Device): { tone: ChipTone; text: string; icon: string } => {
+type Tone = 'acc' | 'red' | 'amb' | 'grey'
+/** What the device's internet is doing right now: a colour-coded glyph plus the words for its tooltip. */
+const deviceState = (d: Device): { tone: Tone; tip: string; icon: string } => {
   // a lock you pressed beats the schedule; one that already ran out doesn't count
   const ov = d.override
-  if (ov?.action === 'lock' && !(ov.expires_at && new Date(ov.expires_at).getTime() <= Date.now())) return { tone: 'grey', text: 'Locked', icon: 'lock' }
-  if (d.status === 'guest') return { tone: 'grey', text: 'Guest', icon: 'person' }
-  if (d.status === 'assigned') return { tone: 'acc', text: 'Open', icon: 'lock_open' }
-  return { tone: 'amb', text: "Who's this?", icon: 'help' }
+  if (ov?.action === 'lock' && !(ov.expires_at && new Date(ov.expires_at).getTime() <= Date.now())) return { tone: 'red', tip: 'Locked by you', icon: 'lock' }
+  if (d.status === 'unassigned') return { tone: 'amb', tip: "Who's this? New device, pick an owner", icon: 'help' }
+  if (d.status === 'guest') return { tone: 'grey', tip: 'Guest · internet on', icon: 'person' }
+  return d.online
+    ? { tone: 'acc', tip: 'Internet on', icon: 'lock_open' }
+    : { tone: 'red', tip: 'Internet off · hours or chores', icon: 'lock' }
 }
 
 const ownerName = (kids: Kid[], ownerIds: number[]) => {
@@ -80,7 +84,7 @@ export function DeviceList({
 
   const sorted = [...unassigned, ...assigned]
   const item = (d: Device) => {
-    const chip = statusChip(d)
+    const state = deviceState(d)
     const owner = ownerName(kids, d.owner_ids)
     const deviceType = getDeviceType(d.name, d.vendor)
     const isSelected = selectedDevice === d.id
@@ -111,9 +115,11 @@ export function DeviceList({
             {owner} · {d.last_seen ? ago(d.last_seen) : 'never seen'}
           </div>
         </div>
-        <Chip tone={chip.tone} icon={chip.icon}>
-          {chip.text}
-        </Chip>
+        <Tooltip label={state.tip} openDelay={300}>
+          <span className="p-device-state" data-tone={state.tone} role="img" aria-label={state.tip}>
+            <Icon name={state.icon} size={16} />
+          </span>
+        </Tooltip>
       </button>
     )
   }
