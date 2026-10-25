@@ -76,7 +76,7 @@ v2 layout (Plan C restyles it); Plan B only adds the behaviour.
 - `Points.reason` check adds `'deduction'`; `Points.by_id` FK users nullable.
 - inbox `KINDS` adds `"chore_note"`.
 
-- [ ] **Step 1:** Write `test_seeded_types` in `tests/test_chore_types.py`: after `alembic upgrade head` on a temp DB (copy the subprocess pattern from `test_migrations.py`), `SELECT name, glyph FROM chore_types ORDER BY position` equals the 8 seeded pairs from Global Constraints, and `SELECT count(*) FROM chore_type_notes` = 18.
+- [ ] **Step 1:** Write `test_seeded_types` in `tests/test_chore_types.py`: after `alembic upgrade head` on a temp DB (copy the subprocess pattern from `test_migrations.py`), `SELECT name, glyph FROM chore_types ORDER BY position` equals the 8 seeded pairs from Global Constraints, and `SELECT count(*) FROM chore_type_notes` = 19.
 - [ ] **Step 2:** Write `test_backfill_type_by_title`: create the DB at `g9c0d1e2f3g4`, insert a user + chores titled "Feed the dog", "Unload dishwasher", "Mystery", upgrade to head, assert types Pets, Kitchen, Other.
 - [ ] **Step 3:** Run both → FAIL.
 - [ ] **Step 4:** Write the migration. Create tables, seed rows, add columns with `batch_alter_table`, recreate `ck_run_status`, `ck_points_reason`, `ck_notification_kind`. Backfill `chores.type_id` in Python with this map (ported from `frontend/src/v2/today/choreIcon.ts`, first match wins, else Other):
