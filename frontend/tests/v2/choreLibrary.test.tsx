@@ -173,7 +173,7 @@ describe('chore detail', () => {
     await waitFor(() =>
       expect(calls('POST')[0]).toEqual([
         '/chores/',
-        { method: 'POST', body: { title: 'Laundry', points: 10, needs_photo: true, steps: ['Fold clothes', 'Make bed'] } },
+        { method: 'POST', body: { title: 'Laundry', points: 10, needs_photo: true, steps: [{ title: 'Fold clothes' }, { title: 'Make bed' }] } },
       ]),
     )
     await waitFor(() => expect(push).toHaveBeenCalledWith(...nav({ section: 'chores', item: 20 })))
@@ -186,7 +186,7 @@ describe('chore detail', () => {
     await waitFor(() => expect(calls('PATCH')).toHaveLength(1))
     expect(calls('PATCH')[0]).toEqual([
       '/chores/5',
-      { method: 'PATCH', body: { title: 'Clean room', points: 15, needs_photo: false, steps: ['Make bed', 'Fold clothes'] } },
+      { method: 'PATCH', body: { title: 'Clean room', points: 15, needs_photo: false, steps: [{ title: 'Make bed' }, { title: 'Fold clothes' }] } },
     ])
   })
 

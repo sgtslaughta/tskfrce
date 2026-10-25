@@ -1,6 +1,6 @@
 /** Shapes of the v2 backend responses (backend/app/api/{family,kid,devices,kids,windows,chores,setup}.py). */
 
-export type ChoreState = 'done' | 'needs_you' | 'todo'
+export type ChoreState = 'done' | 'needs_you' | 'todo' | 'skipped'
 export type DeviceStatus = 'unassigned' | 'assigned' | 'guest'
 export type OverrideAction = 'lock' | 'unlock'
 
@@ -87,6 +87,35 @@ export interface Family {
   giphy_key_set: boolean
 }
 
+/** GET /chore-types item */
+export interface ChoreType {
+  id: number
+  name: string
+  glyph: string
+  builtin: boolean
+  notes: { id: number; label: string; glyph: string }[]
+  chore_count: number
+}
+
+/** Quick-note preset a kid can send on a chore (/kid/today notes). */
+export interface ChoreNote {
+  label: string
+  glyph: string
+  universal: boolean
+}
+
+/** Step of a run (parent /family/today, /chores/{id}). */
+export interface RunStep {
+  id: number
+  title: string
+  done: boolean
+  done_at?: string | null
+  due_time: string | null
+  due_at: string | null
+  after_previous: boolean
+  locked: boolean
+}
+
 /** Chore entry inside /today and /kid/today */
 export interface TodayChore {
   id: number
@@ -101,6 +130,15 @@ export interface TodayChore {
   attempt?: number
   last_note?: string | null
   taken_by?: string | null
+  /** UTC ISO with Z; null = no deadline */
+  due_at?: string | null
+  type?: { id: number; name: string; glyph: string }
+  sent_back?: boolean
+  /** kid's flag on the run (parent view) */
+  note?: { label: string; text: string | null; at: string; kid_name: string | null } | null
+  /** points taken off, total */
+  deducted?: number
+  can_move?: boolean
 }
 
 /** GET /api/v1/chores/{run_id} - run detail with steps and photos */
@@ -111,7 +149,7 @@ export interface RunDetail {
   state: ChoreState
   due_time: string | null
   kid_ids: number[]
-  steps: Array<{ id: number; title: string; done: boolean; done_at: string | null }>
+  steps: RunStep[]
   photos: Array<{ id: number; thumb_url: string }>
 }
 
@@ -207,7 +245,8 @@ export interface LibChore {
   title: string
   points: number
   needs_photo: boolean
-  steps: { id: number; title: string }[]
+  type_id?: number
+  steps: { id: number; title: string; due_time: string | null; after_previous: boolean }[]
   assignments: Assignment[]
   archived: boolean
 }
@@ -226,6 +265,8 @@ export interface KidChore extends TodayChore {
   last_note?: string | null
   subtasks?: { id: number; title: string; done: boolean }[]
   taken_by?: string | null
+  notes?: ChoreNote[]
+  deductions?: { amount: number; note: string | null; by_name: string | null; at: string }[]
 }
 
 export interface KidToday {

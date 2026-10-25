@@ -12,6 +12,7 @@ const STATE: Record<RunDetail['state'], { tone: ChipTone; icon: string; label: s
   needs_you: { tone: 'lav', icon: 'hourglass_top', label: 'Needs OK' },
   done: { tone: 'grey', icon: 'check_circle', label: 'Done' },
   todo: { tone: 'grey', icon: 'radio_button_unchecked', label: 'To do' },
+  skipped: { tone: 'grey', icon: 'do_not_disturb_on', label: 'Skipped' },
 }
 const AMOUNTS = [5, 10, 20]
 

@@ -4,6 +4,7 @@ const LOOK: Record<ChoreState, { mark: string; label: string }> = {
   done: { mark: '✓', label: 'Done' },
   needs_you: { mark: '!', label: 'Needs you' },
   todo: { mark: '', label: 'To do' },
+  skipped: { mark: '–', label: 'Skipped' },
 }
 
 /** One square per chore: ✓ done, ! needs you, blank to do. */

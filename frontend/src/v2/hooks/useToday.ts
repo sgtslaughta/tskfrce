@@ -19,7 +19,7 @@ function useChoreAction<V>(fn: (v: V) => Promise<unknown>) {
     mutationFn: fn,
     onSuccess: () =>
       Promise.all(
-        ['today', 'chores-today', 'run', 'chat-thread', 'chat-threads'].map((k) => qc.invalidateQueries({ queryKey: [k] })),
+        ['today', 'chore-lib', 'chores-today', 'run', 'chat-thread', 'chat-threads'].map((k) => qc.invalidateQueries({ queryKey: [k] })),
       ),
   })
 }
@@ -36,4 +36,12 @@ export const useMarkNotDone = () =>
 export const useSendBack = () =>
   useChoreAction(({ id, note }: { id: number; note: string }) =>
     api(`/chores/${id}/send-back`, { method: 'POST', body: { note } }),
+  )
+
+export const useMoveChore = () => useChoreAction((id: number) => api(`/chores/${id}/move`, { method: 'POST' }))
+/** Skip today; Undo (useMarkNotDone) un-skips. */
+export const useSkipChore = () => useChoreAction((id: number) => api(`/chores/${id}/skip`, { method: 'POST' }))
+export const useDeductChore = () =>
+  useChoreAction(({ id, ...body }: { id: number; kid_id: number; amount: number; note?: string }) =>
+    api(`/chores/${id}/deduct`, { method: 'POST', body }),
   )

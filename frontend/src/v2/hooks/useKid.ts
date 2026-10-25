@@ -138,3 +138,14 @@ export function useUploadPhoto() {
     onSettled: () => refetch(qc),
   })
 }
+
+export function useSendNote() {
+  const qc = useQueryClient()
+  const as = useAsKid()
+  return useMutation({
+    mutationFn: (v: { chore: number; label: string; text?: string }) =>
+      as ? blocked() : api(`/kid/chores/${v.chore}/note`, { method: 'POST', body: { label: v.label, text: v.text }, kid: true }),
+    onError: (e: Error) => toastFail(e),
+    onSettled: () => refetch(qc),
+  })
+}

@@ -65,7 +65,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
 
   const submit = () =>
     saveOnce(
-      { id: chore?.id, body: { title: title.trim(), points: Number(points), needs_photo: photo, steps } },
+      { id: chore?.id, body: { title: title.trim(), points: Number(points), needs_photo: photo, steps: steps.map((title) => ({ title })) } },
       {
         onError: toastFail,
         onSuccess: (c) => {

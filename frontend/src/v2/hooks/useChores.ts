@@ -10,7 +10,8 @@ export interface ChoreBody {
   title: string
   points: number
   needs_photo: boolean
-  steps: string[]
+  type_id?: number
+  steps: { title: string; due_time?: string | null; after_previous?: boolean }[]
 }
 
 export interface AssignmentBody {
