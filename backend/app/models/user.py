@@ -65,7 +65,7 @@ class User(Base):
     celebrated_level = Column(Integer, nullable=False, default=1, server_default="1")
 
     # Relationships
-    points = relationship("Points", back_populates="user")
+    points = relationship("Points", back_populates="user", foreign_keys="Points.user_id")
 
     def __repr__(self) -> str:
         """String representation of User."""

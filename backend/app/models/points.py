@@ -41,7 +41,7 @@ class Points(Base):
     __table_args__ = (
         CheckConstraint("run_id IS NULL OR redemption_id IS NULL", name="ck_points_one_ref"),
         CheckConstraint(
-            "reason IN ('chore','early_bonus','team_share','redemption','bonus','adjustment')",
+            "reason IN ('chore','early_bonus','team_share','redemption','bonus','adjustment','deduction')",
             name="ck_points_reason",
         ),
     )
@@ -52,13 +52,14 @@ class Points(Base):
     amount = Column(Integer, nullable=False)
     description = Column(String(255), nullable=True)
     reason = Column(String(12), nullable=False, default="adjustment", server_default="adjustment")
+    by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     run_id = Column(Integer, ForeignKey("chore_runs.id"), nullable=True, index=True)
     redemption_id = Column(Integer, ForeignKey("redemptions.id"), nullable=True, index=True)
     seen_by_kid = Column(Boolean, nullable=False, default=True, server_default="1")
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
-    user = relationship("User", back_populates="points")
+    user = relationship("User", back_populates="points", foreign_keys=[user_id])
 
     def __repr__(self) -> str:
         """String representation of Points."""

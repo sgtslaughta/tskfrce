@@ -52,7 +52,9 @@ class Chore(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     archived_at = Column(DateTime, nullable=True)
+    type_id = Column(Integer, ForeignKey("chore_types.id"), nullable=False, index=True)
 
+    type = relationship("ChoreType")
     steps = relationship(
         "ChoreStep",
         order_by="ChoreStep.position",
@@ -72,6 +74,8 @@ class ChoreStep(Base):
     chore_id = Column(Integer, ForeignKey("chores.id", ondelete="CASCADE"), nullable=False)
     position = Column(Integer, nullable=False, default=0)
     title = Column(String(100), nullable=False)
+    after_previous = Column(Boolean, nullable=False, default=False, server_default="0")
+    due_time = Column(String(5), nullable=True)
 
     chore = relationship("Chore", back_populates="steps")
 
@@ -102,7 +106,8 @@ class ChoreAssignment(Base):
 class ChoreRun(Base):
     __tablename__ = "chore_runs"
     __table_args__ = (
-        CheckConstraint("status IN ('todo','submitted','done','cancelled')", name="ck_run_status"),
+        CheckConstraint("status IN ('todo','submitted','done','cancelled','skipped')",
+            name="ck_run_status",),
         Index(
             "uq_run_kid_day",
             "assignment_id",
@@ -127,6 +132,8 @@ class ChoreRun(Base):
     status = Column(String(10), nullable=False, default="todo", index=True)
     attempt = Column(Integer, nullable=False, default=1)
     last_note = Column(String(500), nullable=True)
+    note_label = Column(String(40), nullable=True)
+    note_at = Column(DateTime, nullable=True)
     submitted_at = Column(DateTime, nullable=True)
     submitted_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     approved_at = Column(DateTime, nullable=True)

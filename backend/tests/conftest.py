@@ -12,6 +12,7 @@ import pytest  # noqa: E402
 from app.api.deps import get_db  # noqa: E402
 from app.core.database import Base, _import_all_models, get_db_session  # noqa: E402
 from app.main import app, fastapi_app  # noqa: E402
+from app.services.chore_types import seed as seed_chore_types  # noqa: E402
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import create_engine, event  # noqa: E402
 from sqlalchemy.orm import sessionmaker  # noqa: E402
@@ -35,6 +36,8 @@ def db():
     event.listen(engine, "connect", lambda c, r: c.execute("PRAGMA foreign_keys=ON"))
     Base.metadata.create_all(engine)
     session = sessionmaker(bind=engine, autoflush=False)()
+    seed_chore_types(session)
+    session.commit()
     try:
         yield session
     finally:

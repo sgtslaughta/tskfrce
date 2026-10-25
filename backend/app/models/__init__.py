@@ -7,6 +7,7 @@ This package contains all SQLAlchemy models for the application.
 from .badge import BadgeAward, CustomBadge
 from .chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
 from .chore_extra import ChorePhoto
+from .chore_type import ChoreType, ChoreTypeNote
 from .chores import Chore, ChoreAssignment, ChoreRun, ChoreStep, RunStepTick
 from .family import FamilySettings, get_family
 from .flair import KidFlair
@@ -28,6 +29,8 @@ __all__ = [
     "ThreadRead",
     "ChorePhoto",
     "Chore",
+    "ChoreType",
+    "ChoreTypeNote",
     "ChoreStep",
     "ChoreAssignment",
     "ChoreRun",

@@ -15,6 +15,7 @@ KINDS = (
     "badge_earned",
     "level_up",
     "chat_message",
+    "chore_note",
 )
 
 

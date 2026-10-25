@@ -18,6 +18,7 @@ from app.schemas.chore import (
     Repeat,
 )
 from app.services import chores as svc
+from app.services.chore_types import other_id
 
 router = APIRouter(tags=["chores"], dependencies=[Depends(require_parent)])
 
@@ -123,7 +124,11 @@ def create_chore(
     body: ChoreIn, db: Session = Depends(get_db), parent: User = Depends(require_parent)
 ):
     c = Chore(
-        title=body.title, points=body.points, needs_photo=body.needs_photo, created_by_id=parent.id
+        title=body.title,
+        points=body.points,
+        needs_photo=body.needs_photo,
+        created_by_id=parent.id,
+        type_id=other_id(db),
     )
     c.steps = [ChoreStep(title=t, position=i) for i, t in enumerate(body.steps)]
     db.add(c)
@@ -156,6 +161,7 @@ def copy_chore(
         points=c.points,
         needs_photo=c.needs_photo,
         created_by_id=parent.id,
+        type_id=c.type_id,
     )
     n.steps = [ChoreStep(title=s.title, position=s.position) for s in c.steps]
     db.add(n)

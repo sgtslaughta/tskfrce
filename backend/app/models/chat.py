@@ -40,6 +40,8 @@ class ThreadMessage(Base):
     body = Column(Text, nullable=True)
     # chore threads: chore_photos.id; private/family threads: chat_photos.id
     photo_id = Column(Integer, nullable=True)
+    step_id = Column(Integer, ForeignKey("chore_steps.id", ondelete="SET NULL"), nullable=True)
+    note_label = Column(String(40), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     author = relationship("User", foreign_keys=[author_id])

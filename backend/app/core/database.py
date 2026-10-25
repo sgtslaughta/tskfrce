@@ -181,6 +181,8 @@ def _import_all_models():
             ChorePhoto,
             ChoreRun,
             ChoreStep,
+            ChoreType,
+            ChoreTypeNote,
             Device,
             DeviceGroup,
             FamilySettings,

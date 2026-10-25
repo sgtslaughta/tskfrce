@@ -16,6 +16,7 @@ from app.core.config import settings
 from app.core.ratelimit import limit
 from app.models.family import FamilySettings, get_family
 from app.models.user import User, UserRole
+from app.services.chore_types import seed as seed_chore_types
 
 router = APIRouter(prefix="/api/v1/setup", tags=["setup"])
 
@@ -74,6 +75,7 @@ def run_setup(body: SetupIn, db: Session = Depends(get_db)):
     try:
         try:
             get_family(db)
+            seed_chore_types(db)
         except IntegrityError:  # concurrent insert of row id=1
             db.rollback()
         user = User(

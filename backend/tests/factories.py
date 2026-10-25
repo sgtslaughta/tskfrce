@@ -3,6 +3,7 @@
 from datetime import date, datetime
 
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, ChoreStep
+from app.services.chore_types import other_id
 
 DAY = date(2026, 10, 20)  # a Tuesday
 
@@ -22,7 +23,9 @@ def make_chore(
     needs_photo=False,
 ):
     """A chore with one assignment (no runs yet)."""
-    c = Chore(title=title, points=points, needs_photo=needs_photo, created_by_id=parent.id)
+    c = Chore(title=title, points=points, needs_photo=needs_photo, created_by_id=parent.id,
+        type_id=other_id(db),
+    )
     c.steps = [ChoreStep(title=s, position=i) for i, s in enumerate(steps)]
     a = ChoreAssignment(
         chore=c, mode=mode, repeat=repeat, days=days, on_date=on_date, due_time=due_time
