@@ -33,6 +33,8 @@ test.describe('parent journeys', () => {
     try {
       await page.goto('/kids?section=chores')
       await page.getByRole('button', { name: 'New chore' }).click()
+      // the editor swaps from the open chore to the empty form after the route change
+      await expect(page.getByRole('heading', { name: 'New chore' })).toBeVisible()
       await page.getByLabel('Chore', { exact: true }).fill('E2E race')
       for (const s of ['First step', 'Second step']) {
         await page.getByLabel('Add a step').fill(s)
