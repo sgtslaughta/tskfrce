@@ -430,6 +430,8 @@
   [data-look='parent'] .p-detail-column {
     padding-bottom: 88px;
   }
+  /* /chat has no floating button: the thread fills the height */
+  [data-look='parent'] .p-detail-column:has(> .pc-grid) { padding-bottom: 20px; }
 }
 
 /* visible only to screen readers */
