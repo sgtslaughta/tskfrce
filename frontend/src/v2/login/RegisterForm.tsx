@@ -61,12 +61,12 @@ export function RegisterForm({ token }: { token: string | undefined }) {
   }
 
   return (
-    <div className="p-auth-container">
+    <main className="p-auth-container">
       <AuthBrand />
       <div className="p-auth-form-side">
         {token ? (
           <form className="p-auth-form" onSubmit={submit}>
-            <h3>Join the family</h3>
+            <h1>Join the family</h1>
             {invite && (
               <div className="p-auth-invite">
                 <div className="av">{invite.name.charAt(0).toUpperCase()}</div>
@@ -122,7 +122,7 @@ export function RegisterForm({ token }: { token: string | undefined }) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'} title={showPassword ? 'Hide password' : 'Show password'}
                   className="p-auth-link"
                   style={{ textDecoration: 'none' }}
                 >
@@ -135,14 +135,14 @@ export function RegisterForm({ token }: { token: string | undefined }) {
                 <i key={i} className={i < strength ? 'on' : ''} />
               ))}
             </div>
-            <button type="submit" className="p-auth-button primary" disabled={busy}>
-              Join
-              <Icon name="arrow_forward" size={20} />
+            <button type="submit" className="p-auth-button primary" disabled={busy} aria-busy={busy}>
+              {busy ? 'Joining…' : 'Join'}
+              <Icon name={busy ? 'progress_activity' : 'arrow_forward'} size={20} className={busy ? 'p-auth-spin' : undefined} />
             </button>
           </form>
         ) : (
           <div className="p-auth-form">
-            <h3>Join the family</h3>
+            <h1>Join the family</h1>
             <div className="p-auth-error" role="alert">
               <Icon name="error" />
               This invite link is missing its code. Ask a parent to send it again.
@@ -150,6 +150,6 @@ export function RegisterForm({ token }: { token: string | undefined }) {
           </div>
         )}
       </div>
-    </div>
+    </main>
   )
 }

@@ -100,7 +100,7 @@
   gap: 14px;
 }
 
-[data-look='parent'] .p-auth-form h3 {
+[data-look='parent'] .p-auth-form h1 {
   font-size: 28px;
   margin: 0;
   color: var(--p-ink);
@@ -421,3 +421,19 @@
 [data-look='parent'] .p-auth-input input:focus-visible {
   outline: none;
 }
+
+/* States: keyboard focus, press, busy */
+[data-look='parent'] .p-auth-link:focus-visible,
+[data-look='parent'] .p-auth-kid-card:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 3px; border-radius: 8px; }
+[data-look='parent'] .p-auth-button:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 3px; }
+[data-look='parent'] .p-auth-checkbox input:focus-visible ~ i { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+[data-look='parent'] .p-auth-button:hover:not(:disabled),
+[data-look='parent'] .p-auth-kid-card:hover { border-color: var(--p-ink); }
+[data-look='parent'] .p-auth-button:active:not(:disabled) { transform: scale(0.98); }
+[data-look='parent'] .p-auth-button:disabled { opacity: 0.7; cursor: progress; }
+[data-look='parent'] .p-auth-spin { animation: p-auth-spin 0.9s linear infinite; }
+@keyframes p-auth-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: no-preference) {
+  [data-look='parent'] .p-auth-button { transition: border-color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out), opacity var(--dur-1) var(--ease-out); }
+}
+@media (prefers-reduced-motion: reduce) { [data-look='parent'] .p-auth-spin { animation: none; } }
