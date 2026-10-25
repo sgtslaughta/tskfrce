@@ -205,9 +205,18 @@ describe('devices', () => {
     expect(calls('PATCH')).toHaveLength(1)
   })
 
-  test('an unknown device leads with Who\'s this? and owners can be picked', () => {
+  test('an unknown device leads with Who\'s this?; copy follows the block-new-devices setting', async () => {
     render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
     expect(screen.getByRole('heading', { name: "Who's this?" })).toBeInTheDocument()
+    expect(await screen.findByText(/new and blocked until you say/)).toBeInTheDocument() // family fixture blocks
+    await userEvent.click(screen.getByRole('button', { name: 'Maya' }))
+    await waitFor(() => expect(calls('PATCH')[0]).toEqual([`/devices/${device.id}`, { method: 'PATCH', body: { owner_ids: [kids[0].id] } }]))
+  })
+
+  test('learning mode says the new device stays online', async () => {
+    apiMock.mockImplementation(async (path) => (path === '/family' ? { ...family, new_devices_blocked: false } : []))
+    render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
+    expect(await screen.findByText(/stays online until you say/)).toBeInTheDocument()
   })
 
   test('guest disables the owner pills', () => {

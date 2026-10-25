@@ -1,3 +1,4 @@
+import { useFamily } from '@/v2/hooks/useFamily'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { notifications } from '@mantine/notifications'
@@ -46,6 +47,8 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
 
   const guest = device.status === 'guest'
   const unknown = device.status === 'unassigned'
+  // learning mode (the default) leaves new devices online; strict mode blocks them
+  const blockNew = useFamily().data?.new_devices_blocked ?? false
   const owners = kids.filter((k) => device.owner_ids.includes(k.id))
   const ownerLabel = guest ? 'Guest' : owners.length ? owners.map(nameOf).join(', ') : 'Unassigned'
   const needsPins = device.needs_pins && owners.length > 0
@@ -79,7 +82,14 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
         <Icon name={unknown ? 'help' : 'person'} size={18} />
         {unknown ? "Who's this?" : 'Owners'}
       </h3>
-      {unknown && <p className="pk-hint">This device is new and blocked until you say whose it is. Pick the kid, or mark it as a guest.</p>}
+      {unknown && (
+        <p className="pk-hint">
+          {blockNew
+            ? 'This device is new and blocked until you say whose it is.'
+            : 'This device is new. It stays online until you say whose it is.'}{' '}
+          Pick the kid to give it their rules, or mark it as a guest.
+        </p>
+      )}
       <KidPills
         kids={kids}
         label="Owners"
