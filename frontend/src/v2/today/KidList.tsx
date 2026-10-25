@@ -52,13 +52,13 @@ export function KidList({ onSelectKid, selectedKid }: { onSelectKid: (kid: Today
                       <span>{kid.done ?? 0} of {kid.total ?? 0} chores</span>
                       {kid.progress && <span>Level {kid.progress.level}</span>}
                     </div>
+                    <div className="p-track" role="progressbar" aria-label={`${kid.name}'s chores`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct(kid.done, kid.total)}>
+                      <div className="p-meter-bar" style={{ width: `${pct(kid.done, kid.total)}%` }} />
+                    </div>
                   </div>
                   <div className="p-kid-status">{stateChip(kid)}</div>
                   {selectedKid?.id === kid.id && (
                     <div className="p-kid-expanded" data-testid="kid-expanded">
-                      <div className="p-track">
-                        <div className="p-meter-bar" style={{ width: `${pct(kid.done, kid.total)}%` }} />
-                      </div>
                       <KidFacts kid={kid} />
                     </div>
                   )}

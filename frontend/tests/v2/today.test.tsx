@@ -200,7 +200,7 @@ describe('TodayPage', () => {
     expect(within(expandedSection).getByText(/next reward/i)).toBeInTheDocument()
   })
 
-  test('meter bar in expanded card has track container with proper structure', async () => {
+  test('every kid row shows its chores progress bar', async () => {
     const data = todayData({
       kids: [kid(1, 'Kid1', 1, 2)], // 1 of 2 done = 50%
     })
@@ -209,11 +209,8 @@ describe('TodayPage', () => {
       return undefined
     })
     wrap(<TodayPage />)
-    const kidButton = await screen.findByRole('button', { name: /kid1/i })
-    await userEvent.click(kidButton)
-    const expandedSection = await screen.findByTestId('kid-expanded')
-    const track = expandedSection.querySelector('.p-track')
-    expect(track).toBeInTheDocument()
+    // shown on every kid row, selected or not
+    const track = await screen.findByRole('progressbar', { name: "Kid1's chores" })
     const meterBar = track?.querySelector('.p-meter-bar')
     expect(meterBar).toBeInTheDocument()
     expect(meterBar).toHaveStyle('width: 50%')

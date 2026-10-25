@@ -117,7 +117,8 @@
   margin-top: 2px;
 }
 
-.p-kid-expanded .p-track {
+.p-kid-card .p-track {
+  margin-top: 6px;
   height: 8px;
   border-radius: 8px;
   background: var(--p-soft);
