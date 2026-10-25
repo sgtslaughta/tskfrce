@@ -124,14 +124,22 @@
   font: 500 10px var(--font-parent), system-ui, sans-serif;
 }
 
+/* active tab: accent pill around the icon, label in ink (mockup 04) */
 [data-look='parent'] .p-tabbar-item[aria-current] {
-  color: #292928;
-  background: var(--p-acc);
-  border-radius: 12px 12px 0 0;
+  color: var(--p-ink);
+  font-weight: 700;
 }
 
 [data-look='parent'] .p-tabbar-item .ms {
-  font-size: 24px;
+  font-size: 22px;
+  padding: 3px 18px;
+  border-radius: 999px;
+  transition: background var(--dur-1) var(--ease-out);
+}
+
+[data-look='parent'] .p-tabbar-item[aria-current] .ms {
+  background: var(--p-acc);
+  color: #292928;
 }
 
 [data-look='parent'] .p-tabbar-label {

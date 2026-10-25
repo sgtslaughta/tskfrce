@@ -65,6 +65,7 @@ export function ParentShell({
               {phoneTools}
             </header>
           )}
+          <BlockerBanner />
           <ListDetail list={list} detail={children} listTitle={title} phone={phone} />
         </div>
         {small && <TabBar />}
