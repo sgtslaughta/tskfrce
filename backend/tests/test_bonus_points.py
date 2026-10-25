@@ -34,3 +34,22 @@ def test_bonus_raises_balance_and_celebrates(client, db, kid, parent_headers, ki
     )
     items = client.get("/api/v1/kid/celebrations", headers=kid_headers).json()
     assert not [i for i in items if i["kind"] == "bonus"]
+
+
+def test_deduct_takes_points_with_reason_never_below_zero(
+    client, db, kid, parent_headers, kid_headers
+):
+    client.post(URL.format(kid.id), json={"amount": 15, "note": "Helped"}, headers=parent_headers)
+    d = f"/api/v1/kids/{kid.id}/deduct"
+    assert (
+        client.post(d, json={"amount": 5, "note": " "}, headers=parent_headers).status_code == 422
+    )
+    assert client.post(d, json={"amount": 5, "note": "x"}, headers=kid_headers).status_code == 403
+    r = client.post(
+        d, json={"amount": 10, "note": "Left plates in the sink"}, headers=parent_headers
+    )
+    assert r.json() == {"balance": 5, "deducted": 10}
+    p = db.query(Points).filter(Points.reason == "adjustment").one()
+    assert p.amount == -10 and p.description == "Left plates in the sink"
+    r = client.post(d, json={"amount": 20, "note": "Again"}, headers=parent_headers)
+    assert r.json() == {"balance": 0, "deducted": 5}
