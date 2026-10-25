@@ -109,6 +109,15 @@
 [data-look='parent'] .preview-card.dark .preview-bar { background: var(--p-acc); }
 [data-look='parent'] .preview-chip { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; background: var(--p-acc); color: #292928; }
 
+/* Mantine field descriptions: Mantine's grey fails 4.5:1 on white */
+[data-look='parent'] .mantine-InputWrapper-description { color: var(--p-sub); }
+
+/* Settings list: cards are links (pk-card is styled for buttons); chevron is phone-only */
+[data-look='parent'] .ps-card { text-decoration: none; }
+[data-look='parent'] .ps-chev { display: none; color: var(--p-sub); }
+[data-look='parent'] .ps-detail { display: grid; gap: 16px; min-width: 0; }
+@media (max-width: 767px) { [data-look='parent'] .ps-chev { display: grid; } }
+
 /* Settings sections */
 [data-look='parent'] .m-section { margin: 24px 0; }
 [data-look='parent'] .m-section:first-child { margin-top: 0; }

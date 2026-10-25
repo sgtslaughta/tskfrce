@@ -102,6 +102,7 @@ if (typeof window !== 'undefined') {
   });
 }
 
+import Head from 'next/head'
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -160,8 +161,9 @@ function AppContent({ Component, pageProps }: { Component: any; pageProps: any }
         defaultColorScheme="auto"
         colorSchemeManager={colorSchemeManager}
       >
+        <Head><title>t@sk4ce</title></Head>
         <FaviconManager />
-        <Notifications position="bottom-center" />
+        <Notifications position="top-center" />
         <UnifiedAuthProvider>
           <Component {...pageProps} />
         </UnifiedAuthProvider>

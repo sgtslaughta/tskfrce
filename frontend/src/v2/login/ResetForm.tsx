@@ -33,12 +33,12 @@ export function ResetForm({ token }: { token: string | undefined }) {
   }
 
   return (
-    <div className="p-auth-container">
+    <main className="p-auth-container">
       <AuthBrand />
       <div className="p-auth-form-side">
         {token ? (
           <form className="p-auth-form" onSubmit={submit}>
-            <h3>Choose a new password</h3>
+            <h1>Choose a new password</h1>
             <div className="p-subtitle">From the reset link another parent made for you.</div>
             {error && (
               <div className="p-auth-error" role="alert">
@@ -61,7 +61,7 @@ export function ResetForm({ token }: { token: string | undefined }) {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'} title={showPassword ? 'Hide password' : 'Show password'}
                   className="p-auth-link"
                   style={{ textDecoration: 'none' }}
                 >
@@ -84,7 +84,7 @@ export function ResetForm({ token }: { token: string | undefined }) {
                 <button
                   type="button"
                   onClick={() => setShowAgain(!showAgain)}
-                  aria-label={showAgain ? 'Hide password again' : 'Show password again'}
+                  aria-label={showAgain ? 'Hide password again' : 'Show password again'} title={showAgain ? 'Hide password again' : 'Show password again'}
                   className="p-auth-link"
                   style={{ textDecoration: 'none' }}
                 >
@@ -92,13 +92,14 @@ export function ResetForm({ token }: { token: string | undefined }) {
                 </button>
               </div>
             </div>
-            <button type="submit" className="p-auth-button primary" disabled={busy}>
-              Save password
+            <button type="submit" className="p-auth-button primary" disabled={busy} aria-busy={busy}>
+              {busy ? 'Saving…' : 'Save password'}
+              {busy && <Icon name="progress_activity" size={20} className="p-auth-spin" />}
             </button>
           </form>
         ) : (
           <div className="p-auth-form">
-            <h3>Choose a new password</h3>
+            <h1>Choose a new password</h1>
             <div className="p-auth-error" role="alert">
               <Icon name="error" />
               This reset link is missing its code. Ask a parent to send it again.
@@ -106,6 +107,6 @@ export function ResetForm({ token }: { token: string | undefined }) {
           </div>
         )}
       </div>
-    </div>
+    </main>
   )
 }

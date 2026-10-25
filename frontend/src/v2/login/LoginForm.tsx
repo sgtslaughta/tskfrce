@@ -64,13 +64,13 @@ export function LoginForm() {
   }
 
   return (
-    <div className="p-auth-container">
+    <main className="p-auth-container">
       <AuthBrand />
       <div className="p-auth-form-side">
         <form className="p-auth-form" onSubmit={submit}>
           {!showForgot ? (
             <>
-              <h3>Welcome back</h3>
+              <h1>Welcome back</h1>
               <div className="p-subtitle">Parents, log in to manage chores and devices.</div>
               {error && (
                 <div className="p-auth-error" role="alert">
@@ -113,7 +113,7 @@ export function LoginForm() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'} title={showPassword ? 'Hide password' : 'Show password'}
                     className="p-auth-link"
                     style={{ textDecoration: 'none' }}
                   >
@@ -137,9 +137,9 @@ export function LoginForm() {
                   Forgot password?
                 </button>
               </div>
-              <button type="submit" className="p-auth-button primary" disabled={busy}>
-                Log in
-                <Icon name="arrow_forward" size={20} />
+              <button type="submit" className="p-auth-button primary" disabled={busy} aria-busy={busy}>
+                {busy ? 'Logging in…' : 'Log in'}
+                <Icon name={busy ? 'progress_activity' : 'arrow_forward'} size={20} className={busy ? 'p-auth-spin' : undefined} />
               </button>
               <div className="p-auth-or">or</div>
               <Link href="/kid" className="p-auth-kid-card">
@@ -155,7 +155,7 @@ export function LoginForm() {
             </>
           ) : (
             <div className="p-auth-pane">
-              <h3>Forgot your password?</h3>
+              <h1>Forgot your password?</h1>
               <div className="p-subtitle">There&apos;s no email reset: the box is offline-first.</div>
               <div className="p-auth-invite">
                 <Icon name="supervisor_account" />
@@ -184,6 +184,6 @@ export function LoginForm() {
           <div className="p-auth-footer">t@sk4ce{host && ` · ${host}`}</div>
         </form>
       </div>
-    </div>
+    </main>
   )
 }

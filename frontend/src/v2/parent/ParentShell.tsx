@@ -75,11 +75,7 @@ export function ParentShell({
             </header>
           )}
           <BlockerBanner />
-          <main className="p-list-main">
-            {/* desktop shows the title as the list heading (h2); keep one h1 per page */}
-            {!small && <h1 className="p-sr">{title}</h1>}
-            <ListDetail list={list} detail={children} listTitle={title} phone={phone} />
-          </main>
+          <ListDetail list={list} detail={children} listTitle={title} phone={phone} />
         </div>
         {small && <TabBar />}
         {dock}

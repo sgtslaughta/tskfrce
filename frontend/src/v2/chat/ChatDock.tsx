@@ -53,9 +53,10 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
     window.addEventListener(OPEN_CHAT_EVENT, on)
     return () => window.removeEventListener(OPEN_CHAT_EVENT, on)
   }, [])
+  // keep focus inside the panel when it opens or switches thread, so Escape always reaches it
   useEffect(() => {
     if (open) panel.current?.focus()
-  }, [open])
+  }, [open, pick])
 
   const set = (o: boolean, p: Pick | null) => {
     setOpen(o)

@@ -162,6 +162,23 @@
 [data-look='parent'] .pc-pics img,
 [data-look='parent'] .pc-pics span { width: 96px; height: 70px; border-radius: 12px; object-fit: cover; background: var(--p-soft); }
 
+/* ── states: focus, press, busy ──────────────────────────────────────────── */
+[data-look='parent'] .pc-search:focus-within,
+[data-look='parent'] .pc-reply:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-acc) 60%, transparent); }
+[data-look='parent'] .pc-row:focus-visible,
+[data-look='parent'] .pc-photo:focus-visible,
+[data-look='parent'] .pc-ib:focus-visible,
+[data-look='parent'] .pc-send:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+[data-look='parent'] .pc-ib, [data-look='parent'] .pc-send { transition: background-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out), transform var(--dur-1) var(--ease-out), opacity var(--dur-1) var(--ease-out); }
+[data-look='parent'] .pc-ib:active,
+[data-look='parent'] .pc-send:active:not(:disabled) { transform: scale(0.92); }
+[data-look='parent'] .pc-ib:disabled { opacity: 0.5; cursor: default; }
+[data-look='parent'] .pc-send:hover:not(:disabled) { opacity: 0.85; }
+[data-look='parent'] .pc-send[aria-busy='true'] { opacity: 1; cursor: progress; }
+[data-look='parent'] .pc-spin { animation: pc-spin 0.9s linear infinite; }
+@keyframes pc-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { [data-look='parent'] .pc-spin { animation: none; } }
+
 @media (max-width: 767px) {
   [data-look='parent'] .pc-msg { max-width: 85%; }
 }

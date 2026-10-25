@@ -25,29 +25,32 @@ function Card({ title, fam, children }: { title: string; fam: Family; children: 
   const changed = Object.fromEntries(
     Object.entries(draft).filter(([k, v]) => v !== (fam as Fields)[k as keyof Fields]),
   ) as Partial<Fields>
+  const dirty = Object.keys(changed).length > 0
+  const save = () =>
+    patch.mutate(changed, {
+      onError: toastFail,
+      onSuccess: () => {
+        toastOk('Saved')
+        setDraft({})
+      },
+    })
   return (
     <section aria-label={title} className="f-card m-card">
       <h2 className="f-display">{title}</h2>
-      <div className="m-form">
+      <form
+        className="m-form"
+        onSubmit={(e) => {
+          e.preventDefault() // Enter in a field saves, once
+          if (dirty && !patch.isPending) save()
+        }}
+      >
         {children({ val, set })}
         <div className="m-actions">
-          <Button
-            disabled={Object.keys(changed).length === 0}
-            loading={patch.isPending}
-            onClick={() =>
-              patch.mutate(changed, {
-                onError: toastFail,
-                onSuccess: () => {
-                  toastOk('Saved')
-                  setDraft({})
-                },
-              })
-            }
-          >
+          <Button type="submit" disabled={!dirty} loading={patch.isPending}>
             Save settings
           </Button>
         </div>
-      </div>
+      </form>
     </section>
   )
 }

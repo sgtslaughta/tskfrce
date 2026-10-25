@@ -10,14 +10,16 @@ export function InviteSection() {
   return (
     <section aria-label="Invite another parent" className="f-card m-card">
       <h2 className="f-display">Invite another parent</h2>
-      <div className="m-form">
+      <form
+        className="m-form"
+        onSubmit={(e) => {
+          e.preventDefault() // Enter in the field creates the link, once
+          if (username.trim().length >= 3 && !invite.isPending) invite.mutate(username.trim(), { onError: toastFail })
+        }}
+      >
         <TextInput label="Their username" value={username} onChange={(e) => setUsername(e.currentTarget.value)} />
         <div className="m-actions">
-          <Button
-            disabled={username.trim().length < 3}
-            loading={invite.isPending}
-            onClick={() => invite.mutate(username.trim(), { onError: toastFail })}
-          >
+          <Button type="submit" disabled={username.trim().length < 3} loading={invite.isPending}>
             Create invite link
           </Button>
         </div>
@@ -32,7 +34,7 @@ export function InviteSection() {
             <Text className="m-help">The link works once and expires in 24 hours.</Text>
           </>
         )}
-      </div>
+      </form>
     </section>
   )
 }

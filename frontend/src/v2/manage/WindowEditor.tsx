@@ -99,7 +99,13 @@ export function WindowEditor({ target, label }: Props) {
         size={small ? '100%' : 'md'}
         title={`${kindTitle ?? ''}: ${label}`}
       >
-        <div className="m-form">
+        <form
+          className="m-form"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (days.length && start && end && !same && !add.isPending) save()
+          }}
+        >
           <Chip.Group multiple value={days} onChange={setDays}>
             <div className="f-row">
               {DAYS.map((d, i) => (
@@ -116,14 +122,14 @@ export function WindowEditor({ target, label }: Props) {
             {same && <Text size="sm">Start and end can&apos;t be the same.</Text>}
           </div>
           <div className="m-actions">
-            <Button onClick={save} disabled={!days.length || !start || !end || same} loading={add.isPending}>
+            <Button type="submit" disabled={!days.length || !start || !end || same} loading={add.isPending}>
               Add
             </Button>
             <Button variant="default" onClick={() => setAdding(null)}>
               Cancel
             </Button>
           </div>
-        </div>
+        </form>
       </Drawer>
     </section>
   )
