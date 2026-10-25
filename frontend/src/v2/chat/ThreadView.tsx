@@ -218,7 +218,7 @@ export function ThreadView({
             <GifPicker threadId={data.id} kid={kid} opened={gifOpen} onClose={() => setGifOpen(false)} onPicked={sendGif} />
           )}
         </section>
-        {side && <ThreadSidePanel run={run} kidId={sideKid} />}
+        {side && <ThreadSidePanel run={run} kidIds={run ? run.kid_ids : sideKid ? [sideKid] : []} />}
       </div>
     )
   }

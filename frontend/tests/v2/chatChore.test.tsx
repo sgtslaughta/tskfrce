@@ -52,9 +52,11 @@ describe('chore thread', () => {
     show()
     expect(await screen.findByText('Pull sheets')).toBeInTheDocument()
     expect(screen.getByText('Fluff pillow')).toBeInTheDocument()
-    expect(await screen.findByText('Bobby today')).toBeInTheDocument()
+    expect(await screen.findByText('Chores today')).toBeInTheDocument()
     expect(screen.getByText('3 / 5')).toBeInTheDocument()
     expect(screen.getByText('860')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /View as kid/ })).toHaveAttribute('href', expect.stringContaining('/kid?as='))
+    expect(screen.getByRole('link', { name: /Open on Today/ })).toBeInTheDocument()
   })
 
   test('Approve and Send back only when the run needs you; Deduct always', async () => {
