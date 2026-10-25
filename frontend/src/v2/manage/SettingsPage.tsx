@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { useMediaQuery } from '@mantine/hooks'
 import { useRouter } from 'next/router'
 import { ParentShell } from '@/v2/parent/ParentShell'
 import { InfoBlock } from '@/v2/components/InfoBlock'
@@ -8,12 +10,12 @@ import { FamilyCard, GifsCard, ScreenTimeCard } from './FamilyCards'
 import { HoursSection } from './HoursSection'
 import { InviteSection } from './InviteSection'
 import { ParentsList } from './ParentsList'
-import { ManageLayout, type SectionDef } from './ManageLayout'
+import { SettingsList, type SettingsSection } from './SettingsList'
 import { AppearancePane } from './AppearancePane'
 import { toastFail, toastOk } from '@/v2/notify'
 
 type S = 'family' | 'screen' | 'hours' | 'look' | 'gifs' | 'parents'
-const SETTINGS_SECTIONS: SectionDef<S>[] = [
+const SETTINGS_SECTIONS: SettingsSection<S>[] = [
   { id: 'family', label: 'Family', description: 'Name, time zone, points rules', icon: 'home' },
   { id: 'screen', label: 'Screen time', description: 'Price, daily cap, early unlock', icon: 'timer' },
   { id: 'hours', label: 'Hours', description: 'School nights, weekends', icon: 'schedule' },
@@ -29,11 +31,17 @@ function SettingsBody() {
   const family = useFamily()
   const patch = usePatchFamily()
   const want = first(query.section)
-  const section: S = SETTINGS_SECTIONS.some((s) => s.id === want) ? (want as S) : 'family'
+  const small = useMediaQuery('(max-width: 767px)')
+  const valid = SETTINGS_SECTIONS.some((s) => s.id === want)
+  const section: S = valid ? (want as S) : 'family'
   return (
-    <ParentShell title="Settings">
+    <ParentShell
+      title="Settings"
+      list={<SettingsList sections={SETTINGS_SECTIONS} section={small && !valid ? undefined : section} />}
+      phone={valid ? <Link href="/settings" className="p-back-link">← Settings</Link> : undefined}
+    >
       {family.isError && <ErrorPanel kind="unreachable" error={family.error} onRetry={() => family.refetch()} />}
-      <ManageLayout path="/settings" sections={SETTINGS_SECTIONS} section={section} counts={{}}>
+      <div className="ps-detail">
         {family.isPending && ['family', 'screen', 'look', 'gifs'].includes(section) && <Skeleton />}
         {section === 'family' && family.data && <FamilyCard fam={family.data} />}
         {section === 'look' && family.data && (
@@ -72,7 +80,7 @@ function SettingsBody() {
             <InviteSection />
           </>
         )}
-      </ManageLayout>
+      </div>
     </ParentShell>
   )
 }
