@@ -183,11 +183,11 @@ export function ThreadView({
             }}
           >
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden aria-label="Photo file" onChange={(e) => pick(e.target.files?.[0])} />
-            <button type="button" className="pc-ib" data-on={!!photoId} aria-label={photoId ? 'Photo added' : 'Add photo'} disabled={upload.isPending} onClick={() => fileRef.current?.click()}>
+            <button type="button" className="pc-ib" data-on={!!photoId} aria-label={photoId ? 'Photo added' : 'Add photo'} title={photoId ? 'Photo added' : 'Add photo'} disabled={upload.isPending} onClick={() => fileRef.current?.click()}>
               <Icon name={photoId ? 'image' : 'add_photo_alternate'} size={20} />
             </button>
             {gifsOn && (
-              <button type="button" className="pc-ib" aria-label="Add GIF" onClick={() => setGifOpen(true)}>
+              <button type="button" className="pc-ib" aria-label="Add GIF" title="Add GIF" onClick={() => setGifOpen(true)}>
                 <Icon name="gif_box" size={20} />
               </button>
             )}
@@ -205,8 +205,8 @@ export function ThreadView({
                 }
               }}
             />
-            <button type="submit" className="pc-send" aria-label="Send" disabled={!canSend}>
-              <Icon name="send" size={16} />
+            <button type="submit" className="pc-send" aria-label="Send" title="Send" aria-busy={post.isPending} disabled={!canSend}>
+              <Icon name={post.isPending ? "progress_activity" : "send"} size={16} className={post.isPending ? "pc-spin" : undefined} />
             </button>
           </form>
           {gifsOn && data && (

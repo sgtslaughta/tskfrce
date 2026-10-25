@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { ReactNode } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
+import { VisuallyHidden } from '@mantine/core'
 
 export function ListDetail({
   list,
@@ -21,32 +22,33 @@ export function ListDetail({
 
   if (small && phone) {
     return (
-      <div className="p-detail-only">
+      <main className="p-detail-only">
         {phone}
         <div className="p-detail-panel">{detail}</div>
-      </div>
+      </main>
     )
   }
 
   if (small && selectedItem) {
     return (
-      <div className="p-detail-only">
+      <main className="p-detail-only">
         <Link href={{ pathname: router.pathname, query: rest }} className="p-back-link">
           ← {listTitle}
         </Link>
         <div className="p-detail-panel">{detail}</div>
-      </div>
+      </main>
     )
   }
 
   if (small) {
-    return <div className="p-list-only">{list}</div>
+    return <main className="p-list-only">{list}</main>
   }
 
   return (
-    <div className="p-list-detail">
+    <main className="p-list-detail">
+      <VisuallyHidden component="h1">{listTitle}</VisuallyHidden>
       <div className="p-list-column">{list}</div>
       <div className="p-detail-column p-grid">{detail}</div>
-    </div>
+    </main>
   )
 }

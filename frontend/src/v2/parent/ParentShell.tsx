@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useMediaQuery } from '@mantine/hooks'
@@ -58,6 +59,7 @@ export function ParentShell({
   if (list) {
     return (
       <div className="p-shell p-with-list">
+        <Head><title>{`${title} - t@sk4ce`}</title></Head>
         {!small && <Rail onLogout={logOut} />}
         <div className="p-content">
           {small && (
@@ -77,6 +79,7 @@ export function ParentShell({
 
   return (
     <div className="p-shell">
+      <Head><title>{`${title} - t@sk4ce`}</title></Head>
       {!small && <Rail onLogout={logOut} />}
       <div className="p-content">
         <header className="p-header">
