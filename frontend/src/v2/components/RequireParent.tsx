@@ -2,7 +2,9 @@ import { useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/router'
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
-import { api, CANT_REACH } from '../api'
+import { api } from '../api'
+import { ErrorPanel } from '../parent/states'
+import { useLook } from '../parent/useLook'
 import type { SetupStatus } from '../types'
 
 const SETUP_KEY = ['setup']
@@ -24,6 +26,7 @@ export function cancelSignOut(): void {
 /** Parent-only route guard: first-run setup → /setup, logged out → /login?next=, kid → /kid. */
 export function RequireParent({ children }: { children: ReactNode }) {
   const router = useRouter()
+  useLook('parent')
   const { isInitialized, isAuthenticated, user } = useUnifiedAuth()
   const setup = useQuery({
     queryKey: SETUP_KEY,
@@ -57,19 +60,16 @@ export function RequireParent({ children }: { children: ReactNode }) {
 
   if (setup.isError) {
     return (
-      <div className="f-shell" role="alert" style={{ display: 'grid', placeItems: 'center', gap: 12 }}>
-        <p>{CANT_REACH}</p>
-        <button type="button" className="f-btn f-card" onClick={() => setup.refetch()}>
-          Retry
-        </button>
-      </div>
+      <main className="p-gate">
+        <ErrorPanel kind="unreachable" onRetry={() => setup.refetch()} />
+      </main>
     )
   }
   if (target !== '') {
     return (
-      <div className="f-shell" role="status" style={{ display: 'grid', placeItems: 'center' }}>
-        Loading…
-      </div>
+      <main className="p-gate" role="status" aria-label="Loading">
+        <span className="p-gate-spin" />
+      </main>
     )
   }
   return <>{children}</>

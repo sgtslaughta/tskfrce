@@ -177,3 +177,9 @@
   color: var(--p-ink);
   box-shadow: inset 0 0 0 1.5px var(--p-ink);
 }
+
+[data-look='parent'] .p-banner[data-tone='red'] {
+  background: var(--p-redbg);
+  border-color: color-mix(in srgb, var(--p-red) 30%, transparent);
+}
+[data-look='parent'] .p-banner[data-tone='red'] :is(.p-banner-title, .p-banner-title .ms, .p-banner-body) { color: var(--p-red); }
