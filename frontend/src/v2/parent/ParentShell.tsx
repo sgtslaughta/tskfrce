@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import Head from 'next/head'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useMediaQuery } from '@mantine/hooks'
@@ -55,9 +56,16 @@ export function ParentShell({
     </>
   )
 
+  const head = (
+    <Head>
+      <title>{`${title} - t@sk4ce`}</title>
+    </Head>
+  )
+
   if (list) {
     return (
       <div className="p-shell p-with-list">
+        {head}
         {!small && <Rail onLogout={logOut} />}
         <div className="p-content">
           {small && (
@@ -67,7 +75,11 @@ export function ParentShell({
             </header>
           )}
           <BlockerBanner />
-          <ListDetail list={list} detail={children} listTitle={title} phone={phone} />
+          <main className="p-list-main">
+            {/* desktop shows the title as the list heading (h2); keep one h1 per page */}
+            {!small && <h1 className="p-sr">{title}</h1>}
+            <ListDetail list={list} detail={children} listTitle={title} phone={phone} />
+          </main>
         </div>
         {small && <TabBar />}
         {dock}
@@ -77,6 +89,7 @@ export function ParentShell({
 
   return (
     <div className="p-shell">
+      {head}
       {!small && <Rail onLogout={logOut} />}
       <div className="p-content">
         <header className="p-header">
