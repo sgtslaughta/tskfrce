@@ -5,15 +5,16 @@ import { Chip, type ChipTone } from '@/v2/parent/Chip'
 import { ListHeader } from '@/v2/parent/ListHeader'
 import { SegmentedControl } from '@/v2/parent/SegmentedControl'
 import type { Device, Group as DeviceGroup, Kid } from '@/v2/types'
+import { DEVICE_TYPE_ICON, getDeviceType, type DeviceType } from './deviceMeta'
 
 interface Props {
   devices: Device[]
   kids: Kid[]
   groups?: DeviceGroup[]
   selectedDevice?: number | null
-  selectedGroup?: number | null
+  selectedGroup?: number | 'new' | null
   onSelectDevice: (id: number) => void
-  onSelectGroup?: (id: number) => void
+  onSelectGroup?: (id: number | 'new') => void
   tab?: 'devices' | 'groups'
   onTabChange?: (tab: 'devices' | 'groups') => void
 }
@@ -47,27 +48,6 @@ const relativeTime = (iso: string | null) => {
   const days = Math.floor(hours / 24)
   if (days < 7) return `${days}d ago`
   return date.toLocaleDateString()
-}
-
-type DeviceType = 'phone' | 'console' | 'tv' | 'laptop' | 'tablet' | 'other'
-
-const DEVICE_TYPE_ICON: Record<DeviceType, string> = {
-  phone: 'smartphone',
-  tablet: 'tablet_mac',
-  console: 'sports_esports',
-  tv: 'tv',
-  laptop: 'laptop_chromebook',
-  other: 'devices_other',
-}
-
-const getDeviceType = (name: string, vendor?: string | null): DeviceType => {
-  const text = `${name} ${vendor ?? ''}`
-  if (/xbox|playstation|\bps[345]\b|nintendo|switch|steam ?deck/i.test(text)) return 'console'
-  if (/\btv\b|roku|chromecast|fire ?stick|apple ?tv|shield|bravia/i.test(text)) return 'tv'
-  if (/laptop|macbook|chromebook|thinkpad|\bpc\b|desktop|imac/i.test(text)) return 'laptop'
-  if (/ipad|tablet|kindle/i.test(text)) return 'tablet'
-  if (/phone|pixel|galaxy|android|iphone/i.test(text)) return 'phone'
-  return 'other'
 }
 
 const getGroupDeviceTypes = (devices: Device[], groupDeviceIds: number[]): DeviceType[] => {
@@ -173,12 +153,8 @@ export function DeviceList({
 
         {/* Groups tab */}
         <div role="tabpanel" style={{ display: tab === 'groups' ? 'block' : 'none' }}>
-          {groups.length === 0 ? (
-            <div style={{ padding: 24, textAlign: 'center', color: 'var(--p-sub)', fontSize: 13 }}>
-              No groups yet.
-            </div>
-          ) : (
-            <div className="p-device-list">
+          <div className="p-device-list">
+              {groups.length === 0 && <p className="pk-hint pk-empty">No groups yet. Make one to set hours for several devices at once.</p>}
               {groups.map((g) => {
                 const groupOwners = ownerName(kids, g.owner_ids ?? [])
                 const deviceTypes = getGroupDeviceTypes(devices, g.device_ids)
@@ -214,8 +190,11 @@ export function DeviceList({
                   </button>
                 )
               })}
-            </div>
-          )}
+              <button type="button" className="pk-card pk-new" data-selected={selectedGroup === 'new'} onClick={() => onSelectGroup?.('new')}>
+                <Icon name="add" size={18} />
+                New group
+              </button>
+          </div>
         </div>
       </div>
     </div>

@@ -8,8 +8,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { notifications } from '@mantine/notifications'
 import { fridgeTheme } from '@/v2/theme'
 import { api } from '@/v2/api'
-import { DeviceRow } from '@/v2/manage/DeviceRow'
-import { GroupsPanel } from '@/v2/manage/GroupsPanel'
+import { DeviceDetail } from '@/v2/manage/DeviceDetail'
+import { GroupDetail } from '@/v2/manage/GroupDetail'
 import { KidEditor } from '@/v2/manage/KidEditor'
 import { WindowEditor } from '@/v2/manage/WindowEditor'
 import { DevicesPage } from '@/v2/manage/DevicesPage'
@@ -20,9 +20,6 @@ jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } 
 const mockRouter: { query: Record<string, string> } = { query: {} }
 jest.mock('next/router', () => ({ useRouter: () => mockRouter }))
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
-jest.mock('@/v2/today/DeviceQuickMenu', () => ({
-  DeviceQuickMenu: ({ children }: { children: ReactNode }) => <>{children}</>,
-}))
 jest.mock('@/v2/parent/ParentShell', () => ({
   ParentShell: ({ children }: { children: ReactNode }) => <>{children}</>,
 }))
@@ -119,24 +116,23 @@ beforeEach(() => {
 
 describe('devices', () => {
   test('assigning an owner PATCHes owner_ids', async () => {
-    render(wrap(<DeviceRow device={device} kids={kids} />))
-    await userEvent.click(screen.getByRole('textbox', { name: 'Owners' }))
-    await userEvent.click(await screen.findByRole('option', { name: 'Maya', hidden: true }))
+    render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
+    await userEvent.click(screen.getByRole('button', { name: 'Maya' }))
     await waitFor(() =>
       expect(calls('PATCH')[0]).toEqual(['/devices/1', { method: 'PATCH', body: { owner_ids: [7] } }]),
     )
   })
 
   test('guest toggle PATCHes status guest', async () => {
-    render(wrap(<DeviceRow device={device} kids={kids} />))
-    await userEvent.click(screen.getByRole('switch', { name: 'Guest' }))
+    render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
+    await userEvent.click(screen.getByRole('switch', { name: /Guest/ }))
     await waitFor(() =>
       expect(calls('PATCH')[0]).toEqual(['/devices/1', { method: 'PATCH', body: { status: 'guest' } }]),
     )
   })
 
   test('delete asks first, then toasts Deleted', async () => {
-    render(wrap(<DeviceRow device={device} kids={kids} />))
+    render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
     expect(calls('DELETE')).toHaveLength(0)
     const dialog = await screen.findByRole('dialog')
@@ -146,18 +142,18 @@ describe('devices', () => {
   })
 
   test('shows resisting pill when device.resisting', () => {
-    render(wrap(<DeviceRow device={{ ...device, resisting: true }} kids={kids} />))
-    expect(screen.getByText('getting around the block')).toHaveAttribute('data-resisting')
+    render(wrap(<DeviceDetail device={{ ...device, resisting: true }} kids={kids} onRequestOverride={() => {}} />))
+    expect(screen.getByText('getting around the block')).toBeInTheDocument()
   })
 
   test('hides pill otherwise', () => {
-    render(wrap(<DeviceRow device={device} kids={kids} />))
+    render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
     expect(screen.queryByText('getting around the block')).toBeNull()
   })
 
   test('Test block button posts and toasts message', async () => {
     apiMock.mockImplementation(async () => ({ reason: 'ok', message: 'Blocked fine', offline: false, router_resisted: false }))
-    render(wrap(<DeviceRow device={device} kids={kids} />))
+    render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
     await userEvent.click(screen.getByRole('button', { name: TB }))
     await waitFor(() => expect(calls('POST')[0]).toEqual(['/devices/1/test-block', { method: 'POST' }]))
     await waitFor(() =>
@@ -167,7 +163,7 @@ describe('devices', () => {
 
   test('Test block non-ok reason toasts red', async () => {
     apiMock.mockImplementation(async () => ({ reason: 'router', message: 'x' }))
-    render(wrap(<DeviceRow device={device} kids={kids} />))
+    render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
     await userEvent.click(screen.getByRole('button', { name: TB }))
     await waitFor(() =>
       expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'x', color: 'fridgeRed' })),
@@ -178,7 +174,7 @@ describe('devices', () => {
     apiMock.mockImplementation(async () => {
       throw new Error("The home box didn't answer. Is it plugged in?")
     })
-    render(wrap(<DeviceRow device={device} kids={kids} />))
+    render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
     await userEvent.click(screen.getByRole('button', { name: TB }))
     await waitFor(() =>
       expect(notifications.show).toHaveBeenCalledWith(
@@ -189,25 +185,75 @@ describe('devices', () => {
 
   test('Test block is disabled and says Testing… while pending', async () => {
     apiMock.mockImplementation(() => new Promise(() => {}))
-    render(wrap(<DeviceRow device={device} kids={kids} />))
+    render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
     await userEvent.click(screen.getByRole('button', { name: TB }))
     const btn = await screen.findByRole('button', { name: TB })
     await waitFor(() => expect(btn).toBeDisabled())
     expect(btn).toHaveTextContent('Testing…')
   })
 
-  test('focused row is marked', () => {
-    render(wrap(<DeviceRow device={device} kids={kids} focused />))
-    expect(document.getElementById('device-1')).toHaveAttribute('data-focused', 'true')
+  test('rename saves on blur and reverts when emptied', async () => {
+    render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
+    const input = screen.getByRole('textbox', { name: 'Device name' })
+    await userEvent.clear(input)
+    await userEvent.type(input, 'Den laptop')
+    await userEvent.tab()
+    await waitFor(() => expect(calls('PATCH')[0]).toEqual(['/devices/1', { method: 'PATCH', body: { name: 'Den laptop' } }]))
+    await userEvent.clear(input)
+    await userEvent.tab()
+    expect(input).toHaveValue('Maya laptop')
+    expect(calls('PATCH')).toHaveLength(1)
+  })
+
+  test('an unknown device leads with Who\'s this? and owners can be picked', () => {
+    render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
+    expect(screen.getByRole('heading', { name: "Who's this?" })).toBeInTheDocument()
+  })
+
+  test('guest disables the owner pills', () => {
+    render(wrap(<DeviceDetail device={{ ...device, status: 'guest' }} kids={kids} onRequestOverride={() => {}} />))
+    expect(screen.getByRole('button', { name: 'Maya' })).toBeDisabled()
+  })
+
+  test('a group pill adds the device to that group', async () => {
+    const g = { id: 3, name: 'Tablets', device_ids: [9], owner_ids: [] }
+    render(wrap(<DeviceDetail device={device} kids={kids} groups={[g]} onRequestOverride={() => {}} />))
+    await userEvent.click(screen.getByRole('button', { name: 'Tablets' }))
+    await waitFor(() =>
+      expect(calls('PATCH')[0]).toEqual(['/groups/3', { method: 'PATCH', body: { name: 'Tablets', device_ids: [9, 1] } }]),
+    )
   })
 
   test('group create POSTs name and members', async () => {
-    render(wrap(<GroupsPanel devices={[device]} />))
-    await userEvent.click(screen.getByRole('button', { name: 'New group' }))
-    await userEvent.type(await screen.findByLabelText('Group name'), 'Tablets')
+    const onSelect = jest.fn()
+    render(wrap(<GroupDetail devices={[device]} kids={kids} onSelect={onSelect} onRequestOverride={() => {}} />))
+    await userEvent.type(screen.getByLabelText('Group name'), 'Tablets')
+    await userEvent.click(screen.getByRole('button', { name: 'Maya laptop' }))
     await userEvent.click(screen.getByRole('button', { name: 'Create group' }))
     await waitFor(() =>
-      expect(calls('POST')[0]).toEqual(['/groups', { method: 'POST', body: { name: 'Tablets', device_ids: [] } }]),
+      expect(calls('POST')[0]).toEqual(['/groups', { method: 'POST', body: { name: 'Tablets', device_ids: [1] } }]),
+    )
+  })
+
+  test('group delete asks first, then DELETEs', async () => {
+    const g = { id: 3, name: 'Tablets', device_ids: [1], owner_ids: [] }
+    render(wrap(<GroupDetail group={g} devices={[device]} kids={kids} onSelect={() => {}} onRequestOverride={() => {}} />))
+    await userEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    expect(calls('DELETE')).toHaveLength(0)
+    const dialog = await screen.findByRole('dialog')
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(calls('DELETE')[0][0]).toBe('/groups/3'))
+  })
+
+  test('group rename saves on blur', async () => {
+    const g = { id: 3, name: 'Tablets', device_ids: [1], owner_ids: [] }
+    render(wrap(<GroupDetail group={g} devices={[device]} kids={kids} onSelect={() => {}} onRequestOverride={() => {}} />))
+    const input = screen.getByLabelText('Group name')
+    await userEvent.clear(input)
+    await userEvent.type(input, 'Screens')
+    await userEvent.tab()
+    await waitFor(() =>
+      expect(calls('PATCH')[0]).toEqual(['/groups/3', { method: 'PATCH', body: { name: 'Screens', device_ids: [1] } }]),
     )
   })
 })
