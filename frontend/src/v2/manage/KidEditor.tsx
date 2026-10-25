@@ -5,13 +5,17 @@ import { Icon } from '@/v2/parent/Icon'
 import type { Kid } from '@/v2/types'
 import { EmojiPicker } from '@/v2/components/EmojiPicker'
 import { ConfirmDelete } from './ConfirmDelete'
+import { useSingle } from './useSingle'
 import { toastFail, toastOk } from '../notify'
 
 /** Edit a kid, or add one when `kid` is omitted. Only changed fields are sent. */
 export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onDone?: () => void; onCreated?: (id: number) => void; focusPin?: boolean }) {
   const create = useCreateKid()
+  const createOnce = useSingle(create)
   const patch = usePatchKid()
+  const patchOnce = useSingle(patch)
   const del = useDeleteKid()
+  const delOnce = useSingle(del)
   const [name, setName] = useState(kid?.full_name ?? '')
   const [avatar, setAvatar] = useState(kid?.avatar ?? '')
   const [pin, setPin] = useState('')
@@ -36,8 +40,8 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
         if (!kid) onCreated?.((res as Kid).id)
       },
     }
-    if (kid) patch.mutate({ id: kid.id, body }, opts)
-    else create.mutate(body, opts)
+    if (kid) patchOnce({ id: kid.id, body }, opts)
+    else createOnce(body, opts)
   }
 
   return (
@@ -61,9 +65,11 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
             value={pin}
             inputMode="numeric"
             maxLength={4}
+            onBlur={() => setLetters(false)}
             onChange={(e) => {
-              setLetters(/\D/.test(e.currentTarget.value))
-              setPin(e.currentTarget.value.replace(/\D/g, ''))
+              const v = e.currentTarget.value
+              setLetters((l) => /\D/.test(v) || (l && v !== '' && v.length < 4))
+              setPin(v.replace(/\D/g, ''))
             }}
           />
           {kid?.has_pin && !pinBad && <span className="pk-hint">A PIN is set. Enter a new one to change it.</span>}
@@ -85,7 +91,7 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
             <button
               type="button"
               className="p-btn"
-              onClick={() => patch.mutate({ id: kid.id, body: { clear_pin: true } }, { onError: toastFail, onSuccess: () => toastOk('PIN removed') })}
+              onClick={() => patchOnce({ id: kid.id, body: { clear_pin: true } }, { onError: toastFail, onSuccess: () => toastOk('PIN removed') })}
             >
               Remove PIN
             </button>
@@ -103,7 +109,7 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
           opened={confirm}
           title={`Delete ${label}?`}
           body={`Deleting ${label} removes their chores and frees their devices.`}
-          onConfirm={() => del.mutate(kid.id, { onSuccess: onDone })}
+          onConfirm={() => delOnce(kid.id, { onSuccess: onDone })}
           onClose={close}
         />
       )}

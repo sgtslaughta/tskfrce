@@ -6,6 +6,7 @@ import { Icon } from '@/v2/parent/Icon'
 import { choreIcon } from '@/v2/today/choreIcon'
 import type { Kid, LibChore } from '@/v2/types'
 import { ConfirmDelete } from './ConfirmDelete'
+import { useSingle } from './useSingle'
 import { WhoWhen } from './WhoWhen'
 import { intError, schedules } from './choreMeta'
 import { toastFail, toastOk } from '../notify'
@@ -28,8 +29,11 @@ export const clearChoreDrafts = () => drafts.clear()
 /** Chore editor laid out as cards: header, Basics, Steps and Who & when. */
 export function ChoreDetail({ kids, chore, onSelect }: Props) {
   const save = useSaveChore()
+  const saveOnce = useSingle(save)
   const del = useDeleteChore()
+  const delOnce = useSingle(del)
   const copy = useCopyChore()
+  const copyOnce = useSingle(copy)
   const [confirm, { open, close }] = useDisclosure(false)
   const key = String(chore?.id ?? 'new')
   const kept = drafts.get(key)
@@ -60,7 +64,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
   }
 
   const submit = () =>
-    save.mutate(
+    saveOnce(
       { id: chore?.id, body: { title: title.trim(), points: Number(points), needs_photo: photo, steps } },
       {
         onError: toastFail,
@@ -73,7 +77,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
     )
 
   const duplicate = () =>
-    copy.mutate(chore!.id, {
+    copyOnce(chore!.id, {
       onError: toastFail,
       onSuccess: (c) => {
         toastOk('Copied')
@@ -140,7 +144,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
               opened={confirm}
               title={`Delete ${chore.title}?`}
               body="Chores already done stay in history."
-              onConfirm={() => del.mutate(chore.id, { onError: toastFail, onSuccess: () => onSelect(null) })}
+              onConfirm={() => delOnce(chore.id, { onError: toastFail, onSuccess: () => onSelect(null) })}
               onClose={close}
             />
           </div>

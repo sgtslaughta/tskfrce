@@ -349,6 +349,35 @@ describe('kids', () => {
     await waitFor(() => expect(calls('PATCH')[0]).toEqual(['/kids/8', { method: 'PATCH', body: { clear_pin: true } }]))
   })
 
+  test('PIN: letters are refused with a message, 3 digits are refused, nothing is sent', async () => {
+    query = { section: 'kids', item: '8' }
+    render(wrap(<KidsPage />))
+    await userEvent.click(await within(detail()).findByRole('button', { name: 'Edit' }))
+    const pin = within(detail()).getByLabelText(/PIN \(4 digits\)/)
+    await userEvent.type(pin, 'ab')
+    expect(within(detail()).getByText('A PIN is digits only, exactly 4.')).toBeInTheDocument()
+    await userEvent.type(pin, '1234')
+    expect(within(detail()).queryByText('A PIN is digits only, exactly 4.')).toBeNull()
+    await userEvent.clear(pin)
+    await userEvent.type(pin, '123')
+    expect(within(detail()).getByText('Use exactly 4 digits.')).toBeInTheDocument()
+    expect(within(detail()).getByRole('button', { name: 'Save kid' })).toBeDisabled()
+    expect(calls('PATCH')).toHaveLength(0)
+  })
+
+  test('a double-click on Send points posts once', async () => {
+    serve({ '/kids/8/points': { balance: 50 } })
+    query = { section: 'kids', item: '8' }
+    render(wrap(<KidsPage />))
+    await userEvent.click(await within(detail()).findByRole('button', { name: 'Bonus' }))
+    await userEvent.type(within(detail()).getByLabelText(/Points/), '8')
+    await userEvent.type(within(detail()).getByLabelText('Why?'), 'Helped out')
+    const send = within(detail()).getByRole('button', { name: 'Send points' })
+    fireEvent.click(send)
+    fireEvent.click(send)
+    await waitFor(() => expect(calls('POST')).toHaveLength(1))
+  })
+
   test('Bonus POSTs /points and Deduct POSTs /deduct with amount and note', async () => {
     serve({ '/kids/8/points': { balance: 50 }, '/kids/8/deduct': { balance: 10, deducted: 5 } })
     query = { section: 'kids', item: '8' }

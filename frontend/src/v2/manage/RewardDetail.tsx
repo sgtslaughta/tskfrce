@@ -6,13 +6,16 @@ import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import type { Reward } from '@/v2/types'
 import { ConfirmDelete } from './ConfirmDelete'
+import { useSingle } from './useSingle'
 import { intError } from './choreMeta'
 import { toastFail, toastOk } from '../notify'
 
 /** Add or edit one reward in the catalogue. `reward` omitted = new. */
 export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: (id: number | null) => void }) {
   const save = useSaveReward()
+  const saveOnce = useSingle(save)
   const del = useDeleteReward()
+  const delOnce = useSingle(del)
   const [name, setName] = useState(reward?.name ?? '')
   const [price, setPrice] = useState(String(reward?.price ?? 50))
   const [icon, setIcon] = useState(reward?.icon ?? '')
@@ -20,7 +23,7 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
   const priceErr = intError(price, 1, 100000)
 
   const submit = () =>
-    save.mutate(
+    saveOnce(
       { id: reward?.id, body: { name: name.trim(), price: Number(price), ...(icon !== (reward?.icon ?? '') && { icon }) } },
       {
         onError: toastFail,
@@ -61,7 +64,7 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
               opened={confirm}
               title={`Delete ${reward.name}?`}
               body="Kids won't see it any more. Requests already made stay in history."
-              onConfirm={() => del.mutate(reward.id, { onError: toastFail, onSuccess: () => (toastOk('Deleted'), onSelect(null)) })}
+              onConfirm={() => delOnce(reward.id, { onError: toastFail, onSuccess: () => (toastOk('Deleted'), onSelect(null)) })}
               onClose={close}
             />
           </div>

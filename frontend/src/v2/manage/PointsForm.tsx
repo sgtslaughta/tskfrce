@@ -3,12 +3,15 @@ import { useBonus, useDeduct } from '@/v2/hooks/useKids'
 import { Icon } from '@/v2/parent/Icon'
 import type { Kid } from '@/v2/types'
 import { intError, nameOf } from './choreMeta'
+import { useSingle } from './useSingle'
 import { toastOk } from '../notify'
 
 /** Parent gives (bonus) or takes (deduct) points with a short note the kid sees. */
 export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | 'deduct'; onClose: () => void }) {
   const bonus = useBonus()
+  const bonusOnce = useSingle(bonus)
   const deduct = useDeduct()
+  const deductOnce = useSingle(deduct)
   const [amount, setAmount] = useState('')
   const [note, setNote] = useState('')
   const n = Number(amount)
@@ -26,14 +29,14 @@ export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | '
       onClose()
     }
     if (give)
-      bonus.mutate(vars, {
+      bonusOnce(vars, {
         onSuccess: () => {
           toastOk(`Sent! ${name} got +${n}`)
           done()
         },
       })
     else
-      deduct.mutate(vars, {
+      deductOnce(vars, {
         onSuccess: (r) => {
           toastOk(`${name} lost ${r.deducted} points`)
           done()
