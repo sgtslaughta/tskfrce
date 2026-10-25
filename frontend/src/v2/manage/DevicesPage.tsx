@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { useRouter } from 'next/router'
 import { useMediaQuery } from '@mantine/hooks'
 import { ParentShell } from '@/v2/parent/ParentShell'
@@ -11,6 +12,7 @@ import { useOverride, type OverrideTarget } from '@/v2/hooks/useOverride'
 import { DevicesSection } from './DevicesSection'
 import { DeviceDetail } from './DeviceDetail'
 import { GroupDetail } from './GroupDetail'
+import { useSingleFlight } from './useSingleFlight'
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
 
@@ -36,6 +38,15 @@ function DevicesBody() {
   const creating = item === 'new' && tab === 'groups'
   // a stale ?item (just deleted) falls back instead of leaving the pane blank
   const selectedId = shown.some((x) => x.id === Number(item)) ? Number(item) : fallback
+  const loaded = tab === 'devices' ? !!devices.data : !!groups.data
+  const stale = !!item && item !== 'new' && loaded && !shown.some((x) => x.id === Number(item))
+  // a deleted item's id (from another tab, or this one) shouldn't linger in the URL where a reused id could reopen it
+  useEffect(() => {
+    if (!stale) return
+    const { item: _drop, ...rest } = query
+    router.replace({ pathname: router.pathname, query: rest }, undefined, { shallow: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stale])
   // select a group (or null = drop ?item so the first item reopens)
   const pick = (id: number | null) => {
     const { item: _drop, ...rest } = query
@@ -46,14 +57,15 @@ function DevicesBody() {
   const selectedGroup = (groups.data ?? []).find((g) => g.id === selectedId && tab === 'groups' && !creating)
 
   const override = useOverride()
+  const once = useSingleFlight()
   // detail buttons: lock until changed, unlock for 30 min, "schedule" = clear the override
   const handleRequestOverride = (req: { kind: string; id: number; action: string }) =>
-    override.mutate({
+    once((settled) => override.mutate({
       target: { kind: req.kind as OverrideTarget['kind'], id: req.id },
       choice: req.action === 'lock' ? { action: 'lock', minutes: null }
         : req.action === 'unlock' ? { action: 'unlock', minutes: 30 }
         : { action: 'clear' },
-    })
+    }, settled))
 
   // the action in flight (lock / unlock / clear): the pressed button shows a spinner
   const pending = override.isPending ? override.variables.choice.action : null

@@ -16,6 +16,7 @@ import { ago, DEVICE_TYPE_ICON, getDeviceType, inFamilyZone } from './deviceMeta
 import { KidPills } from './KidPills'
 import { nameOf } from './choreMeta'
 import { toastFail, toastOk, toasts } from '../notify'
+import { useSingleFlight } from './useSingleFlight'
 
 interface Props {
   device: Device
@@ -35,6 +36,8 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
   const saveGroup = useSaveGroup()
   const del = useDeleteDevice()
   const test = useTestBlock()
+  const once = useSingleFlight()
+  const onceTest = useSingleFlight() // a slow test must not swallow the next save
   const [tab, setTab] = useState<string | null>('overview')
   const [name, setName] = useState(device.name)
   const [confirm, { open, close }] = useDisclosure(false)
@@ -52,7 +55,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
   const ownerLabel = guest ? 'Guest' : owners.length ? owners.map(nameOf).join(', ') : 'Unassigned'
   const needsPins = device.needs_pins && owners.length > 0
 
-  const save = (p: DevicePatch, done: string) => patch.mutate({ id: device.id, patch: p }, toasts(done))
+  const save = (p: DevicePatch, done: string) => once((settled) => patch.mutate({ id: device.id, patch: p }, { ...toasts(done), ...settled }))
   const rename = () => {
     const n = name.trim()
     if (!n) setName(device.name)
@@ -60,13 +63,16 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
   }
   const toggleGroup = (g: Group) => {
     const ids = g.device_ids.includes(device.id) ? g.device_ids.filter((i) => i !== device.id) : [...g.device_ids, device.id]
-    saveGroup.mutate({ id: g.id, name: g.name, device_ids: ids }, toasts('Saved'))
+    once((settled) => saveGroup.mutate({ id: g.id, name: g.name, device_ids: ids }, { ...toasts('Saved'), ...settled }))
   }
   const runTest = () =>
-    test.mutate(device.id, {
-      onSuccess: (r) => (r.reason === 'ok' ? toastOk(r.message) : notifications.show({ message: r.message, color: 'fridgeRed' })),
-      onError: toastFail,
-    })
+    onceTest((settled) =>
+      test.mutate(device.id, {
+        onSuccess: (r) => (r.reason === 'ok' ? toastOk(r.message) : notifications.show({ message: r.message, color: 'fridgeRed' })),
+        onError: toastFail,
+        ...settled,
+      }),
+    )
 
   const chips = [
     ...(device.vendor ? [{ text: device.vendor, vendor: device.vendor }] : []),

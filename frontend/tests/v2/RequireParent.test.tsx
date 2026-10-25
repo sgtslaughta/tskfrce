@@ -73,13 +73,13 @@ describe('RequireParent', () => {
     expect(replace).not.toHaveBeenCalled()
   })
 
-  test('setup check failure shows a retry message', async () => {
+  test('setup check failure shows the can\'t-reach panel and Try again recovers', async () => {
     apiMock.mockRejectedValueOnce(new Error('down')).mockResolvedValue({ needed: false })
     auth({})
     renderGuard()
-    expect(await screen.findByText("Can't reach the home box. Check it's plugged in and on Wi-Fi.")).toBeTruthy()
+    expect(await screen.findByText("Can't reach your home box")).toBeTruthy()
     expect(replace).not.toHaveBeenCalled()
-    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('secret')).toBeTruthy()
   })
 

@@ -92,6 +92,17 @@ describe('DeviceDetail', () => {
     expect(deletes).toHaveLength(1)
   })
 
+  test('a double click on an owner pill or Test block sends exactly one request', async () => {
+    apiMock.mockImplementation(() => new Promise(() => {})) // the first request is still in flight for the second click
+    render(wrap(<DeviceDetail device={dev({ owner_ids: [] })} kids={kids} onRequestOverride={() => {}} />))
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Maya' }))
+    await userEvent.dblClick(screen.getByRole('button', { name: /Test block/ }))
+    const calls = (path: string) => apiMock.mock.calls.filter(([p]) => p === path)
+    expect(calls('/devices/1')).toHaveLength(1)
+    expect(apiMock).toHaveBeenCalledWith('/devices/1', { method: 'PATCH', body: { owner_ids: [7] } })
+    expect(calls('/devices/1/test-block')).toHaveLength(1)
+  })
+
   test('names stop at the 100 characters the API accepts', () => {
     render(wrap(<DeviceDetail device={dev()} kids={kids} onRequestOverride={() => {}} />))
     expect(screen.getByLabelText('Device name').getAttribute('maxlength')).toBe('100')
@@ -126,6 +137,17 @@ describe('GroupDetail with no devices', () => {
     expect(screen.getByText('0 devices')).toBeTruthy()
     expect(screen.queryByText('0 open')).toBeNull()
     for (const name of ['Lock group', 'Unlock 30 min', 'Back to schedule']) expect((screen.getByRole('button', { name }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  test('Create group on a new group sends one POST even when mashed', async () => {
+    apiMock.mockImplementation(() => new Promise(() => {}))
+    render(wrap(<GroupDetail devices={[dev({ name: 'Switch' })]} kids={kids} groups={[]} windows={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
+    await userEvent.type(screen.getByLabelText('Group name'), 'Twins')
+    await userEvent.click(screen.getByRole('button', { name: 'Switch' }))
+    await userEvent.dblClick(screen.getByRole('button', { name: 'Create group' }))
+    const posts = apiMock.mock.calls.filter(([p, o]) => p === '/groups' && o?.method === 'POST')
+    expect(posts).toHaveLength(1)
+    expect(posts[0][1]).toEqual({ method: 'POST', body: { name: 'Twins', device_ids: [1] } })
   })
 
   test('tapping a device saves the group with exactly that member', async () => {
