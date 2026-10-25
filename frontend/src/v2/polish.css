@@ -97,3 +97,4 @@
 @media (max-width: 767px) {
   .f-main { padding-bottom: 96px; }
 }
+.f-pill[data-tone='late'] { background: var(--f-coral, #ff6b57); color: var(--f-ink); }

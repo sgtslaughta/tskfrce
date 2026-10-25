@@ -1,26 +1,14 @@
 import { Button, Checkbox } from '@mantine/core'
 import { IconMessage } from '@tabler/icons-react'
 import { ChoreChip } from '../components/ChoreChip'
-import { useTickSubtask, useUploadPhoto } from '../hooks/useKid'
+import { useUploadPhoto } from '../hooks/useKid'
+import { statusChip } from '../today/statusChip'
+import { KidSteps } from './KidSteps'
+import { TellParent } from './TellParent'
 import type { KidChore } from '../types'
 
-function Steps({ c }: { c: KidChore }) {
-  const tick = useTickSubtask()
-  return (
-    <div style={{ flexBasis: '100%', display: 'grid', gap: 6, paddingLeft: 8 }}>
-      {c.subtasks!.map((s) => (
-        <Checkbox
-          key={s.id}
-          size="md"
-          label={s.title}
-          checked={s.done}
-          onChange={(e) => tick.mutate({ chore: c.id, sub: s.id, done: e.currentTarget.checked })}
-          styles={{ root: { minHeight: 44, display: 'flex', alignItems: 'center' } }}
-        />
-      ))}
-    </div>
-  )
-}
+// parent chip tones -> kid pill tones
+const TONE = { acc: 'done', lav: 'wait', amb: 'wait', red: 'late', grey: 'mute' } as const
 
 function Photo({ c }: { c: KidChore }) {
   const up = useUploadPhoto()
@@ -98,6 +86,13 @@ export function KidChecklist({
                 {c.state === 'needs_you' && (
                   <span className="f-pill" data-tone="wait">Waiting for Mom or Dad</span>
                 )}
+                {c.state === 'todo' &&
+                  statusChip(c, Date.now())
+                    .slice(0, 1)
+                    .filter((x) => x.label !== 'To do')
+                    .map((x) => (
+                      <span key={x.label} className="f-pill" data-tone={TONE[x.tone as keyof typeof TONE] ?? 'mute'}>{x.label}</span>
+                    ))}
                 {c.state === 'done' && <span className="f-pill" data-tone="done">Done</span>}
               </>
             )}
@@ -130,7 +125,17 @@ export function KidChecklist({
                 )}
               </div>
             )}
-            {open && onDone && !!c.subtasks?.length && <Steps c={c} />}
+            {c.deductions?.map((d, i) => (
+              <div key={i} style={{ flexBasis: '100%', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', padding: '8px 12px', borderRadius: 12, fontWeight: 700, background: 'color-mix(in srgb, var(--f-coral, #ff6b57) 18%, transparent)' }}>
+                <span style={{ flex: '1 1 160px' }}>
+                  {`${d.by_name ?? 'A parent'} took ${d.amount} points`}
+                  {d.note && <span style={{ display: 'block', fontWeight: 600 }}>{d.note}</span>}
+                </span>
+                {onChat && <Button variant="default" size="compact-md" onClick={() => onChat(c.id)}>Reply</Button>}
+              </div>
+            ))}
+            {open && !!c.notes?.length && <TellParent c={c} />}
+            {open && onDone && !!c.subtasks?.length && <KidSteps c={c} />}
             {open && onDone && c.needs_photo && <Photo c={c} />}
             {open && onDone && (
               <div style={{ flexBasis: '100%', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>

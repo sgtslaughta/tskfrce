@@ -262,13 +262,24 @@ export interface KidWhoami {
   kids: { id: number; full_name: string | null; avatar: string | null; has_pin: boolean }[]
 }
 
+/** Step on the kid screen; locked = chained behind an unfinished step. */
+export interface KidStep {
+  id: number
+  title: string
+  done: boolean
+  due_time?: string | null
+  due_at?: string | null
+  after_previous?: boolean
+  locked?: boolean
+}
+
 /** GET /kid/today */
 export interface KidChore extends TodayChore {
   mode?: 'each' | 'race' | 'team'
   needs_photo?: boolean
   photo_count_current?: number
   last_note?: string | null
-  subtasks?: { id: number; title: string; done: boolean }[]
+  subtasks?: KidStep[]
   taken_by?: string | null
   notes?: ChoreNote[]
   deductions?: { amount: number; note: string | null; by_name: string | null; at: string }[]
