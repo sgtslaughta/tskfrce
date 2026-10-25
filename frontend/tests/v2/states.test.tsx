@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, test } from '@jest/globals'
+import NotFoundPage from '../../pages/[...slug]'
 import type { Mock } from 'jest-mock'
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -11,7 +12,7 @@ import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 jest.mock('@/v2/api', () => ({ api: jest.fn(), CANT_REACH: "Can't reach your home box" }))
 jest.mock('@/contexts/UnifiedAuthContext', () => ({ useUnifiedAuth: jest.fn() }))
 jest.mock('next/router', () => ({ useRouter: jest.fn() }))
-jest.mock('next/head', () => ({ default: ({ children }: any) => children }))
+jest.mock('next/head', () => ({ __esModule: true, default: ({ children }: any) => children }))
 
 const replace = jest.fn()
 const push = jest.fn()
@@ -27,32 +28,17 @@ beforeEach(() => {
 })
 
 describe('404 page', () => {
-  test('404 copy shows proper message', async () => {
-    // Simulating the [...slug].tsx 404 page behavior
-    const NotFound = () => (
-      <div className="f-shell">
-        <main className="f-main">
-          <div className="f-card">
-            <h1>That page isn&apos;t here</h1>
-            <p>The link may be old, or the chore was deleted.</p>
-            <button onClick={() => push('/')}>Go to Today</button>
-          </div>
-        </main>
-      </div>
-    )
-
-    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  test('the real 404 page: parent look, copy and a link home', async () => {
     render(
-      <QueryClientProvider client={client}>
-        <MantineProvider>
-          <NotFound />
-        </MantineProvider>
-      </QueryClientProvider>,
+      <MantineProvider>
+        <NotFoundPage />
+      </MantineProvider>,
     )
-
-    expect(await screen.findByText(/That page isn't here/)).toBeInTheDocument()
-    expect(await screen.findByText(/The link may be old/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: "That page isn't here" })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /go to today/i })).toHaveAttribute('href', '/')
+    expect(document.documentElement.dataset.look).toBe('parent')
   })
+
 })
 
 describe('expired link states', () => {

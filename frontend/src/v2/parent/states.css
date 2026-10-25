@@ -40,3 +40,25 @@
   [data-look='parent'] .p-sk-row :is(i, b) { animation: p-sk 1.2s ease-in-out infinite alternate; }
 }
 @keyframes p-sk { to { opacity: 0.45; } }
+
+/* 404 page */
+[data-look='parent'] .p-404 {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  background: var(--p-bg);
+  color: var(--p-ink);
+}
+[data-look='parent'] .p-404-num { font-size: 88px; font-weight: 800; line-height: 1; letter-spacing: -0.04em; }
+[data-look='parent'] .p-404-num span {
+  display: inline-block;
+  margin: 0 4px;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: var(--p-acc);
+  color: #292928;
+}
