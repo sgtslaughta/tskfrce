@@ -87,7 +87,7 @@ describe('message actions', () => {
 
   test('edited label', () => {
     wrap(msg({ edited_at: new Date().toISOString() }), true)
-    expect(screen.getByText(/edited/)).toBeInTheDocument()
+    expect(screen.getByText('edited')).toBeInTheDocument()
   })
 })
 

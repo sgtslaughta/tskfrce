@@ -46,6 +46,7 @@ export function MessageActions({
   return (
     <div
       className="msg-act"
+      data-mine={mine}
       data-pressed={pressed}
       onTouchStart={press}
       onTouchEnd={release}
@@ -56,7 +57,7 @@ export function MessageActions({
       }}
     >
       {children}
-      <Menu position="bottom-end" withinPortal onClose={() => setPressed(false)}>
+      <Menu position="bottom-end" withinPortal returnFocus={false} trapFocus={false} closeOnItemClick onClose={() => setPressed(false)}>
         <Menu.Target>
           <button type="button" className="msg-act-btn" aria-label="Message actions">
             <Icon name="more_horiz" size={18} />
@@ -103,7 +104,11 @@ export function EditBox({ m, kid, onDone }: { m: ChatMessage; kid: boolean; onDo
   const ref = useRef<HTMLTextAreaElement>(null)
   // the menu hands focus back to its button as it closes; take it back after
   useEffect(() => {
-    const t = setTimeout(() => ref.current?.focus(), 0)
+    const t = setTimeout(() => {
+      const el = ref.current
+      el?.focus()
+      el?.setSelectionRange(el.value.length, el.value.length)
+    }, 50)
     return () => clearTimeout(t)
   }, [])
   const save = () => {

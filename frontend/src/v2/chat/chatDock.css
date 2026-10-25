@@ -49,6 +49,7 @@
 
 /* message actions: shown on hover, focus-within, or long-press */
 .msg-act { position: relative; display: flex; flex-direction: column; gap: 4px; }
-.msg-act-btn { position: absolute; top: 2px; right: 2px; opacity: 0; border: 0; border-radius: 999px; padding: 0 2px; cursor: pointer; background: rgba(128, 128, 128, 0.25); color: inherit; line-height: 1; }
+.msg-act-btn { position: absolute; top: 50%; transform: translateY(-50%); right: calc(100% + 8px); width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; opacity: 0; border: 0; border-radius: 999px; padding: 0; cursor: pointer; background: rgba(128, 128, 128, 0.25); color: var(--p-ink, inherit); line-height: 1; }
+.msg-act[data-mine='false'] .msg-act-btn { right: auto; left: calc(100% + 8px); }
 .msg-act:hover .msg-act-btn, .msg-act:focus-within .msg-act-btn, .msg-act[data-pressed='true'] .msg-act-btn, .msg-act-btn[aria-expanded='true'] { opacity: 1; }
 .msg-edit { width: 100%; min-width: 220px; resize: none; font: inherit; padding: 6px; border-radius: 8px; border: 1.5px solid currentColor; background: transparent; color: inherit; }

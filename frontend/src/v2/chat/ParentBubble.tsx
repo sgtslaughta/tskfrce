@@ -39,7 +39,12 @@ export function ParentBubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
       <MessageActions m={m} mine={mine} kid={false} onEdit={() => setEditing(true)}>
         <small>
           {mine ? 'You' : (m.author_name ?? 'Someone')} · {timeLabel(m.created_at)}
-          {m.edited_at && ' · edited'}
+          {m.edited_at && (
+            <>
+              {' · '}
+              <span>edited</span>
+            </>
+          )}
         </small>
         {m.photo_url && <Photo url={m.photo_url} className="pc-photo" />}
         {editing ? <EditBox m={m} kid={false} onDone={() => setEditing(false)} /> : m.body}

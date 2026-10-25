@@ -66,7 +66,12 @@ function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
       </div>
       <span style={{ fontSize: '0.85rem', color: 'var(--p-sub)', alignSelf: mine ? 'flex-end' : 'flex-start' }}>
         {timeLabel(m.created_at)}
-        {m.edited_at && ' · edited'}
+        {m.edited_at && (
+          <>
+            {' · '}
+            <span>edited</span>
+          </>
+        )}
       </span>
     </div>
   )
