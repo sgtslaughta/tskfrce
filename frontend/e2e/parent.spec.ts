@@ -28,8 +28,10 @@ test.describe('parent journeys', () => {
 
   test('create a race chore with steps, duplicate it, edit it', async ({ page }) => {
     const api = await parentApi()
-    const a = await makeKid(api, 'Race A')
-    const b = await makeKid(api, 'Race B')
+    // unique names: a run killed mid-test leaves its kids behind
+    const tag = Date.now().toString(36).slice(-4)
+    const a = await makeKid(api, `Race A ${tag}`)
+    const b = await makeKid(api, `Race B ${tag}`)
     try {
       await page.goto('/kids?section=chores')
       await page.getByRole('button', { name: 'New chore' }).click()
@@ -44,8 +46,8 @@ test.describe('parent journeys', () => {
 
       // saving a new chore opens it; assign it to both kids as a race
       const who = page.getByRole('region', { name: 'Who and when' })
-      await who.getByRole('button', { name: 'Race A' }).click()
-      await who.getByRole('button', { name: 'Race B' }).click()
+      await who.getByRole('button', { name: `Race A ${tag}` }).click()
+      await who.getByRole('button', { name: `Race B ${tag}` }).click()
       await who.getByText('First one wins', { exact: true }).click()
       await who.getByRole('button', { name: 'Save', exact: true }).click()
       const card = page.getByRole('button', { name: /^E2E race/ }).first()
