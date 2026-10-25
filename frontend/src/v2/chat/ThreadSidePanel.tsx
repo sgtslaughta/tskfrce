@@ -33,8 +33,16 @@ const Kv = ({ k, children }: { k: string; children: React.ReactNode }) => (
   </div>
 )
 
+/** Thin meter (Today's bar style) with an accessible name. */
+const Bar = ({ label, value, max }: { label: string; value: number; max: number }) => (
+  <div className="pt-bar pc-bar" role="progressbar" aria-label={label} aria-valuenow={value} aria-valuemin={0} aria-valuemax={max}>
+    <i style={{ width: `${max > 0 ? Math.min(100, (value / max) * 100) : 0}%` }} />
+  </div>
+)
+
 function KidCard({ kid }: { kid: TodayKid }) {
   const online = kid.devices.filter((d) => d.online).length
+  const p = kid.progress
   return (
     <div className="pc-card">
       <div className="pc-kid">
@@ -45,6 +53,13 @@ function KidCard({ kid }: { kid: TodayKid }) {
         </span>
       </div>
       <Kv k="Chores today">{kid.done ?? 0} / {kid.total ?? 0}</Kv>
+      <Bar label={`${kid.name ?? 'Kid'} chores today`} value={kid.done ?? 0} max={kid.total ?? 0} />
+      {p && p.next > p.floor && (
+        <>
+          <Kv k={`To level ${p.level + 1}`}>{p.xp - p.floor} / {p.next - p.floor} XP</Kv>
+          <Bar label={`${kid.name ?? 'Kid'} level progress`} value={p.xp - p.floor} max={p.next - p.floor} />
+        </>
+      )}
       <Kv k="Devices online">{online} / {kid.devices.length}</Kv>
       <KidFacts kid={kid} />
       <div className="pc-links">
@@ -97,6 +112,7 @@ export function ThreadSidePanel({ run, kidIds }: { run?: RunDetail; kidIds: numb
             <Icon name="checklist" size={18} />
             Steps · {run.steps.filter((s) => s.done).length} of {run.steps.length}
           </h3>
+          <Bar label="Steps done" value={run.steps.filter((s) => s.done).length} max={run.steps.length} />
           {run.steps.map((s) => (
             <div key={s.id} className="pc-kv">
               <span>
