@@ -66,3 +66,12 @@
 [data-look='parent'] .f-sheet-head.f-sheet-head { background: var(--p-card); color: var(--p-ink); }
 [data-look='parent'] .f-sheet-head.f-sheet-head { border-bottom: 1px solid var(--p-line); }
 [data-look='parent'] .f-sheet-title.f-sheet-title { font-family: inherit; text-transform: none; letter-spacing: 0; }
+
+/* disabled: quiet grey, not Mantine's navy disabled fill */
+[data-look='parent'] .f-btn.f-btn:is(:disabled, [data-disabled]) {
+  background: var(--p-soft);
+  border-color: var(--p-line);
+  color: var(--p-sub);
+  opacity: 0.7;
+  cursor: not-allowed;
+}

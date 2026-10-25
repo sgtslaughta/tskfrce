@@ -1,10 +1,10 @@
 /* Kids & chores: sidebar layout, chore rows */
-.m-wrap { display: grid; grid-template-columns: 1fr; gap: 0; align-items: start; }
+.m-wrap { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; align-items: start; }
 .m-main { display: grid; gap: 16px; min-width: 0; padding-top: 12px; }
 .m-form { display: grid; gap: 12px; }
 .m-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .m-actions .m-push { margin-left: auto; }
-@media (max-width: 767px) { .m-wrap { grid-template-columns: 1fr; } }
+@media (max-width: 767px) { .m-wrap { grid-template-columns: minmax(0, 1fr); } }
 
 /* Sidebar - scoped by data-look */
 .m-side { border-radius: 0; padding: 0; margin: 0 0 16px 0; }

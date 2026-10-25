@@ -38,6 +38,18 @@ test.describe('every screen', () => {
       fullPage: true,
     })
     expect(wide, `${route} scrolls sideways`).toBe(false)
+    // clipped overflow does not scroll, so also look for controls cut off at the right edge
+    const cut = await page.evaluate((w) => {
+      const scroller = (el: Element | null): boolean =>
+        !!el && (['auto', 'scroll'].includes(getComputedStyle(el).overflowX) || scroller(el.parentElement))
+      return Array.from(document.querySelectorAll('input, button, select, textarea'))
+        .filter((el) => {
+          const r = el.getBoundingClientRect()
+          return r.width > 0 && r.height > 0 && r.right > w + 1 && !scroller(el.parentElement)
+        })
+        .map((el) => (el.getAttribute('aria-label') || el.textContent || el.tagName).trim().slice(0, 40))
+    }, page.viewportSize()!.width)
+    expect(cut, `${route} controls cut off at the right edge`).toEqual([])
     expect(errors, `${route} console errors`).toEqual([])
   }
 
