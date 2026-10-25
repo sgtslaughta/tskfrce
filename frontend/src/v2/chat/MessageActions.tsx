@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button, Menu, Modal, Text } from '@mantine/core'
+import { Button, Modal, Text } from '@mantine/core'
 import { Icon } from '@/v2/parent/Icon'
 import { ConfirmDelete } from '@/v2/manage/ConfirmDelete'
 import { useDeleteMessage, useEditMessage, type ChatMessage } from '@/v2/hooks/useChat'
@@ -14,7 +14,7 @@ export function allowed(m: ChatMessage, mine: boolean, kid: boolean) {
   return { edit: mine && fresh, del: (mine && fresh) || !kid }
 }
 
-/** Hover / focus / long-press wrapper with a "..." menu: Edit and Delete. */
+/** Hover / focus / long-press wrapper showing Edit (pencil) and Delete (trash) buttons. */
 export function MessageActions({
   m,
   mine,
@@ -57,22 +57,18 @@ export function MessageActions({
       }}
     >
       {children}
-      {/* above the chat dock (z-index 301) */}
-      <Menu position="bottom-end" withinPortal zIndex={400} returnFocus={false} trapFocus={false} closeOnItemClick onClose={() => setPressed(false)}>
-        <Menu.Target>
-          <button type="button" className="msg-act-btn" aria-label="Message actions">
-            <Icon name="more_horiz" size={18} />
+      <span className="msg-act-tools">
+        {can.edit && (
+          <button type="button" className="msg-act-btn" aria-label="Edit message" title="Edit" onClick={() => (setPressed(false), onEdit())}>
+            <Icon name="edit" size={16} />
           </button>
-        </Menu.Target>
-        <Menu.Dropdown>
-          {can.edit && <Menu.Item onClick={onEdit}>Edit</Menu.Item>}
-          {can.del && (
-            <Menu.Item color="red" onClick={() => setAsking(true)}>
-              Delete
-            </Menu.Item>
-          )}
-        </Menu.Dropdown>
-      </Menu>
+        )}
+        {can.del && (
+          <button type="button" className="msg-act-btn" data-danger aria-label="Delete message" title="Delete" onClick={() => (setPressed(false), setAsking(true))}>
+            <Icon name="delete" size={16} />
+          </button>
+        )}
+      </span>
       {kid ? (
         <Modal opened={asking} onClose={() => setAsking(false)} title="Delete this message?" centered zIndex={400}>
           <Text mb="md">{body}</Text>

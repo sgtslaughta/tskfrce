@@ -25,7 +25,6 @@ const wrap = (m: ChatMessage, mine: boolean) =>
       </MantineProvider>
     </QueryClientProvider>,
   )
-const open = () => userEvent.click(screen.getByRole('button', { name: 'Message actions' }))
 
 beforeEach(() => {
   apiMock.mockReset()
@@ -35,27 +34,24 @@ beforeEach(() => {
 describe('message actions', () => {
   test('own message: Edit and Delete', async () => {
     wrap(msg(), true)
-    await open()
-    expect(await screen.findByRole('menuitem', { name: 'Edit' })).toBeInTheDocument()
-    expect(await screen.findByRole('menuitem', { name: 'Delete', hidden: true })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit message' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Delete message' })).toBeInTheDocument()
   })
 
   test("parent sees only Delete on someone else's message", async () => {
     wrap(msg({ author_id: 2 }), false)
-    await open()
-    expect(await screen.findByRole('menuitem', { name: 'Delete' })).toBeInTheDocument()
-    expect(screen.queryByRole('menuitem', { name: 'Edit' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Delete message' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull()
   })
 
   test('system messages have no actions', () => {
     wrap(msg({ kind: 'system', author_id: null }), false)
-    expect(screen.queryByRole('button', { name: 'Message actions' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /message$/ })).toBeNull()
   })
 
   test('edit saves with PATCH on Enter; label shows when edited', async () => {
     wrap(msg(), true)
-    await open()
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Edit' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Edit message' }))
     const box = screen.getByRole('textbox', { name: 'Edit message' })
     await userEvent.clear(box)
     await userEvent.type(box, 'new text{Enter}')
@@ -67,8 +63,7 @@ describe('message actions', () => {
 
   test('Esc cancels without saving', async () => {
     wrap(msg(), true)
-    await open()
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Edit' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Edit message' }))
     fireEvent.change(screen.getByRole('textbox', { name: 'Edit message' }), { target: { value: 'zzz' } })
     fireEvent.keyDown(screen.getByRole('textbox', { name: 'Edit message' }), { key: 'Escape' })
     expect(screen.queryByRole('textbox', { name: 'Edit message' })).toBeNull()
@@ -78,8 +73,7 @@ describe('message actions', () => {
 
   test('delete asks first, then calls DELETE', async () => {
     wrap(msg(), true)
-    await open()
-    await userEvent.click(await screen.findByRole('menuitem', { name: 'Delete' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Delete message' }))
     expect(apiMock).not.toHaveBeenCalled()
     await userEvent.click(await screen.findByRole('button', { name: 'Delete' }))
     await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/chat/messages/5', expect.objectContaining({ method: 'DELETE' })))
@@ -105,7 +99,7 @@ describe('kid rules', () => {
 
   test('kid: own fresh message has actions; old or others have none', () => {
     kidBubble(msg(), true)
-    expect(screen.getByRole('button', { name: 'Message actions' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Edit message' })).toBeInTheDocument()
   })
   test('kid: nothing after 5 minutes or on others', () => {
     expect(allowed(msg({ created_at: new Date(Date.now() - 6 * 60_000).toISOString() }), true, true)).toEqual({ edit: false, del: false })
