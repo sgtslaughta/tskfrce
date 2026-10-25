@@ -82,6 +82,7 @@ def run_detail(run_id: int, db: Session = Depends(get_db), _: User = Depends(req
         "title": chore.title,
         "points": chore.points or 0,
         "state": svc.state(r),
+        "can_move": svc.can_move(r, svc.tomorrow(db)),
         "due_time": r.assignment.due_time,
         "kid_ids": svc.run_kid_ids(r),
         "steps": svc.steps_out(r, fam),
@@ -133,6 +134,11 @@ def mark_not_done(run_id: int, db: Session = Depends(get_db), _: User = Depends(
     r = db.get(ChoreRun, run_id)
     if r is None:
         raise HTTPException(404, "That chore doesn't exist.")
+    if r.status == "skipped":
+        r.status = "todo"
+        chat.system(db, r, "Back on today's list")
+        db.commit()
+        return svc.chore_out(r, get_family(db))
     if r.status != "done":
         raise HTTPException(409, "This chore isn't done.")
     # ponytail: spent points can leave the balance below 0; badges already earned stay
@@ -142,6 +148,40 @@ def mark_not_done(run_id: int, db: Session = Depends(get_db), _: User = Depends(
     r.approved_at = r.completed_at = r.approved_by_id = None
     r.submitted_at = r.submitted_by_id = None
     chat.system(db, r, "Marked not done")
+    db.commit()
+    return svc.chore_out(r, get_family(db))
+
+
+@router.post("/{run_id}/move")
+def move(run_id: int, db: Session = Depends(get_db), _: User = Depends(require_parent)):
+    """Push a to-do chore to tomorrow's list (once per assignment per day)."""
+    r = db.get(ChoreRun, run_id)
+    if r is None:
+        raise HTTPException(404, "That chore doesn't exist.")
+    if r.status != "todo":
+        raise HTTPException(409, "Only a chore that's still to do can move.")
+    tmrw = svc.tomorrow(db)
+    if not svc.can_move(r, tmrw):
+        raise HTTPException(409, "It's already on tomorrow's list. Try Skip today.")
+    r.day = tmrw
+    r.ticks.clear()
+    svc.clear_note(r)
+    chat.system(db, r, "Moved to tomorrow")
+    db.commit()
+    return svc.chore_out(r, get_family(db))
+
+
+@router.post("/{run_id}/skip")
+def skip(run_id: int, db: Session = Depends(get_db), _: User = Depends(require_parent)):
+    """Skip today's chore with no penalty: it drops out of counts, locks and streaks."""
+    r = db.get(ChoreRun, run_id)
+    if r is None:
+        raise HTTPException(404, "That chore doesn't exist.")
+    if r.status not in ("todo", "submitted"):
+        raise HTTPException(409, "Only a chore that's to do or waiting can be skipped.")
+    r.status = "skipped"
+    svc.clear_note(r)
+    chat.system(db, r, "Skipped today (no penalty)")
     db.commit()
     return svc.chore_out(r, get_family(db))
 

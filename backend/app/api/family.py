@@ -1,6 +1,6 @@
 """Parent API: family settings and the /today home screen."""
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -130,7 +130,7 @@ def _needs_you(
     return sorted(items, key=lambda x: x["submitted_at"] or "")
 
 
-def _chore_out(r: ChoreRun, names: dict[int, str], fam, notes: dict) -> dict:
+def _chore_out(r: ChoreRun, names: dict[int, str], fam, notes: dict, tmrw: date) -> dict:
     c, st, mode = svc.chore_of(r), svc.state(r), svc.mode_of(r)
     steps = svc.steps_out(r, fam)
     taken = mode == "race" and st != "todo" and r.submitted_by_id
@@ -150,6 +150,7 @@ def _chore_out(r: ChoreRun, names: dict[int, str], fam, notes: dict) -> dict:
         "last_note": r.last_note,
         "note": svc.note_out(r, notes),
         "taken_by": names.get(r.submitted_by_id) if taken else None,
+        "can_move": svc.can_move(r, tmrw),
     }
 
 
@@ -169,7 +170,13 @@ def _locks_at(pre: Prefetch, kid_id: int, now_local: datetime) -> str | None:
 def today(db: Session = Depends(get_db)):
     fam, now = get_family(db), datetime.now(UTC)
     day = svc.today(db, now)
-    tasks = svc.with_detail(svc.day_runs(db, day), photos=False).order_by(ChoreRun.id).all()
+    tmrw = day + timedelta(days=1)
+    shown = (
+        svc.with_detail(svc.day_runs(db, day, skipped=True), photos=False)
+        .order_by(ChoreRun.id)
+        .all()
+    )
+    tasks = [t for t in shown if t.status != "skipped"]  # skipped: listed, never counted
     kid_rows = db.query(User).filter(User.role == UserRole.KID).order_by(User.id).all()
     devices = (
         db.query(Device)
@@ -178,6 +185,7 @@ def today(db: Session = Depends(get_db)):
         .all()
     )
     mine_by = {k.id: [t for t in tasks if k.id in svc.run_kid_ids(t)] for k in kid_rows}
+    shown_by = {k.id: [t for t in shown if k.id in svc.run_kid_ids(t)] for k in kid_rows}
     counts = {i: (sum(svc.state(t) == "done" for t in m), len(m)) for i, m in mine_by.items()}
     kid_devs = {k.id: [d for d in devices if k in d.owners] for k in kid_rows}
     new = [d for d in devices if d.status == "unassigned"]
@@ -185,7 +193,7 @@ def today(db: Session = Depends(get_db)):
     balances: dict = {}
     prog = progression.progress_many(db, kid_rows, fam, balances)
     names = {k.id: k.full_name for k in kid_rows}
-    notes = svc.note_texts(db, tasks)
+    notes = svc.note_texts(db, shown)
     needs = _needs_you(db, tasks, names, fam, balances)
     prices = sorted(p for (p,) in db.query(Reward.price).filter(Reward.active.is_(True)))
     now_local = local_now(fam.timezone, now)
@@ -208,7 +216,7 @@ def today(db: Session = Depends(get_db)):
                 "points": balances.get(k.id, 0),
                 "next_reward": _next_reward(prices, balances.get(k.id, 0)),
                 "locks_at": _locks_at(pre, k.id, now_local),
-                "chores": [_chore_out(t, names, fam, notes) for t in mine],
+                "chores": [_chore_out(t, names, fam, notes, tmrw) for t in shown_by[k.id]],
                 "devices": [
                     {"id": d["id"], "name": d["name"], "vendor": d["vendor"], "online": d["online"]}
                     for d in devs

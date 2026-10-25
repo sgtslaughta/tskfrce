@@ -4,7 +4,7 @@ A run is one day's work for one kid (or one shared race/team run). It holds only
 status and history; title, points, steps and photo rule are read from its chore.
 """
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 
 from fastapi import HTTPException
 from sqlalchemy import or_, select
@@ -55,14 +55,25 @@ def chore_of(run: ChoreRun) -> Chore:
 
 
 def state(run: ChoreRun) -> str:
-    """done (parent-approved) | needs_you (submitted) | todo."""
+    """done (parent-approved) | needs_you (submitted) | skipped | todo."""
     if (
         run.status == "done"
         and run.approved_by is not None
         and run.approved_by.role == UserRole.PARENT
     ):
         return "done"
+    if run.status == "skipped":
+        return "skipped"
     return "needs_you" if run.status == "submitted" else "todo"
+
+
+def tomorrow(db: Session) -> date:
+    return today(db) + timedelta(days=1)
+
+
+def can_move(run: ChoreRun, tmrw: date) -> bool:
+    """A to-do run can move to tomorrow unless its assignment already occurs then."""
+    return run.status == "todo" and not occurs_on(run.assignment, tmrw)
 
 
 def day_runs(db: Session, day: date, skipped: bool = False):
