@@ -4,14 +4,19 @@ import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api } from '@/v2/api'
 import { useLook } from '@/v2/parent/useLook'
 import { Icon } from '@/v2/parent/Icon'
+import { ErrorPanel } from '@/v2/parent/states'
 import { AuthBrand } from '@/v2/components/AuthBrand'
 
 /** Username and expiry from the invite token (JWT `sub`, `exp`); display only, the server checks them itself. */
-function readInvite(token: string | undefined): { name: string; hoursLeft: number } | null {
+function readInvite(token: string | undefined): { name: string; hoursLeft: number; expired: boolean } | null {
   try {
     const part = (token ?? '').split('.')[1].replace(/-/g, '+').replace(/_/g, '/')
     const { sub, exp } = JSON.parse(atob(part))
-    return { name: String(sub), hoursLeft: Math.max(0, Math.round((exp * 1000 - Date.now()) / 3_600_000)) }
+    return {
+      name: String(sub),
+      hoursLeft: Math.max(0, Math.round((exp * 1000 - Date.now()) / 3_600_000)),
+      expired: exp * 1000 <= Date.now(),
+    }
   } catch {
     return null
   }
@@ -64,7 +69,11 @@ export function RegisterForm({ token }: { token: string | undefined }) {
     <main className="p-auth-container">
       <AuthBrand />
       <div className="p-auth-form-side">
-        {token ? (
+        {token && (!invite || invite.expired) ? (
+          <div className="p-auth-form">
+            <ErrorPanel kind="expired" />
+          </div>
+        ) : token ? (
           <form className="p-auth-form" onSubmit={submit}>
             <h1>Join the family</h1>
             {invite && (
