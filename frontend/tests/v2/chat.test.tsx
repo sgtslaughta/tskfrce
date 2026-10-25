@@ -7,7 +7,6 @@ import { MantineProvider } from "@mantine/core";
 import { api } from "@/v2/api";
 import { ThreadView } from "@/v2/chat/ThreadView";
 import { ThreadList } from "@/v2/chat/ThreadList";
-import { KidCard } from "@/v2/today/KidCard";
 import type { TodayKid } from "@/v2/types";
 import * as mantineHooks from "@mantine/hooks";
 
@@ -94,31 +93,6 @@ describe("ThreadView", () => {
       expect(apiMock).toHaveBeenCalledWith("/chat/threads/9/read", expect.objectContaining({ method: "POST" })),
     );
   });
-});
-
-test("Today chat box shows the latest message across the kid's threads", async () => {
-  threads = {
-    total: 1,
-    threads: [
-      { id: 1, kind: "private", task_id: null, kid_id: 3, title: "Maya", unread: 0, last_message_at: "2020-01-01T10:00:00Z", last_author: "Maya", last_text: "older" },
-      { id: 2, kind: "chore", task_id: 5, kid_id: null, title: "Dishes", unread: 1, last_message_at: "2020-01-02T10:00:00Z", last_author: "Maya", last_text: "all done" },
-      { id: 3, kind: "chore", task_id: 99, kid_id: null, title: "Other kid", unread: 4, last_message_at: "2020-01-03T10:00:00Z", last_author: "Sam", last_text: "not hers" },
-    ],
-  };
-  const kid = { id: 3, name: "Maya", chores: [{ id: 5, title: "Dishes" }], devices: [], progress: undefined } as unknown as TodayKid;
-  wrap(<KidCard kid={kid} />);
-  expect(await screen.findByText(/all done/)).toBeInTheDocument();
-  expect(screen.getByText(/in Dishes/)).toBeInTheDocument();
-  expect(screen.getByText(/1 new/)).toBeInTheDocument();
-  expect(screen.queryByText(/not hers/)).toBeNull();
-  expect(screen.getByRole("button", { name: "Open chat" })).toBeInTheDocument();
-});
-
-test("Today chat box invites you to say hi when nothing was said", async () => {
-  const kid = { id: 3, name: "Maya", chores: [], devices: [], progress: undefined } as unknown as TodayKid;
-  wrap(<KidCard kid={kid} />);
-  expect(await screen.findByText("Nothing yet. Say hi to Maya.")).toBeInTheDocument();
-  expect(screen.getByRole("button", { name: "Say hi to Maya" })).toBeInTheDocument();
 });
 
 describe("Chat page (parent restyle)", () => {

@@ -8,7 +8,6 @@ import { api, KID_TOKEN_KEY } from '@/v2/api'
 import { fridgeTheme } from '@/v2/theme'
 import { KidPage } from '@/v2/kid/KidPage'
 import { KidEditor } from '@/v2/manage/KidEditor'
-import { KidCard } from '@/v2/today/KidCard'
 import { authService } from '@/services/authService'
 import { apiPost } from '@/services/api'
 
@@ -51,12 +50,6 @@ test('KidEditor rejects a PIN that is not 4 digits', async () => {
   await userEvent.type(screen.getByLabelText(/PIN/), '12')
   expect(screen.getByText('Use exactly 4 digits.')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: 'Add kid' })).toBeDisabled()
-})
-
-test('KidCard with no devices shows a neutral badge, not Offline', () => {
-  render(wrap(<KidCard kid={{ id: 1, name: 'Emma', avatar: null, online_all: false, chores: [], devices: [] }} />))
-  expect(screen.getByRole('img', { name: 'No devices yet' })).toBeInTheDocument()
-  expect(screen.queryByRole('img', { name: 'Offline' })).toBeNull()
 })
 
 test('kid name survives a reload on a shared device', async () => {

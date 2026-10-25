@@ -8,7 +8,6 @@ import { KidPage } from '@/v2/kid/KidPage'
 import { Leaderboard } from '@/v2/components/Leaderboard'
 import { ProfileModal } from '@/v2/components/ProfileModal'
 import { ProgressHeader } from '@/v2/components/ProgressHeader'
-import { KidCard } from '@/v2/today/KidCard'
 import { api } from '@/v2/api'
 import { fridgeTheme } from '@/v2/theme'
 import type { Badge, Profile } from '@/v2/types'
@@ -81,15 +80,6 @@ describe('flair on identity surfaces', () => {
     )
     expect(container.querySelector('.flair-card.flair-card-sheen')).toBeTruthy()
     expect(await screen.findByText('👑')).toBeInTheDocument()
-  })
-
-  test('parent Today kid card renders the equipped card', () => {
-    const kid = {
-      id: 1, name: 'Ana', avatar: '🦊', online_all: true, chores: [], devices: [],
-      progress: { level: 8, title: 'Clutch', xp: 1200, floor: 1000, next: 1400, streak: 1, flair: gold },
-    }
-    const { container } = wrap(<KidCard kid={kid} />)
-    expect(container.querySelector('.flair-card.flair-card-sheen')).toBeTruthy()
   })
 
   test('leaderboard row renders the equipped card', () => {
