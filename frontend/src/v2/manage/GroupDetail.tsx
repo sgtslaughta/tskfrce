@@ -141,7 +141,7 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
               <Icon name="schedule" size={18} />
               Hours for {group.name}
             </h3>
-            <HoursTimeline windows={windows} kids={kids} groups={groups ?? []} />
+            <HoursTimeline windows={windows.filter((w) => w.group_id === group.id)} kids={kids} groups={groups ?? []} />
           </section>
         )}
       </div>
