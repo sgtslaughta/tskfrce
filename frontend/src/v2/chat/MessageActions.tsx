@@ -17,7 +17,7 @@ export function allowed(m: ChatMessage, mine: boolean, kid: boolean) {
 
 /**
  * Hover / focus / long-press wrapper: a Teams-style pill on the bubble's top edge with
- * React, Edit and Delete (the last two only when allowed). Upper-right for mine, upper-left for others.
+ * React, Edit and Delete (the last two only when allowed), at the upper right.
  */
 export function MessageActions({
   m,
@@ -36,6 +36,7 @@ export function MessageActions({
   const [asking, setAsking] = useState(false)
   const [pressed, setPressed] = useState(false)
   const [reacting, setReacting] = useState(false)
+  const [low, setLow] = useState(false)
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined)
   const can = allowed(m, mine, kid)
   if (m.kind !== 'user') return <>{children}</>
@@ -44,6 +45,11 @@ export function MessageActions({
     timer.current = setTimeout(() => setPressed(true), 500)
   }
   const release = () => clearTimeout(timer.current)
+  // the pill sits above the bubble; if the chat column would clip it, put it on the bottom edge
+  const place = (el: HTMLElement) => {
+    const top = el.closest('[data-chat-scroll]')?.getBoundingClientRect().top ?? 0
+    setLow(el.getBoundingClientRect().top - 40 < top)
+  }
   const remove = () =>
     del.mutate(m.id, { onSuccess: () => toastOk('Deleted'), onError: toastFail })
   const body = 'This message will be gone for everyone.'
@@ -54,7 +60,10 @@ export function MessageActions({
       data-mine={mine}
       data-pressed={pressed}
       data-open={reacting}
-      onTouchStart={press}
+      data-low={low}
+      onMouseEnter={(e) => place(e.currentTarget)}
+      onFocus={(e) => place(e.currentTarget)}
+      onTouchStart={(e) => (place(e.currentTarget), press())}
       onTouchEnd={release}
       onTouchMove={release}
       onTouchCancel={release}
@@ -65,7 +74,7 @@ export function MessageActions({
       onKeyDown={(e) => e.key === 'Escape' && !e.currentTarget.contains(e.target as Node) && e.stopPropagation()}
     >
       {children}
-      <span className="msg-act-tools" role="toolbar" aria-label="Message actions">
+      <span className="msg-act-tools">
         <ReactBar m={m} kid={kid} onOpen={setReacting} />
         {can.edit && (
           <button type="button" className="msg-act-btn" aria-label="Edit message" title="Edit" onClick={() => (setPressed(false), onEdit())}>

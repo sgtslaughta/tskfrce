@@ -47,9 +47,9 @@
 }
 .f-dock-who { font-size: 13px; font-weight: 500; opacity: 0.7; }
 
-/* message actions: a pill on the bubble's top edge (Teams-style), shown on hover, focus-within,
-   long-press, or while a reaction menu is open. Mine anchor upper-right, others upper-left so the
-   expanded quick row grows into the column instead of off its edge. --msg-pad-* = bubble padding. */
+/* message actions: a pill on the bubble's upper-right edge (Teams-style), shown on hover,
+   focus-within, long-press, or while a reaction menu is open; data-low moves it to the bottom
+   edge when the column would clip it. --msg-pad-* = bubble padding. */
 .msg-act { position: relative; display: flex; flex-direction: column; gap: 4px; }
 .pc-msg .msg-act { --msg-pad-y: 8px; --msg-pad-x: 12px; }
 .msg-act-tools {
@@ -58,10 +58,14 @@
   background: var(--p-card, #fff); border: 1px solid var(--p-line, rgba(128,128,128,.3)); box-shadow: 0 2px 8px rgba(0,0,0,.14);
   opacity: 0; pointer-events: none; transition: opacity 120ms; white-space: nowrap;
 }
-.msg-act[data-mine='false'] .msg-act-tools { right: auto; left: calc(8px - var(--msg-pad-x, 0px)); }
-.msg-act[data-mine='false'] .msg-react-bar { flex-direction: row-reverse; }
+.msg-act[data-low='true'] .msg-act-tools { top: auto; bottom: calc(-20px - var(--msg-pad-y, 0px)); }
 .msg-act:hover .msg-act-tools, .msg-act:focus-within .msg-act-tools, .msg-act[data-pressed='true'] .msg-act-tools, .msg-act[data-open='true'] .msg-act-tools { opacity: 1; pointer-events: auto; }
-.msg-react-bar, .msg-quick { display: flex; align-items: center; gap: 2px; }
+.msg-react-bar { position: relative; display: flex; }
+/* quick row: below the React button, growing left over the bubble (nudged right in JS if needed) */
+.msg-quick {
+  position: absolute; top: calc(100% + 6px); right: 0; display: flex; align-items: center; gap: 2px; padding: 2px;
+  border-radius: 999px; background: var(--p-card, #fff); border: 1px solid var(--p-line, rgba(128,128,128,.3)); box-shadow: 0 2px 8px rgba(0,0,0,.14);
+}
 .msg-act-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; padding: 0; cursor: pointer; background: transparent; color: var(--p-ink, inherit); line-height: 1; }
 .msg-act-btn:hover, .msg-act-btn[aria-expanded='true'] { background: var(--p-soft, rgba(128,128,128,.18)); }
 .msg-act-btn:focus-visible { outline: 2px solid var(--p-ink, currentColor); outline-offset: -2px; }

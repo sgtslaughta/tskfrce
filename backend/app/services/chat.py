@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from sqlalchemy import func, or_
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.chat import ChatPhoto, MessageReaction, Thread, ThreadMessage, ThreadRead
@@ -297,16 +298,33 @@ def purge_kid(db: Session, kid_id: int) -> None:
     db.query(ChatPhoto).filter(ChatPhoto.uploaded_by_id == kid_id).update({"uploaded_by_id": None})
 
 
-def toggle_reaction(db: Session, m: ThreadMessage, user: User, emoji: str) -> None:
-    """Add `user`'s `emoji` to `m`, or take it off if already there. Flushes, never commits."""
+MAX_REACTIONS = 10  # distinct emoji per user per message
+
+
+def toggle_reaction(db: Session, m: ThreadMessage, user: User, emoji: str) -> bool:
+    """Add `user`'s `emoji` to `m`, or take it off if already there. False = at the cap.
+    Flushes, never commits."""
     q = db.query(MessageReaction).filter_by(message_id=m.id, user_id=user.id, emoji=emoji)
-    if not q.delete():
-        db.add(MessageReaction(message_id=m.id, user_id=user.id, emoji=emoji))
-    db.flush()
+    if q.delete():
+        db.flush()
+        return True
+    if (
+        db.query(MessageReaction).filter_by(message_id=m.id, user_id=user.id).count()
+        >= MAX_REACTIONS
+    ):
+        return False
+    try:
+        with db.begin_nested():  # a double click can race us to the same row
+            db.add(MessageReaction(message_id=m.id, user_id=user.id, emoji=emoji))
+    except IntegrityError:
+        pass  # the other request added it: same outcome
+    return True
 
 
 def reactions(db: Session, message_ids: list[int], me: User) -> dict[int, list[dict]]:
     """{message id: [{emoji, count, mine, names}]} for a page of messages, in one query."""
+    if not message_ids:
+        return {}
     rows = (
         db.query(
             MessageReaction.message_id,

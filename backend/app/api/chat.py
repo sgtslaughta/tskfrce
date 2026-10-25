@@ -1,5 +1,6 @@
 """Chat: chore, private and family threads (polled by clients)."""
 
+import unicodedata
 import uuid
 from datetime import datetime, timedelta
 from typing import Annotated
@@ -233,8 +234,15 @@ class ReactionIn(BaseModel):
     @field_validator("emoji")
     @classmethod
     def _emoji_only(cls, v: str) -> str:
-        # ponytail: cheap guard against arbitrary text, not a full emoji grammar check
-        if any(c.isascii() and (c.isalnum() or c.isspace()) for c in v) or v.isspace():
+        # ponytail: cheap guard against arbitrary text, not a full emoji grammar check:
+        # no ASCII letters/digits/space, no letters of any script, no invisible format chars
+        if any(
+            (c.isascii() and (c.isalnum() or c.isspace()))
+            or c.isspace()
+            or (unicodedata.category(c) == "Cf" and c != "\u200d")  # ZWJ joins emoji
+            or unicodedata.category(c).startswith("L")
+            for c in v
+        ) or not any(not c.isascii() and unicodedata.category(c)[0] in "SP" for c in v):
             raise ValueError("Pick an emoji.")
         return v
 
@@ -253,7 +261,8 @@ def react(
         raise HTTPException(404, "We couldn't find that message.")
     if m.kind != "user":
         raise HTTPException(422, "You can't react to that.")
-    chat.toggle_reaction(db, m, user, body.emoji)
+    if not chat.toggle_reaction(db, m, user, body.emoji):
+        raise HTTPException(422, "That's enough reactions.")
     db.commit()
     return _msg(t, m, chat.reactions(db, [m.id], user))
 

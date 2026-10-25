@@ -122,12 +122,27 @@ export const usePost = (kid = false) => {
   })
 }
 
+const CHANGED = 'chat-message-changed'
+
+/** Edits, deletes and reactions announce the new message (null = gone) so pages loaded with
+ * "Load earlier" (outside the query cache) can update too. Returns the unsubscribe. */
+export function onMessageChanged(fn: (id: number, m: ChatMessage | null) => void) {
+  const h = (e: Event) => {
+    const d = (e as CustomEvent<{ id: number; m: ChatMessage | null }>).detail
+    fn(d.id, d.m)
+  }
+  window.addEventListener(CHANGED, h)
+  return () => window.removeEventListener(CHANGED, h)
+}
+const changed = (id: number, m: ChatMessage | null) =>
+  window.dispatchEvent(new CustomEvent(CHANGED, { detail: { id, m } }))
+
 export const useEditMessage = (kid = false) => {
   const refresh = useRefresh(kid)
   return useMutation({
     mutationFn: ({ id, body }: { id: number; body: string }) =>
       api<ChatMessage>(`/chat/messages/${Number(id)}`, { method: 'PATCH', body: { body }, kid }),
-    onSuccess: refresh,
+    onSuccess: (m, v) => (m && changed(v.id, m), refresh()),
   })
 }
 
@@ -135,7 +150,7 @@ export const useDeleteMessage = (kid = false) => {
   const refresh = useRefresh(kid)
   return useMutation({
     mutationFn: (id: number) => api(`/chat/messages/${Number(id)}`, { method: 'DELETE', kid }),
-    onSuccess: refresh,
+    onSuccess: (_, id) => (changed(id, null), refresh()),
   })
 }
 
@@ -145,7 +160,7 @@ export const useReact = (kid = false) => {
   return useMutation({
     mutationFn: ({ id, emoji }: { id: number; emoji: string }) =>
       api<ChatMessage>(`/chat/messages/${Number(id)}/reactions`, { method: 'POST', body: { emoji }, kid }),
-    onSuccess: refresh,
+    onSuccess: (m, v) => (m && changed(v.id, m), refresh()),
   })
 }
 

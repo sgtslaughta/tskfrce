@@ -50,7 +50,6 @@ LEGACY_TABLES = {
     "conversation_settings",
     "direct_messages",
     "direct_message_media",
-    # "message_reactions" is reused by v3 chat reactions (j3c4d5e6f7a8)
     "message_read_receipts",
     "task_chat_messages",
     "task_chat_message_media",
@@ -81,5 +80,8 @@ def test_legacy_tables_dropped(tmp_path):
     )
     insp = inspect(create_engine(url))
     assert not LEGACY_TABLES & set(insp.get_table_names())
+    # the legacy name is reused by v3 chat reactions, now pointing at thread_messages
+    fks = insp.get_foreign_keys("message_reactions")
+    assert {"thread_messages", "users"} == {f["referred_table"] for f in fks}
     assert "task_id" not in {c["name"] for c in insp.get_columns("chore_photos")}
     assert "task_id" not in {c["name"] for c in insp.get_columns("threads")}

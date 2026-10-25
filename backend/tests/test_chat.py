@@ -356,7 +356,7 @@ def test_reaction_rules(client, db, parent_headers):
     leo, maya, lh, mh, chore = _world(db, client, parent_headers)
     mid = _say(client, lh, _tid(client, lh, "private", leo.id)).json()["id"]
     assert _react(client, mh, mid).status_code == 404  # sibling can't see the thread
-    for bad in ["", "ok", "👍 ", "1", "👍" * 17]:
+    for bad in ["", "ok", "👍 ", "1", "👍" * 17, "é", "日", "\u200b👍", "\u202e👍", "\u200d", "!!"]:
         assert _react(client, lh, mid, bad).status_code == 422, bad
     sysm = ThreadMessage(thread_id=_tid(client, lh, "family", "family"), kind="system", body="x")
     db.add(sysm)
@@ -394,3 +394,17 @@ def test_reactions_load_in_one_query(client, db, parent_headers):
         mid = _say(client, lh, tid).json()["id"]
         _react(client, mh, mid)
     assert count() == 1
+
+
+def test_reaction_cap_and_chore_access(client, db, parent_headers):
+    leo, maya, lh, mh, chore = _world(db, client, parent_headers)
+    cid = chore("Dishes", [leo])
+    mid = _say(client, lh, _tid(client, lh, "chore", cid)).json()["id"]
+    assert _react(client, mh, mid).status_code == 404  # maya isn't on leo's chore
+    ten = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🎉", "🔥", "⭐", "🍕"]
+    for e in ten:
+        assert _react(client, lh, mid, e).status_code == 200
+    r = _react(client, lh, mid, "🧑‍🍳")
+    assert r.status_code == 422 and r.json()["detail"] == "That's enough reactions."
+    assert _react(client, lh, mid, "👍").status_code == 200  # removing still works at the cap
+    assert _react(client, parent_headers, mid, "🧑‍🍳").status_code == 200  # cap is per user

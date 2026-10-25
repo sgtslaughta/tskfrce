@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from "@jest/globals";
 import type { Mock } from "jest-mock";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MantineProvider } from "@mantine/core";
@@ -84,6 +84,24 @@ describe("ThreadView", () => {
     await waitFor(() => expect(apiMock).toHaveBeenCalledWith("/chat/threads/private/3?before=7", expect.anything()));
     expect(await screen.findByText("m1")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Load earlier" })).toBeNull();
+  });
+
+  test("reactions and deletes update messages loaded with Load earlier", async () => {
+    page.messages = [msg(7)];
+    page.has_more = true;
+    const base = apiMock.getMockImplementation()!;
+    apiMock.mockImplementation(async (p, init) =>
+      p === "/chat/messages/1/reactions" ? msg(1, { reactions: [{ emoji: "👍", count: 1, mine: true, names: ["Mom"] }] }) : base(p, init),
+    );
+    view();
+    await userEvent.click(await screen.findByRole("button", { name: "Load earlier" }));
+    const old = (await screen.findByText("m1")).closest(".pc-msg") as HTMLElement;
+    await userEvent.click(within(old).getByRole("button", { name: "Add reaction" }));
+    await userEvent.click(within(old).getByRole("button", { name: "React 👍" }));
+    expect(await screen.findByRole("button", { name: "👍 1: Mom" })).toBeInTheDocument();
+    await userEvent.click(within(old).getByRole("button", { name: "Delete message" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Delete" }));
+    await waitFor(() => expect(screen.queryByText("m1")).toBeNull());
   });
 
   test("opening marks the thread read", async () => {

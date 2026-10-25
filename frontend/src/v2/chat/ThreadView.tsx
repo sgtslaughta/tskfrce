@@ -6,6 +6,7 @@ import { GifPicker } from '@/v2/chat/GifPicker'
 import { Icon } from '@/v2/parent/Icon'
 import {
   fetchEarlier,
+  onMessageChanged,
   useMarkRead,
   usePost,
   useThread,
@@ -122,6 +123,7 @@ export function ThreadView({
   const lastId = latest.length ? latest[latest.length - 1].id : 0
   // the last bubble growing a chip row would otherwise push it below the fold
   const lastChips = !!latest[latest.length - 1]?.reactions?.length
+  const nearBottom = useRef(true)
   const messages = [...older.filter((o) => !latest.some((l) => l.id === o.id)), ...latest]
 
   // opening (and every new message while open) marks the thread read
@@ -131,7 +133,19 @@ export function ThreadView({
   }, [data?.id, lastId, mutate])
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ block: 'end' })
-  }, [lastId, lastChips])
+  }, [lastId])
+  useEffect(() => {
+    if (lastChips && nearBottom.current) endRef.current?.scrollIntoView?.({ block: 'end' })
+  }, [lastChips])
+  const onScroll = (e: React.UIEvent<HTMLElement>) => {
+    const el = e.currentTarget
+    nearBottom.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
+  }
+  // "Load earlier" pages live outside the query cache: patch them when a message changes
+  useEffect(
+    () => onMessageChanged((id, m) => setOlder((o) => (m ? o.map((x) => (x.id === id ? m : x)) : o.filter((x) => x.id !== id)))),
+    [],
+  )
 
   const loadEarlier = async () => {
     if (!messages.length) return
@@ -188,7 +202,7 @@ export function ThreadView({
           {thread.isError && !data && <ErrorPanel kind="unreachable" error={thread.error} onRetry={() => thread.refetch()} />}
           {thread.isError && data && <p className="pc-empty" role="alert">Can&apos;t reach your home box. Showing what we have.</p>}
           {thread.isPending && !thread.isError && <Skeleton rows={3} />}
-          <div className="pc-msgs">
+          <div className="pc-msgs" data-chat-scroll onScroll={onScroll}>
             {(hasMore ?? data?.has_more) && (
               <Button variant="default" size="xs" onClick={loadEarlier} style={{ alignSelf: 'center' }}>
                 Load earlier
@@ -268,7 +282,7 @@ export function ThreadView({
     <section aria-label={data?.title ?? 'Conversation'} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
       {thread.isError && <LoadError error={thread.error} onRetry={() => thread.refetch()} />}
       {thread.isPending && !thread.isError && <LoadingCards n={3} h={48} />}
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 2px', minHeight: 240 }}>
+      <div data-chat-scroll onScroll={onScroll} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 2px', minHeight: 240 }}>
         {(hasMore ?? data?.has_more) && (
           <Button variant="default" size="xs" onClick={loadEarlier} style={{ alignSelf: 'center' }}>
             Load earlier

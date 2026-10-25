@@ -87,12 +87,35 @@ describe('reaction toolbar', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Add reaction' }))
     await userEvent.click(screen.getByRole('button', { name: 'More reactions' }))
     const search = await screen.findByRole('textbox', { name: 'Search emoji' })
+    await waitFor(() => expect(search).toHaveFocus())
     expect(await screen.findByRole('button', { name: 'pizza' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'red apple' })).toBeInTheDocument()
     await userEvent.type(search, 'pizza')
     expect(screen.queryByRole('button', { name: 'red apple' })).toBeNull()
     await userEvent.click(screen.getByRole('button', { name: 'pizza' }))
     await posted('🍕')
+  })
+
+  test('keyboard: Tab goes from React into the quick row; a pick returns focus to React', async () => {
+    wrap(<ParentBubble m={msg()} mine />)
+    const react = screen.getByRole('button', { name: 'Add reaction' })
+    react.focus()
+    await userEvent.keyboard('{Enter}')
+    await userEvent.tab()
+    expect(screen.getByRole('button', { name: 'React 👍' })).toHaveFocus()
+    await userEvent.keyboard('{Enter}')
+    await posted('👍')
+    expect(react).toHaveFocus()
+    expect(screen.queryByRole('button', { name: 'React 👍' })).toBeNull()
+  })
+
+  test('picker opened by hover does not take focus; by click it focuses search', async () => {
+    wrap(<ParentBubble m={msg()} mine />)
+    await userEvent.click(screen.getByRole('button', { name: 'Add reaction' }))
+    await userEvent.hover(screen.getByRole('button', { name: 'More reactions' }))
+    const search = await screen.findByRole('textbox', { name: 'Search emoji' })
+    await new Promise((r) => setTimeout(r, 50))
+    expect(search).not.toHaveFocus()
   })
 
   test('search matches keywords as well as names', () => {
@@ -121,6 +144,15 @@ describe('reaction chips', () => {
     wrap(<ParentBubble m={reacted} mine />)
     await userEvent.click(screen.getByRole('button', { name: '👍 2: Mom, Bobby' }))
     await posted('👍')
+  })
+
+  test('a chip is disabled while its toggle is in flight', async () => {
+    apiMock.mockReturnValue(new Promise(() => {}))
+    wrap(<ParentBubble m={reacted} mine />)
+    const up = screen.getByRole('button', { name: '👍 2: Mom, Bobby' })
+    await userEvent.click(up)
+    await waitFor(() => expect(up).toBeDisabled())
+    expect(screen.getByRole('button', { name: '😂 1: Bobby' })).toBeEnabled()
   })
 
   test('no chips without reactions', () => {
