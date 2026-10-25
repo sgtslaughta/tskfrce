@@ -9,7 +9,7 @@ from app.models.chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
 from app.models.chores import ChoreAssignment, ChoreRun
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services.chores import kid_runs_filter, run_kid_ids
+from app.services.chores import clear_note, kid_runs_filter, run_kid_ids
 
 
 def _target_ok(db: Session, user: User, kind: str, run_id: int | None, kid_id: int | None) -> bool:
@@ -80,16 +80,22 @@ def post(
     body: str | None,
     photo_id: int | None = None,
     kind: str = "user",
+    note_label: str | None = None,
 ) -> ThreadMessage:
-    """Add a message. Flushes, never commits."""
+    """Add a message. Flushes, never commits. A parent's chore-thread message clears the note."""
     m = ThreadMessage(
         thread_id=thread.id,
         author_id=author.id if author else None,
         kind=kind,
         body=body,
         photo_id=photo_id,
+        note_label=note_label,
     )
     db.add(m)
+    if author and author.role == UserRole.PARENT and thread.kind == "chore":
+        run = db.get(ChoreRun, thread.run_id)
+        if run:
+            clear_note(run)
     db.flush()
     return m
 

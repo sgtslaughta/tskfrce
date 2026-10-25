@@ -50,6 +50,7 @@ def _msg(t: Thread, m: ThreadMessage) -> dict:
         "author_id": m.author_id,
         "author_name": (m.author.full_name or m.author.username) if m.author else None,
         "kind": m.kind,
+        "note_label": m.note_label,
         "body": m.body,
         "photo_url": chat.photo_url(t, m),
         "created_at": utc_z(m.created_at),

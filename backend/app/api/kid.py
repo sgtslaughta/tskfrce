@@ -3,7 +3,7 @@
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_active_user, get_db
@@ -25,6 +25,7 @@ from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
 from app.services import badges, chat, economy, inbox, progression
 from app.services import chores as svc
+from app.services.chore_types import notes_for
 from app.services.photos import save_photo
 
 router = APIRouter(prefix="/api/v1/kid", tags=["kid"])
@@ -40,6 +41,11 @@ class RedeemIn(BaseModel):
 
 class SubtaskIn(BaseModel):
     done: bool
+
+
+class NoteIn(BaseModel):
+    label: str
+    text: str | None = Field(None, max_length=200)
 
 
 class KidLogin(BaseModel):
@@ -208,6 +214,31 @@ def tick_subtask(
     svc.tick_step(db, r, sub_id, kid, body.done)
     db.commit()
     return {"id": sub_id, "done": body.done}
+
+
+@router.post("/chores/{run_id}/note")
+def leave_note(
+    run_id: int, body: NoteIn, db: Session = Depends(get_db), kid: User = Depends(require_kid)
+):
+    r = _open_run(db, kid, run_id)
+    c = svc.chore_of(r)
+    if body.label not in {n["label"] for n in notes_for(c.type)}:
+        raise HTTPException(422, "Pick one of the notes.")
+    text = body.text.strip() if body.text else None
+    chat.post(
+        db, chat.thread_for(db, "chore", run_id=r.id), kid, text or None, note_label=body.label
+    )
+    r.note_label, r.note_at = body.label, datetime.now(UTC).replace(tzinfo=None)
+    inbox.notify(
+        db,
+        inbox.parents(db),
+        "chore_note",
+        f"{kid.full_name} left a note on {c.title}",
+        body.label + (f' · "{text}"' if text else ""),
+        run_id=r.id,
+    )
+    db.commit()
+    return {"ok": True}
 
 
 @router.post("/chores/{chore_id}/photos")

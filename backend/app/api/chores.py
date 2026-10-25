@@ -88,6 +88,7 @@ def run_detail(run_id: int, db: Session = Depends(get_db), _: User = Depends(req
         "due_at": svc.iso_z(svc.due_at(r, fam)),
         "type": svc.type_out(chore),
         "sent_back": svc.sent_back(r),
+        "note": svc.note_out(r, svc.note_texts(db, [r])),
         "photos": [{"id": p.id, "thumb_url": f"/chore-photos/{p.id}/thumb"} for p in r.photos],
     }
 
@@ -98,6 +99,7 @@ def approve(run_id: int, db: Session = Depends(get_db), parent: User = Depends(r
     r.status = "done"
     r.approved_at = r.completed_at = datetime.utcnow()
     r.approved_by_id = parent.id
+    svc.clear_note(r)
     fam = get_family(db)
     pts = award_chore(db, r, fam)
     chat.system(db, r, f"Approved · +{pts}")

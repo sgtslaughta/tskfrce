@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.lock.reset import current_chore_day
 from app.lock.schedule import occurs_on
+from app.models.chat import Thread, ThreadMessage
 from app.models.chore_type import ChoreType
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, RunStepTick, run_kids
 from app.models.family import get_family
@@ -128,6 +129,35 @@ def type_out(c: Chore) -> dict:
 
 def notes_out(run: ChoreRun) -> list[dict]:
     return notes_for(chore_of(run).type)
+
+
+def clear_note(run: ChoreRun) -> None:
+    run.note_label = run.note_at = None
+
+
+def note_texts(db: Session, runs: list[ChoreRun]) -> dict[int, tuple[str | None, str | None]]:
+    """run_id -> (text, kid name) of the latest note message, for flagged runs only."""
+    ids = [r.id for r in runs if r.note_label]
+    if not ids:
+        return {}
+    rows = (
+        db.query(Thread.run_id, ThreadMessage.body, User.full_name)
+        .join(ThreadMessage, ThreadMessage.thread_id == Thread.id)
+        .outerjoin(User, User.id == ThreadMessage.author_id)
+        .filter(
+            Thread.kind == "chore", Thread.run_id.in_(ids), ThreadMessage.note_label.isnot(None)
+        )
+        .order_by(ThreadMessage.id)
+        .all()
+    )
+    return {rid: (body, name) for rid, body, name in rows}  # later rows win
+
+
+def note_out(run: ChoreRun, texts: dict) -> dict | None:
+    if not run.note_label:
+        return None
+    text, kid = texts.get(run.id, (None, None))
+    return {"label": run.note_label, "text": text, "at": iso_z(run.note_at), "kid_name": kid}
 
 
 def sent_back(run: ChoreRun) -> bool:
