@@ -10,6 +10,8 @@ const PARENT_ROUTES = [
   '/devices',
   '/chat',
   '/settings',
+  '/settings?section=screen',
+  '/more',
 ]
 const PUBLIC_ROUTES = ['/login', '/register', '/kid']
 
@@ -63,16 +65,22 @@ test.describe('every screen', () => {
     await page.screenshot({ path: `e2e-artifacts/screens/${info.project.name}/bell-open.png` })
   })
 
-  test('account menu open', async ({ page }, info) => {
+  // v3: desktop logs out from the rail; phones reach settings and log out from the header initial -> More
+  test('account and log out are reachable', async ({ page }, info) => {
     await loginUi(page)
     await page.goto('/')
-    await page.getByRole('button', { name: /^Account menu/ }).click()
-    await expect(page.getByRole('menuitem', { name: 'Log out' })).toBeVisible()
-    await page.waitForTimeout(400)
-    await page.screenshot({ path: `e2e-artifacts/screens/${info.project.name}/account-menu.png` })
+    if (info.project.name.startsWith('phone')) {
+      await page.getByRole('link', { name: 'Account and settings' }).click()
+      await expect(page).toHaveURL(/\/more$/)
+      await expect(page.getByRole('button', { name: 'Log out' })).toBeVisible()
+    } else {
+      await expect(page.getByRole('button', { name: /log out/i })).toBeVisible()
+    }
+    await page.screenshot({ path: `e2e-artifacts/screens/${info.project.name}/account.png` })
   })
 
   test('chat dock open', async ({ page }, info) => {
+    test.skip(info.project.name.startsWith('phone'), 'phones use the Chat tab, not the floating dock')
     await loginUi(page)
     await page.goto('/')
     await page.getByRole('button', { name: /^Chat(,| *$)/ }).click()
