@@ -42,8 +42,8 @@ export function ParentShell({
     router.replace('/login')
   }
 
-  // phone: the Chat tab replaces the floating chat button
-  const dock = small ? null : <ChatDock meId={user ? Number(user.id) : null} />
+  // floating chat button: not on phone (Chat tab) or on the Chat page (it covered Send)
+  const dock = small || router.pathname === '/chat' ? null : <ChatDock meId={user ? Number(user.id) : null} />
   const initial = (user?.username ?? '?').charAt(0).toUpperCase()
   const phoneTools = (
     <>

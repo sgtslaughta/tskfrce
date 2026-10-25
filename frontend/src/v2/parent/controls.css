@@ -1,0 +1,68 @@
+/**
+ * @fileoverview Mantine controls in the parent look. theme.ts gives every Button/Input/...
+ * the kid "f-" classes; on parent screens these rules swap the chamfered navy/sun skin for
+ * the flat DM Sans one (pill buttons, 12px fields, accent toggles).
+ */
+
+[data-look='parent'] .f-btn.f-btn {
+  font: 600 13px var(--font-parent), 'DM Sans', system-ui, sans-serif;
+  text-transform: none;
+  letter-spacing: 0;
+  min-height: 38px;
+  padding-inline: 16px;
+  border: 1px solid var(--p-line);
+  border-radius: 999px;
+  clip-path: none;
+  background: var(--p-card);
+  color: var(--p-ink);
+}
+[data-look='parent'] .f-btn.f-btn:hover { background: var(--p-soft); }
+[data-look='parent'] .f-btn.f-btn[data-variant='filled'] { background: var(--p-ink); border-color: var(--p-ink); color: var(--p-card); }
+[data-look='parent'] .f-btn.f-btn[data-variant='subtle'] { border-color: transparent; background: transparent; }
+[data-look='parent'] .f-btn.f-btn[data-variant='subtle'][data-color='red'],
+[data-look='parent'] .f-btn.f-btn[data-color='red'] { color: var(--p-red); }
+[data-look='parent'] .f-btn.f-btn:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; border-radius: 999px; }
+
+[data-look='parent'] .f-input.f-input {
+  min-height: 42px;
+  border: 1px solid var(--p-line);
+  border-radius: 12px;
+  background: var(--p-card);
+  color: var(--p-ink);
+  font-family: inherit;
+}
+[data-look='parent'] .f-input.f-input:focus,
+[data-look='parent'] .f-input.f-input:focus-within {
+  border-color: var(--p-ink);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-acc) 45%, transparent);
+}
+
+[data-look='parent'] .f-label.f-label {
+  margin-bottom: 6px;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .f-seg.f-seg { border: 0; border-radius: 14px; background: var(--p-soft); padding: 4px; }
+[data-look='parent'] .f-seg.f-seg .mantine-SegmentedControl-indicator { border-radius: 10px; background: var(--p-ink); }
+[data-look='parent'] .f-seg.f-seg [data-active],
+[data-look='parent'] .f-seg.f-seg [data-active] .mantine-SegmentedControl-label { color: var(--p-card); }
+
+[data-look='parent'] .f-switch.f-switch { border-radius: 999px; border: 1px solid var(--p-line); background: var(--p-track); }
+[data-look='parent'] .f-switch.f-switch::before { border-radius: 50%; }
+[data-look='parent'] input:checked + .f-switch.f-switch { background: var(--p-acc); border-color: var(--p-acc); }
+[data-look='parent'] input:checked + .f-switch.f-switch::before { background: #292928; }
+
+[data-look='parent'] .f-check.f-check { border-radius: 6px; border: 1.5px solid var(--p-sub); background: var(--p-card); }
+[data-look='parent'] .f-check.f-check:checked { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
+
+[data-look='parent'] .f-chipctl.f-chipctl { border: 1px solid var(--p-line); border-radius: 999px; background: var(--p-card); color: var(--p-ink); font-weight: 600; }
+[data-look='parent'] .f-chipctl.f-chipctl[data-checked] { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
+
+[data-look='parent'] .f-sheet.f-sheet,
+[data-look='parent'] .f-sheet-head.f-sheet-head { background: var(--p-card); color: var(--p-ink); }
+[data-look='parent'] .f-sheet-head.f-sheet-head { border-bottom: 1px solid var(--p-line); }
+[data-look='parent'] .f-sheet-title.f-sheet-title { font-family: inherit; text-transform: none; letter-spacing: 0; }
