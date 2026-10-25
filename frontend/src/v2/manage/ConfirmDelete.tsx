@@ -18,7 +18,7 @@ export function ConfirmDelete({ opened, title, body, confirmLabel = 'Delete', on
     if (opened) sent.current = false
   }, [opened])
   return (
-    <Modal opened={opened} onClose={onClose} title={title} centered styles={{ title: { fontWeight: 700, color: 'var(--p-ink)' } }}>
+    <Modal opened={opened} onClose={onClose} title={title} centered zIndex={400} styles={{ title: { fontWeight: 700, color: 'var(--p-ink)' } }}>
       <Text mb="md">{body}</Text>
       <div className="pk-actions">
         <button type="button" className="p-btn" onClick={onClose}>

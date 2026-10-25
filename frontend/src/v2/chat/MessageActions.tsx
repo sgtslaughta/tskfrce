@@ -57,7 +57,8 @@ export function MessageActions({
       }}
     >
       {children}
-      <Menu position="bottom-end" withinPortal returnFocus={false} trapFocus={false} closeOnItemClick onClose={() => setPressed(false)}>
+      {/* above the chat dock (z-index 301) */}
+      <Menu position="bottom-end" withinPortal zIndex={400} returnFocus={false} trapFocus={false} closeOnItemClick onClose={() => setPressed(false)}>
         <Menu.Target>
           <button type="button" className="msg-act-btn" aria-label="Message actions">
             <Icon name="more_horiz" size={18} />
@@ -73,7 +74,7 @@ export function MessageActions({
         </Menu.Dropdown>
       </Menu>
       {kid ? (
-        <Modal opened={asking} onClose={() => setAsking(false)} title="Delete this message?" centered>
+        <Modal opened={asking} onClose={() => setAsking(false)} title="Delete this message?" centered zIndex={400}>
           <Text mb="md">{body}</Text>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
             <Button variant="default" onClick={() => setAsking(false)}>
