@@ -75,3 +75,17 @@
   opacity: 0.7;
   cursor: not-allowed;
 }
+
+/* shared kid-look text/card helpers still used on parent screens (settings cards, window
+   editor, hours): parent font, radius and digits instead of Space Grotesk and mono */
+[data-look='parent'] :is(.f-display, .f-card h2, .f-card h3) {
+  font-family: var(--font-parent), 'DM Sans', system-ui, sans-serif;
+  letter-spacing: 0;
+}
+[data-look='parent'] .f-card { border-radius: 18px; }
+[data-look='parent'] .f-num,
+[data-look='parent'] .m-num { font-family: inherit; font-variant-numeric: tabular-nums; }
+[data-look='parent'] .f-cap { color: var(--p-sub); }
+[data-look='parent'] .f-note { color: var(--p-sub); font-family: inherit; }
+[data-look='parent'] .f-btn.f-btn[data-variant='light'] { background: var(--p-soft); border-color: var(--p-line); color: var(--p-ink); }
+[data-look='parent'] .m-d { border-radius: 6px; border-color: var(--p-line); color: var(--p-sub); }
