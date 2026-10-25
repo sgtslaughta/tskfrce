@@ -10,8 +10,8 @@
   gap: 10px;
   flex-wrap: wrap;
 }
-[data-look='parent'] .pt-head h2 { margin: 0; font-size: 30px; font-weight: 700; color: var(--p-ink); }
-[data-look='parent'] .pt-head-acts { display: flex; gap: 8px; }
+[data-look='parent'] .pt-head h2 { margin: 0; min-width: 0; font-size: 30px; font-weight: 700; color: var(--p-ink); overflow-wrap: anywhere; }
+[data-look='parent'] .pt-head-acts { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* progress line: ink on track in light, accent on track in dark (spec 2.4) */
 [data-look='parent'] .pt-prog { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
@@ -66,7 +66,8 @@
 }
 [data-look='parent'] .pt-chore[data-open='true'] .pt-ty { background: var(--p-card); }
 
-[data-look='parent'] .pt-t { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; }
+[data-look='parent'] .pt-t { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+[data-look='parent'] .pt-row > :is(.p-chip, .pt-pts) { flex: none; }
 [data-look='parent'] .pt-t small { display: block; margin-top: 1px; color: var(--p-sub); font-weight: 400; font-size: 12px; }
 [data-look='parent'] .pt-chore[data-state='done'] > .pt-row .pt-title,
 [data-look='parent'] .pt-chore[data-state='needs_you'] > .pt-row .pt-title,
@@ -75,7 +76,7 @@
   text-decoration-thickness: 1.5px;
   color: var(--p-sub);
 }
-[data-look='parent'] .pt-pts { width: 58px; text-align: right; font-size: 12.5px; font-weight: 600; color: var(--p-sub); }
+[data-look='parent'] .pt-pts { width: 58px; flex: none; text-align: right; font-size: 12.5px; font-weight: 600; color: var(--p-sub); }
 
 /* open chore: left column + optional chat column */
 [data-look='parent'] .pt-open { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 4px 16px 16px; }
@@ -172,6 +173,8 @@
 [data-look='parent'] .pt-phone-facts { display: none; }
 [data-look='parent'] .pt-strip { display: flex; gap: 14px; padding: 12px 16px 4px; overflow-x: auto; }
 [data-look='parent'] .pt-strip-kid {
+  flex: none;
+  max-width: 72px;
   display: grid;
   justify-items: center;
   gap: 4px;
@@ -195,6 +198,7 @@
   font-size: 18px;
   font-weight: 700;
 }
+[data-look='parent'] .pt-strip-kid > :not(.pt-strip-av) { max-width: 100%; }
 [data-look='parent'] .pt-strip-kid[aria-pressed='true'] .pt-strip-av { background: var(--p-acc); color: #292928; box-shadow: 0 0 0 2px var(--p-bg), 0 0 0 4px var(--p-acc); }
 [data-look='parent'] .pt-strip-av[data-add] { border: 1.5px dashed var(--p-line); background: none; color: var(--p-sub); }
 [data-look='parent'] .pt-strip-av i {
@@ -247,3 +251,9 @@
 
 /* kid preview bar stays reachable while the kid screen scrolls */
 .kid-preview-bar { position: sticky; top: 8px; z-index: 50; }
+
+/* a chore whose detail failed to load */
+[data-look='parent'] .pt-open-err { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 8px 0; font-size: 13px; color: var(--p-red); }
+
+/* stale-data banner: the poll failed but the last good Today is still on screen */
+[data-look='parent'] .pt-stale { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin: 0 0 12px; }

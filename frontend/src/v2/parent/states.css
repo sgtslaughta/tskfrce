@@ -62,3 +62,6 @@
   background: var(--p-acc);
   color: #292928;
 }
+
+/* full-page error before the shell exists (route guard) */
+[data-look='parent'] .p-guard-state { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--p-bg); }

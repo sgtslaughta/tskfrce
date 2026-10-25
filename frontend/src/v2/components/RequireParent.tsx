@@ -2,7 +2,9 @@ import { useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/router'
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
-import { api, CANT_REACH } from '../api'
+import { api } from '../api'
+import { ErrorPanel } from '../parent/states'
+import { useLook } from '../parent/useLook'
 import type { SetupStatus } from '../types'
 
 const SETUP_KEY = ['setup']
@@ -55,16 +57,7 @@ export function RequireParent({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target])
 
-  if (setup.isError) {
-    return (
-      <div className="f-shell" role="alert" style={{ display: 'grid', placeItems: 'center', gap: 12 }}>
-        <p>{CANT_REACH}</p>
-        <button type="button" className="f-btn f-card" onClick={() => setup.refetch()}>
-          Retry
-        </button>
-      </div>
-    )
-  }
+  if (setup.isError) return <Unreachable error={setup.error} onRetry={() => setup.refetch()} />
   if (target !== '') {
     return (
       <div className="f-shell" role="status" style={{ display: 'grid', placeItems: 'center' }}>
@@ -73,4 +66,14 @@ export function RequireParent({ children }: { children: ReactNode }) {
     )
   }
   return <>{children}</>
+}
+
+/** The home box didn't answer the very first request: the mockup-05 panel, in the parent look. */
+function Unreachable({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+  useLook('parent')
+  return (
+    <main className="p-guard-state">
+      <ErrorPanel kind="unreachable" error={error instanceof TypeError ? undefined : error} onRetry={onRetry} />
+    </main>
+  )
 }

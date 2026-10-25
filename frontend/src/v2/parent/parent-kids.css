@@ -63,12 +63,16 @@
 }
 
 .p-kid-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-weight: 600;
   font-size: 15px;
   color: var(--p-ink);
 }
 
 .p-kid-progress span { white-space: nowrap; }
+.p-kid-progress { overflow-wrap: anywhere; }
 
 .p-kid-progress {
   font-size: 11.5px;
