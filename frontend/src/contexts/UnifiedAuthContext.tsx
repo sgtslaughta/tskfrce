@@ -270,6 +270,9 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
           isLoading: false,
           isInitialized: true,
         });
+      } else if (refreshResult.shouldLogout === false) {
+        // box unreachable: keep the tokens; the route guard shows "Can't reach your home box"
+        updateAuthState({ isLoading: false, isInitialized: true });
       } else {
         throw new Error('Token refresh failed');
       }
@@ -422,7 +425,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
         if (cookieState) {
           try {
             const refreshResult = await tokenManager.refreshTokens();
-            if (!refreshResult.success) {
+            if (!refreshResult.success && refreshResult.shouldLogout !== false) {
               // Clear auth state on refresh failure
               tokenManager.clearTokens();
               clearLoginState();

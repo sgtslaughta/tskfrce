@@ -57,7 +57,9 @@ export function RequireParent({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target])
 
-  if (setup.isError) return <Unreachable error={setup.error} onRetry={() => setup.refetch()} />
+  // signed-in state could not be confirmed while the box was down: reload so auth re-checks the kept tokens
+  if (setup.isError)
+    return <Unreachable error={setup.error} onRetry={() => (isAuthenticated ? setup.refetch() : window.location.reload())} />
   if (target !== '') return <Checking />
   return <>{children}</>
 }

@@ -263,13 +263,26 @@ export class TokenManager {
     try {
       this.refreshRetryCount++;
       
-      const response = await fetch('/api/proxy/auth/refresh', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ refresh_token: refreshToken }),
-      });
+      // the box being down (network error, or 5xx from the proxy) is not a bad session:
+      // keep the tokens so the parent is still signed in once it answers again
+      const unreachable: TokenRefreshResult = { success: false, error: 'Home box unreachable', shouldLogout: false };
+      let response: Response;
+      try {
+        response = await fetch('/api/proxy/auth/refresh', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+      } catch {
+        this.refreshRetryCount = 0;
+        return unreachable;
+      }
+      if (response.status >= 500) {
+        this.refreshRetryCount = 0;
+        return unreachable;
+      }
 
       if (!response.ok) {
         throw new Error(`Refresh failed: ${response.status} ${response.statusText}`);
