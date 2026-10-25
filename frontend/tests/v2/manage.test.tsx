@@ -216,10 +216,23 @@ describe('devices page', () => {
   const serve = (devices: Device[]) =>
     apiMock.mockImplementation(async (path) => (path === '/devices' ? devices : path === '/kids' ? kids : path === '/groups' ? [] : {}))
 
-  test('renders devices page', async () => {
+  test('opens the first device and its lock buttons call the box', async () => {
     serve([device])
-    const { container } = render(wrap(<DevicesPage />))
-    expect(container).toBeInTheDocument()
+    render(wrap(<DevicesPage />))
+    await userEvent.click(await screen.findByRole('button', { name: /lock now/i }))
+    await waitFor(() =>
+      expect(apiMock).toHaveBeenCalledWith(`/devices/${device.id}/override`, {
+        method: 'POST',
+        body: { action: 'lock', minutes: null },
+      }),
+    )
+    await userEvent.click(screen.getByRole('button', { name: /unlock 30 min/i }))
+    await waitFor(() =>
+      expect(apiMock).toHaveBeenCalledWith(`/devices/${device.id}/override`, {
+        method: 'POST',
+        body: { action: 'unlock', minutes: 30 },
+      }),
+    )
   })
 })
 

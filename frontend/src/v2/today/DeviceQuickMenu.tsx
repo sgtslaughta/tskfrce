@@ -1,26 +1,14 @@
 import { Fragment, type ReactNode } from "react";
 import { Menu } from "@mantine/core";
-import { toastFail, toastOk } from "../notify";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "../api";
-import type { OverrideAction } from "../types";
+import { useOverride, type OverrideTarget } from "../hooks/useOverride";
 
-export interface QuickMenuTarget {
-  kind: "device" | "kid" | "group";
-  id: number;
-}
+export type QuickMenuTarget = OverrideTarget;
 
-const BASE = { device: "devices", kid: "kids", group: "groups" } as const;
 const TIMES: { label: string; minutes: number | null }[] = [
   { label: "for 30 min", minutes: 30 },
   { label: "for 1 hour", minutes: 60 },
   { label: "until I change it", minutes: null },
 ];
-const TOAST = { lock: "Locked", unlock: "Unlocked", clear: "Back on schedule" };
-
-type Choice =
-  | { action: OverrideAction; minutes: number | null }
-  | { action: "clear" };
 
 /** Lock / unlock menu with timers, plus "Back to schedule". `children` is the clickable trigger. */
 export function DeviceQuickMenu({
@@ -32,23 +20,7 @@ export function DeviceQuickMenu({
   label: string;
   children: ReactNode;
 }) {
-  const qc = useQueryClient();
-  const url = `/${BASE[targets.kind]}/${targets.id}/override`;
-  const run = useMutation({
-    mutationFn: (c: Choice) =>
-      c.action === "clear"
-        ? api(url, { method: "DELETE" })
-        : api(url, {
-            method: "POST",
-            body: { action: c.action, minutes: c.minutes },
-          }),
-    onSuccess: (_d, c) => {
-      toastOk(TOAST[c.action]);
-      qc.invalidateQueries({ queryKey: ["today"] });
-      qc.invalidateQueries({ queryKey: ["devices"] });
-    },
-    onError: toastFail,
-  });
+  const override = useOverride();
 
   return (
     <Menu withinPortal transitionProps={{ duration: 0 }}>
@@ -62,7 +34,7 @@ export function DeviceQuickMenu({
                 <Menu.Item
                   key={text}
                   mih={44}
-                  onClick={() => run.mutate({ action, minutes: t.minutes })}
+                  onClick={() => override.mutate({ target: targets, choice: { action, minutes: t.minutes } })}
                 >
                   {text}
                 </Menu.Item>
@@ -71,7 +43,7 @@ export function DeviceQuickMenu({
             <Menu.Divider />
           </Fragment>
         ))}
-        <Menu.Item mih={44} onClick={() => run.mutate({ action: "clear" })}>
+        <Menu.Item mih={44} onClick={() => override.mutate({ target: targets, choice: { action: "clear" } })}>
           Back to schedule
         </Menu.Item>
       </Menu.Dropdown>

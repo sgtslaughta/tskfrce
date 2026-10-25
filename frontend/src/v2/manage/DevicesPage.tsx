@@ -1,11 +1,13 @@
 import { useRouter } from 'next/router'
-import { useCallback, useState } from 'react'
+import { useState } from 'react'
+import { useMediaQuery } from '@mantine/hooks'
 import { ParentShell } from '@/v2/parent/ParentShell'
 import { LoadError, LoadingCards } from '@/v2/components/States'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useDevices, useGroups } from '@/v2/hooks/useDevices'
 import { useKids } from '@/v2/hooks/useKids'
 import { useWindows } from '@/v2/hooks/useWindows'
+import { useOverride, type OverrideTarget } from '@/v2/hooks/useOverride'
 import { DevicesSection } from './DevicesSection'
 import { DeviceDetail } from './DeviceDetail'
 import { GroupDetail } from './GroupDetail'
@@ -20,19 +22,24 @@ function DevicesBody() {
   const groups = useGroups()
   const windows = useWindows()
   const all = devices.data ?? []
-  const selectedId = Number(first(query.item)) || null
   const [tab, setTab] = useState<'devices' | 'groups'>('devices')
+  const small = useMediaQuery('(max-width: 767px)')
+  // desktop opens the first item rather than an empty detail pane; phone stays on the list
+  const fallback = small ? null : ((tab === 'devices' ? all : groups.data ?? [])[0]?.id ?? null)
+  const selectedId = Number(first(query.item)) || fallback
 
   const selectedDevice = all.find((d) => d.id === selectedId && tab === 'devices')
   const selectedGroup = (groups.data ?? []).find((g) => g.id === selectedId && tab === 'groups')
 
-  const handleRequestOverride = useCallback(
-    (req: { kind: string; id: number; action: string }) => {
-      console.log('Override requested:', req)
-      // This will be implemented by the parent component
-    },
-    [],
-  )
+  const override = useOverride()
+  // detail buttons: lock until changed, unlock for 30 min, "schedule" = clear the override
+  const handleRequestOverride = (req: { kind: string; id: number; action: string }) =>
+    override.mutate({
+      target: { kind: req.kind as OverrideTarget['kind'], id: req.id },
+      choice: req.action === 'lock' ? { action: 'lock', minutes: null }
+        : req.action === 'unlock' ? { action: 'unlock', minutes: 30 }
+        : { action: 'clear' },
+    })
 
   return (
     <ParentShell
