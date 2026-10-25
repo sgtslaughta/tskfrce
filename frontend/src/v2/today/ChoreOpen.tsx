@@ -3,7 +3,7 @@ import { useMediaQuery } from '@mantine/hooks'
 import { Drawer, Tooltip } from '@mantine/core'
 import type { TodayKid, TodayChore } from '../types'
 import { useRunDetail } from '../hooks/useChores'
-import { useApproveChore, useSendBack } from '../hooks/useToday'
+import { useApproveChore, useMarkDone, useMarkNotDone, useSendBack } from '../hooks/useToday'
 import { useDeduct } from '../hooks/useKids'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { Icon } from '../parent/Icon'
@@ -25,6 +25,8 @@ function AuthImg({ path, alt }: { path: string; alt: string }) {
 export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) {
   const { data: run, isError, error, refetch } = useRunDetail(chore.id)
   const approve = useApproveChore()
+  const markDone = useMarkDone()
+  const markNotDone = useMarkNotDone()
   const sendBack = useSendBack()
   const deduct = useDeduct()
   const clock = useClock()
@@ -115,6 +117,29 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
                 Send back
               </button>
             </>
+          )}
+          {chore.state === 'todo' && chore.mode !== 'race' && (
+            <button
+              className="p-btn"
+              data-variant="accent"
+              disabled={markDone.isPending}
+              data-loading={markDone.isPending}
+              onClick={() => markDone.mutate(chore.id, { onSuccess: () => toastOk(`Marked done +${chore.points}`), onError: toastFail })}
+            >
+              <Icon name="task_alt" size={17} />
+              Mark done +{chore.points}
+            </button>
+          )}
+          {chore.state === 'done' && (
+            <button
+              className="p-btn"
+              disabled={markNotDone.isPending}
+              data-loading={markNotDone.isPending}
+              onClick={() => markNotDone.mutate(chore.id, { onSuccess: () => toastOk('Marked not done'), onError: toastFail })}
+            >
+              <Icon name="remove_done" size={17} />
+              Mark not done
+            </button>
           )}
           <button className="p-btn" data-variant="red" aria-expanded={ded} onClick={() => setDed(!ded)}>
             <Icon name="remove_circle" size={17} />

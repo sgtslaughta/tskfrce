@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Button } from '@mantine/core'
 import { IconArrowLeft, IconMessage, IconX } from '@tabler/icons-react'
-import { refOf, useThreads, validRef, type ThreadKind } from '@/v2/hooks/useChat'
+import { refOf, useThread, useThreads, validRef, type ThreadKind } from '@/v2/hooks/useChat'
 import { OPEN_CHAT_EVENT } from './dock'
 import { LoadError, LoadingCards } from '@/v2/components/States'
 import { ErrorPanel, Skeleton } from '@/v2/parent/states'
@@ -68,6 +68,7 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
     set(false, pick)
     launcher.current?.focus()
   }
+  const page = useThread(pick?.kind ?? null, pick?.ref ?? null, kid) // same query as the open ThreadView
   const title =
     pick && threads.data?.threads.find((t) => t.kind === pick.kind && refOf(t) === pick.ref)?.title
 
@@ -110,7 +111,10 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
                 <IconArrowLeft size={18} />
               </Button>
             )}
-            <h2>{pick ? title || 'Chat' : 'Chat'}</h2>
+            <h2>
+              {pick ? page.data?.title || title || 'Chat' : 'Chat'}
+              {pick && page.data?.who && <small className="f-dock-who"> · {page.data.who}</small>}
+            </h2>
             <Button variant="subtle" size="compact-md" aria-label="Close chat" onClick={close}>
               <IconX size={18} />
             </Button>

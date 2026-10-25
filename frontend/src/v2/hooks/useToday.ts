@@ -27,6 +27,12 @@ function useChoreAction<V>(fn: (v: V) => Promise<unknown>) {
 export const useApproveChore = () =>
   useChoreAction((id: number) => api(`/chores/${id}/approve`, { method: 'POST' }))
 
+export const useMarkDone = () =>
+  useChoreAction((id: number) => api(`/chores/${id}/done`, { method: 'POST' }))
+
+export const useMarkNotDone = () =>
+  useChoreAction((id: number) => api(`/chores/${id}/undo`, { method: 'POST' }))
+
 export const useSendBack = () =>
   useChoreAction(({ id, note }: { id: number; note: string }) =>
     api(`/chores/${id}/send-back`, { method: 'POST', body: { note } }),

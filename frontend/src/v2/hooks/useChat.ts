@@ -33,6 +33,8 @@ export interface ThreadPage {
   messages: ChatMessage[]
   has_more: boolean
   run_id?: number
+  /** chore threads: the kid(s) it is about */
+  who?: string | null
 }
 
 /** URL ref for a thread: chore task id, kid id, or "family". */

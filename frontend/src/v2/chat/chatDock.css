@@ -30,7 +30,7 @@
 
 /* Parent look styles for chat dock */
 [data-look='parent'] .f-dock-btn {
-  background: var(--p-acc); color: var(--p-ink); box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  background: var(--p-acc); color: #292928; box-shadow: 0 2px 12px rgba(0,0,0,0.15);
 }
 [data-look='parent'] .f-dock-btn:focus-visible { outline: 3px solid var(--p-ink); }
 [data-look='parent'] .f-dock-badge { background: var(--p-red); color: var(--p-card); }
@@ -45,3 +45,4 @@
   .f-dock { inset: 0; width: auto; height: auto; max-height: none; border-radius: 0; border: 0; }
   .f-dock-open .f-dock-btn { display: none; }
 }
+.f-dock-who { font-size: 13px; font-weight: 500; opacity: 0.7; }

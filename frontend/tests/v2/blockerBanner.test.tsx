@@ -4,15 +4,19 @@ import { BlockerBanner } from '@/v2/components/BlockerBanner'
 
 jest.mock('@/v2/hooks/useDevices', () => ({ useBlocker: () => ({ data: { online: false, last_seen: null } }) }))
 
-test('offline banner reads as plain text (no HTML entities)', () => {
+test('box offline shows a dismissable toast, not a banner', () => {
+  const { notifications } = jest.requireActual('@mantine/notifications')
+  const show = jest.spyOn(notifications, 'show').mockImplementation(() => '')
   const { QueryClient, QueryClientProvider } = jest.requireActual('@tanstack/react-query')
   render(
     <QueryClientProvider client={new QueryClient()}>
       <BlockerBanner />
     </QueryClientProvider>,
   )
-  expect(screen.getByRole('alert')).toHaveTextContent('Hasn’t checked in yet.')
-  expect(screen.getByRole('alert').textContent).not.toContain('&apos;')
+  expect(screen.queryByRole('alert')).toBeNull()
+  expect(show).toHaveBeenCalledWith(expect.objectContaining({ id: 'box-offline', autoClose: false, title: 'Home box offline' }))
+  expect(show.mock.calls[0][0].message).toContain('Hasn’t checked in yet.')
+  show.mockRestore()
 })
 
 test('a request that cannot reach the box shows the offline banner until one succeeds', async () => {

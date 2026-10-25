@@ -1,11 +1,33 @@
 import { useBlocker } from "@/v2/hooks/useDevices";
 import { Icon } from "@/v2/parent/Icon";
 import { useReachable } from "@/v2/hooks/useReachable";
+import { useEffect } from "react";
+import { notifications } from "@mantine/notifications";
 
-/** Warns parents when the home box stops checking in: blocks may have lapsed. */
+const ID = "box-offline";
+let dismissedFor: string | null = null; // the outage (by last_seen) the parent closed; a new outage toasts again
+
+/** Warns parents when the home box stops checking in (dismissable toast) or can't be reached (banner). */
 export function BlockerBanner() {
   const { data } = useBlocker();
   const reachable = useReachable();
+  const offline = reachable && data?.online === false;
+  const outage = data?.last_seen ?? "never";
+  useEffect(() => {
+    if (!offline) {
+      notifications.hide(ID);
+      return;
+    }
+    if (dismissedFor === outage) return;
+    notifications.show({
+      id: ID,
+      color: "yellow",
+      title: "Home box offline",
+      message: `${outage === "never" ? "Hasn’t checked in yet." : `Went quiet at ${new Date(outage).toLocaleString()}.`} Paused devices may be back online until it reconnects.`,
+      autoClose: false,
+      onClose: () => (dismissedFor = outage),
+    });
+  }, [offline, outage]);
   // mockup 05 "You're offline": the box itself can't be reached, so what's on screen may be stale
   if (!reachable)
     return (
@@ -17,19 +39,5 @@ export function BlockerBanner() {
         <div className="p-banner-body">Showing what we had. Changes will wait until it&apos;s back.</div>
       </div>
     );
-  if (data?.online !== false) return null;
-  return (
-    <div className="p-banner" role="alert">
-      <div className="p-banner-title">
-        <Icon name="warning" />
-        Home box offline
-      </div>
-      <div className="p-banner-body">
-        {data.last_seen
-          ? `Went quiet at ${new Date(data.last_seen).toLocaleString()}.`
-          : "Hasn’t checked in yet."}{" "}
-        Paused devices may be back online until it reconnects. Check that it&apos;s plugged in and running.
-      </div>
-    </div>
-  );
+  return null;
 }

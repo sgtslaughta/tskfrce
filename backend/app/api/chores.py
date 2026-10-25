@@ -8,9 +8,10 @@ from pydantic import BaseModel, StringConstraints
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db, require_parent
-from app.models.chores import ChoreRun
+from app.models.chores import ChoreRun, RunStepTick
 from app.models.family import get_family
 from app.models.lock import Device
+from app.models.points import Points
 from app.models.user import User, UserRole
 from app.services import badges, chat
 from app.services import chores as svc
@@ -97,6 +98,44 @@ def approve(run_id: int, db: Session = Depends(get_db), parent: User = Depends(r
     pts = award_chore(db, r, fam)
     chat.system(db, r, f"Approved · +{pts}")
     badges.check_for_run(db, r, fam)
+    db.commit()
+    return svc.chore_out(r)
+
+
+@router.post("/{run_id}/done")
+def mark_done(run_id: int, db: Session = Depends(get_db), parent: User = Depends(require_parent)):
+    """Parent ticks a to-do chore off for the kid: same as submit + approve."""
+    r = db.get(ChoreRun, run_id)
+    if r is None:
+        raise HTTPException(404, "That chore doesn't exist.")
+    if r.status != "todo":
+        raise HTTPException(409, "This chore is already done or waiting for your OK.")
+    if r.kid_id is None and r.assignment.mode == "race":
+        raise HTTPException(409, "Race chores go to the kid who finishes first.")
+    now = datetime.utcnow()
+    have = {t.step_id for t in r.ticks}
+    for s in svc.chore_of(r).steps:
+        if s.id not in have:
+            r.ticks.append(RunStepTick(step_id=s.id, done_by_id=parent.id, done_at=now))
+    r.status, r.submitted_at = "submitted", now
+    return approve(run_id, db, parent)
+
+
+@router.post("/{run_id}/undo")
+def mark_not_done(run_id: int, db: Session = Depends(get_db), _: User = Depends(require_parent)):
+    """Parent unticks a done chore: back to to-do, its points and step ticks removed."""
+    r = db.get(ChoreRun, run_id)
+    if r is None:
+        raise HTTPException(404, "That chore doesn't exist.")
+    if r.status != "done":
+        raise HTTPException(409, "This chore isn't done.")
+    # ponytail: spent points can leave the balance below 0; badges already earned stay
+    db.query(Points).filter(Points.run_id == r.id).delete()
+    r.ticks.clear()
+    r.status = "todo"
+    r.approved_at = r.completed_at = r.approved_by_id = None
+    r.submitted_at = r.submitted_by_id = None
+    chat.system(db, r, "Marked not done")
     db.commit()
     return svc.chore_out(r)
 

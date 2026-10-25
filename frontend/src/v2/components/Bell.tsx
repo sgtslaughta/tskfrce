@@ -31,6 +31,16 @@ const severityIcon = (n: InboxItem): { name: string; tone: 'hi' | 'md' | 'lv' | 
   return { name: 'whatshot', tone: 'ok' }
 }
 
+/** Where a parent notification leads: the device, the chore on Today, or the Needs you list. */
+const dest = (n: InboxItem): string | null =>
+  n.device_id
+    ? `/devices?item=${n.device_id}`
+    : n.run_id
+      ? `/?chore=${n.run_id}`
+      : n.kind === 'redemption_request'
+        ? '/?tab=needs'
+        : null
+
 const isToday = (iso: string): boolean => {
   const now = new Date()
   const then = new Date(iso)
@@ -149,6 +159,21 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
   const handleRedeem = (n: InboxItem) => handleDecide(n, true)
   const handleDecline = (n: InboxItem) => handleDecide(n, false)
 
+  /** Click a notification: mark it read and go where it points (kid notifications just get read). */
+  const go = (n: InboxItem) => {
+    markRead(n)
+    const to = kid ? null : dest(n)
+    if (!to) return
+    onGo()
+    void router.push(to)
+  }
+  const text = (n: InboxItem) => (
+    <button type="button" className="p-bell-text" onClick={() => go(n)}>
+      <span className="p-bell-title">{n.title}</span>
+      {n.body && <span className="p-bell-sub">{n.body}</span>}
+    </button>
+  )
+
   const handleView = (n: InboxItem) => {
     if (!n.read) read.mutate(n.id)
     if (n.device_id) {
@@ -210,10 +235,7 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
                     <div className={`p-bell-icon ${sev.tone}`}>
                       <Icon name={sev.name} />
                     </div>
-                    <div className="p-bell-text">
-                      <div className="p-bell-title">{n.title}</div>
-                      {n.body && <div className="p-bell-sub">{n.body}</div>}
-                    </div>
+                    {text(n)}
                     <div className="p-bell-actions">
                       {isNeedsYou(n, pending) && n.kind === 'chore_submitted' && (
                         <>
@@ -283,10 +305,7 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
                     <div className={`p-bell-icon ${sev.tone}`}>
                       <Icon name={sev.name} />
                     </div>
-                    <div className="p-bell-text">
-                      <div className="p-bell-title">{n.title}</div>
-                      {n.body && <div className="p-bell-sub">{n.body}</div>}
-                    </div>
+                    {text(n)}
                   </div>
                 )
               })}

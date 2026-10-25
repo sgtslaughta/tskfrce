@@ -71,6 +71,28 @@ def test_approve_marks_done(client, db, parent, kid, parent_headers):
     assert t.approved_at and t.completed_at
 
 
+def test_parent_marks_todo_done(client, db, parent, kid, parent_headers):
+    t = make_run(db, parent, kid, status="todo", steps=("a", "b"))
+    assert client.post(f"/api/v1/chores/{t.id}/done", headers=parent_headers).status_code == 200
+    db.refresh(t)
+    assert t.status == "done" and t.approved_by_id == parent.id
+    assert len(t.ticks) == 2
+    assert client.post(f"/api/v1/chores/{t.id}/done", headers=parent_headers).status_code == 409
+
+
+def test_parent_unticks_done_chore(client, db, parent, kid, parent_headers):
+    from app.models.points import Points
+
+    t = make_run(db, parent, kid, status="todo", steps=("a",))
+    client.post(f"/api/v1/chores/{t.id}/done", headers=parent_headers)
+    assert db.query(Points).filter(Points.run_id == t.id).count() > 0
+    assert client.post(f"/api/v1/chores/{t.id}/undo", headers=parent_headers).status_code == 200
+    db.refresh(t)
+    assert t.status == "todo" and not t.ticks and t.approved_by_id is None
+    assert db.query(Points).filter(Points.run_id == t.id).count() == 0
+    assert client.post(f"/api/v1/chores/{t.id}/undo", headers=parent_headers).status_code == 409
+
+
 def test_kid_cannot_approve(client, db, parent, kid, kid_headers):
     t = make_run(db, parent, kid, status="submitted")
     assert client.post(f"/api/v1/chores/{t.id}/approve", headers=kid_headers).status_code == 403
@@ -119,3 +141,10 @@ def test_library_lists_chores_for_a_kid(client, db, kid, parent_headers, kid_hea
     assert len(client.get("/api/v1/chores/", headers=parent_headers).json()) == 3
     assert client.get("/api/v1/chores/", headers=kid_headers).status_code == 403
     assert client.get("/api/v1/chores/definitions", headers=parent_headers).status_code != 200
+
+
+def test_chore_thread_says_who(client, db, parent, kid, parent_headers):
+    t = make_run(db, parent, kid, status="todo")
+    r = client.get(f"/api/v1/chat/threads/chore/{t.id}", headers=parent_headers)
+    assert r.status_code == 200
+    assert r.json()["who"] == (kid.full_name or kid.username)

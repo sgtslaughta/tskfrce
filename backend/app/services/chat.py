@@ -9,7 +9,7 @@ from app.models.chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
 from app.models.chores import ChoreAssignment, ChoreRun
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services.chores import kid_runs_filter
+from app.services.chores import kid_runs_filter, run_kid_ids
 
 
 def _target_ok(db: Session, user: User, kind: str, run_id: int | None, kid_id: int | None) -> bool:
@@ -152,6 +152,15 @@ def _ensure_private(db: Session, kid_ids: list[int]) -> None:
 def title(db: Session, t: Thread) -> str:
     kid = db.get(User, t.kid_id) if t.kind == "private" else None
     return _title(db, t, {kid.id: kid.full_name or kid.username} if kid else {})
+
+
+def who(db: Session, t: Thread) -> str | None:
+    """Kids a chore thread is about ("Bobby", "Bobby & Susan"); None for other threads."""
+    run = db.get(ChoreRun, t.run_id) if t.kind == "chore" else None
+    if run is None:
+        return None
+    kids = db.query(User).filter(User.id.in_(run_kid_ids(run))).order_by(User.id)
+    return " & ".join(k.full_name or k.username for k in kids) or None
 
 
 def _preview(m: ThreadMessage | None) -> dict:

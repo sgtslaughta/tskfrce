@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { ParentShell } from "../parent/ParentShell";
 import { EmptyState, ErrorPanel, Skeleton } from "../parent/states";
@@ -26,9 +26,14 @@ export function TodayPage() {
     router.push(`/?item=${k.id}`, undefined, { shallow: true }); // deep link + back button follow the choice
   };
   const [openChoreId, setOpenChoreId] = useState<number | null>(null);
+  // ?chore=<run id> (from a notification) opens that chore on its kid's day
+  const runId = Number(router.query.chore) || null;
+  useEffect(() => {
+    if (runId) setOpenChoreId(runId);
+  }, [runId]);
 
   const kidById = (id?: number) => data?.kids.find((k) => k.id === id);
-  const kid = kidById(Number(router.query.item)) || kidById(selectedId) || data?.kids[0];
+  const kid = kidById(Number(router.query.item)) || data?.kids.find((k) => k.chores.some((c) => c.id === runId)) || kidById(selectedId) || data?.kids[0];
 
   return (
     <ParentShell

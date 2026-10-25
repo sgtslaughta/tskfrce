@@ -84,6 +84,7 @@ def thread(
         "id": t.id,
         "kind": t.kind,
         "title": chat.title(db, t),
+        "who": chat.who(db, t),
         "messages": [_msg(t, m) for m in reversed(rows[:PAGE])],
         "has_more": len(rows) > PAGE,
     }
