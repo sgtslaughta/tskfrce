@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { notifications } from '@mantine/notifications'
 import { useDisclosure } from '@mantine/hooks'
-import { useDeleteDevice, usePatchDevice, useSaveGroup, useTestBlock, type DevicePatch } from '@/v2/hooks/useDevices'
+import { useDeleteDevice, useExpired, usePatchDevice, useSaveGroup, useTestBlock, type DevicePatch } from '@/v2/hooks/useDevices'
 import { Chip } from '@/v2/parent/Chip'
 import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Icon } from '@/v2/parent/Icon'
@@ -12,10 +12,11 @@ import type { Device, Group, Kid } from '@/v2/types'
 import { ActionButton } from './ActionButton'
 import { ConfirmDelete } from './ConfirmDelete'
 import { DeviceNetwork } from './DeviceNetwork'
-import { DEVICE_TYPE_ICON, getDeviceType } from './deviceMeta'
+import { ago, DEVICE_TYPE_ICON, getDeviceType, inFamilyZone } from './deviceMeta'
 import { KidPills } from './KidPills'
 import { nameOf } from './choreMeta'
 import { toastFail, toastOk, toasts } from '../notify'
+import { useSingleFlight } from './useSingleFlight'
 
 interface Props {
   device: Device
@@ -28,14 +29,6 @@ interface Props {
   pendingAction?: string | null
 }
 
-const relativeTime = (iso: string | null) => {
-  if (!iso) return 'never'
-  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
-  if (mins < 60) return `${mins}m ago`
-  const hours = Math.floor(mins / 60)
-  return hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`
-}
-
 /** Device editor: header actions, Overview (details, owners, groups, right now) and Network tabs. */
 export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOverride, pendingAction = null }: Props) {
   const router = useRouter()
@@ -43,6 +36,8 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
   const saveGroup = useSaveGroup()
   const del = useDeleteDevice()
   const test = useTestBlock()
+  const once = useSingleFlight()
+  const onceTest = useSingleFlight() // a slow test must not swallow the next save
   const [tab, setTab] = useState<string | null>('overview')
   const [name, setName] = useState(device.name)
   const [confirm, { open, close }] = useDisclosure(false)
@@ -51,12 +46,16 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
   const guest = device.status === 'guest'
   const unknown = device.status === 'unassigned'
   // learning mode (the default) leaves new devices online; strict mode blocks them
-  const blockNew = useFamily().data?.new_devices_blocked ?? false
+  const family = useFamily().data
+  const blockNew = family?.new_devices_blocked ?? false
+  // an override that ran out while the screen was open no longer counts
+  const expired = useExpired(device.override?.expires_at)
+  const override = expired ? null : device.override
   const owners = kids.filter((k) => device.owner_ids.includes(k.id))
   const ownerLabel = guest ? 'Guest' : owners.length ? owners.map(nameOf).join(', ') : 'Unassigned'
   const needsPins = device.needs_pins && owners.length > 0
 
-  const save = (p: DevicePatch, done: string) => patch.mutate({ id: device.id, patch: p }, toasts(done))
+  const save = (p: DevicePatch, done: string) => once((settled) => patch.mutate({ id: device.id, patch: p }, { ...toasts(done), ...settled }))
   const rename = () => {
     const n = name.trim()
     if (!n) setName(device.name)
@@ -64,17 +63,20 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
   }
   const toggleGroup = (g: Group) => {
     const ids = g.device_ids.includes(device.id) ? g.device_ids.filter((i) => i !== device.id) : [...g.device_ids, device.id]
-    saveGroup.mutate({ id: g.id, name: g.name, device_ids: ids }, toasts('Saved'))
+    once((settled) => saveGroup.mutate({ id: g.id, name: g.name, device_ids: ids }, { ...toasts('Saved'), ...settled }))
   }
   const runTest = () =>
-    test.mutate(device.id, {
-      onSuccess: (r) => (r.reason === 'ok' ? toastOk(r.message) : notifications.show({ message: r.message, color: 'fridgeRed' })),
-      onError: toastFail,
-    })
+    onceTest((settled) =>
+      test.mutate(device.id, {
+        onSuccess: (r) => (r.reason === 'ok' ? toastOk(r.message) : notifications.show({ message: r.message, color: 'fridgeRed' })),
+        onError: toastFail,
+        ...settled,
+      }),
+    )
 
   const chips = [
     ...(device.vendor ? [{ text: device.vendor, vendor: device.vendor }] : []),
-    { text: device.online ? 'Online now' : `Last seen ${relativeTime(device.last_seen)}`, tone: device.online ? ('acc' as const) : ('plain' as const), icon: device.online ? 'wifi' : 'schedule' },
+    { text: device.online ? 'Online now' : `Last seen ${ago(device.last_seen)}`, tone: device.online ? ('acc' as const) : ('plain' as const), icon: device.online ? 'wifi' : 'schedule' },
     ...(device.ip ? [{ text: device.ip, tone: 'mono' as const, icon: 'lan' }] : []),
     { text: ownerLabel, icon: 'person' },
   ]
@@ -123,6 +125,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
         <input
           className="pk-input"
           aria-label="Device name"
+          maxLength={100}
           aria-busy={patch.isPending || undefined}
           value={name}
           onChange={(e) => setName(e.currentTarget.value)}
@@ -135,7 +138,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
           <span className="pk-label">Groups</span>
           <div className="pk-pills" role="group" aria-label="Groups">
             {groups.map((g) => (
-              <button key={g.id} type="button" className="pk-pill pk-pill-plain" aria-pressed={g.device_ids.includes(device.id)} aria-disabled={saveGroup.isPending || undefined} onClick={() => !saveGroup.isPending && toggleGroup(g)}>
+              <button key={g.id} type="button" title={g.name} className="pk-pill pk-pill-plain" aria-pressed={g.device_ids.includes(device.id)} aria-disabled={saveGroup.isPending || undefined} onClick={() => !saveGroup.isPending && toggleGroup(g)}>
                 {g.name}
               </button>
             ))}
@@ -213,24 +216,24 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
             </div>
             <div className="pk-kv">
               <span>Override</span>
-              <b>{device.override ? (device.override.action === 'lock' ? 'Locked' : 'Unlocked') : 'None, on schedule'}</b>
+              <b>{override ? (override.action === 'lock' ? 'Locked' : 'Unlocked') : 'None, on schedule'}</b>
             </div>
-            {device.override?.expires_at && (
+            {override?.expires_at && (
               <div className="pk-kv">
                 <span>Expires at</span>
-                <b>{new Date(device.override.expires_at).toLocaleString()}</b>
+                <b>{inFamilyZone(override.expires_at, family?.timezone)}</b>
               </div>
             )}
           </section>
         </div>
       )}
-      {tab === 'network' && <DeviceNetwork device={device} />}
+      {tab === 'network' && <DeviceNetwork device={device} timeZone={family?.timezone} />}
 
       <ConfirmDelete
         opened={confirm}
         title={`Delete ${device.name}?`}
         body="It will show up as a new device if it connects again."
-        onConfirm={() => del.mutate(device.id, { onSuccess: onDeleted })}
+        onConfirm={() => !del.isPending && del.mutate(device.id, { onSuccess: onDeleted })}
         onClose={close}
       />
     </div>

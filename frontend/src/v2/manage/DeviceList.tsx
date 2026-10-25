@@ -1,10 +1,11 @@
+import { useEffect, useRef } from 'react'
 import { Icon } from '@/v2/parent/Icon'
 import { MakerLogo } from '@/v2/parent/MakerLogo'
 import { Chip, type ChipTone } from '@/v2/parent/Chip'
 import { ListHeader } from '@/v2/parent/ListHeader'
 import { SegmentedControl } from '@/v2/parent/SegmentedControl'
 import type { Device, Group as DeviceGroup, Kid } from '@/v2/types'
-import { DEVICE_TYPE_ICON, getDeviceType, type DeviceType } from './deviceMeta'
+import { ago, DEVICE_TYPE_ICON, getDeviceType, type DeviceType } from './deviceMeta'
 
 interface Props {
   devices: Device[]
@@ -18,11 +19,12 @@ interface Props {
   onTabChange?: (tab: 'devices' | 'groups') => void
 }
 
-const statusChip = (status: string): { tone: ChipTone; text: string; icon: string } => {
-  if (status === 'open' || status === 'assigned') return { tone: 'acc', text: 'Open', icon: 'lock_open' }
-  if (status === 'locked') return { tone: 'grey', text: 'Locked', icon: 'lock' }
-  if (status === 'exempt') return { tone: 'lav', text: 'Exempt', icon: 'shield' }
-  if (status === 'guest') return { tone: 'grey', text: 'Guest', icon: 'person' }
+const statusChip = (d: Device): { tone: ChipTone; text: string; icon: string } => {
+  // a lock you pressed beats the schedule; one that already ran out doesn't count
+  const ov = d.override
+  if (ov?.action === 'lock' && !(ov.expires_at && new Date(ov.expires_at).getTime() <= Date.now())) return { tone: 'grey', text: 'Locked', icon: 'lock' }
+  if (d.status === 'guest') return { tone: 'grey', text: 'Guest', icon: 'person' }
+  if (d.status === 'assigned') return { tone: 'acc', text: 'Open', icon: 'lock_open' }
   return { tone: 'amb', text: "Who's this?", icon: 'help' }
 }
 
@@ -32,21 +34,6 @@ const ownerName = (kids: Kid[], ownerIds: number[]) => {
     .filter((k) => ownerIds.includes(k.id))
     .map((k) => k.full_name || k.username)
     .join(', ')
-}
-
-const relativeTime = (iso: string | null) => {
-  if (!iso) return 'never seen'
-  const date = new Date(iso)
-  const now = new Date()
-  const ms = now.getTime() - date.getTime()
-  const mins = Math.floor(ms / 60000)
-  if (mins < 60) return `${mins}m ago`
-  if (mins < 120) return '1h ago'
-  const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days < 7) return `${days}d ago`
-  return date.toLocaleDateString()
 }
 
 const getGroupDeviceTypes = (devices: Device[], groupDeviceIds: number[]): DeviceType[] => {
@@ -78,9 +65,14 @@ export function DeviceList({
   const assigned = devices.filter((d) => d.status !== 'unassigned')
 
   const sorted = [...unassigned, ...assigned]
+  // a deep link (?item=) or a pick from elsewhere may be off-screen in a long list
+  const listRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    listRef.current?.querySelector<HTMLElement>(`[role="tabpanel"]:not([hidden]) [data-selected="true"]`)?.scrollIntoView({ block: 'nearest' })
+  }, [selectedDevice, selectedGroup, tab, devices.length])
 
   return (
-    <div role="region" aria-label="Devices and groups">
+    <div role="region" aria-label="Devices and groups" ref={listRef}>
       <ListHeader title={tab === 'devices' ? 'Devices' : 'Groups'}>
         <SegmentedControl
           value={tab}
@@ -100,7 +92,7 @@ export function DeviceList({
           ) : (
             <div className="p-device-list">
               {sorted.map((d) => {
-                const chip = statusChip(d.status)
+                const chip = statusChip(d)
                 const owner = ownerName(kids, d.owner_ids)
                 const deviceType = getDeviceType(d.name, d.vendor)
                 const isSelected = selectedDevice === d.id
@@ -128,7 +120,7 @@ export function DeviceList({
                     <div className="p-device-info">
                       <div className="p-device-name" title={d.name}>{d.name}</div>
                       <div className="p-device-meta">
-                        {owner} · {relativeTime(d.last_seen)}
+                        {owner} · {d.last_seen ? ago(d.last_seen) : 'never seen'}
                       </div>
                     </div>
                     <Chip tone={chip.tone} icon={chip.icon}>
@@ -167,13 +159,13 @@ export function DeviceList({
                       <Icon name={DEVICE_TYPE_ICON[firstType]} size={18} />
                     </div>
                     <div className="p-device-info">
-                      <div className="p-device-name">{g.name}</div>
+                      <div className="p-device-name" title={g.name}>{g.name}</div>
                       <div className="p-device-meta">
                         {g.device_ids.length} {g.device_ids.length === 1 ? 'device' : 'devices'} · {groupOwners}
                       </div>
                     </div>
                     <div className="p-group-stack" aria-hidden="true">
-                      {deviceTypes.map((type) => (
+                      {deviceTypes.slice(0, 3).map((type) => (
                         <Icon key={type} name={DEVICE_TYPE_ICON[type]} size={16} />
                       ))}
                     </div>

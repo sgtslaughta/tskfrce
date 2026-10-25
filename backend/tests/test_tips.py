@@ -114,4 +114,7 @@ def test_tips_requires_auth(client):
 def test_kid_token_keeps_own_tips(client, kid_headers, parent_headers):
     assert client.post("/api/v1/me/tips/onboard.kid/dismiss", headers=kid_headers).status_code < 300
     assert "onboard.kid" in client.get("/api/v1/me/tips", headers=kid_headers).json()["dismissed"]
-    assert "onboard.kid" not in client.get("/api/v1/me/tips", headers=parent_headers).json()["dismissed"]
+    assert (
+        "onboard.kid"
+        not in client.get("/api/v1/me/tips", headers=parent_headers).json()["dismissed"]
+    )

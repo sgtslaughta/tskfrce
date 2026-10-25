@@ -4,6 +4,7 @@ from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import delete
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db, require_parent
@@ -25,9 +26,17 @@ BLOCKER_STALE = timedelta(seconds=90)
 
 
 def device_out(
-    db: Session, d: Device, fam: FamilySettings, now: datetime, pre: Prefetch | None = None
+    db: Session,
+    d: Device,
+    fam: FamilySettings,
+    now: datetime,
+    pre: Prefetch | None = None,
+    addresses: bool = False,
 ) -> dict:
-    """Device JSON; `now` is aware UTC. Pass `pre` when rendering many devices."""
+    """Device JSON; `now` is aware UTC. Pass `pre` when rendering many devices.
+
+    `addresses` adds ip, ipv6, hostname, first_seen (the Network tab); Today skips them.
+    """
     if pre:
         ov = next((o for o in pre.overrides[d.id] if o.source == "manual"), None)
     else:
@@ -43,7 +52,7 @@ def device_out(
     # two or more kids share this device and someone can sign in without a PIN
     active_kids = [k for k in d.owners if k.role == UserRole.KID and k.is_active]
     needs_pins = len(active_kids) >= 2 and any(not k.pin_hash for k in active_kids)
-    return {
+    out = {
         "id": d.id,
         "name": d.name,
         "mac": d.mac,
@@ -57,6 +66,14 @@ def device_out(
         "resisting": d.resisting_since is not None,
         "needs_pins": needs_pins,
     }
+    if addresses:
+        out |= {
+            "first_seen": utc_z(d.first_seen),
+            "ip": d.ip,
+            "ipv6": d.ipv6,
+            "hostname": d.hostname,
+        }
+    return out
 
 
 def _device(db: Session, device_id: int) -> Device:
@@ -73,6 +90,15 @@ def _devices(db: Session, ids: list[int]) -> list[Device]:
     return rows
 
 
+def _commit(db: Session, msg: str, code: int = 409) -> None:
+    """Two taps at once can both pass a check and then collide on a unique key: answer, don't 500."""
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(code, msg) from None
+
+
 @router.get("/blocker")
 def blocker_status(db: Session = Depends(get_db)) -> dict:
     seen = get_family(db).blocker_last_seen  # naive UTC
@@ -85,12 +111,14 @@ def list_devices(db: Session = Depends(get_db)):
     fam, now = get_family(db), datetime.now(UTC)
     devs = (
         db.query(Device)
-        .options(selectinload(Device.owners), selectinload(Device.groups))
+        .options(
+            selectinload(Device.owners), selectinload(Device.groups), selectinload(Device.ipv6_rows)
+        )
         .order_by(Device.id)
         .all()
     )
     pre = Prefetch(db, devs)
-    return [device_out(db, d, fam, now, pre) for d in devs]
+    return [device_out(db, d, fam, now, pre, addresses=True) for d in devs]
 
 
 @router.patch("/devices/{device_id}")
@@ -112,9 +140,9 @@ def patch_device(device_id: int, body: DevicePatch, db: Session = Depends(get_db
         if len(groups) != len(set(body.group_ids)):
             raise HTTPException(400, "One of the groups doesn't exist. Refresh and try again.")
         d.groups = groups
-    db.commit()
+    _commit(db, "That device just changed somewhere else. Refresh and try again.")
     trigger()
-    return device_out(db, d, get_family(db), datetime.now(UTC))
+    return device_out(db, d, get_family(db), datetime.now(UTC), addresses=True)
 
 
 @router.post("/devices/{device_id}/override")
@@ -195,7 +223,7 @@ def create_group(body: GroupIn, db: Session = Depends(get_db)):
     g = DeviceGroup(name=body.name)
     g.devices = _devices(db, body.device_ids)
     db.add(g)
-    db.commit()
+    _commit(db, "A group with that name already exists. Pick another name.", 400)
     trigger()
     return _group_out(g)
 
@@ -206,7 +234,7 @@ def patch_group(group_id: int, body: GroupIn, db: Session = Depends(get_db)):
     _name_free(db, body.name, g.id)
     g.name = body.name
     g.devices = _devices(db, body.device_ids)
-    db.commit()
+    _commit(db, "A group with that name already exists. Pick another name.", 400)
     trigger()
     return _group_out(g)
 

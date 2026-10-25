@@ -321,6 +321,30 @@ def test_device_datetimes_are_utc_z(client, db, parent_headers):
     assert j["override"]["expires_at"].endswith("Z")
 
 
+def test_device_list_carries_addresses_for_the_network_tab(client, db, parent_headers):
+    d = mkdev(db)
+    d.ip, d.hostname, d.ipv6 = "192.168.1.9", "pad.local", ["fe80::1", "fe80::2"]
+    db.commit()
+    j = client.get("/api/v1/devices", headers=parent_headers).json()[0]
+    assert (j["ip"], j["hostname"], j["ipv6"]) == (
+        "192.168.1.9",
+        "pad.local",
+        ["fe80::1", "fe80::2"],
+    )
+    assert j["first_seen"].endswith("Z")
+
+
+def test_two_group_creates_at_once_get_a_400_not_a_500(client, db, parent_headers, monkeypatch):
+    # a double click lets both requests pass the name check; the unique key then rejects the second
+    monkeypatch.setattr("app.api.devices._name_free", lambda *a, **k: None)
+    body = {"name": "Twins", "device_ids": []}
+    assert client.post("/api/v1/groups", json=body, headers=parent_headers).status_code == 200
+    r = client.post("/api/v1/groups", json=body, headers=parent_headers)
+    assert r.status_code == 400
+    assert "already exists" in r.json()["detail"]
+    assert db.query(DeviceGroup).filter_by(name="Twins").count() == 1
+
+
 def test_owner_ids_keep_explicit_guest(client, db, kid, parent_headers):
     d = mkdev(db)
     url = f"/api/v1/devices/{d.id}"

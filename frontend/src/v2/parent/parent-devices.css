@@ -201,3 +201,16 @@
   [data-look='parent'] .pk-head .pk-actions-grid { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
   [data-look='parent'] .pk-actions-grid .p-btn { width: 100%; }
 }
+
+/* ── extreme content (pass 3): long names, many IPv6 addresses, 30-device groups ── */
+[data-look='parent'] .pk-pill-plain { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-look='parent'] .pk-detail .pk-kv { align-items: baseline; }
+[data-look='parent'] .pk-detail .pk-kv span { flex-shrink: 0; }
+[data-look='parent'] .pk-detail .pk-kv b { min-width: 0; overflow-wrap: anywhere; }
+[data-look='parent'] .pk-detail .pk-panel :is(h2, h3) { min-width: 0; overflow-wrap: anywhere; }
+[data-look='parent'] .pk-head .p-header-chip { max-width: 100%; min-width: 0; overflow-wrap: anywhere; }
+[data-look='parent'] .p-device-meta { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 767px) {
+  [data-look='parent'] .pk-actions-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-look='parent'] .pk-actions-grid .p-btn { white-space: normal; line-height: 1.2; }
+}
