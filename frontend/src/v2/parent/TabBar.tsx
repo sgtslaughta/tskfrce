@@ -24,7 +24,7 @@ export function TabBar() {
   ]
 
   return (
-    <nav aria-label="Main" className="p-tabbar" role="tablist">
+    <nav aria-label="Main" className="p-tabbar">
       {items.map((item) => (
         <Link
           key={item.href}
