@@ -23,6 +23,27 @@ def balance(db: Session, kid_id: int) -> int:
     return int(total.scalar())
 
 
+def deduct(
+    db: Session, kid_id: int, amount: int, note: str, by_id: int, run_id: int | None = None
+) -> int:
+    """Take points off with a reason the kid sees; never below zero. Returns what was taken."""
+    take = min(amount, max(balance(db, kid_id), 0))
+    if take:
+        db.add(
+            Points(
+                user_id=kid_id,
+                points_type=PointsType.PENALTY,
+                amount=-take,
+                reason="deduction",
+                description=note,
+                by_id=by_id,
+                run_id=run_id,
+                seen_by_kid=False,
+            )
+        )
+    return take
+
+
 def deadline_utc(fam: FamilySettings, chore_day: date, due_time: str | None) -> datetime | None:
     """Chore deadline as naive UTC, or None when the chore has no due time."""
     if not due_time:

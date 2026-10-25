@@ -49,7 +49,7 @@ def test_deduct_takes_points_with_reason_never_below_zero(
         d, json={"amount": 10, "note": "Left plates in the sink"}, headers=parent_headers
     )
     assert r.json() == {"balance": 5, "deducted": 10}
-    p = db.query(Points).filter(Points.reason == "adjustment").one()
+    p = db.query(Points).filter(Points.reason == "deduction").one()
     assert p.amount == -10 and p.description == "Left plates in the sink"
     r = client.post(d, json={"amount": 20, "note": "Again"}, headers=parent_headers)
     assert r.json() == {"balance": 0, "deducted": 5}

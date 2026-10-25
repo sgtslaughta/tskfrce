@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta
 
 from app.models.chat import ThreadMessage
 from app.models.chore_extra import ChorePhoto
-from app.models.chores import Chore, ChoreAssignment, ChoreRun
+from app.models.chores import Chore, ChoreAssignment, ChoreRun, ChoreStep
 from app.models.family import get_family
 from app.models.user import UserRole
 from PIL import Image
@@ -292,3 +292,38 @@ def test_parent_edits_own_any_time(client, db, parent_headers):
     assert r.status_code == 200
     got = client.get(f"{C}/threads/family/family", headers=lh).json()["messages"][-1]
     assert got["body"] == "later" and got["edited_at"].endswith("Z")
+
+
+def test_step_reply(client, db, parent_headers):
+    leo, maya, lh, mh, _ = _world(db, client, parent_headers)
+    api_chore(client, parent_headers, [leo], title="Dishes", steps=["rinse", "stack"])
+    run = (
+        db.query(ChoreRun)
+        .filter(ChoreRun.assignment.has(ChoreAssignment.chore.has(Chore.title == "Dishes")))
+        .one()
+    )
+    api_chore(client, parent_headers, [maya], title="Sweep", steps=["broom"])
+    step = db.query(ChoreStep).filter(ChoreStep.chore_id == run.assignment.chore_id).first()
+    tid = _tid(client, parent_headers, "chore", run.id)
+    r = client.post(
+        f"{C}/threads/{tid}/messages",
+        json={"body": "this one", "step_id": step.id},
+        headers=parent_headers,
+    )
+    assert r.status_code == 200
+    assert (r.json()["step_id"], r.json()["step_title"]) == (step.id, step.title)
+    foreign = db.query(ChoreStep).filter(ChoreStep.chore_id != run.assignment.chore_id).first()
+    for bad in (99999, foreign.id):
+        r = client.post(
+            f"{C}/threads/{tid}/messages",
+            json={"body": "x", "step_id": bad},
+            headers=parent_headers,
+        )
+        assert r.status_code == 422 and r.json()["detail"] == "We couldn't find that step."
+    fid = _tid(client, parent_headers, "family", "family")
+    r = client.post(
+        f"{C}/threads/{fid}/messages",
+        json={"body": "x", "step_id": step.id},
+        headers=parent_headers,
+    )
+    assert r.status_code == 422

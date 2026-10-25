@@ -27,6 +27,7 @@ NOT_FOUND = "We couldn't find that conversation."
 class MessageIn(BaseModel):
     body: Annotated[str | None, StringConstraints(strip_whitespace=True, max_length=2000)] = None
     photo_id: int | None = None
+    step_id: int | None = None
 
     @model_validator(mode="after")
     def _something(self):
@@ -51,6 +52,8 @@ def _msg(t: Thread, m: ThreadMessage) -> dict:
         "author_name": (m.author.full_name or m.author.username) if m.author else None,
         "kind": m.kind,
         "note_label": m.note_label,
+        "step_id": m.step_id,
+        "step_title": m.step.title if m.step else None,
         "body": m.body,
         "photo_url": chat.photo_url(t, m),
         "created_at": utc_z(m.created_at),
@@ -104,7 +107,9 @@ def send(
     t = _thread(db, user, thread_id)
     if body.photo_id is not None and not chat.photo_ok(db, t, body.photo_id):
         raise HTTPException(422, "We couldn't find that photo. Add it again.")
-    m = chat.post(db, t, user, body.body, body.photo_id)
+    if body.step_id is not None and not chat.step_ok(db, t, body.step_id):
+        raise HTTPException(422, "We couldn't find that step.")
+    m = chat.post(db, t, user, body.body, body.photo_id, step_id=body.step_id)
     db.commit()
     return _msg(t, m)
 

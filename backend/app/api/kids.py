@@ -168,22 +168,16 @@ def give_points(kid_id: int, body: BonusIn, db: Session = Depends(get_db)):
 
 
 @router.post("/{kid_id}/deduct")
-def deduct_points(kid_id: int, body: BonusIn, db: Session = Depends(get_db)):
+def deduct_points(
+    kid_id: int,
+    body: BonusIn,
+    db: Session = Depends(get_db),
+    parent: User = Depends(require_parent),
+):
     """Take points away with a reason the kid sees; the balance never goes below zero."""
     kid = _kid(db, kid_id)
-    take = min(body.amount, max(economy.balance(db, kid.id), 0))
-    if take:
-        db.add(
-            Points(
-                user_id=kid.id,
-                points_type=PointsType.PENALTY,
-                amount=-take,
-                reason="adjustment",
-                description=body.note,
-                seen_by_kid=False,
-            )
-        )
-        db.commit()
+    take = economy.deduct(db, kid.id, body.amount, body.note, parent.id)
+    db.commit()
     return {"balance": economy.balance(db, kid.id), "deducted": take}
 
 

@@ -17,6 +17,7 @@ from app.models.chat import Thread, ThreadMessage
 from app.models.chore_type import ChoreType
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, RunStepTick, run_kids
 from app.models.family import get_family
+from app.models.points import Points
 from app.models.user import User, UserRole
 from app.schemas.chore import ChoreOut
 from app.services.chore_types import notes_for
@@ -162,6 +163,32 @@ def note_texts(db: Session, runs: list[ChoreRun]) -> dict[int, tuple[str | None,
         .all()
     )
     return {rid: (body, name) for rid, body, name in rows}  # later rows win
+
+
+def deductions(db: Session, runs: list[ChoreRun]) -> dict[int, list[dict]]:
+    """run_id -> that run's deductions (positive amounts, oldest first), in one query."""
+    ids = [r.id for r in runs]
+    if not ids:
+        return {}
+    rows = (
+        db.query(Points, User.full_name)
+        .outerjoin(User, User.id == Points.by_id)
+        .filter(Points.run_id.in_(ids), Points.reason == "deduction")
+        .order_by(Points.id)
+        .all()
+    )
+    out: dict[int, list[dict]] = {}
+    for p, by in rows:
+        out.setdefault(p.run_id, []).append(
+            {
+                "kid_id": p.user_id,
+                "amount": -p.amount,
+                "note": p.description,
+                "by_name": by,
+                "at": iso_z(p.created_at),
+            }
+        )
+    return out
 
 
 def note_out(run: ChoreRun, texts: dict) -> dict | None:

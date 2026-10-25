@@ -46,6 +46,7 @@ class ThreadMessage(Base):
     edited_at = Column(DateTime, nullable=True)
 
     author = relationship("User", foreign_keys=[author_id])
+    step = relationship("ChoreStep", lazy="joined")
 
 
 class ThreadRead(Base):

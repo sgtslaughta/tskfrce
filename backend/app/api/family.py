@@ -130,7 +130,9 @@ def _needs_you(
     return sorted(items, key=lambda x: x["submitted_at"] or "")
 
 
-def _chore_out(r: ChoreRun, names: dict[int, str], fam, notes: dict, tmrw: date) -> dict:
+def _chore_out(
+    r: ChoreRun, names: dict[int, str], fam, notes: dict, tmrw: date, deds: list[dict]
+) -> dict:
     c, st, mode = svc.chore_of(r), svc.state(r), svc.mode_of(r)
     steps = svc.steps_out(r, fam)
     taken = mode == "race" and st != "todo" and r.submitted_by_id
@@ -151,6 +153,7 @@ def _chore_out(r: ChoreRun, names: dict[int, str], fam, notes: dict, tmrw: date)
         "note": svc.note_out(r, notes),
         "taken_by": names.get(r.submitted_by_id) if taken else None,
         "can_move": svc.can_move(r, tmrw),
+        "deducted": sum(d["amount"] for d in deds),
     }
 
 
@@ -194,6 +197,7 @@ def today(db: Session = Depends(get_db)):
     prog = progression.progress_many(db, kid_rows, fam, balances)
     names = {k.id: k.full_name for k in kid_rows}
     notes = svc.note_texts(db, shown)
+    deds = svc.deductions(db, shown)
     needs = _needs_you(db, tasks, names, fam, balances)
     prices = sorted(p for (p,) in db.query(Reward.price).filter(Reward.active.is_(True)))
     now_local = local_now(fam.timezone, now)
@@ -216,7 +220,10 @@ def today(db: Session = Depends(get_db)):
                 "points": balances.get(k.id, 0),
                 "next_reward": _next_reward(prices, balances.get(k.id, 0)),
                 "locks_at": _locks_at(pre, k.id, now_local),
-                "chores": [_chore_out(t, names, fam, notes, tmrw) for t in shown_by[k.id]],
+                "chores": [
+                    _chore_out(t, names, fam, notes, tmrw, deds.get(t.id, []))
+                    for t in shown_by[k.id]
+                ],
                 "devices": [
                     {"id": d["id"], "name": d["name"], "vendor": d["vendor"], "online": d["online"]}
                     for d in devs

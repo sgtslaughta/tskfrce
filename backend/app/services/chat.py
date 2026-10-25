@@ -9,7 +9,7 @@ from app.models.chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
 from app.models.chores import ChoreAssignment, ChoreRun
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services.chores import clear_note, kid_runs_filter, run_kid_ids
+from app.services.chores import chore_of, clear_note, kid_runs_filter, run_kid_ids
 
 
 def _target_ok(db: Session, user: User, kind: str, run_id: int | None, kid_id: int | None) -> bool:
@@ -81,6 +81,7 @@ def post(
     photo_id: int | None = None,
     kind: str = "user",
     note_label: str | None = None,
+    step_id: int | None = None,
 ) -> ThreadMessage:
     """Add a message. Flushes, never commits. A parent's chore-thread message clears the note."""
     m = ThreadMessage(
@@ -90,6 +91,7 @@ def post(
         body=body,
         photo_id=photo_id,
         note_label=note_label,
+        step_id=step_id,
     )
     db.add(m)
     if author and author.role == UserRole.PARENT and thread.kind == "chore":
@@ -103,6 +105,12 @@ def post(
 def system(db: Session, run: ChoreRun, body: str, photo_id: int | None = None) -> None:
     """System line in the run's thread; `photo_id` is a ChorePhoto (proof)."""
     post(db, thread_for(db, "chore", run_id=run.id), None, body, photo_id, kind="system")
+
+
+def step_ok(db: Session, thread: Thread, step_id: int) -> bool:
+    """A step of the chore this chore thread is about."""
+    run = db.get(ChoreRun, thread.run_id) if thread.kind == "chore" else None
+    return run is not None and any(s.id == step_id for s in chore_of(run).steps)
 
 
 def photo_ok(db: Session, thread: Thread, photo_id: int) -> bool:

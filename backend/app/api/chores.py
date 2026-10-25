@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException
-from pydantic import BaseModel, StringConstraints
+from pydantic import BaseModel, Field, StringConstraints
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db, require_parent
@@ -13,7 +13,7 @@ from app.models.family import get_family
 from app.models.lock import Device
 from app.models.points import Points
 from app.models.user import User, UserRole
-from app.services import badges, chat
+from app.services import badges, chat, economy
 from app.services import chores as svc
 from app.services.economy import award_chore
 
@@ -188,6 +188,31 @@ def skip(run_id: int, db: Session = Depends(get_db), _: User = Depends(require_p
 
 class SendBack(BaseModel):
     note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+
+
+class DeductIn(BaseModel):
+    kid_id: int
+    amount: Annotated[int, Field(ge=1, le=500)]
+    note: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+
+
+@router.post("/{run_id}/deduct")
+def deduct(
+    run_id: int,
+    body: DeductIn,
+    db: Session = Depends(get_db),
+    parent: User = Depends(require_parent),
+):
+    r = db.get(ChoreRun, run_id)
+    if r is None:
+        raise HTTPException(404, "That chore doesn't exist.")
+    if body.kid_id not in svc.run_kid_ids(r):
+        raise HTTPException(422, "That kid isn't on this chore.")
+    take = economy.deduct(db, body.kid_id, body.amount, body.note, parent.id, r.id)
+    if take:
+        chat.system(db, r, f"\u2212{take} points: {body.note}")
+    db.commit()
+    return {"balance": economy.balance(db, body.kid_id), "deducted": take}
 
 
 @router.post("/{run_id}/send-back")
