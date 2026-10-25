@@ -20,6 +20,8 @@ const MODES: { value: ChoreMode; label: string; hint: string }[] = [
   { value: 'team', label: 'Team effort', hint: 'One chore for everyone. Any kid can tick it, and the points are split evenly.' },
 ]
 
+const FULL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
 const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
 
 interface Props {
@@ -111,7 +113,8 @@ export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissa
               key={d}
               type="button"
               className="pk-day"
-              aria-label={d}
+              aria-label={FULL_DAYS[i]}
+              title={FULL_DAYS[i]}
               aria-pressed={days.includes(String(i))}
               onClick={() => setDays(toggle(days, String(i)))}
             >
@@ -133,9 +136,9 @@ export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissa
         </label>
       </div>
       <div className="pk-actions">
-        <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!ready || save.isPending}>
-          <Icon name="check" />
-          Save
+        <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!ready || save.isPending} aria-busy={save.isPending}>
+          <Icon name={save.isPending ? 'progress_activity' : 'check'} className={save.isPending ? 'pk-spin' : ''} />
+          {save.isPending ? 'Saving…' : 'Save'}
         </button>
         {dismissable && (
           <button type="button" className="p-btn" onClick={onClose}>
@@ -144,7 +147,7 @@ export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissa
         )}
         {a && (
           <>
-            <button type="button" className="p-btn pk-push" data-variant="red" onClick={open}>
+            <button type="button" className="p-btn pk-push" data-variant="red" onClick={open} disabled={del.isPending}>
               <Icon name="person_remove" />
               Remove
             </button>

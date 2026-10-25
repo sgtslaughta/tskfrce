@@ -188,6 +188,16 @@ describe('chore detail', () => {
     ])
   })
 
+  test('Enter in "Add a step" adds it and flags unsaved changes; step buttons have tooltips', async () => {
+    await show({ item: '5' })
+    expect(within(detail()).queryByText('Unsaved changes')).toBeNull()
+    await userEvent.type(within(detail()).getByLabelText('Add a step'), 'Wipe desk{Enter}')
+    expect(within(detail()).getByText('Wipe desk')).toBeInTheDocument()
+    expect(within(detail()).getByText('Unsaved changes')).toBeInTheDocument()
+    expect(within(detail()).getByRole('button', { name: 'Remove Wipe desk' })).toHaveAttribute('title', 'Remove step')
+    expect(within(detail()).getByRole('button', { name: 'Move up Wipe desk' })).toHaveAttribute('title', 'Move up')
+  })
+
   test('Assign posts AssignmentIn with exact keys; mode hidden with one kid', async () => {
     await show({ item: '9' })
     expect(within(who()).getByText(/Nobody has this chore yet/)).toBeInTheDocument()
@@ -223,8 +233,8 @@ describe('chore detail', () => {
     await userEvent.click(within(who()).getByRole('button', { name: 'Some days' }))
     const save = within(who()).getByRole('button', { name: 'Save' })
     expect(save).toBeDisabled()
-    const wed = within(who()).getByRole('button', { name: 'Wed' })
-    await userEvent.click(within(who()).getByRole('button', { name: 'Mon' }))
+    const wed = within(who()).getByRole('button', { name: 'Wednesday' })
+    await userEvent.click(within(who()).getByRole('button', { name: 'Monday' }))
     await userEvent.click(wed)
     expect(wed).toHaveAttribute('aria-pressed', 'true')
     expect(wed).toHaveTextContent('W')

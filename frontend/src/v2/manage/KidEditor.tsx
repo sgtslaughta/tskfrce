@@ -40,7 +40,7 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
 
   return (
     <section className="pk-panel pk-span" aria-label={kid ? 'Edit kid' : 'Add a kid'}>
-      <h3>
+      <h3 aria-level={kid ? 3 : 2}>
         <Icon name={kid ? 'edit' : 'person_add'} size={18} />
         {kid ? 'Edit kid' : 'Add a kid'}
       </h3>
@@ -71,9 +71,10 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
             data-variant="accent"
             onClick={save}
             disabled={!name.trim() || pinBad || create.isPending || patch.isPending}
+            aria-busy={create.isPending || patch.isPending}
           >
-            <Icon name="check" />
-            {kid ? 'Save kid' : 'Add kid'}
+            <Icon name={create.isPending || patch.isPending ? 'progress_activity' : 'check'} className={create.isPending || patch.isPending ? 'pk-spin' : ''} />
+            {create.isPending || patch.isPending ? 'Saving…' : kid ? 'Save kid' : 'Add kid'}
           </button>
           {kid?.has_pin && (
             <button
@@ -97,7 +98,7 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
           opened={confirm}
           title={`Delete ${label}?`}
           body={`Deleting ${label} removes their chores and frees their devices.`}
-          onConfirm={() => del.mutate(kid.id, { onSuccess: onDone })}
+          onConfirm={() => del.mutate(kid.id, { onError: toastFail, onSuccess: onDone })}
           onClose={close}
         />
       )}
