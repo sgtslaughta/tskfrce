@@ -73,3 +73,10 @@ def read_one(
     n.read_at = n.read_at or datetime.utcnow()
     db.commit()
     return _out(n)
+
+
+@router.delete("/{nid}", status_code=204)
+def dismiss(nid: int, db: Session = Depends(get_db), user: User = Depends(get_current_active_user)):
+    if not _mine(db, user).filter(Notification.id == nid).delete():
+        raise HTTPException(404, "That notification isn't yours.")
+    db.commit()

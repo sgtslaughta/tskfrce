@@ -170,6 +170,17 @@
   position: relative;
 }
 
+.p-bell-x {
+  position: absolute; top: 6px; right: 4px;
+  width: 28px; height: 28px; display: grid; place-items: center;
+  border: 0; border-radius: 6px; background: none; color: var(--p-sub); cursor: pointer;
+  opacity: 0;
+}
+.p-bell-item:hover .p-bell-x, .p-bell-x:focus-visible { opacity: 1; }
+.p-bell-x:hover { color: var(--p-ink); background: var(--p-line); }
+@media (hover: none) { .p-bell-x { opacity: 1; } }
+.p-bell-item:hover::after, .p-bell-item:focus-within::after { display: none; }
+
 .p-bell-item:hover {
   background: var(--p-soft);
 }
@@ -232,7 +243,7 @@
   overflow-wrap: anywhere;
   font-size: 13px;
   font-weight: 600;
-  padding-right: 14px;
+  padding-right: 28px;
 }
 
 .p-bell-text:hover .p-bell-title { text-decoration: underline; }

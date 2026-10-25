@@ -24,13 +24,13 @@ export interface Inbox {
 
 const key = (kid: boolean) => ['inbox', kid ? 'kid' : 'parent']
 
-/** Own notifications, refetched every 30 s while the tab is visible. */
+/** Own notifications, refetched every 30 s, in the background too (OS notifications). */
 export const useInbox = (kid = false) =>
   useQuery({
     queryKey: key(kid),
     queryFn: () => api<Inbox>('/notifications', { kid }),
     refetchInterval: 30_000,
-    refetchIntervalInBackground: false,
+    refetchIntervalInBackground: true,
   })
 
 function useInboxMutation<V>(kid: boolean, fn: (v: V) => Promise<unknown>) {
@@ -47,3 +47,6 @@ export const useMarkRead = (kid = false) =>
 
 export const useMarkAllRead = (kid = false) =>
   useInboxMutation(kid, () => api('/notifications/read-all', { method: 'POST', kid }))
+
+export const useDismiss = (kid = false) =>
+  useInboxMutation(kid, (id: number) => api(`/notifications/${id}`, { method: 'DELETE', kid }))

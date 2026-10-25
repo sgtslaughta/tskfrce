@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState, ErrorPanel } from '@/v2/parent/states'
 import { useRouter } from 'next/router'
 import { Drawer, Popover, Tooltip } from '@mantine/core'
 import { useQueryClient } from '@tanstack/react-query'
 import { useMediaQuery } from '@mantine/hooks'
-import { useInbox, useMarkAllRead, useMarkRead, type Inbox, type InboxItem } from '../hooks/useInbox'
+import { useDismiss, useInbox, useMarkAllRead, useMarkRead, type Inbox, type InboxItem } from '../hooks/useInbox'
+import { askOnFirstClick, dest, useOsNotify } from '../osNotify'
 import { useApproveChore, useSendBack, useToday } from '../hooks/useToday'
 import { useDecideRedemption } from '../hooks/useRewards'
 import { Icon } from '../parent/Icon'
@@ -31,16 +32,6 @@ const severityIcon = (n: InboxItem): { name: string; tone: 'hi' | 'md' | 'lv' | 
   return { name: 'whatshot', tone: 'ok' }
 }
 
-/** Where a parent notification leads: the device, the chore on Today, or the Needs you list. */
-const dest = (n: InboxItem): string | null =>
-  n.device_id
-    ? `/devices?item=${n.device_id}`
-    : n.run_id
-      ? `/?chore=${n.run_id}`
-      : n.kind === 'redemption_request'
-        ? '/?tab=needs'
-        : null
-
 const isToday = (iso: string): boolean => {
   const now = new Date()
   const then = new Date(iso)
@@ -61,6 +52,7 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
   const inbox = useInbox(kid)
   const read = useMarkRead(kid)
   const readAll = useMarkAllRead(kid)
+  const dismiss = useDismiss(kid)
   const approve = useApproveChore()
   const sendBack = useSendBack()
   const decideRedemption = useDecideRedemption()
@@ -168,10 +160,15 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
     void router.push(to)
   }
   const text = (n: InboxItem) => (
-    <button type="button" className="p-bell-text" onClick={() => go(n)}>
-      <span className="p-bell-title">{n.title}</span>
-      {n.body && <span className="p-bell-sub">{n.body}</span>}
-    </button>
+    <>
+      <button type="button" className="p-bell-text" onClick={() => go(n)}>
+        <span className="p-bell-title">{n.title}</span>
+        {n.body && <span className="p-bell-sub">{n.body}</span>}
+      </button>
+      <button type="button" className="p-bell-x" aria-label={`Dismiss ${n.title}`} onClick={() => dismiss.mutate(n.id)}>
+        <Icon name="close" size={16} />
+      </button>
+    </>
   )
 
   const handleView = (n: InboxItem) => {
@@ -326,7 +323,15 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
 export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; placement?: 'rail' | 'header' }) {
   const [opened, setOpened] = useState(false)
   const small = useMediaQuery('(max-width: 767px)')
-  const unread = useInbox(kid).data?.unread ?? 0
+  const inbox = useInbox(kid)
+  const unread = inbox.data?.unread ?? 0
+  const router = useRouter()
+  const fromOs = useCallback((n: InboxItem) => {
+    const to = kid ? null : dest(n)
+    if (to) void router.push(to)
+  }, [kid, router])
+  useOsNotify(inbox.data?.items, fromOs)
+  useEffect(askOnFirstClick, [])
 
   // Escape closes the desktop popover wherever focus is (focus stays on the bell)
   useEffect(() => {

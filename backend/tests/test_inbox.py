@@ -118,3 +118,12 @@ def test_cascades(client, db, parent, kid, parent_headers):
     assert client.delete(f"/api/v1/kids/{kid.id}", headers=parent_headers).status_code == 200
     db.expire_all()
     assert not _all(db, run_id=r.id) and not _all(db, user_id=kid.id)
+
+
+def test_dismiss_own_only(client, db, parent, parent_headers, kid_headers):
+    n = Notification(user_id=parent.id, kind="level_up", title="x")
+    db.add(n)
+    db.commit()
+    assert client.delete(f"{N}/{n.id}", headers=kid_headers).status_code == 404
+    assert client.delete(f"{N}/{n.id}", headers=parent_headers).status_code == 204
+    assert client.get(N, headers=parent_headers).json()["items"] == []
