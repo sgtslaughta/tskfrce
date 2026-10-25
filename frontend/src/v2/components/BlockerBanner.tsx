@@ -14,7 +14,7 @@ export function BlockerBanner() {
       <div className="p-banner-body">
         {data.last_seen
           ? `Went quiet at ${new Date(data.last_seen).toLocaleString()}.`
-          : "Hasn&apos;t checked in yet."}{" "}
+          : "Hasn’t checked in yet."}{" "}
         Paused devices may be back online until it reconnects. Check that it&apos;s plugged in and running.
       </div>
     </div>

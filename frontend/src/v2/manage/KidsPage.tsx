@@ -32,7 +32,7 @@ function KidsBody() {
   return (
     <ParentShell title="Kids & chores">
       {kids.isError && <LoadError error={kids.error} onRetry={() => kids.refetch()} />}
-      <ManageLayout section={section} counts={{ chores: defs.length, kids: list.length }} title="Kids & chores">
+      <ManageLayout section={section} counts={{ chores: defs.length, kids: list.length }}>
         {kids.isPending && <LoadingCards />}
         {section === 'chores' && !kids.isPending && (
           <ChoresSection key={first(query.kid)} kids={list} chores={defs} progress={progress} initialKid={first(query.kid)} />

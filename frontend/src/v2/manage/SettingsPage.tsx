@@ -31,7 +31,7 @@ function SettingsBody() {
   return (
     <ParentShell title="Settings">
       {family.isError && <LoadError error={family.error} onRetry={() => family.refetch()} />}
-      <ManageLayout path="/settings" sections={SETTINGS_SECTIONS} section={section} counts={{}} title="Settings">
+      <ManageLayout path="/settings" sections={SETTINGS_SECTIONS} section={section} counts={{}}>
         {family.isPending && ['family', 'look', 'gifs'].includes(section) && <LoadingCards />}
         {section === 'family' && family.data && <FamilyCard fam={family.data} />}
         {section === 'look' && family.data && (

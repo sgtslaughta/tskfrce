@@ -3,7 +3,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 
 const tokensCss = readFileSync(join(__dirname, '../../src/v2/parent/parent-tokens.css'), 'utf8');
-const choreCss = readFileSync(join(__dirname, '../../src/v2/parent/parent-chore.css'), 'utf8');
+const choreCss = readFileSync(join(__dirname, '../../src/v2/parent/parent-today.css'), 'utf8');
 const css = tokensCss + '\n' + choreCss;
 
 // WCAG contrast helper: relative luminance calc

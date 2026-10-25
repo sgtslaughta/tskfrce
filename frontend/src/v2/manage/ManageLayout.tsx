@@ -25,7 +25,6 @@ interface Props<S extends string> {
   /** Page path the sections live on (default the Kids page). */
   path?: string
   sections?: SectionDef<S>[]
-  title?: string
 }
 
 /** Sidebar (top menu under 768 px) with the sections. */
@@ -35,18 +34,12 @@ export function ManageLayout<S extends string = Section>({
   children,
   path = '/kids',
   sections = SECTIONS as unknown as SectionDef<S>[],
-  title,
 }: Props<S>) {
   const small = useMediaQuery('(max-width: 767px)')
   const router = useRouter()
   return (
     <div className="m-wrap">
       <div style={{ marginBottom: '12px' }}>
-        {!small && title && (
-          <div style={{ marginBottom: '8px', paddingLeft: '4px', paddingRight: '4px' }}>
-            <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 600 }}>{title}</h2>
-          </div>
-        )}
         {small ? (
           <SegmentedControl
             fullWidth
