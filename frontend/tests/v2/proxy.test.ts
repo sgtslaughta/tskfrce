@@ -63,6 +63,14 @@ test('client-sent x-forwarded-for is not copied', async () => {
   expect(init.headers['x-forwarded-for']).toBeUndefined();
 });
 
+test('x-view-as passes through for parent preview', async () => {
+  const fetch = jest.fn(async () => fakeResp(200, '', null));
+  (global as any).fetch = fetch;
+  await handler(mockReq('GET', '/api/proxy/kid/today', '', { 'x-view-as': '2' }), mockRes());
+  const [, init] = fetch.mock.calls[0] as any;
+  expect(init.headers['x-view-as']).toBe('2');
+});
+
 test('oversized body is refused with 413', async () => {
   (global as any).fetch = jest.fn();
   const res = mockRes();
