@@ -71,7 +71,7 @@ beforeEach(() => {
   apiMock.mockImplementation(async (p) => {
     if (p === '/today') return todayData()
     if (p.match(/^\/chores\/\d+$/) && !p.endsWith('/approve') && !p.endsWith('/send-back'))
-      return { id: 1, thread_ref: 'run:11', steps: [{ id: 1, title: 'Step 1', done: false, done_at: null }, { id: 2, title: 'Step 2', done: false, done_at: null }], photos: [] }
+      return { id: 1, steps: [{ id: 1, title: 'Step 1', done: false, done_at: null }, { id: 2, title: 'Step 2', done: false, done_at: null }], photos: [] }
     if (p.startsWith('/chores/') && p.endsWith('/approve'))
       return { ok: true }
     if (p.startsWith('/chores/') && p.endsWith('/send-back'))
@@ -146,6 +146,7 @@ describe('TodayPage', () => {
     expect(screen.queryByTestId('chat-column')).not.toBeInTheDocument()
     await userEvent.click(await screen.findByRole('button', { name: /open chat/i }))
     expect(screen.getByTestId('chat-column')).toBeInTheDocument()
+    await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/chat/threads/chore/11', expect.anything()))
     await userEvent.click(screen.getByRole('button', { name: /close chat/i }))
     expect(screen.queryByTestId('chat-column')).not.toBeInTheDocument()
   })

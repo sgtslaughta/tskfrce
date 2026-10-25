@@ -84,7 +84,6 @@ def run_detail(run_id: int, db: Session = Depends(get_db), _: User = Depends(req
         "kid_ids": svc.run_kid_ids(r),
         "steps": svc.steps_out(r),
         "photos": [{"id": p.id, "thumb_url": f"/chore-photos/{p.id}/thumb"} for p in r.photos],
-        "thread_ref": f"run_{r.id}",
     }
 
 

@@ -113,7 +113,6 @@ export interface RunDetail {
   kid_ids: number[]
   steps: Array<{ id: number; title: string; done: boolean; done_at: string | null }>
   photos: Array<{ id: number; thumb_url: string }>
-  thread_ref: string
 }
 
 export interface TodayDevice {
