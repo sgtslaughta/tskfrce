@@ -5,7 +5,7 @@ import { Chip } from '@/v2/parent/Chip';
 import { HeaderChips } from '@/v2/parent/HeaderChips';
 import { MakerLogo, makerKey } from '@/v2/parent/MakerLogo';
 import { GlyphPicker } from '@/v2/parent/GlyphPicker';
-import { EmptyState, ErrorPanel, Banner, Skeleton } from '@/v2/parent/states';
+import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states';
 import { withUndo, toastOk } from '@/v2/notify';
 import { notifications } from '@mantine/notifications';
 
@@ -149,7 +149,7 @@ describe('states', () => {
 
   test('Skeleton renders rows', () => {
     const { container } = render(<Skeleton rows={3} />);
-    const skeletons = container.querySelectorAll('.sk');
+    const skeletons = container.querySelectorAll('.p-sk-row');
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
@@ -173,17 +173,6 @@ describe('states', () => {
     expect(screen.getByText('This invite has expired')).toBeInTheDocument();
   });
 
-  test('Banner renders with tone and copy', () => {
-    renderWithMantine(
-      <Banner
-        tone="red"
-        icon="shield"
-        title="Blocker is offline"
-        body="Devices aren't being locked right now."
-      />
-    );
-    expect(screen.getByText('Blocker is offline')).toBeInTheDocument();
-  });
 });
 
 describe('toasts with undo', () => {

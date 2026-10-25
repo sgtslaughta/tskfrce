@@ -2,13 +2,15 @@ import { useState, useMemo } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
 import { refOf, type ThreadSummary } from '@/v2/hooks/useChat'
 import { Icon } from '../parent/Icon'
+import { EmptyState } from '../parent/states'
 
 const when = (iso: string | null) =>
   iso ? new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : 'Nothing yet'
 
 const LABEL = { family: 'Family', private: 'Private', chore: 'Chore' } as const
 
-type FilterTab = 'all' | 'chores' | 'notes' | 'family'
+// ponytail: no Notes tab until kid notes reach the backend (Plan C)
+type FilterTab = 'all' | 'chores' | 'family'
 
 /** Threads with search, tabs, and unread badges; `selected` is "kind:ref". */
 export function ThreadList({
@@ -30,9 +32,6 @@ export function ThreadList({
     // Filter by tab
     if (filter === 'chores') {
       result = result.filter(t => t.kind === 'chore')
-    } else if (filter === 'notes') {
-      // Notes are chore threads with has_note flag
-      result = result.filter(t => t.kind === 'chore' && t.has_note)
     } else if (filter === 'family') {
       result = result.filter(t => t.kind === 'family')
     }
@@ -51,7 +50,6 @@ export function ThreadList({
 
   const counts = useMemo(() => ({
     chores: threads.filter(t => t.kind === 'chore').length,
-    notes: threads.filter(t => t.kind === 'chore' && t.has_note).length,
     family: threads.filter(t => t.kind === 'family').length,
   }), [threads])
 
@@ -79,12 +77,10 @@ export function ThreadList({
 
       {/* Tabs */}
       <div style={{ display: 'flex', gap: 4, background: 'var(--p-soft)', borderRadius: 14, padding: 4 }}>
-        {(['all', 'chores', 'notes', 'family'] as const).map((tab) => {
+        {(['all', 'chores', 'family'] as const).map((tab) => {
           let label = tab.charAt(0).toUpperCase() + tab.slice(1);
           if (tab === 'chores') {
             label = `Chores · ${counts.chores}`;
-          } else if (tab === 'notes') {
-            label = `Notes · ${counts.notes}`;
           }
           return (
             <button
@@ -113,11 +109,19 @@ export function ThreadList({
         })}
       </div>
 
+      {search.trim() && filtered.length === 0 && (
+        <EmptyState
+          icon="person_search"
+          title={`No chats match “${search.trim()}”`}
+          body="Try a kid's name or a chore title."
+          actions={[{ label: 'Clear search', icon: 'close', onClick: () => setSearch('') }]}
+        />
+      )}
+
       {/* Thread list */}
       <ul aria-label="Conversations" style={{ listStyle: 'none', margin: 0, padding: 0, display: 'flex', flexDirection: 'column', gap: 6, overflowY: 'auto', minHeight: 0 }}>
         {filtered.map((t) => {
           const key = `${t.kind}:${refOf(t)}`
-          const hasNote = t.has_note
           return (
             <li key={t.id}>
               <button
@@ -146,11 +150,7 @@ export function ThreadList({
                     </span>
                   )}
                 </span>
-                {hasNote ? (
-                  <span style={{ background: 'var(--p-amb)', color: 'var(--p-ambink)', padding: '3px 8px', borderRadius: 6, fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', whiteSpace: 'nowrap', letterSpacing: '0.06em' }} aria-label="Has note">
-                    Note
-                  </span>
-                ) : t.unread > 0 ? (
+                {t.unread > 0 ? (
                   <span style={{ background: 'var(--p-acc)', color: '#292928', padding: '2px 8px', borderRadius: 12, fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }} data-testid={`unread-${t.id}`} aria-label={`${t.unread} unread`}>
                     {t.unread}
                   </span>

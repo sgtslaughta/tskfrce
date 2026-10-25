@@ -2,7 +2,8 @@ import { useRouter } from 'next/router'
 import { useState } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
 import { ParentShell } from '@/v2/parent/ParentShell'
-import { LoadError, LoadingCards } from '@/v2/components/States'
+import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
+import { HELP_URL } from '@/v2/components/AccountMenu'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useDevices, useGroups } from '@/v2/hooks/useDevices'
 import { useKids } from '@/v2/hooks/useKids'
@@ -46,7 +47,7 @@ function DevicesBody() {
       title="Devices"
       list={
         devices.isPending ? (
-          <LoadingCards />
+          <Skeleton />
         ) : (
           <DevicesSection
             devices={all}
@@ -59,7 +60,15 @@ function DevicesBody() {
         )
       }
     >
-      {devices.isError && <LoadError error={devices.error} onRetry={() => devices.refetch()} />}
+      {devices.isError && <ErrorPanel kind="unreachable" error={devices.error} onRetry={() => devices.refetch()} />}
+      {devices.data?.length === 0 && (
+        <EmptyState
+          icon="wifi_find"
+          title="Looking for devices…"
+          body="Turn on a kid's tablet and open a web page. It'll show up here."
+          actions={[{ label: 'Not showing up?', icon: 'help', href: HELP_URL }]}
+        />
+      )}
       {!devices.isError && selectedDevice && (
         <DeviceDetail
           device={selectedDevice}

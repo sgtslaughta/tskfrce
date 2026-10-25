@@ -2,8 +2,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { ParentShell } from "../parent/ParentShell";
-import { LoadError, LoadingCards } from "../components/States";
-import { StickerCard } from "../components/StickerCard";
+import { EmptyState, ErrorPanel, Skeleton } from "../parent/states";
 import { TipsContainer } from "../components/TipsContainer";
 import { useToday } from "../hooks/useToday";
 import { GetStartingChecklistCard } from "./GetStartingChecklistCard";
@@ -40,13 +39,18 @@ export function TodayPage() {
         ) : undefined
       }
     >
-      {isError && !data && <LoadError error={error} onRetry={() => refetch()} />}
-      {!data && !isError && <LoadingCards n={3} h={140} />}
+      {isError && !data && <ErrorPanel kind="unreachable" error={error} onRetry={() => refetch()} />}
+      {!data && !isError && <Skeleton rows={4} />}
       {data && data.kids.length === 0 && (
-        <StickerCard>
-          <p>Add your first kid to get started.</p>
-          <Link href="/kids">Add a kid</Link>
-        </StickerCard>
+        <EmptyState
+          icon="person_add"
+          title="Add your first kid"
+          body="Then give them chores and devices. Takes about a minute."
+          actions={[
+            { label: 'Add a kid', icon: 'person_add', href: '/kids?section=kids' },
+            { label: 'Run setup', icon: 'auto_fix_high', href: '/setup' },
+          ]}
+        />
       )}
       {data && kid && (
         <div className="p-today-detail">
@@ -78,6 +82,14 @@ export function TodayPage() {
 
           <TipsContainer tips={PARENT_TIPS} maxTips={1} />
 
+          {kid.chores.length === 0 && (
+            <EmptyState
+              icon="event_available"
+              title={`Nothing for ${kid.name ?? 'them'} today`}
+              body="No chores are due today. Their devices follow the schedule only."
+              actions={[{ label: 'Add a chore', icon: 'add', href: `/kids?section=chores&kid=${kid.id}` }]}
+            />
+          )}
           {kid.chores.length > 0 && (
             <div className="pt-box">
               {kid.chores.map((chore) => (

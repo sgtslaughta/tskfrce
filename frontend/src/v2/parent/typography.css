@@ -71,9 +71,7 @@
 /* ─────────────────────────────────────────────────────────────────────────── */
 
 [data-look='parent'] .p-empty,
-[data-look='parent'] .p-empty-state,
-[data-look='parent'] .p-error,
-[data-look='parent'] .p-skeleton {
+[data-look='parent'] .p-error {
   padding: 48px 24px;
   text-align: center;
   color: var(--p-sub);
@@ -81,7 +79,6 @@
   line-height: 1.6;
 }
 
-[data-look='parent'] .p-empty-state h2,
 [data-look='parent'] .p-error h2 {
   color: var(--p-ink);
   font-size: 18px;

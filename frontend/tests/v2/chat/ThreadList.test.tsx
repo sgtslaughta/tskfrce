@@ -14,7 +14,6 @@ describe('ThreadList', () => {
       last_text: 'Milk needed',
       last_author: 'Mom',
       unread: 0,
-      has_note: false,
     },
     {
       id: 2,
@@ -26,7 +25,6 @@ describe('ThreadList', () => {
       last_text: 'Check this out',
       last_author: 'Dad',
       unread: 2,
-      has_note: false,
     },
     {
       id: 3,
@@ -38,7 +36,6 @@ describe('ThreadList', () => {
       last_text: 'Please tidy up',
       last_author: 'Mom',
       unread: 1,
-      has_note: false,
     },
     {
       id: 4,
@@ -50,11 +47,10 @@ describe('ThreadList', () => {
       last_text: 'Need help',
       last_author: 'Leo',
       unread: 0,
-      has_note: true,
     },
   ]
 
-  it('renders tabs: All, Chores, Notes, Family', () => {
+  it('renders tabs: All, Chores, Family (no Notes until the backend has notes)', () => {
     render(
       <ThreadList
         threads={mockThreads}
@@ -65,7 +61,7 @@ describe('ThreadList', () => {
 
     expect(screen.getByText(/^All$/)).toBeInTheDocument()
     expect(screen.getByText(/^Chores/)).toBeInTheDocument()
-    expect(screen.getByText(/^Notes/)).toBeInTheDocument()
+    expect(screen.queryByText(/^Notes/)).toBeNull()
     expect(screen.getByText(/^Family$/)).toBeInTheDocument()
   })
 
@@ -138,6 +134,14 @@ describe('ThreadList', () => {
     expect(screen.queryByText('Clean room')).not.toBeInTheDocument()
   })
 
+  it('no search match shows a clear-search state', async () => {
+    render(<ThreadList threads={mockThreads} selected={null} onPick={() => {}} />)
+    fireEvent.change(screen.getByLabelText('Search threads'), { target: { value: 'piano' } })
+    expect(screen.getByText('No chats match “piano”')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /clear search/i }))
+    expect(screen.queryByText(/No chats match/)).toBeNull()
+  })
+
   it('calls onPick when thread is selected', () => {
     const mockOnPick = jest.fn()
     render(
@@ -186,66 +190,4 @@ describe('ThreadList', () => {
     })
   })
 
-  it('filters threads by notes tab', () => {
-    render(
-      <ThreadList
-        threads={mockThreads}
-        selected={null}
-        onPick={() => {}}
-      />
-    )
-
-    const buttons = screen.getAllByRole('button')
-    const notesTab = buttons.find(btn => btn.textContent?.startsWith('Notes'))
-    if (notesTab) {
-      fireEvent.click(notesTab)
-    }
-
-    expect(screen.getByText('Homework')).toBeInTheDocument()
-    expect(screen.queryByText('Buy groceries')).not.toBeInTheDocument()
-    expect(screen.queryByText('Family photo')).not.toBeInTheDocument()
-    expect(screen.queryByText('Clean room')).not.toBeInTheDocument()
-  })
-
-  it('shows correct notes count in tab label', () => {
-    render(
-      <ThreadList
-        threads={mockThreads}
-        selected={null}
-        onPick={() => {}}
-      />
-    )
-
-    expect(screen.getByText('Notes · 1')).toBeInTheDocument()
-  })
-
-  it('shows Note badge instead of unread count for threads with notes', () => {
-    render(
-      <ThreadList
-        threads={mockThreads}
-        selected={null}
-        onPick={() => {}}
-      />
-    )
-
-    expect(screen.getByText('Homework')).toBeInTheDocument()
-    const noteBadges = screen.getAllByLabelText('Has note')
-    expect(noteBadges.length).toBe(1)
-    expect(noteBadges[0]).toHaveTextContent('Note')
-  })
-
-  it('displays Note badge for threads with notes', () => {
-    render(
-      <ThreadList
-        threads={mockThreads}
-        selected={null}
-        onPick={() => {}}
-      />
-    )
-
-    const notesBadges = screen.getAllByLabelText('Has note')
-    expect(notesBadges.length).toBe(1)
-    const noteText = screen.getByLabelText('Has note')
-    expect(noteText).toHaveTextContent('Note')
-  })
 })

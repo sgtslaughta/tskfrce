@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { EmptyState, ErrorPanel } from '@/v2/parent/states'
 import { useRouter } from 'next/router'
 import { Button, Drawer, Popover } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
@@ -131,7 +132,13 @@ function List({ kid, onGo }: { kid: boolean; onGo: () => void }) {
         </button>
       </div>
       {filtered.length === 0 ? (
-        <p className="p-bell-empty">{inbox.isError ? "Can't load notifications right now." : "You're all caught up."}</p>
+        kid ? (
+          <p className="p-bell-empty">{inbox.isError ? "Can't load notifications right now." : "You're all caught up."}</p>
+        ) : inbox.isError ? (
+          <ErrorPanel kind="unreachable" error={inbox.error} onRetry={() => inbox.refetch()} />
+        ) : (
+          <EmptyState icon="notifications_off" title="No notifications" body="We'll ping you when a chore needs your OK." />
+        )
       ) : (
         <div className="p-bell-scroll">
           {byGroup.today.length > 0 && (

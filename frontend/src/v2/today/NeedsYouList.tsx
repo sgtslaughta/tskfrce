@@ -2,13 +2,14 @@ import type { NeedsItem } from '../types'
 import { useApproveChore, useSendBack } from '../hooks/useToday'
 import { Chip } from '../parent/Chip'
 import { withUndo } from '../notify'
+import { EmptyState } from '../parent/states'
 
 export function NeedsYouList({ items }: { items: NeedsItem[] }) {
   const approve = useApproveChore()
   const sendBack = useSendBack()
 
   if (items.length === 0) {
-    return <div className="p-empty-state">All caught up</div>
+    return <EmptyState icon="celebration" tone="acc" title="All caught up" body="Nothing needs your OK right now. Nice." />
   }
 
   return (

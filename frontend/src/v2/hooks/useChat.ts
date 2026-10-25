@@ -14,7 +14,6 @@ export interface ThreadSummary {
   last_author?: string | null
   /** one-line text of the newest message; "Photo" for a photo-only one */
   last_text?: string | null
-  has_note?: boolean
 }
 
 export interface ChatMessage {
