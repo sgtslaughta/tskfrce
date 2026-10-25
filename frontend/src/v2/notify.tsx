@@ -60,20 +60,23 @@ export const toasts = (done: string) => ({ onSuccess: () => toastOk(done), onErr
 
 /**
  * Show an undo toast immediately and run an async action after a delay.
- * If the user clicks Undo, cancel the action.
+ * If the user clicks Undo, cancel the action. Resolves once the action ran (or was undone), never rejects.
  */
 export function withUndo<T>(
   run: () => Promise<T>,
   message: string,
   ms: number = 5000
-): void {
+): Promise<void> {
   let cancelled = false;
   let timeoutId: NodeJS.Timeout | null = null;
+  let settle: () => void = () => {};
+  const settled = new Promise<void>((r) => { settle = r; });
 
   const id = `undo-${Date.now()}-${Math.random()}`;
   const undo = () => {
     cancelled = true;
     if (timeoutId) clearTimeout(timeoutId);
+    settle();
     notifications.hide(id);
     notifications.show({ message: 'Undone', color: 'fridgeGreen' });
   };
@@ -92,5 +95,7 @@ export function withUndo<T>(
         toastFail(e);
       }
     }
+    settle();
   }, ms);
+  return settled;
 }

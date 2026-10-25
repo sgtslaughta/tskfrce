@@ -1,12 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { EmptyState, ErrorPanel } from '@/v2/parent/states'
 import { useRouter } from 'next/router'
 import { Drawer, Popover, Tooltip } from '@mantine/core'
+import { useQueryClient } from '@tanstack/react-query'
 import { useMediaQuery } from '@mantine/hooks'
-import { useInbox, useMarkAllRead, useMarkRead, type InboxItem } from '../hooks/useInbox'
+import { useInbox, useMarkAllRead, useMarkRead, type Inbox, type InboxItem } from '../hooks/useInbox'
 import { useApproveChore, useSendBack, useToday } from '../hooks/useToday'
 import { useDecideRedemption } from '../hooks/useRewards'
 import { Icon } from '../parent/Icon'
+import { toastFail, toastOk } from '../notify'
+import { api } from '../api'
 
 type FilterKind = 'all' | 'needs-you' | 'alerts'
 
@@ -59,7 +62,29 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
       redemptions: new Set(needs.filter((i) => i.type === 'reward' || i.type === 'screen_time').map((i) => i.id)),
     }
   }, [today?.needs_you])
-  const items = useMemo(() => inbox.data?.items ?? [], [inbox.data?.items])
+  // the server sends the newest page; "Show older" appends further pages (the 30 s poll only refreshes the first)
+  const [older, setOlder] = useState<{ items: InboxItem[]; more: boolean } | null>(null)
+  const [loadingOlder, setLoadingOlder] = useState(false)
+  const items = useMemo(() => {
+    const first = inbox.data?.items ?? []
+    const seen = new Set(first.map((i) => i.id))
+    return older ? [...first, ...older.items.filter((i) => !seen.has(i.id))] : first
+  }, [inbox.data?.items, older])
+  const hasMore = older ? older.more : !!inbox.data?.has_more
+  const showOlder = async () => {
+    const last = items.at(-1)
+    if (!last || loadingOlder) return
+    setLoadingOlder(true)
+    try {
+      const page = await api<Inbox>(`/notifications?before=${last.id}`, { kid })
+      setOlder({ items: [...(older?.items ?? []), ...page.items], more: page.has_more })
+    } catch (e) {
+      toastFail(e)
+    } finally {
+      setLoadingOlder(false)
+    }
+  }
+  const more = hasMore ? '+' : ''
   const [filter, setFilter] = useState<FilterKind>('all')
   const [sending, setSending] = useState<number | null>(null)
   const [note, setNote] = useState('')
@@ -89,27 +114,40 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
     return { all, needsYou, alerts }
   }, [items, pending])
 
+  // one request per notification at a time (a double click or Enter-mash must not send twice)
+  const qc = useQueryClient()
+  const inflight = useRef(new Set<number>())
+  const [busy, setBusy] = useState<number | null>(null)
+  const act = (n: InboxItem, go: () => Promise<unknown>, ok: string) => {
+    if (inflight.current.has(n.id)) return Promise.resolve(false)
+    inflight.current.add(n.id)
+    setBusy(n.id)
+    return go()
+      .then(() => (toastOk(ok), true), (e) => (toastFail(e), qc.invalidateQueries({ queryKey: ['today'] }), false))
+      .finally(() => (inflight.current.delete(n.id), setBusy((b) => (b === n.id ? null : b))))
+  }
+  const markRead = (n: InboxItem) => { if (!n.read) read.mutate(n.id) }
+
   const handleApprove = (n: InboxItem) => {
-    if (!n.read) read.mutate(n.id)
-    if (n.run_id) approve.mutate(n.run_id)
+    if (n.run_id) void act(n, () => approve.mutateAsync(n.run_id!), 'Approved').then((ok) => ok && markRead(n))
   }
 
-  const handleSendBack = (n: InboxItem) => {
-    if (!n.read) read.mutate(n.id)
-    if (n.run_id && note.trim()) sendBack.mutate({ id: n.run_id, note: note.trim() })
+  /** The note box stays open (with its text) when the request fails. */
+  const handleSendBack = async (n: InboxItem) => {
+    if (!n.run_id || !note.trim()) return
+    const ok = await act(n, () => sendBack.mutateAsync({ id: n.run_id!, note: note.trim() }), 'Sent back')
+    if (!ok) return
+    markRead(n)
     setSending(null)
     setNote('')
   }
 
-  const handleRedeem = (n: InboxItem) => {
-    if (!n.read) read.mutate(n.id)
-    if (n.redemption_id) decideRedemption.mutate({ id: n.redemption_id, approve: true })
+  const handleDecide = (n: InboxItem, yes: boolean) => {
+    if (n.redemption_id)
+      void act(n, () => decideRedemption.mutateAsync({ id: n.redemption_id!, approve: yes }), yes ? 'Approved' : 'Declined').then((ok) => ok && markRead(n))
   }
-
-  const handleDecline = (n: InboxItem) => {
-    if (!n.read) read.mutate(n.id)
-    if (n.redemption_id) decideRedemption.mutate({ id: n.redemption_id, approve: false })
-  }
+  const handleRedeem = (n: InboxItem) => handleDecide(n, true)
+  const handleDecline = (n: InboxItem) => handleDecide(n, false)
 
   const handleView = (n: InboxItem) => {
     if (!n.read) read.mutate(n.id)
@@ -120,7 +158,7 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
   }
 
   return (
-    <div className="p-bell-list">
+    <div className="p-bell-list" data-sheet={sheet || undefined}>
       <div className="p-bell-head">
         {sheet ? <span /> : <strong>Notifications</strong>}
         {(inbox.data?.unread ?? 0) > 0 && (
@@ -135,21 +173,21 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
           className={`p-bell-tab ${filter === 'all' ? 'on' : ''}`}
           onClick={() => setFilter('all')}
         >
-          All · {counts.all}
+          All · {counts.all}{more}
         </button>
         <button
           type="button"
           className={`p-bell-tab ${filter === 'needs-you' ? 'on' : ''}`}
           onClick={() => setFilter('needs-you')}
         >
-          Needs you · {counts.needsYou}
+          Needs you · {counts.needsYou}{more}
         </button>
         <button
           type="button"
           className={`p-bell-tab ${filter === 'alerts' ? 'on' : ''}`}
           onClick={() => setFilter('alerts')}
         >
-          Alerts · {counts.alerts}
+          Alerts · {counts.alerts}{more}
         </button>
       </div>
       {filtered.length === 0 ? (
@@ -190,14 +228,14 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
                               onChange={(e) => setNote(e.target.value)}
                             />
                           )}
-                          <button type="button" className="p-btn" data-variant="accent" data-loading={approve.isPending && approve.variables === n.run_id} onClick={() => handleApprove(n)}>
+                          <button type="button" className="p-btn" data-variant="accent" disabled={busy === n.id} data-loading={busy === n.id} onClick={() => handleApprove(n)}>
                             <Icon name="check" size={16} />
                             Approve {n.points ? `+${n.points}` : ''}
                           </button>
                           <button
                             type="button"
                             className="p-btn"
-                            disabled={sending === n.id && !note.trim()}
+                            disabled={busy === n.id || (sending === n.id && !note.trim())}
                             onClick={() => (sending === n.id ? handleSendBack(n) : (setSending(n.id), setNote('')))}
                           >
                             <Icon name="undo" size={16} />
@@ -207,11 +245,11 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
                       )}
                       {isNeedsYou(n, pending) && n.kind === 'redemption_request' && (
                         <>
-                          <button type="button" className="p-btn" data-variant="accent" onClick={() => handleRedeem(n)}>
+                          <button type="button" className="p-btn" data-variant="accent" disabled={busy === n.id} data-loading={busy === n.id} onClick={() => handleRedeem(n)}>
                             <Icon name="check" size={16} />
                             Approve
                           </button>
-                          <button type="button" className="p-btn" onClick={() => handleDecline(n)}>
+                          <button type="button" className="p-btn" disabled={busy === n.id} onClick={() => handleDecline(n)}>
                             <Icon name="close" size={16} />
                             Decline
                           </button>
@@ -255,6 +293,11 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
             </>
           )}
         </div>
+      )}
+      {hasMore && (
+        <button type="button" className="p-btn p-bell-older" disabled={loadingOlder} data-loading={loadingOlder} onClick={showOlder}>
+          Show older
+        </button>
       )}
     </div>
   )

@@ -86,6 +86,8 @@
   max-height: 560px;
 }
 
+.p-bell-list[data-sheet] { max-height: none; height: calc(100dvh - 84px); }
+
 .p-bell-head {
   display: flex;
   align-items: center;
@@ -161,7 +163,7 @@
 
 .p-bell-item {
   display: grid;
-  grid-template-columns: 34px 1fr;
+  grid-template-columns: 34px minmax(0, 1fr);
   gap: 0 10px;
   padding: 10px 8px;
   border-radius: 12px;
@@ -218,6 +220,7 @@
 
 .p-bell-text {
   min-width: 0;
+  overflow-wrap: anywhere;
   font-size: 13px;
   font-weight: 600;
   padding-right: 14px;
@@ -274,3 +277,6 @@
 [data-look='parent'] .p-bell-drawer-close:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
 .p-bell-tab, .p-bell-mark-read { transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
 .p-bell-tab:not(.on):hover { background: var(--p-soft); color: var(--p-ink); }
+
+.p-bell-older { display: flex; flex: none; margin: 6px auto 10px; }
+.p-bell-scroll { overscroll-behavior: contain; }
