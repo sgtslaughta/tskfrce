@@ -217,6 +217,12 @@
     border-radius: 0;
   }
 
+  /* grid items default to min-width: auto, so the scrolling step row widened the page */
+  .side,
+  .main {
+    min-width: 0;
+  }
+
   .side {
     border-radius: 14px 14px 0 0;
     padding-bottom: 16px;
