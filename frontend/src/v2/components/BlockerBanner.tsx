@@ -28,6 +28,9 @@ export function BlockerBanner() {
       title: "Home box offline",
       message: `${outage === "never" ? "Hasn’t checked in yet." : `Went quiet at ${new Date(outage).toLocaleString()}.`} Paused devices may be back online until it reconnects.`,
       autoClose: false,
+      closeButtonProps: { "aria-label": "Dismiss" },
+      // Mantine's dimmed grey fails contrast (axe); the parent sub-ink passes in both themes
+      styles: { description: { color: "var(--p-sub, #5f5f5c)" } },
       onClose: () => {
         if (!quiet) dismissedFor = outage;
       },
