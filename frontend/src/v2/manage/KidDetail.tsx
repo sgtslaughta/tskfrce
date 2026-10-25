@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useRouter } from 'next/router'
+import { viewAs } from '@/v2/kid/viewAs'
 import Link from 'next/link'
 import { useDevices } from '@/v2/hooks/useDevices'
 import { useLibrary } from '@/v2/hooks/useChores'
@@ -22,6 +24,7 @@ interface Props {
 
 /** Kid header and actions, with Bonus / Deduct / Edit opening below; chores and devices from existing data. */
 export function KidDetail({ kid, focusPin, onDeleted }: Props) {
+  const { asPath } = useRouter()
   const [mode, setMode] = useState<Mode | null>(focusPin ? 'edit' : null)
   const t = useToday().data?.kids.find((k) => k.id === kid.id)
   const chores = (useLibrary().data ?? []).filter((c) => c.assignments.some((a) => a.active && a.kid_ids.includes(kid.id)))
@@ -59,7 +62,7 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
           </div>
         </div>
         <div className="pk-actions">
-          <Link className="p-btn" href={`/kid?as=${kid.id}`}>
+          <Link className="p-btn" href={viewAs(kid.id, asPath)}>
             <Icon name="visibility" />
             View as kid
           </Link>

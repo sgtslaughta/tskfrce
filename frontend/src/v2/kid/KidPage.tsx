@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { backFrom } from './viewAs'
 import { useRouter } from 'next/router'
 import { Button } from '@mantine/core'
 import { CANT_REACH } from '../api'
@@ -141,7 +142,7 @@ function KidPreview({ id }: { id: number }) {
   const kid = (kids ?? []).find((k) => k.id === id)
   const name = kid?.full_name ?? 'kid'
   useEffect(() => {
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && !document.querySelector('[role=dialog]') && router.push(`/?item=${id}`)
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && !document.querySelector('[role=dialog]') && router.push(backFrom(router.query.back, id))
     window.addEventListener('keydown', esc)
     return () => window.removeEventListener('keydown', esc)
   }, [router, id])
@@ -154,7 +155,7 @@ function KidPreview({ id }: { id: number }) {
               <span className="ms" style={{ fontSize: 20 }}>visibility</span>
               {`Viewing as ${name} · preview`}
             </span>
-            <Button size="xs" variant="filled" color="var(--p-acc)" style={{ color: '#292928', flex: 'none' }} leftSection={<Icon name="arrow_back" size={14} />} onClick={() => router.push(`/?item=${id}`)}>
+            <Button size="xs" variant="filled" color="var(--p-acc)" style={{ color: '#292928', flex: 'none' }} leftSection={<Icon name="arrow_back" size={14} />} onClick={() => router.push(backFrom(router.query.back, id))}>
               Back to parent
             </Button>
           </div>

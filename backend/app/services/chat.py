@@ -3,7 +3,7 @@
 from datetime import datetime
 
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.chat import ChatPhoto, Thread, ThreadMessage, ThreadRead
 from app.models.chores import ChoreAssignment, ChoreRun
@@ -224,14 +224,19 @@ def unread(db: Session, user: User) -> dict:
         .options(joinedload(ThreadMessage.author))
     }
     run_ids = [t.run_id for t in threads if t.kind == "chore"]
-    chores = {}
+    chores, run_kids = {}, {}
     if run_ids:
         runs = (
             db.query(ChoreRun)
             .filter(ChoreRun.id.in_(run_ids))
-            .options(joinedload(ChoreRun.assignment).joinedload(ChoreAssignment.chore))
+            .options(
+                joinedload(ChoreRun.assignment).joinedload(ChoreAssignment.chore),
+                selectinload(ChoreRun.kids),
+            )
+            .all()
         )
         chores = {r.id: r.assignment.chore.title for r in runs}
+        run_kids = {r.id: run_kid_ids(r) for r in runs}
     out = [
         {
             **_preview(latest.get(t.id)),
@@ -239,6 +244,7 @@ def unread(db: Session, user: User) -> dict:
             "kind": t.kind,
             "task_id": t.run_id,  # key kept for the frontend; it is the run id
             "kid_id": t.kid_id,
+            "kid_ids": run_kids.get(t.run_id, []) if t.kind == "chore" else [],
             "title": _title(db, t, names, chores),
             "unread": counts.get(t.id, 0),
         }

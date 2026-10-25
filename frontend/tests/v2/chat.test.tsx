@@ -109,8 +109,10 @@ describe("Chat page (parent restyle)", () => {
     );
     const searchBox = screen.getByLabelText("Search threads") as HTMLInputElement;
 
-    // Verify all threads are visible initially
+    // Verify all threads are visible initially (the chore nests under Family until expanded)
     expect(screen.getByText("Maya chat")).toBeInTheDocument();
+    expect(screen.queryByText("Dishes")).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Show 1 chore chat" }));
     expect(screen.getByText("Dishes")).toBeInTheDocument();
     expect(screen.getAllByText("Family")[0]).toBeInTheDocument();
 

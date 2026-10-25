@@ -14,6 +14,24 @@ function Tile({ t }: { t: ThreadSummary }) {
   return <Icon name={t.kind === 'family' ? 'group' : choreIcon(t.title)} size={20} />
 }
 
+/** Nest each chore under its kid's chat; a chore shared by several kids (or whose kid has no row) goes under Family. */
+export function nest(threads: ThreadSummary[]): Array<{ t: ThreadSummary; kids: ThreadSummary[] }> {
+  const top = threads.filter((t) => t.kind !== 'chore')
+  const home = (c: ThreadSummary) => {
+    const ids = c.kid_ids ?? []
+    const kid = ids.length === 1 && top.find((t) => t.kind === 'private' && t.kid_id === ids[0])
+    return kid || top.find((t) => t.kind === 'family')
+  }
+  const groups = top.map((t) => ({ t, kids: [] as ThreadSummary[] }))
+  const orphans: ThreadSummary[] = []
+  for (const c of threads.filter((t) => t.kind === 'chore')) {
+    const g = groups.find((x) => x.t === home(c))
+    if (g) g.kids.push(c)
+    else orphans.push(c)
+  }
+  return [...groups, ...orphans.map((t) => ({ t, kids: [] }))]
+}
+
 /** Threads with search, tabs, and unread badges; `selected` is "kind:ref", `meName` turns "You:" on own lines. */
 export function ThreadList({
   threads,
@@ -28,6 +46,7 @@ export function ThreadList({
 }) {
   const [filter, setFilter] = useState<FilterTab>('all')
   const [search, setSearch] = useState('')
+  const [open, setOpen] = useState<Record<number, boolean>>({})
 
   const filtered = useMemo(() => {
     let result = threads
@@ -45,6 +64,27 @@ export function ThreadList({
     if (!t.last_text) return 'No messages yet'
     if (!t.last_author) return t.last_text
     return `${meName && t.last_author === meName ? 'You' : t.last_author}: ${t.last_text}`
+  }
+
+  const flat = filter !== 'all' || !!search.trim() // tabs and search list matches flat
+  const row = (t: ThreadSummary) => {
+    const key = `${t.kind}:${refOf(t)}`
+    return (
+      <button type="button" className="pc-row" data-selected={selected === key} aria-current={selected === key ? 'true' : undefined} onClick={() => onPick(t)}>
+        <span className="pc-tile">
+          <Tile t={t} />
+        </span>
+        <span className="pc-row-t">
+          <b>{t.title}</b>
+          <span>{lastLine(t)}</span>
+        </span>
+        {t.unread > 0 ? (
+          <span className="pc-badge" data-testid={`unread-${t.id}`} aria-label={`${t.unread} unread`}>
+            {t.unread}
+          </span>
+        ) : null}
+      </button>
+    )
   }
 
   return (
@@ -78,27 +118,40 @@ export function ThreadList({
       )}
 
       <ul aria-label="Conversations" className="pc-rows">
-        {filtered.map((t) => {
-          const key = `${t.kind}:${refOf(t)}`
-          return (
-            <li key={t.id}>
-              <button type="button" className="pc-row" data-selected={selected === key} aria-current={selected === key ? 'true' : undefined} onClick={() => onPick(t)}>
-                <span className="pc-tile">
-                  <Tile t={t} />
-                </span>
-                <span className="pc-row-t">
-                  <b>{t.title}</b>
-                  <span>{lastLine(t)}</span>
-                </span>
-                {t.unread > 0 ? (
-                  <span className="pc-badge" data-testid={`unread-${t.id}`} aria-label={`${t.unread} unread`}>
-                    {t.unread}
-                  </span>
-                ) : null}
-              </button>
-            </li>
-          )
-        })}
+        {flat
+          ? filtered.map((t) => <li key={t.id}>{row(t)}</li>)
+          : nest(threads).map(({ t, kids }) => {
+              // a group starts open when one of its chores is selected or unread
+              const shown = open[t.id] ?? kids.some((c) => c.unread > 0 || selected === `chore:${refOf(c)}`)
+              const unread = kids.reduce((n, c) => n + c.unread, 0)
+              return (
+                <li key={t.id} className="pc-group" data-open={shown}>
+                  <div className="pc-group-head">
+                    {row(t)}
+                    {kids.length > 0 && (
+                      <button
+                        type="button"
+                        className="pc-caret"
+                        aria-expanded={shown}
+                        aria-label={`${shown ? 'Hide' : 'Show'} ${kids.length} chore ${kids.length === 1 ? 'chat' : 'chats'}${unread ? `, ${unread} unread` : ''}`}
+                        onClick={() => setOpen({ ...open, [t.id]: !shown })}
+                      >
+                        <Icon name="expand_more" size={18} />
+                        <span>{kids.length}</span>
+                        {!shown && unread > 0 && <i className="pc-caret-dot" aria-hidden />}
+                      </button>
+                    )}
+                  </div>
+                  {shown && kids.length > 0 && (
+                    <ul className="pc-rows pc-sub" aria-label={`Chore chats for ${t.title}`}>
+                      {kids.map((c) => (
+                        <li key={c.id}>{row(c)}</li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              )
+            })}
       </ul>
     </>
   )

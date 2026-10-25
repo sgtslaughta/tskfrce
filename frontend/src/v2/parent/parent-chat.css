@@ -190,3 +190,18 @@
 [data-look='parent'] .pc-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 [data-look='parent'] .pc-note { margin: 8px 0 0; font-size: 12.5px; color: var(--p-ink); background: var(--p-soft); border-radius: 10px; padding: 8px 10px; }
 [data-look='parent'] .pc-bar { flex: none; height: 6px; margin: 2px 0 6px; }
+/* chats nested by kid: caret on the kid row, chore chats indented under it */
+[data-look='parent'] .pc-group-head { position: relative; }
+[data-look='parent'] .pc-group-head > .pc-row { padding-right: 64px; }
+[data-look='parent'] .pc-caret {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  display: flex; align-items: center; gap: 2px; padding: 4px 6px; border-radius: 10px;
+  border: 1px solid var(--p-line); background: var(--p-card); color: var(--p-sub); font: inherit; font-size: 12px; cursor: pointer;
+}
+[data-look='parent'] .pc-caret:hover { color: var(--p-ink); }
+[data-look='parent'] .pc-caret:focus-visible { outline: 2px solid var(--p-acc); outline-offset: 2px; }
+[data-look='parent'] .pc-caret .ms { transition: transform 0.15s; }
+[data-look='parent'] .pc-group[data-open='true'] .pc-caret .ms { transform: rotate(180deg); }
+[data-look='parent'] .pc-caret-dot { position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--p-acc); }
+[data-look='parent'] .pc-sub { margin: 6px 0 0 18px; padding: 0 0 0 10px; border-left: 2px solid var(--p-line); overflow: visible; }
+[data-look='parent'] .pc-sub .pc-row { padding: 8px 10px; }

@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { useRouter } from 'next/router'
+import { viewAs } from '@/v2/kid/viewAs'
 import { Icon } from '@/v2/parent/Icon'
 import { Chip } from '@/v2/parent/Chip'
 import { useToday } from '@/v2/hooks/useToday'
@@ -41,6 +43,7 @@ const Bar = ({ label, value, max }: { label: string; value: number; max: number 
 )
 
 function KidCard({ kid }: { kid: TodayKid }) {
+  const { asPath } = useRouter()
   const online = kid.devices.filter((d) => d.online).length
   const p = kid.progress
   return (
@@ -67,7 +70,7 @@ function KidCard({ kid }: { kid: TodayKid }) {
           <Icon name="today" size={16} />
           Today
         </Link>
-        <Link href={`/kid?as=${kid.id}`} className="p-btn">
+        <Link href={viewAs(kid.id, asPath)} className="p-btn">
           <Icon name="visibility" size={16} />
           View as kid
         </Link>

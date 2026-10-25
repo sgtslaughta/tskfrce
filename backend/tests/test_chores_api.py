@@ -148,3 +148,11 @@ def test_chore_thread_says_who(client, db, parent, kid, parent_headers):
     r = client.get(f"/api/v1/chat/threads/chore/{t.id}", headers=parent_headers)
     assert r.status_code == 200
     assert r.json()["who"] == (kid.full_name or kid.username)
+
+
+def test_thread_list_says_which_kids_a_chore_is_for(client, db, parent, kid, parent_headers):
+    t = make_run(db, parent, kid, status="todo")
+    tid = client.get(f"/api/v1/chat/threads/chore/{t.id}", headers=parent_headers).json()["id"]
+    client.post(f"/api/v1/chat/threads/{tid}/messages", json={"body": "hi"}, headers=parent_headers)
+    rows = client.get("/api/v1/chat/threads", headers=parent_headers).json()["threads"]
+    assert next(r for r in rows if r["kind"] == "chore")["kid_ids"] == [kid.id]

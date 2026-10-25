@@ -6,6 +6,12 @@ import { notifications } from "@mantine/notifications";
 
 const ID = "box-offline";
 let dismissedFor: string | null = null; // the outage (by last_seen) the parent closed; a new outage toasts again
+let quiet = false // our own hides (leaving parent pages, box back) aren't the parent dismissing it
+const hide = () => {
+  quiet = true;
+  notifications.hide(ID); // onClose runs synchronously
+  quiet = false;
+};
 
 /** Warns parents when the home box stops checking in (dismissable toast) or can't be reached (banner). */
 export function BlockerBanner() {
@@ -14,10 +20,7 @@ export function BlockerBanner() {
   const offline = reachable && data?.online === false;
   const outage = data?.last_seen ?? "never";
   useEffect(() => {
-    if (!offline) {
-      notifications.hide(ID);
-      return;
-    }
+    if (!offline) return hide();
     if (dismissedFor === outage) return;
     notifications.show({
       id: ID,
@@ -25,8 +28,11 @@ export function BlockerBanner() {
       title: "Home box offline",
       message: `${outage === "never" ? "Hasn’t checked in yet." : `Went quiet at ${new Date(outage).toLocaleString()}.`} Paused devices may be back online until it reconnects.`,
       autoClose: false,
-      onClose: () => (dismissedFor = outage),
+      onClose: () => {
+        if (!quiet) dismissedFor = outage;
+      },
     });
+    return hide; // not on kid screens (view as kid) or after logout
   }, [offline, outage]);
   // mockup 05 "You're offline": the box itself can't be reached, so what's on screen may be stale
   if (!reachable)

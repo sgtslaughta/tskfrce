@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react'
-import { ThreadList } from '@/v2/chat/ThreadList'
+import { ThreadList, nest } from '@/v2/chat/ThreadList'
 import type { ThreadSummary } from '@/v2/hooks/useChat'
 
 describe('ThreadList', () => {
@@ -187,5 +187,17 @@ describe('ThreadList', () => {
   it('marks the selected row', () => {
     render(<ThreadList threads={mockThreads} selected="family:family" onPick={() => {}} />)
     expect(screen.getByRole('button', { name: /Family photo/ })).toHaveAttribute('aria-current', 'true')
+  })
+
+  it('nests chores under their kid, Family for shared ones', () => {
+    const t = (id: number, kind: 'private' | 'family' | 'chore', extra = {}) =>
+      ({ id, kind, task_id: kind === 'chore' ? id : null, kid_id: null, title: `t${id}`, unread: 0, last_message_at: null, ...extra })
+    const groups = nest([
+      t(1, 'family'),
+      t(2, 'private', { kid_id: 7 }),
+      t(3, 'chore', { kid_ids: [7] }),
+      t(4, 'chore', { kid_ids: [7, 8] }),
+    ])
+    expect(groups.map((g) => [g.t.id, g.kids.map((c) => c.id)])).toEqual([[1, [4]], [2, [3]]])
   })
 })

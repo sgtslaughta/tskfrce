@@ -8,6 +8,8 @@ export interface ThreadSummary {
   kind: ThreadKind
   task_id: number | null
   kid_id: number | null
+  /** chore threads: the kids the chore is for */
+  kid_ids?: number[]
   title: string
   unread: number
   last_message_at: string | null

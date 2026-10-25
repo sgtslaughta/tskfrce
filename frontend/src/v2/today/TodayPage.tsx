@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { viewAs } from '@/v2/kid/viewAs'
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { ParentShell } from "../parent/ParentShell";
@@ -68,7 +69,7 @@ export function TodayPage() {
           <div className="pt-head">
             <h2>{kid.name}&apos;s day</h2>
             <div className="pt-head-acts">
-              <Link href={`/kid?as=${kid.id}`} className="p-btn">
+              <Link href={viewAs(kid.id, router.asPath)} className="p-btn">
                 <Icon name="visibility" size={17} />
                 View as kid
               </Link>
