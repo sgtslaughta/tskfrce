@@ -1,5 +1,4 @@
 import { useRouter } from 'next/router'
-import { useState } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
 import { ParentShell } from '@/v2/parent/ParentShell'
 import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
@@ -23,7 +22,12 @@ function DevicesBody() {
   const groups = useGroups()
   const windows = useWindows()
   const all = devices.data ?? []
-  const [tab, setTab] = useState<'devices' | 'groups'>('devices')
+  // the tab lives in the URL: device and group ids overlap, so ?item alone can't say which one it is
+  const tab = first(query.tab) === 'groups' ? 'groups' : 'devices'
+  const setTab = (t: 'devices' | 'groups') => {
+    const { item: _drop, tab: _t, ...rest } = query
+    router.push({ pathname: router.pathname, query: t === 'groups' ? { ...rest, tab: t } : rest }, undefined, { shallow: true })
+  }
   const small = useMediaQuery('(max-width: 767px)')
   // desktop opens the first item rather than an empty detail pane; phone stays on the list
   const fallback = small ? null : ((tab === 'devices' ? all : groups.data ?? [])[0]?.id ?? null)

@@ -75,6 +75,18 @@ export function DeviceNetwork({ device }: { device: Device }) {
           </div>
         )}
       </section>
+      {isPrivateMac(device.mac) && (
+        <section className="pk-panel pk-span" data-tone="amber" aria-label="Private MAC tip">
+          <h3>
+            <Icon name="shield" size={18} />
+            Private MAC is on
+          </h3>
+          <p className="pk-hint">
+            This device can switch to a new random address, which would look like a new device. Turn off &ldquo;Private Wi-Fi Address&rdquo; for your
+            home network on it so the lock keeps working.
+          </p>
+        </section>
+      )}
     </div>
   )
 }

@@ -100,7 +100,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
       {needsPins && (
         <div className="pk-note">
           <p>{owners.map(nameOf).join(' and ')} share this device. Add PINs so they can&apos;t sign in as each other.</p>
-          <button type="button" className="p-btn" onClick={() => router.push(`/kids?section=kids&kid=${device.owner_ids[0]}&pin=1`)}>
+          <button type="button" className="p-btn" onClick={() => router.push(`/kids?section=kids&kid=${(owners.find((k) => !k.has_pin) ?? owners[0]).id}&pin=1`)}>
             Set PINs
           </button>
         </div>

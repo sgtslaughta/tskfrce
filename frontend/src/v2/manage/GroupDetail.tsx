@@ -36,7 +36,8 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
   const ids = group ? group.device_ids : draftIds
   const members = devices.filter((d) => ids.includes(d.id))
   const locked = members.filter((d) => d.override?.action === 'lock').length
-  const owners = kids.filter((k) => group?.owner_ids?.includes(k.id)).map(nameOf).join(', ')
+  const memberOwners = members.flatMap((d) => d.owner_ids)
+  const owners = kids.filter((k) => memberOwners.includes(k.id)).map(nameOf).join(', ')
 
   const chips = [
     { text: `${members.length} ${members.length === 1 ? 'device' : 'devices'}` },
@@ -89,7 +90,7 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
               Unlock 30 min
             </button>
             <button type="button" className="p-btn" onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'schedule' })}>
-              <Icon name="arrow_back" size={16} />
+              <Icon name="event_repeat" size={16} />
               Back to schedule
             </button>
             <button type="button" className="p-btn" data-variant="red" onClick={open}>

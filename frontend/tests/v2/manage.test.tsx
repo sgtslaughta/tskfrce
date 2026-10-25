@@ -291,6 +291,22 @@ describe('devices page', () => {
   })
 })
 
+describe('groups deep link', () => {
+  test('?tab=groups&item=1 opens group 1, not the device that shares id 1', async () => {
+    apiMock.mockImplementation(async (path) => {
+      if (path === '/devices') return [{ ...device, status: 'assigned', owner_ids: [7] }]
+      if (path === '/kids') return kids
+      if (path === '/groups') return [{ id: 1, name: 'Tablets', device_ids: [1] }]
+      return []
+    })
+    mockRouter.query = { item: '1', tab: 'groups' }
+    render(wrap(<DevicesPage />))
+    expect(await screen.findByLabelText('Group name')).toHaveValue('Tablets')
+    expect(screen.queryByLabelText('Device name')).toBeNull()
+    expect(screen.getByText('Maya')).toBeTruthy()
+  })
+})
+
 describe('PIN', () => {
   test('Remove PIN sends clear_pin, and only shows when a PIN is set', async () => {
     apiMock.mockResolvedValue({})
