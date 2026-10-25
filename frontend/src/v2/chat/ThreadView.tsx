@@ -14,6 +14,7 @@ import {
   type ChatMessage,
   type ThreadKind,
 } from '@/v2/hooks/useChat'
+import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import { useRunDetail } from '@/v2/hooks/useChores'
 import { LoadError, LoadingCards } from '@/v2/components/States'
 import { toastFail } from '@/v2/notify'
@@ -118,16 +119,18 @@ export function ThreadView({
   }
 
   const canSend = (text.trim().length > 0 || photoId !== null) && !post.isPending && !!data
-  const send = async () => {
-    if (!canSend || !data) return
-    try {
-      await post.mutateAsync({ threadId: data.id, body: text.trim(), photoId: photoId ?? undefined })
-      setText('')
-      setPhotoId(null)
-    } catch (e) {
-      toastFail(e)
-    }
-  }
+  const once = useSingleFlight()
+  const send = () =>
+    once(async () => {
+      if (!canSend || !data) return
+      try {
+        await post.mutateAsync({ threadId: data.id, body: text.trim(), photoId: photoId ?? undefined })
+        setText('')
+        setPhotoId(null)
+      } catch (e) {
+        toastFail(e)
+      }
+    })
   const sendGif = async (id: number) => {
     if (!data) return
     await post.mutateAsync({ threadId: data.id, body: text.trim(), photoId: id })

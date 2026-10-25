@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Button, CopyButton, Text, TextInput } from '@mantine/core'
 import { useInvite } from '@/v2/hooks/useFamily'
+import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import { toastFail } from '../notify'
 
 export function InviteSection() {
   const invite = useInvite()
+  const once = useSingleFlight()
   const [username, setUsername] = useState('')
   const link = invite.data ? `${window.location.origin}/register?token=${invite.data.token}` : ''
   return (
@@ -14,7 +16,7 @@ export function InviteSection() {
         className="m-form"
         onSubmit={(e) => {
           e.preventDefault() // Enter in the field creates the link, once
-          if (username.trim().length >= 3 && !invite.isPending) invite.mutate(username.trim(), { onError: toastFail })
+          if (username.trim().length >= 3) void once(() => invite.mutateAsync(username.trim()).catch(toastFail))
         }}
       >
         <TextInput label="Their username" value={username} onChange={(e) => setUsername(e.currentTarget.value)} />

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ActionIcon, Button, Chip, Drawer, Text, TextInput } from '@mantine/core'
 import { useMediaQuery } from '@mantine/hooks'
+import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import { useAddWindow, useDeleteWindow, useWindows } from '@/v2/hooks/useWindows'
 import { DAYS } from '@/v2/days'
 import type { TimeWindow } from '@/v2/types'
@@ -38,17 +39,17 @@ export function WindowEditor({ target, label }: Props) {
   const same = start === end && start !== ''
   const kindTitle = KINDS.find((k) => k.kind === adding)?.title
 
+  const once = useSingleFlight()
   const save = () =>
     adding &&
-    add.mutate(
-      { kind: adding, days: days.slice().sort().join(''), start, end, ...target },
-      {
-        onError: toastFail,
-        onSuccess: () => {
+    once(() =>
+      add.mutateAsync({ kind: adding, days: days.slice().sort().join(''), start, end, ...target }).then(
+        () => {
           toastOk('Added')
           setAdding(null)
         },
-      },
+        toastFail,
+      ),
     )
 
   return (
