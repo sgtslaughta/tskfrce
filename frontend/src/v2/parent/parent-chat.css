@@ -23,7 +23,8 @@
   font-size: 13px;
   outline: 0;
 }
-[data-look='parent'] .pc-search:focus-within { border-color: var(--p-ink); }
+[data-look='parent'] .pc-search:focus-within, [data-look='parent'] .pc-reply:focus-within { border-color: var(--p-ink); }
+[data-look='parent'] .pc-search input:focus, [data-look='parent'] .pc-reply textarea:focus { box-shadow: none; border-color: transparent; }
 [data-look='parent'] .pc-tabs .p-segmented-control { width: 100%; }
 [data-look='parent'] .pc-tabs .p-segmented-button { flex: 1; padding: 7px 4px; }
 

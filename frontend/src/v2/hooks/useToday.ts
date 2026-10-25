@@ -17,7 +17,9 @@ function useChoreAction<V>(fn: (v: V) => Promise<unknown>) {
   return useMutation({
     mutationFn: fn,
     onSuccess: () =>
-      Promise.all([qc.invalidateQueries({ queryKey: ['today'] }), qc.invalidateQueries({ queryKey: ['chores-today'] })]),
+      Promise.all(
+        ['today', 'chores-today', 'run', 'chat-thread', 'chat-threads'].map((k) => qc.invalidateQueries({ queryKey: [k] })),
+      ),
   })
 }
 
