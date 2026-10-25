@@ -6,20 +6,6 @@
  */
 
 /* ─────────────────────────────────────────────────────────────────────────── */
-/* Chore row transitions */
-/* ─────────────────────────────────────────────────────────────────────────── */
-
-[data-look='parent'] .p-chore-row {
-  transition: background-color var(--dur-1) var(--ease-out),
-              border-color var(--dur-1) var(--ease-out);
-}
-
-[data-look='parent'] .p-chore-header {
-  transition: background var(--dur-1) var(--ease-out),
-              color var(--dur-1) var(--ease-out);
-}
-
-/* ─────────────────────────────────────────────────────────────────────────── */
 /* List-detail panel transitions */
 /* ─────────────────────────────────────────────────────────────────────────── */
 

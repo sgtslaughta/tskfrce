@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
 import { api } from '@/v2/api'
+import { notifications } from '@mantine/notifications'
 import { TodayPage } from '@/v2/today/TodayPage'
 import type { Today, TodayKid } from '@/v2/types'
 
@@ -37,7 +38,10 @@ const kid = (id: number, name = `Kid${id}`, done = 0, total = 2): TodayKid => ({
   total,
   needs_you_count: 0,
   last_active: null,
-  progress: { level: 1, points: 0, next_reward: 100, next_reward_points: 50, locked_until: null },
+  progress: { level: 1, title: 'Rookie', xp: 0, floor: 0, next: 50, streak: 3 },
+  points: 860,
+  next_reward: 40,
+  locks_at: '2026-10-25T00:00:00Z',
   chores: [
     { id: 10 + id, title: 'Dishes', points: 10, state: 'todo', due_time: null },
     { id: 20 + id, title: 'Laundry', points: 20, state: 'todo', due_time: null },
@@ -67,7 +71,7 @@ beforeEach(() => {
   apiMock.mockImplementation(async (p) => {
     if (p === '/today') return todayData()
     if (p.match(/^\/chores\/\d+$/) && !p.endsWith('/approve') && !p.endsWith('/send-back'))
-      return { id: 1, steps: [{ id: 1, title: 'Step 1', done: false, done_at: null }, { id: 2, title: 'Step 2', done: false, done_at: null }], photos: [] }
+      return { id: 1, thread_ref: 'run:11', steps: [{ id: 1, title: 'Step 1', done: false, done_at: null }, { id: 2, title: 'Step 2', done: false, done_at: null }], photos: [] }
     if (p.startsWith('/chores/') && p.endsWith('/approve'))
       return { ok: true }
     if (p.startsWith('/chores/') && p.endsWith('/send-back'))
@@ -125,6 +129,53 @@ describe('TodayPage', () => {
     expect(screen.getByRole('link', { name: /add chore/i })).toBeInTheDocument()
   })
 
+  test('expanded kid card shows letter avatar and real stats', async () => {
+    wrap(<TodayPage />)
+    await userEvent.click(await screen.findByRole('button', { name: /kid1/i }))
+    const card = await screen.findByTestId('kid-expanded')
+    expect(card).toHaveTextContent('860')
+    expect(card).toHaveTextContent('3 days')
+    expect(card).toHaveTextContent('40 pts')
+    expect(card).toHaveTextContent(/\d+:\d\d [AP]M/)
+    expect(screen.getAllByText('K')[0]).toHaveClass('p-kid-avatar')
+  })
+
+  test('chat opens beside the chore and closes', async () => {
+    wrap(<TodayPage />)
+    await userEvent.click((await screen.findAllByRole('button', { name: /dishes/i }))[0])
+    expect(screen.queryByTestId('chat-column')).not.toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('button', { name: /open chat/i }))
+    expect(screen.getByTestId('chat-column')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /close chat/i }))
+    expect(screen.queryByTestId('chat-column')).not.toBeInTheDocument()
+  })
+
+  test('approve shows only for Needs OK and posts approve', async () => {
+    const k = { ...kid(1), chores: [{ id: 11, title: 'Dishes', points: 10, state: 'needs_you' as const, due_time: null }] }
+    const base = apiMock.getMockImplementation()!
+    apiMock.mockImplementation(async (p, init) => (p === '/today' ? todayData({ kids: [k] }) : base(p, init)))
+    wrap(<TodayPage />)
+    await userEvent.click(await screen.findByRole('button', { name: /dishes/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /approve \+10/i }))
+    // withUndo holds the call for the undo window and shows a toast first
+    expect(notifications.show).toHaveBeenCalled()
+    expect(apiMock).not.toHaveBeenCalledWith('/chores/11/approve', expect.anything())
+  })
+
+  test('to-do chore has no approve; deduct posts amount and reason', async () => {
+    wrap(<TodayPage />)
+    await userEvent.click((await screen.findAllByRole('button', { name: /dishes/i }))[0])
+    await screen.findByRole('button', { name: /open chat/i })
+    expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /deduct points/i }))
+    await userEvent.click(screen.getByRole('button', { name: '−20' }))
+    await userEvent.type(screen.getByLabelText('Reason'), 'Left plates')
+    await userEvent.click(screen.getByRole('button', { name: /^deduct$/i }))
+    await waitFor(() =>
+      expect(apiMock).toHaveBeenCalledWith('/kids/1/deduct', { method: 'POST', body: { amount: 20, note: 'Left plates' } }),
+    )
+  })
+
   test('expanded kid card displays progress meter and stats', async () => {
     wrap(<TodayPage />)
     const kidButton = await screen.findByRole('button', { name: /kid1/i })
@@ -152,18 +203,6 @@ describe('TodayPage', () => {
     const meterBar = track?.querySelector('.p-meter-bar')
     expect(meterBar).toBeInTheDocument()
     expect(meterBar).toHaveStyle('width: 50%')
-  })
-
-  test('meter bar uses correct CSS variable for contrast compliance', async () => {
-    wrap(<TodayPage />)
-    const kidButton = await screen.findByRole('button', { name: /kid1/i })
-    await userEvent.click(kidButton)
-    const expandedSection = await screen.findByTestId('kid-expanded')
-    const meterBar = expandedSection.querySelector('.p-meter-bar')
-    // Verify the meter bar element exists (actual color testing requires computed styles)
-    expect(meterBar).toBeInTheDocument()
-    // The actual background color (var(--p-meter)) is defined in typography.css
-    // and parent-kids.css and is contrast-compliant per design spec
   })
 
   test('chore rows start collapsed', async () => {
@@ -207,31 +246,9 @@ describe('TodayPage', () => {
     })
     wrap(<TodayPage />)
     await screen.findByRole('button', { name: /kid1/i })
-    const choreButton = await screen.findByRole('button', { name: /dishes/i })
-    expect(choreButton).toHaveStyle('textDecoration: line-through')
-    expect(await screen.findByText(/done \d+:\d+ [ap]m/i)).toBeInTheDocument()
-  })
-
-  test('done chore time uses CSS variable for color', async () => {
-    const data = todayData({
-      kids: [
-        {
-          ...kid(1),
-          chores: [
-            { id: 11, title: 'Dishes', points: 10, state: 'done', due_time: null, done_at: '2026-10-24T16:30:00Z' },
-          ],
-        },
-      ],
-    })
-    apiMock.mockImplementation(async (p) => {
-      if (p === '/today') return data
-      return undefined
-    })
-    wrap(<TodayPage />)
-    await screen.findByRole('button', { name: /kid1/i })
-    const doneTimeText = await screen.findByText(/done \d+:\d+ [ap]m/i)
-    const span = doneTimeText.closest('span')
-    expect(span?.style.color).toBe('var(--p-sub)')
+    const row = (await screen.findAllByTestId('chore-row'))[0]
+    expect(row).toHaveAttribute('data-state', 'done')
+    expect(await screen.findByText(/^done \d+:\d+ [ap]m · approved$/i)).toBeInTheDocument()
   })
 
   test('progress meter shows chores done and total', async () => {
@@ -248,30 +265,6 @@ describe('TodayPage', () => {
     expect(summaryStrip).toBeInTheDocument()
     const statusLabels = screen.getAllByText(/^status$/i)
     expect(statusLabels.length).toBeGreaterThan(0)
-  })
-
-  test('chat column appears only after reply and closing it removes it', async () => {
-    wrap(<TodayPage />)
-    await screen.findByRole('button', { name: /kid1/i })
-    const rows = await screen.findAllByTestId('chore-row')
-    const button = rows[0]?.querySelector('button')
-    if (button) await userEvent.click(button)
-    expect(screen.queryByTestId('chat-column')).not.toBeInTheDocument()
-    const openChatButton = screen.queryByRole('button', { name: /open chat/i })
-    if (openChatButton) {
-      await userEvent.click(openChatButton)
-      await waitFor(() => expect(screen.queryByTestId('chat-column')).toBeInTheDocument())
-    }
-  })
-
-  test('approve uses undo toast', async () => {
-    wrap(<TodayPage />)
-    await screen.findByRole('button', { name: /kid1/i })
-    const rows = await screen.findAllByTestId('chore-row')
-    const button = rows[0]?.querySelector('button')
-    if (button) await userEvent.click(button)
-    const approveButton = screen.queryByRole('button', { name: /approve/i })
-    if (approveButton) await userEvent.click(approveButton)
   })
 
   test('needs you lists all kids\' items', async () => {

@@ -133,6 +133,12 @@ export interface TodayKid {
   needs_you_count?: number
   last_active?: string | null
   progress?: Progress
+  /** points balance */
+  points?: number
+  /** points still needed for the cheapest reward not yet affordable; null = none */
+  next_reward?: number | null
+  /** UTC ISO end of today's allowed hours; null = no hours set or already outside them */
+  locks_at?: string | null
   chores: TodayChore[]
   devices: TodayDevice[]
 }
@@ -288,9 +294,6 @@ export interface Progress {
   next: number
   streak: number
   flair?: Flair
-  points?: number
-  next_reward_points?: number
-  locked_until?: string | null
 }
 
 export interface Badge {

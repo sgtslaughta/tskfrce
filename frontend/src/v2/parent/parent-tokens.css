@@ -3,6 +3,13 @@
  * Light and dark tokens with accent system for parent screens
  */
 
+/* Mantine components read these; html[] outranks Mantine's own :root, else they fall back to Inter */
+html[data-look='parent'] {
+  --mantine-font-family: var(--font-parent), 'DM Sans', system-ui, sans-serif;
+  --mantine-font-family-headings: var(--font-parent), 'DM Sans', system-ui, sans-serif;
+}
+html[data-look='parent'] body { font-family: var(--mantine-font-family); }
+
 [data-look='parent'] {
   /* Light mode defaults */
   --p-bg: #f8f8f8;

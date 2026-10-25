@@ -1,107 +1,152 @@
-import Link from 'next/link'
-import { useMediaQuery } from '@mantine/hooks'
-import { Drawer } from '@mantine/core'
 import { useState } from 'react'
+import { useMediaQuery } from '@mantine/hooks'
+import { Drawer, Tooltip } from '@mantine/core'
 import type { TodayKid, TodayChore } from '../types'
 import { useRunDetail } from '../hooks/useChores'
 import { useApproveChore, useSendBack } from '../hooks/useToday'
-import { Chip } from '../parent/Chip'
+import { useDeduct } from '../hooks/useKids'
+import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { Icon } from '../parent/Icon'
 import { withUndo } from '../notify'
-import { ChatColumn } from './ChatColumn'
+import { ThreadView } from '../chat/ThreadView'
 
-export function ChoreOpen({
-  chore,
-  kid,
-  onOpenChat,
-  chatOpen,
-}: {
-  chore: TodayChore
-  kid: TodayKid
-  onOpenChat: () => void
-  chatOpen: boolean
-}) {
-  const { data: runDetail } = useRunDetail(chore.id)
+const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+const AMOUNTS = [5, 10, 20]
+
+/** Open chore: steps, photos and actions on the left; the chore's chat on the right when open. */
+export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) {
+  const { data: run } = useRunDetail(chore.id)
   const approve = useApproveChore()
   const sendBack = useSendBack()
+  const deduct = useDeduct()
+  const meId = Number(useUnifiedAuth().user?.id) || null
   const isMobile = useMediaQuery('(max-width: 768px)')
-  const [drawerOpen, setDrawerOpen] = useState(false)
+  const [chat, setChat] = useState(false)
+  const [ded, setDed] = useState(false)
+  const [amount, setAmount] = useState<number | null>(10)
+  const [custom, setCustom] = useState('')
+  const [why, setWhy] = useState('')
 
-  if (!runDetail) return null
-
-  const progressPercent = runDetail.steps.length > 0 ? runDetail.steps.filter((s) => s.done).length / runDetail.steps.length * 100 : 0
+  if (!run) return null
+  const name = kid.name ?? 'your kid'
+  const take = amount ?? Number(custom)
+  const thread = run.thread_ref ? (
+    <ThreadView kind="chore" refId={run.thread_ref} meId={meId} />
+  ) : null
 
   return (
-    <div className="p-chore-open">
-      <div className="p-open-content">
-        <div className="p-chore-steps">
-          {runDetail.steps.map((step, idx) => (
-            <div key={step.id} className="p-step">
-              <input type="checkbox" checked={step.done} readOnly className="p-step-checkbox" />
-              <span className="p-step-title">{step.title}</span>
-              {step.done && step.done_at && (
-                <span className="p-step-time">
-                  {new Date(step.done_at).toLocaleTimeString('en-US', {
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  })}
+    <div className="pt-open" data-chat={chat && !isMobile}>
+      <div className="pt-open-main">
+        {run.steps.length > 0 && (
+          <ol className="pt-steps">
+            {run.steps.map((s) => (
+              <li key={s.id} className="pt-step" data-done={s.done}>
+                <span className="pt-ck" data-on={s.done} aria-hidden>
+                  {s.done && <Icon name="check" size={14} />}
                 </span>
-              )}
-              <button className="p-step-reply" aria-label={`Reply to step ${idx + 1}`}>Reply</button>
-            </div>
-          ))}
-        </div>
+                <span className="pt-t">
+                  <span className="pt-title">{s.title}</span>
+                  {s.done && s.done_at && <small>Done {clock(s.done_at)}</small>}
+                </span>
+                <Tooltip label={`Reply on ${s.title}`} openDelay={400}>
+                  <button className="pt-rp" aria-label={`Reply on ${s.title}`} onClick={() => setChat(true)}>
+                    <Icon name="chat_bubble" size={16} />
+                  </button>
+                </Tooltip>
+              </li>
+            ))}
+          </ol>
+        )}
 
-        {runDetail.photos.length > 0 && (
-          <div className="p-chore-photos">
-            {runDetail.photos.map((photo) => (
+        {run.photos.length > 0 && (
+          <div className="pt-photos">
+            {run.photos.map((p) => (
               // eslint-disable-next-line @next/next/no-img-element
-              <img key={photo.id} src={photo.thumb_url} alt="chore" className="p-photo-thumb" />
+              <img key={p.id} src={p.thumb_url} alt={`Photo for ${chore.title}`} />
             ))}
           </div>
         )}
 
-        <div className="p-action-panel">
-          <button
-            className="p-btn"
-            aria-label={`Approve chore and award ${chore.points} points`}
-            onClick={() =>
-              withUndo(() => approve.mutateAsync(chore.id), `Approved +${chore.points}`)
-            }
-          >
-            Approve +{chore.points}
+        <div className="pt-acts">
+          {chore.state === 'needs_you' && (
+            <>
+              <button
+                className="p-btn"
+                data-variant="accent"
+                onClick={() => withUndo(() => approve.mutateAsync(chore.id), `Approved +${chore.points}`)}
+              >
+                <Icon name="check" size={17} />
+                Approve +{chore.points}
+              </button>
+              <button className="p-btn" onClick={() => sendBack.mutateAsync({ id: chore.id, note: '' })}>
+                <Icon name="undo" size={17} />
+                Send back
+              </button>
+            </>
+          )}
+          <button className="p-btn" data-variant="red" aria-expanded={ded} onClick={() => setDed(!ded)}>
+            <Icon name="remove_circle" size={17} />
+            Deduct points
           </button>
-          <button
-            className="p-btn"
-            aria-label="Send chore back to child for revision"
-            onClick={() => sendBack.mutateAsync({ id: chore.id, note: '' })}
-          >
-            Send back
-          </button>
-          <button
-            className="p-btn"
-            aria-label="Open chat with child about this chore"
-            onClick={onOpenChat}
-          >
-            Open chat
+          <button className="p-btn" aria-expanded={chat} onClick={() => setChat(!chat)}>
+            <Icon name="chat" size={17} />
+            {chat ? 'Hide chat' : 'Open chat'}
           </button>
         </div>
+
+        {ded && (
+          <form
+            className="pt-ded"
+            onSubmit={(e) => {
+              e.preventDefault()
+              deduct.mutate({ id: kid.id, amount: take, note: why }, { onSuccess: () => setDed(false) })
+            }}
+          >
+            <b>Deduct for {chore.title}</b>
+            {AMOUNTS.map((a) => (
+              <button type="button" key={a} className="pt-amt" data-on={amount === a} onClick={() => setAmount(a)}>
+                −{a}
+              </button>
+            ))}
+            <input
+              className="pt-amt-custom"
+              inputMode="numeric"
+              placeholder="Custom"
+              aria-label="Custom amount"
+              value={custom}
+              onFocus={() => setAmount(null)}
+              onChange={(e) => setCustom(e.target.value.replace(/\D/g, ''))}
+            />
+            <input
+              placeholder={`Why? (${name} will see this)`}
+              aria-label="Reason"
+              value={why}
+              maxLength={100}
+              onChange={(e) => setWhy(e.target.value)}
+            />
+            <button className="p-btn" data-variant="red" disabled={!why.trim() || !(take > 0) || deduct.isPending}>
+              Deduct
+            </button>
+          </form>
+        )}
       </div>
 
       {isMobile ? (
-        <Drawer
-          opened={chatOpen}
-          onClose={() => onOpenChat()}
-          position="bottom"
-          size="58%"
-          title="Chat"
-          closeButtonProps={{ 'aria-label': 'Close chat' }}
-        >
-          <ChatColumn runId={chore.id} onClose={() => onOpenChat()} />
+        <Drawer opened={chat} onClose={() => setChat(false)} position="bottom" size="58%" title={chore.title}>
+          {thread}
         </Drawer>
       ) : (
-        chatOpen && (
-          <ChatColumn runId={chore.id} onClose={() => onOpenChat()} />
+        chat && (
+          <div className="pt-chat" data-testid="chat-column">
+            <div className="pt-chat-head">
+              <Icon name="subdirectory_arrow_right" size={16} />
+              <span>{chore.title}</span>
+              <button aria-label="Close chat" onClick={() => setChat(false)}>
+                <Icon name="close" size={18} />
+              </button>
+            </div>
+            {thread}
+          </div>
         )
       )}
     </div>

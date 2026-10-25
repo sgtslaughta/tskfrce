@@ -35,3 +35,13 @@ export const useBonus = () =>
       api<{ balance: number }>(`/kids/${id}/points`, { method: 'POST', body: { amount, note } }),
     onError: toastFail,
   })
+
+export const useDeduct = () => {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, amount, note }: { id: number; amount: number; note: string }) =>
+      api<{ balance: number; deducted: number }>(`/kids/${id}/deduct`, { method: 'POST', body: { amount, note } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['today'] }),
+    onError: toastFail,
+  })
+}

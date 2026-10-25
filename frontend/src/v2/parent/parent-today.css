@@ -1,0 +1,165 @@
+/**
+ * @fileoverview Today detail: day header, progress line, chore rows and the open chore.
+ * Ported from mockup 01-parent-today.html (classes .mh .prog .box .chore .row .ck .ty .t .pts).
+ */
+
+[data-look='parent'] .pt-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+[data-look='parent'] .pt-head h2 { margin: 0; font-size: 30px; font-weight: 700; color: var(--p-ink); }
+[data-look='parent'] .pt-head-acts { display: flex; gap: 8px; }
+
+/* progress line: ink on track in light, accent on track in dark (spec 2.4) */
+[data-look='parent'] .pt-prog { display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; }
+[data-look='parent'] .pt-bar { flex: 1; height: 8px; border-radius: 8px; background: var(--p-track); overflow: hidden; }
+[data-look='parent'] .pt-bar i { display: block; height: 100%; background: var(--p-meter); transition: width var(--dur-2) var(--ease-out); }
+
+[data-look='parent'] .pt-box { background: var(--p-card); border: 1px solid var(--p-line); border-radius: 18px; overflow: hidden; }
+[data-look='parent'] .pt-chore + .pt-chore { border-top: 1px solid var(--p-line); }
+
+[data-look='parent'] .pt-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 0;
+  background: transparent;
+  color: var(--p-ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--dur-1) var(--ease-out);
+}
+[data-look='parent'] .pt-row:hover,
+[data-look='parent'] .pt-chore[data-open='true'] > .pt-row { background: var(--p-soft); }
+[data-look='parent'] .pt-row:focus-visible { outline: 2px solid var(--p-ink); outline-offset: -2px; }
+
+[data-look='parent'] .pt-car { width: 20px; display: grid; color: var(--p-sub); transition: transform var(--dur-1) var(--ease-out); }
+[data-look='parent'] .pt-chore[data-open='true'] .pt-car { transform: rotate(90deg); }
+
+[data-look='parent'] .pt-ck {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  border: 1.5px solid var(--p-sub);
+  color: #292928;
+}
+[data-look='parent'] .pt-ck[data-on='true'] { background: var(--p-acc); border-color: var(--p-acc); }
+
+[data-look='parent'] .pt-ty {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--p-soft);
+  color: var(--p-sub);
+}
+[data-look='parent'] .pt-chore[data-open='true'] .pt-ty { background: var(--p-card); }
+
+[data-look='parent'] .pt-t { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; }
+[data-look='parent'] .pt-t small { display: block; margin-top: 1px; color: var(--p-sub); font-weight: 400; font-size: 12px; }
+[data-look='parent'] .pt-chore[data-state='done'] > .pt-row .pt-title,
+[data-look='parent'] .pt-chore[data-state='needs_you'] > .pt-row .pt-title,
+[data-look='parent'] .pt-step[data-done='true'] .pt-title {
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+  color: var(--p-sub);
+}
+[data-look='parent'] .pt-pts { width: 58px; text-align: right; font-size: 12.5px; font-weight: 600; color: var(--p-sub); }
+
+/* open chore: left column + optional chat column */
+[data-look='parent'] .pt-open { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 4px 16px 16px; }
+[data-look='parent'] .pt-open[data-chat='true'] { grid-template-columns: 1fr 1fr; }
+[data-look='parent'] .pt-open-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+
+[data-look='parent'] .pt-steps { list-style: none; margin: 4px 0 0 10px; padding: 0 0 0 4px; border-left: 2px solid var(--p-line); }
+[data-look='parent'] .pt-step { position: relative; display: flex; align-items: center; gap: 10px; padding: 7px 8px 7px 14px; border-radius: 10px; }
+[data-look='parent'] .pt-step::before { content: ''; position: absolute; left: -4px; top: 50%; width: 12px; border-top: 2px solid var(--p-line); }
+[data-look='parent'] .pt-step .pt-ck { width: 18px; height: 18px; border-radius: 6px; }
+[data-look='parent'] .pt-step .pt-t { font-weight: 500; font-size: 13.5px; }
+[data-look='parent'] .pt-rp {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--p-line);
+  background: var(--p-card);
+  color: var(--p-ink);
+  cursor: pointer;
+}
+
+[data-look='parent'] .pt-photos { display: flex; gap: 8px; flex-wrap: wrap; }
+[data-look='parent'] .pt-photos img { width: 80px; height: 60px; object-fit: cover; border-radius: 10px; border: 1px solid var(--p-line); }
+
+[data-look='parent'] .pt-acts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  background: var(--p-soft);
+}
+
+[data-look='parent'] .pt-ded {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--p-red) 30%, var(--p-line));
+  font-size: 13px;
+}
+[data-look='parent'] .pt-ded b { width: 100%; color: var(--p-red); }
+[data-look='parent'] .pt-amt,
+[data-look='parent'] .pt-amt-custom,
+[data-look='parent'] .pt-ded input {
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--p-line);
+  background: var(--p-card);
+  color: var(--p-ink);
+  font: 600 13px inherit;
+}
+[data-look='parent'] .pt-amt { cursor: pointer; }
+[data-look='parent'] .pt-amt[data-on='true'] { background: var(--p-redbg); border-color: var(--p-red); color: var(--p-red); }
+[data-look='parent'] .pt-amt-custom { width: 76px; }
+[data-look='parent'] .pt-ded input:not(.pt-amt-custom) { flex: 1; min-width: 160px; font-weight: 400; }
+
+[data-look='parent'] .pt-chat {
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+  border-radius: 14px;
+  background: var(--p-soft);
+  overflow: hidden;
+}
+[data-look='parent'] .pt-chat-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--p-sub);
+}
+[data-look='parent'] .pt-chat-head span { flex: 1; }
+[data-look='parent'] .pt-chat-head button { border: 0; background: none; color: var(--p-sub); cursor: pointer; display: grid; }
+
+@media (max-width: 768px) {
+  [data-look='parent'] .pt-head h2 { font-size: 24px; }
+  [data-look='parent'] .pt-row { padding: 12px; gap: 10px; }
+  [data-look='parent'] .pt-pts { width: auto; }
+}

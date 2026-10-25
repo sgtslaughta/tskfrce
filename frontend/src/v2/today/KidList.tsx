@@ -1,11 +1,10 @@
-import { ReactNode, useState } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { Tabs } from '@mantine/core'
 import { useToday } from '../hooks/useToday'
-import type { TodayKid, NeedsItem } from '../types'
+import type { TodayKid } from '../types'
 import { NeedsYouList } from './NeedsYouList'
 import { Chip } from '../parent/Chip'
-import { Icon } from '../parent/Icon'
 import { ListHeader } from '../parent/ListHeader'
 
 const stateChip = (kid: TodayKid) => {
@@ -13,6 +12,16 @@ const stateChip = (kid: TodayKid) => {
   if ((kid.needs_you_count ?? 0) > 0) return <Chip tone="lav" icon="hourglass_top">Needs OK</Chip>
   if (kid.done === kid.total) return <Chip tone="grey" icon="check_circle">All done</Chip>
   return <Chip tone="grey" icon="lock">Locked</Chip>
+}
+
+const initial = (name: string | null) => (name?.trim()[0] ?? '?').toUpperCase()
+const pct = (done = 0, total = 0) => (total ? (done / total) * 100 : 0)
+const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+
+/** Schedule end time; "Locked" when the kid's devices are already off. */
+const locksAt = (kid: TodayKid) => {
+  if (kid.locks_at) return clock(kid.locks_at)
+  return kid.devices.length && !kid.devices.some((d) => d.online) ? 'Locked' : '—'
 }
 
 export function KidList({ onSelectKid, selectedKid }: { onSelectKid: (kid: TodayKid) => void; selectedKid?: TodayKid }) {
@@ -43,35 +52,36 @@ export function KidList({ onSelectKid, selectedKid }: { onSelectKid: (kid: Today
                     router.push(`/?item=${kid.id}`, undefined, { shallow: true })
                   }}
                 >
-                  <div className="p-kid-avatar">{kid.avatar || kid.name?.[0] || '?'}</div>
+                  <div className="p-kid-avatar">{initial(kid.name)}</div>
                   <div className="p-kid-info">
                     <div className="p-kid-name">{kid.name}</div>
                     <div className="p-kid-progress">
                       {kid.done ?? 0} of {kid.total ?? 0} chores
+                      {kid.progress ? ` · Level ${kid.progress.level}` : ''}
                     </div>
                   </div>
                   <div className="p-kid-status">{stateChip(kid)}</div>
-                  {selectedKid?.id === kid.id && kid.progress && (
+                  {selectedKid?.id === kid.id && (
                     <div className="p-kid-expanded" data-testid="kid-expanded">
                       <div className="p-track">
-                        <div className="p-meter-bar" style={{ width: `${(kid.done ?? 0) / (kid.total ?? 1) * 100}%` }} />
+                        <div className="p-meter-bar" style={{ width: `${pct(kid.done, kid.total)}%` }} />
                       </div>
                       <div className="p-kid-facts">
                         <div>
                           <span>Points</span>
-                          <b>{kid.progress.points}</b>
+                          <b>{kid.points ?? 0}</b>
                         </div>
                         <div>
                           <span>Streak</span>
-                          <b>{kid.progress.streak || 0} days</b>
+                          <b>{kid.progress?.streak ?? 0} days</b>
                         </div>
                         <div>
                           <span>Next reward</span>
-                          <b>{kid.progress.next_reward_points} pts</b>
+                          <b>{kid.next_reward != null ? `${kid.next_reward} pts` : '—'}</b>
                         </div>
                         <div>
                           <span>Locks at</span>
-                          <b>{kid.progress.locked_until || '—'}</b>
+                          <b>{locksAt(kid)}</b>
                         </div>
                       </div>
                     </div>

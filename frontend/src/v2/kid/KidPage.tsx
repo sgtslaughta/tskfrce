@@ -135,7 +135,7 @@ const Shell = ({ children }: { children: React.ReactNode }) => (
 
 /** Parent-only read-only look at a kid's screen (/kid?as=<id>). */
 function KidPreview({ id }: { id: number }) {
-  useLook('parent')
+  useLook('kid')
   const router = useRouter()
   const kids = useKids().data
   const kid = (kids ?? []).find((k) => k.id === id)
