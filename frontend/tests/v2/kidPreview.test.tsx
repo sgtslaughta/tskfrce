@@ -52,25 +52,20 @@ function renderKid() {
 }
 
 describe('parent view-as-kid', () => {
-  test('shows banner, loads with asKid, blocks mark-done', async () => {
+  test('shows banner, loads with asKid, is read-only (no mark-done)', async () => {
     renderKid()
     expect(await screen.findByText('Dishes')).toBeInTheDocument()
     expect(await screen.findByText(/Viewing as Ana · preview/)).toBeInTheDocument()
     expect(apiMock).toHaveBeenCalledWith('/kid/today', { asKid: 3 })
     expect(apiMock.mock.calls.some((c) => c[1]?.kid)).toBe(false)
-    await userEvent.click(screen.getByRole('button', { name: /done/i }))
-    await waitFor(() =>
-      expect(notifications.show).toHaveBeenCalledWith(
-        expect.objectContaining({ message: 'Preview only — log in as the kid to do this.' }),
-      ),
-    )
+    expect(screen.queryByRole('button', { name: /mark done/i })).toBeNull()
     expect(apiMock.mock.calls.some((c) => c[0].includes('/done'))).toBe(false)
   })
 
   test('back button returns to the parent side', async () => {
     renderKid()
     await userEvent.click(await screen.findByRole('button', { name: 'Back to parent' }))
-    expect(push).toHaveBeenCalledWith('/kids')
+    expect(push).toHaveBeenCalledWith('/?item=3')
   })
 
   test('preview bar has visibility icon and dark background', async () => {

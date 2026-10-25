@@ -17,8 +17,10 @@ const item = (id: number, over: object = {}) => ({
   id, kind: 'chore_submitted', title: `Item ${id}`, body: null, created_at: new Date().toISOString(),
   read: false, run_id: null, redemption_id: null, device_id: null, thread_id: null, points: null, ...over,
 })
-const serve = (items: object[], unread = items.length) =>
-  apiMock.mockImplementation(async (p) => (p === '/notifications' ? { items, unread, has_more: false } : undefined))
+const serve = (items: object[], unread = items.length, needs: object[] = []) =>
+  apiMock.mockImplementation(async (p) =>
+    p === '/notifications' ? { items, unread, has_more: false } : p === '/today' ? { kids: [], needs_you: needs } : undefined,
+  )
 const wrap = (ui: React.ReactElement) =>
   render(
     <QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
@@ -77,13 +79,17 @@ describe('Bell', () => {
   })
 
   test('filters count by kind', async () => {
-    serve([
-      item(1, { kind: 'chore_submitted' }),
-      item(2, { kind: 'chore_submitted' }),
-      item(3, { kind: 'redemption_request' }),
-      item(4, { kind: 'new_device' }),
-      item(5, { kind: 'device_resisting' }),
-    ])
+    serve(
+      [
+        item(1, { kind: 'chore_submitted', run_id: 1 }),
+        item(2, { kind: 'chore_submitted', run_id: 2 }),
+        item(3, { kind: 'redemption_request', redemption_id: 3 }),
+        item(4, { kind: 'new_device' }),
+        item(5, { kind: 'device_resisting' }),
+      ],
+      5,
+      [{ type: 'chore', id: 1 }, { type: 'chore', id: 2 }, { type: 'reward', id: 3 }],
+    )
     wrap(<Bell />)
     await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
     expect(await screen.findByText(/All · 5/)).toBeTruthy()
@@ -92,12 +98,43 @@ describe('Bell', () => {
   })
 
   test('approve from bell calls approve endpoint', async () => {
+    serve([item(1, { run_id: 7, kind: 'chore_submitted' })], 1, [{ type: 'chore', id: 7 }])
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    const approveBtn = await screen.findByRole('button', { name: /Approve/, hidden: true })
+    await userEvent.click(approveBtn)
+    expect(posts('/chores/7/approve')).toHaveLength(1)
+  })
+
+  test('already-handled chore gets no buttons', async () => {
     serve([item(1, { run_id: 7, kind: 'chore_submitted' })])
     wrap(<Bell />)
     await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
-    const approveBtn = await screen.findByRole('button', { name: /Approve/ })
-    await userEvent.click(approveBtn)
-    expect(posts('/chores/7/approve')).toHaveLength(1)
+    await screen.findByText('Item 1')
+    await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/today'))
+    await new Promise((r) => setTimeout(r, 50))
+    expect(screen.queryByRole('button', { name: /Approve/, hidden: true })).toBeNull()
+  })
+
+  test('redemption approve and decline hit /redemptions', async () => {
+    serve([item(1, { kind: 'redemption_request', redemption_id: 4 })], 1, [{ type: 'reward', id: 4 }])
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /Approve/, hidden: true }))
+    expect(apiMock).toHaveBeenCalledWith('/redemptions/4/approve', expect.objectContaining({ method: 'POST' }))
+    await userEvent.click(await screen.findByRole('button', { name: /Decline/, hidden: true }))
+    expect(apiMock).toHaveBeenCalledWith('/redemptions/4/deny', expect.objectContaining({ method: 'POST' }))
+  })
+
+  test('send back from bell needs a note and posts it', async () => {
+    serve([item(1, { run_id: 7, kind: 'chore_submitted' })], 1, [{ type: 'chore', id: 7 }])
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /Send back/, hidden: true }))
+    expect((screen.getByRole('button', { name: /Send back/, hidden: true }) as HTMLButtonElement).disabled).toBe(true)
+    await userEvent.type(screen.getByLabelText('Note for sending back'), 'redo it')
+    await userEvent.click(screen.getByRole('button', { name: /Send back/, hidden: true }))
+    expect(apiMock).toHaveBeenCalledWith('/chores/7/send-back', expect.objectContaining({ method: 'POST', body: { note: 'redo it' } }))
   })
 
   test('earlier group for read items', async () => {

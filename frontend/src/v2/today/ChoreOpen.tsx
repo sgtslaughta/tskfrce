@@ -155,7 +155,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
       </div>
 
       {isMobile ? (
-        <Drawer opened={chat} onClose={() => setChat(false)} position="bottom" size="58%" title={chore.title}>
+        <Drawer opened={chat} onClose={() => setChat(false)} position="bottom" size="58%" title={chore.title} classNames={{ body: 'pt-sheet-body' }}>
           {thread}
         </Drawer>
       ) : (

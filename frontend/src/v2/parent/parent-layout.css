@@ -49,8 +49,8 @@
 }
 
 /* Needs you list styling */
-[data-look='parent'] .p-needs-list { display: grid; gap: 10px; padding: 12px; }
-[data-look='parent'] .p-needs-item { display: grid; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--p-soft); }
+[data-look='parent'] .p-needs-list { display: grid; gap: 8px; padding: 8px 0; }
+[data-look='parent'] .p-needs-item { display: grid; gap: 10px; padding: 12px; border-radius: 16px; background: var(--p-soft); }
 [data-look='parent'] .p-needs-header { display: flex; align-items: center; gap: 10px; }
 [data-look='parent'] .p-needs-ic,
 [data-look='parent'] .p-needs-thumb {
@@ -63,4 +63,5 @@
 [data-look='parent'] .p-needs-t small { display: block; color: var(--p-sub); font-size: 12px; }
 [data-look='parent'] .p-needs-note { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--p-line); background: var(--p-card); color: var(--p-ink); font: inherit; }
 [data-look='parent'] .p-needs-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+[data-look='parent'] .p-needs-actions .p-btn { padding: 7px 10px; }
 

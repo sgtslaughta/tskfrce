@@ -17,24 +17,9 @@ export const PARENT_TIPS: TipDefinition[] = [
     text: 'Name devices so you know whose they are.',
   },
   {
-    key: 'kids.steps',
-    icon: 'info',
-    text: 'Steps run in order — chain them to enforce dependencies.',
-  },
-  {
     key: 'settings.hours',
     icon: 'info',
     text: 'Set up hour patterns with holidays and summer breaks.',
-  },
-  {
-    key: 'chat.replies',
-    icon: 'info',
-    text: 'Quick replies make messaging faster. Edit them in Settings.',
-  },
-  {
-    key: 'today.dashboard',
-    icon: 'info',
-    text: 'See everything waiting for you on the Today screen.',
   },
   {
     key: 'rewards.points',
