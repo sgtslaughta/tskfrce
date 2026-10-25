@@ -107,6 +107,8 @@ test.describe('every screen', () => {
     await page.goto('/setup')
     await page.waitForLoadState('networkidle')
     await page.waitForTimeout(500)
+    const wide = await page.evaluate((w) => document.documentElement.scrollWidth > w, page.viewportSize()!.width)
+    expect(wide, 'setup scrolls sideways').toBe(false)
     await page.screenshot({ path: `e2e-artifacts/screens/${info.project.name}/setup.png`, fullPage: true })
   })
 
