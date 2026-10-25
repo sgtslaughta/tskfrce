@@ -37,10 +37,10 @@ test.describe('parent journeys', () => {
       await page.getByRole('button', { name: 'New chore' }).click()
       // the editor swaps from the open chore to the empty form after the route change
       await expect(page.getByRole('heading', { name: 'New chore' })).toBeVisible()
-      await page.getByLabel('Chore', { exact: true }).fill('E2E race')
+      await page.getByLabel('Chore name', { exact: true }).fill('E2E race')
       for (const s of ['First step', 'Second step']) {
         await page.getByLabel('Add a step').fill(s)
-        await page.getByRole('button', { name: 'Add step' }).click()
+        await page.getByLabel('Add a step').press('Enter')
       }
       await page.getByRole('button', { name: 'Save chore' }).click()
 
@@ -54,7 +54,7 @@ test.describe('parent journeys', () => {
       await expect(card).toContainText('2 steps')
 
       await page.getByRole('button', { name: 'Duplicate' }).click()
-      const name = page.getByLabel('Chore', { exact: true })
+      const name = page.getByLabel('Chore name', { exact: true })
       await expect(name).toHaveValue('E2E race (copy)') // wait for the editor to switch to the copy
       await name.fill('E2E race edited')
       await page.getByRole('button', { name: 'Save chore' }).click()
