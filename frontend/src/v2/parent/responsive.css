@@ -23,12 +23,12 @@
 
 @media (max-width: 767px) {
   [data-look='parent'] .p-shell {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr auto;
   }
 
   [data-look='parent'] .p-shell.p-with-list {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto 1fr auto;
   }
 

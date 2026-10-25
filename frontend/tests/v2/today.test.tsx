@@ -71,7 +71,7 @@ beforeEach(() => {
   apiMock.mockImplementation(async (p) => {
     if (p === '/today') return todayData()
     if (p.match(/^\/chores\/\d+$/) && !p.endsWith('/approve') && !p.endsWith('/send-back'))
-      return { id: 1, steps: [{ id: 1, title: 'Step 1', done: false, done_at: null }, { id: 2, title: 'Step 2', done: false, done_at: null }], photos: [] }
+      return { id: 1, title: 'Dishes', points: 10, state: 'todo', due_time: null, kid_ids: [1], steps: [{ id: 1, title: 'Step 1', done: false, done_at: null }, { id: 2, title: 'Step 2', done: false, done_at: null }], photos: [] }
     if (p.startsWith('/chores/') && p.endsWith('/approve'))
       return { ok: true }
     if (p.startsWith('/chores/') && p.endsWith('/send-back'))

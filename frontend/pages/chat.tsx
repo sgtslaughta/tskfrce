@@ -19,15 +19,20 @@ function ChatPageBody() {
   const list = threads.data?.threads ?? []
   // ?item=<kind>:<ref> (ref = run id, kid id or "family"); desktop falls back to the first thread
   const item = typeof router.query.item === 'string' ? router.query.item : null
-  const selected = list.find((t) => `${t.kind}:${refOf(t)}` === item) ?? (small ? null : list[0] ?? null)
+  const picked = list.find((t) => `${t.kind}:${refOf(t)}` === item)
+  // a chore without messages has no list row yet; ?item=chore:<run id> still opens it
+  const bareChore = !picked && threads.data ? item?.match(/^chore:(\d+)$/)?.[1] : undefined
+  const selected = picked ?? (small || bareChore ? null : list[0] ?? null)
 
   const handlePick = (t: ThreadSummary) => {
     void router.push({ query: { item: `${t.kind}:${refOf(t)}` } }, undefined, { shallow: true })
   }
 
-  const listContent = <ThreadList threads={list} selected={selected ? `${selected.kind}:${refOf(selected)}` : null} onPick={handlePick} />
+  const listContent = <ThreadList threads={list} selected={selected ? `${selected.kind}:${refOf(selected)}` : null} onPick={handlePick} meName={user?.username} />
 
-  const detailContent = selected ? (
+  const detailContent = bareChore ? (
+    <ThreadView key={item} kind="chore" refId={bareChore} meId={user ? Number(user.id) : null} />
+  ) : selected ? (
     <ThreadView key={`${selected.kind}:${refOf(selected)}`} kind={selected.kind} refId={refOf(selected)} meId={user ? Number(user.id) : null} />
   ) : threads.data ? (
     <EmptyState icon="chat_bubble" title="No chats yet" body="Chats start when a kid comments on a chore, or you can message anyone." />
