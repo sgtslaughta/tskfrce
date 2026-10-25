@@ -2,6 +2,10 @@ import { useRef, useState } from 'react'
 import { useDeductChore, useToday } from '../hooks/useToday'
 import { toastFail, toastOk } from '../notify'
 
+/** Toast text from what the server really took (capped at the balance). */
+export const deductMsg = (taken: number, name: string) =>
+  taken > 0 ? `Deducted ${taken} from ${name}` : 'Nothing left to take — balance is 0.'
+
 export const DEDUCT_PRESETS = [5, 10, 20]
 
 /** Inline "Deduct for {chore}" form: kid picker (shared chores), −5 / −10 / −20 / Custom, required reason. */
@@ -39,7 +43,7 @@ export function DeductForm({
         deduct.mutate(
           { id: runId, kid_id: who, amount: take, note: why.trim() },
           {
-            onSuccess: () => (toastOk(`Deducted ${take} from ${nameOf(who)}`), onDone()),
+            onSuccess: (r) => (toastOk(deductMsg(r.deducted, nameOf(who))), onDone()),
             onError: toastFail,
             onSettled: () => (sending.current = false),
           },

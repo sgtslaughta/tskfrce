@@ -1,13 +1,13 @@
 import { Checkbox } from '@mantine/core'
 import { IconLock } from '@tabler/icons-react'
 import { useTickSubtask } from '../hooks/useKid'
+import { useClock } from '../today/useClock'
 import type { KidChore } from '../types'
-
-const wall = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
 /** Checklist of a chore's steps; a chained step stays locked until the one before it is done. */
 export function KidSteps({ c }: { c: KidChore }) {
   const tick = useTickSubtask()
+  const wall = useClock()
   const steps = c.subtasks!
   const now = Date.now()
   return (

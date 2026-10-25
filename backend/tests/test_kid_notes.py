@@ -65,3 +65,9 @@ def test_note_rules(client, db, parent_headers):
     db.get(ChoreRun, rid).status = "submitted"
     db.commit()
     assert _note(client, kh, rid, "Need help").status_code == 409
+
+
+def test_parent_view_as_cannot_note(client, db, parent_headers):
+    kid, kh, rid = _setup(db, client, parent_headers)
+    h = {**parent_headers, "X-View-As": str(kid.id)}
+    assert _note(client, h, rid).status_code == 403

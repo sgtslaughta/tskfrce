@@ -1,18 +1,29 @@
 """Parent API: chore types (Cleaning, Pets, ...) and their quick-note presets."""
 
 from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_parent
 from app.models.chore_type import ChoreType, ChoreTypeNote
 from app.models.chores import Chore
-from app.services.chore_types import other_id
+from app.services.chore_types import UNIVERSAL, other_id
 
 router = APIRouter(tags=["chore-types"], dependencies=[Depends(require_parent)])
 
 Label = Field(min_length=1, max_length=40)
+
+
+def _clean(v):
+    """Strip whitespace; a blank label is rejected."""
+    if v is None:
+        return None
+    items = v if isinstance(v, list) else [v]
+    out = [x.strip() for x in items]
+    if not all(out):
+        raise ValueError("can't be blank")
+    return out if isinstance(v, list) else out[0]
 
 
 class TypeIn(BaseModel):
@@ -20,11 +31,15 @@ class TypeIn(BaseModel):
     glyph: str = Label
     notes: list[str] = Field(default_factory=list, max_length=8)
 
+    _strip = field_validator("name", "glyph", "notes")(_clean)
+
 
 class TypePatch(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=40)
     glyph: str | None = Field(default=None, min_length=1, max_length=40)
     notes: list[str] | None = Field(default=None, max_length=8)
+
+    _strip = field_validator("name", "glyph", "notes")(_clean)
 
 
 def _out(t: ChoreType, count: int) -> dict:
@@ -58,7 +73,13 @@ def _check_name(db: Session, name: str, own_id: int | None = None) -> None:
 
 
 def _set_notes(t: ChoreType, labels: list[str]) -> None:
-    t.notes[:] = [ChoreTypeNote(label=lb, glyph=t.glyph, position=i) for i, lb in enumerate(labels)]
+    seen = {lb.lower() for lb, _ in UNIVERSAL}
+    keep = []
+    for lb in labels:
+        if lb.lower() not in seen:
+            seen.add(lb.lower())
+            keep.append(lb)
+    t.notes[:] = [ChoreTypeNote(label=lb, glyph=t.glyph, position=i) for i, lb in enumerate(keep)]
 
 
 @router.get("/api/v1/chore-types")

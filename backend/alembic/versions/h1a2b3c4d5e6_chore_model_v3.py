@@ -87,6 +87,7 @@ def _tables() -> dict[str, int]:
         sa.Column("glyph", sa.String(40), nullable=False),
         sa.Column("position", sa.Integer(), nullable=False),
     )
+    op.create_index("ix_chore_type_notes_type_id", "chore_type_notes", ["type_id"])
     ids: dict[str, int] = {}
     for i, (name, glyph, labels) in enumerate(SEED, 1):
         ids[name] = i
@@ -143,7 +144,7 @@ def upgrade() -> None:
         )
     with op.batch_alter_table("points") as b:
         b.add_column(sa.Column("by_id", sa.Integer(), nullable=True))
-        b.create_foreign_key("fk_points_by", "users", ["by_id"], ["id"])
+        b.create_foreign_key("fk_points_by", "users", ["by_id"], ["id"], ondelete="SET NULL")
         b.drop_constraint("ck_points_reason", type_="check")
         b.create_check_constraint("ck_points_reason", f"reason IN ({REASONS},'deduction')")
     with op.batch_alter_table("notifications") as b:
@@ -152,9 +153,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    # Rows using the new values are removed so the old CHECKs hold.
+    # Rows using the new values are removed/remapped so the old CHECKs hold.
     op.execute("DELETE FROM notifications WHERE kind='chore_note'")
-    op.execute("DELETE FROM points WHERE reason='deduction'")
+    op.execute("UPDATE points SET reason='adjustment' WHERE reason='deduction'")
     op.execute("UPDATE chore_runs SET status='cancelled' WHERE status='skipped'")
     with op.batch_alter_table("notifications") as b:
         b.drop_constraint("ck_notification_kind", type_="check")
@@ -180,5 +181,6 @@ def downgrade() -> None:
         b.drop_index("ix_chores_type_id")
         b.drop_constraint("fk_chore_type", type_="foreignkey")
         b.drop_column("type_id")
+    op.drop_index("ix_chore_type_notes_type_id", table_name="chore_type_notes")
     op.drop_table("chore_type_notes")
     op.drop_table("chore_types")

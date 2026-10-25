@@ -167,3 +167,62 @@ def test_kid_cannot_edit_types(client, kid_headers):
     r = client.post("/api/v1/chore-types", json={"name": "X", "glyph": "x"}, headers=kid_headers)
     assert r.status_code == 403
     assert client.delete("/api/v1/chore-types/1", headers=kid_headers).status_code == 403
+
+
+def test_labels_stripped_deduped_blank_rejected(client, parent_headers):
+    h = parent_headers
+    r = client.post(
+        "/api/v1/chore-types",
+        json={
+            "name": "  Garden ",
+            "glyph": "eco",
+            "notes": [" Weeds ", "weeds", "need HELP", "Ran out of time", "Mud"],
+        },
+        headers=h,
+    )
+    assert r.status_code == 200
+    assert r.json()["name"] == "Garden"
+    assert [n["label"] for n in r.json()["notes"]] == ["Weeds", "Mud"]
+    assert (
+        client.post("/api/v1/chore-types", json={"name": "  ", "glyph": "x"}, headers=h).status_code
+        == 422
+    )
+    bad = {"name": "Z", "glyph": "x", "notes": ["ok", "   "]}
+    assert client.post("/api/v1/chore-types", json=bad, headers=h).status_code == 422
+    tid = r.json()["id"]
+    assert (
+        client.patch(f"/api/v1/chore-types/{tid}", json={"name": " "}, headers=h).status_code == 422
+    )
+
+
+def test_downgrade_keeps_balances_then_reupgrades(tmp_path):
+    db = tmp_path / "m.db"
+    url = f"sqlite:///{db}"
+    _alembic(url, "g9c0d1e2f3g4")
+    with create_engine(url).begin() as c:
+        c.execute(
+            text(
+                "INSERT INTO users (id, username, email, hashed_password, role) VALUES (1,'k','k@x.io','x','KID')"
+            )
+        )
+    _alembic(url, "h1a2b3c4d5e6")
+    eng = create_engine(url)
+    with eng.begin() as c:
+        for amt, reason in ((30, "bonus"), (-10, "deduction")):
+            c.execute(
+                text(
+                    "INSERT INTO points (user_id, points_type, amount, reason, by_id, seen_by_kid)"
+                    " VALUES (1,'BONUS',:a,:r,1,1)"
+                ),
+                {"a": amt, "r": reason},
+            )
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "downgrade", "g9c0d1e2f3g4"],
+        cwd=BACKEND,
+        env={**os.environ, "DATABASE_URL": url},
+        check=True,
+    )
+    with create_engine(url).connect() as c:
+        assert c.execute(text("SELECT SUM(amount) FROM points")).scalar() == 20
+        assert c.execute(text("SELECT reason FROM points WHERE amount<0")).scalar() == "adjustment"
+    _alembic(url, "h1a2b3c4d5e6")

@@ -221,7 +221,14 @@ def today(db: Session = Depends(get_db)):
                 "next_reward": _next_reward(prices, balances.get(k.id, 0)),
                 "locks_at": _locks_at(pre, k.id, now_local),
                 "chores": [
-                    _chore_out(t, names, fam, notes, tmrw, deds.get(t.id, []))
+                    _chore_out(
+                        t,
+                        names,
+                        fam,
+                        notes,
+                        tmrw,
+                        [d for d in deds.get(t.id, []) if d["kid_id"] == k.id],
+                    )
                     for t in shown_by[k.id]
                 ],
                 "devices": [

@@ -69,6 +69,7 @@ beforeEach(() => {
   // Dismiss the onboarding card so tests are focused
   localStorage.setItem('task4ce-tip:onboard.parent', '1')
   apiMock.mockImplementation(async (p) => {
+    if (p.endsWith('/deduct')) return { balance: 5, deducted: 20 }
     if (p === '/today') return todayData()
     if (p.match(/^\/chores\/\d+$/) && !p.endsWith('/approve') && !p.endsWith('/send-back'))
       return { id: 1, title: 'Dishes', points: 10, state: 'todo', due_time: null, kid_ids: [1], steps: [{ id: 1, title: 'Step 1', done: false, done_at: null }, { id: 2, title: 'Step 2', done: false, done_at: null }], photos: [] }

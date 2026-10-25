@@ -13,7 +13,7 @@ export const useToday = (enabled = true) =>
     refetchOnWindowFocus: true,
   })
 
-function useChoreAction<V>(fn: (v: V) => Promise<unknown>) {
+function useChoreAction<V, R = unknown>(fn: (v: V) => Promise<R>) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: fn,
@@ -43,5 +43,5 @@ export const useMoveChore = () => useChoreAction((id: number) => api(`/chores/${
 export const useSkipChore = () => useChoreAction((id: number) => api(`/chores/${id}/skip`, { method: 'POST' }))
 export const useDeductChore = () =>
   useChoreAction(({ id, ...body }: { id: number; kid_id: number; amount: number; note: string }) =>
-    api(`/chores/${id}/deduct`, { method: 'POST', body }),
+    api<{ balance: number; deducted: number }>(`/chores/${id}/deduct`, { method: 'POST', body }),
   )

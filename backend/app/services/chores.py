@@ -310,7 +310,7 @@ def tick_step(db: Session, run: ChoreRun, step_id: int, kid: User, done: bool) -
     steps = chore_of(run).steps
     i = next(i for i, s in enumerate(steps) if s.id == step_id)
     ticked = {t.step_id for t in run.ticks}
-    if done and steps[i].after_previous and steps[i - 1].id not in ticked:
+    if done and i > 0 and steps[i].after_previous and steps[i - 1].id not in ticked:
         raise HTTPException(409, "Do the step before this one first.")
     nxt = steps[i + 1] if i + 1 < len(steps) else None
     if not done and nxt and nxt.after_previous and nxt.id in ticked:

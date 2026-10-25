@@ -27,7 +27,9 @@ class ChoreTypeNote(Base):
     __tablename__ = "chore_type_notes"
 
     id = Column(Integer, primary_key=True)
-    type_id = Column(Integer, ForeignKey("chore_types.id", ondelete="CASCADE"), nullable=False)
+    type_id = Column(
+        Integer, ForeignKey("chore_types.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     label = Column(String(40), nullable=False)
     glyph = Column(String(40), nullable=False)
     position = Column(Integer, nullable=False, default=0)

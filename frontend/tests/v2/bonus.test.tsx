@@ -112,7 +112,18 @@ describe('PointsForm', () => {
       expect(apiMock).toHaveBeenCalledWith('/kids/3/deduct', { method: 'POST', body: { amount: 30, note: 'Broke a rule' } }),
     )
     await waitFor(() =>
-      expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Maya lost 10 points' })),
+      expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Deducted 10 from Maya' })),
+    )
+  })
+
+  test('deduct at a zero balance says nothing was taken', async () => {
+    apiMock.mockResolvedValue({ balance: 0, deducted: 0 })
+    await setup('deduct')
+    await userEvent.type(screen.getByLabelText(/Points/), '30')
+    await userEvent.type(screen.getByLabelText('Why?'), 'Broke a rule')
+    await userEvent.click(screen.getByRole('button', { name: 'Take points' }))
+    await waitFor(() =>
+      expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Nothing left to take — balance is 0.' })),
     )
   })
 })

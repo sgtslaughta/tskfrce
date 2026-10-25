@@ -52,7 +52,7 @@ class Points(Base):
     amount = Column(Integer, nullable=False)
     description = Column(String(255), nullable=True)
     reason = Column(String(12), nullable=False, default="adjustment", server_default="adjustment")
-    by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     run_id = Column(Integer, ForeignKey("chore_runs.id"), nullable=True, index=True)
     redemption_id = Column(Integer, ForeignKey("redemptions.id"), nullable=True, index=True)
     seen_by_kid = Column(Boolean, nullable=False, default=True, server_default="1")

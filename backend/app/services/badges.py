@@ -262,7 +262,9 @@ def celebrations(db: Session, kid: User) -> list[dict]:
                 },
             )
         )
-    for p in db.query(Points).filter(Points.user_id == kid.id, Points.seen_by_kid.is_(False)):
+    for p in db.query(Points).filter(
+        Points.user_id == kid.id, Points.seen_by_kid.is_(False), Points.amount > 0
+    ):
         items.append(
             (
                 p.created_at,

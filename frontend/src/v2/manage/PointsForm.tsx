@@ -5,7 +5,7 @@ import type { Kid } from '@/v2/types'
 import { intError, nameOf } from './choreMeta'
 import { useSingle } from './useSingle'
 import { toastOk } from '../notify'
-import { DEDUCT_PRESETS } from '../today/DeductForm'
+import { DEDUCT_PRESETS, deductMsg } from '../today/DeductForm'
 
 /** Parent gives (bonus) or takes (deduct) points with a short note the kid sees. */
 export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | 'deduct'; onClose: () => void }) {
@@ -43,7 +43,7 @@ export function PointsForm({ kid, kind, onClose }: { kid: Kid; kind: 'bonus' | '
     else
       deductOnce(vars, {
         onSuccess: (r) => {
-          toastOk(`${name} lost ${r.deducted} points`)
+          toastOk(deductMsg(r.deducted, name))
           done()
         },
       })

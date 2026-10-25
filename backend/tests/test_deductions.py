@@ -70,3 +70,40 @@ def test_deduct_never_negative(client, db, kid, parent_headers):
     )
     assert r.json() == {"balance": 0, "deducted": 5}
     assert economy.balance(db, kid.id) == 0
+
+
+def _shared_run(db, client, ph, mode):
+    from app.models.user import UserRole
+
+    from tests.conftest import _make_user
+
+    get_family(db).last_reset_date = DAY
+    db.commit()
+    mia, leo = _make_user(db, "mia", UserRole.KID), _make_user(db, "leo", UserRole.KID)
+    api_chore(client, ph, [mia, leo], mode)
+    return mia, leo, db.query(ChoreRun).one().id
+
+
+def test_deduction_only_on_that_kids_row(client, db, parent_headers):
+    mia, leo, rid = _shared_run(db, client, parent_headers, "team")
+    _give(db, mia, 30)
+    client.post(
+        f"/api/v1/chores/{rid}/deduct",
+        json={"kid_id": mia.id, "amount": 10, "note": "x"},
+        headers=parent_headers,
+    )
+    kids = {k["id"]: k for k in client.get("/api/v1/today", headers=parent_headers).json()["kids"]}
+    assert kids[mia.id]["chores"][0]["deducted"] == 10
+    assert kids[leo.id]["chores"][0]["deducted"] == 0
+
+
+def test_deduction_not_a_celebration(client, db, kid, parent_headers):
+    rid = _run(db, client, parent_headers, kid)
+    _give(db, kid, 30)
+    client.post(
+        f"/api/v1/chores/{rid}/deduct",
+        json={"kid_id": kid.id, "amount": 10, "note": "x"},
+        headers=parent_headers,
+    )
+    feed = client.get("/api/v1/kid/celebrations", headers=_headers(db, kid)).json()
+    assert [f for f in feed if f["kind"] == "bonus"] == []
