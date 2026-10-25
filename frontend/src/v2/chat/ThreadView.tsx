@@ -61,6 +61,10 @@ function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
             overflowWrap: 'anywhere',
           }}
         >
+          {m.step_title && (
+            <span style={{ display: 'block', fontSize: '0.85rem', opacity: 0.75 }}>↪ {m.step_title}</span>
+          )}
+          {m.note_label && <strong style={{ display: 'block' }}>Note: {m.note_label}</strong>}
           {m.photo_url && <Photo url={m.photo_url} />}
           {editing ? <EditBox m={m} kid onDone={() => setEditing(false)} /> : m.body}
         </div>
@@ -146,8 +150,9 @@ export function ThreadView({
     once(async () => {
       if (!canSend || !data) return
       try {
-        // ponytail: a photo reply sends only the text; the API takes chat photos, not chore proof ids
-        await post.mutateAsync({ threadId: data.id, body: text.trim(), photoId: photoId ?? undefined, stepId: reply?.step_id })
+        // a photo reply (no step) can't link the chore proof photo, so the reference rides in the text
+        const body = reply?.label === 'Photo' && !reply.step_id ? `↪ Photo: ${text.trim()}` : text.trim()
+        await post.mutateAsync({ threadId: data.id, body, photoId: photoId ?? undefined, stepId: reply?.step_id })
         setText('')
         setPhotoId(null)
         setReply(undefined)

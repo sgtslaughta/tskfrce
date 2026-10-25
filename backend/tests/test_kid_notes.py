@@ -71,3 +71,35 @@ def test_parent_view_as_cannot_note(client, db, parent_headers):
     kid, kh, rid = _setup(db, client, parent_headers)
     h = {**parent_headers, "X-View-As": str(kid.id)}
     assert _note(client, h, rid).status_code == 403
+
+
+def _msgs(db):
+    return db.query(ThreadMessage).filter(ThreadMessage.note_label.isnot(None)).all()
+
+
+def test_delete_note_message_resyncs_run(client, db, parent_headers):
+    _, kh, rid = _setup(db, client, parent_headers)
+    _note(client, kh, rid, label="Out of supplies", text="a")
+    _note(client, kh, rid, label="Did part of it")
+    first, second = sorted(_msgs(db), key=lambda m: m.id)
+    client.delete(f"/api/v1/chat/messages/{second.id}", headers=kh)
+    run = db.query(ChoreRun).one()
+    db.refresh(run)
+    assert run.note_label == "Out of supplies" and run.note_at is not None
+    client.delete(f"/api/v1/chat/messages/{first.id}", headers=kh)
+    db.refresh(run)
+    assert run.note_label is None and run.note_at is None
+
+
+def test_thread_preview_falls_back_to_note_label(client, db, parent_headers):
+    _, kh, rid = _setup(db, client, parent_headers)
+    _note(client, kh, rid, label="Did part of it")
+    rows = client.get("/api/v1/chat/threads", headers=parent_headers).json()["threads"]
+    assert [r["last_text"] for r in rows if r["kind"] == "chore"] == ["Did part of it"]
+
+
+def test_kid_today_has_family_timezone(client, db, parent_headers):
+    _, kh, _ = _setup(db, client, parent_headers)
+    get_family(db).timezone = "America/Chicago"
+    db.commit()
+    assert client.get("/api/v1/kid/today", headers=kh).json()["timezone"] == "America/Chicago"

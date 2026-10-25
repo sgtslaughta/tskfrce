@@ -46,12 +46,14 @@ function why(c: KidChore) {
 /** Chore rows for the locked screen. `onDone` omitted = read-only. */
 export function KidChecklist({
   chores,
+  timezone,
   onDone,
   busyId,
   unread,
   onChat,
 }: {
   chores: KidChore[]
+  timezone?: string
   onDone?: (id: number) => void
   busyId?: number | null
   /** unread chat count per chore id; with `onChat`, each chore gets a chat icon button */
@@ -135,7 +137,7 @@ export function KidChecklist({
               </div>
             ))}
             {open && !!c.notes?.length && <TellParent c={c} />}
-            {open && onDone && !!c.subtasks?.length && <KidSteps c={c} />}
+            {open && onDone && !!c.subtasks?.length && <KidSteps c={c} timezone={timezone} />}
             {open && onDone && c.needs_photo && <Photo c={c} />}
             {open && onDone && (
               <div style={{ flexBasis: '100%', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>

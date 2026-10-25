@@ -102,6 +102,23 @@ def post(
     return m
 
 
+def resync_note(db: Session, thread: Thread) -> None:
+    """After a note message is deleted: flag the run from the latest remaining note, else clear."""
+    run = db.get(ChoreRun, thread.run_id) if thread.kind == "chore" else None
+    if run is None:
+        return
+    last = (
+        db.query(ThreadMessage)
+        .filter(ThreadMessage.thread_id == thread.id, ThreadMessage.note_label.isnot(None))
+        .order_by(ThreadMessage.id.desc())
+        .first()
+    )
+    if last is None:
+        clear_note(run)
+    else:
+        run.note_label, run.note_at = last.note_label, last.created_at
+
+
 def system(db: Session, run: ChoreRun, body: str, photo_id: int | None = None) -> None:
     """System line in the run's thread; `photo_id` is a ChorePhoto (proof)."""
     post(db, thread_for(db, "chore", run_id=run.id), None, body, photo_id, kind="system")
@@ -189,7 +206,9 @@ def _preview(m: ThreadMessage | None) -> dict:
     return {
         "last_message_at": utc_z(m.created_at),
         "last_author": who,
-        "last_text": (m.body or "").strip()[:140] or ("Photo" if m.photo_id else None),
+        "last_text": (m.body or "").strip()[:140]
+        or m.note_label
+        or ("Photo" if m.photo_id else None),
     }
 
 

@@ -290,6 +290,8 @@ export interface KidToday {
   chores: KidChore[]
   points_balance: number
   progress?: Progress
+  /** family time zone, for step deadlines (kids can't read /family) */
+  timezone?: string
 }
 
 /** GET /kid/rewards */

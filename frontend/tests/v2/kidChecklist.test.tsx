@@ -64,10 +64,10 @@ describe('kid chore behaviour', () => {
     expect(screen.getByText('Late')).toHaveAttribute('data-tone', 'late')
   })
   test('step deadline is shown in the family time zone', async () => {
-    apiMock.mockImplementation(async (path) => (path === '/family' ? { timezone: 'Pacific/Auckland' } : undefined))
     const steps = [{ id: 1, title: 'Rinse', done: false, due_at: '2099-01-01T00:00:00Z' }]
-    render(wrap(<KidChecklist chores={[chore({ subtasks: steps })]} onDone={() => {}} />))
-    expect(await screen.findByText('by 1:00 PM')).toBeInTheDocument()
+    render(wrap(<KidChecklist chores={[chore({ subtasks: steps })]} timezone="Pacific/Auckland" onDone={() => {}} />))
+    expect(screen.getByText('by 1:00 PM')).toBeInTheDocument()
+    expect(apiMock.mock.calls.some(([p]) => p === '/family')).toBe(false)
   })
   test('sheet closes after a successful send and the note is pressed while selected', async () => {
     render(wrap(<KidChecklist chores={[chore()]} />))

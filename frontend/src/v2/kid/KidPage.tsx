@@ -112,6 +112,7 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
         <h2 style={{ margin: '0 0 8px' }}>{d.progress || !name ? 'Your chores' : name}</h2>
         <KidChecklist
           chores={d.chores}
+          timezone={d.timezone}
           onDone={preview ? undefined : (id) => done.mutate(id)}
           busyId={done.isPending ? done.variables : null}
           unread={preview ? undefined : unread}

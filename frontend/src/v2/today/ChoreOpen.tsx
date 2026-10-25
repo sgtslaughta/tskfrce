@@ -119,7 +119,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
                   className="pt-rp"
                   aria-label="Reply on photo"
                   title="Reply on photo"
-                  onClick={() => openChat('chore', ref, { photo_id: p.id, label: 'Photo' })}
+                  onClick={() => openChat('chore', ref, { label: 'Photo' })}
                 >
                   <Icon name="chat_bubble" size={14} />
                 </button>

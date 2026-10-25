@@ -25,7 +25,9 @@ const threads = {
   ],
 }
 
+let noteMsgs: object[] = []
 beforeEach(() => {
+  noteMsgs = []
   apiMock.mockReset()
   localStorage.setItem(KID_TOKEN_KEY, 'tok')
   localStorage.setItem('task4ce-kid-id', '1')
@@ -35,7 +37,7 @@ beforeEach(() => {
       return { locked: true, points_balance: 0, chores: [{ id: 7, title: 'Dishes', points: 5, state: 'todo' }] }
     if (p === '/chat/threads') return threads
     if (p.startsWith('/chat/threads/chore/7'))
-      return { id: 3, kind: 'chore', title: 'Dishes', messages: [], has_more: false }
+      return { id: 3, kind: 'chore', title: 'Dishes', messages: noteMsgs, has_more: false }
     if (p.startsWith('/chat/threads/')) return { id: 1, kind: 'family', title: 'Family', messages: [], has_more: false }
     return undefined
   })
@@ -73,5 +75,17 @@ describe('kid chat', () => {
   test('chore link shows its unread count', async () => {
     renderKid()
     expect(await screen.findByRole('button', { name: 'Chat about Dishes, 4 unread' })).toBeInTheDocument()
+  })
+
+  test('a text-less note and a step reply render their label and quote', async () => {
+    const base = { author_id: 1, author_name: 'Ana', kind: 'user', photo_url: null, created_at: new Date().toISOString() }
+    noteMsgs = [
+      { ...base, id: 1, body: null, note_label: 'Need help' },
+      { ...base, id: 2, body: 'on it', step_title: 'Rinse' },
+    ]
+    renderKid()
+    await userEvent.click(await screen.findByRole('button', { name: /^Chat about Dishes/ }))
+    expect(await screen.findByText('Note: Need help')).toBeInTheDocument()
+    expect(screen.getByText(/Rinse/)).toBeInTheDocument()
   })
 })

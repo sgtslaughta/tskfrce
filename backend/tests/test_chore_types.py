@@ -5,7 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, inspect, text
 
 BACKEND = Path(__file__).resolve().parent.parent
 
@@ -226,3 +226,31 @@ def test_downgrade_keeps_balances_then_reupgrades(tmp_path):
         assert c.execute(text("SELECT SUM(amount) FROM points")).scalar() == 20
         assert c.execute(text("SELECT reason FROM points WHERE amount<0")).scalar() == "adjustment"
     _alembic(url, "h1a2b3c4d5e6")
+
+
+def test_wave_a_migration_up_down(tmp_path):
+    url = f"sqlite:///{tmp_path / 'm.db'}"
+    _alembic(url, "j3c4d5e6f7a8")
+    eng = create_engine(url)
+    assert "ix_chore_type_notes_type_id" not in {
+        i["name"] for i in inspect(eng).get_indexes("chore_type_notes")
+    }
+    _alembic(url, "head")
+    insp = inspect(create_engine(url))
+    assert "ix_chore_type_notes_type_id" in {
+        i["name"] for i in insp.get_indexes("chore_type_notes")
+    }
+    (fk,) = [f for f in insp.get_foreign_keys("points") if f["constrained_columns"] == ["by_id"]]
+    assert fk["options"].get("ondelete") == "SET NULL"
+    subprocess.run(
+        [sys.executable, "-m", "alembic", "downgrade", "j3c4d5e6f7a8"],
+        cwd=BACKEND,
+        env={**os.environ, "DATABASE_URL": url},
+        check=True,
+    )
+    insp = inspect(create_engine(url))
+    (fk,) = [f for f in insp.get_foreign_keys("points") if f["constrained_columns"] == ["by_id"]]
+    assert not fk["options"].get("ondelete")
+    assert "ix_chore_type_notes_type_id" not in {
+        i["name"] for i in insp.get_indexes("chore_type_notes")
+    }

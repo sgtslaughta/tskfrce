@@ -3,7 +3,7 @@ import { validRef, type ThreadKind } from '@/v2/hooks/useChat'
 export const OPEN_CHAT_EVENT = 'task4ce:open-chat'
 
 /** What a new message answers: a chore step or photo. `label` names it in the composer. */
-export type ChatReply = { step_id?: number; photo_id?: number; label: string }
+export type ChatReply = { step_id?: number; label: string }
 
 // An open chore on Today shows its own chat column; it claims openChat for its thread.
 const inline = new Map<string, (reply?: ChatReply) => void>()

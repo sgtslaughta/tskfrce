@@ -20,7 +20,7 @@ jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } 
 jest.mock('next/router', () => ({ useRouter: () => ({ pathname: '/', query: {}, replace: jest.fn() }) }))
 jest.mock('@/contexts/UnifiedAuthContext', () => ({ useUnifiedAuth: () => ({ logout: jest.fn(), user: { id: 1 } }) }))
 
-const apiMock = api as unknown as Mock<(p: string) => Promise<unknown>>
+const apiMock = api as unknown as Mock<(p: string, i?: object) => Promise<unknown>>
 const th = (id: number, kind: string, title: string, unread: number, over: object = {}) => ({
   id, kind, title, unread, task_id: null, kid_id: null, last_message_at: null, ...over,
 })
@@ -85,6 +85,18 @@ describe('ChatDock', () => {
     expect(await screen.findByTestId('replying')).toHaveTextContent('Replying to Photo')
     await userEvent.click(screen.getByRole('button', { name: 'Stop replying' }))
     expect(screen.queryByTestId('replying')).toBeNull()
+  })
+
+  test('a photo reply stores the reference in the sent text', async () => {
+    wrap(<ChatDock meId={1} />)
+    act(() => openChat('private', '3', { label: 'Photo' }))
+    await userEvent.type(await screen.findByLabelText('Message'), 'nice{Enter}')
+    await waitFor(() =>
+      expect(apiMock).toHaveBeenCalledWith(
+        '/chat/threads/2/messages',
+        expect.objectContaining({ body: expect.objectContaining({ body: '↪ Photo: nice' }) }),
+      ),
+    )
   })
 
   test('openChat with an invalid ref does nothing', () => {

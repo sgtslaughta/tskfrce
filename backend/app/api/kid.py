@@ -199,6 +199,7 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(v
         ],
         "points_balance": balances[kid.id],
         "progress": prog,
+        "timezone": fam.timezone,
     }
 
 

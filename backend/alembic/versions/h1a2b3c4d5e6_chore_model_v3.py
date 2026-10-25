@@ -87,7 +87,6 @@ def _tables() -> dict[str, int]:
         sa.Column("glyph", sa.String(40), nullable=False),
         sa.Column("position", sa.Integer(), nullable=False),
     )
-    op.create_index("ix_chore_type_notes_type_id", "chore_type_notes", ["type_id"])
     ids: dict[str, int] = {}
     for i, (name, glyph, labels) in enumerate(SEED, 1):
         ids[name] = i
@@ -144,7 +143,7 @@ def upgrade() -> None:
         )
     with op.batch_alter_table("points") as b:
         b.add_column(sa.Column("by_id", sa.Integer(), nullable=True))
-        b.create_foreign_key("fk_points_by", "users", ["by_id"], ["id"], ondelete="SET NULL")
+        b.create_foreign_key("fk_points_by", "users", ["by_id"], ["id"])
         b.drop_constraint("ck_points_reason", type_="check")
         b.create_check_constraint("ck_points_reason", f"reason IN ({REASONS},'deduction')")
     with op.batch_alter_table("notifications") as b:
@@ -181,6 +180,5 @@ def downgrade() -> None:
         b.drop_index("ix_chores_type_id")
         b.drop_constraint("fk_chore_type", type_="foreignkey")
         b.drop_column("type_id")
-    op.drop_index("ix_chore_type_notes_type_id", table_name="chore_type_notes")
     op.drop_table("chore_type_notes")
     op.drop_table("chore_types")

@@ -271,7 +271,11 @@ def delete_message(
         m.author_id != user.id or datetime.utcnow() - m.created_at > DELETE_WINDOW
     ):
         raise HTTPException(403, "You can only delete your own messages for 5 minutes.")
+    note = m.note_label
     db.delete(m)
+    db.flush()
+    if note:
+        chat.resync_note(db, db.get(Thread, m.thread_id))
     db.commit()
     return Response(status_code=204)
 
