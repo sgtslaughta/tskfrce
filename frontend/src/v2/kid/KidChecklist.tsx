@@ -89,7 +89,7 @@ export function KidChecklist({
                 {c.state === 'todo' &&
                   statusChip(c, Date.now())
                     .slice(0, 1)
-                    .filter((x) => x.label !== 'To do')
+                    .filter((x) => x.label !== 'To do' && !(x.label === 'Sent back' && c.last_note))
                     .map((x) => (
                       <span key={x.label} className="f-pill" data-tone={TONE[x.tone as keyof typeof TONE] ?? 'mute'}>{x.label}</span>
                     ))}

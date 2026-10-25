@@ -18,21 +18,30 @@ export function TellParent({ c }: { c: KidChore }) {
   return (
     <div style={{ flexBasis: '100%', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
       {c.note ? (
-        <span className="f-pill" data-tone="done">
-          <IconCircleCheck size={16} aria-hidden />
-          {`Note sent: ${c.note.label}`}
-        </span>
+        <>
+          <span className="f-pill" data-tone="done">
+            <IconCircleCheck size={16} aria-hidden />
+            {`Note sent: ${c.note.label}`}
+          </span>
+          <span style={{ fontWeight: 700, color: 'var(--f-sub)' }}>Sent to Mom &amp; Dad</span>
+        </>
       ) : (
         <Button variant="default" size="md" style={{ minHeight: 44 }} leftSection={<IconMessageReport size={20} aria-hidden />} onClick={() => setOpen(true)}>
           Something wrong? Tell a parent
         </Button>
       )}
-      <Drawer opened={open} onClose={close} position="bottom" zIndex={400} title="Tell Mom or Dad">
+      <Drawer opened={open} onClose={close} position="bottom" zIndex={400} title="Tell Mom or Dad"
+        styles={{
+          content: { height: 'auto', maxHeight: '90vh', display: 'flex', flexDirection: 'column' },
+          body: { overflowY: 'auto', paddingBottom: 0 },
+        }}
+      >
         <div style={{ display: 'grid', gap: 10 }}>
           {c.notes!.map((n) => (
             <Button
               key={n.label}
               size="lg"
+              aria-pressed={label === n.label}
               variant={label === n.label ? 'filled' : 'default'}
               style={{ borderStyle: n.universal ? 'dashed' : 'solid' }}
               onClick={() => setLabel(n.label)}
@@ -41,7 +50,9 @@ export function TellParent({ c }: { c: KidChore }) {
             </Button>
           ))}
           <Textarea aria-label="Add a note (optional)" placeholder="Add a note (optional)" maxLength={200} value={text} onChange={(e) => setText(e.currentTarget.value)} />
+          <div style={{ position: 'sticky', bottom: 0, padding: '8px 0 16px', background: 'inherit' }}>
           <Button
+            fullWidth
             size="lg"
             disabled={!label}
             loading={send.isPending}
@@ -49,6 +60,7 @@ export function TellParent({ c }: { c: KidChore }) {
           >
             Send
           </Button>
+          </div>
         </div>
       </Drawer>
     </div>

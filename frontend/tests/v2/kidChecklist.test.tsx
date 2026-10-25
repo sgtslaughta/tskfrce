@@ -52,9 +52,30 @@ describe('kid chore behaviour', () => {
       expect(apiMock).toHaveBeenCalledWith('/kid/chores/7/note', expect.objectContaining({ method: 'POST', body: { label: 'Need help', text: 'soap' } })),
     )
   })
+  test('step deadline chip says by time, or Late once past', () => {
+    const soon = new Date(Date.now() + 3600e3).toISOString()
+    const past = new Date(Date.now() - 3600e3).toISOString()
+    const steps = [
+      { id: 1, title: 'Rinse', done: false, due_at: soon },
+      { id: 2, title: 'Dry', done: false, due_at: past },
+    ]
+    render(wrap(<KidChecklist chores={[chore({ subtasks: steps })]} onDone={() => {}} />))
+    expect(screen.getByText(/^by \d/)).toBeInTheDocument()
+    expect(screen.getByText('Late')).toHaveAttribute('data-tone', 'late')
+  })
+  test('sheet closes after a successful send and the note is pressed while selected', async () => {
+    render(wrap(<KidChecklist chores={[chore()]} />))
+    await userEvent.click(screen.getByRole('button', { name: /Tell a parent/ }))
+    const b = await screen.findByRole('button', { name: 'Need help' })
+    await userEvent.click(b)
+    expect(b).toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Need help' })).toBeNull())
+  })
   test('sent note replaces the button', () => {
     render(wrap(<KidChecklist chores={[chore({ note: { label: 'Need help', text: null, at: '', kid_name: 'A' } })]} />))
     expect(screen.getByText('Note sent: Need help')).toBeInTheDocument()
+    expect(screen.getByText('Sent to Mom & Dad')).toBeInTheDocument()
   })
   test('deduction card names who and replies in the chat', async () => {
     const onChat = jest.fn()
