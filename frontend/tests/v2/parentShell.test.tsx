@@ -285,7 +285,8 @@ describe('TabBar', () => {
     render(<TabBar />)
     const nav = screen.getByRole('navigation', { name: 'Main' })
     expect(within(nav).getAllByRole('link')).toHaveLength(5)
-    for (const name of ['Today', 'Devices', 'Kids', 'Chat', 'More']) expect(within(nav).getByRole('link', { name })).toBeInTheDocument()
+    for (const name of [/^Today$/, /^Devices$/, /^Kids$/, /^Chat( \d+\+? unread)?$/, /^More$/])
+      expect(within(nav).getByRole('link', { name })).toBeInTheDocument()
   })
 
   test('chat link carries the unread count in its name', () => {
