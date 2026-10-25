@@ -58,8 +58,8 @@
 }
 
 .p-kid-info {
-  flex: 1;
-  min-width: 0;
+  flex: 1 1 130px;
+  min-width: 130px;
 }
 
 .p-kid-name {
@@ -72,7 +72,7 @@
 }
 
 .p-kid-progress span { white-space: nowrap; }
-.p-kid-progress { overflow-wrap: anywhere; }
+.p-kid-progress { display: flex; flex-wrap: wrap; column-gap: 10px; overflow-wrap: anywhere; }
 
 .p-kid-progress {
   font-size: 11.5px;

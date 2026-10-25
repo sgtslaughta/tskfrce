@@ -1,7 +1,8 @@
 import type { TodayKid } from '../types'
 import { useClock } from './useClock'
 
-export const initial = (name: string | null) => (name?.trim()[0] ?? '?').toUpperCase()
+/** First letter, whole code point (an emoji name must not be cut into half a surrogate pair). */
+export const initial = (name: string | null) => (Array.from(name?.trim() ?? '')[0] ?? '?').toUpperCase()
 
 /** Schedule end time; "Locked" when the kid's devices are already off. */
 const locksAt = (kid: TodayKid, clock: (iso: string) => string) => {

@@ -198,7 +198,7 @@
   font-size: 18px;
   font-weight: 700;
 }
-[data-look='parent'] .pt-strip-kid > :not(.pt-strip-av) { max-width: 100%; }
+[data-look='parent'] .pt-strip-name { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 [data-look='parent'] .pt-strip-kid[aria-pressed='true'] .pt-strip-av { background: var(--p-acc); color: #292928; box-shadow: 0 0 0 2px var(--p-bg), 0 0 0 4px var(--p-acc); }
 [data-look='parent'] .pt-strip-av[data-add] { border: 1.5px dashed var(--p-line); background: none; color: var(--p-sub); }
 [data-look='parent'] .pt-strip-av i {

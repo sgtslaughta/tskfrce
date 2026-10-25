@@ -45,7 +45,7 @@ export function KidList({ onSelectKid, selectedKid }: { onSelectKid: (kid: Today
                     <div className="p-kid-name">{kid.name}</div>
                     <div className="p-kid-progress">
                       <span>{kid.done ?? 0} of {kid.total ?? 0} chores</span>
-                      {kid.progress && <span> · Level {kid.progress.level}</span>}
+                      {kid.progress && <span>Level {kid.progress.level}</span>}
                     </div>
                   </div>
                   <div className="p-kid-status">{stateChip(kid)}</div>

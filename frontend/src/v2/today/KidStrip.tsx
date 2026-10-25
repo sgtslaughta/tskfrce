@@ -21,7 +21,7 @@ export function KidStrip({ kids, selected, onSelect }: { kids: TodayKid[]; selec
                 </i>
               )}
             </span>
-            {k.name}
+            <span className="pt-strip-name">{k.name}</span>
           </button>
         )
       })}

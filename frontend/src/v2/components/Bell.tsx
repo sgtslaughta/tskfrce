@@ -199,7 +199,7 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
           <EmptyState icon="notifications_off" title="No notifications" body="We'll ping you when a chore needs your OK." />
         )
       ) : (
-        <div className="p-bell-scroll">
+        <div className="p-bell-scroll" tabIndex={0} role="region" aria-label="Notification list">
           {byGroup.today.length > 0 && (
             <>
               <div className="p-bell-group">Today</div>
@@ -326,7 +326,7 @@ export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; pla
     <button
       type="button"
       className={kid ? 'f-bell' : 'p-bell'}
-      aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+      aria-label={unread ? `Notifications, ${unread > 9 ? '9+' : unread} unread` : 'Notifications'}
       onClick={() => setOpened((o) => !o)}
     >
       <Icon name="notifications" size={22} />

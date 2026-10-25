@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
 import { Drawer, Tooltip } from '@mantine/core'
 import type { TodayKid, TodayChore } from '../types'
@@ -38,6 +38,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
   const [back, setBack] = useState(false)
   const [note, setNote] = useState('')
   const [approving, setApproving] = useState(false)
+  const sending = useRef(false) // synchronous guard: a double click or Enter-mash fires before React re-renders
 
   if (!run && isError)
     return (
@@ -97,9 +98,13 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
                 disabled={approving || approve.isPending}
                 data-loading={approving || approve.isPending}
                 onClick={() => {
-                  if (approving) return
+                  if (sending.current) return
+                  sending.current = true
                   setApproving(true)
-                  void withUndo(() => approve.mutateAsync(chore.id), `Approved +${chore.points}`).finally(() => setApproving(false))
+                  void withUndo(() => approve.mutateAsync(chore.id), `Approved +${chore.points}`).finally(() => {
+                    sending.current = false
+                    setApproving(false)
+                  })
                 }}
               >
                 <Icon name="check" size={17} />
@@ -127,10 +132,15 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
             data-tone="ink"
             onSubmit={(e) => {
               e.preventDefault()
-              if (sendBack.isPending || !note.trim()) return
+              if (sending.current || !note.trim()) return
+              sending.current = true
               sendBack.mutate(
                 { id: chore.id, note: note.trim() },
-                { onSuccess: () => (setBack(false), setNote(''), toastOk('Sent back')), onError: toastFail },
+                {
+                  onSuccess: () => (setBack(false), setNote(''), toastOk('Sent back')),
+                  onError: toastFail,
+                  onSettled: () => (sending.current = false),
+                },
               )
             }}
           >
@@ -147,10 +157,14 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
             className="pt-ded"
             onSubmit={(e) => {
               e.preventDefault()
-              if (deduct.isPending || !(take > 0) || !why.trim()) return
+              if (sending.current || !(take > 0) || !why.trim()) return
+              sending.current = true
               deduct.mutate(
                 { id: kid.id, amount: take, note: why.trim() },
-                { onSuccess: () => (setDed(false), setWhy(''), setCustom(''), setAmount(10), toastOk(`Deducted ${take} from ${name}`)) },
+                {
+                  onSuccess: () => (setDed(false), setWhy(''), setCustom(''), setAmount(10), toastOk(`Deducted ${take} from ${name}`)),
+                  onSettled: () => (sending.current = false),
+                },
               )
             }}
           >

@@ -280,3 +280,4 @@
 
 .p-bell-older { display: flex; flex: none; margin: 6px auto 10px; }
 .p-bell-scroll { overscroll-behavior: contain; }
+.p-bell-scroll:focus-visible { outline: 2px solid var(--p-ink); outline-offset: -2px; }
