@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Icon } from '@/v2/parent/Icon'
 import { MakerLogo } from '@/v2/parent/MakerLogo'
 import { Chip, type ChipTone } from '@/v2/parent/Chip'
@@ -72,15 +71,9 @@ export function DeviceList({
   selectedGroup,
   onSelectDevice,
   onSelectGroup,
-  tab: propTab = 'devices',
+  tab = 'devices',
   onTabChange,
 }: Props) {
-  const [tab, setTab] = useState<'devices' | 'groups'>(propTab)
-
-  const handleTabChange = (newTab: 'devices' | 'groups') => {
-    setTab(newTab)
-    onTabChange?.(newTab)
-  }
   const unassigned = devices.filter((d) => d.status === 'unassigned')
   const assigned = devices.filter((d) => d.status !== 'unassigned')
 
@@ -91,7 +84,7 @@ export function DeviceList({
       <ListHeader title={tab === 'devices' ? 'Devices' : 'Groups'}>
         <SegmentedControl
           value={tab}
-          onChange={handleTabChange}
+          onChange={(t) => onTabChange?.(t)}
           options={[
             { value: 'devices', label: `Devices · ${devices.length}` },
             { value: 'groups', label: `Groups · ${groups.length}` },
@@ -156,7 +149,8 @@ export function DeviceList({
           <div className="p-device-list">
               {groups.length === 0 && <p className="pk-hint pk-empty">No groups yet. Make one to set hours for several devices at once.</p>}
               {groups.map((g) => {
-                const groupOwners = ownerName(kids, g.owner_ids ?? [])
+                const memberOwners = devices.filter((d) => g.device_ids.includes(d.id)).flatMap((d) => d.owner_ids)
+                const groupOwners = ownerName(kids, memberOwners)
                 const deviceTypes = getGroupDeviceTypes(devices, g.device_ids)
                 const isSelected = selectedGroup === g.id
                 const firstDevice = devices.find((d) => d.id === g.device_ids[0])

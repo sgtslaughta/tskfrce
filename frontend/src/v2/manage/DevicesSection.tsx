@@ -26,18 +26,15 @@ export function DevicesSection({
 
   const handleSelectDevice = useCallback(
     (id: number) => {
-      router.push({ pathname: router.pathname, query: { ...router.query, item: id } }, undefined, { shallow: true })
-      onTabChange?.('devices')
+      const { tab: _t, ...rest } = router.query
+      router.push({ pathname: router.pathname, query: { ...rest, item: id } }, undefined, { shallow: true })
     },
-    [router, onTabChange],
+    [router],
   )
 
   const handleSelectGroup = useCallback(
-    (id: number | 'new') => {
-      router.push({ pathname: router.pathname, query: { ...router.query, item: id } }, undefined, { shallow: true })
-      onTabChange?.('groups')
-    },
-    [router, onTabChange],
+    (id: number | 'new') => router.push({ pathname: router.pathname, query: { ...router.query, item: id, tab: 'groups' } }, undefined, { shallow: true }),
+    [router],
   )
 
   return (

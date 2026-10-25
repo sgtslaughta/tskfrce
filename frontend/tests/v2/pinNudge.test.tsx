@@ -120,6 +120,12 @@ describe('DeviceDetail needs_pins note', () => {
     expect(push).toHaveBeenCalledWith('/kids?section=kids&kid=7&pin=1')
   })
 
+  test('Set PINs goes to the owner who has no PIN yet, even when listed second', async () => {
+    row({ ...device, owner_ids: [8, 7] })
+    await userEvent.click(screen.getByRole('button', { name: 'Set PINs' }))
+    expect(push).toHaveBeenLastCalledWith('/kids?section=kids&kid=7&pin=1')
+  })
+
   test('hidden when needs_pins is false', () => {
     row({ ...device, needs_pins: false })
     expect(screen.queryByRole('button', { name: 'Set PINs' })).toBeNull()
