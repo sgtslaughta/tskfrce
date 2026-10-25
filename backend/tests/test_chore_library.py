@@ -188,3 +188,55 @@ def test_delete_kid_with_runs_photos_and_chat(client, db, parent, kid, parent_he
     client.post(f"/api/v1/chores/{rid}/approve", headers=parent_headers)
     assert client.delete(f"/api/v1/kids/{kid.id}", headers=parent_headers).status_code == 200
     assert db.query(ChoreRun).count() == 0 and db.query(Points).count() == 0
+
+
+def test_create_with_type_and_step_objects(client, parent_headers):
+    steps = [
+        {"title": "A", "after_previous": True},
+        {"title": "B", "after_previous": True, "due_time": "16:30"},
+    ]
+    c = _mk(client, parent_headers, steps=steps)
+    assert [(s["title"], s["after_previous"], s["due_time"]) for s in c["steps"]] == [
+        ("A", False, None),
+        ("B", True, "16:30"),
+    ]
+    types = client.get("/api/v1/chore-types", headers=parent_headers).json()
+    c2 = _mk(client, parent_headers, type_id=types[1]["id"])
+    assert c2["type_id"] == types[1]["id"] and c["type_id"] == types[-1]["id"]
+    bad = client.post(
+        "/api/v1/chores/", json={"title": "x", "type_id": 999}, headers=parent_headers
+    )
+    assert (bad.status_code, bad.json()["detail"]) == (422, "Pick a chore type from the list.")
+
+
+def test_patch_steps_keeps_ticks_and_flags(client, db, kid, parent_headers, kid_headers):
+    _day(db)
+    c, _ = api_chore(client, parent_headers, [kid], steps=["A", "B"])
+    run = client.get("/api/v1/kid/today", headers=kid_headers).json()["chores"][0]
+    a_id = run["subtasks"][0]["id"]
+    client.post(
+        f"/api/v1/kid/chores/{run['id']}/subtasks/{a_id}", json={"done": True}, headers=kid_headers
+    )
+    r = client.patch(
+        f"/api/v1/chores/{c['id']}",
+        json={"steps": [{"title": "B"}, {"title": "A", "after_previous": True}]},
+        headers=parent_headers,
+    )
+    out = r.json()["steps"]
+    assert [(s["title"], s["after_previous"]) for s in out] == [("B", False), ("A", True)]
+    assert out[1]["id"] == a_id
+    assert [s.position for s in db.query(ChoreStep).order_by(ChoreStep.position)] == [0, 1]
+    got = client.get("/api/v1/kid/today", headers=kid_headers).json()["chores"][0]["subtasks"]
+    assert [(s["title"], s["done"]) for s in got] == [("B", False), ("A", True)]
+
+
+def test_copy_keeps_type_and_step_fields(client, parent_headers):
+    types = client.get("/api/v1/chore-types", headers=parent_headers).json()
+    steps = [{"title": "A"}, {"title": "B", "after_previous": True, "due_time": "16:30"}]
+    c = _mk(client, parent_headers, steps=steps, type_id=types[2]["id"])
+    n = client.post(f"/api/v1/chores/{c['id']}/copy", headers=parent_headers).json()
+    assert n["type_id"] == types[2]["id"]
+    assert [(s["after_previous"], s["due_time"]) for s in n["steps"]] == [
+        (False, None),
+        (True, "16:30"),
+    ]

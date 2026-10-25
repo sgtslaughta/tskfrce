@@ -20,6 +20,19 @@ SEED: list[tuple[str, str, list[str]]] = [
     ("Other", "task_alt", ["Did part of it"]),
 ]
 
+# Offered for every type, after the type's own notes: (label, glyph).
+UNIVERSAL: list[tuple[str, str]] = [
+    ("Need help", "help"),
+    ("Ran out of time", "schedule"),
+    ("Can't do it today", "block"),
+]
+
+
+def notes_for(t: ChoreType) -> list[dict]:
+    """The type's own notes first, then the universal ones."""
+    own = [{"label": n.label, "glyph": n.glyph, "universal": False} for n in t.notes]
+    return own + [{"label": lb, "glyph": g, "universal": True} for lb, g in UNIVERSAL]
+
 
 def seed(db: Session) -> None:
     """Insert the builtin types once; no-op when any type exists."""

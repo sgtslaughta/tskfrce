@@ -89,3 +89,81 @@ def test_other_id_survives_rename(db):
     db.commit()
     assert other_id(db) == oid
     assert db.get(ChoreType, oid).glyph == "task_alt"
+
+
+def test_list_types_with_universal_free(client, parent_headers):
+    from app.services.chore_types import UNIVERSAL, notes_for
+
+    r = client.get("/api/v1/chore-types", headers=parent_headers)
+    types = r.json()
+    assert len(types) == 8 and types[0]["name"] == "Cleaning"
+    assert [n["label"] for n in types[0]["notes"]] == [
+        "Out of supplies",
+        "Did part of it",
+        "Too messy for one go",
+    ]
+    labels = {n["label"] for t in types for n in t["notes"]}
+    assert not labels & {u[0] for u in UNIVERSAL}
+    assert len(UNIVERSAL) == 3 and notes_for.__name__ == "notes_for"
+
+
+def test_notes_for_puts_universal_last(db):
+    from app.models.chore_type import ChoreType
+    from app.services.chore_types import notes_for
+
+    notes = notes_for(db.query(ChoreType).filter_by(name="Personal").one())
+    assert [(n["label"], n["universal"]) for n in notes] == [
+        ("Don't feel well", False),
+        ("Need help", True),
+        ("Ran out of time", True),
+        ("Can't do it today", True),
+    ]
+
+
+def test_create_rename_reorder_notes(client, parent_headers):
+    h = parent_headers
+    r = client.post(
+        "/api/v1/chore-types",
+        json={"name": "Garden", "glyph": "eco", "notes": ["a", "b"]},
+        headers=h,
+    )
+    assert r.status_code == 200
+    t = r.json()
+    assert (t["builtin"], t["chore_count"]) == (False, 0)
+    assert [(n["label"], n["glyph"]) for n in t["notes"]] == [("a", "eco"), ("b", "eco")]
+    dup = client.post("/api/v1/chore-types", json={"name": "garden", "glyph": "x"}, headers=h)
+    assert (dup.status_code, dup.json()["detail"]) == (409, "There's already a type called garden.")
+    r = client.patch(
+        f"/api/v1/chore-types/{t['id']}", json={"name": "Yard work", "notes": ["b", "a"]}, headers=h
+    )
+    assert r.json()["name"] == "Yard work"
+    assert [n["label"] for n in r.json()["notes"]] == ["b", "a"]
+    assert client.get("/api/v1/chore-types", headers=h).json()[-1]["id"] == t["id"]
+    too_many = {"name": "X", "glyph": "x", "notes": ["n"] * 9}
+    assert client.post("/api/v1/chore-types", json=too_many, headers=h).status_code == 422
+
+
+def test_delete_type_rules(client, db, parent_headers):
+    from app.models.chores import Chore
+    from app.services.chore_types import other_id
+
+    h = parent_headers
+    t = client.post(
+        "/api/v1/chore-types", json={"name": "Garden", "glyph": "eco"}, headers=h
+    ).json()
+    c = client.post("/api/v1/chores/", json={"title": "Weed", "type_id": t["id"]}, headers=h).json()
+    assert c["type_id"] == t["id"]
+    assert client.delete(f"/api/v1/chore-types/{t['id']}", headers=h).status_code == 204
+    db.expire_all()
+    assert db.get(Chore, c["id"]).type_id == other_id(db)
+    builtin = client.get("/api/v1/chore-types", headers=h).json()[0]
+    r = client.delete(f"/api/v1/chore-types/{builtin['id']}", headers=h)
+    assert r.status_code == 409
+    assert r.json()["detail"] == "Built-in types can't be deleted. Rename it instead."
+
+
+def test_kid_cannot_edit_types(client, kid_headers):
+    assert client.get("/api/v1/chore-types", headers=kid_headers).status_code == 403
+    r = client.post("/api/v1/chore-types", json={"name": "X", "glyph": "x"}, headers=kid_headers)
+    assert r.status_code == 403
+    assert client.delete("/api/v1/chore-types/1", headers=kid_headers).status_code == 403

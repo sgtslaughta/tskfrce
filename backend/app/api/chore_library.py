@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db, require_parent
+from app.models.chore_type import ChoreType
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, ChoreStep
 from app.models.user import User, UserRole
 from app.schemas.chore import (
@@ -45,7 +46,16 @@ def chore_out(c: Chore) -> dict:
         title=c.title,
         points=c.points,
         needs_photo=c.needs_photo,
-        steps=[{"id": s.id, "title": s.title} for s in c.steps],
+        type_id=c.type_id,
+        steps=[
+            {
+                "id": s.id,
+                "title": s.title,
+                "due_time": s.due_time,
+                "after_previous": s.after_previous,
+            }
+            for s in c.steps
+        ],
         # an assignment with no kids left is a retired one (deleted, history kept)
         assignments=[assignment_out(a) for a in c.assignments if a.kids],
         archived=c.archived_at is not None,
@@ -74,15 +84,26 @@ def _kids(db: Session, ids: list[int]) -> list[User]:
     return found
 
 
-def _set_steps(c: Chore, titles: list[str]) -> None:
+def _type_id(db: Session, type_id: int | None) -> int:
+    if type_id is None:
+        return other_id(db)
+    if db.get(ChoreType, type_id) is None:
+        raise HTTPException(422, "Pick a chore type from the list.")
+    return type_id
+
+
+def _set_steps(c: Chore, steps: list[dict]) -> None:
     """Keep steps whose title survives (so ticks stay), drop the rest, add new ones."""
     old = list(c.steps)
     keep: list[ChoreStep] = []
-    for t in titles:
-        hit = next((s for s in old if s.title == t), None)
+    for i, d in enumerate(steps):
+        hit = next((s for s in old if s.title == d["title"]), None)
         if hit:
             old.remove(hit)
-        keep.append(hit or ChoreStep(title=t))
+        s = hit or ChoreStep(title=d["title"])
+        s.due_time = d.get("due_time")
+        s.after_previous = bool(d.get("after_previous")) and i > 0
+        keep.append(s)
     for s in old:
         c.steps.remove(s)
     # park positions first: (chore_id, position) is unique
@@ -128,9 +149,11 @@ def create_chore(
         points=body.points,
         needs_photo=body.needs_photo,
         created_by_id=parent.id,
-        type_id=other_id(db),
+        type_id=_type_id(db, body.type_id),
     )
-    c.steps = [ChoreStep(title=t, position=i) for i, t in enumerate(body.steps)]
+    _set_steps(c, [x.model_dump() for x in body.steps])
+    for i, st in enumerate(c.steps):
+        st.position = i
     db.add(c)
     db.commit()
     return chore_out(c)
@@ -143,6 +166,8 @@ def patch_chore(chore_id: int, body: ChorePatch, db: Session = Depends(get_db)):
     for k in ("title", "points", "needs_photo"):
         if ch.get(k) is not None:
             setattr(c, k, ch[k])
+    if ch.get("type_id") is not None:
+        c.type_id = _type_id(db, ch["type_id"])
     if ch.get("steps") is not None:
         _set_steps(c, ch["steps"])
         _renumber(db, c)
@@ -163,7 +188,15 @@ def copy_chore(
         created_by_id=parent.id,
         type_id=c.type_id,
     )
-    n.steps = [ChoreStep(title=s.title, position=s.position) for s in c.steps]
+    n.steps = [
+        ChoreStep(
+            title=s.title,
+            position=s.position,
+            due_time=s.due_time,
+            after_previous=s.after_previous,
+        )
+        for s in c.steps
+    ]
     db.add(n)
     db.commit()
     return chore_out(n)

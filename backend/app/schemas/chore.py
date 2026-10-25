@@ -3,7 +3,7 @@
 from datetime import date
 from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, BeforeValidator, Field, field_validator, model_validator
 
 from app.schemas.lock import _hhmm
 
@@ -26,13 +26,23 @@ class Repeat(BaseModel):
         return self
 
 
-Step = Annotated[str, Field(min_length=1, max_length=100)]
+class StepIn(BaseModel):
+    title: str = Field(min_length=1, max_length=100)
+    due_time: str | None = None
+    after_previous: bool = False
+
+    _due = field_validator("due_time")(_hhmm)
+
+
+# ponytail: bare strings still accepted as {"title": s} so older clients keep working
+Step = Annotated[StepIn, BeforeValidator(lambda v: {"title": v} if isinstance(v, str) else v)]
 
 
 class ChoreIn(BaseModel):
     title: str = Field(min_length=1, max_length=100)
     points: int = Field(default=10, ge=0)
     needs_photo: bool = False
+    type_id: int | None = None  # None -> Other
     steps: list[Step] = Field(default_factory=list, max_length=20)
 
 
@@ -40,6 +50,7 @@ class ChorePatch(BaseModel):
     title: str | None = Field(default=None, min_length=1, max_length=100)
     points: int | None = Field(default=None, ge=0)
     needs_photo: bool | None = None
+    type_id: int | None = None
     steps: list[Step] | None = Field(default=None, max_length=20)
 
 
@@ -77,6 +88,8 @@ class AssignmentOut(BaseModel):
 class StepOut(BaseModel):
     id: int
     title: str
+    due_time: str | None = None
+    after_previous: bool = False
 
 
 class ChoreLibOut(BaseModel):
@@ -84,6 +97,7 @@ class ChoreLibOut(BaseModel):
     title: str
     points: int
     needs_photo: bool
+    type_id: int
     steps: list[StepOut]
     assignments: list[AssignmentOut]
     archived: bool
