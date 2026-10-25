@@ -68,6 +68,8 @@
   color: var(--p-ink);
 }
 
+.p-kid-progress span { white-space: nowrap; }
+
 .p-kid-progress {
   font-size: 11.5px;
   color: var(--p-sub);

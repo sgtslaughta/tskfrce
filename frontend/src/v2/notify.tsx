@@ -70,13 +70,16 @@ export function withUndo<T>(
   let cancelled = false;
   let timeoutId: NodeJS.Timeout | null = null;
 
+  const id = `undo-${Date.now()}-${Math.random()}`;
   const undo = () => {
     cancelled = true;
     if (timeoutId) clearTimeout(timeoutId);
+    notifications.hide(id);
     notifications.show({ message: 'Undone', color: 'fridgeGreen' });
   };
 
   notifications.show({
+    id,
     message: <NotificationContent message={message} onAction={undo} />,
     color: 'fridgeGreen',
   });

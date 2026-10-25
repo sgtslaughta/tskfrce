@@ -250,7 +250,7 @@
   border: 0;
   border-radius: 8px;
   padding: 8px 4px;
-  font-size: 12.5px;
+  font-size: 13px;
   font-weight: 500;
   color: var(--p-sub);
   background: transparent;
@@ -258,14 +258,13 @@
   transition: all 0.15s ease;
 }
 
-[data-look='parent'] .p-segment-tabs .mantine-Tabs-tab:hover {
+[data-look='parent'] .p-segment-tabs .mantine-Tabs-tab:hover:not([data-active]) {
   color: var(--p-ink);
 }
 
 [data-look='parent'] .p-segment-tabs .mantine-Tabs-tab[data-active] {
-  background: var(--p-card);
-  color: var(--p-ink);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  background: var(--p-ink);
+  color: var(--p-card);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────── */
