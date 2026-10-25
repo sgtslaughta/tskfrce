@@ -38,6 +38,15 @@ jest.mock('@mantine/core', () => ({
     gap?: string
   }) => <div>{children}</div>,
 }))
+let windows: unknown[] = []
+let parents: unknown[] = [{ id: 1 }]
+jest.mock('@/v2/hooks/useWindows', () => ({ useWindows: () => ({ data: windows }) }))
+jest.mock('@/v2/hooks/useFamily', () => ({ useParents: () => ({ data: parents }) }))
+const dismissed = new Set<string>()
+const dismiss = jest.fn((k: string) => dismissed.add(k))
+jest.mock('@/v2/hooks/useTips', () => ({
+  useTipState: () => ({ ready: true, isDismissed: (k: string) => dismissed.has(k), dismiss }),
+}))
 jest.mock('next/link', () => {
   return ({ children, href }: { children: React.ReactNode; href: string }) => (
     <a href={href}>{children}</a>
@@ -48,32 +57,35 @@ const mockKid = (overrides = {}): TodayKid => ({
   id: 1,
   name: 'Leo',
   avatar: '🧒',
+  online_all: false,
   chores: [],
-  points_balance: 0,
-  progress: { level: 1, title: 'Novice', xp: 0 },
+  devices: [],
   ...overrides,
 })
 
 describe('GetStartingChecklistCard', () => {
   beforeEach(() => {
-    localStorage.clear()
+    dismissed.clear()
+    windows = []
+    parents = [{ id: 1 }]
+    dismiss.mockClear()
   })
 
   test('renders when not all items are done', () => {
-    render(<GetStartingChecklistCard kids={[]} devicesCount={0} />)
+    render(<GetStartingChecklistCard kids={[]} />)
     expect(screen.getByText('Getting started')).toBeInTheDocument()
   })
 
   test('shows correct progress', () => {
-    const kids = [mockKid()]
-    render(<GetStartingChecklistCard kids={kids} devicesCount={1} />)
-    // With 1 kid and 1 device but no chores, "Add a kid" is done, "Name devices" is done = 2 of 5
+    const kids = [mockKid({ devices: [{ id: 1, name: 'iPad', vendor: null, online: false }] })]
+    render(<GetStartingChecklistCard kids={kids} />)
+    // kid + device done; no chores, no hours, one parent
     expect(screen.getByText(/2 of 5 done/)).toBeInTheDocument()
   })
 
   test('auto-ticks items from real data', () => {
     const kids = [mockKid({ chores: [{ id: 1 } as any] })]
-    render(<GetStartingChecklistCard kids={kids} devicesCount={1} />)
+    render(<GetStartingChecklistCard kids={kids} />)
     // Item should show progress - "Add a kid" and "Add chores" should be marked done
     const checkmarks = screen.getAllByText('check')
     expect(checkmarks.length).toBeGreaterThan(0)
@@ -81,27 +93,28 @@ describe('GetStartingChecklistCard', () => {
 
   test('hides when dismissed', async () => {
     const { rerender } = render(
-      <GetStartingChecklistCard kids={[]} devicesCount={0} />
+      <GetStartingChecklistCard kids={[]} />
     )
     const dismissBtn = screen.getByLabelText('Dismiss getting started')
     await userEvent.click(dismissBtn)
+    expect(dismiss).toHaveBeenCalledWith('onboard.parent')
 
-    rerender(<GetStartingChecklistCard kids={[]} devicesCount={0} />)
+    rerender(<GetStartingChecklistCard kids={[]} />)
     expect(screen.queryByText('Getting started')).not.toBeInTheDocument()
   })
 
-  test('hides when all items are done', () => {
-    const kids = [mockKid({ chores: [{ id: 1 } as any] })]
-    // Create a mock with all items done
-    const { container } = render(
-      <GetStartingChecklistCard kids={kids} devicesCount={1} />
-    )
-    // Check is still visible because not all 5 items can be auto-completed
-    expect(container.textContent).toContain('Getting started')
+  test('ticks hours and second parent from the box and hides when all done', () => {
+    const kids = [mockKid({ chores: [{ id: 1 } as any], devices: [{ id: 1, name: 'iPad', vendor: null, online: false }] })]
+    windows = [{ id: 1 }]
+    const { rerender } = render(<GetStartingChecklistCard kids={kids} />)
+    expect(screen.getByText(/4 of 5 done/)).toBeInTheDocument()
+    parents = [{ id: 1 }, { id: 2 }]
+    rerender(<GetStartingChecklistCard kids={kids} />)
+    expect(screen.queryByText('Getting started')).not.toBeInTheDocument()
   })
 
   test('links to correct pages', () => {
-    render(<GetStartingChecklistCard kids={[]} devicesCount={0} />)
+    render(<GetStartingChecklistCard kids={[]} />)
     expect(screen.getByRole('link', { name: /Add a kid/ })).toHaveAttribute(
       'href',
       '/kids'

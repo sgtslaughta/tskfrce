@@ -1,103 +1,63 @@
-import { describe, test, expect, beforeEach } from '@jest/globals'
+import { beforeEach, describe, expect, test } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import React from 'react'
+import { MantineProvider } from '@mantine/core'
+import { KidIntroSwipe } from '@/v2/kid/KidIntroSwipe'
 
-// Mock Mantine Button before importing KidIntroSwipe to avoid MantineProvider requirement
-jest.mock('@mantine/core', () => {
-  const actualMantine = jest.requireActual('@mantine/core')
-  return {
-    ...actualMantine,
-    Button: ({
-      children,
-      onClick,
-      size,
-      variant,
-      style,
-      ...props
-    }: any) => React.createElement('button', { onClick, style, 'data-variant': variant }, children),
-  }
-}, { virtual: true })
-
-jest.mock('@/v2/parent/Icon', () => ({
-  Icon: ({ name }: { name: string; size?: number }) => <span>{name}</span>,
+let state = { ready: true, dismissed: new Set<string>() }
+const dismiss = jest.fn()
+jest.mock('@/v2/hooks/useTips', () => ({
+  useTipState: (kid: boolean) => {
+    if (!kid) throw new Error('kid intro must use the kid token')
+    return { ready: state.ready, isDismissed: (k: string) => state.dismissed.has(k), dismiss }
+  },
 }))
 
-import { KidIntroSwipe } from '@/v2/kid/KidIntroSwipe'
+const show = (onComplete = jest.fn()) => {
+  render(
+    <MantineProvider>
+      <KidIntroSwipe onComplete={onComplete} />
+    </MantineProvider>,
+  )
+  return onComplete
+}
 
 describe('KidIntroSwipe', () => {
   beforeEach(() => {
-    localStorage.clear()
+    state = { ready: true, dismissed: new Set() }
+    dismiss.mockClear()
   })
 
-  test('renders first card', () => {
-    const onComplete = jest.fn()
-    render(<KidIntroSwipe onComplete={onComplete} />)
-    expect(screen.getByText('Do Your Chores')).toBeInTheDocument()
-    expect(screen.getByText('Complete the chores your family gives you')).toBeInTheDocument()
-  })
-
-  test('shows progress dots', () => {
-    const onComplete = jest.fn()
-    render(<KidIntroSwipe onComplete={onComplete} />)
-    const dots = screen.getAllByRole('button').filter((btn) => {
-      const style = btn.getAttribute('style')
-      return style && style.includes('width: 8px')
-    })
-    // The dots won't be buttons, they'll be divs. Let's just check structure is there.
-    expect(screen.getByText('Do Your Chores')).toBeInTheDocument()
-  })
-
-  test('navigates to next card', async () => {
-    const onComplete = jest.fn()
-    render(<KidIntroSwipe onComplete={onComplete} />)
-
-    const nextBtn = screen.getByRole('button', { name: /Next/ })
-    await userEvent.click(nextBtn)
-
-    expect(screen.getByText('Ask for Rewards')).toBeInTheDocument()
-    expect(onComplete).not.toHaveBeenCalled()
-  })
-
-  test('shows Done button on last card', async () => {
-    const onComplete = jest.fn()
-    render(<KidIntroSwipe onComplete={onComplete} />)
-
-    const nextBtn = screen.getByRole('button', { name: /Next/ })
-    await userEvent.click(nextBtn)
-    await userEvent.click(nextBtn)
-
-    expect(screen.getByRole('button', { name: /Done/ })).toBeInTheDocument()
-  })
-
-  test('calls onComplete when Done is clicked', async () => {
-    const onComplete = jest.fn()
-    render(<KidIntroSwipe onComplete={onComplete} />)
-
-    const nextBtn = screen.getByRole('button', { name: /Next/ })
-    await userEvent.click(nextBtn)
-    await userEvent.click(nextBtn)
-
-    const doneBtn = screen.getByRole('button', { name: /Done/ })
-    await userEvent.click(doneBtn)
-
-    expect(onComplete).toHaveBeenCalled()
+  test('walks three cards, Done dismisses on the box and completes', async () => {
+    const done = show()
+    expect(screen.getByText('Do your chores')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }))
+    expect(screen.getByText('Ask for rewards')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Done' }))
+    expect(dismiss).toHaveBeenCalledWith('onboard.kid')
+    expect(done).toHaveBeenCalled()
   })
 
   test('Skip dismisses and completes', async () => {
-    const onComplete = jest.fn()
-    render(<KidIntroSwipe onComplete={onComplete} />)
-
-    const skipBtn = screen.getByRole('button', { name: /Skip/ })
-    await userEvent.click(skipBtn)
-
-    expect(onComplete).toHaveBeenCalled()
+    const done = show()
+    await userEvent.click(screen.getByRole('button', { name: 'Skip' }))
+    expect(dismiss).toHaveBeenCalledWith('onboard.kid')
+    expect(done).toHaveBeenCalled()
   })
 
-  test('hides when already dismissed', () => {
-    localStorage.setItem('task4ce-tip:onboard.kid', '1')
-    const onComplete = jest.fn()
-    const { container } = render(<KidIntroSwipe onComplete={onComplete} />)
-    expect(container.textContent).toBe('')
+  test('dots jump to a card', async () => {
+    show()
+    await userEvent.click(screen.getByRole('button', { name: 'Go to slide 3' }))
+    expect(screen.getByText('Tell a parent')).toBeInTheDocument()
+  })
+
+  test('hidden when dismissed, and until the box answers', () => {
+    state.dismissed.add('onboard.kid')
+    show()
+    expect(screen.queryByTestId('kid-intro-swipe')).not.toBeInTheDocument()
+    state = { ready: false, dismissed: new Set() }
+    show()
+    expect(screen.queryByTestId('kid-intro-swipe')).not.toBeInTheDocument()
   })
 })

@@ -1,15 +1,18 @@
 import Link from 'next/link'
 import { Icon } from '../parent/Icon'
-import { useTipsLocal } from '../hooks/useTips'
+import { useTipState } from '../hooks/useTips'
+import { useWindows } from '../hooks/useWindows'
+import { useParents } from '../hooks/useFamily'
 import type { TodayKid } from '../types'
 
 interface Props {
   kids: TodayKid[]
-  devicesCount?: number
 }
 
-export function GetStartingChecklistCard({ kids, devicesCount = 0 }: Props) {
-  const { isDismissed, dismiss } = useTipsLocal()
+export function GetStartingChecklistCard({ kids }: Props) {
+  const { isDismissed, dismiss } = useTipState()
+  const hours = (useWindows().data?.length ?? 0) > 0
+  const parents = useParents().data?.length ?? 0
 
   const items = [
     {
@@ -29,21 +32,21 @@ export function GetStartingChecklistCard({ kids, devicesCount = 0 }: Props) {
     {
       key: 'device',
       label: 'Name devices',
-      done: devicesCount > 0,
+      done: kids.some((k) => k.devices.length > 0),
       href: '/devices',
       icon: 'devices',
     },
     {
       key: 'hours',
       label: 'Set hours',
-      done: false,
+      done: hours,
       href: '/settings?section=hours',
       icon: 'schedule',
     },
     {
       key: 'other_parent',
       label: 'Invite other parent',
-      done: false,
+      done: parents > 1,
       href: '/settings?section=parents',
       icon: 'people',
     },

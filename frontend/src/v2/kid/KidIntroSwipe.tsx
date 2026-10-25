@@ -1,66 +1,26 @@
 import { useState } from 'react'
 import { Button } from '@mantine/core'
-import { useTipsLocal } from '../hooks/useTips'
+import { useTipState } from '../hooks/useTips'
 import { StickerCard } from '../components/StickerCard'
 import { Icon } from '../parent/Icon'
 
 interface Props {
   onComplete: () => void
-  ageGroup?: 'little' | 'kid' | 'teen'
 }
 
-type AgeGroup = 'little' | 'kid' | 'teen'
+// ponytail: one wording for every age; age-group copy arrives with the age setting (Plan D)
+const CARDS = [
+  { icon: 'task_alt', title: 'Do your chores', desc: 'Finish the chores your family gives you.' },
+  { icon: 'redeem', title: 'Ask for rewards', desc: 'Earn points and trade them for cool things.' },
+  { icon: 'mail', title: 'Tell a parent', desc: 'Stuck? Send a note and they will help.' },
+]
 
-const wordsMap: Record<AgeGroup, Record<string, string>> = {
-  little: {
-    title1: 'Do Your Chores',
-    desc1: 'Complete the chores your family gives you',
-    title2: 'Ask for Rewards',
-    desc2: 'Earn points and get cool things',
-    title3: 'Tell Mom or Dad',
-    desc3: 'Let them know if you need help',
-  },
-  kid: {
-    title1: 'Do Your Chores',
-    desc1: 'Complete the chores your family gives you',
-    title2: 'Ask for Rewards',
-    desc2: 'Earn points and get cool things',
-    title3: 'Tell Mom or Dad',
-    desc3: 'Let them know if you need help',
-  },
-  teen: {
-    title1: 'Do Your Chores',
-    desc1: 'Complete the chores your family gives you',
-    title2: 'Ask for Rewards',
-    desc2: 'Earn points and get cool things',
-    title3: 'Tell Mom or Dad',
-    desc3: 'Let them know if you need help',
-  },
-}
-
-export function KidIntroSwipe({ onComplete, ageGroup = 'kid' }: Props) {
-  const { isDismissed, dismiss } = useTipsLocal()
+export function KidIntroSwipe({ onComplete }: Props) {
+  const { ready, isDismissed, dismiss } = useTipState(true)
   const [step, setStep] = useState(0)
 
-  if (isDismissed('onboard.kid')) return null
-
-  const cards = [
-    {
-      icon: 'task_alt',
-      title: wordsMap[ageGroup].title1,
-      desc: wordsMap[ageGroup].desc1,
-    },
-    {
-      icon: 'redeem',
-      title: wordsMap[ageGroup].title2,
-      desc: wordsMap[ageGroup].desc2,
-    },
-    {
-      icon: 'mail',
-      title: wordsMap[ageGroup].title3,
-      desc: wordsMap[ageGroup].desc3,
-    },
-  ]
+  if (!ready || isDismissed('onboard.kid')) return null
+  const cards = CARDS
 
   const handleNext = () => {
     if (step < cards.length - 1) {
