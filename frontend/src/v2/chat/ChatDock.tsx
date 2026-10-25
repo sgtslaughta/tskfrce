@@ -4,6 +4,7 @@ import { IconArrowLeft, IconMessage, IconX } from '@tabler/icons-react'
 import { refOf, useThreads, validRef, type ThreadKind } from '@/v2/hooks/useChat'
 import { OPEN_CHAT_EVENT } from './dock'
 import { LoadError, LoadingCards } from '@/v2/components/States'
+import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { ThreadList } from './ThreadList'
 import { ThreadView } from './ThreadView'
 
@@ -119,8 +120,9 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
               <ThreadView key={`${pick.kind}:${pick.ref}`} kind={pick.kind} refId={pick.ref} meId={meId} kid={kid} bare />
             ) : (
               <>
-                {threads.isError && <LoadError error={threads.error} onRetry={() => threads.refetch()} />}
-                {threads.isPending && <LoadingCards n={3} h={56} />}
+                {threads.isError && !kid && <ErrorPanel kind="unreachable" error={threads.error} onRetry={() => threads.refetch()} />}
+                {threads.isError && kid && <LoadError error={threads.error} onRetry={() => threads.refetch()} />}
+                {threads.isPending && (kid ? <LoadingCards n={3} h={56} /> : <Skeleton rows={3} />)}
                 <ThreadList
                   threads={threads.data?.threads ?? []}
                   selected={null}

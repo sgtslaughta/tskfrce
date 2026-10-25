@@ -2,7 +2,9 @@ import { useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/router'
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
-import { api, CANT_REACH } from '../api'
+import { api } from '../api'
+import { ErrorPanel, Skeleton } from '../parent/states'
+import { useLook } from '../parent/useLook'
 import type { SetupStatus } from '../types'
 
 const SETUP_KEY = ['setup']
@@ -23,6 +25,7 @@ export function cancelSignOut(): void {
 
 /** Parent-only route guard: first-run setup → /setup, logged out → /login?next=, kid → /kid. */
 export function RequireParent({ children }: { children: ReactNode }) {
+  useLook('parent')
   const router = useRouter()
   const { isInitialized, isAuthenticated, user } = useUnifiedAuth()
   const setup = useQuery({
@@ -55,22 +58,8 @@ export function RequireParent({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target])
 
-  if (setup.isError) {
-    return (
-      <div className="f-shell" role="alert" style={{ display: 'grid', placeItems: 'center', gap: 12 }}>
-        <p>{CANT_REACH}</p>
-        <button type="button" className="f-btn f-card" onClick={() => setup.refetch()}>
-          Retry
-        </button>
-      </div>
-    )
-  }
-  if (target !== '') {
-    return (
-      <div className="f-shell" role="status" style={{ display: 'grid', placeItems: 'center' }}>
-        Loading…
-      </div>
-    )
-  }
+  // same look as the screens behind it, so a down box or a redirect never flashes the old kid style
+  if (setup.isError) return <ErrorPanel kind="unreachable" onRetry={() => setup.refetch()} />
+  if (target !== '') return <Skeleton />
   return <>{children}</>
 }

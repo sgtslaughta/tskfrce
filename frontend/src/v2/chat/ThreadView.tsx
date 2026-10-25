@@ -17,6 +17,7 @@ import {
 import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import { useRunDetail } from '@/v2/hooks/useChores'
 import { LoadError, LoadingCards } from '@/v2/components/States'
+import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { toastFail } from '@/v2/notify'
 import { Photo } from './ChatPhoto'
 import { DaySep, ParentBubble, dayName } from './ParentBubble'
@@ -156,8 +157,9 @@ export function ThreadView({
       <div className="pc-grid" data-side={side} data-bare={bare}>
         <section className="pc-thread" aria-label={data?.title ?? 'Conversation'}>
           {data && !bare && <ThreadHead kind={kind} title={data.title} run={run} />}
-          {thread.isError && <LoadError error={thread.error} onRetry={() => thread.refetch()} />}
-          {thread.isPending && !thread.isError && <LoadingCards n={3} h={48} />}
+          {thread.isError && !data && <ErrorPanel kind="unreachable" error={thread.error} onRetry={() => thread.refetch()} />}
+          {thread.isError && data && <p className="pc-empty" role="alert">Can&apos;t reach your home box. Showing what we have.</p>}
+          {thread.isPending && !thread.isError && <Skeleton rows={3} />}
           <div className="pc-msgs">
             {(hasMore ?? data?.has_more) && (
               <Button variant="default" size="xs" onClick={loadEarlier} style={{ alignSelf: 'center' }}>
