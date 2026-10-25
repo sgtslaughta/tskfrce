@@ -7,6 +7,8 @@ test('view as kid returns to where it came from, same-site only', () => {
   expect(backFrom('//evil.com', 3)).toBe('/?item=3')
   expect(backFrom('https://evil.com', 3)).toBe('/?item=3')
   expect(backFrom(undefined, 3)).toBe('/?item=3')
+  expect(backFrom('/.//evil.com', 3)).toBe('/?item=3')
+  expect(backFrom('/a/..//evil.com', 3)).toBe('/?item=3')
   expect(backFrom('/\t/evil.com', 3)).toBe('/?item=3')
   expect(backFrom('/\\evil.com', 3)).toBe('/?item=3')
 })

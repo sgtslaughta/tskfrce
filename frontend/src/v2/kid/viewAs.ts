@@ -7,7 +7,9 @@ export function backFrom(back: unknown, id: number): string {
   if (typeof back !== 'string' || !back.startsWith('/') || /[\x00-\x1f\\]/.test(back)) return home
   try {
     const u = new URL(back, window.location.origin)
-    return u.origin === window.location.origin ? u.pathname + u.search + u.hash : home
+    const path = u.pathname + u.search + u.hash
+    // "/.//evil.com" normalizes to "//evil.com", which the browser reads as another host
+    return u.origin === window.location.origin && !path.startsWith('//') ? path : home
   } catch {
     return home
   }
