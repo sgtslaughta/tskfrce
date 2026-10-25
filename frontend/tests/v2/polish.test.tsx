@@ -14,9 +14,6 @@ import { apiPost } from '@/services/api'
 jest.mock('@/v2/api', () => ({ ...(jest.requireActual('@/v2/api') as object), api: jest.fn() }))
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
 jest.mock('@/services/api', () => ({ apiPost: jest.fn(), apiGet: jest.fn() }))
-jest.mock('@/v2/today/DeviceQuickMenu', () => ({
-  DeviceQuickMenu: ({ children }: { children: unknown }) => <>{children as never}</>,
-}))
 
 const apiMock = api as unknown as Mock<(p: string, i?: unknown) => Promise<unknown>>
 const wrap = (ui: unknown) => (

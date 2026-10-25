@@ -1,81 +1,181 @@
-import { useState } from 'react'
-import { HeaderChips } from '@/v2/parent/HeaderChips'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
+import { notifications } from '@mantine/notifications'
+import { useDisclosure } from '@mantine/hooks'
+import { useDeleteDevice, usePatchDevice, useSaveGroup, useTestBlock, type DevicePatch } from '@/v2/hooks/useDevices'
 import { Chip } from '@/v2/parent/Chip'
+import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Icon } from '@/v2/parent/Icon'
 import { SegmentedControl } from '@/v2/parent/SegmentedControl'
-import { isPrivateMac } from './privateMac'
-import type { Device, Kid, Group } from '@/v2/types'
-
-type HeaderChip = { text: string; vendor?: string; icon?: string; tone?: 'acc' | 'mono' | 'plain' }
+import type { Device, Group, Kid } from '@/v2/types'
+import { ConfirmDelete } from './ConfirmDelete'
+import { DeviceNetwork } from './DeviceNetwork'
+import { DEVICE_TYPE_ICON, getDeviceType } from './deviceMeta'
+import { KidPills } from './KidPills'
+import { nameOf } from './choreMeta'
+import { toastFail, toastOk, toasts } from '../notify'
 
 interface Props {
   device: Device
   kids: Kid[]
   groups?: Group[]
-  isGroupOpen: boolean
-  onClose: () => void
+  /** Called after the device is deleted. */
+  onDeleted?: () => void
   onRequestOverride: (req: { kind: string; id: number; action: string }) => void
-}
-
-const maskMac = (mac: string) => {
-  if (mac.length < 17) return mac
-  return mac.substring(0, 6) + '••:••' + mac.substring(11)
 }
 
 const relativeTime = (iso: string | null) => {
   if (!iso) return 'never'
-  const date = new Date(iso)
-  const now = new Date()
-  const ms = now.getTime() - date.getTime()
-  const mins = Math.floor(ms / 60000)
+  const mins = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
   if (mins < 60) return `${mins}m ago`
   const hours = Math.floor(mins / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  return `${days}d ago`
+  return hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`
 }
 
-const ownerName = (kids: Kid[], ownerIds: number[]) => {
-  if (ownerIds.length === 0) return 'Unassigned'
-  return kids
-    .filter((k) => ownerIds.includes(k.id))
-    .map((k) => k.full_name || k.username)
-    .join(', ')
-}
-
-export function DeviceDetail({ device, kids, groups, isGroupOpen, onClose, onRequestOverride }: Props) {
+/** Device editor: header actions, Overview (details, owners, groups, right now) and Network tabs. */
+export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOverride }: Props) {
+  const router = useRouter()
+  const patch = usePatchDevice()
+  const saveGroup = useSaveGroup()
+  const del = useDeleteDevice()
+  const test = useTestBlock()
   const [tab, setTab] = useState<string | null>('overview')
+  const [name, setName] = useState(device.name)
+  const [confirm, { open, close }] = useDisclosure(false)
+  useEffect(() => setName(device.name), [device.name])
 
-  const headerChips: HeaderChip[] = [
+  const guest = device.status === 'guest'
+  const unknown = device.status === 'unassigned'
+  const owners = kids.filter((k) => device.owner_ids.includes(k.id))
+  const ownerLabel = guest ? 'Guest' : owners.length ? owners.map(nameOf).join(', ') : 'Unassigned'
+  const needsPins = device.needs_pins && owners.length > 0
+
+  const save = (p: DevicePatch, done: string) => patch.mutate({ id: device.id, patch: p }, toasts(done))
+  const rename = () => {
+    const n = name.trim()
+    if (!n) setName(device.name)
+    else if (n !== device.name) save({ name: n }, 'Renamed')
+  }
+  const toggleGroup = (g: Group) => {
+    const ids = g.device_ids.includes(device.id) ? g.device_ids.filter((i) => i !== device.id) : [...g.device_ids, device.id]
+    saveGroup.mutate({ id: g.id, name: g.name, device_ids: ids }, toasts('Saved'))
+  }
+  const runTest = () =>
+    test.mutate(device.id, {
+      onSuccess: (r) => (r.reason === 'ok' ? toastOk(r.message) : notifications.show({ message: r.message, color: 'fridgeRed' })),
+      onError: toastFail,
+    })
+
+  const chips = [
     ...(device.vendor ? [{ text: device.vendor, vendor: device.vendor }] : []),
-    {
-      text: device.online ? 'Online now' : `Last seen ${relativeTime(device.last_seen)}`,
-      tone: device.online ? ('acc' as const) : ('plain' as const),
-      icon: device.online ? 'wifi' : 'schedule',
-    },
+    { text: device.online ? 'Online now' : `Last seen ${relativeTime(device.last_seen)}`, tone: device.online ? ('acc' as const) : ('plain' as const), icon: device.online ? 'wifi' : 'schedule' },
     ...(device.ip ? [{ text: device.ip, tone: 'mono' as const, icon: 'lan' }] : []),
-    { text: ownerName(kids, device.owner_ids), icon: 'person' },
+    { text: ownerLabel, icon: 'person' },
   ]
 
-  return (
-    <div className="p-detail-column p-grid" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div>
-        <h2 style={{ margin: '0 0 8px 0', fontSize: 20, fontWeight: 600, color: 'var(--p-ink)' }}>
-          {device.name}
-        </h2>
-        <HeaderChips items={headerChips} />
-      </div>
+  const ownersPanel = (
+    <section className="pk-panel" data-tone={unknown ? 'amber' : undefined} aria-label="Owners">
+      <h3>
+        <Icon name={unknown ? 'help' : 'person'} size={18} />
+        {unknown ? "Who's this?" : 'Owners'}
+      </h3>
+      {unknown && <p className="pk-hint">This device is new and blocked until you say whose it is. Pick the kid, or mark it as a guest.</p>}
+      <KidPills
+        kids={kids}
+        label="Owners"
+        value={device.owner_ids}
+        disabled={guest}
+        onChange={(ids) => save({ owner_ids: ids }, 'Assigned')}
+      />
+      {needsPins && (
+        <div className="pk-note">
+          <p>{owners.map(nameOf).join(' and ')} share this device. Add PINs so they can&apos;t sign in as each other.</p>
+          <button type="button" className="p-btn" onClick={() => router.push(`/kids?section=kids&kid=${device.owner_ids[0]}&pin=1`)}>
+            Set PINs
+          </button>
+        </div>
+      )}
+    </section>
+  )
 
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button className="p-btn" data-variant="red" onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'lock' })}>
-          <Icon name="lock" size={16} />
-          Lock now
-        </button>
-        <button className="p-btn" onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'unlock' })}>
-          <Icon name="lock_open" size={16} />
-          Unlock 30 min
-        </button>
+  const detailsPanel = (
+    <section className="pk-panel" aria-label="Details">
+      <h3>
+        <Icon name="info" size={18} />
+        Details
+      </h3>
+      <label className="pk-field">
+        <span className="pk-label">Name</span>
+        <input
+          className="pk-input"
+          aria-label="Device name"
+          value={name}
+          onChange={(e) => setName(e.currentTarget.value)}
+          onBlur={rename}
+          onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+        />
+      </label>
+      {groups.length > 0 && (
+        <div className="pk-field">
+          <span className="pk-label">Groups</span>
+          <div className="pk-pills" role="group" aria-label="Groups">
+            {groups.map((g) => (
+              <button key={g.id} type="button" className="pk-pill pk-pill-plain" aria-pressed={g.device_ids.includes(device.id)} disabled={saveGroup.isPending} onClick={() => toggleGroup(g)}>
+                {g.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+      <div className="pk-switch">
+        <span id="guest-label">Guest (never blocked)</span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={guest}
+          aria-labelledby="guest-label"
+          onClick={() => save({ status: !guest ? 'guest' : device.owner_ids.length ? 'assigned' : 'unassigned' }, 'Saved')}
+        />
       </div>
+    </section>
+  )
+
+  return (
+    <div className="pk-detail">
+      <header className="pk-head">
+        <span className="pk-tile pk-tile-lg">
+          <Icon name={DEVICE_TYPE_ICON[getDeviceType(device.name, device.vendor)]} size={30} />
+        </span>
+        <div className="pk-head-t">
+          <h2>{device.name}</h2>
+          <HeaderChips items={chips} />
+          {device.resisting && (
+            <div className="pk-chips">
+              <Chip tone="red" icon="gpp_maybe">
+                getting around the block
+              </Chip>
+            </div>
+          )}
+        </div>
+        <div className="pk-actions">
+          <button type="button" className="p-btn" data-variant="red" onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'lock' })}>
+            <Icon name="lock" size={16} />
+            Lock now
+          </button>
+          <button type="button" className="p-btn" onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'unlock' })}>
+            <Icon name="lock_open" size={16} />
+            Unlock 30 min
+          </button>
+          <button type="button" className="p-btn" aria-label={`Test block on ${device.name}`} disabled={test.isPending} onClick={runTest}>
+            <Icon name="shield" size={16} />
+            {test.isPending ? 'Testing…' : 'Test block'}
+          </button>
+          <button type="button" className="p-btn" data-variant="red" onClick={open}>
+            <Icon name="delete" size={16} />
+            Delete
+          </button>
+        </div>
+      </header>
 
       <SegmentedControl
         value={tab || 'overview'}
@@ -87,147 +187,40 @@ export function DeviceDetail({ device, kids, groups, isGroupOpen, onClose, onReq
       />
 
       {tab === 'overview' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, overflowY: 'auto' }}>
-          <div className="p-card" style={{ padding: 16, borderRadius: 16, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>
-              Details
-            </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-                  Name
-                </label>
-                <div style={{ padding: '8px 12px', background: 'var(--p-card)', border: '1px solid var(--p-line)', borderRadius: 8, fontSize: 13, color: 'var(--p-ink)' }}>
-                  {device.name}
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-                  Owners
-                </label>
-                <div style={{ padding: '8px 12px', background: 'var(--p-card)', border: '1px solid var(--p-line)', borderRadius: 8, fontSize: 13, color: 'var(--p-ink)' }}>
-                  {ownerName(kids, device.owner_ids)}
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-                  Groups
-                </label>
-                <div style={{ padding: '8px 12px', background: 'var(--p-card)', border: '1px solid var(--p-line)', borderRadius: 8, fontSize: 13, color: 'var(--p-ink)' }}>
-                  {groups
-                    ?.filter((g) => device.group_ids.includes(g.id))
-                    .map((g) => g.name)
-                    .join(', ') || '—'}
-                </div>
-              </div>
-              <div style={{ paddingTop: 4 }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: 'var(--p-ink)', fontWeight: 500 }}>
-                  <input type="checkbox" checked={device.status === 'guest'} disabled style={{ width: 16, height: 16 }} />
-                  Guest
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-card" style={{ padding: 16, borderRadius: 16, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>
+        <div className="pk-grid">
+          {unknown ? ownersPanel : detailsPanel}
+          {unknown ? detailsPanel : ownersPanel}
+          <section className="pk-panel pk-span" aria-label="Right now">
+            <h3>
+              <Icon name="bolt" size={18} />
               Right now
             </h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-                  Status
-                </label>
-                <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>
-                  {device.status === 'guest' ? 'Guest' : device.online ? 'Online' : 'Offline'}
-                </div>
-              </div>
-              {device.override && (
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-                    Override
-                  </label>
-                  <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>{device.override.action}</div>
-                </div>
-              )}
-              {device.override?.expires_at && (
-                <div>
-                  <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-                    Expires at
-                  </label>
-                  <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>
-                    {new Date(device.override.expires_at).toLocaleString()}
-                  </div>
-                </div>
-              )}
+            <div className="pk-kv">
+              <span>State</span>
+              <b>{guest ? 'Guest' : device.online ? 'Online' : 'Offline'}</b>
             </div>
-          </div>
+            <div className="pk-kv">
+              <span>Override</span>
+              <b>{device.override ? device.override.action : 'None, on schedule'}</b>
+            </div>
+            {device.override?.expires_at && (
+              <div className="pk-kv">
+                <span>Expires at</span>
+                <b>{new Date(device.override.expires_at).toLocaleString()}</b>
+              </div>
+            )}
+          </section>
         </div>
       )}
+      {tab === 'network' && <DeviceNetwork device={device} />}
 
-      {tab === 'network' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, flex: 1, overflowY: 'auto' }}>
-          {device.ip && (
-            <div className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-                IPv4
-              </label>
-              <div style={{ fontSize: 13, color: 'var(--p-ink)', fontFamily: 'monospace' }}>{device.ip}</div>
-            </div>
-          )}
-          {device.ipv6 && device.ipv6.length > 0 && (
-            <div>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-                IPv6
-              </label>
-              {device.ipv6.map((ip, i) => (
-                <div key={i} className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)', marginBottom: 4, fontSize: 13, color: 'var(--p-ink)', fontFamily: 'monospace' }}>
-                  {ip}
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-              MAC
-            </label>
-            <div style={{ fontSize: 13, color: 'var(--p-ink)', fontFamily: 'monospace' }}>{maskMac(device.mac)}</div>
-          </div>
-          {isPrivateMac(device.mac) && (
-            <Chip tone="amb" icon="wifi">
-              Yes, random
-            </Chip>
-          )}
-          {device.hostname && (
-            <div className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-                Hostname
-              </label>
-              <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>{device.hostname}</div>
-            </div>
-          )}
-          {device.first_seen && (
-            <div className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-                First seen
-              </label>
-              <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>
-                {new Date(device.first_seen).toLocaleDateString()}
-              </div>
-            </div>
-          )}
-          {device.last_seen && (
-            <div className="p-card" style={{ padding: 12, borderRadius: 8, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--p-sub)', marginBottom: 4 }}>
-                Last seen
-              </label>
-              <div style={{ fontSize: 13, color: 'var(--p-ink)' }}>
-                {new Date(device.last_seen).toLocaleString()}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
+      <ConfirmDelete
+        opened={confirm}
+        title={`Delete ${device.name}?`}
+        body="It will show up as a new device if it connects again."
+        onConfirm={() => del.mutate(device.id, { onSuccess: onDeleted })}
+        onClose={close}
+      />
     </div>
   )
 }

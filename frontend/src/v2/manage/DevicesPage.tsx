@@ -27,10 +27,17 @@ function DevicesBody() {
   const small = useMediaQuery('(max-width: 767px)')
   // desktop opens the first item rather than an empty detail pane; phone stays on the list
   const fallback = small ? null : ((tab === 'devices' ? all : groups.data ?? [])[0]?.id ?? null)
-  const selectedId = Number(first(query.item)) || fallback
+  const item = first(query.item)
+  const creating = item === 'new' && tab === 'groups'
+  const selectedId = Number(item) || fallback
+  // select a group (or null = drop ?item so the first item reopens)
+  const pick = (id: number | null) => {
+    const { item: _drop, ...rest } = query
+    router.push({ pathname: router.pathname, query: id === null ? rest : { ...rest, item: id } }, undefined, { shallow: true })
+  }
 
   const selectedDevice = all.find((d) => d.id === selectedId && tab === 'devices')
-  const selectedGroup = (groups.data ?? []).find((g) => g.id === selectedId && tab === 'groups')
+  const selectedGroup = (groups.data ?? []).find((g) => g.id === selectedId && tab === 'groups' && !creating)
 
   const override = useOverride()
   // detail buttons: lock until changed, unlock for 30 min, "schedule" = clear the override
@@ -71,22 +78,23 @@ function DevicesBody() {
       )}
       {!devices.isError && selectedDevice && (
         <DeviceDetail
+          key={selectedDevice.id}
           device={selectedDevice}
           kids={kids.data ?? []}
           groups={groups.data ?? []}
-          isGroupOpen={tab === 'groups'}
-          onClose={() => {}}
+          onDeleted={() => pick(null)}
           onRequestOverride={handleRequestOverride}
         />
       )}
-      {!devices.isError && selectedGroup && (
+      {!devices.isError && (selectedGroup || creating) && (
         <GroupDetail
+          key={selectedGroup?.id ?? 'new'}
           group={selectedGroup}
           devices={all}
           kids={kids.data ?? []}
           groups={groups.data ?? []}
           windows={windows.data ?? []}
-          onClose={() => {}}
+          onSelect={pick}
           onRequestOverride={handleRequestOverride}
         />
       )}

@@ -21,7 +21,8 @@ export function DevicesSection({
   onTabChange?: (tab: 'devices' | 'groups') => void
 }) {
   const router = useRouter()
-  const selectedId = Number(first(router.query.item)) || null
+  const item = first(router.query.item)
+  const selectedId = item === 'new' ? ('new' as const) : Number(item) || null
 
   const handleSelectDevice = useCallback(
     (id: number) => {
@@ -32,7 +33,7 @@ export function DevicesSection({
   )
 
   const handleSelectGroup = useCallback(
-    (id: number) => {
+    (id: number | 'new') => {
       router.push({ pathname: router.pathname, query: { ...router.query, item: id } }, undefined, { shallow: true })
       onTabChange?.('groups')
     },
@@ -44,7 +45,7 @@ export function DevicesSection({
       devices={devices}
       kids={kids}
       groups={groups}
-      selectedDevice={selectedId}
+      selectedDevice={selectedId === 'new' ? null : selectedId}
       selectedGroup={selectedId}
       onSelectDevice={handleSelectDevice}
       onSelectGroup={handleSelectGroup}

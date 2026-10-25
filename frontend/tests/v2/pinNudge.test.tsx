@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fridgeTheme } from '@/v2/theme'
 import { api } from '@/v2/api'
 import { PINsNudge } from '@/v2/today/PINsNudge'
-import { DeviceRow } from '@/v2/manage/DeviceRow'
+import { DeviceDetail } from '@/v2/manage/DeviceDetail'
 import { KidsPage } from '@/v2/manage/KidsPage'
 import type { Device, Kid, SharedDeviceNudge } from '@/v2/types'
 
@@ -18,9 +18,6 @@ let query: Record<string, string> = {}
 jest.mock('next/router', () => ({ useRouter: () => ({ query, push, replace }) }))
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
-jest.mock('@/v2/today/DeviceQuickMenu', () => ({
-  DeviceQuickMenu: ({ children }: { children: ReactNode }) => <>{children}</>,
-}))
 jest.mock('@/v2/parent/ParentShell', () => ({
   ParentShell: ({ children }: { children: ReactNode }) => <>{children}</>,
 }))
@@ -113,8 +110,8 @@ describe('PINsNudge', () => {
   })
 })
 
-describe('DeviceRow needs_pins note', () => {
-  const row = (d: Device) => render(wrap(<DeviceRow device={d} kids={kids} />))
+describe('DeviceDetail needs_pins note', () => {
+  const row = (d: Device) => render(wrap(<DeviceDetail device={d} kids={kids} onRequestOverride={() => {}} />))
 
   test('shows note and Set PINs navigates to the first owner', async () => {
     row(device)
@@ -126,18 +123,6 @@ describe('DeviceRow needs_pins note', () => {
   test('hidden when needs_pins is false', () => {
     row({ ...device, needs_pins: false })
     expect(screen.queryByRole('button', { name: 'Set PINs' })).toBeNull()
-  })
-
-  test('uses parent token CSS variables for colors', () => {
-    const { container } = row(device)
-    const noteDiv = container.querySelector('div[style*="border"]')
-    expect(noteDiv?.style.border).toContain('var(--p-line)')
-    expect(noteDiv?.style.backgroundColor).toContain('var(--p-soft)')
-    const p = screen.getByText(/share this device/)
-    expect(p).toHaveStyle('color: var(--p-sub)')
-    const button = screen.getByRole('button', { name: 'Set PINs' })
-    expect(button).toHaveStyle('backgroundColor: var(--p-ink)')
-    expect(button).toHaveStyle('color: var(--p-card)')
   })
 })
 

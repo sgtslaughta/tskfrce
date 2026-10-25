@@ -140,3 +140,16 @@
   color: var(--p-sub);
   font-size: 13px;
 }
+
+/* Device and group detail panes (extend the pk-* cards) */
+[data-look='parent'] .pk-mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; }
+[data-look='parent'] .pk-empty { padding: 8px 4px; text-align: center; }
+[data-look='parent'] .pk-pill-plain { padding: 8px 14px; }
+[data-look='parent'] .pk-pill-plain[aria-pressed='true'] { padding: 7.5px 13.5px; background: var(--p-acc); border-color: var(--p-ink); color: #292928; }
+[data-look='parent'] .pk-pill:disabled { opacity: 0.5; cursor: not-allowed; }
+[data-look='parent'] .pk-panel[data-tone='amber'] { background: var(--p-amb); border-color: transparent; }
+[data-look='parent'] .pk-panel[data-tone='amber'] h3,
+[data-look='parent'] .pk-panel[data-tone='amber'] .pk-hint { color: var(--p-ambink); }
+[data-look='parent'] .pk-note { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--p-soft); }
+[data-look='parent'] .pk-note p { color: var(--p-sub); font-size: 13px; line-height: 1.45; }
+[data-look='parent'] .pk-head-t .pk-chips { margin-top: 8px; }

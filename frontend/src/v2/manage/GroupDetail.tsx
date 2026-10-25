@@ -1,102 +1,172 @@
+import { useEffect, useState } from 'react'
+import { useDisclosure } from '@mantine/hooks'
+import { useDeleteGroup, useSaveGroup } from '@/v2/hooks/useDevices'
 import { HeaderChips } from '@/v2/parent/HeaderChips'
-import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
-import { HoursTimeline } from './HoursTimeline'
 import type { Device, Group, Kid, TimeWindow } from '@/v2/types'
+import { ConfirmDelete } from './ConfirmDelete'
+import { HoursTimeline } from './HoursTimeline'
+import { nameOf } from './choreMeta'
+import { toastFail, toastOk, toasts } from '../notify'
 
 interface Props {
-  group: Group
+  /** Omit to create a new group. */
+  group?: Group
   devices: Device[]
   kids: Kid[]
   groups?: Group[]
   windows?: TimeWindow[]
-  onClose: () => void
+  /** Select a group, or null to close the detail. */
+  onSelect: (id: number | null) => void
   onRequestOverride: (req: { kind: string; id: number; action: string }) => void
 }
 
-const ownerNames = (kids: Kid[], ownerIds: number[] | undefined) => {
-  if (!ownerIds || ownerIds.length === 0) return 'No owners'
-  return kids
-    .filter((k) => ownerIds.includes(k.id))
-    .map((k) => k.full_name || k.username)
-    .join(', ')
-}
+/**
+ * Group editor. An existing group saves as you go (name on blur, members on tap);
+ * a new group is a small form with Create / Cancel.
+ */
+export function GroupDetail({ group, devices, kids, groups, windows, onSelect, onRequestOverride }: Props) {
+  const save = useSaveGroup()
+  const del = useDeleteGroup()
+  const [confirm, { open, close }] = useDisclosure(false)
+  const [name, setName] = useState(group?.name ?? '')
+  const [draftIds, setDraftIds] = useState<number[]>([])
+  useEffect(() => setName(group?.name ?? ''), [group?.name])
 
-export function GroupDetail({ group, devices, kids, groups, windows, onClose, onRequestOverride }: Props) {
-  const groupDevices = devices.filter((d) => group.device_ids.includes(d.id))
-  const locked = groupDevices.filter((d) => d.override?.action === 'lock').length
-  const open = groupDevices.length - locked
+  const ids = group ? group.device_ids : draftIds
+  const members = devices.filter((d) => ids.includes(d.id))
+  const locked = members.filter((d) => d.override?.action === 'lock').length
+  const owners = kids.filter((k) => group?.owner_ids?.includes(k.id)).map(nameOf).join(', ')
 
-  const headerChips = [
-    { text: `${groupDevices.length} devices` },
-    { text: `${open} open` },
+  const chips = [
+    { text: `${members.length} ${members.length === 1 ? 'device' : 'devices'}` },
+    { text: `${members.length - locked} open` },
     { text: `${locked} locked` },
-    { text: ownerNames(kids, group.owner_ids) },
+    ...(owners ? [{ text: owners }] : []),
   ]
 
+  const toggle = (id: number) => {
+    const next = ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]
+    if (group) save.mutate({ id: group.id, name: group.name, device_ids: next }, toasts('Saved'))
+    else setDraftIds(next)
+  }
+  const rename = () => {
+    const n = name.trim()
+    if (!group) return
+    if (!n) setName(group.name)
+    else if (n !== group.name) save.mutate({ id: group.id, name: n, device_ids: group.device_ids }, toasts('Renamed'))
+  }
+  const create = () =>
+    save.mutate(
+      { name: name.trim(), device_ids: draftIds },
+      {
+        onError: toastFail,
+        onSuccess: (g) => {
+          toastOk('Created')
+          onSelect((g as Group).id)
+        },
+      },
+    )
+
   return (
-    <div className="p-detail-column p-grid" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div>
-        <h2 style={{ margin: '0 0 8px 0', fontSize: 20, fontWeight: 600, color: 'var(--p-ink)' }}>
-          {group.name}
-        </h2>
-        <HeaderChips items={headerChips} />
-      </div>
-
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button className="p-btn" data-variant="red" onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'lock' })}>
-          <Icon name="lock" size={16} />
-          Lock group
-        </button>
-        <button className="p-btn" onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'unlock' })}>
-          <Icon name="lock_open" size={16} />
-          Unlock 30 min
-        </button>
-        <button className="p-btn" onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'schedule' })}>
-          <Icon name="arrow_back" size={16} />
-          Back to schedule
-        </button>
-      </div>
-
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 12 }}>
-        <div className="p-card" style={{ padding: 16, borderRadius: 16, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
-          <h3 style={{ margin: '0 0 12px 0', fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>
-            Group name
-          </h3>
-          <div style={{ padding: '8px 12px', background: 'var(--p-card)', border: '1px solid var(--p-line)', borderRadius: 8, fontSize: 13, color: 'var(--p-ink)' }}>
-            {group.name}
-          </div>
+    <div className="pk-detail">
+      <header className="pk-head">
+        <span className="pk-tile pk-tile-lg">
+          <Icon name="devices" size={30} />
+        </span>
+        <div className="pk-head-t">
+          <h2>{(group ? group.name : name).trim() || 'New group'}</h2>
+          <HeaderChips items={chips} />
         </div>
-
-        <div className="p-card" style={{ padding: 16, borderRadius: 16, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
-          <h3 style={{ margin: '0 0 12px 0', fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>
-            Devices in group
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {groupDevices.map((d) => (
-              <div key={d.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--p-line)', fontSize: 13, color: 'var(--p-ink)' }}>
-                <span>{d.name}</span>
-                <button className="p-btn" style={{ fontSize: 11, padding: '4px 8px' }} onClick={() => {}}>
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
-          <button className="p-btn" style={{ marginTop: 12, width: '100%' }} onClick={() => {}}>
-            <Icon name="add" size={16} />
-            Add a device
-          </button>
-        </div>
-
-        {windows && (
-          <div className="p-card" style={{ padding: 16, borderRadius: 16, border: '1px solid var(--p-line)', backgroundColor: 'var(--p-soft)' }}>
-            <h3 style={{ margin: '0 0 12px 0', fontSize: 13, fontWeight: 600, color: 'var(--p-ink)' }}>
-              Hours for {group.name}
-            </h3>
-            <HoursTimeline windows={windows ?? []} kids={kids} groups={groups ?? []} />
+        {group && (
+          <div className="pk-actions">
+            <button type="button" className="p-btn" data-variant="red" onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'lock' })}>
+              <Icon name="lock" size={16} />
+              Lock group
+            </button>
+            <button type="button" className="p-btn" onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'unlock' })}>
+              <Icon name="lock_open" size={16} />
+              Unlock 30 min
+            </button>
+            <button type="button" className="p-btn" onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'schedule' })}>
+              <Icon name="arrow_back" size={16} />
+              Back to schedule
+            </button>
+            <button type="button" className="p-btn" data-variant="red" onClick={open}>
+              <Icon name="delete" size={16} />
+              Delete
+            </button>
           </div>
         )}
+      </header>
+
+      <div className="pk-grid">
+        <section className="pk-panel" aria-label="Name">
+          <h3>
+            <Icon name="edit" size={18} />
+            Group name
+          </h3>
+          <input
+            className="pk-input"
+            aria-label="Group name"
+            placeholder="Group name"
+            value={name}
+            onChange={(e) => setName(e.currentTarget.value)}
+            onBlur={rename}
+            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+          />
+        </section>
+
+        <section className="pk-panel" aria-label="Devices in group">
+          <h3>
+            <Icon name="devices_other" size={18} />
+            Devices in group
+          </h3>
+          {devices.length === 0 ? (
+            <p className="pk-hint">No devices yet.</p>
+          ) : (
+            <div className="pk-pills" role="group" aria-label="Devices in group">
+              {devices.map((d) => (
+                <button key={d.id} type="button" className="pk-pill pk-pill-plain" aria-pressed={ids.includes(d.id)} disabled={save.isPending && !!group} onClick={() => toggle(d.id)}>
+                  {d.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {group && windows && (
+          <section className="pk-panel pk-span" aria-label="Hours">
+            <h3>
+              <Icon name="schedule" size={18} />
+              Hours for {group.name}
+            </h3>
+            <HoursTimeline windows={windows} kids={kids} groups={groups ?? []} />
+          </section>
+        )}
       </div>
+
+      {!group && (
+        <div className="pk-foot">
+          <button type="button" className="p-btn" onClick={() => onSelect(null)}>
+            Cancel
+          </button>
+          <button type="button" className="p-btn" data-variant="accent" onClick={create} disabled={!name.trim() || save.isPending}>
+            <Icon name="check" />
+            Create group
+          </button>
+        </div>
+      )}
+
+      {group && (
+        <ConfirmDelete
+          opened={confirm}
+          title={`Delete ${group.name}?`}
+          body="The devices stay. This group's hours are removed."
+          onConfirm={() => del.mutate(group.id, { onSuccess: () => onSelect(null) })}
+          onClose={close}
+        />
+      )}
     </div>
   )
 }
