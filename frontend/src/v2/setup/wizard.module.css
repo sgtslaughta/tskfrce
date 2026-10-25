@@ -77,6 +77,15 @@
   background: #323230;
 }
 
+.st:focus-visible {
+  outline: 2px solid var(--p-acc);
+  outline-offset: -2px;
+}
+
+.st {
+  transition: background-color var(--dur-1) var(--ease-out);
+}
+
 .st .dot {
   width: 28px;
   height: 28px;
@@ -193,6 +202,8 @@
 
 .main h2 {
   margin: 0;
+  font-family: var(--font-parent), 'DM Sans', system-ui, sans-serif;
+  font-weight: 600;
   font-size: 30px;
   letter-spacing: -0.01em;
 }

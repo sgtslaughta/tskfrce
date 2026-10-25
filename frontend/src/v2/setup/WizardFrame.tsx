@@ -58,12 +58,18 @@ export function WizardFrame({
             return (
               <div
                 key={s.num}
+                data-step={s.num}
                 className={`${styles.st} ${isDone ? styles.done : ''} ${isActive ? styles.on : ''}`}
                 onClick={() => canOpen && onStepClick?.(i + 1)}
+                onKeyDown={(e) => {
+                  if (canOpen && (e.key === 'Enter' || e.key === ' ')) {
+                    e.preventDefault()
+                    onStepClick?.(i + 1)
+                  }
+                }}
                 role={canOpen ? 'button' : undefined}
                 tabIndex={canOpen ? 0 : -1}
                 aria-current={isActive ? 'step' : undefined}
-                aria-label={`Step ${s.num}, ${s.title}`}
               >
                 <span className={styles.dot}>{isDone ? <span className="ms" aria-hidden="true">check</span> : s.num}</span>
                 <div>
@@ -84,7 +90,14 @@ export function WizardFrame({
       </aside>
 
       {/* Right panel */}
-      <div className={styles.main}>
+      <form
+        className={styles.main}
+        noValidate
+        onSubmit={(e) => {
+          e.preventDefault()
+          if (!busy) onNext()
+        }}
+      >
         {title && (
           <>
             {step <= STEPS.length && <div className={styles.eyebrow}>Step {step} of {STEPS.length}{step === 7 ? ' · optional' : ''}</div>}
@@ -107,12 +120,12 @@ export function WizardFrame({
                 Skip
               </Button>
             )}
-            <Button onClick={onNext} loading={busy} leftSection={nextLabel === 'Finish' ? <span className="ms" aria-hidden="true">check</span> : <span className="ms" aria-hidden="true">arrow_forward</span>}>
+            <Button type="submit" loading={busy} leftSection={nextLabel === 'Finish' ? <span className="ms" aria-hidden="true">check</span> : <span className="ms" aria-hidden="true">arrow_forward</span>}>
               {nextLabel}
             </Button>
           </Group>
         </Group>
-      </div>
+      </form>
     </main>
   )
 }

@@ -98,7 +98,7 @@ describe('WizardFrame', () => {
     )
 
     // Steps 1 and 2 should be marked as done (have check icon)
-    const stepElements = container.querySelectorAll('[aria-label^="Step"]')
+    const stepElements = container.querySelectorAll('[data-step]')
     expect(stepElements.length).toBe(7)
 
     // Step 1 should be done
@@ -136,7 +136,7 @@ describe('WizardFrame', () => {
       </MantineProvider>,
     )
 
-    const stepElements = container.querySelectorAll('[aria-label^="Step"]')
+    const stepElements = container.querySelectorAll('[data-step]')
 
     // Try to click step 3 from step 1 (should not call onStepClick)
     fireEvent.click(stepElements[2])
@@ -161,7 +161,7 @@ describe('WizardFrame', () => {
       </MantineProvider>,
     )
 
-    const stepElements = container.querySelectorAll('[aria-label^="Step"]')
+    const stepElements = container.querySelectorAll('[data-step]')
 
     // Steps 1 and 2 should be clickable (reached step 2, so maxStepReached is 2)
     expect(stepElements[0]).toHaveAttribute('role', 'button')
@@ -171,5 +171,36 @@ describe('WizardFrame', () => {
     expect(stepElements[2]).not.toHaveAttribute('role', 'button')
     expect(stepElements[3]).not.toHaveAttribute('role', 'button')
     expect(stepElements[4]).not.toHaveAttribute('role', 'button')
+  })
+
+  test('Enter in a field submits the form, once, and not while busy', () => {
+    const onNext = jest.fn()
+    const { rerender } = wrap(
+      <WizardFrame step={1} onNext={onNext}>
+        <input aria-label="Name" />
+      </WizardFrame>,
+    )
+    fireEvent.submit(screen.getByLabelText('Name'))
+    expect(onNext).toHaveBeenCalledTimes(1)
+    rerender(
+      <MantineProvider>
+        <WizardFrame step={1} onNext={onNext} busy>
+          <input aria-label="Name" />
+        </WizardFrame>
+      </MantineProvider>,
+    )
+    fireEvent.submit(screen.getByLabelText('Name'))
+    expect(onNext).toHaveBeenCalledTimes(1)
+  })
+
+  test('a reached step opens with Enter from the keyboard', () => {
+    const onStepClick = jest.fn()
+    const { container } = wrap(
+      <WizardFrame step={2} onNext={() => {}} onStepClick={onStepClick}>
+        <div>Content</div>
+      </WizardFrame>,
+    )
+    fireEvent.keyDown(container.querySelectorAll('[data-step]')[0], { key: 'Enter' })
+    expect(onStepClick).toHaveBeenCalledWith(1)
   })
 })
