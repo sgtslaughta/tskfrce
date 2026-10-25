@@ -38,6 +38,7 @@ export function ChoreTypePanel({ opened, type, onClose, onSaved, onDeleted }: Pr
       position="right"
       size={small ? '100%' : 420}
       title={type ? 'Edit chore type' : 'New chore type'}
+      closeButtonProps={{ 'aria-label': 'Close' }}
       zIndex={350} // above the chat dock (300/301); ConfirmDelete (400) stays on top
       classNames={{ content: 'pk-sheet', header: 'pk-sheet-head', title: 'pk-sheet-title', body: 'pk-sheet-body' }}
     >

@@ -30,7 +30,7 @@ export function TellParent({ c }: { c: KidChore }) {
           Something wrong? Tell a parent
         </Button>
       )}
-      <Drawer opened={open} onClose={close} position="bottom" zIndex={400} title="Tell Mom or Dad"
+      <Drawer opened={open} onClose={close} position="bottom" zIndex={400} title="Tell Mom or Dad" closeButtonProps={{ 'aria-label': 'Close' }}
         styles={{
           content: { height: 'auto', maxHeight: '90vh', display: 'flex', flexDirection: 'column' },
           body: { overflowY: 'auto', paddingBottom: 0 },
