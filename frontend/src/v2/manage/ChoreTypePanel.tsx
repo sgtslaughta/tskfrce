@@ -38,7 +38,8 @@ export function ChoreTypePanel({ opened, type, onClose, onSaved, onDeleted }: Pr
       position="right"
       size={small ? '100%' : 420}
       title={type ? 'Edit chore type' : 'New chore type'}
-      classNames={{ content: 'pk-sheet', header: 'pk-sheet', title: 'pk-sheet-title' }}
+      zIndex={350} // above the chat dock (300/301); ConfirmDelete (400) stays on top
+      classNames={{ content: 'pk-sheet', header: 'pk-sheet-head', title: 'pk-sheet-title', body: 'pk-sheet-body' }}
     >
       <TypeForm type={type} onClose={onClose} onSaved={onSaved} onDeleted={onDeleted} />
     </Drawer>
@@ -90,7 +91,10 @@ function TypeForm({ type, onClose, onSaved, onDeleted }: Omit<Props, 'opened'>) 
       <div className="pk-field pk-type-icons">
         <span className="pk-label">Icon</span>
         <span className="pk-hint pk-hint-tight">Search or pick</span>
-        <GlyphPicker value={glyph} onChange={setGlyph} choices={choices} />
+        <div className="pk-glyph-search">
+          <Icon name="search" size={18} />
+          <GlyphPicker value={glyph} onChange={setGlyph} choices={choices} />
+        </div>
       </div>
       <div className="pk-field">
         <span className="pk-label">Notes a kid can send</span>
@@ -108,22 +112,19 @@ function TypeForm({ type, onClose, onSaved, onDeleted }: Omit<Props, 'opened'>) 
             </button>
           </div>
         ))}
-        <div className="pk-add">
+        <label className="pk-add" data-disabled={full}>
+          <Icon name="add" size={16} />
           <input
-            className="pk-input"
             aria-label="Add a note"
             placeholder={full ? `${MAX_NOTES} notes is the most` : 'Add a note'}
             value={next}
             maxLength={MAX_LABEL}
             disabled={full}
+            enterKeyHint="done"
             onChange={(e) => setNext(e.currentTarget.value)}
             onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add())}
           />
-          <button type="button" className="p-btn" onClick={add} disabled={!next.trim() || full}>
-            <Icon name="add" />
-            Add
-          </button>
-        </div>
+        </label>
       </div>
       <div className="pk-field">
         <span className="pk-label">Added to every type</span>
@@ -134,7 +135,7 @@ function TypeForm({ type, onClose, onSaved, onDeleted }: Omit<Props, 'opened'>) 
           </div>
         ))}
       </div>
-      <div className="pk-foot">
+      <div className="pk-foot pk-sheet-foot">
         {type && !type.builtin && (
           <button type="button" className="p-btn pk-foot-start" data-variant="red" onClick={open}>
             <Icon name="delete" />

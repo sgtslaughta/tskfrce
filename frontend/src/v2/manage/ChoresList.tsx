@@ -17,17 +17,18 @@ interface Props {
 export function ChoresList({ chores, kids, selected, onSelect }: Props) {
   const byId = new Map(kids.map((k) => [k.id, k]))
   const all = useChoreTypes().data ?? []
-  // type position order, Other last; chores whose type isn't loaded yet fall in an untitled group at the end
+  // type position order, Other last; chores whose type isn't loaded fall into Other
   const isOther = (t: ChoreType) => t.builtin && t.name === 'Other'
   const order = [...all.filter((t) => !isOther(t)), ...all.filter(isOther)]
   const known = new Set(all.map((t) => t.id))
+  const unknown = chores.filter((c) => !known.has(c.type_id))
   const groups: { key: string; name: string; glyph: string; list: LibChore[] }[] = order.map((t) => ({
     key: String(t.id),
     name: t.name,
     glyph: t.glyph,
-    list: chores.filter((c) => c.type_id === t.id),
+    list: [...chores.filter((c) => c.type_id === t.id), ...(isOther(t) ? unknown : [])],
   }))
-  groups.push({ key: 'rest', name: 'Other', glyph: 'task_alt', list: chores.filter((c) => !known.has(c.type_id)) })
+  if (!order.some(isOther)) groups.push({ key: 'rest', name: 'Other', glyph: 'task_alt', list: unknown })
   const glyphOf = new Map(all.map((t) => [t.id, t.glyph]))
   const card = (c: LibChore) => {
         const ids = usedBy(c)

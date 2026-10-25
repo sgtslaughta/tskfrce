@@ -8,6 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fridgeTheme } from '@/v2/theme'
 import { api } from '@/v2/api'
 import { ChoreDetail, clearChoreDrafts } from '@/v2/manage/ChoreDetail'
+import { ChoresList } from '@/v2/manage/ChoresList'
 import type { ChoreType, Kid, LibChore } from '@/v2/types'
 
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
@@ -109,5 +110,19 @@ describe('chore editor: type, steps, notes', () => {
     for (const n of ["Don't understand it", 'Need help', 'Ran out of time', "Can't do it today"]) {
       expect(within(notes).getByText(n)).toBeInTheDocument()
     }
+  })
+
+  test('list groups by type, Other last, and a chore of an unknown type joins Other', async () => {
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MantineProvider theme={fridgeTheme}>
+          <ChoresList kids={kids} onSelect={jest.fn()} chores={[chore({ id: 1, type_id: 3, title: 'A' }), chore({ id: 2, type_id: 99, title: 'B' }), chore({ id: 3, type_id: 2, title: 'C' })]} />
+        </MantineProvider>
+      </QueryClientProvider>,
+    )
+    await screen.findByText('Pets')
+    expect(screen.getAllByText('Other')).toHaveLength(1)
+    const text = document.body.textContent!
+    expect(text.indexOf('Pets')).toBeLessThan(text.indexOf('Other'))
   })
 })

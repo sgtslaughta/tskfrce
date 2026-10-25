@@ -80,7 +80,7 @@ export function ChoreSteps({ steps, onChange, next, onNext, choreDue }: Props) {
               </button>
             )}
             <div className="pk-step" data-step={i}>
-              <span className="pk-grab" onPointerDown={(e) => (e.preventDefault(), drag(i))} title="Drag to reorder">
+              <span className="pk-grab" aria-hidden onPointerDown={(e) => (e.preventDefault(), drag(i))} title="Drag to reorder">
                 <Icon name="drag_indicator" size={18} />
               </span>
               <span className="pk-num" data-free={!chained(i)}>
@@ -116,22 +116,19 @@ export function ChoreSteps({ steps, onChange, next, onNext, choreDue }: Props) {
           </Fragment>
         ))}
       </div>
-      <div className="pk-add">
+      <label className="pk-add" data-disabled={full}>
+        <Icon name="add" size={18} />
         <input
-          className="pk-input"
           aria-label="Add a step"
           placeholder={full ? `${MAX_STEPS} steps is the most` : 'Add a step'}
           value={next}
           maxLength={100}
           disabled={full}
+          enterKeyHint="done"
           onChange={(e) => onNext(e.currentTarget.value)}
           onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), add())}
         />
-        <button type="button" className="p-btn" onClick={add} disabled={!next.trim() || full}>
-          <Icon name="add" />
-          Add step
-        </button>
-      </div>
+      </label>
       {steps.length > 1 && (
         <div className="pk-legend">
           <span>

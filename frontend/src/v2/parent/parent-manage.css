@@ -196,8 +196,13 @@
 [data-look='parent'] .pk-ib { width: 32px; height: 32px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--p-sub); cursor: pointer; transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
 [data-look='parent'] .pk-ib:hover:not(:disabled) { background: var(--p-card); color: var(--p-ink); }
 [data-look='parent'] .pk-ib:disabled { opacity: 0.35; cursor: default; }
-[data-look='parent'] .pk-add { display: flex; gap: 8px; }
-[data-look='parent'] .pk-add .pk-input { flex: 1; min-width: 0; background: transparent; border: 1.5px dashed var(--p-line); }
+/* "+ Add a step" / "+ Add a note": one dashed row that is the input */
+[data-look='parent'] .pk-add { display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px dashed var(--p-line); border-radius: 12px; color: var(--p-sub); cursor: text; }
+[data-look='parent'] .pk-add:focus-within { border-color: var(--p-ink); border-style: solid; color: var(--p-ink); }
+[data-look='parent'] .pk-add[data-disabled='true'] { opacity: 0.6; cursor: default; }
+[data-look='parent'] .pk-add input { flex: 1; min-width: 0; padding: 9px 0; border: 0; outline: 0; background: transparent; color: var(--p-ink); font: 500 13.5px var(--font-parent), system-ui, sans-serif; }
+[data-look='parent'] .pk-add input::placeholder { color: var(--p-sub); }
+[data-look='parent'] .pk-add input:focus { box-shadow: none; border-color: transparent; } /* the dashed row shows focus */
 
 /* chore type chips (selected = accent with a pencil) and the notes a kid can send */
 [data-look='parent'] .pk-types { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -220,6 +225,15 @@ html[data-look='parent'] .pk-sheet { background: var(--p-card); color: var(--p-i
 html[data-look='parent'] .mantine-Drawer-content.pk-sheet { border-left: 1px solid var(--p-line); }
 html[data-look='parent'] .pk-sheet-title { font-size: 18px; font-weight: 700; color: var(--p-ink); }
 html[data-look='parent'] .pk-sheet .mantine-Drawer-close { color: var(--p-sub); }
+html[data-look='parent'] .pk-sheet.pk-sheet { display: flex; flex-direction: column; }
+html[data-look='parent'] .pk-sheet-head.pk-sheet-head { border-bottom: 0; padding: 20px 20px 0; min-height: 0; background: var(--p-card); }
+html[data-look='parent'] .pk-sheet-body.pk-sheet-body { flex: 1; display: flex; flex-direction: column; padding: 14px 20px 0; }
+html[data-look='parent'] .pk-sheet-body > .pk-form { flex: 1; }
+/* footer pinned to the bottom of the drawer, even when the form scrolls */
+html[data-look='parent'] .pk-sheet-foot { position: sticky; bottom: 0; margin-top: auto; padding: 12px 0 20px; background: var(--p-card); }
+[data-look='parent'] .pk-glyph-search { position: relative; }
+[data-look='parent'] .pk-glyph-search > .ms { position: absolute; left: 12px; top: 9px; color: var(--p-sub); pointer-events: none; }
+[data-look='parent'] .pk-glyph-search .p-glyph-search { padding-left: 38px; }
 [data-look='parent'] .pk-type-icons .p-glyph-grid { grid-template-columns: repeat(8, 1fr); }
 [data-look='parent'] .pk-type-icons .p-glyph-item { aspect-ratio: 1; padding: 0; justify-content: center; color: var(--p-sub); }
 [data-look='parent'] .pk-type-icons .p-glyph-item .ms { font-size: 20px !important; }

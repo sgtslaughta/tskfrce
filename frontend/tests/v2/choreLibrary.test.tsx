@@ -164,7 +164,7 @@ describe('chore detail', () => {
     })
     await show({ item: 'new' })
     expect(within(who()).getByText(/Save the chore first/)).toBeInTheDocument()
-    await userEvent.type(within(detail()).getByLabelText('Chore'), 'Laundry')
+    await userEvent.type(within(detail()).getByLabelText('Chore name'), 'Laundry')
     for (const s of ['Fold clothes', 'Make bed']) {
       await userEvent.type(within(detail()).getByLabelText('Add a step'), `${s}{Enter}`)
     }
@@ -226,21 +226,20 @@ describe('chore detail', () => {
     serve({ '/chores/': [{ ...defs[0], steps }, ...defs.slice(1)] })
     await show({ item: String(defs[0].id) })
     expect(within(detail()).getByLabelText('Add a step')).toBeDisabled()
-    expect(within(detail()).getByRole('button', { name: 'Add step' })).toBeDisabled()
     expect(within(detail()).getByText(/20 of 20 steps/)).toBeInTheDocument()
   })
 
   test('a half-typed new chore survives switching away and back, and is gone after Cancel', async () => {
     await show({ item: 'new' })
-    await userEvent.type(within(detail()).getByLabelText('Chore'), 'Water plants')
+    await userEvent.type(within(detail()).getByLabelText('Chore name'), 'Water plants')
     cleanup()
     await show({ item: 'new' })
-    expect(within(detail()).getByLabelText('Chore')).toHaveValue('Water plants')
+    expect(within(detail()).getByLabelText('Chore name')).toHaveValue('Water plants')
     expect(within(detail()).getByText('Unsaved changes (restored)')).toBeInTheDocument()
     await userEvent.click(within(detail()).getByRole('button', { name: 'Cancel' }))
     cleanup()
     await show({ item: 'new' })
-    expect(within(detail()).getByLabelText('Chore')).toHaveValue('')
+    expect(within(detail()).getByLabelText('Chore name')).toHaveValue('')
   })
 
   test('Enter in "Add a step" adds it and flags unsaved changes; step buttons have tooltips', async () => {

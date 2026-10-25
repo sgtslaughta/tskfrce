@@ -173,7 +173,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
             Basics
           </h3>
           <label className="pk-field">
-            <span className="pk-label">Chore</span>
+            <span className="pk-label">Chore name</span>
             <input className="pk-input" value={title} maxLength={100} onChange={(e) => setTitle(e.currentTarget.value)} />
           </label>
           <ChoreTypePicker types={types} value={typeId} onPick={setPicked} onEdit={() => setPanel(typeId ?? null)} onNew={() => setPanel('new')} />
