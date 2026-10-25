@@ -43,6 +43,7 @@ class ThreadMessage(Base):
     step_id = Column(Integer, ForeignKey("chore_steps.id", ondelete="SET NULL"), nullable=True)
     note_label = Column(String(40), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    edited_at = Column(DateTime, nullable=True)
 
     author = relationship("User", foreign_keys=[author_id])
 

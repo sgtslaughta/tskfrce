@@ -53,6 +53,7 @@ def _msg(t: Thread, m: ThreadMessage) -> dict:
         "body": m.body,
         "photo_url": chat.photo_url(t, m),
         "created_at": utc_z(m.created_at),
+        "edited_at": utc_z(m.edited_at) if m.edited_at else None,
     }
 
 
@@ -189,6 +190,33 @@ def read(
     chat.mark_read(db, _thread(db, user, thread_id), user)
     db.commit()
     return {"ok": True}
+
+
+class EditIn(BaseModel):
+    body: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=2000)]
+
+
+@router.patch("/messages/{message_id}")
+def edit_message(
+    message_id: int,
+    body: EditIn,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    m = db.get(ThreadMessage, message_id)
+    t = db.get(Thread, m.thread_id) if m else None
+    if t is None or not chat.can_access(db, user, t):
+        raise HTTPException(404, "We couldn't find that message.")
+    if (
+        m.kind != "user"
+        or m.author_id != user.id
+        or (user.role != UserRole.PARENT and datetime.utcnow() - m.created_at > DELETE_WINDOW)
+    ):
+        raise HTTPException(403, "You can only edit your own messages for 5 minutes.")
+    m.body = body.body
+    m.edited_at = datetime.utcnow()
+    db.commit()
+    return _msg(t, m)
 
 
 @router.delete("/messages/{message_id}", status_code=204, response_class=Response)

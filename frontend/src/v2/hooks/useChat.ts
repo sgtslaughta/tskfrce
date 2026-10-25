@@ -26,6 +26,7 @@ export interface ChatMessage {
   body: string | null
   photo_url: string | null
   created_at: string
+  edited_at?: string | null
 }
 
 export interface ThreadPage {
@@ -103,6 +104,23 @@ export const usePost = (kid = false) => {
         body: { body: body || null, photo_id: photoId ?? null },
         kid,
       }),
+    onSuccess: refresh,
+  })
+}
+
+export const useEditMessage = (kid = false) => {
+  const refresh = useRefresh(kid)
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: string }) =>
+      api<ChatMessage>(`/chat/messages/${Number(id)}`, { method: 'PATCH', body: { body }, kid }),
+    onSuccess: refresh,
+  })
+}
+
+export const useDeleteMessage = (kid = false) => {
+  const refresh = useRefresh(kid)
+  return useMutation({
+    mutationFn: (id: number) => api(`/chat/messages/${Number(id)}`, { method: 'DELETE', kid }),
     onSuccess: refresh,
   })
 }

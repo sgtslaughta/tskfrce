@@ -254,3 +254,41 @@ def test_thread_list_previews_latest_message(client, db, parent_headers):
     assert row["last_message_at"]
     quiet = next(r for r in rows if r["kind"] == "family")
     assert quiet["last_text"] is None and quiet["last_author"] is None
+
+
+def test_edit_rules(client, db, parent_headers):
+    leo, maya, lh, mh, _ = _world(db, client, parent_headers)
+    tid = _tid(client, lh, "family", "family")
+    mine = _say(client, lh, tid).json()["id"]
+    r = client.patch(f"{C}/messages/{mine}", json={"body": " fixed "}, headers=lh)
+    assert r.status_code == 200 and r.json()["body"] == "fixed" and r.json()["edited_at"]
+    assert client.patch(f"{C}/messages/{mine}", json={"body": " "}, headers=lh).status_code == 422
+    assert client.patch(f"{C}/messages/{mine}", json={"body": "x"}, headers=mh).status_code == 403
+    assert (
+        client.patch(f"{C}/messages/{mine}", json={"body": "x"}, headers=parent_headers).status_code
+        == 403
+    )
+    db.get(ThreadMessage, mine).created_at = datetime.utcnow() - timedelta(minutes=6)
+    db.commit()
+    assert client.patch(f"{C}/messages/{mine}", json={"body": "x"}, headers=lh).status_code == 403
+    sysm = ThreadMessage(thread_id=tid, author_id=None, kind="system", body="done")
+    db.add(sysm)
+    db.commit()
+    assert (
+        client.patch(
+            f"{C}/messages/{sysm.id}", json={"body": "x"}, headers=parent_headers
+        ).status_code
+        == 403
+    )
+
+
+def test_parent_edits_own_any_time(client, db, parent_headers):
+    leo, maya, lh, mh, _ = _world(db, client, parent_headers)
+    tid = _tid(client, parent_headers, "family", "family")
+    mid = _say(client, parent_headers, tid).json()["id"]
+    db.get(ThreadMessage, mid).created_at = datetime.utcnow() - timedelta(days=2)
+    db.commit()
+    r = client.patch(f"{C}/messages/{mid}", json={"body": "later"}, headers=parent_headers)
+    assert r.status_code == 200
+    got = client.get(f"{C}/threads/family/family", headers=lh).json()["messages"][-1]
+    assert got["body"] == "later" and got["edited_at"].endswith("Z")

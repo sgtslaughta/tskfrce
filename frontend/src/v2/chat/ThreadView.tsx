@@ -20,6 +20,7 @@ import { LoadError, LoadingCards } from '@/v2/components/States'
 import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { toastFail } from '@/v2/notify'
 import { Photo } from './ChatPhoto'
+import { EditBox, MessageActions } from './MessageActions'
 import { DaySep, ParentBubble, dayName } from './ParentBubble'
 import { ThreadHead } from './ThreadHead'
 import { ThreadSidePanel } from './ThreadSidePanel'
@@ -29,6 +30,7 @@ const dayLabel = (iso: string) =>
 const timeLabel = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 
 function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
+  const [editing, setEditing] = useState(false)
   if (m.kind === 'system') {
     return (
       <div data-testid="msg-system" style={{ textAlign: 'center', margin: '8px 0', fontSize: '0.85rem', color: 'var(--p-sub)' }}>
@@ -45,6 +47,7 @@ function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
     >
       {!mine && <span style={{ fontSize: '0.85rem', color: 'var(--p-sub)' }}>{m.author_name ?? 'Someone'}</span>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+        <MessageActions m={m} mine={mine} kid onEdit={() => setEditing(true)}>
         <div
           style={{
             padding: '8px 12px',
@@ -57,10 +60,14 @@ function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
           }}
         >
           {m.photo_url && <Photo url={m.photo_url} />}
-          {m.body}
+          {editing ? <EditBox m={m} kid onDone={() => setEditing(false)} /> : m.body}
         </div>
+        </MessageActions>
       </div>
-      <span style={{ fontSize: '0.85rem', color: 'var(--p-sub)', alignSelf: mine ? 'flex-end' : 'flex-start' }}>{timeLabel(m.created_at)}</span>
+      <span style={{ fontSize: '0.85rem', color: 'var(--p-sub)', alignSelf: mine ? 'flex-end' : 'flex-start' }}>
+        {timeLabel(m.created_at)}
+        {m.edited_at && ' · edited'}
+      </span>
     </div>
   )
 }

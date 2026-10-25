@@ -1,6 +1,8 @@
 import { Icon } from '@/v2/parent/Icon'
 import type { ChatMessage } from '@/v2/hooks/useChat'
 import { Photo } from './ChatPhoto'
+import { EditBox, MessageActions } from './MessageActions'
+import { useState } from 'react'
 
 export const timeLabel = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 
@@ -20,6 +22,7 @@ export const DaySep = ({ label }: { label: string }) => (
 
 /** Parent chat bubble: others soft, mine inverse (--p-tbg), system lines centred with a tick. */
 export function ParentBubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
+  const [editing, setEditing] = useState(false)
   if (m.kind === 'system') {
     return (
       <div className="pc-sys" data-testid="msg-system">
@@ -33,11 +36,14 @@ export function ParentBubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
   }
   return (
     <div className="pc-msg" data-mine={mine} data-testid={mine ? 'msg-mine' : 'msg-other'}>
-      <small>
-        {mine ? 'You' : (m.author_name ?? 'Someone')} · {timeLabel(m.created_at)}
-      </small>
-      {m.photo_url && <Photo url={m.photo_url} className="pc-photo" />}
-      {m.body}
+      <MessageActions m={m} mine={mine} kid={false} onEdit={() => setEditing(true)}>
+        <small>
+          {mine ? 'You' : (m.author_name ?? 'Someone')} · {timeLabel(m.created_at)}
+          {m.edited_at && ' · edited'}
+        </small>
+        {m.photo_url && <Photo url={m.photo_url} className="pc-photo" />}
+        {editing ? <EditBox m={m} kid={false} onDone={() => setEditing(false)} /> : m.body}
+      </MessageActions>
     </div>
   )
 }
