@@ -55,7 +55,7 @@ test.describe('parent journeys', () => {
 
       await page.getByRole('button', { name: 'Duplicate' }).click()
       const name = page.getByLabel('Chore', { exact: true })
-      await expect(name).toHaveValue(/E2E race/)
+      await expect(name).toHaveValue('E2E race (copy)') // wait for the editor to switch to the copy
       await name.fill('E2E race edited')
       await page.getByRole('button', { name: 'Save chore' }).click()
       await expect(page.getByRole('button', { name: /E2E race edited/ })).toBeVisible()
