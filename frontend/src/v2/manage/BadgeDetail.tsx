@@ -90,9 +90,9 @@ export function BadgeDetail({ badge, kids, onSelect }: { badge?: CustomBadge; ki
             <input className="pk-input" value={description} maxLength={200} onChange={(e) => setDescription(e.currentTarget.value)} />
           </label>
           <div className="pk-actions">
-            <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!name.trim() || !icon.trim() || save.isPending}>
-              <Icon name="check" />
-              {badge ? 'Save badge' : 'Add badge'}
+            <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!name.trim() || !icon.trim() || save.isPending} aria-busy={save.isPending}>
+              <Icon name={save.isPending ? 'progress_activity' : 'check'} className={save.isPending ? 'pk-spin' : ''} />
+              {save.isPending ? 'Saving…' : badge ? 'Save badge' : 'Add badge'}
             </button>
             {!badge && (
               <button type="button" className="p-btn" onClick={() => onSelect(null)}>
@@ -118,9 +118,9 @@ export function BadgeDetail({ badge, kids, onSelect }: { badge?: CustomBadge; ki
               ))}
             </div>
             <div className="pk-actions">
-              <button type="button" className="p-btn" data-variant="accent" disabled={kid === null || award.isPending} onClick={give}>
-                <Icon name="military_tech" />
-                Award
+              <button type="button" className="p-btn" data-variant="accent" disabled={kid === null || award.isPending} aria-busy={award.isPending} onClick={give}>
+                <Icon name={award.isPending ? 'progress_activity' : 'military_tech'} className={award.isPending ? 'pk-spin' : ''} />
+                {award.isPending ? 'Awarding…' : 'Award'}
               </button>
             </div>
           </section>

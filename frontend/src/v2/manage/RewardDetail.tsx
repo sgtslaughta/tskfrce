@@ -86,9 +86,10 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
             data-variant="accent"
             onClick={submit}
             disabled={!name.trim() || !(Number(price) >= 1) || save.isPending}
+            aria-busy={save.isPending}
           >
-            <Icon name="check" />
-            {reward ? 'Save reward' : 'Add reward'}
+            <Icon name={save.isPending ? 'progress_activity' : 'check'} className={save.isPending ? 'pk-spin' : ''} />
+            {save.isPending ? 'Saving…' : reward ? 'Save reward' : 'Add reward'}
           </button>
           {!reward && (
             <button type="button" className="p-btn" onClick={() => onSelect(null)}>

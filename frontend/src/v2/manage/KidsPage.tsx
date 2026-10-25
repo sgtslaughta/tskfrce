@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import Head from 'next/head'
 import { useRouter } from 'next/router'
 import { ParentShell } from '@/v2/parent/ParentShell'
 import { useMediaQuery } from '@mantine/hooks'
@@ -84,6 +85,10 @@ function KidsBody() {
   const total = { chores: chores.data?.length, kids: kids.data?.length, rewards: rewards.data?.length, badges: badges.data?.length }[section]
   const EMPTY_ICON = { chores: 'task_alt', kids: 'person_add', rewards: 'redeem', badges: 'military_tech' }
   return (
+    <>
+    <Head>
+      <title>{`${SECTIONS.find((s) => s.id === section)?.label} - Kids & chores - t@sk4ce`}</title>
+    </Head>
     <ParentShell
       title="Kids & chores"
       list={
@@ -107,6 +112,7 @@ function KidsBody() {
           />
         ))}
     </ParentShell>
+    </>
   )
 }
 

@@ -61,6 +61,13 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
       },
     })
 
+  const dirty = chore
+    ? title.trim() !== chore.title ||
+      (Number(points) || 0) !== chore.points ||
+      photo !== chore.needs_photo ||
+      steps.join('\n') !== chore.steps.map((s) => s.title).join('\n')
+    : !!(title.trim() || steps.length)
+
   const when = chore ? schedules(chore).join(' + ') : ''
 
   return (
@@ -93,9 +100,9 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
               <Icon name="delete" />
               Delete
             </button>
-            <button type="button" className="p-btn" onClick={duplicate} disabled={copy.isPending}>
+            <button type="button" className="p-btn" onClick={duplicate} disabled={copy.isPending} aria-busy={copy.isPending}>
               <Icon name="content_copy" />
-              Duplicate
+              {copy.isPending ? 'Duplicating…' : 'Duplicate'}
             </button>
             <ConfirmDelete
               opened={confirm}
@@ -136,13 +143,13 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
           {steps.map((s, i) => (
             <div key={`${i}-${s}`} className="pk-step">
               <span>{s}</span>
-              <button type="button" className="pk-ib" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move up ${s}`}>
+              <button type="button" className="pk-ib" disabled={i === 0} onClick={() => move(i, -1)} aria-label={`Move up ${s}`} title="Move up">
                 <Icon name="arrow_upward" size={16} />
               </button>
-              <button type="button" className="pk-ib" disabled={i === steps.length - 1} onClick={() => move(i, 1)} aria-label={`Move down ${s}`}>
+              <button type="button" className="pk-ib" disabled={i === steps.length - 1} onClick={() => move(i, 1)} aria-label={`Move down ${s}`} title="Move down">
                 <Icon name="arrow_downward" size={16} />
               </button>
-              <button type="button" className="pk-ib" onClick={() => setSteps(steps.filter((_, j) => j !== i))} aria-label={`Remove ${s}`}>
+              <button type="button" className="pk-ib" onClick={() => setSteps(steps.filter((_, j) => j !== i))} aria-label={`Remove ${s}`} title="Remove step">
                 <Icon name="close" size={16} />
               </button>
             </div>
@@ -178,14 +185,20 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
       </div>
 
       <div className="pk-foot">
+        {dirty && (
+          <span className="pk-dirty" role="status">
+            <Icon name="edit_note" size={16} />
+            Unsaved changes
+          </span>
+        )}
         {!chore && (
           <button type="button" className="p-btn" onClick={() => onSelect(null)}>
             Cancel
           </button>
         )}
-        <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!title.trim() || save.isPending}>
-          <Icon name="check" />
-          Save chore
+        <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!title.trim() || save.isPending} aria-busy={save.isPending}>
+          <Icon name={save.isPending ? 'progress_activity' : 'check'} className={save.isPending ? 'pk-spin' : ''} />
+          {save.isPending ? 'Saving…' : 'Save chore'}
         </button>
       </div>
     </div>

@@ -26,6 +26,11 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
   const t = useToday().data?.kids.find((k) => k.id === kid.id)
   const chores = (useLibrary().data ?? []).filter((c) => c.assignments.some((a) => a.active && a.kid_ids.includes(kid.id)))
   const devices = (useDevices().data ?? []).filter((d) => d.owner_ids.includes(kid.id))
+  // closing an inline form hands focus back to the button that opened it
+  const closeForm = (m: Mode) => {
+    setMode(null)
+    requestAnimationFrame(() => document.getElementById(`kid-act-${m}`)?.focus())
+  }
   const toggle = (m: Mode) => setMode(mode === m ? null : m)
   const name = nameOf(kid)
 
@@ -58,15 +63,15 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
             <Icon name="visibility" />
             View as kid
           </Link>
-          <button type="button" className="p-btn" aria-pressed={mode === 'bonus'} onClick={() => toggle('bonus')}>
+          <button type="button" id="kid-act-bonus" className="p-btn" aria-pressed={mode === 'bonus'} onClick={() => toggle('bonus')}>
             <Icon name="add_circle" />
             Bonus
           </button>
-          <button type="button" className="p-btn" data-variant="red" aria-pressed={mode === 'deduct'} onClick={() => toggle('deduct')}>
+          <button type="button" id="kid-act-deduct" className="p-btn" data-variant="red" aria-pressed={mode === 'deduct'} onClick={() => toggle('deduct')}>
             <Icon name="remove_circle" />
             Deduct
           </button>
-          <button type="button" className="p-btn" data-variant="accent" aria-pressed={mode === 'edit'} onClick={() => toggle('edit')}>
+          <button type="button" id="kid-act-edit" className="p-btn" data-variant="accent" aria-pressed={mode === 'edit'} onClick={() => toggle('edit')}>
             <Icon name="edit" />
             Edit
           </button>
@@ -74,7 +79,7 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
       </header>
 
       <div className="pk-grid">
-        {(mode === 'bonus' || mode === 'deduct') && <PointsForm key={mode} kid={kid} kind={mode} onClose={() => setMode(null)} />}
+        {(mode === 'bonus' || mode === 'deduct') && <PointsForm key={mode} kid={kid} kind={mode} onClose={() => closeForm(mode)} />}
         {mode === 'edit' && <KidEditor kid={kid} focusPin={focusPin} onDone={onDeleted} />}
 
         <section className="pk-panel" aria-label="Profile">
