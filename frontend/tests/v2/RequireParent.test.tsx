@@ -77,9 +77,9 @@ describe('RequireParent', () => {
     apiMock.mockRejectedValueOnce(new Error('down')).mockResolvedValue({ needed: false })
     auth({})
     renderGuard()
-    expect(await screen.findByText("Can't reach the home box. Check it's plugged in and on Wi-Fi.")).toBeTruthy()
+    expect(await screen.findByText("Can't reach your home box")).toBeTruthy()
     expect(replace).not.toHaveBeenCalled()
-    await userEvent.click(screen.getByRole('button', { name: 'Retry' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(await screen.findByText('secret')).toBeTruthy()
   })
 

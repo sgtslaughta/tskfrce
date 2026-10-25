@@ -215,6 +215,10 @@
   max-width: 560px;
 }
 
+.main li {
+  overflow-wrap: anywhere; /* a long kid name wraps instead of being clipped */
+}
+
 .nav {
   margin-top: auto;
   padding-top: 10px;

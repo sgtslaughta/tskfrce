@@ -2,6 +2,7 @@ import { useState, type KeyboardEvent } from 'react'
 import { Button, Group, TextInput } from '@mantine/core'
 import { useMutation } from '@tanstack/react-query'
 import { api } from '../api'
+import { useSingleFlight } from '../hooks/useSingleFlight'
 import type { Kid } from '../types'
 import { AVATARS } from './starterChores'
 
@@ -26,11 +27,13 @@ export function StepKids({ kids, name, onName, draftError, onAdd }: Props) {
       setPin('')
     },
   })
+  const once = useSingleFlight()
+  const addKid = () => void once(() => add.mutateAsync().catch(() => {})) // errors show via add.error
   const canAdd = !!name.trim() && !pinBad && !add.isPending
   const enterAdds = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter' || !name.trim()) return
     e.preventDefault() // would otherwise submit the wizard form
-    if (canAdd) add.mutate()
+    if (canAdd) addKid()
   }
   return (
     <>
@@ -51,7 +54,7 @@ export function StepKids({ kids, name, onName, draftError, onAdd }: Props) {
         error={pinBad ? 'Use exactly 4 digits.' : undefined} />
       {add.error && <p role="alert">Couldn&apos;t add that kid. {add.error.message}</p>}
       <Group mt="md">
-        <Button disabled={!name.trim() || pinBad} loading={add.isPending} onClick={() => add.mutate()}>Add kid</Button>
+        <Button disabled={!name.trim() || pinBad} loading={add.isPending} onClick={addKid}>Add kid</Button>
       </Group>
     </>
   )
