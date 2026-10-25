@@ -92,7 +92,7 @@
 .accent-swatch { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80px; border-radius: 12px; border: 2px solid transparent; cursor: pointer; transition: border-color 0.2s; position: relative; overflow: hidden; }
 [data-look='parent'] .accent-swatch:hover { border-color: var(--p-line); }
 [data-look='parent'] .accent-swatch.selected { border-color: var(--p-ink); box-shadow: 0 0 0 2px var(--p-card), 0 0 0 4px var(--p-ink); }
-[data-look='parent'] .swatch-name { font-size: 12px; font-weight: 500; color: var(--p-ink); text-align: center; position: absolute; bottom: 8px; left: 0; right: 0; }
+[data-look='parent'] .swatch-name { font-size: 12px; font-weight: 600; color: #292928; text-align: center; position: absolute; bottom: 8px; left: 0; right: 0; }
 
 /* Mode buttons and preview */
 [data-look='parent'] .mode-buttons { display: flex; gap: 8px; margin: 12px 0; flex-wrap: wrap; }
@@ -102,7 +102,10 @@
 [data-look='parent'] .preview-card.light { background: #f3f3f3; border-color: #e4e4e1; color: #292928; }
 [data-look='parent'] .preview-card.dark { background: #323230; border-color: #3d3d3b; color: #f4f4f2; }
 [data-look='parent'] .preview-header { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
-[data-look='parent'] .preview-bar { height: 4px; background: var(--p-acc); border-radius: 2px; margin: 8px 0; }
+[data-look='parent'] .preview-bar { height: 6px; border-radius: 6px; margin: 8px 0; }
+/* spec 2.4: ink bar on light, accent bar on dark */
+[data-look='parent'] .preview-card.light .preview-bar { background: #292928; }
+[data-look='parent'] .preview-card.dark .preview-bar { background: var(--p-acc); }
 [data-look='parent'] .preview-chip { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; background: var(--p-acc); color: #292928; }
 
 /* Settings sections */

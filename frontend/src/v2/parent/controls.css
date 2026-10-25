@@ -4,7 +4,8 @@
  * the flat DM Sans one (pill buttons, 12px fields, accent toggles).
  */
 
-[data-look='parent'] .f-btn.f-btn {
+/* html[] raises specificity above the kid rules in controls.css, which load later */
+html[data-look='parent'] .f-btn.f-btn {
   font: 600 13px var(--font-parent), 'DM Sans', system-ui, sans-serif;
   text-transform: none;
   letter-spacing: 0;
@@ -16,14 +17,14 @@
   background: var(--p-card);
   color: var(--p-ink);
 }
-[data-look='parent'] .f-btn.f-btn:hover { background: var(--p-soft); }
-[data-look='parent'] .f-btn.f-btn[data-variant='filled'] { background: var(--p-ink); border-color: var(--p-ink); color: var(--p-card); }
-[data-look='parent'] .f-btn.f-btn[data-variant='subtle'] { border-color: transparent; background: transparent; }
-[data-look='parent'] .f-btn.f-btn[data-variant='subtle'][data-color='red'],
-[data-look='parent'] .f-btn.f-btn[data-color='red'] { color: var(--p-red); }
-[data-look='parent'] .f-btn.f-btn:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; border-radius: 999px; }
+html[data-look='parent'] .f-btn.f-btn:hover { background: var(--p-soft); }
+html[data-look='parent'] .f-btn.f-btn[data-variant='filled'] { background: var(--p-ink); border-color: var(--p-ink); color: var(--p-card); }
+html[data-look='parent'] .f-btn.f-btn[data-variant='subtle'] { border-color: transparent; background: transparent; }
+html[data-look='parent'] .f-btn.f-btn[data-variant='subtle'][data-color='red'],
+html[data-look='parent'] .f-btn.f-btn[data-color='red'] { color: var(--p-red); }
+html[data-look='parent'] .f-btn.f-btn:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; border-radius: 999px; }
 
-[data-look='parent'] .f-input.f-input {
+html[data-look='parent'] .f-input.f-input {
   min-height: 42px;
   border: 1px solid var(--p-line);
   border-radius: 12px;
@@ -31,13 +32,13 @@
   color: var(--p-ink);
   font-family: inherit;
 }
-[data-look='parent'] .f-input.f-input:focus,
-[data-look='parent'] .f-input.f-input:focus-within {
+html[data-look='parent'] .f-input.f-input:focus,
+html[data-look='parent'] .f-input.f-input:focus-within {
   border-color: var(--p-ink);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-acc) 45%, transparent);
 }
 
-[data-look='parent'] .f-label.f-label {
+html[data-look='parent'] .f-label.f-label {
   margin-bottom: 6px;
   text-transform: none;
   letter-spacing: 0;
@@ -46,29 +47,29 @@
   color: var(--p-ink);
 }
 
-[data-look='parent'] .f-seg.f-seg { border: 0; border-radius: 14px; background: var(--p-soft); padding: 4px; }
-[data-look='parent'] .f-seg.f-seg .mantine-SegmentedControl-indicator { border-radius: 10px; background: var(--p-ink); }
-[data-look='parent'] .f-seg.f-seg [data-active],
-[data-look='parent'] .f-seg.f-seg [data-active] .mantine-SegmentedControl-label { color: var(--p-card); }
+html[data-look='parent'] .f-seg.f-seg { border: 0; border-radius: 14px; background: var(--p-soft); padding: 4px; }
+html[data-look='parent'] .f-seg.f-seg .mantine-SegmentedControl-indicator { border-radius: 10px; background: var(--p-ink); }
+html[data-look='parent'] .f-seg.f-seg [data-active],
+html[data-look='parent'] .f-seg.f-seg [data-active] .mantine-SegmentedControl-label { color: var(--p-card); }
 
-[data-look='parent'] .f-switch.f-switch { border-radius: 999px; border: 1px solid var(--p-line); background: var(--p-track); }
-[data-look='parent'] .f-switch.f-switch::before { border-radius: 50%; }
-[data-look='parent'] input:checked + .f-switch.f-switch { background: var(--p-acc); border-color: var(--p-acc); }
-[data-look='parent'] input:checked + .f-switch.f-switch::before { background: #292928; }
+html[data-look='parent'] .f-switch.f-switch { border-radius: 999px; border: 1px solid var(--p-line); background: var(--p-track); }
+html[data-look='parent'] .f-switch.f-switch::before { border-radius: 50%; }
+html[data-look='parent'] input:checked + .f-switch.f-switch { background: var(--p-acc); border-color: var(--p-acc); }
+html[data-look='parent'] input:checked + .f-switch.f-switch::before { background: #292928; }
 
-[data-look='parent'] .f-check.f-check { border-radius: 6px; border: 1.5px solid var(--p-sub); background: var(--p-card); }
-[data-look='parent'] .f-check.f-check:checked { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
+html[data-look='parent'] .f-check.f-check { border-radius: 6px; border: 1.5px solid var(--p-sub); background: var(--p-card); }
+html[data-look='parent'] .f-check.f-check:checked { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
 
-[data-look='parent'] .f-chipctl.f-chipctl { border: 1px solid var(--p-line); border-radius: 999px; background: var(--p-card); color: var(--p-ink); font-weight: 600; }
-[data-look='parent'] .f-chipctl.f-chipctl[data-checked] { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
+html[data-look='parent'] .f-chipctl.f-chipctl { border: 1px solid var(--p-line); border-radius: 999px; background: var(--p-card); color: var(--p-ink); font-weight: 600; }
+html[data-look='parent'] .f-chipctl.f-chipctl[data-checked] { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
 
-[data-look='parent'] .f-sheet.f-sheet,
-[data-look='parent'] .f-sheet-head.f-sheet-head { background: var(--p-card); color: var(--p-ink); }
-[data-look='parent'] .f-sheet-head.f-sheet-head { border-bottom: 1px solid var(--p-line); }
-[data-look='parent'] .f-sheet-title.f-sheet-title { font-family: inherit; text-transform: none; letter-spacing: 0; }
+html[data-look='parent'] .f-sheet.f-sheet,
+html[data-look='parent'] .f-sheet-head.f-sheet-head { background: var(--p-card); color: var(--p-ink); }
+html[data-look='parent'] .f-sheet-head.f-sheet-head { border-bottom: 1px solid var(--p-line); }
+html[data-look='parent'] .f-sheet-title.f-sheet-title { font-family: inherit; text-transform: none; letter-spacing: 0; }
 
 /* disabled: quiet grey, not Mantine's navy disabled fill */
-[data-look='parent'] .f-btn.f-btn:is(:disabled, [data-disabled]) {
+html[data-look='parent'] .f-btn.f-btn:is(:disabled, [data-disabled]) {
   background: var(--p-soft);
   border-color: var(--p-line);
   color: var(--p-sub);
@@ -78,14 +79,14 @@
 
 /* shared kid-look text/card helpers still used on parent screens (settings cards, window
    editor, hours): parent font, radius and digits instead of Space Grotesk and mono */
-[data-look='parent'] :is(.f-display, .f-card h2, .f-card h3) {
+html[data-look='parent'] :is(.f-display, .f-card h2, .f-card h3) {
   font-family: var(--font-parent), 'DM Sans', system-ui, sans-serif;
   letter-spacing: 0;
 }
-[data-look='parent'] .f-card { border-radius: 18px; }
-[data-look='parent'] .f-num,
-[data-look='parent'] .m-num { font-family: inherit; font-variant-numeric: tabular-nums; }
-[data-look='parent'] .f-cap { color: var(--p-sub); }
-[data-look='parent'] .f-note { color: var(--p-sub); font-family: inherit; }
-[data-look='parent'] .f-btn.f-btn[data-variant='light'] { background: var(--p-soft); border-color: var(--p-line); color: var(--p-ink); }
-[data-look='parent'] .m-d { border-radius: 6px; border-color: var(--p-line); color: var(--p-sub); }
+html[data-look='parent'] .f-card { border-radius: 18px; }
+html[data-look='parent'] .f-num,
+html[data-look='parent'] .m-num { font-family: inherit; font-variant-numeric: tabular-nums; }
+html[data-look='parent'] .f-cap { color: var(--p-sub); }
+html[data-look='parent'] .f-note { color: var(--p-sub); font-family: inherit; }
+html[data-look='parent'] .f-btn.f-btn[data-variant='light'] { background: var(--p-soft); border-color: var(--p-line); color: var(--p-ink); }
+html[data-look='parent'] .m-d { border-radius: 6px; border-color: var(--p-line); color: var(--p-sub); }
