@@ -49,43 +49,18 @@
 }
 
 /* Needs you list styling */
-.p-needs-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+[data-look='parent'] .p-needs-list { display: grid; gap: 10px; padding: 12px; }
+[data-look='parent'] .p-needs-item { display: grid; gap: 10px; padding: 12px 14px; border-radius: 16px; background: var(--p-soft); }
+[data-look='parent'] .p-needs-header { display: flex; align-items: center; gap: 10px; }
+[data-look='parent'] .p-needs-ic,
+[data-look='parent'] .p-needs-thumb {
+  width: 38px; height: 38px; flex: none; display: grid; place-items: center; padding: 0; overflow: hidden;
+  border: 0; border-radius: 10px; background: var(--p-card); color: var(--p-sub); cursor: pointer;
 }
-
-.p-needs-item {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: var(--p-card);
-  border: 1px solid var(--p-line);
-  border-radius: 12px;
-}
-
-.p-needs-header {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.p-needs-kid {
-  font-size: 12px;
-  color: var(--p-sub);
-  font-weight: 500;
-}
-
-.p-needs-title {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--p-ink);
-}
-
-.p-needs-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
+[data-look='parent'] .p-needs-thumb img { width: 100%; height: 100%; object-fit: cover; }
+[data-look='parent'] .p-needs-t { flex: 1; min-width: 0; font-size: 14px; }
+[data-look='parent'] .p-needs-t b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-look='parent'] .p-needs-t small { display: block; color: var(--p-sub); font-size: 12px; }
+[data-look='parent'] .p-needs-note { padding: 8px 12px; border-radius: 10px; border: 1px solid var(--p-line); background: var(--p-card); color: var(--p-ink); font: inherit; }
+[data-look='parent'] .p-needs-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 

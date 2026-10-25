@@ -9,9 +9,16 @@ import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { Icon } from '../parent/Icon'
 import { withUndo } from '../notify'
 import { ThreadView } from '../chat/ThreadView'
+import { useAuthImage } from './PhotoViewer'
 
 const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 const AMOUNTS = [5, 10, 20]
+
+function AuthImg({ path, alt }: { path: string; alt: string }) {
+  const src = useAuthImage(path)
+  // eslint-disable-next-line @next/next/no-img-element
+  return src ? <img src={src} alt={alt} /> : <span className="pt-photo-ph" aria-label={alt} />
+}
 
 /** Open chore: steps, photos and actions on the left; the chore's chat on the right when open. */
 export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) {
@@ -26,6 +33,8 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
   const [amount, setAmount] = useState<number | null>(10)
   const [custom, setCustom] = useState('')
   const [why, setWhy] = useState('')
+  const [back, setBack] = useState(false)
+  const [note, setNote] = useState('')
 
   if (!run) return null
   const name = kid.name ?? 'your kid'
@@ -59,8 +68,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
         {run.photos.length > 0 && (
           <div className="pt-photos">
             {run.photos.map((p) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={p.id} src={p.thumb_url} alt={`Photo for ${chore.title}`} />
+              <AuthImg key={p.id} path={p.thumb_url} alt={`Photo for ${chore.title}`} />
             ))}
           </div>
         )}
@@ -76,7 +84,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
                 <Icon name="check" size={17} />
                 Approve +{chore.points}
               </button>
-              <button className="p-btn" onClick={() => sendBack.mutateAsync({ id: chore.id, note: '' })}>
+              <button className="p-btn" aria-expanded={back} onClick={() => setBack(!back)}>
                 <Icon name="undo" size={17} />
                 Send back
               </button>
@@ -91,6 +99,23 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
             {chat ? 'Hide chat' : 'Open chat'}
           </button>
         </div>
+
+        {back && (
+          <form
+            className="pt-ded"
+            data-tone="ink"
+            onSubmit={(e) => {
+              e.preventDefault()
+              sendBack.mutate({ id: chore.id, note: note.trim() }, { onSuccess: () => setBack(false) })
+            }}
+          >
+            <b>What should {name} fix?</b>
+            <input aria-label="Note for sending back" value={note} maxLength={500} autoFocus onChange={(e) => setNote(e.target.value)} />
+            <button className="p-btn" disabled={!note.trim() || sendBack.isPending}>
+              Send back
+            </button>
+          </form>
+        )}
 
         {ded && (
           <form

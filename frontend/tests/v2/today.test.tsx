@@ -163,6 +163,20 @@ describe('TodayPage', () => {
     expect(apiMock).not.toHaveBeenCalledWith('/chores/11/approve', expect.anything())
   })
 
+  test('send back on an open chore needs a note', async () => {
+    const k = { ...kid(1), chores: [{ id: 11, title: 'Dishes', points: 10, state: 'needs_you' as const, due_time: null }] }
+    const base = apiMock.getMockImplementation()!
+    apiMock.mockImplementation(async (p, init) => (p === '/today' ? todayData({ kids: [k] }) : base(p, init)))
+    wrap(<TodayPage />)
+    await userEvent.click(await screen.findByRole('button', { name: /dishes/i }))
+    await userEvent.click(await screen.findByRole('button', { name: /^send back$/i }))
+    const send = screen.getAllByRole('button', { name: /^send back$/i }).at(-1)!
+    expect(send).toBeDisabled()
+    await userEvent.type(screen.getByLabelText('Note for sending back'), 'Pans too')
+    await userEvent.click(send)
+    await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/chores/11/send-back', { method: 'POST', body: { note: 'Pans too' } }))
+  })
+
   test('to-do chore has no approve; deduct posts amount and reason', async () => {
     wrap(<TodayPage />)
     await userEvent.click((await screen.findAllByRole('button', { name: /dishes/i }))[0])
