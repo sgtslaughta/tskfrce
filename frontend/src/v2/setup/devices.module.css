@@ -1,6 +1,7 @@
 /* Setup step 5: device discovery rows (mockup 07 .dv) */
 .card { display: flex; flex-direction: column; padding: 4px 16px 4px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 18px; }
-.head { display: flex; align-items: center; gap: 10px; padding: 12px 0 4px; font-size: 13px; }
+.head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; padding: 12px 0 4px; font-size: 13px; }
+.head b { white-space: nowrap; }
 .head span:last-child { margin-left: auto; color: var(--p-sub); font-size: 12px; }
 .pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--p-acc); box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-acc) 35%, transparent); animation: pulse 1.8s var(--ease-out) infinite; }
 @keyframes pulse { 50% { box-shadow: 0 0 0 6px transparent; } }

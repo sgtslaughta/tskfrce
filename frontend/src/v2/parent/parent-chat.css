@@ -163,6 +163,8 @@
 [data-look='parent'] .pc-pics span { width: 96px; height: 70px; border-radius: 12px; object-fit: cover; background: var(--p-soft); }
 
 /* ── states: focus, press, busy ──────────────────────────────────────────── */
+[data-look='parent'] .pc-search:focus-within,
+[data-look='parent'] .pc-reply:focus-within { box-shadow: 0 0 0 3px color-mix(in srgb, var(--p-acc) 60%, transparent); }
 [data-look='parent'] .pc-row:focus-visible,
 [data-look='parent'] .pc-photo:focus-visible,
 [data-look='parent'] .pc-ib:focus-visible,
