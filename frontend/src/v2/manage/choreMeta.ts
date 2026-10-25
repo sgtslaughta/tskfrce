@@ -18,8 +18,9 @@ function repeatText(a: Assignment) {
   return days.map((d) => DAYS[d]).join(' ')
 }
 
-/** Distinct schedules of the active assignments, e.g. ["daily", "Sat"]. */
-export const schedules = (c: LibChore) => Array.from(new Set(c.assignments.filter((a) => a.active).map(repeatText)))
+/** Distinct schedules of the active assignments (only this kid's when `kidId` is given), e.g. ["daily", "Sat"]. */
+export const schedules = (c: LibChore, kidId?: number) =>
+  Array.from(new Set(c.assignments.filter((a) => a.active && (kidId === undefined || a.kid_ids.includes(kidId))).map(repeatText)))
 
 /** "30 pts · daily · 3 steps · photo" */
 export function choreLine(c: LibChore) {

@@ -17,7 +17,7 @@ export function KidsList({ kids, selected, onSelect }: Props) {
     <div className="pk-items">
       {kids.map((k) => {
         const t = today.get(k.id)
-        const bits = [t?.points !== undefined ? `${t.points} pts` : k.username, t?.progress ? `Level ${t.progress.level}` : '']
+        const bits = [t?.progress ? `Level ${t.progress.level}` : '', t?.points !== undefined ? `${t.points} pts` : k.username]
         return (
           <button key={k.id} type="button" className="pk-card" data-selected={selected === String(k.id)} onClick={() => onSelect(k.id)}>
             <span className="pk-av" data-size="lg" aria-hidden="true">
@@ -32,7 +32,7 @@ export function KidsList({ kids, selected, onSelect }: Props) {
                 Online
               </Chip>
             ) : !k.has_pin ? (
-              <Chip tone="amb" icon="lock_open">
+              <Chip tone="lav" icon="lock_open">
                 No PIN
               </Chip>
             ) : (

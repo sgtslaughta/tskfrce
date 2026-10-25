@@ -251,7 +251,7 @@ describe('chore detail', () => {
     await waitFor(() => expect(calls('PATCH')[0][0]).toBe('/assignments/11'))
     await userEvent.click(within(who()).getByRole('button', { name: 'Remove' }))
     const confirm = await screen.findByRole('dialog', { name: 'Remove this assignment?' })
-    await userEvent.click(within(confirm).getByRole('button', { name: 'Delete' }))
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Remove' }))
     await waitFor(() => expect(calls('DELETE')[0]).toEqual(['/assignments/11', { method: 'DELETE' }]))
   })
 
@@ -278,7 +278,7 @@ describe('kids', () => {
     query = { section: 'kids' }
     render(wrap(<KidsPage />))
     const leo = await within(list()).findByRole('button', { name: /Leo/ })
-    await waitFor(() => expect(leo).toHaveTextContent('42 pts · Level 3'))
+    await waitFor(() => expect(leo).toHaveTextContent('Level 3 · 42 pts'))
     expect(within(list()).getByRole('button', { name: /Maya/ })).toHaveTextContent('No PIN')
     expect(within(list()).getByRole('button', { name: 'Add a kid' })).toBeInTheDocument()
     expect(document.body.textContent).not.toContain('🦊')
@@ -318,6 +318,50 @@ describe('kids', () => {
     await userEvent.type(within(detail()).getByLabelText('Why?'), 'Broke a rule')
     await userEvent.click(within(detail()).getByRole('button', { name: 'Take points' }))
     await waitFor(() => expect(calls('POST')[1]).toEqual(['/kids/8/deduct', { method: 'POST', body: { amount: 5, note: 'Broke a rule' } }]))
+  })
+})
+
+describe('kids: create, delete, points', () => {
+  test('adding a kid POSTs /kids and selects the new kid', async () => {
+    const base = apiMock.getMockImplementation()!
+    apiMock.mockImplementation(async (path, init) => (path === '/kids' && init?.method === 'POST' ? { id: 9 } : base(path, init)))
+    query = { section: 'kids', item: 'new' }
+    render(wrap(<KidsPage />))
+    await userEvent.type(await screen.findByLabelText('Name'), 'Zed')
+    await userEvent.click(screen.getByRole('button', { name: 'Add kid' }))
+    await waitFor(() => expect(calls('POST')[0]).toEqual(['/kids', { method: 'POST', body: { full_name: 'Zed' } }]))
+    await waitFor(() => expect(push).toHaveBeenCalledWith(...nav({ section: 'kids', item: 9 })))
+  })
+
+  test('a kid deleted from the list sends the page back to the section list', async () => {
+    query = { section: 'kids', item: '99' }
+    render(wrap(<KidsPage />))
+    await within(list()).findByRole('button', { name: /Leo/ })
+    await waitFor(() => expect(push).toHaveBeenCalledWith(...nav({ section: 'kids' })))
+  })
+
+  test('Chores assigned lists only that kid\'s schedule', async () => {
+    serve({
+      '/chores/': [lib({ id: 6, title: 'Trash', steps: [], assignments: [asg({ id: 1, kid_ids: [7] }), asg({ id: 2, kid_ids: [8], repeat: { type: 'once', days: [] } })] })],
+    })
+    query = { section: 'kids', item: '7' }
+    render(wrap(<KidsPage />))
+    const card = await within(detail()).findByRole('region', { name: 'Chores assigned' })
+    await waitFor(() => expect(card).toHaveTextContent('Trash · daily'))
+    expect(card).not.toHaveTextContent('once')
+  })
+
+  test('Bonus refreshes the balance by refetching /today', async () => {
+    serve({ '/kids/8/points': { balance: 50 } })
+    query = { section: 'kids', item: '8' }
+    render(wrap(<KidsPage />))
+    await userEvent.click(await within(detail()).findByRole('button', { name: 'Bonus' }))
+    await userEvent.type(within(detail()).getByLabelText(/Points/), '8')
+    await userEvent.type(within(detail()).getByLabelText('Why?'), 'Nice')
+    const todayCalls = () => apiMock.mock.calls.filter(([p]) => p === '/today').length
+    const before = todayCalls()
+    await userEvent.click(within(detail()).getByRole('button', { name: 'Send points' }))
+    await waitFor(() => expect(todayCalls()).toBeGreaterThan(before))
   })
 })
 
@@ -367,5 +411,37 @@ describe('rewards and badges', () => {
     await waitFor(() =>
       expect(calls('POST')[0]).toEqual(['/custom-badges', { method: 'POST', body: { name: 'Kind', icon: 'star', description: 'Was kind' } }]),
     )
+  })
+})
+
+describe('rewards and badges: icon and delete confirmation', () => {
+  test('reward emoji icon is sent with the price and name', async () => {
+    query = { section: 'rewards', item: 'new' }
+    render(wrap(<KidsPage />))
+    await userEvent.type(await screen.findByLabelText('Reward'), 'Pizza')
+    await userEvent.click(screen.getByRole('button', { name: /Icon \(an emoji/ }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Pick 🍕' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Add reward' }))
+    await waitFor(() => expect(calls('POST')[0]).toEqual(['/rewards', { method: 'POST', body: { name: 'Pizza', price: 50, icon: '🍕' } }]))
+  })
+
+  test('deleting a reward asks first, then DELETEs', async () => {
+    serve({ '/rewards': [{ id: 3, name: 'Movie night', price: 150, icon: null }] })
+    query = { section: 'rewards', item: '3' }
+    render(wrap(<KidsPage />))
+    await userEvent.click(await within(detail()).findByRole('button', { name: 'Delete reward' }))
+    expect(calls('DELETE')).toHaveLength(0)
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(calls('DELETE')[0]).toEqual(['/rewards/3', { method: 'DELETE' }]))
+  })
+
+  test('deleting a badge asks first, then DELETEs', async () => {
+    serve({ '/custom-badges': [{ id: 3, name: 'Helper', icon: 'star', description: '' }] })
+    query = { section: 'badges', item: '3' }
+    render(wrap(<KidsPage />))
+    await userEvent.click(await within(detail()).findByRole('button', { name: 'Delete badge' }))
+    expect(calls('DELETE')).toHaveLength(0)
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(calls('DELETE')[0]).toEqual(['/custom-badges/3', { method: 'DELETE' }]))
   })
 })

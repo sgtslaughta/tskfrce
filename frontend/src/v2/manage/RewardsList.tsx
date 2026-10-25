@@ -14,7 +14,7 @@ export function RewardsList({ rewards, selected, onSelect }: Props) {
       {rewards.map((r) => (
         <button key={r.id} type="button" className="pk-card" data-selected={selected === String(r.id)} onClick={() => onSelect(r.id)}>
           <span className="pk-tile">
-            <Icon name="redeem" size={20} />
+            {r.icon || <Icon name="redeem" size={20} />}
           </span>
           <span className="pk-card-t">
             <b>{r.name}</b>

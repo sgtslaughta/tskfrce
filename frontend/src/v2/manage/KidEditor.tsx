@@ -8,7 +8,7 @@ import { ConfirmDelete } from './ConfirmDelete'
 import { toastFail, toastOk } from '../notify'
 
 /** Edit a kid, or add one when `kid` is omitted. Only changed fields are sent. */
-export function KidEditor({ kid, onDone, focusPin }: { kid?: Kid; onDone?: () => void; focusPin?: boolean }) {
+export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onDone?: () => void; onCreated?: (id: number) => void; focusPin?: boolean }) {
   const create = useCreateKid()
   const patch = usePatchKid()
   const del = useDeleteKid()
@@ -28,13 +28,10 @@ export function KidEditor({ kid, onDone, focusPin }: { kid?: Kid; onDone?: () =>
     if (pin) body.pin = pin
     const opts = {
       onError: toastFail,
-      onSuccess: () => {
+      onSuccess: (res: unknown) => {
         toastOk(kid ? 'Saved' : 'Added')
         setPin('')
-        if (!kid) {
-          setName('')
-          setAvatar('')
-        }
+        if (!kid) onCreated?.((res as Kid).id)
       },
     }
     if (kid) patch.mutate({ id: kid.id, body }, opts)

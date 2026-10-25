@@ -17,7 +17,7 @@ export function ListDetail({
 }) {
   const router = useRouter()
   const small = useMediaQuery('(max-width: 767px)')
-  const selectedItem = router.query.item
+  const { item: selectedItem, ...rest } = router.query
 
   if (small && phone) {
     return (
@@ -31,7 +31,7 @@ export function ListDetail({
   if (small && selectedItem) {
     return (
       <div className="p-detail-only">
-        <Link href={{ pathname: router.pathname, query: { ...router.query, item: undefined } }} className="p-back-link">
+        <Link href={{ pathname: router.pathname, query: rest }} className="p-back-link">
           ← {listTitle}
         </Link>
         <div className="p-detail-panel">{detail}</div>

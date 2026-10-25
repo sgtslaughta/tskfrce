@@ -4,11 +4,13 @@ interface ConfirmProps {
   opened: boolean
   title: string
   body: string
+  /** Confirm button text. Default "Delete". */
+  confirmLabel?: string
   onConfirm: () => void
   onClose: () => void
 }
 
-export function ConfirmDelete({ opened, title, body, onConfirm, onClose }: ConfirmProps) {
+export function ConfirmDelete({ opened, title, body, confirmLabel = 'Delete', onConfirm, onClose }: ConfirmProps) {
   return (
     <Modal opened={opened} onClose={onClose} title={title} centered>
       <Text mb="md">{body}</Text>
@@ -25,7 +27,7 @@ export function ConfirmDelete({ opened, title, body, onConfirm, onClose }: Confi
             onClose()
           }}
         >
-          Delete
+          {confirmLabel}
         </button>
       </div>
     </Modal>

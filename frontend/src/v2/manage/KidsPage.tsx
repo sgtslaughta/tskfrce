@@ -40,6 +40,14 @@ function KidsBody() {
     router.push({ pathname: '/kids', query: id === null ? { section } : { ...rest, section, item: id } }, undefined, { shallow: true })
   }
 
+  // A deleted (or stale) ?item= falls back to the section's list
+  const loaded = { chores, kids, rewards, badges }[section]
+  const known = loaded.data?.some((x) => String(x.id) === item)
+  useEffect(() => {
+    if (loaded.isSuccess && item && item !== 'new' && !known) pick(null)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded.isSuccess, item, known])
+
   // Deep link /kids?section=kids&kid=7&pin=1 selects that kid (phones need ?item to show the detail).
   const kidParam = first(query.kid)
   useEffect(() => {
@@ -64,7 +72,7 @@ function KidsBody() {
     chores: item === 'new' ? <ChoreDetail key="new" kids={kidList} onSelect={select} /> : chore && <ChoreDetail key={chore.id} kids={kidList} chore={chore} onSelect={select} />,
     kids:
       item === 'new' ? (
-        <div className="pk-detail"><div className="pk-grid"><KidEditor onDone={() => pick(null)} /></div></div>
+        <div className="pk-detail"><div className="pk-grid"><KidEditor onCreated={pick} /></div></div>
       ) : (
         kid && <KidDetail key={kid.id} kid={kid} focusPin={first(query.pin) === '1'} onDeleted={() => pick(null)} />
       ),

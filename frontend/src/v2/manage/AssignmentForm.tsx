@@ -151,6 +151,7 @@ export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissa
             <ConfirmDelete
               opened={confirm}
               title="Remove this assignment?"
+              confirmLabel="Remove"
               body="The chore stays in the library. Chores already done stay in history."
               onConfirm={() => del.mutate(a.id, { onError: toastFail, onSuccess: onClose })}
               onClose={close}
