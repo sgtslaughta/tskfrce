@@ -125,4 +125,21 @@ describe('chore editor: type, steps, notes', () => {
     const text = document.body.textContent!
     expect(text.indexOf('Pets')).toBeLessThan(text.indexOf('Other'))
   })
+
+  test('Other is found by rule (last builtin), so a renamed Other still sorts last and takes unknown types', async () => {
+    const renamed = [type(3, 'Misc', 'task_alt'), type(1, 'Schoolwork', 'school'), type(2, 'Pets', 'pets'), { ...type(9, 'Laundry', 'local_laundry_service'), builtin: false }]
+    apiMock.mockImplementation(async (path) => (path === '/chore-types' ? renamed : {}))
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MantineProvider theme={fridgeTheme}>
+          <ChoresList kids={kids} onSelect={jest.fn()} chores={[chore({ id: 1, type_id: 3, title: 'A' }), chore({ id: 2, type_id: 99, title: 'B' }), chore({ id: 3, type_id: 9, title: 'C' })]} />
+        </MantineProvider>
+      </QueryClientProvider>,
+    )
+    await screen.findByText('Misc')
+    expect(screen.queryByText('Other')).toBeNull()
+    const text = document.body.textContent!
+    expect(text.indexOf('Laundry')).toBeLessThan(text.indexOf('Misc'))
+    expect(text.slice(text.indexOf('Misc'))).toMatch(/Misc.*2/)
+  })
 })

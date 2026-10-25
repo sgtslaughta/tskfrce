@@ -1,4 +1,4 @@
-import type { Assignment, Kid, LibChore } from '@/v2/types'
+import type { Assignment, ChoreType, Kid, LibChore } from '@/v2/types'
 import { DAYS } from '@/v2/days'
 
 export const nameOf = (k: Kid) => k.full_name ?? k.username
@@ -56,3 +56,7 @@ export const UNIVERSAL_NOTES = [
   { label: 'Ran out of time', glyph: 'schedule' },
   { label: "Can't do it today", glyph: 'block' },
 ]
+
+/** The default "Other" type, found like the backend's other_id: the builtin with the highest id (its name is renamable). */
+export const otherType = (types: ChoreType[]) =>
+  types.filter((t) => t.builtin).reduce<ChoreType | undefined>((a, t) => (!a || t.id > a.id ? t : a), undefined)

@@ -11,7 +11,7 @@ import { ChoreTypePicker } from './ChoreTypePicker'
 import { ConfirmDelete } from './ConfirmDelete'
 import { useSingle } from './useSingle'
 import { WhoWhen } from './WhoWhen'
-import { intError, joinNames, nameOf, schedules, UNIVERSAL_NOTES, usedBy } from './choreMeta'
+import { intError, joinNames, nameOf, otherType, schedules, UNIVERSAL_NOTES, usedBy } from './choreMeta'
 import { toastFail, toastOk } from '../notify'
 
 interface Props {
@@ -55,7 +55,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
   const [next, setNext] = useState(kept?.next ?? '')
   const [photo, setPhoto] = useState(kept?.photo ?? chore?.needs_photo ?? false)
   const pointsErr = intError(points, 0)
-  const typeId = picked ?? chore?.type_id ?? types.find((t) => t.builtin && t.name === 'Other')?.id
+  const typeId = picked ?? chore?.type_id ?? otherType(types)?.id
   const type = types.find((t) => t.id === typeId)
 
   const discard = () => {

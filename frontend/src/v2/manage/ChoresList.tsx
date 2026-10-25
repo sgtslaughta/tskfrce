@@ -1,8 +1,8 @@
 import { Icon } from '@/v2/parent/Icon'
 import { useChoreTypes } from '@/v2/hooks/useChoreTypes'
 import { Fold } from '@/v2/parent/Fold'
-import type { ChoreType, Kid, LibChore } from '@/v2/types'
-import { choreLine, initial, nameOf, usedBy } from './choreMeta'
+import type { Kid, LibChore } from '@/v2/types'
+import { choreLine, initial, nameOf, otherType, usedBy } from './choreMeta'
 
 const MAX_AVATARS = 4
 
@@ -18,17 +18,17 @@ export function ChoresList({ chores, kids, selected, onSelect }: Props) {
   const byId = new Map(kids.map((k) => [k.id, k]))
   const all = useChoreTypes().data ?? []
   // type position order, Other last; chores whose type isn't loaded fall into Other
-  const isOther = (t: ChoreType) => t.builtin && t.name === 'Other'
-  const order = [...all.filter((t) => !isOther(t)), ...all.filter(isOther)]
+  const other = otherType(all)
+  const order = [...all.filter((t) => t !== other), ...(other ? [other] : [])]
   const known = new Set(all.map((t) => t.id))
   const unknown = chores.filter((c) => !known.has(c.type_id))
   const groups: { key: string; name: string; glyph: string; list: LibChore[] }[] = order.map((t) => ({
     key: String(t.id),
     name: t.name,
     glyph: t.glyph,
-    list: [...chores.filter((c) => c.type_id === t.id), ...(isOther(t) ? unknown : [])],
+    list: [...chores.filter((c) => c.type_id === t.id), ...(t === other ? unknown : [])],
   }))
-  if (!order.some(isOther)) groups.push({ key: 'rest', name: 'Other', glyph: 'task_alt', list: unknown })
+  if (!other) groups.push({ key: 'rest', name: 'Other', glyph: 'task_alt', list: unknown })
   const glyphOf = new Map(all.map((t) => [t.id, t.glyph]))
   const card = (c: LibChore) => {
         const ids = usedBy(c)
