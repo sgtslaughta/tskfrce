@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { Tooltip } from '@mantine/core'
 import { Icon } from '../parent/Icon'
 import { useTipState } from '../hooks/useTips'
 import { useWindows } from '../hooks/useWindows'
@@ -62,19 +63,21 @@ export function GetStartingChecklistCard({ kids }: Props) {
     <div className="p-onboard-card" data-testid="parent-onboarding">
       <div className="p-onboard-header">
         <div>
-          <h3 className="p-onboard-title">Getting started</h3>
+          <h2 className="p-onboard-title">Getting started</h2>
           <p className="p-onboard-progress">
             {doneCount} of {items.length} done
           </p>
         </div>
-        <button
-          className="p-onboard-dismiss"
-          onClick={() => dismiss('onboard.parent')}
-          aria-label="Dismiss getting started"
-          type="button"
-        >
-          <Icon name="close" size={18} />
-        </button>
+        <Tooltip label="Dismiss" openDelay={400}>
+          <button
+            className="p-onboard-dismiss"
+            onClick={() => dismiss('onboard.parent')}
+            aria-label="Dismiss getting started"
+            type="button"
+          >
+            <Icon name="close" size={18} />
+          </button>
+        </Tooltip>
       </div>
 
       <ul className="p-onboard-items">
