@@ -211,7 +211,7 @@
 
 @media (max-width: 900px) {
   .wizard {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     min-height: auto;
     margin: 0;
     border-radius: 0;
@@ -227,6 +227,7 @@
   }
 
   .steps {
+    min-width: 0;
     flex-direction: row;
     overflow-x: auto;
     gap: 0;
