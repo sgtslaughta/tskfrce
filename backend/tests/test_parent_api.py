@@ -321,6 +321,15 @@ def test_device_datetimes_are_utc_z(client, db, parent_headers):
     assert j["override"]["expires_at"].endswith("Z")
 
 
+def test_device_list_carries_addresses_for_the_network_tab(client, db, parent_headers):
+    d = mkdev(db)
+    d.ip, d.hostname, d.ipv6 = "192.168.1.9", "pad.local", ["fe80::1", "fe80::2"]
+    db.commit()
+    j = client.get("/api/v1/devices", headers=parent_headers).json()[0]
+    assert (j["ip"], j["hostname"], j["ipv6"]) == ("192.168.1.9", "pad.local", ["fe80::1", "fe80::2"])
+    assert j["first_seen"].endswith("Z")
+
+
 def test_owner_ids_keep_explicit_guest(client, db, kid, parent_headers):
     d = mkdev(db)
     url = f"/api/v1/devices/{d.id}"

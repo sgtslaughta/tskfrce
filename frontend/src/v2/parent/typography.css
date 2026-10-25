@@ -84,8 +84,9 @@
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 8px 12px;
+  padding: 8px 2px;
   flex: 1;
+  min-width: 0;
   border: 0;
   background: transparent;
   color: var(--p-sub);

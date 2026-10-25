@@ -1,12 +1,13 @@
 import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import type { Device } from '@/v2/types'
+import { inFamilyZone } from './deviceMeta'
 import { isPrivateMac } from './privateMac'
 
 const maskMac = (mac: string) => (mac.length < 17 ? mac : mac.substring(0, 6) + '••:••' + mac.substring(11))
 
 /** Network tab: addresses and connection history. */
-export function DeviceNetwork({ device }: { device: Device }) {
+export function DeviceNetwork({ device, timeZone }: { device: Device; timeZone?: string }) {
   return (
     <div className="pk-grid">
       <section className="pk-panel" aria-label="Addresses">
@@ -65,13 +66,13 @@ export function DeviceNetwork({ device }: { device: Device }) {
         {device.first_seen && (
           <div className="pk-kv">
             <span>First seen</span>
-            <b>{new Date(device.first_seen).toLocaleDateString()}</b>
+            <b>{inFamilyZone(device.first_seen, timeZone, { dateStyle: 'medium' })}</b>
           </div>
         )}
         {device.last_seen && (
           <div className="pk-kv">
             <span>Last seen</span>
-            <b>{new Date(device.last_seen).toLocaleString()}</b>
+            <b>{inFamilyZone(device.last_seen, timeZone)}</b>
           </div>
         )}
       </section>

@@ -54,6 +54,10 @@ def device_out(
         "online": online,
         "override": {"action": ov.action, "expires_at": utc_z(ov.expires_at)} if ov else None,
         "last_seen": utc_z(d.last_seen),
+        "first_seen": utc_z(d.first_seen),
+        "ip": d.ip,
+        "ipv6": d.ipv6,
+        "hostname": d.hostname,
         "resisting": d.resisting_since is not None,
         "needs_pins": needs_pins,
     }
@@ -85,7 +89,9 @@ def list_devices(db: Session = Depends(get_db)):
     fam, now = get_family(db), datetime.now(UTC)
     devs = (
         db.query(Device)
-        .options(selectinload(Device.owners), selectinload(Device.groups))
+        .options(
+            selectinload(Device.owners), selectinload(Device.groups), selectinload(Device.ipv6_rows)
+        )
         .order_by(Device.id)
         .all()
     )

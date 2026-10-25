@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/v2/api'
 import { toastFail, toastOk } from '@/v2/notify'
@@ -10,10 +11,33 @@ export interface DevicePatch {
   group_ids?: number[]
 }
 
-export const useDevices = () => useQuery({ queryKey: ['devices'], queryFn: () => api<Device[]>('/devices') })
+// polled so a second tab, an expired override or a new device shows up without a reload
+const poll = { refetchInterval: 15_000, refetchIntervalInBackground: false }
+export const useDevices = () => useQuery({ queryKey: ['devices'], queryFn: () => api<Device[]>('/devices'), ...poll })
 export const useBlocker = () =>
   useQuery({ queryKey: ['blocker'], queryFn: () => api<BlockerStatus>('/blocker'), refetchInterval: 30_000, refetchIntervalInBackground: false })
-export const useGroups = () => useQuery({ queryKey: ['groups'], queryFn: () => api<Group[]>('/groups') })
+export const useGroups = () => useQuery({ queryKey: ['groups'], queryFn: () => api<Group[]>('/groups'), ...poll })
+
+/**
+ * True once `iso` has passed. Re-renders and refetches devices at that moment, so an
+ * "Unlock 30 min" that runs out while the screen is open flips back to "on schedule".
+ */
+export function useExpired(iso: string | null | undefined): boolean {
+  const qc = useQueryClient()
+  const at = iso ? new Date(iso).getTime() : 0
+  const [, tick] = useState(0)
+  useEffect(() => {
+    if (!at) return
+    const wait = at - Date.now()
+    if (wait > 2 ** 31 - 1) return
+    const t = setTimeout(() => {
+      tick((n) => n + 1)
+      qc.invalidateQueries({ queryKey: ['devices'] })
+    }, Math.max(wait, 0) + 500)
+    return () => clearTimeout(t)
+  }, [at, qc])
+  return !!at && at <= Date.now()
+}
 
 /** Run a mutation then refresh devices, groups and today. */
 function useRefreshing<V>(fn: (v: V) => Promise<unknown>, done?: string) {
