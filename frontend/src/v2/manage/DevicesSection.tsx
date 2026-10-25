@@ -22,7 +22,7 @@ export function DevicesSection({
 }) {
   const router = useRouter()
   const item = first(router.query.item)
-  const selectedId = item === 'new' ? ('new' as const) : Number(item) || focus || null
+  const selectedId = item === 'new' ? ('new' as const) : focus || null
 
   const handleSelectDevice = useCallback(
     (id: number) => {

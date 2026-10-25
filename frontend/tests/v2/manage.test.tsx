@@ -183,13 +183,20 @@ describe('devices', () => {
     )
   })
 
-  test('Test block is disabled and says Testing… while pending', async () => {
+  test('Test block is busy (aria-disabled, keeps focus) and says Testing… while pending', async () => {
     apiMock.mockImplementation(() => new Promise(() => {}))
     render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
     await userEvent.click(screen.getByRole('button', { name: TB }))
     const btn = await screen.findByRole('button', { name: TB })
-    await waitFor(() => expect(btn).toBeDisabled())
+    await waitFor(() => expect(btn).toHaveAttribute('aria-busy', 'true'))
+    expect(btn).toHaveAttribute('aria-disabled', 'true')
     expect(btn).toHaveTextContent('Testing…')
+  })
+
+  test('Lock now shows busy and Unlock is disabled while an override is running', () => {
+    render(wrap(<DeviceDetail device={device} kids={kids} pendingAction="lock" onRequestOverride={() => {}} />))
+    expect(screen.getByRole('button', { name: /Lock now/ })).toHaveAttribute('aria-busy', 'true')
+    expect(screen.getByRole('button', { name: /Unlock 30 min/ })).toBeDisabled()
   })
 
   test('rename saves on blur and reverts when emptied', async () => {

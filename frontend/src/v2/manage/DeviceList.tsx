@@ -94,11 +94,9 @@ export function DeviceList({
 
       <div className="p-list-items">
         {/* Devices tab */}
-        <div role="tabpanel" style={{ display: tab === 'devices' ? 'block' : 'none' }}>
+        <div role="tabpanel" aria-label="Devices" hidden={tab !== 'devices'}>
           {sorted.length === 0 ? (
-            <div style={{ padding: 24, textAlign: 'center', color: 'var(--p-sub)', fontSize: 13 }}>
-              No devices yet.
-            </div>
+            <p className="p-device-empty">No devices yet.</p>
           ) : (
             <div className="p-device-list">
               {sorted.map((d) => {
@@ -115,10 +113,9 @@ export function DeviceList({
                     data-device={d.id}
                     data-selected={isSelected}
                     data-unassigned={isUnassigned}
+                    type="button"
+                    aria-current={isSelected || undefined}
                     onClick={() => onSelectDevice(d.id)}
-                    style={{
-                      cursor: 'pointer',
-                    }}
                   >
                     <div className="p-device-icon">
                       <Icon name={DEVICE_TYPE_ICON[deviceType]} size={18} />
@@ -145,7 +142,7 @@ export function DeviceList({
         </div>
 
         {/* Groups tab */}
-        <div role="tabpanel" style={{ display: tab === 'groups' ? 'block' : 'none' }}>
+        <div role="tabpanel" aria-label="Groups" hidden={tab !== 'groups'}>
           <div className="p-device-list">
               {groups.length === 0 && <p className="pk-hint pk-empty">No groups yet. Make one to set hours for several devices at once.</p>}
               {groups.map((g) => {
@@ -162,10 +159,9 @@ export function DeviceList({
                     className="p-device-item"
                     data-group={g.id}
                     data-selected={isSelected}
+                    type="button"
+                    aria-current={isSelected || undefined}
                     onClick={() => onSelectGroup?.(g.id)}
-                    style={{
-                      cursor: 'pointer',
-                    }}
                   >
                     <div className="p-device-icon">
                       <Icon name={DEVICE_TYPE_ICON[firstType]} size={18} />
@@ -176,7 +172,7 @@ export function DeviceList({
                         {g.device_ids.length} {g.device_ids.length === 1 ? 'device' : 'devices'} · {groupOwners}
                       </div>
                     </div>
-                    <div className="p-group-stack">
+                    <div className="p-group-stack" aria-hidden="true">
                       {deviceTypes.map((type) => (
                         <Icon key={type} name={DEVICE_TYPE_ICON[type]} size={16} />
                       ))}

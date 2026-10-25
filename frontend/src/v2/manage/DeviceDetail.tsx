@@ -9,6 +9,7 @@ import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Icon } from '@/v2/parent/Icon'
 import { SegmentedControl } from '@/v2/parent/SegmentedControl'
 import type { Device, Group, Kid } from '@/v2/types'
+import { ActionButton } from './ActionButton'
 import { ConfirmDelete } from './ConfirmDelete'
 import { DeviceNetwork } from './DeviceNetwork'
 import { DEVICE_TYPE_ICON, getDeviceType } from './deviceMeta'
@@ -23,6 +24,8 @@ interface Props {
   /** Called after the device is deleted. */
   onDeleted?: () => void
   onRequestOverride: (req: { kind: string; id: number; action: string }) => void
+  /** Override action in flight (lock / unlock / clear), if any. */
+  pendingAction?: string | null
 }
 
 const relativeTime = (iso: string | null) => {
@@ -34,7 +37,7 @@ const relativeTime = (iso: string | null) => {
 }
 
 /** Device editor: header actions, Overview (details, owners, groups, right now) and Network tabs. */
-export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOverride }: Props) {
+export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOverride, pendingAction = null }: Props) {
   const router = useRouter()
   const patch = usePatchDevice()
   const saveGroup = useSaveGroup()
@@ -95,6 +98,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
         label="Owners"
         value={device.owner_ids}
         disabled={guest}
+        busy={patch.isPending}
         onChange={(ids) => save({ owner_ids: ids }, 'Assigned')}
       />
       {needsPins && (
@@ -119,6 +123,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
         <input
           className="pk-input"
           aria-label="Device name"
+          aria-busy={patch.isPending || undefined}
           value={name}
           onChange={(e) => setName(e.currentTarget.value)}
           onBlur={rename}
@@ -130,7 +135,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
           <span className="pk-label">Groups</span>
           <div className="pk-pills" role="group" aria-label="Groups">
             {groups.map((g) => (
-              <button key={g.id} type="button" className="pk-pill pk-pill-plain" aria-pressed={g.device_ids.includes(device.id)} disabled={saveGroup.isPending} onClick={() => toggleGroup(g)}>
+              <button key={g.id} type="button" className="pk-pill pk-pill-plain" aria-pressed={g.device_ids.includes(device.id)} aria-disabled={saveGroup.isPending || undefined} onClick={() => !saveGroup.isPending && toggleGroup(g)}>
                 {g.name}
               </button>
             ))}
@@ -144,7 +149,8 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
           role="switch"
           aria-checked={guest}
           aria-labelledby="guest-label"
-          onClick={() => save({ status: !guest ? 'guest' : device.owner_ids.length ? 'assigned' : 'unassigned' }, 'Saved')}
+          aria-disabled={patch.isPending || undefined}
+          onClick={() => !patch.isPending && save({ status: !guest ? 'guest' : device.owner_ids.length ? 'assigned' : 'unassigned' }, 'Saved')}
         />
       </div>
     </section>
@@ -167,23 +173,19 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
             </div>
           )}
         </div>
-        <div className="pk-actions">
-          <button type="button" className="p-btn" data-variant="red" onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'lock' })}>
-            <Icon name="lock" size={16} />
+        <div className="pk-actions pk-actions-grid">
+          <ActionButton icon="lock" variant="red" busy={pendingAction === 'lock'} disabled={!!pendingAction} onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'lock' })}>
             Lock now
-          </button>
-          <button type="button" className="p-btn" onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'unlock' })}>
-            <Icon name="lock_open" size={16} />
+          </ActionButton>
+          <ActionButton icon="lock_open" busy={pendingAction === 'unlock'} disabled={!!pendingAction} onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'unlock' })}>
             Unlock 30 min
-          </button>
-          <button type="button" className="p-btn" aria-label={`Test block on ${device.name}`} disabled={test.isPending} onClick={runTest}>
-            <Icon name="shield" size={16} />
+          </ActionButton>
+          <ActionButton icon="shield" label={`Test block on ${device.name}`} busy={test.isPending} onClick={runTest}>
             {test.isPending ? 'Testing…' : 'Test block'}
-          </button>
-          <button type="button" className="p-btn" data-variant="red" onClick={open}>
-            <Icon name="delete" size={16} />
+          </ActionButton>
+          <ActionButton icon="delete" variant="red" busy={del.isPending} onClick={open}>
             Delete
-          </button>
+          </ActionButton>
         </div>
       </header>
 
@@ -211,7 +213,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
             </div>
             <div className="pk-kv">
               <span>Override</span>
-              <b>{device.override ? device.override.action : 'None, on schedule'}</b>
+              <b>{device.override ? (device.override.action === 'lock' ? 'Locked' : 'Unlocked') : 'None, on schedule'}</b>
             </div>
             {device.override?.expires_at && (
               <div className="pk-kv">

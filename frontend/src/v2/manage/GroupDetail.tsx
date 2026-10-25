@@ -4,6 +4,7 @@ import { useDeleteGroup, useSaveGroup } from '@/v2/hooks/useDevices'
 import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Icon } from '@/v2/parent/Icon'
 import type { Device, Group, Kid, TimeWindow } from '@/v2/types'
+import { ActionButton } from './ActionButton'
 import { ConfirmDelete } from './ConfirmDelete'
 import { HoursTimeline } from './HoursTimeline'
 import { nameOf } from './choreMeta'
@@ -19,13 +20,15 @@ interface Props {
   /** Select a group, or null to close the detail. */
   onSelect: (id: number | null) => void
   onRequestOverride: (req: { kind: string; id: number; action: string }) => void
+  /** Override action in flight (lock / unlock / clear), if any. */
+  pendingAction?: string | null
 }
 
 /**
  * Group editor. An existing group saves as you go (name on blur, members on tap);
  * a new group is a small form with Create / Cancel.
  */
-export function GroupDetail({ group, devices, kids, groups, windows, onSelect, onRequestOverride }: Props) {
+export function GroupDetail({ group, devices, kids, groups, windows, onSelect, onRequestOverride, pendingAction = null }: Props) {
   const save = useSaveGroup()
   const del = useDeleteGroup()
   const [confirm, { open, close }] = useDisclosure(false)
@@ -80,23 +83,19 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
           <HeaderChips items={chips} />
         </div>
         {group && (
-          <div className="pk-actions">
-            <button type="button" className="p-btn" data-variant="red" onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'lock' })}>
-              <Icon name="lock" size={16} />
+          <div className="pk-actions pk-actions-grid">
+            <ActionButton icon="lock" variant="red" busy={pendingAction === 'lock'} disabled={!!pendingAction} onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'lock' })}>
               Lock group
-            </button>
-            <button type="button" className="p-btn" onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'unlock' })}>
-              <Icon name="lock_open" size={16} />
+            </ActionButton>
+            <ActionButton icon="lock_open" busy={pendingAction === 'unlock'} disabled={!!pendingAction} onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'unlock' })}>
               Unlock 30 min
-            </button>
-            <button type="button" className="p-btn" onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'schedule' })}>
-              <Icon name="event_repeat" size={16} />
+            </ActionButton>
+            <ActionButton icon="event_repeat" busy={pendingAction === 'clear'} disabled={!!pendingAction} onClick={() => onRequestOverride({ kind: 'group', id: group.id, action: 'schedule' })}>
               Back to schedule
-            </button>
-            <button type="button" className="p-btn" data-variant="red" onClick={open}>
-              <Icon name="delete" size={16} />
+            </ActionButton>
+            <ActionButton icon="delete" variant="red" busy={del.isPending} onClick={open}>
               Delete
-            </button>
+            </ActionButton>
           </div>
         )}
       </header>
@@ -110,6 +109,7 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
           <input
             className="pk-input"
             aria-label="Group name"
+            aria-busy={save.isPending || undefined}
             placeholder="Group name"
             value={name}
             onChange={(e) => setName(e.currentTarget.value)}
@@ -128,7 +128,7 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
           ) : (
             <div className="pk-pills" role="group" aria-label="Devices in group">
               {devices.map((d) => (
-                <button key={d.id} type="button" className="pk-pill pk-pill-plain" aria-pressed={ids.includes(d.id)} disabled={save.isPending && !!group} onClick={() => toggle(d.id)}>
+                <button key={d.id} type="button" className="pk-pill pk-pill-plain" aria-pressed={ids.includes(d.id)} aria-disabled={(save.isPending && !!group) || undefined} onClick={() => !(save.isPending && group) && toggle(d.id)}>
                   {d.name}
                 </button>
               ))}
@@ -153,8 +153,8 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
             Cancel
           </button>
           <button type="button" className="p-btn" data-variant="accent" onClick={create} disabled={!name.trim() || save.isPending}>
-            <Icon name="check" />
-            Create group
+            <Icon name={save.isPending ? 'progress_activity' : 'check'} className={save.isPending ? 'p-spin' : undefined} />
+            {save.isPending ? 'Creating…' : 'Create group'}
           </button>
         </div>
       )}

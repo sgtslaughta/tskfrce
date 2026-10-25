@@ -30,10 +30,12 @@ function DevicesBody() {
   }
   const small = useMediaQuery('(max-width: 767px)')
   // desktop opens the first item rather than an empty detail pane; phone stays on the list
-  const fallback = small ? null : ((tab === 'devices' ? all : groups.data ?? [])[0]?.id ?? null)
+  const shown = tab === 'devices' ? all : groups.data ?? []
+  const fallback = small ? null : (shown[0]?.id ?? null)
   const item = first(query.item)
   const creating = item === 'new' && tab === 'groups'
-  const selectedId = Number(item) || fallback
+  // a stale ?item (just deleted) falls back instead of leaving the pane blank
+  const selectedId = shown.some((x) => x.id === Number(item)) ? Number(item) : fallback
   // select a group (or null = drop ?item so the first item reopens)
   const pick = (id: number | null) => {
     const { item: _drop, ...rest } = query
@@ -52,6 +54,9 @@ function DevicesBody() {
         : req.action === 'unlock' ? { action: 'unlock', minutes: 30 }
         : { action: 'clear' },
     })
+
+  // the action in flight (lock / unlock / clear): the pressed button shows a spinner
+  const pending = override.isPending ? override.variables.choice.action : null
 
   return (
     <ParentShell
@@ -88,6 +93,7 @@ function DevicesBody() {
           groups={groups.data ?? []}
           onDeleted={() => pick(null)}
           onRequestOverride={handleRequestOverride}
+          pendingAction={pending}
         />
       )}
       {!devices.isError && (selectedGroup || creating) && (
@@ -100,6 +106,7 @@ function DevicesBody() {
           windows={windows.data ?? []}
           onSelect={pick}
           onRequestOverride={handleRequestOverride}
+          pendingAction={pending}
         />
       )}
     </ParentShell>
