@@ -1,0 +1,14 @@
+/* Collapsible list groups (Fold.tsx): chores by type, devices by owner */
+[data-look='parent'] .p-fold > summary {
+  display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px;
+  list-style: none; cursor: pointer; color: var(--p-sub); font-size: 13px; font-weight: 600;
+}
+[data-look='parent'] .p-fold > summary::-webkit-details-marker { display: none; }
+[data-look='parent'] .p-fold > summary:hover { color: var(--p-ink); background: var(--p-soft); }
+[data-look='parent'] .p-fold > summary:focus-visible { outline: 2px solid var(--p-acc); outline-offset: 2px; }
+[data-look='parent'] .p-fold-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-look='parent'] .p-fold-n { font-size: 12px; padding: 1px 8px; border-radius: 10px; background: var(--p-soft); }
+[data-look='parent'] .p-fold-car { transition: transform 0.15s; }
+[data-look='parent'] .p-fold[open] .p-fold-car { transform: rotate(180deg); }
+[data-look='parent'] .p-fold-body { display: flex; flex-direction: column; gap: 8px; padding: 4px 0 8px 12px; margin-left: 8px; border-left: 2px solid var(--p-line); }
+@media (prefers-reduced-motion: reduce) { [data-look='parent'] .p-fold-car { transition: none; } }

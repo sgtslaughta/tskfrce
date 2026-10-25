@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { Icon } from '@/v2/parent/Icon'
+import { Fold } from '@/v2/parent/Fold'
 import { MakerLogo } from '@/v2/parent/MakerLogo'
 import { Chip, type ChipTone } from '@/v2/parent/Chip'
 import { ListHeader } from '@/v2/parent/ListHeader'
@@ -50,6 +51,19 @@ const getGroupDeviceTypes = (devices: Device[], groupDeviceIds: number[]): Devic
   return types
 }
 
+/** Devices by owner: new ones first, then each kid, shared, guests, and nobody's. */
+function byOwner(devices: Device[], kids: Kid[]) {
+  const pick = (key: string, title: string, icon: string, list: Device[]) => ({ key, title, icon, list })
+  const solo = (d: Device) => d.status === 'assigned' && d.owner_ids.length === 1
+  return [
+    pick('new', "Who's this?", 'help', devices.filter((d) => d.status === 'unassigned')),
+    ...kids.map((k) => pick(`k${k.id}`, k.full_name || k.username, 'person', devices.filter((d) => solo(d) && d.owner_ids[0] === k.id))),
+    pick('shared', 'Shared', 'group', devices.filter((d) => d.status === 'assigned' && d.owner_ids.length > 1)),
+    pick('guest', 'Guests', 'badge', devices.filter((d) => d.status === 'guest')),
+    pick('none', 'No owner', 'devices_other', devices.filter((d) => d.status === 'assigned' && (d.owner_ids.length === 0 || (solo(d) && !kids.some((k) => k.id === d.owner_ids[0]))))),
+  ].filter((g) => g.list.length > 0)
+}
+
 export function DeviceList({
   devices,
   kids,
@@ -65,6 +79,44 @@ export function DeviceList({
   const assigned = devices.filter((d) => d.status !== 'unassigned')
 
   const sorted = [...unassigned, ...assigned]
+  const item = (d: Device) => {
+    const chip = statusChip(d)
+    const owner = ownerName(kids, d.owner_ids)
+    const deviceType = getDeviceType(d.name, d.vendor)
+    const isSelected = selectedDevice === d.id
+    const isUnassigned = d.status === 'unassigned'
+
+    return (
+      <button
+        key={d.id}
+        className="p-device-item"
+        data-device={d.id}
+        data-selected={isSelected}
+        data-unassigned={isUnassigned}
+        type="button"
+        aria-current={isSelected || undefined}
+        onClick={() => onSelectDevice(d.id)}
+      >
+        <div className="p-device-icon">
+          <Icon name={DEVICE_TYPE_ICON[deviceType]} size={18} />
+          {d.vendor && (
+            <div className="p-device-vendor">
+              <MakerLogo vendor={d.vendor} size={12} />
+            </div>
+          )}
+        </div>
+        <div className="p-device-info">
+          <div className="p-device-name" title={d.name}>{d.name}</div>
+          <div className="p-device-meta">
+            {owner} · {d.last_seen ? ago(d.last_seen) : 'never seen'}
+          </div>
+        </div>
+        <Chip tone={chip.tone} icon={chip.icon}>
+          {chip.text}
+        </Chip>
+      </button>
+    )
+  }
   // a deep link (?item=) or a pick from elsewhere may be off-screen in a long list
   const listRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -91,44 +143,11 @@ export function DeviceList({
             <p className="p-device-empty">No devices yet.</p>
           ) : (
             <div className="p-device-list">
-              {sorted.map((d) => {
-                const chip = statusChip(d)
-                const owner = ownerName(kids, d.owner_ids)
-                const deviceType = getDeviceType(d.name, d.vendor)
-                const isSelected = selectedDevice === d.id
-                const isUnassigned = d.status === 'unassigned'
-
-                return (
-                  <button
-                    key={d.id}
-                    className="p-device-item"
-                    data-device={d.id}
-                    data-selected={isSelected}
-                    data-unassigned={isUnassigned}
-                    type="button"
-                    aria-current={isSelected || undefined}
-                    onClick={() => onSelectDevice(d.id)}
-                  >
-                    <div className="p-device-icon">
-                      <Icon name={DEVICE_TYPE_ICON[deviceType]} size={18} />
-                      {d.vendor && (
-                        <div className="p-device-vendor">
-                          <MakerLogo vendor={d.vendor} size={12} />
-                        </div>
-                      )}
-                    </div>
-                    <div className="p-device-info">
-                      <div className="p-device-name" title={d.name}>{d.name}</div>
-                      <div className="p-device-meta">
-                        {owner} · {d.last_seen ? ago(d.last_seen) : 'never seen'}
-                      </div>
-                    </div>
-                    <Chip tone={chip.tone} icon={chip.icon}>
-                      {chip.text}
-                    </Chip>
-                  </button>
-                )
-              })}
+              {byOwner(sorted, kids).map((g) => (
+                <Fold key={g.key} title={g.title} icon={g.icon} count={g.list.length} open={g.key === 'new' || g.list.some((d) => d.id === selectedDevice)}>
+                  {g.list.map(item)}
+                </Fold>
+              ))}
             </div>
           )}
         </div>

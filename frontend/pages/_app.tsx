@@ -16,6 +16,7 @@ import '../src/v2/fridge.css';
 import '../src/v2/parent/parent-tokens.css';
 import '../src/v2/parent/motion.css';
 import '../src/v2/parent/shell.css';
+import '../src/v2/parent/fold.css';
 import '../src/v2/parent/layout.css';
 import '../src/v2/parent/rail.css';
 import '../src/v2/parent/buttons.css';

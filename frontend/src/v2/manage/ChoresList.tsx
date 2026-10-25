@@ -1,5 +1,6 @@
 import { Icon } from '@/v2/parent/Icon'
-import { choreIcon } from '@/v2/today/choreIcon'
+import { choreIcon, choreType } from '@/v2/today/choreIcon'
+import { Fold } from '@/v2/parent/Fold'
 import type { Kid, LibChore } from '@/v2/types'
 import { choreLine, initial, nameOf, usedBy } from './choreMeta'
 
@@ -15,9 +16,8 @@ interface Props {
 /** Chore cards (icon tile, name, summary line, assignee avatars) and the dashed "New chore" card. */
 export function ChoresList({ chores, kids, selected, onSelect }: Props) {
   const byId = new Map(kids.map((k) => [k.id, k]))
-  return (
-    <div className="pk-items">
-      {chores.map((c) => {
+  const types = Array.from(new Set(chores.map((c) => choreType(c.title)))).sort((a, b) => (a === 'Other' ? 1 : b === 'Other' ? -1 : a.localeCompare(b)))
+  const card = (c: LibChore) => {
         const ids = usedBy(c)
         return (
           <button key={c.id} type="button" className="pk-card" data-selected={selected === String(c.id)} onClick={() => onSelect(c.id)}>
@@ -41,6 +41,16 @@ export function ChoresList({ chores, kids, selected, onSelect }: Props) {
               {ids.length > MAX_AVATARS && <span className="pk-av">+{ids.length - MAX_AVATARS}</span>}
             </span>
           </button>
+        )
+  }
+  return (
+    <div className="pk-items">
+      {types.map((t) => {
+        const list = chores.filter((c) => choreType(c.title) === t)
+        return (
+          <Fold key={t} title={t} icon={choreIcon(list[0].title)} count={list.length} open={list.some((c) => selected === String(c.id))}>
+            {list.map(card)}
+          </Fold>
         )
       })}
       <button type="button" className="pk-card pk-new" data-selected={selected === 'new'} onClick={() => onSelect('new')}>
