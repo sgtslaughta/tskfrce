@@ -140,7 +140,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
           <div className="pt-chat" data-testid="chat-column">
             <div className="pt-chat-head">
               <Icon name="subdirectory_arrow_right" size={16} />
-              <span>{chore.title}</span>
+              <span className="pt-chat-title">{chore.title}</span>
               <button aria-label="Close chat" onClick={() => setChat(false)}>
                 <Icon name="close" size={18} />
               </button>
