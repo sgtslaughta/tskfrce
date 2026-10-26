@@ -59,3 +59,12 @@ def test_reward_glyph_and_flags(client, parent_headers):
     assert _mk(client, parent_headers, icon="🎬").status_code == 422
     hidden = client.get("/api/v1/rewards", headers=parent_headers).json()
     assert [x["id"] for x in hidden] == [out["id"]]
+
+
+def test_quick_replies_deduped_in_order(client, parent_headers):
+    r = client.patch(
+        "/api/v1/family",
+        json={"quick_replies": ["A", "B", " A ", "C", "B"]},
+        headers=parent_headers,
+    )
+    assert r.json()["quick_replies"] == ["A", "B", "C"]

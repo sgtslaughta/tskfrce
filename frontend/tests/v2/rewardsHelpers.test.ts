@@ -1,10 +1,13 @@
 import { describe, expect, test } from '@jest/globals'
-import { renderHook } from '@testing-library/react'
+import { renderHook, waitFor } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createElement, type ReactNode } from 'react'
+import { useApproveAll, useDecideRedemption, useSaveReward } from '@/v2/hooks/useRewards'
 import { api } from '@/v2/api'
 import { useTypingPing } from '@/v2/hooks/useChat'
 import { BADGE_GLYPH, badgeGlyph } from '@/v2/badgeGlyphs'
 import { REWARD_GLYPHS } from '@/v2/parent/glyphs'
-import { toCsv } from '@/v2/manage/historyCsv'
+import { downloadCsv, toCsv } from '@/v2/manage/historyCsv'
 import type { HistoryRow } from '@/v2/types'
 
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
@@ -72,5 +75,45 @@ describe('useTypingPing', () => {
     result.current()
     expect(post).toHaveBeenCalledTimes(3)
     jest.useRealTimers()
+  })
+})
+
+describe('csv date and BOM', () => {
+  test('date column prefers decided_at, falls back to created_at', () => {
+    const lines = toCsv([row({}), row({ decided_at: null })]).split('\n')
+    expect(lines[1].startsWith('2026-10-20T11:00:00Z,')).toBe(true)
+    expect(lines[2].startsWith('2026-10-20T10:00:00Z,')).toBe(true)
+  })
+  test('downloadCsv prepends a UTF-8 BOM', async () => {
+    let blob: Blob | undefined
+    URL.createObjectURL = jest.fn((b: Blob) => ((blob = b), 'blob:x'))
+    URL.revokeObjectURL = jest.fn()
+    downloadCsv('a.csv', 'date,kid\nx,Zoë')
+    const bytes = await new Promise<Uint8Array>((res) => {
+      const fr = new FileReader()
+      fr.onload = () => res(new Uint8Array(fr.result as ArrayBuffer))
+      fr.readAsArrayBuffer(blob as Blob)
+    })
+    expect(Array.from(bytes.slice(0, 3))).toEqual([0xef, 0xbb, 0xbf])
+  })
+})
+
+describe('reward mutations invalidate on settle', () => {
+  const run = async (hook: () => { mutate: (v: never) => void }, v: unknown) => {
+    const qc = new QueryClient()
+    const inv = jest.spyOn(qc, 'invalidateQueries')
+    ;(api as unknown as jest.Mock).mockRejectedValue(new Error('boom'))
+    const wrapper = ({ children }: { children: ReactNode }) => createElement(QueryClientProvider, { client: qc }, children)
+    const { result } = renderHook(hook, { wrapper })
+    result.current.mutate(v as never)
+    await waitFor(() => expect(inv).toHaveBeenCalled())
+    return inv.mock.calls.map((c) => (c[0] as { queryKey: string[] }).queryKey[0])
+  }
+  test('approve all and decide refresh even on error, incl. screen-time', async () => {
+    expect(await run(useApproveAll, undefined)).toEqual(expect.arrayContaining(['redemptions', 'screen-time']))
+    expect(await run(useDecideRedemption, { id: 1, approve: false })).toEqual(expect.arrayContaining(['screen-time']))
+  })
+  test('save reward refreshes redemptions', async () => {
+    expect(await run(useSaveReward, { body: { name: 'a', price: 1 } })).toEqual(expect.arrayContaining(['rewards', 'redemptions']))
   })
 })

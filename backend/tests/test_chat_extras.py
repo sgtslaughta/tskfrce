@@ -128,3 +128,14 @@ def test_search_messages(client, db, parent, parent_headers):
         f"{C}/search", params={"q": "fraction"}, headers=_headers(db, leo)
     ).json() == {"thread_ids": []}
     assert client.get(f"{C}/search", params={"q": "a"}, headers=parent_headers).status_code == 422
+
+
+def test_parent_mention_not_double_pinged(client, db, parent, parent_headers):
+    leo = _make_user(db, "leo", UserRole.KID)
+    rid = _chore(client, db, parent_headers, leo)
+    cid = client.get(f"{C}/threads/chore/{rid}", headers=parent_headers).json()["id"]
+    client.post(f"{C}/threads/{cid}/messages", json={"body": "@leo nice"}, headers=parent_headers)
+    assert _pings(db, leo).count() == 1
+    fid = _fam(client, parent_headers)["id"]  # family thread has no parent_reply ping
+    client.post(f"{C}/threads/{fid}/messages", json={"body": "@leo hi"}, headers=parent_headers)
+    assert _pings(db, leo).count() == 2

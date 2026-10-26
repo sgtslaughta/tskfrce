@@ -16,7 +16,7 @@ function useInvalidating<V>(fn: (v: V) => Promise<unknown>, keys: string[]) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: fn,
-    onSuccess: () => Promise.all(keys.map((k) => qc.invalidateQueries({ queryKey: [k] }))),
+    onSettled: () => Promise.all(keys.map((k) => qc.invalidateQueries({ queryKey: [k] }))),
   })
 }
 
@@ -24,7 +24,7 @@ export const useSaveReward = () =>
   useInvalidating(
     ({ id, body }: { id?: number; body: RewardBody }) =>
       id ? api(`/rewards/${id}`, { method: 'PATCH', body }) : api('/rewards', { method: 'POST', body }),
-    ['rewards'],
+    ['rewards', 'redemptions'],
   )
 
 export const useDeleteReward = () =>
@@ -33,7 +33,7 @@ export const useDeleteReward = () =>
 export const usePendingRedemptions = () =>
   useQuery({ queryKey: ['redemptions'], queryFn: () => api<PendingRedemption[]>('/redemptions') })
 
-const DECIDED = ['redemptions', 'reward-history', 'today', 'family']
+const DECIDED = ['redemptions', 'reward-history', 'today', 'family', 'screen-time']
 
 export const useDecideRedemption = () =>
   useInvalidating(

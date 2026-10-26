@@ -15,7 +15,7 @@ from app.models.chat import ChatPhoto, Thread, ThreadMessage
 from app.models.family import get_family
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services import chat, chat_extras, giphy, inbox, typing
+from app.services import chat, chat_extras, giphy, inbox, kid_events, typing
 from app.services.photos import chat_storage, put, put_gif
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
@@ -118,6 +118,8 @@ def send(
         raise HTTPException(422, "We couldn't find that step.")
     m = chat.post(db, t, user, body.body, body.photo_id, step_id=body.step_id)
     ids = chat_extras.mentioned(chat_extras.members(db, t), body.body, user.id)
+    covered = set(kid_events.reply_targets(db, t, user))  # already pinged by parent_reply
+    ids = [i for i in ids if i not in covered]
     if ids:
         name = user.full_name or user.username
         inbox.notify(

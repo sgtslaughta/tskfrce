@@ -106,4 +106,9 @@ class FamilyPatch(BaseModel):
         | None
     ) = None
 
+    @field_validator("quick_replies")
+    @classmethod
+    def _dedupe_replies(cls, v: list[str] | None) -> list[str] | None:
+        return None if v is None else list(dict.fromkeys(v))  # keep order, drop repeats
+
     _rt = field_validator("reset_time")(_hhmm)
