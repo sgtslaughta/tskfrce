@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { notifications } from '@mantine/notifications'
 import { useDisclosure } from '@mantine/hooks'
-import { useDeleteDevice, useExpired, usePatchDevice, useSaveGroup, useTestBlock, type DevicePatch } from '@/v2/hooks/useDevices'
+import { useDeleteDevice, usePatchDevice, useSaveGroup, useTestBlock, type DevicePatch } from '@/v2/hooks/useDevices'
 import { Chip } from '@/v2/parent/Chip'
 import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Icon } from '@/v2/parent/Icon'
@@ -12,7 +12,9 @@ import type { Device, Group, Kid } from '@/v2/types'
 import { ActionButton } from './ActionButton'
 import { ConfirmDelete } from './ConfirmDelete'
 import { DeviceNetwork } from './DeviceNetwork'
-import { ago, DEVICE_TYPE_ICON, getDeviceType, inFamilyZone } from './deviceMeta'
+import { DeviceRightNow } from './DeviceRightNow'
+import { OnlineWeek } from './OnlineWeek'
+import { ago, DEVICE_TYPE_ICON, getDeviceType } from './deviceMeta'
 import { KidPills } from './KidPills'
 import { nameOf } from './choreMeta'
 import { toastFail, toastOk, toasts } from '../notify'
@@ -29,7 +31,7 @@ interface Props {
   pendingAction?: string | null
 }
 
-/** Device editor: header actions, Overview (details, owners, groups, right now) and Network tabs. */
+/** Device editor: header actions, Overview (details, owners, right now, online this week), Network and Activity tabs. */
 export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOverride, pendingAction = null }: Props) {
   const router = useRouter()
   const patch = usePatchDevice()
@@ -48,9 +50,6 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
   // learning mode (the default) leaves new devices online; strict mode blocks them
   const family = useFamily().data
   const blockNew = family?.new_devices_blocked ?? false
-  // an override that ran out while the screen was open no longer counts
-  const expired = useExpired(device.override?.expires_at)
-  const override = expired ? null : device.override
   const owners = kids.filter((k) => device.owner_ids.includes(k.id))
   const ownerLabel = guest ? 'Guest' : owners.length ? owners.map(nameOf).join(', ') : 'Unassigned'
   const needsPins = device.needs_pins && owners.length > 0
@@ -156,6 +155,19 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
           onClick={() => !patch.isPending && save({ status: !guest ? 'guest' : device.owner_ids.length ? 'assigned' : 'unassigned' }, 'Saved')}
         />
       </div>
+      <div className="pk-switch ph-sw-row">
+        <span id="exempt-label">Always allowed (never lock)</span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={device.exempt}
+          aria-labelledby="exempt-label"
+          aria-describedby="exempt-hint"
+          aria-disabled={patch.isPending || undefined}
+          onClick={() => !patch.isPending && save({ exempt: !device.exempt }, 'Saved')}
+        />
+      </div>
+      <p className="pk-hint" id="exempt-hint">Skips hours and the chore check. A manual lock still applies.</p>
     </section>
   )
 
@@ -198,33 +210,30 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
         options={[
           { value: 'overview', label: 'Overview' },
           { value: 'network', label: 'Network' },
+          {
+            value: 'activity',
+            label: (
+              <>
+                Activity
+                {device.alerts > 0 && (
+                  <Chip tone="red" icon="notifications">
+                    {device.alerts}
+                  </Chip>
+                )}
+              </>
+            ),
+          },
         ]}
       />
 
       {tab === 'overview' && (
         <div className="pk-grid">
           {unknown ? ownersPanel : detailsPanel}
-          {unknown ? detailsPanel : ownersPanel}
-          <section className="pk-panel pk-span" aria-label="Right now">
-            <h3>
-              <Icon name="bolt" size={18} />
-              Right now
-            </h3>
-            <div className="pk-kv">
-              <span>State</span>
-              <b>{guest ? 'Guest' : device.online ? 'Online' : 'Offline'}</b>
-            </div>
-            <div className="pk-kv">
-              <span>Override</span>
-              <b>{override ? (override.action === 'lock' ? 'Locked' : 'Unlocked') : 'None, on schedule'}</b>
-            </div>
-            {override?.expires_at && (
-              <div className="pk-kv">
-                <span>Expires at</span>
-                <b>{inFamilyZone(override.expires_at, family?.timezone)}</b>
-              </div>
-            )}
-          </section>
+          <div className="pk-col">
+            {unknown ? detailsPanel : ownersPanel}
+            <DeviceRightNow device={device} timeZone={family?.timezone} />
+          </div>
+          {!guest && <OnlineWeek device={device} />}
         </div>
       )}
       {tab === 'network' && <DeviceNetwork device={device} timeZone={family?.timezone} />}

@@ -61,26 +61,25 @@ describe('device time helpers', () => {
 })
 
 describe('DeviceDetail', () => {
-  test('an unlock that expires while the screen is open goes back to "None, on schedule"', async () => {
+  test('an unlock that expires while the screen is open goes back to "None · on schedule"', async () => {
     jest.useFakeTimers({ now: new Date('2026-10-25T10:00:00Z') })
     const d = dev({ override: { action: 'unlock', expires_at: '2026-10-25T10:00:02Z' } })
     render(wrap(<DeviceDetail device={d} kids={kids} onRequestOverride={() => {}} />))
     const right = screen.getByRole('region', { name: 'Right now' })
-    expect(within(right).getByText('Unlocked')).toBeTruthy()
-    expect(within(right).getByText('Expires at')).toBeTruthy()
+    expect(within(right).getByText(/^Unlocked until/)).toBeTruthy()
     await act(async () => {
       jest.advanceTimersByTime(3000)
     })
-    expect(within(right).getByText('None, on schedule')).toBeTruthy()
-    expect(within(right).queryByText('Expires at')).toBeNull()
+    expect(within(right).getByText('None · on schedule')).toBeTruthy()
+    expect(within(right).queryByText(/until/)).toBeNull()
   })
 
-  test('Expires at is in the family time zone', async () => {
+  test('an override expiry is in the family time zone', async () => {
     const d = dev({ override: { action: 'lock', expires_at: new Date(Date.now() + 3600000).toISOString() } })
     render(wrap(<DeviceDetail device={d} kids={kids} onRequestOverride={() => {}} />))
     await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/family'))
-    const want = inFamilyZone(d.override!.expires_at!, 'Pacific/Auckland')
-    expect(await screen.findByText(want)).toBeTruthy()
+    const want = inFamilyZone(d.override!.expires_at!, 'Pacific/Auckland', { timeStyle: 'short' })
+    expect(await screen.findByText(`Locked until ${want}`)).toBeTruthy()
   })
 
   test('a double click on Delete in the dialog sends exactly one DELETE', async () => {
@@ -120,6 +119,14 @@ describe('DeviceList status glyph', () => {
     list([dev({ id: 1, name: 'Locked one', online: true, override: { action: 'lock', expires_at: future } }), dev({ id: 2, name: 'Was locked', online: true, override: { action: 'lock', expires_at: past } })])
     expect(glyph(/Locked one/)).toBe('Locked by you')
     expect(glyph(/Was locked/)).toBe('Internet on')
+  })
+
+  test('an exempt device shows the Exempt chip and glyph; a manual lock still wins', () => {
+    const future = new Date(Date.now() + 600000).toISOString()
+    list([dev({ id: 1, name: 'Free one', online: true, exempt: true }), dev({ id: 2, name: 'Held one', online: false, exempt: true, override: { action: 'lock', expires_at: future } })])
+    expect(within(screen.getByRole('button', { name: /Free one/ })).getByText('Exempt')).toBeTruthy()
+    expect(glyph(/Free one/)).toBe('Exempt · always allowed')
+    expect(glyph(/Held one/)).toBe('Locked by you')
   })
 
   test('a kid device cut off by hours or chores shows Internet off, not Open', () => {

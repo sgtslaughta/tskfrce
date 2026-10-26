@@ -1,4 +1,5 @@
 import { Chip } from '@/v2/parent/Chip'
+import { useBlocker } from '@/v2/hooks/useDevices'
 import { Icon } from '@/v2/parent/Icon'
 import type { Device } from '@/v2/types'
 import { inFamilyZone } from './deviceMeta'
@@ -8,6 +9,8 @@ const maskMac = (mac: string) => (mac.length < 17 ? mac : mac.substring(0, 6) + 
 
 /** Network tab: addresses and connection history. */
 export function DeviceNetwork({ device, timeZone }: { device: Device; timeZone?: string }) {
+  const boxUp = useBlocker().data?.online
+  const hold = boxUp === false ? (['grey', 'wifi_off', 'Box offline'] as const) : device.resisting ? (['amb', 'warning', 'Slipping'] as const) : boxUp ? (['acc', 'shield', 'Healthy'] as const) : null
   return (
     <div className="pk-grid">
       <section className="pk-panel" aria-label="Addresses">
@@ -73,6 +76,22 @@ export function DeviceNetwork({ device, timeZone }: { device: Device; timeZone?:
           <div className="pk-kv">
             <span>Last seen</span>
             <b>{inFamilyZone(device.last_seen, timeZone)}</b>
+          </div>
+        )}
+        {hold && (
+          <div className="pk-kv">
+            <span>Blocker hold</span>
+            <Chip tone={hold[0]} icon={hold[1]}>{hold[2]}</Chip>
+          </div>
+        )}
+        <div className="pk-kv">
+          <span>Resisting blocker</span>
+          <b>{device.resisting ? 'Yes' : 'No'}</b>
+        </div>
+        {device.address_changes !== undefined && (
+          <div className="pk-kv">
+            <span>Address changes (7 days)</span>
+            <b>{device.address_changes}</b>
           </div>
         )}
       </section>

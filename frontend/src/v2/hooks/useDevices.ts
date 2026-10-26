@@ -9,6 +9,7 @@ export interface DevicePatch {
   status?: DeviceStatus
   owner_ids?: number[]
   group_ids?: number[]
+  exempt?: boolean
 }
 
 // polled so a second tab, an expired override or a new device shows up without a reload

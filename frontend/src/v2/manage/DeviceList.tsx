@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import { Fold } from '@/v2/parent/Fold'
 import { MakerLogo } from '@/v2/parent/MakerLogo'
@@ -26,6 +27,7 @@ const deviceState = (d: Device): { tone: Tone; tip: string; icon: string } => {
   // a lock you pressed beats the schedule; one that already ran out doesn't count
   const ov = d.override
   if (ov?.action === 'lock' && !(ov.expires_at && new Date(ov.expires_at).getTime() <= Date.now())) return { tone: 'red', tip: 'Locked by you', icon: 'lock' }
+  if (d.exempt) return { tone: 'grey', tip: 'Exempt · always allowed', icon: 'verified_user' }
   if (d.status === 'unassigned') return { tone: 'amb', tip: "Who's this? New device, pick an owner", icon: 'help' }
   if (d.status === 'guest') return { tone: 'grey', tip: 'Guest · internet on', icon: 'person' }
   return d.online
@@ -112,7 +114,12 @@ export function DeviceList({
         <div className="p-device-info">
           <div className="p-device-name" title={d.name}>{d.name}</div>
           <div className="p-device-meta">
-            {owner} · {d.last_seen ? ago(d.last_seen) : 'never seen'}
+            <span>{owner} · {d.last_seen ? ago(d.last_seen) : 'never seen'}</span>
+            {d.exempt && (
+              <Chip tone="grey" icon="verified_user">
+                Exempt
+              </Chip>
+            )}
           </div>
         </div>
         <Tooltip label={state.tip} openDelay={300}>
