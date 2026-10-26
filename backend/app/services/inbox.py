@@ -42,6 +42,8 @@ def notify(
     dedup_key: str | None = None,
 ) -> int:
     """Add one row per recipient; returns rows added (dedup_key skips existing)."""
+    from app.services import push  # lazy: push imports inbox
+
     n = 0
     for uid in user_ids:
         if dedup_key and (
@@ -49,18 +51,18 @@ def notify(
         ):
             continue
         n += 1
-        db.add(
-            Notification(
-                user_id=uid,
-                kind=kind,
-                title=title[:120],
-                body=body[:300] if body else None,
-                run_id=run_id,
-                redemption_id=redemption_id,
-                device_id=device_id,
-                thread_id=thread_id,
-                dedup_key=dedup_key,
-            )
+        row = Notification(
+            user_id=uid,
+            kind=kind,
+            title=title[:120],
+            body=body[:300] if body else None,
+            run_id=run_id,
+            redemption_id=redemption_id,
+            device_id=device_id,
+            thread_id=thread_id,
+            dedup_key=dedup_key,
         )
+        db.add(row)
         db.flush()
+        push.queue(db, uid, kind, title, body, row=row)
     return n
