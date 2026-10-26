@@ -37,6 +37,7 @@ def _out(k: User) -> dict:
         "username": k.username,
         "avatar": k.avatar,
         "has_pin": bool(k.pin_hash),
+        "age_group": k.age_group,
     }
 
 
@@ -74,6 +75,7 @@ def create_kid(body: KidCreate, db: Session = Depends(get_db)):
         role=UserRole.KID,
         avatar=body.avatar,
         pin_hash=auth.get_password_hash(body.pin) if body.pin else None,
+        age_group=body.age_group or "kid",
     )
     db.add(kid)
     db.commit()
@@ -90,6 +92,8 @@ def patch_kid(kid_id: int, body: KidPatch, db: Session = Depends(get_db)):
         kid.avatar = body.avatar
     if body.pin is not None:
         kid.pin_hash = AuthService(db).get_password_hash(body.pin)
+    if body.age_group is not None:
+        kid.age_group = body.age_group
     if body.clear_pin:
         kid.pin_hash = None
     db.commit()

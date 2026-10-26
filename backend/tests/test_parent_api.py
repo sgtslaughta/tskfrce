@@ -456,3 +456,12 @@ def test_run_detail_kid_forbidden(client, db, parent, kid, kid_headers):
 
     r = client.get(f"/api/v1/chores/{run.id}", headers=kid_headers)
     assert r.status_code == 403
+
+
+def test_kid_age_group_patch(client, kid, parent_headers):
+    url = f"/api/v1/kids/{kid.id}"
+    assert (
+        client.patch(url, json={"age_group": "little"}, headers=parent_headers).json()["age_group"]
+        == "little"
+    )
+    assert client.patch(url, json={"age_group": "baby"}, headers=parent_headers).status_code == 422

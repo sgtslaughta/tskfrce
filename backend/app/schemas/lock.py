@@ -50,6 +50,7 @@ class KidCreate(BaseModel):
     full_name: str = Field(min_length=1, max_length=100)
     avatar: str | None = Field(default=None, max_length=255)
     pin: str | None = None
+    age_group: Literal["little", "kid", "teen"] | None = None
 
     _pin = field_validator("pin")(_pin)
 
@@ -59,6 +60,7 @@ class KidPatch(BaseModel):
     avatar: str | None = Field(default=None, max_length=255)
     pin: str | None = None
     clear_pin: bool = False
+    age_group: Literal["little", "kid", "teen"] | None = None
 
     _pin = field_validator("pin")(_pin)
 

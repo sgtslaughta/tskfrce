@@ -16,14 +16,14 @@ from app.lock.rules import is_online
 from app.lock.schedule import local_now
 from app.lock.state import Prefetch, device_facts
 from app.models.badge import BadgeAward
-from app.models.chores import ChoreRun
+from app.models.chores import ChoreRun, ChoreSeen
 from app.models.family import get_family
 from app.models.lock import Device, DeviceIPv6
 from app.models.points import Points
 from app.models.reward import Redemption, Reward
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services import badges, chat, economy, inbox, progression
+from app.services import badges, chat, economy, inbox, kid_view, progression
 from app.services import chores as svc
 from app.services.chore_types import notes_for
 from app.services.photos import save_photo
@@ -130,38 +130,6 @@ def _locked(db: Session, kid: User, ip: str, now: datetime, counts: dict) -> boo
     return any(not is_online(device_facts(db, d, fam, now, pre), local) for d in devs)
 
 
-def _names(db: Session, ids: set[int]) -> dict[int, User]:
-    return {u.id: u for u in db.query(User).filter(User.id.in_(ids))} if ids else {}
-
-
-def _kid_extras(run: ChoreRun, fam, takers: dict[int, User], deds: list[dict], texts: dict) -> dict:
-    """Fields the kid screen needs beyond the basics."""
-    c, mode = svc.chore_of(run), svc.mode_of(run)
-    taker = takers.get(run.submitted_by_id)
-    return {
-        "mode": mode,
-        "needs_photo": bool(c.needs_photo),
-        "photo_count_current": svc.photo_count(run),
-        "last_note": run.last_note,
-        "subtasks": svc.steps_out(run, fam),
-        "due_at": svc.iso_z(svc.due_at(run, fam)),
-        "type": svc.type_out(c),
-        "notes": svc.notes_out(run),
-        "note": svc.note_out(run, texts),
-        "sent_back": svc.sent_back(run),
-        "deductions": deds,
-        "taken_by": (taker.full_name or taker.username) if taker and mode == "race" else None,
-    }
-
-
-def _mine(deds: list[dict], kid_id: int) -> list[dict]:
-    return [
-        {k: d[k] for k in ("amount", "note", "by_name", "at")}
-        for d in deds
-        if d["kid_id"] == kid_id
-    ]
-
-
 @router.get("/today")
 def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(view_kid)):
     now = datetime.now(UTC)
@@ -174,11 +142,14 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(v
     fam = get_family(db)
     balances: dict = {}
     prog = progression.progress(db, kid, fam, balances)
-    takers = _names(db, {r.submitted_by_id for r in runs} - {None, kid.id})
+    takers = kid_view.names(db, {r.submitted_by_id for r in runs} - {None, kid.id})
     done = sum(svc.state(r) == "done" for r in runs)
     deds = svc.deductions(db, runs)
     texts = svc.note_texts(db, runs)
+    seen = kid_view.seen_ids(db, kid.id, {r.assignment_id for r in runs})
     return {
+        "age_group": kid.age_group,
+        "locks_at": kid_view.locks_at(db, kid, fam, now),
         "locked": _locked(
             db,
             kid,
@@ -193,7 +164,9 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(v
                 "points": svc.chore_of(r).points or 0,
                 "state": svc.state(r),
                 "due_time": r.assignment.due_time,
-                **_kid_extras(r, fam, takers, _mine(deds.get(r.id, []), kid.id), texts),
+                **kid_view.extras(
+                    r, fam, takers, kid_view.mine(deds.get(r.id, []), kid.id), texts, seen, now
+                ),
             }
             for r in runs
         ],
@@ -365,6 +338,17 @@ def awards(db: Session = Depends(get_db), kid: User = Depends(view_kid)):
         }
         for r in rows
     ]
+
+
+@router.post("/chores/{run_id}/seen", status_code=204)
+def chore_seen(run_id: int, db: Session = Depends(get_db), kid: User = Depends(require_kid)):
+    r = db.query(ChoreRun).filter(ChoreRun.id == run_id, svc.kid_runs_filter(kid.id)).first()
+    if r is None:
+        raise HTTPException(404, "We couldn't find that chore.")
+    if db.get(ChoreSeen, (r.assignment_id, kid.id)) is None:
+        db.add(ChoreSeen(assignment_id=r.assignment_id, kid_id=kid.id))
+        db.commit()
+    return Response(status_code=204)
 
 
 @router.post("/awards/{award_id}/seen", status_code=204)

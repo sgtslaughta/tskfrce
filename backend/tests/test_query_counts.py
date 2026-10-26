@@ -20,8 +20,9 @@ from tests.factories import DAY, api_chore
 
 LIMIT = 16  # +1 batched deductions
 LIMITS = {
-    "/api/v1/today": 19
-}  # per-device lock facts and per-kid progress are batched; +1 reward prices, +1 deductions
+    "/api/v1/today": 19,  # per-device lock facts and per-kid progress are batched; +1 reward prices, +1 deductions
+    "/api/v1/kid/today": 18,  # +1 seen set, +1 own allowed windows (locks_at)
+}
 
 
 class QueryCounter:
