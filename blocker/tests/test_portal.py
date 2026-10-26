@@ -51,14 +51,16 @@ def test_dns_response_aaaa_noerror_no_answer():
 @pytest.fixture
 def portal(tmp_path):
     cfg = _cfg(tmp_path)
+    hits = []
 
     class H(PortalHTTP):
         config = cfg
+        on_hit = staticmethod(hits.append)
 
     srv = HTTPServer(("127.0.0.1", 0), H)
     t = threading.Thread(target=srv.serve_forever, daemon=True)
     t.start()
-    yield srv.server_address[1], cfg
+    yield srv.server_address[1], cfg, hits
     srv.shutdown()
     srv.server_close()
 
@@ -73,13 +75,42 @@ def portal(tmp_path):
     ],
 )
 def test_portal_http_redirects_to_kid_screen(portal, path, host):
-    port, cfg = portal
+    port, cfg, _ = portal
     c = http.client.HTTPConnection("127.0.0.1", port)
     c.request("GET", path, headers={"Host": host})
     r = c.getresponse()
     assert r.status == 302
     assert r.getheader("Location") == cfg.portal_redirect_url
     c.close()
+
+
+def test_portal_http_calls_on_hit_and_still_redirects(portal):
+    port, _, hits = portal
+    c = http.client.HTTPConnection("127.0.0.1", port)
+    c.request("GET", "/x")
+    assert c.getresponse().status == 302
+    c.close()
+    assert hits == ["127.0.0.1"]
+
+
+def test_portal_http_swallows_on_hit_errors(tmp_path):
+    cfg = _cfg(tmp_path)
+
+    def boom(ip):
+        raise RuntimeError
+
+    class H(PortalHTTP):
+        config = cfg
+        on_hit = staticmethod(boom)
+
+    srv = HTTPServer(("127.0.0.1", 0), H)
+    threading.Thread(target=srv.serve_forever, daemon=True).start()
+    c = http.client.HTTPConnection("127.0.0.1", srv.server_address[1])
+    c.request("GET", "/x")
+    assert c.getresponse().status == 302
+    c.close()
+    srv.shutdown()
+    srv.server_close()
 
 
 def test_portal_http_has_connection_timeout():

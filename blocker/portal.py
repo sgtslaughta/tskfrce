@@ -63,8 +63,15 @@ class PortalHTTP(BaseHTTPRequestHandler):
 
     config = None
     timeout = 5
+    on_hit = None  # Callable[[str], None] | None; set as a staticmethod
 
     def _redirect(self):
+        hit = type(self).on_hit
+        if hit is not None:
+            try:
+                hit(self.client_address[0])
+            except Exception:
+                log.debug("on_hit failed", exc_info=True)
         self.send_response(302)
         self.send_header("Location", self.config.portal_redirect_url)
         self.send_header("Content-Length", "0")
@@ -76,9 +83,13 @@ class PortalHTTP(BaseHTTPRequestHandler):
         pass
 
 
-def run_http(cfg, stop) -> None:
+def run_http(cfg, stop, on_hit=None) -> None:
     """Serve PortalHTTP on :80 until stop (threading.Event) is set."""
-    handler = type("Handler", (PortalHTTP,), {"config": cfg})
+    handler = type(
+        "Handler",
+        (PortalHTTP,),
+        {"config": cfg, "on_hit": staticmethod(on_hit) if on_hit else None},
+    )
     srv = ThreadingHTTPServer(("0.0.0.0", 80), handler)
     srv.daemon_threads = True
     threading.Thread(target=lambda: (stop.wait(), srv.shutdown()), daemon=True).start()

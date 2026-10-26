@@ -16,9 +16,10 @@ from dataclasses import replace
 from blocker import firewall as fw
 from blocker.api import make_api
 from blocker.arp import RedirectionManager, TargetAddrs
-from blocker.backend import Seen, fetch_blocked, report_resisting
+from blocker.backend import Seen, fetch_blocked, report_hits, report_resisting
 from blocker.config import Config
 from blocker.discovery import run_discovery
+from blocker.hits import HitCounter
 from blocker.portal import run_dns, run_http
 from blocker.resist import ResistanceCounter, ResistanceWatch, Tally
 from blocker.state_store import MAC_RE, StateStore
@@ -76,6 +77,7 @@ class Service:
         portal_ip: str | None = None,
         watch: ResistanceWatch | None = None,
         report: Callable[[Config, set[str]], bool] = report_resisting,
+        report_hits: Callable[[Config, dict[str, int]], bool] = report_hits,
     ) -> None:
         self.cfg = cfg
         self._fw = firewall
@@ -87,6 +89,9 @@ class Service:
         self._portal_ip = portal_ip
         self._watch = watch
         self._report = report
+        self._report_hits = report_hits
+        self._ip_mac: dict[str, str] = {}
+        self.hits = HitCounter(self._mac_for_ip)
         self.store = StateStore()
         self._devices: dict[str, TargetAddrs] = {}
         self._seen_at: dict[str, float] = {}
@@ -132,9 +137,13 @@ class Service:
                 self._fw.apply(ruleset)
             except Exception:
                 log.exception("firewall apply failed")
+            self._ip_mac = {ip: mac for mac, t in devs.items() for ip in (t.ip, *t.ip6) if ip}
             self._redir.set_targets(devs)
             if self._watch is not None:
                 self._watch.set_watched(devs)
+
+    def _mac_for_ip(self, ip: str) -> str | None:
+        return self._ip_mac.get(ip)
 
     def _lan(self):
         try:
@@ -216,6 +225,9 @@ class Service:
     def _resist_once(self) -> None:
         # Always report the full set (even empty) so the backend can clear.
         self._report(self.cfg, self._watch.counter.resisting())
+        h = self.hits.drain()
+        if h:
+            self._report_hits(self.cfg, h)
 
     def _resist_loop(self) -> None:
         while not self._stop.wait(self.cfg.resist_interval):
@@ -290,7 +302,7 @@ class Service:
         self._spawn(self._resist_loop)
         self._spawn(lambda: run_discovery(self.cfg, self._stop, self._on_seen))
         self._spawn(lambda: run_dns(self.cfg, self._portal_ip or "", self._stop))
-        self._spawn(lambda: run_http(self.cfg, self._stop))
+        self._spawn(lambda: run_http(self.cfg, self._stop, on_hit=self.hits.add))
         self._api = make_api(
             self.store,
             self.cfg.internal_token,

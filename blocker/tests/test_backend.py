@@ -129,3 +129,17 @@ def test_report_resisting_posts_sorted_list(make_stub):
 
 def test_report_resisting_false_on_unreachable():
     assert report_resisting(_cfg("http://127.0.0.1:1"), set()) is False
+
+
+def test_report_hits_posts_body(make_stub):
+    s = make_stub(body=b"{}")
+    assert backend.report_hits(_cfg(s.url), {"aa:aa:aa:aa:aa:01": 3}) is True
+    method, path, headers, raw = s.requests[0]
+    assert method == "POST"
+    assert path == "/api/v1/internal/devices/hits"
+    assert headers["X-Internal-Token"] == "tok"
+    assert json.loads(raw) == {"hits": {"aa:aa:aa:aa:aa:01": 3}}
+
+
+def test_report_hits_false_on_unreachable():
+    assert backend.report_hits(_cfg("http://127.0.0.1:1"), {"aa:aa:aa:aa:aa:01": 1}) is False
