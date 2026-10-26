@@ -1,68 +1,70 @@
 import { useState } from 'react'
-import { Button, Drawer, Textarea } from '@mantine/core'
-import { IconCircleCheck, IconMessageReport } from '@tabler/icons-react'
+import { Drawer } from '@mantine/core'
+import { Icon } from '@/v2/parent/Icon'
 import { useSendNote } from '../hooks/useKid'
 import type { KidChore } from '../types'
 
-/** "Something wrong? Tell a parent" button and sheet of quick notes; shows the sent note afterwards. */
-export function TellParent({ c }: { c: KidChore }) {
-  const [open, setOpen] = useState(false)
+/** "Tell Mom or Dad" bottom sheet of quick notes (08 sheet 2). Controlled by the caller. */
+export function TellParentSheet({ c, opened, onClose }: { c: KidChore; opened: boolean; onClose: () => void }) {
   const [label, setLabel] = useState<string | null>(null)
   const [text, setText] = useState('')
   const send = useSendNote()
   const close = () => {
-    setOpen(false)
     setLabel(null)
     setText('')
+    onClose()
   }
   return (
-    <div style={{ flexBasis: '100%', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-      {c.note ? (
-        <>
-          <span className="f-pill" data-tone="done">
-            <IconCircleCheck size={16} aria-hidden />
-            {`Note sent: ${c.note.label}`}
-          </span>
-          <span style={{ fontWeight: 700, color: 'var(--f-sub)' }}>Sent to Mom &amp; Dad</span>
-        </>
-      ) : (
-        <Button variant="default" size="md" style={{ minHeight: 44 }} leftSection={<IconMessageReport size={20} aria-hidden />} onClick={() => setOpen(true)}>
-          Something wrong? Tell a parent
-        </Button>
-      )}
-      <Drawer opened={open} onClose={close} position="bottom" zIndex={400} title="Tell Mom or Dad" closeButtonProps={{ 'aria-label': 'Close' }}
-        styles={{
-          content: { height: 'auto', maxHeight: '90vh', display: 'flex', flexDirection: 'column' },
-          body: { overflowY: 'auto', paddingBottom: 0 },
-        }}
-      >
-        <div style={{ display: 'grid', gap: 10 }}>
-          {c.notes!.map((n) => (
-            <Button
-              key={n.label}
-              size="lg"
-              aria-pressed={label === n.label}
-              variant={label === n.label ? 'filled' : 'default'}
-              style={{ borderStyle: n.universal ? 'dashed' : 'solid' }}
-              onClick={() => setLabel(n.label)}
-            >
-              {n.label}
-            </Button>
-          ))}
-          <Textarea aria-label="Add a note (optional)" placeholder="Add a note (optional)" maxLength={200} value={text} onChange={(e) => setText(e.currentTarget.value)} />
-          <div style={{ position: 'sticky', bottom: 0, padding: '8px 0 16px', background: 'inherit' }}>
-          <Button
-            fullWidth
-            size="lg"
-            disabled={!label}
-            loading={send.isPending}
-            onClick={() => send.mutate({ chore: c.id, label: label!, text: text.trim() || undefined }, { onSuccess: close })}
+    <Drawer
+      opened={opened}
+      onClose={close}
+      position="bottom"
+      zIndex={400}
+      title="Tell Mom or Dad"
+      withCloseButton={false}
+      classNames={{ content: 'k-tok k-sheet', header: 'k-sheet-head', title: 'k-sheet-title', body: 'k-sheet-body' }}
+      styles={{
+        inner: { justifyContent: 'center' },
+        content: { height: 'auto', maxWidth: 560, maxHeight: '90vh', display: 'flex', flexDirection: 'column' },
+        header: { borderBottom: 0, padding: '10px 16px 0' },
+        title: { fontSize: 22, lineHeight: 1.2, fontWeight: 700, color: 'var(--k-ink)' },
+        body: { overflowY: 'auto', padding: '4px 16px 26px' },
+      }}
+    >
+      <p className="k-sheet-sub">{`About: ${c.title}`}</p>
+      <div className="k-nts">
+        {(c.notes ?? []).map((n) => (
+          <button
+            key={n.label}
+            type="button"
+            className="k-nt"
+            data-u={n.universal || undefined}
+            aria-pressed={label === n.label}
+            onClick={() => setLabel(n.label)}
           >
-            Send
-          </Button>
-          </div>
-        </div>
-      </Drawer>
-    </div>
+            <Icon name={n.glyph} />
+            {n.label}
+          </button>
+        ))}
+      </div>
+      <textarea
+        className="k-ti"
+        aria-label="Add a note (optional)"
+        placeholder="Add a note (optional)"
+        maxLength={200}
+        rows={2}
+        value={text}
+        onChange={(e) => setText(e.currentTarget.value)}
+      />
+      <button
+        type="button"
+        className="k-cut"
+        disabled={!label || send.isPending}
+        onClick={() => send.mutate({ chore: c.id, label: label!, text: text.trim() || undefined }, { onSuccess: close })}
+      >
+        Send
+        <Icon name="send" />
+      </button>
+    </Drawer>
   )
 }

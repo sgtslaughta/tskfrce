@@ -1,45 +1,54 @@
-import { Checkbox } from '@mantine/core'
-import { IconLock } from '@tabler/icons-react'
+import { Icon } from '@/v2/parent/Icon'
 import { useTickSubtask } from '../hooks/useKid'
 import type { KidChore } from '../types'
+import { nextStep, stepBadge, stepChip, stepHint } from './kidChips'
 
-/** Checklist of a chore's steps; a chained step stays locked until the one before it is done. */
-const at = (iso: string, timeZone?: string) => {
-  const o = { hour: 'numeric', minute: '2-digit' } as const
-  try {
-    return new Date(iso).toLocaleTimeString('en-US', { ...o, timeZone })
-  } catch {
-    return new Date(iso).toLocaleTimeString('en-US', o)
-  }
-}
-
-export function KidSteps({ c, timezone }: { c: KidChore; timezone?: string }) {
+/** A chore's steps. big = Kid/Little (48px boxes), small = Teen (20px boxes + time chip). */
+export function KidSteps({
+  c,
+  timezone,
+  size = 'big',
+  readOnly = false,
+}: {
+  c: KidChore
+  timezone?: string
+  size?: 'big' | 'small'
+  readOnly?: boolean
+}) {
   const tick = useTickSubtask()
-  const steps = c.subtasks!
+  const steps = c.subtasks ?? []
+  const next = nextStep(steps)
   const now = Date.now()
   return (
-    <div style={{ flexBasis: '100%', display: 'grid', gap: 6, paddingLeft: 8 }}>
+    <div className="k-steps" data-size={size}>
       {steps.map((s, i) => {
-        const late = !s.done && !!s.due_at && Date.parse(s.due_at) < now
+        const state = s.done ? 'done' : s.locked ? 'locked' : i === next ? 'next' : 'open'
+        const badge = stepBadge(steps, i)
+        const chip = size === 'small' ? stepChip(s, now, timezone) : null
+        const hint = stepHint(steps, i, timezone)
         return (
-          <div key={s.id} style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', opacity: s.locked ? 0.55 : 1 }}>
-            <Checkbox
-              size="md"
-              label={s.title}
-              checked={s.done}
-              disabled={!!s.locked}
-              onChange={(e) => tick.mutate({ chore: c.id, sub: s.id, done: e.currentTarget.checked })}
-              styles={{ root: { minHeight: 44, display: 'flex', alignItems: 'center' } }}
-            />
-            {s.locked && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontWeight: 700, color: 'var(--f-sub)' }}>
-                <IconLock size={16} aria-hidden />
-                {`Unlocks after step ${steps.findIndex((p, j) => j < i && !p.done) + 1 || i}`}
-              </span>
-            )}
-            {s.due_at && !s.done && (
-              <span className="f-pill" data-tone={late ? 'late' : 'mute'}>
-                {late ? 'Late' : `by ${at(s.due_at, timezone)}`}
+          <div key={s.id} className="k-step" data-state={state}>
+            <span className="k-num" data-free={badge === '–' || undefined} aria-hidden>
+              {badge}
+            </span>
+            <span className="k-cb">
+              <input
+                type="checkbox"
+                aria-label={s.title}
+                checked={s.done}
+                disabled={readOnly || !!s.locked}
+                onChange={(e) => tick.mutate({ chore: c.id, sub: s.id, done: e.currentTarget.checked })}
+              />
+              {s.done && <Icon name="check" />}
+              {!s.done && s.locked && <Icon name="lock" />}
+            </span>
+            <span className="k-sx">
+              <span>{s.title}</span>
+              {hint && <small>{hint}</small>}
+            </span>
+            {chip && (
+              <span className="k-chip" data-tone={chip.tone} data-size="sm">
+                {chip.time}
               </span>
             )}
           </div>

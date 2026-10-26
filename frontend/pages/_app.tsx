@@ -44,6 +44,7 @@ import '../src/v2/manage/manage.css';
 import '../src/v2/components/progression.css';
 import '../src/v2/kid/award.css';
 import '../src/v2/kid/kid-intro.css';
+import '../src/v2/kid/kid-app.css';
 import '../src/v2/components/bell.css';
 import '../src/v2/interactions.css';
 

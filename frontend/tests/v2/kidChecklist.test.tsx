@@ -41,7 +41,7 @@ describe('kid chore behaviour', () => {
   })
   test('sheet lists type and universal notes and Send posts label and text', async () => {
     render(wrap(<KidChecklist chores={[chore()]} />))
-    await userEvent.click(screen.getByRole('button', { name: /Tell a parent/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Tell Mom or Dad/ }))
     for (const l of ['Out of supplies', 'Did part of it', 'Too messy for one go', 'Need help', 'Ran out of time', "Can't do it today"])
       expect(await screen.findByRole('button', { name: l })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Send' })).toBeDisabled()
@@ -52,7 +52,7 @@ describe('kid chore behaviour', () => {
       expect(apiMock).toHaveBeenCalledWith('/kid/chores/7/note', expect.objectContaining({ method: 'POST', body: { label: 'Need help', text: 'soap' } })),
     )
   })
-  test('step deadline chip says by time, or Late once past', () => {
+  test('step deadline shows in the step hint', () => {
     const soon = new Date(Date.now() + 3600e3).toISOString()
     const past = new Date(Date.now() - 3600e3).toISOString()
     const steps = [
@@ -60,18 +60,18 @@ describe('kid chore behaviour', () => {
       { id: 2, title: 'Dry', done: false, due_at: past },
     ]
     render(wrap(<KidChecklist chores={[chore({ subtasks: steps })]} onDone={() => {}} />))
-    expect(screen.getByText(/^by \d/)).toBeInTheDocument()
-    expect(screen.getByText('Late')).toHaveAttribute('data-tone', 'late')
+    expect(screen.getByText(/^Do this next · by \d/)).toBeInTheDocument()
+    expect(screen.getByText(/^Any time · by \d/)).toBeInTheDocument()
   })
   test('step deadline is shown in the family time zone', async () => {
     const steps = [{ id: 1, title: 'Rinse', done: false, due_at: '2099-01-01T00:00:00Z' }]
     render(wrap(<KidChecklist chores={[chore({ subtasks: steps })]} timezone="Pacific/Auckland" onDone={() => {}} />))
-    expect(screen.getByText('by 1:00 PM')).toBeInTheDocument()
+    expect(screen.getByText('Do this next · by 1:00 PM')).toBeInTheDocument()
     expect(apiMock.mock.calls.some(([p]) => p === '/family')).toBe(false)
   })
   test('sheet closes after a successful send and the note is pressed while selected', async () => {
     render(wrap(<KidChecklist chores={[chore()]} />))
-    await userEvent.click(screen.getByRole('button', { name: /Tell a parent/ }))
+    await userEvent.click(screen.getByRole('button', { name: /Tell Mom or Dad/ }))
     const b = await screen.findByRole('button', { name: 'Need help' })
     await userEvent.click(b)
     expect(b).toHaveAttribute('aria-pressed', 'true')
@@ -81,7 +81,7 @@ describe('kid chore behaviour', () => {
   test('sent note replaces the button', () => {
     render(wrap(<KidChecklist chores={[chore({ note: { label: 'Need help', text: null, at: '', kid_name: 'A' } })]} />))
     expect(screen.getByText('Note sent: Need help')).toBeInTheDocument()
-    expect(screen.getByText('Sent to Mom & Dad')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /Tell Mom or Dad/ })).toBeNull()
   })
   test('deduction card names who and replies in the chat', async () => {
     const onChat = jest.fn()
