@@ -148,3 +148,35 @@ def test_drop_and_restore_windows(old_db):
     con = sqlite3.connect(path)
     assert len(original) == 5 and _window_set(con) == original
     con.close()
+
+
+def test_mixed_category_windows_become_other(old_db):
+    path, url = old_db
+    con = sqlite3.connect(path)
+    con.execute("DELETE FROM time_windows")
+    con.executemany(
+        "INSERT INTO time_windows (kind, days, start, end, kid_id, group_id) VALUES (?,?,?,?,?,?)",
+        [
+            ("allowed", "01236", "15:00", "20:00", 1, None),
+            ("allowed", "0123456", "07:00", "08:00", 1, None),
+        ],
+    )
+    con.commit()
+    con.close()
+    alembic(url, "upgrade", A)
+    con = sqlite3.connect(path)
+    assert con.execute("SELECT category FROM hour_rules ORDER BY id").fetchall() == [
+        ("other",),
+        ("other",),
+    ]
+    con.close()
+    # Monday 07:30 local must be allowed (not hidden by the school-night rule)
+    from datetime import date, datetime
+
+    from app.lock.hours import _allowing, load, resolve
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    with Session(create_engine(url)) as db:
+        res = resolve(load(db), {1}, set(), date(2026, 10, 26))
+    assert _allowing(res.allowed_sets, res.off, datetime(2026, 10, 26, 7, 30))

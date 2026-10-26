@@ -37,15 +37,30 @@ def _convert(bind) -> None:
         key = (kind, days, ("kid", kid) if kid is not None else ("group", grp))
         per_target.setdefault(key, set()).add((start, end))
         first_id.setdefault(key, wid)
+    # allowed windows of one target with different categories that share a weekday would
+    # hide each other under rank precedence: force them all to "other" so they union
+    cats: dict = {}
+    for kind, days, target in per_target:
+        if kind == "allowed":
+            cats.setdefault(target, {})[days] = CAT.get(frozenset(days), "other")
+    mixed = {
+        t
+        for t, dc in cats.items()
+        if any(dc[a] != dc[b] and set(a) & set(b) for a in dc for b in dc)
+    }
     rules: dict = {}
     for key, times in per_target.items():
         kind, days, target = key
-        sig = (kind, days, tuple(sorted(times)))
+        cat = (
+            "other" if kind == "allowed" and target in mixed else CAT.get(frozenset(days), "other")
+        )
+        sig = (kind, days, tuple(sorted(times)), cat)
         entry = rules.setdefault(sig, {"first": first_id[key], "targets": []})
         entry["first"] = min(entry["first"], first_id[key])
         entry["targets"].append(target)
-    for (kind, days, times), entry in sorted(rules.items(), key=lambda kv: kv[1]["first"]):
-        category = CAT.get(frozenset(days), "other")
+    for (kind, days, times, category), entry in sorted(
+        rules.items(), key=lambda kv: kv[1]["first"]
+    ):
         name = NAME.get(category) or ("Free time" if kind == "free" else "Online hours")
         rid = bind.execute(
             sa.text(
