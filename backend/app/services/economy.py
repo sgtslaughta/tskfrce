@@ -31,25 +31,28 @@ def balance(db: Session, kid_id: int) -> int:
 def deduct(
     db: Session, kid_id: int, amount: int, note: str, by_id: int, run_id: int | None = None
 ) -> int:
-    """Take points off with a reason the kid sees; never below zero. Returns what was taken."""
-    take = min(amount, max(balance(db, kid_id), 0))
-    if take:
-        db.add(
-            Points(
-                user_id=kid_id,
-                points_type=PointsType.PENALTY,
-                amount=-take,
-                reason="deduction",
-                description=note,
-                by_id=by_id,
-                run_id=run_id,
-                seen_by_kid=False,
+    """Take points off with a reason the kid sees; never below zero. Commits."""
+    with SPEND_LOCK:
+        db.commit()  # fresh snapshot: see other threads' debits
+        take = min(amount, max(balance(db, kid_id), 0))
+        if take:
+            db.add(
+                Points(
+                    user_id=kid_id,
+                    points_type=PointsType.PENALTY,
+                    amount=-take,
+                    reason="deduction",
+                    description=note,
+                    by_id=by_id,
+                    run_id=run_id,
+                    seen_by_kid=False,
+                )
             )
-        )
-        from app.services import kid_events  # late: kid_events -> chores -> economy
+            from app.services import kid_events  # late: kid_events -> chores -> economy
 
-        kid_events.points_taken(db, kid_id, take, note, by_id)
-    return take
+            kid_events.points_taken(db, kid_id, take, note, by_id)
+        db.commit()
+        return take
 
 
 def deadline_utc(fam: FamilySettings, chore_day: date, due_time: str | None) -> datetime | None:

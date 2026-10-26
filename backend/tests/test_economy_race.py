@@ -120,3 +120,35 @@ def test_daily_cap_cannot_be_beaten_by_two_buys(env):
     body = {"kind": "screen_time", "minutes": 15}  # 20 points each, 100 available
     out = _race([lambda c: c.post("/api/v1/kid/redeem", json=body, headers=kh)] * 2)
     assert sorted(r.status_code for r in out) == [200, 409]
+
+
+def test_parent_deduction_cannot_overdraw_against_purchase(env, monkeypatch):
+    db, kid, ph, kh = env
+    meet, read = threading.Barrier(2), economy.balance
+
+    def balance_after_both_read(d, kid_id):  # force both sides to see the same stale balance
+        v = read(d, kid_id)
+        try:
+            meet.wait(1.5)
+        except threading.BrokenBarrierError:  # the lock keeps the other side out: fine
+            pass
+        return v
+
+    monkeypatch.setattr(economy, "balance", balance_after_both_read)
+    db.add(Reward(name="Candy", price=60, icon="x", needs_approval=False))
+    db.commit()
+    parent_id = db.query(economy.User).filter_by(username="mom").one().id
+    Session = sessionmaker(bind=db.get_bind(), autoflush=False)
+
+    def deduct(_c):
+        s = Session()
+        try:
+            economy.deduct(s, kid.id, 80, "oops", parent_id)
+            s.commit()
+        finally:
+            s.close()
+
+    buy = {"kind": "reward", "reward_id": 1}
+    out = _race([deduct, lambda c: c.post("/api/v1/kid/redeem", json=buy, headers=kh)])
+    assert len(out) == 2  # neither side crashed on a stale snapshot
+    assert sum(a for (a,) in _total(db, kid)) >= 0
