@@ -14,3 +14,8 @@ const RULES: [RegExp, string][] = [
 
 export const choreIcon = (title: string) => RULES.find(([re]) => re.test(title))?.[1] ?? 'task_alt'
 
+
+/** A chore thread's tile: its type's glyph, unless it has none or only the generic `task_alt`
+ * (built-in Other type), where the title guess is more telling. */
+export const threadGlyph = (glyph: string | null | undefined, title: string) =>
+  glyph && glyph !== 'task_alt' ? glyph : choreIcon(title)

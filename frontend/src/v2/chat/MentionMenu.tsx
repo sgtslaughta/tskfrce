@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent, type SyntheticEvent } from 'react'
 import { useTypingPing } from '@/v2/hooks/useChat'
 import { mentionAt } from './mentions'
 
@@ -76,6 +76,13 @@ export function useComposerBox({
       if (v.trim()) ping()
       open(mentionAt(v, e.target.selectionStart ?? v.length))
     },
+    /** caret moved (click, arrow keys): follow it, so a stale menu can't eat Enter */
+    onSelect: (e: SyntheticEvent<HTMLTextAreaElement>) => {
+      const el = e.currentTarget
+      const n = mentionAt(el.value, el.selectionStart ?? el.value.length)
+      if (!n || !at || n.start !== at.start || n.q !== at.q) open(n)
+    },
+    onBlur: () => open(null),
     onKeyDown: (e: KeyboardEvent<HTMLTextAreaElement>) => {
       if (at && e.key === 'Escape') {
         e.preventDefault()

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Icon } from '@/v2/parent/Icon'
 import { Chip, type ChipTone } from '@/v2/parent/Chip'
-import { choreIcon } from '@/v2/today/choreIcon'
+import { threadGlyph } from '@/v2/today/choreIcon'
 import { useApproveChore, useSendBack, useToday } from '@/v2/hooks/useToday'
 import { useDeduct } from '@/v2/hooks/useKids'
 import { withUndo } from '@/v2/notify'
@@ -30,7 +30,7 @@ export function ThreadHead({ kind, title, run, glyph }: { kind: ThreadKind; titl
   const take = amount ?? Number(custom)
   const toggle = (f: 'back' | 'deduct') => setForm(form === f ? null : f)
   const tile =
-    kind === 'chore' ? <Icon name={glyph ?? choreIcon(title)} size={24} /> : kind === 'family' ? <Icon name="group" size={24} /> : <b>{(title.trim()[0] ?? '?').toUpperCase()}</b>
+    kind === 'chore' ? <Icon name={threadGlyph(glyph, title)} size={24} /> : kind === 'family' ? <Icon name="group" size={24} /> : <b>{(title.trim()[0] ?? '?').toUpperCase()}</b>
   const s = run && STATE[run.state]
 
   return (

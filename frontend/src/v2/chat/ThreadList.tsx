@@ -5,13 +5,13 @@ import { Icon } from '../parent/Icon'
 import { ListHeader } from '../parent/ListHeader'
 import { SegmentedControl } from '../parent/SegmentedControl'
 import { EmptyState } from '../parent/states'
-import { choreIcon } from '../today/choreIcon'
+import { threadGlyph } from '../today/choreIcon'
 
 type FilterTab = 'all' | 'chores' | 'notes' | 'family'
 
 function Tile({ t }: { t: ThreadSummary }) {
   if (t.kind === 'private') return <b>{(t.title.trim()[0] ?? '?').toUpperCase()}</b>
-  return <Icon name={t.kind === 'family' ? 'group' : (t.glyph ?? choreIcon(t.title))} size={20} />
+  return <Icon name={t.kind === 'family' ? 'group' : threadGlyph(t.glyph, t.title)} size={20} />
 }
 
 /** Nest each chore under its kid's chat; a chore shared by several kids (or whose kid has no row) goes under Family. */

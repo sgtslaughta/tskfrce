@@ -9,6 +9,7 @@ import { ThreadView } from '@/v2/chat/ThreadView'
 import { ThreadList } from '@/v2/chat/ThreadList'
 import { TypingLine } from '@/v2/chat/TypingLine'
 import { renderMentions } from '@/v2/chat/mentions'
+import { threadGlyph } from '@/v2/today/choreIcon'
 import type { ThreadSummary } from '@/v2/hooks/useChat'
 
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
@@ -85,6 +86,19 @@ describe('ThreadList extras', () => {
   })
 })
 
+describe('threadGlyph', () => {
+  test('a type glyph wins; none or the generic task_alt falls back to the title guess', () => {
+    expect(threadGlyph('school', 'Feed the dog')).toBe('school')
+    expect(threadGlyph('task_alt', 'Feed the dog')).toBe('pets')
+    expect(threadGlyph(null, 'Feed the dog')).toBe('pets')
+  })
+
+  test('list tiles use it', () => {
+    const { container } = wrap(<ThreadList threads={[th(5, 'chore', 'Feed the dog', { glyph: 'task_alt' })]} selected={null} onPick={() => {}} />)
+    expect(container.querySelector('.pc-tile')).toHaveTextContent('pets')
+  })
+})
+
 describe('TypingLine', () => {
   test.each([
     [['Mia'], 'Mia is typing…'],
@@ -149,6 +163,31 @@ describe('composer', () => {
     await userEvent.type(box, '@')
     expect(await screen.findByRole('listbox', { name: 'Mention' })).toBeInTheDocument()
     await userEvent.keyboard('{Escape}')
+    expect(screen.queryByRole('listbox', { name: 'Mention' })).toBeNull()
+  })
+
+  test('a menu left open by moving away closes: after blur Enter sends', async () => {
+    wrap(<ThreadView kind="private" refId="2" meId={1} />)
+    const box = await screen.findByLabelText('Message')
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mention someone' })).toBeEnabled())
+    await userEvent.type(box, 'hi @m')
+    expect(await screen.findByRole('listbox', { name: 'Mention' })).toBeInTheDocument()
+    fireEvent.blur(box)
+    expect(screen.queryByRole('listbox', { name: 'Mention' })).toBeNull()
+    box.focus()
+    fireEvent.keyDown(box, { key: 'Enter' })
+    await waitFor(() => expect(posts()).toHaveLength(1))
+    expect(posts()[0][1]?.body).toEqual({ body: 'hi @m', photo_id: null })
+  })
+
+  test('moving the caret off the @word closes the menu', async () => {
+    wrap(<ThreadView kind="private" refId="2" meId={1} />)
+    const box = (await screen.findByLabelText('Message')) as HTMLTextAreaElement
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Mention someone' })).toBeEnabled())
+    await userEvent.type(box, 'hi @m')
+    expect(await screen.findByRole('listbox', { name: 'Mention' })).toBeInTheDocument()
+    box.setSelectionRange(1, 1)
+    fireEvent.select(box)
     expect(screen.queryByRole('listbox', { name: 'Mention' })).toBeNull()
   })
 

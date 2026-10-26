@@ -274,6 +274,8 @@ export function ThreadView({
               placeholder={reply ? 'Reply…' : 'Message…'}
               onChange={box.onChange}
               onKeyDown={box.onKeyDown}
+              onSelect={box.onSelect}
+              onBlur={box.onBlur}
             />
             <button type="submit" className="pc-send" aria-label="Send" title="Send" aria-busy={post.isPending} disabled={!canSend}>
               <Icon name={post.isPending ? "progress_activity" : "send"} size={16} className={post.isPending ? "pc-spin" : undefined} />
@@ -349,6 +351,8 @@ export function ThreadView({
           placeholder="Write a message"
           onChange={box.onChange}
           onKeyDown={box.onKeyDown}
+          onSelect={box.onSelect}
+          onBlur={box.onBlur}
           style={{ flex: 1, minWidth: 0, resize: 'none', font: 'inherit', padding: 8 }}
         />
         <Button type="submit" disabled={!canSend}>
