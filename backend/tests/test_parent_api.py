@@ -465,3 +465,24 @@ def test_kid_age_group_patch(client, kid, parent_headers):
         == "little"
     )
     assert client.patch(url, json={"age_group": "baby"}, headers=parent_headers).status_code == 422
+
+
+def test_quick_replies_roundtrip(client, parent_headers):
+    d = client.get("/api/v1/family", headers=parent_headers).json()["quick_replies"]
+    assert d == ["Looks good", "Can you redo it?", "Retake the photo"]
+    r = client.patch("/api/v1/family", json={"quick_replies": ["A", " B "]}, headers=parent_headers)
+    assert r.json()["quick_replies"] == ["A", "B"]
+    assert client.get("/api/v1/family", headers=parent_headers).json()["quick_replies"] == [
+        "A",
+        "B",
+    ]
+    bad = client.patch("/api/v1/family", json={"quick_replies": ["x"] * 9}, headers=parent_headers)
+    assert bad.status_code == 422
+    bad = client.patch("/api/v1/family", json={"quick_replies": ["x" * 61]}, headers=parent_headers)
+    assert bad.status_code == 422
+
+
+def test_quick_replies_bad_json_falls_back(client, db, parent_headers):
+    get_family(db).quick_replies = "{nope"
+    db.commit()
+    assert len(client.get("/api/v1/family", headers=parent_headers).json()["quick_replies"]) == 3

@@ -2,9 +2,9 @@
 
 import re
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, StringConstraints, field_validator
 
 HHMM = r"([01]\d|2[0-3]):[0-5]\d"
 
@@ -94,6 +94,10 @@ class FamilyPatch(BaseModel):
     gifs_enabled: bool | None = None
     gif_rating: Literal["g", "pg"] | None = None
     ntfy_upstream_relay: bool | None = None
+    quick_replies: (
+        list[Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]]
+        | None
+    ) = Field(default=None, max_length=8)
     giphy_api_key: str | None = Field(default=None, max_length=100)  # "" clears
     accent: (
         Literal[
