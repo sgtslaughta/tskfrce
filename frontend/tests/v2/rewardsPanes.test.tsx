@@ -28,8 +28,8 @@ jest.mock('@/v2/components/RequireParent', () => ({
 setupLibrary()
 
 const pending = [
-  { id: 41, kid_id: 7, kid_name: 'Maya', kind: 'reward', name: 'Movie night', minutes: null, cost: 100, created_at: '2026-10-25T17:51:00Z', kid_balance: 300, kid_balance_after: 200 },
-  { id: 42, kid_id: 8, kid_name: 'Leo', kind: 'reward', name: 'Ice cream trip', minutes: null, cost: 150, created_at: '2026-10-25T18:10:00Z', kid_balance: 95, kid_balance_after: -55 },
+  { id: 41, kid_id: 7, kid_name: 'Maya', kind: 'reward', name: 'Movie night', icon: 'movie', minutes: null, cost: 100, created_at: '2026-10-25T17:51:00Z', kid_balance: 300, kid_balance_after: 200 },
+  { id: 42, kid_id: 8, kid_name: 'Leo', kind: 'reward', name: 'Ice cream trip', icon: 'icecream', minutes: null, cost: 150, created_at: '2026-10-25T18:10:00Z', kid_balance: 95, kid_balance_after: -55 },
 ]
 const rewards = [
   { id: 3, name: 'Movie night', price: 150, icon: 'movie', visible: true, needs_approval: true },
@@ -93,6 +93,24 @@ describe('rewards: requests', () => {
     expect(within(list()).getByRole('button', { name: /Requests/ })).toHaveTextContent('Nothing waiting')
     expect(within(list()).getByRole('button', { name: /Catalogue/ })).toHaveTextContent('2 rewards · 1 hidden')
   })
+})
+
+test('request cards use the icon sent with the request, not a name match', async () => {
+  data({
+    '/redemptions': [
+      { ...pending[0], id: 51, name: 'Treat', icon: 'cake' },
+      { ...pending[0], id: 52, kind: 'screen_time', name: '30 min of screen time', icon: null, minutes: 30 },
+      { ...pending[0], id: 53, name: 'Gone', icon: null },
+    ],
+    '/rewards': [{ id: 9, name: 'Treat', price: 10, icon: 'movie', visible: true, needs_approval: true }],
+  })
+  mockRoute.query = { section: 'rewards', item: 'requests' }
+  render(wrap(<KidsPage />))
+  const glyph = async (name: string) =>
+    ((await within(detail()).findByText(name)).closest('article') as HTMLElement).querySelector('.rw-glyph')?.textContent
+  expect(await glyph('Treat')).toBe('cake')
+  expect(await glyph('30 min of screen time')).toBe('timer')
+  expect(await glyph('Gone')).toBe('redeem')
 })
 
 describe('rewards: catalogue', () => {

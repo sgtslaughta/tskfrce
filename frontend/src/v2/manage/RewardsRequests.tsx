@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useApproveAll, useDecideRedemption, usePendingRedemptions, useRewards } from '@/v2/hooks/useRewards'
+import { useApproveAll, useDecideRedemption, usePendingRedemptions } from '@/v2/hooks/useRewards'
 import { Icon } from '@/v2/parent/Icon'
 import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
 import type { PendingRedemption } from '@/v2/types'
@@ -74,11 +74,10 @@ function RequestCard({ req, glyph, hide }: { req: PendingRedemption; glyph: stri
 /** Requests pane: pending reward and screen-time requests with Approve all. */
 export function RewardsRequests({ onHistory }: { onHistory: () => void }) {
   const pending = usePendingRedemptions()
-  const rewards = useRewards().data ?? []
   const approveAll = useApproveAll()
   const [hidden, setHidden] = useState<number[]>([])
   const list = (pending.data ?? []).filter((r) => !hidden.includes(r.id))
-  const glyphOf = (r: PendingRedemption) => (r.kind === 'screen_time' ? 'timer' : rewardGlyph(rewards.find((x) => x.name === r.name)?.icon))
+  const glyphOf = (r: PendingRedemption) => (r.kind === 'screen_time' ? 'timer' : rewardGlyph(r.icon))
   const all = () =>
     approveAll.mutate(undefined, {
       onError: toastFail,

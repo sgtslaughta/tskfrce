@@ -88,10 +88,13 @@ def list_redemptions(
     status: Literal["pending", "approved", "denied"] = "pending", db: Session = Depends(get_db)
 ):
     rows = db.query(Redemption).filter(Redemption.status == status).order_by(Redemption.id).all()
+    ids = {r.reward_id for r in rows if r.reward_id is not None}
+    rewards = {w.id: w for w in db.query(Reward).filter(Reward.id.in_(ids))} if ids else {}
     out = []
     for r in rows:
         kid = db.get(User, r.kid_id)
         bal = economy.balance(db, r.kid_id)
+        reward = rewards.get(r.reward_id) if r.kind == "reward" else None
         out.append(
             {
                 "id": r.id,
@@ -99,6 +102,7 @@ def list_redemptions(
                 "kid_name": kid.full_name,
                 "kind": r.kind,
                 "name": redemption_name(db, r),
+                "icon": reward.icon if reward else None,
                 "minutes": r.minutes,
                 "cost": r.cost,
                 "created_at": r.created_at.isoformat() + "Z",

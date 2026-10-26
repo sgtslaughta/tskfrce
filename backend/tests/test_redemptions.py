@@ -264,3 +264,20 @@ def test_history_filters_and_totals(client, db, kid, parent, parent_headers):
 
 def test_history_parent_only(client, kid_headers):
     assert client.get("/api/v1/redemptions/history", headers=kid_headers).status_code == 403
+
+
+def test_pending_list_carries_the_reward_icon(client, db, kid, parent_headers):
+    movie = Reward(name="Treat", price=10, icon="movie")
+    other = Reward(name="Treat", price=10, icon="cake")
+    db.add_all([movie, other])
+    db.commit()
+    db.add_all(
+        [
+            Redemption(kid_id=kid.id, kind="reward", reward_id=other.id, cost=10),
+            Redemption(kid_id=kid.id, kind="screen_time", minutes=15, cost=20),
+            Redemption(kid_id=kid.id, kind="reward", reward_id=movie.id, cost=10),
+        ]
+    )
+    db.commit()
+    rows = client.get("/api/v1/redemptions", headers=parent_headers).json()
+    assert [r["icon"] for r in rows] == ["cake", None, "movie"]

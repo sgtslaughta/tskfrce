@@ -362,6 +362,8 @@ export interface PendingRedemption {
   kid_name: string | null
   kind: 'screen_time' | 'reward'
   name: string
+  /** the reward's glyph; null for screen time or a missing reward */
+  icon: string | null
   minutes: number | null
   cost: number
   created_at: string
