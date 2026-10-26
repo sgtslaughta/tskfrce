@@ -187,7 +187,7 @@ export interface TodayKid {
 
 /** Item in GET /today needs_you. */
 export interface NeedsItem {
-  type: 'chore' | 'redo' | 'screen_time' | 'reward'
+  type: 'chore' | 'redo' | 'screen_time' | 'reward' | 'note'
   id: number
   kid_id: number | null
   kid_name: string | null
@@ -200,6 +200,8 @@ export interface NeedsItem {
   cost?: number
   kid_balance?: number
   mode?: string
+  /** type 'note': the kid's note label */
+  note?: string
 }
 
 /** Device with kids missing PINs */

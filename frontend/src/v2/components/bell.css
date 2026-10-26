@@ -74,10 +74,15 @@
   text-align: center;
 }
 
-.p-bell-pop {
+/* §2.2 sticker popover; no overflow clip so the pointer shows */
+[data-look='parent'] .p-bell-pop {
   padding: 0;
   border-radius: 16px;
-  overflow: hidden;
+  box-shadow: 4px 4px 0 var(--p-acc);
+}
+[data-look='parent'] .p-bell-arrow {
+  background: var(--p-card);
+  border: 2px solid var(--p-ink);
 }
 
 .p-bell-list {
@@ -87,6 +92,7 @@
 }
 
 .p-bell-list[data-sheet] { max-height: none; height: calc(100dvh - 84px); }
+.p-bell-list[data-page] { max-height: none; max-width: 720px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 16px; }
 
 .p-bell-head {
   display: flex;
@@ -271,7 +277,7 @@
   flex-wrap: wrap;
 }
 .p-bell-actions:not(:empty) { margin-top: 7px; }
-.p-bell-actions .p-btn { padding: 5px 11px; font-size: 12px; }
+.p-bell-actions .p-btn { padding: 4px 10px; font-size: 11.5px; min-height: 0; }
 .p-bell-note {
   width: 100%;
   padding: 6px 10px;
@@ -283,15 +289,24 @@
   font-size: 12.5px;
 }
 
-.p-bell-footer {
+.p-bell-foot {
   border-top: 1px solid var(--p-line);
   padding: 10px 14px;
   display: flex;
   justify-content: space-between;
-  font-size: 12px;
-  color: var(--p-sub);
-  font-weight: 600;
+  flex: none;
 }
+.p-bell-foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-sub);
+  text-decoration: none;
+}
+.p-bell-foot a:hover { color: var(--p-ink); }
+.p-bell-foot a:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; border-radius: 4px; }
 
 /* phone sheet: title in the parent face (the list's own header is hidden there) */
 [data-look='parent'] .p-bell-drawer-title { font: 700 18px var(--font-parent), system-ui, sans-serif; color: var(--p-ink); text-transform: none; letter-spacing: 0; }

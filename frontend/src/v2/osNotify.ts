@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import type { InboxItem } from './hooks/useInbox'
 import { toastOk } from './notify'
 
-/** Where a parent notification leads: the device, the chore on Today, or the Needs you list. */
+/** Where a parent notification leads: the device (or Devices for box offline), the chore on Today, or the Needs you list. */
 export const dest = (n: InboxItem): string | null =>
   n.device_id
     ? `/devices?item=${n.device_id}`
@@ -10,7 +10,9 @@ export const dest = (n: InboxItem): string | null =>
       ? `/?chore=${n.run_id}`
       : n.kind === 'redemption_request'
         ? '/?tab=needs'
-        : null
+        : n.kind === 'box_offline'
+          ? '/devices'
+          : null
 
 const can = () => typeof window !== 'undefined' && 'Notification' in window // needs https or localhost
 
