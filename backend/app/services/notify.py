@@ -3,7 +3,7 @@
 import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
-from urllib.parse import urlsplit
+from urllib.parse import unquote, urlsplit
 from zoneinfo import ZoneInfo
 
 import apprise
@@ -92,17 +92,23 @@ def ping(db, event: str, title: str, body: str | None = None, path: str | None =
 
 def _redact(msg: str, urls: list[str]) -> str:
     """Mask every URL and credential-ish piece of it, then cap at 300 chars."""
-    secrets = set()
+    secrets, always = set(), set()
     for u in urls:
-        secrets.add(u)
         parts = urlsplit(u)
-        for chunk in (u.split("://", 1)[-1], parts.netloc, parts.path, parts.query):
-            secrets.add(chunk)
-            secrets.update(re.split(r"[/@:?&=]", chunk))
+        for v in (parts.username, parts.password):
+            if v:
+                always.update((v, unquote(v)))
+        for whole in (u, unquote(u)):
+            secrets.add(whole)
+            for chunk in (whole.split("://", 1)[-1], parts.netloc, parts.path, parts.query):
+                for c in (chunk, unquote(chunk)):
+                    secrets.add(c)
+                    for piece in re.split(r"[/@:?&=]", c):
+                        secrets.update((piece, unquote(piece)))
     scheme = {u.split("://", 1)[0] for u in urls}
+    secrets = {x for x in secrets if len(x) >= 4 and x not in scheme} | always
     for sec in sorted(secrets, key=len, reverse=True):
-        if len(sec) >= 4 and sec not in scheme:
-            msg = msg.replace(sec, "••••")
+        msg = msg.replace(sec, "••••")
     return msg[:300]
 
 

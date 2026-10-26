@@ -138,3 +138,9 @@ def test_send_logs_no_secret(monkeypatch):
     )
     notify._send([URL], "t", "b")
     assert seen and all("tok123" not in x for x in seen)
+
+
+def test_redact_decoded_credentials():
+    url = "mailto://bob:p%40ss%20word9@gmail.com"
+    out = notify._redact("login failed bob p@ss word9 for gmail.com p%40ss%20word9", [url])
+    assert "p@ss word9" not in out and "p%40ss" not in out and "bob" not in out
