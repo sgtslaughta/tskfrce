@@ -196,6 +196,7 @@
 [data-look='parent'] .rw-ci[data-selected='true'] .rw-glyph { background: var(--p-acc); color: #292928; }
 [data-look='parent'] .rw-ci b { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
 [data-look='parent'] .rw-ci small { color: var(--p-sub); font-size: 12.5px; }
+[data-look='parent'] .pk-detail:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; border-radius: 12px; }
 [data-look='parent'] .rw-ci[data-hidden] .rw-glyph { opacity: 0.55; }
 [data-look='parent'] .rw-off { position: absolute; top: 12px; right: 12px; }
 [data-look='parent'] .rw-add { align-items: center; justify-content: center; min-height: 150px; border-style: dashed; color: var(--p-sub); font-weight: 600; }
