@@ -3,6 +3,7 @@
 from datetime import date, datetime
 
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, ChoreStep
+from app.models.hours import HourRule, HourRuleTarget, HourRuleTime
 from app.services.chore_types import other_id
 
 DAY = date(2026, 10, 20)  # a Tuesday
@@ -105,3 +106,36 @@ def api_chore(client, ph, kids, mode="each", repeat=None, title="Trash", points=
     r = client.post(f"/api/v1/chores/{chore['id']}/assignments", json=a, headers=ph)
     assert r.status_code == 200, r.text
     return chore, r.json()
+
+
+def make_rule(
+    db,
+    *,
+    kind="allowed",
+    days="0123456",
+    times=(("00:00", "23:59"),),
+    kid_ids=(),
+    group_ids=(),
+    everyone=False,
+    category="other",
+    start_date=None,
+    end_date=None,
+    name="Hours",
+):
+    """An hour rule with its times and targets."""
+    r = HourRule(
+        name=name,
+        category=category,
+        kind=kind,
+        days=days,
+        start_date=start_date,
+        end_date=end_date,
+        everyone=everyone,
+    )
+    r.times = [HourRuleTime(start=s, end=e) for s, e in times]
+    r.targets = [HourRuleTarget(kid_id=k) for k in kid_ids] + [
+        HourRuleTarget(group_id=g) for g in group_ids
+    ]
+    db.add(r)
+    db.commit()
+    return r

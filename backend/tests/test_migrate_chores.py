@@ -372,15 +372,13 @@ def test_drop_legacy_keeps_what_parents_and_lock_see(tmp_path):
     _seed(con.cursor())
     con.commit()
     con.close()
-    _alembic(url, "d0e1f2a3b4c5")
+    _alembic(url, "head")  # ORM inserts below need every current column
     with Session(create_engine(url)) as db:
         for i, kid in enumerate(db.query(User).filter(User.id.in_([2, 3]))):
             db.add(
                 Device(mac=f"aa:bb:cc:dd:ee:0{i}", name=f"d{i}", status="assigned", owners=[kid])
             )
         db.commit()
-    # Migrate to head to ensure all schema columns exist (including accent) before taking snapshot
-    _alembic(url, "head")
     before = _snapshot(url)
     assert before["needs_you"] and before["runs"] and before["blocked"]
     # Snapshot at final state should match

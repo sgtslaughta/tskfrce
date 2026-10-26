@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Column,
     DateTime,
@@ -46,6 +47,8 @@ class Device(Base):
     first_seen = Column(DateTime, nullable=False, default=datetime.utcnow)
     last_seen = Column(DateTime, nullable=True)
     resisting_since = Column(DateTime, nullable=True)
+    blocked_since = Column(DateTime, nullable=True)
+    exempt = Column(Boolean, nullable=False, default=False, server_default="0")  # never locked
 
     ipv6_rows = relationship("DeviceIPv6", cascade="all, delete-orphan")
     owners = relationship("User", secondary=device_owners, backref="devices")
@@ -79,6 +82,8 @@ class DeviceGroup(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, unique=True)
+    icon = Column(String(40), nullable=False, default="devices", server_default="devices")
+    chore_lock = Column(Boolean, nullable=False, default=True, server_default="1")
 
 
 class TimeWindow(Base):
