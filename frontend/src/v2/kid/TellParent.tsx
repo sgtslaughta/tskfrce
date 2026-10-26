@@ -26,7 +26,7 @@ export function TellParentSheet({ c, opened, onClose }: { c: KidChore; opened: b
       styles={{
         inner: { justifyContent: 'center' },
         content: { height: 'auto', maxWidth: 560, maxHeight: '90vh', display: 'flex', flexDirection: 'column' },
-        header: { borderBottom: 0, padding: '10px 16px 0' },
+        header: { borderBottom: 0, padding: '10px 16px 0', background: 'var(--k-card)' },
         title: { fontSize: 22, lineHeight: 1.2, fontWeight: 700, color: 'var(--k-ink)' },
         body: { overflowY: 'auto', padding: '4px 16px 26px' },
       }}

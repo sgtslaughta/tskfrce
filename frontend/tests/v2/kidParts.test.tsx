@@ -87,6 +87,7 @@ describe('DeductionCards', () => {
 
 test('no @tabler imports under src/v2/kid', () => {
   const dir = join(__dirname, '../../src/v2/kid')
-  const hits = readdirSync(dir).filter((f) => /\.tsx?$/.test(f) && readFileSync(join(dir, f), 'utf8').includes('@tabler'))
+  const files = readdirSync(dir, { recursive: true }) as string[]
+  const hits = files.filter((f) => /\.tsx?$/.test(f) && readFileSync(join(dir, f), 'utf8').includes('@tabler'))
   expect(hits).toEqual([])
 })

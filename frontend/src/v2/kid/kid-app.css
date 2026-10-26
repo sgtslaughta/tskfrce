@@ -155,6 +155,7 @@
 .k-ded {
   display: flex; gap: 10px; align-items: flex-start; background: var(--k-coral-bg);
   border-left: 4px solid var(--k-coral); border-radius: 8px; padding: 10px 12px; font-size: 14px; color: var(--k-ink);
+  margin-top: 10px;
 }
 .k-ded > .ms { color: var(--k-coral); }
 .k-ded b { font-family: var(--font-display), 'Space Grotesk', sans-serif; }
@@ -175,7 +176,7 @@
   background: var(--k-card) !important; color: var(--k-ink);
   border-radius: 20px 20px 0 0 !important; border-top: 3px solid var(--k-ink);
 }
-.k-sheet-head { background: transparent; flex-direction: column; align-items: stretch; gap: 4px; min-height: 0; }
+.k-sheet-head { flex-direction: column; align-items: stretch; gap: 4px; min-height: 0; }
 .k-sheet-head::before { content: ''; width: 44px; height: 5px; border-radius: 3px; background: var(--k-line); margin: 0 auto 4px; }
 .k-sheet-title { font-family: var(--font-display), 'Space Grotesk', sans-serif; }
 .k-sheet-body { display: flex; flex-direction: column; gap: 12px; }
