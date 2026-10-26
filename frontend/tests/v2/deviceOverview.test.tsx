@@ -114,7 +114,6 @@ describe('device Network history rows', () => {
     const c = await net(dev({ resisting: true }))
     expect(await within(c).findByText('Slipping')).toBeTruthy()
     expect(within(c).getByText('Yes')).toBeTruthy()
-    blocker = { online: false }
   })
 
   test('box offline', async () => {

@@ -116,9 +116,7 @@ export function DeviceList({
           <div className="p-device-meta">
             <span>{owner} · {d.last_seen ? ago(d.last_seen) : 'never seen'}</span>
             {d.exempt && (
-              <Chip tone="grey" icon="verified_user">
-                Exempt
-              </Chip>
+              <span className="p-chip" data-tone="lav">Exempt</span>
             )}
           </div>
         </div>

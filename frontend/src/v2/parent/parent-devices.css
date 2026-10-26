@@ -252,7 +252,6 @@
 [data-look='parent'] .ow-key[data-state='l'] { background: var(--p-red-bg); box-shadow: inset 0 0 0 1px var(--p-red); }
 [data-look='parent'][data-mantine-color-scheme='dark'] .ow-key { background: var(--p-soft); }
 [data-look='parent'][data-mantine-color-scheme='dark'] .ow-key[data-state='o'] { background: var(--p-acc); }
-[data-look='parent'][data-mantine-color-scheme='dark'] .ow-key[data-state='l'] { background: var(--p-red-bg); }
 [data-look='parent'] .p-device-meta { display: flex; align-items: center; gap: 6px; }
 [data-look='parent'] .p-device-meta > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 [data-look='parent'] .p-device-meta .p-chip { flex: none; }
