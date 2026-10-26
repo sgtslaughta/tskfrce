@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.models.badge import BadgeAward, CustomBadge
 from app.models.user import User
+from app.schemas.lock import utc_z
 from app.services.badges import CATALOG, TIERS
 
 MAX_RECENT = 50
@@ -88,7 +89,7 @@ def recent(db: Session, days: int = 7) -> list[dict]:
                 "tier_name": TIERS[a.tier - 1],
                 "note": a.note,
                 "by_name": names.get(a.awarded_by_id),
-                "earned_at": a.earned_at.isoformat(),
+                "earned_at": utc_z(a.earned_at),
             }
         )
     return out

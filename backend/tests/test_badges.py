@@ -264,6 +264,7 @@ def test_award_note_and_recent(client, db, parent, kid, parent_headers, kid_head
     )
     built = next(x for x in rec if not x["custom"])
     assert built["by_name"] is None and built["key"] == "first_blood"
+    assert cust["earned_at"].endswith("Z")
     assert [x["earned_at"] for x in rec] == sorted((x["earned_at"] for x in rec), reverse=True)
     old = db.query(BadgeAward).filter_by(custom_badge_id=bid).one()
     old.earned_at = datetime.utcnow() - timedelta(days=9)
