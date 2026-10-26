@@ -59,6 +59,27 @@ def test_no_push_on_savepoint_rollback(db, kid, cfg):
     assert [i["title"] for i in cfg] == ["kept"]
 
 
+def test_savepoint_release_does_not_send_early(db, kid, cfg):
+    _kid(db, kid)
+    inbox.notify(db, [kid.id], "chore_approved", "outer")
+    with db.begin_nested():
+        pass
+    assert cfg == []
+    db.rollback()
+    db.commit()
+    assert cfg == []
+
+
+def test_savepoint_rollback_keeps_earlier_push(db, kid, cfg):
+    _kid(db, kid)
+    inbox.notify(db, [kid.id], "chore_approved", "outer")
+    with db.begin_nested() as sp:
+        inbox.notify(db, [kid.id], "level_up", "inner")
+        sp.rollback()
+    db.commit()
+    assert [i["title"] for i in cfg] == ["outer"]
+
+
 def test_no_push_without_topic_or_config(db, kid, cfg, monkeypatch):
     inbox.notify(db, [kid.id], "chore_approved", "no topic")
     db.commit()
@@ -100,6 +121,12 @@ def test_send_swallows_errors(monkeypatch):
         raise httpx.ConnectError("down")
 
     monkeypatch.setattr(httpx, "post", boom)
+    push.send({"topic": "t"})
+    monkeypatch.setattr(
+        httpx,
+        "post",
+        lambda *a, **k: httpx.Response(500, request=httpx.Request("POST", "http://x")),
+    )
     push.send({"topic": "t"})
 
 

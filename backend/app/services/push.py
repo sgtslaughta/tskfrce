@@ -91,6 +91,8 @@ def _send_all(items: list[dict]) -> None:
 
 @event.listens_for(Session, "after_commit")
 def _after_commit(session: Session) -> None:
+    if session.in_nested_transaction():  # savepoint release, not the real commit
+        return
     items = session.info.pop("push_out", None)
     if not items:
         return
@@ -106,4 +108,6 @@ def _after_commit(session: Session) -> None:
 
 @event.listens_for(Session, "after_rollback")
 def _after_rollback(session: Session) -> None:
+    if session.in_nested_transaction():  # savepoint rollback; _row filter handles it
+        return
     session.info.pop("push_out", None)
