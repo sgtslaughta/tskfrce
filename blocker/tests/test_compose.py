@@ -40,3 +40,16 @@ def test_backend_image_owns_ntfy_conf_volume():
     # Docker copies image dir ownership into a fresh named volume; without this appuser can't write.
     df = (COMPOSE.parent / "backend" / "Dockerfile").read_text()
     assert "chown appuser:appuser /app/data /ntfy-conf" in df
+
+
+def test_ntfy_base_url_matches_backend_public_url():
+    svcs = yaml.safe_load(PROD.read_text())["services"]
+    assert (
+        svcs["ntfy"]["environment"]["NTFY_BASE_URL"]
+        == svcs["backend"]["environment"]["NTFY_PUBLIC_URL"]
+    )
+    assert "${NTFY_PUBLIC_URL" in svcs["ntfy"]["environment"]["NTFY_BASE_URL"]
+
+
+def test_ntfy_starts_after_backend():
+    assert "backend" in yaml.safe_load(PROD.read_text())["services"]["ntfy"]["depends_on"]

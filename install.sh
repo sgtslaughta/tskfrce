@@ -121,6 +121,7 @@ write_env() {
     echo "SECRET_KEY=$(random_hex)"
     echo "INTERNAL_TOKEN=$(random_hex)"
     echo "BOX_URL=http://$ip_addr:$PORT"
+    echo "NTFY_PUBLIC_URL=http://$ip_addr:2586"
     echo "TRUSTED_HOSTS=localhost,127.0.0.1,backend"
     echo "FRONTEND_PORT=0.0.0.0:$PORT"
     echo "BACKEND_PORT=127.0.0.1:$API_PORT"
