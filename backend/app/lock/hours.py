@@ -145,10 +145,9 @@ def resolve(rules, owner_ids: set[int], group_ids: set[int], d: date) -> Resolve
             for k, rs in _pick([(r, k) for r, k in allowed if active_on(r, y)]).items()
             if (ws := [w for r in rs for w in _pin(r, y, True)])
         }
-        # a tail whose key has no rule today only extends (it is yesterday's late night)
-        extra = [w for k, ws in tail.items() if k not in today for w in ws]
+        # a key with no rule today restricts nothing today, so its late-night tail can't loosen others
         if today:
-            sets.extend(tuple(ws + tail.get(k, []) + extra) for k, ws in today.items())
+            sets.extend(tuple(ws + tail.get(k, [])) for k, ws in today.items())
         else:
             sets.extend([tuple(ws) for ws in tail.values()] or [()])
     return Resolved(tuple(sets), tuple(free), tuple(off))

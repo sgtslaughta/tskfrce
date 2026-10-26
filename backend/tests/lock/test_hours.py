@@ -199,6 +199,14 @@ def test_overnight_tail_survives_midnight():
     assert blocked_at(r, datetime(2026, 12, 21, 8, 0))
 
 
+def test_other_keys_overnight_tail_does_not_loosen_kid():
+    kid_mon = rule(1, days="0", times=(("07:00", "21:00"),), kids=[1])
+    grp_sun = rule(2, days="6", times=(("20:00", "02:00"),), groups=[5])
+    r = resolve([kid_mon, grp_sun], {1}, {5}, MON)
+    assert blocked_at(r, datetime(2026, 12, 21, 1, 0))  # kid's Monday rule says no
+    assert not blocked_at(r, datetime(2026, 12, 21, 8, 0))
+
+
 def test_no_rule_today_fails_closed():
     wk = rule(1, days="0123", times=(("08:00", "20:00"),), kids=[1])
     r = resolve([wk], {1}, set(), SAT)
