@@ -128,7 +128,7 @@ def resolve(rules, owner_ids: set[int], group_ids: set[int], d: date) -> Resolve
                 if active_on(r, y):
                     out.extend(_pin(r, y, True))
         allowed = [(r, k) for r, k in mine if r.kind == "allowed"]
-        if not any(in_range(r, d) or in_range(r, y) for r, _ in allowed):
+        if not any(in_range(r, d) for r, _ in allowed):
             continue  # no hours set for this principal: unrestricted
         today = _best([(r, k) for r, k in allowed if active_on(r, d)])
         tail = [

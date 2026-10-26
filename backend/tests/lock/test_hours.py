@@ -199,3 +199,11 @@ def test_own_rule_for_one_owner_does_not_free_the_other():
     fam = rule(2, times=(("15:00", "20:00"),), everyone=True)
     r = resolve([a, fam], {1, 2}, set(), D)
     assert blocked_at(r, datetime(2026, 12, 25, 10, 0))  # B only has 15-20
+
+
+def test_dated_rule_ended_yesterday_does_not_lock():
+    thu = date(2026, 12, 24)
+    ended = rule(1, category="holiday", times=(("08:00", "23:00"),), kids=[1], start=thu, end=thu)
+    r = resolve([ended], {1}, set(), date(2026, 12, 25))
+    assert r.allowed_sets == ()
+    assert not blocked_at(r, datetime(2026, 12, 25, 12, 0))
