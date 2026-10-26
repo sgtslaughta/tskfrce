@@ -12,13 +12,15 @@ import { InviteSection } from './InviteSection'
 import { ParentsList } from './ParentsList'
 import { SettingsList, type SettingsSection } from './SettingsList'
 import { AppearancePane } from './AppearancePane'
+import { NotificationsPane } from './NotificationsPane'
 import { toastFail, toastOk } from '@/v2/notify'
 
-type S = 'family' | 'screen' | 'hours' | 'look' | 'gifs' | 'parents'
+type S = 'family' | 'screen' | 'hours' | 'notifications' | 'look' | 'gifs' | 'parents'
 const SETTINGS_SECTIONS: SettingsSection<S>[] = [
   { id: 'family', label: 'Family', description: 'Name, time zone, points rules', icon: 'home' },
   { id: 'screen', label: 'Screen time', description: 'Price and early unlock', icon: 'timer' },
   { id: 'hours', label: 'Hours', description: 'School nights, weekends', icon: 'schedule' },
+  { id: 'notifications', label: 'Notifications', description: 'Chat app pings, quiet hours', icon: 'notifications' },
   { id: 'look', label: 'Appearance', description: 'Accent colour, dark mode', icon: 'palette' },
   { id: 'gifs', label: 'GIFs', description: 'Chat GIF search', icon: 'gif_box' },
   { id: 'parents', label: 'Parents', description: 'Invite and manage parents', icon: 'supervisor_account' },
@@ -70,6 +72,7 @@ function SettingsBody() {
           />
         )}
         {section === 'hours' && <HoursSection />}
+        {section === 'notifications' && <NotificationsPane />}
         {section === 'parents' && (
           <>
             <InfoBlock

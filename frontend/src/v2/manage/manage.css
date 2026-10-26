@@ -162,3 +162,41 @@
 .m-chips .mantine-Chip-label { min-width: 0; max-width: 100%; box-sizing: border-box; }
 .m-chips .mantine-Chip-label > span:not([class*="iconWrapper"]) { display: block; min-width: 0; max-width: 100%; }
 .m-chip-t { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Settings > Notifications (mockup 02 #sp-notif) */
+[data-look='parent'] .pn { display: grid; gap: 14px; min-width: 0; }
+[data-look='parent'] .pn-mh { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+[data-look='parent'] .pn-mh h2 { margin: 0; font-size: 28px; color: var(--p-ink); }
+[data-look='parent'] .pn-s, [data-look='parent'] .pn-help { color: var(--p-sub); font-size: 13px; }
+[data-look='parent'] .pn-help { margin: -6px 0 12px; font-size: 12.5px; }
+[data-look='parent'] .pn-card { background: var(--p-card); color: var(--p-ink); border: 1px solid var(--p-line); border-radius: 18px; padding: 16px 18px; min-width: 0; }
+[data-look='parent'] .pn-h { margin: 0 0 10px; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+[data-look='parent'] .pn-h > .ms { color: var(--p-sub); }
+[data-look='parent'] .pn-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-look='parent'] .pn-ib { padding: 4px; border-color: transparent; background: transparent; color: var(--p-sub); }
+[data-look='parent'] .pn-inp { display: flex; gap: 8px; align-items: center; border: 1px solid var(--p-line); border-radius: 12px; padding: 8px 10px; background: var(--p-soft); font: 12.5px ui-monospace, monospace; }
+[data-look='parent'] .pn-mask { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+[data-look='parent'] .pn-test { padding: 4px 10px; }
+[data-look='parent'] .pn-evs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+[data-look='parent'] .pn-ev { font: 11.5px var(--font-parent), system-ui, sans-serif; border: 1px solid var(--p-line); border-radius: 999px; padding: 3px 9px; background: transparent; color: var(--p-sub); cursor: pointer; }
+[data-look='parent'] .pn-ev[aria-pressed='true'] { background: var(--p-ink); color: var(--p-card); border-color: var(--p-ink); }
+[data-look='parent'] .pn-ev:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+[data-look='parent'] .pn-warn { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px 10px; border-radius: 12px; background: var(--p-amb); color: var(--p-ambink); font-size: 13px; font-weight: 600; }
+[data-look='parent'] .pn-warn > span:not(.ms) { flex: 1; }
+[data-look='parent'] .pn-g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+[data-look='parent'] .pn-kv, [data-look='parent'] .pn-times { padding: 8px 0; font-size: 13px; border-top: 1px solid var(--p-line); }
+[data-look='parent'] .pn-h + .pn-kv { border-top: 0; }
+[data-look='parent'] .pn-kv .mantine-Switch-label { color: var(--p-sub); font-size: 13px; }
+[data-look='parent'] .pn-kv .mantine-Switch-body { justify-content: space-between; }
+[data-look='parent'] .pn-kv .mantine-Switch-root, [data-look='parent'] .pn-kv .mantine-Switch-labelWrapper { flex: 1; }
+[data-look='parent'] .pn-times { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+[data-look='parent'] .pn-times .mantine-InputWrapper-label { color: var(--p-sub); font-weight: 400; font-size: 13px; }
+/* fields per mockup: soft fill like the masked address row (beats the global .f-input.f-input card fill) */
+html[data-look='parent'] .pn .f-input.f-input { background: var(--p-soft); }
+html[data-look='parent'] .pn-addr .f-input.f-input { font: 12.5px ui-monospace, monospace; }
+/* switch per mockup: ink track, accent knob when on */
+[data-look='parent'] .pn-sw .mantine-Switch-track { cursor: pointer; background: var(--p-line); border-color: var(--p-line); }
+[data-look='parent'] .pn-sw .mantine-Switch-input:checked + .mantine-Switch-track { background: var(--p-ink); border-color: var(--p-ink); }
+[data-look='parent'] .pn-sw .mantine-Switch-input:checked + .mantine-Switch-track .mantine-Switch-thumb { background: var(--p-acc); border-color: var(--p-acc); }
+[data-look='parent'] .pn-form { display: grid; gap: 14px; }
+@media (max-width: 767px) { [data-look='parent'] .pn-g2 { grid-template-columns: 1fr; } }
