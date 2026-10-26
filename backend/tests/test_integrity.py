@@ -85,7 +85,7 @@ def test_redemptions_status_filter_validated(client, parent_headers):
 
 def test_custom_badge_award_survives_deactivation(client, db, kid, parent_headers):
     bid = client.post(
-        "/api/v1/custom-badges", json={"name": "Walker", "icon": "🐕"}, headers=parent_headers
+        "/api/v1/custom-badges", json={"name": "Walker", "icon": "pets"}, headers=parent_headers
     ).json()["id"]
     client.post(
         f"/api/v1/custom-badges/{bid}/award", json={"kid_id": kid.id}, headers=parent_headers

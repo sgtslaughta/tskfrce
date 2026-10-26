@@ -20,6 +20,7 @@ from app.api import (
     auth_router,
     users_router,
 )
+from app.api.badges import overview_router as badges_overview_router
 from app.api.badges import router as badges_router
 from app.api.chat import router as chat_router
 from app.api.chore_library import router as chore_library_router
@@ -153,6 +154,7 @@ fastapi_app.include_router(family_router)
 fastapi_app.include_router(rewards_router)
 fastapi_app.include_router(screen_time_router)
 fastapi_app.include_router(badges_router)
+fastapi_app.include_router(badges_overview_router)
 fastapi_app.include_router(community_router)
 fastapi_app.include_router(flair_router)
 fastapi_app.include_router(redemptions_router)

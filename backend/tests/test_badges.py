@@ -122,14 +122,15 @@ def test_spending_metrics(db, parent, kid):
 def test_custom_badge_flow(client, db, kid, kid_headers, parent_headers):
     r = client.post(
         "/api/v1/custom-badges",
-        json={"name": "Dog walker", "icon": "🐕", "description": "x"},
+        json={"name": "Dog walker", "icon": "pets", "description": "x"},
         headers=parent_headers,
     )
     bid = r.json()["id"]
     url = f"/api/v1/custom-badges/{bid}/award"
     for tier in range(1, 6):
         assert client.post(url, json={"kid_id": kid.id}, headers=parent_headers).json() == {
-            "tier": tier
+            "tier": tier,
+            "tier_name": bd.TIERS[tier - 1],
         }
     r = client.post(url, json={"kid_id": kid.id}, headers=parent_headers)
     assert r.status_code == 409 and r.json()["detail"] == "This badge is already at the top tier."
@@ -223,3 +224,86 @@ def test_level_celebration_lists_new_flair(client, db, kid, kid_headers):
 def test_emblem_map(client, kid_headers):
     r = client.get("/api/v1/flair/emblems", headers=kid_headers).json()
     assert r["emblem-crown"] == "👑" and "card-grid" not in r
+
+
+def _custom(client, headers, icon="volunteer_activism"):
+    return client.post(
+        "/api/v1/custom-badges", json={"name": "Kindness", "icon": icon}, headers=headers
+    )
+
+
+def test_custom_badge_glyph_only(client, parent_headers):
+    assert _custom(client, parent_headers).status_code == 200
+    assert _custom(client, parent_headers, "🏅").status_code == 422
+    bid = _custom(client, parent_headers).json()["id"]
+    r = client.patch(f"/api/v1/custom-badges/{bid}", json={"icon": "🏅"}, headers=parent_headers)
+    assert r.status_code == 422
+
+
+def test_award_note_and_recent(client, db, parent, kid, parent_headers, kid_headers):
+    from app.models.inbox import Notification
+
+    bid = _custom(client, parent_headers).json()["id"]
+    r = client.post(
+        f"/api/v1/custom-badges/{bid}/award",
+        json={"kid_id": kid.id, "note": " shared her snack "},
+        headers=parent_headers,
+    )
+    assert r.json() == {"tier": 1, "tier_name": "copper"}
+    n = db.query(Notification).filter_by(kind="badge_earned").one()
+    assert n.body == "copper · shared her snack"
+    _done(db, kid, parent, 1)
+    bd.check_badges(db, kid, get_family(db))
+    db.commit()
+    rec = client.get("/api/v1/badges/recent", headers=parent_headers).json()
+    assert len(rec) == 2
+    cust = next(x for x in rec if x["custom"])
+    assert cust["note"] == "shared her snack" and cust["by_name"] == parent.full_name
+    assert (
+        cust["tier"] == 1 and cust["kid_name"] == kid.full_name and cust["key"] == f"custom:{bid}"
+    )
+    built = next(x for x in rec if not x["custom"])
+    assert built["by_name"] is None and built["key"] == "first_blood"
+    assert [x["earned_at"] for x in rec] == sorted((x["earned_at"] for x in rec), reverse=True)
+    old = db.query(BadgeAward).filter_by(custom_badge_id=bid).one()
+    old.earned_at = datetime.utcnow() - timedelta(days=9)
+    db.commit()
+    assert len(client.get("/api/v1/badges/recent", headers=parent_headers).json()) == 1
+    assert len(client.get("/api/v1/badges/recent?days=30", headers=parent_headers).json()) == 2
+    assert client.get("/api/v1/badges/recent", headers=kid_headers).status_code == 403
+
+
+def test_overview_tiers(client, db, kid, parent_headers, kid_headers):
+    from app.models.user import UserRole
+
+    other = _make_user(db, "sis", UserRole.KID)
+    bid = _custom(client, parent_headers).json()["id"]
+    client.post(
+        f"/api/v1/custom-badges/{bid}/award", json={"kid_id": kid.id}, headers=parent_headers
+    )
+    rows = client.get("/api/v1/badges/overview", headers=parent_headers).json()
+    assert len(rows) == len(bd.CATALOG) + 1 == 19
+    assert [r["key"] for r in rows[:18]] == list(bd.CATALOG)
+    assert rows[0]["icon"] == "🩸" and not rows[0]["custom"] and rows[0]["tiers"] == {}
+    last = rows[-1]
+    assert (
+        last["key"] == f"custom:{bid}" and last["custom"] and last["icon"] == "volunteer_activism"
+    )
+    assert last["tiers"] == {str(kid.id): 1} and str(other.id) not in last["tiers"]
+    assert client.get("/api/v1/badges/overview", headers=kid_headers).status_code == 403
+
+
+def test_custom_celebration_has_glyph(client, db, kid, parent_headers, kid_headers):
+    bid = _custom(client, parent_headers).json()["id"]
+    client.post(
+        f"/api/v1/custom-badges/{bid}/award",
+        json={"kid_id": kid.id, "note": "so kind"},
+        headers=parent_headers,
+    )
+    db.add(BadgeAward(kid_id=kid.id, badge_key="first_blood", tier=1, earned_at=NOW))
+    db.commit()
+    feed = client.get("/api/v1/kid/celebrations", headers=kid_headers).json()
+    c = next(f for f in feed if f["kind"] == "badge" and f["title"] == "Kindness")
+    assert c["glyph"] == "volunteer_activism" and c["detail"] == "so kind"
+    b = next(f for f in feed if f["kind"] == "badge" and "First Blood" in f["title"])
+    assert "glyph" not in b and b["title"].startswith("🩸")
