@@ -8,6 +8,8 @@ interface Props {
   kids: Kid[]
   groups: Group[]
   onEdit?: (r: HourRule) => void
+  /** Shown inside one group's page: a rule that targets only groups reads "only this group". */
+  thisGroup?: boolean
 }
 
 // keep "Dec 20" together so a narrow name column only wraps at the dash
@@ -15,7 +17,7 @@ const when = (r: HourRule) =>
   r.start_date && r.end_date ? datesLabel(r.start_date, r.end_date).replace(/([A-Z][a-z]{2}) (\d)/g, '$1\u00a0$2') : daysLabel(r.days)
 
 /** Pattern timeline (mockup 02 Settings → Hours): one row per rule, bars per time over a 24 h track. */
-export function HoursTimeline({ rules, kids, groups, onEdit }: Props) {
+export function HoursTimeline({ rules, kids, groups, onEdit, thisGroup }: Props) {
   if (!rules.length) return <p className="ph-empty">No hours yet. Devices can be online any time until you add some.</p>
   return (
     <div className="ph-tl" data-edit={!!onEdit}>
@@ -29,7 +31,7 @@ export function HoursTimeline({ rules, kids, groups, onEdit }: Props) {
               {kid && <span className="avx" aria-hidden="true">{initial(nameOf(kid))}</span>}
               <div className="ph-nm-t">
                 {r.name}
-                <small>{`${whoLabel(r, kids, groups)} · ${when(r)}`}</small>
+                <small>{`${thisGroup && !r.everyone && !r.kid_ids.length ? 'only this group' : whoLabel(r, kids, groups)} · ${when(r)}`}</small>
               </div>
             </div>
             <div className="ph-tr">

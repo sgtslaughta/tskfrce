@@ -181,7 +181,7 @@ export function DeviceList({
                     onClick={() => onSelectGroup?.(g.id)}
                   >
                     <div className="p-device-icon">
-                      <Icon name={DEVICE_TYPE_ICON[firstType]} size={18} />
+                      <Icon name={g.icon || DEVICE_TYPE_ICON[firstType]} size={18} />
                     </div>
                     <div className="p-device-info">
                       <div className="p-device-name" title={g.name}>{g.name}</div>
