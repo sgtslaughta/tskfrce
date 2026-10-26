@@ -6,11 +6,11 @@ import { useMediaQuery } from '@mantine/hooks'
 import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useLibrary } from '@/v2/hooks/useChores'
-import { useCustomBadges } from '@/v2/hooks/useCustomBadges'
 import { useKids } from '@/v2/hooks/useKids'
-import { useRewards } from '@/v2/hooks/useRewards'
-import { BadgeDetail } from './BadgeDetail'
-import { BadgesList } from './BadgesList'
+import { BadgesAll } from './BadgesAll'
+import { BadgesCustom } from './BadgesCustom'
+import { BadgesNav } from './BadgesNav'
+import { BadgesRecent } from './BadgesRecent'
 import { ChoreDetail } from './ChoreDetail'
 import { ChoresList } from './ChoresList'
 import { KidDetail } from './KidDetail'
@@ -24,33 +24,32 @@ import { RewardsRequests } from './RewardsRequests'
 import { ScreenTimePane } from './ScreenTimePane'
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
-const FIXED: Partial<Record<Section, string>> = { rewards: 'requests' }
+const FIXED: Partial<Record<Section, string>> = { rewards: 'requests', badges: 'all' }
 
 function KidsBody() {
   const router = useRouter()
   const { query } = router
   const kids = useKids()
   const chores = useLibrary()
-  const rewards = useRewards()
-  const badges = useCustomBadges()
   const want = first(query.section)
   const section: Section = SECTIONS.some((s) => s.id === want) ? (want as Section) : 'chores'
   const kidList = kids.data ?? []
   const small = useMediaQuery('(max-width: 767px)')
-  // rewards is a fixed set of panes (Requests, Catalogue, ...), not a list of records
+  // rewards and badges are fixed sets of panes (Requests, Catalogue, ...), not lists of records
   const fixed = FIXED[section]
   // desktop opens the section's first item rather than an empty pane; phone stays on the list
-  const firstId = { chores: chores.data, kids: kids.data, rewards: undefined, badges: badges.data }[section]?.[0]?.id
+  const firstId = { chores: chores.data, kids: kids.data, rewards: undefined, badges: undefined }[section]?.[0]?.id
   const item = first(query.item) ?? (small || query.kid ? undefined : (fixed ?? (firstId == null ? undefined : String(firstId))))
   const pick = (id: number | string | null) => {
     const { item: _drop, pick: _pick, ...rest } = query
     router.push({ pathname: '/kids', query: id === null ? { section } : { ...rest, section, item: id } }, undefined, { shallow: true })
   }
-  const pickReward = (id: number | 'new' | null) =>
-    router.push({ pathname: '/kids', query: { section, item: 'catalogue', ...(id !== null && { pick: id }) } }, undefined, { shallow: true })
+  // a fixed pane's own selection (?pick=) inside `pane`
+  const pickIn = (pane: string) => (id: number | 'new' | null) =>
+    router.push({ pathname: '/kids', query: { section, item: pane, ...(id !== null && { pick: id }) } }, undefined, { shallow: true })
 
-  // A deleted (or stale) ?item= falls back to the section's list
-  const loaded = { chores, kids, rewards, badges }[section]
+  // A deleted (or stale) ?item= falls back to the section's list (fixed panes never are)
+  const loaded = section === 'chores' ? chores : kids
   const known = loaded.data?.some((x) => String(x.id) === item)
   useEffect(() => {
     if (!fixed && loaded.isSuccess && item && item !== 'new' && !known) pick(null)
@@ -68,13 +67,12 @@ function KidsBody() {
     chores: <ChoresList chores={chores.data ?? []} kids={kidList} selected={item} onSelect={pick} />,
     kids: <KidsList kids={kidList} selected={item} onSelect={pick} />,
     rewards: <RewardsNav selected={item} onSelect={pick} />,
-    badges: <BadgesList badges={badges.data ?? []} selected={item} onSelect={pick} />,
+    badges: <BadgesNav selected={item} onSelect={pick} />,
   }
 
   const id = Number(item)
   const chore = chores.data?.find((c) => c.id === id)
   const kid = kidList.find((k) => k.id === id)
-  const badge = badges.data?.find((b) => b.id === id)
   const select = (n: number | null) => pick(n)
   const details = {
     chores: item === 'new' ? <ChoreDetail key="new" kids={kidList} onSelect={select} /> : chore && <ChoreDetail key={chore.id} kids={kidList} chore={chore} onSelect={select} />,
@@ -88,17 +86,24 @@ function KidsBody() {
       item === 'requests' ? (
         <RewardsRequests onHistory={() => pick('history')} />
       ) : item === 'catalogue' ? (
-        <RewardsCatalogue pick={first(query.pick)} onPick={pickReward} />
+        <RewardsCatalogue pick={first(query.pick)} onPick={pickIn('catalogue')} />
       ) : item === 'screen' ? (
         <ScreenTimePane />
       ) : item === 'history' ? (
         <RewardsHistory />
       ) : null,
-    badges: item === 'new' ? <BadgeDetail key="new" kids={kidList} onSelect={select} /> : badge && <BadgeDetail key={badge.id} badge={badge} kids={kidList} onSelect={select} />,
+    badges:
+      item === 'all' ? (
+        <BadgesAll />
+      ) : item === 'custom' ? (
+        <BadgesCustom pick={first(query.pick)} onPick={pickIn('custom')} />
+      ) : item === 'recent' ? (
+        <BadgesRecent />
+      ) : null,
   }
 
   const noun = { chores: 'chore', kids: 'kid', rewards: 'reward', badges: 'badge' }[section]
-  const total = { chores: chores.data?.length, kids: kids.data?.length, rewards: rewards.data?.length, badges: badges.data?.length }[section]
+  const total = loaded.data?.length
   const EMPTY_ICON = { chores: 'task_alt', kids: 'person_add', rewards: 'redeem', badges: 'military_tech' }
   return (
     <>

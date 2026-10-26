@@ -96,7 +96,7 @@ describe('rewards: requests', () => {
     render(wrap(<KidsPage />))
     expect(await within(detail()).findByText('No requests')).toBeInTheDocument()
     expect(within(list()).getByRole('button', { name: /Requests/ })).toHaveTextContent('Nothing waiting')
-    expect(within(list()).getByRole('button', { name: /Catalogue/ })).toHaveTextContent('2 rewards · 1 hidden')
+    await waitFor(() => expect(within(list()).getByRole('button', { name: /Catalogue/ })).toHaveTextContent('2 rewards · 1 hidden'))
   })
 })
 

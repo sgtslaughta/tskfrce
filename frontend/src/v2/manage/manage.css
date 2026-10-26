@@ -270,3 +270,48 @@
 }
 /* mockup: the first row under a card title has no rule above it */
 [data-look='parent'] .pk-panel > h3 + .rw-sw { padding-top: 0; border-top: 0; }
+
+/* Badges (mockup 02 Kids & chores → Badges): tier pips, badge cards, award, recent */
+[data-look='parent'] .bd-pips { display: inline-flex; flex: none; gap: 3px; }
+[data-look='parent'] .bd-pips i, [data-look='parent'] .bd-tlg i { width: 14px; height: 8px; border-radius: 3px; background: var(--p-soft); border: 1px solid var(--p-line); box-sizing: border-box; }
+[data-look='parent'] :is(.bd-pips, .bd-tlg) i.t1 { background: #b87333; border-color: #b87333; }
+[data-look='parent'] :is(.bd-pips, .bd-tlg) i.t2 { background: #c0c0c0; border-color: #c0c0c0; }
+[data-look='parent'] :is(.bd-pips, .bd-tlg) i.t3 { background: #ffd23f; border-color: #ffd23f; }
+[data-look='parent'] :is(.bd-pips, .bd-tlg) i.t4 { background: #e5e4e2; border-color: #9a9a96; }
+[data-look='parent'] :is(.bd-pips, .bd-tlg) i.t5 { background: linear-gradient(90deg, #7cc8ff, #c9b6ff, #ff9ecd); border-color: transparent; }
+[data-look='parent'] .bd-tlg { display: flex; flex-wrap: wrap; gap: 12px; color: var(--p-sub); font-size: 11.5px; }
+[data-look='parent'] .bd-tlg span { display: flex; align-items: center; gap: 5px; }
+[data-look='parent'] .bd-tlg i { display: inline-block; }
+[data-look='parent'] .bd-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }
+[data-look='parent'] .bd-card { display: flex; flex-direction: column; gap: 8px; padding: 14px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 18px; color: var(--p-ink); font: inherit; text-align: left; }
+[data-look='parent'] button.bd-card { cursor: pointer; }
+[data-look='parent'] button.bd-card:hover { border-color: var(--p-sub); }
+[data-look='parent'] button.bd-card:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+[data-look='parent'] .bd-card[data-selected='true'] { border-color: var(--p-ink); box-shadow: inset 0 0 0 1px var(--p-ink); }
+[data-look='parent'] .bd-top { display: flex; align-items: center; gap: 10px; min-width: 0; }
+[data-look='parent'] .bd-glyph { flex: none; width: 42px; height: 42px; display: grid; place-items: center; border-radius: 13px; background: var(--p-soft); color: var(--p-ink); }
+[data-look='parent'] .bd-glyph-sm { width: 36px; height: 36px; border-radius: 11px; }
+[data-look='parent'] .bd-card[data-selected='true'] .bd-glyph { background: var(--p-acc); color: #292928; }
+[data-look='parent'] .bd-t { min-width: 0; }
+[data-look='parent'] .bd-t b { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+[data-look='parent'] .bd-t small { display: block; color: var(--p-sub); font-size: 11.5px; }
+[data-look='parent'] .bd-custom { font-size: 11px; padding: 2px 8px 2px 6px; }
+[data-look='parent'] .bd-tiers { display: flex; flex-direction: column; gap: 4px; font-size: 11.5px; }
+[data-look='parent'] .bd-tk { display: flex; align-items: center; gap: 6px; }
+[data-look='parent'] .bd-tk .rw-avx { font-size: 9px; }
+[data-look='parent'] .bd-tn { margin-left: auto; color: var(--p-sub); font-size: 10.5px; }
+[data-look='parent'] .bd-icons .p-glyph-grid { grid-template-columns: repeat(8, 1fr); }
+[data-look='parent'] .bd-next { display: inline-flex; align-items: center; gap: 8px; color: var(--p-ink); }
+[data-look='parent'] .bd-kp { padding: 4px 10px 4px 4px; font-weight: 600; }
+[data-look='parent'] .bd-kp .pk-av { width: 24px; height: 24px; border: 0; background: var(--p-soft); color: var(--p-sub); font-size: 11px; }
+[data-look='parent'] .bd-kp[aria-pressed='true'] { background: none; border-color: var(--p-ink); color: var(--p-ink); }
+[data-look='parent'] .bd-kp[aria-pressed='true'] .pk-av { background: var(--p-acc); color: #292928; }
+[data-look='parent'] .bd-awl { margin: 0; padding: 0; list-style: none; }
+[data-look='parent'] .bd-aw { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--p-line); }
+[data-look='parent'] .bd-aw:first-child { border-top: 0; }
+[data-look='parent'] .bd-aw-t { flex: 1; min-width: 0; color: var(--p-ink); font-size: 13.5px; font-weight: 600; overflow-wrap: anywhere; }
+[data-look='parent'] .bd-aw-t small { display: block; color: var(--p-sub); font-size: 11.5px; font-weight: 400; }
+@media (max-width: 767px) {
+  [data-look='parent'] .bd-grid { grid-template-columns: minmax(0, 1fr); }
+  [data-look='parent'] .bd-icons .p-glyph-grid { grid-template-columns: repeat(6, 1fr); }
+}
