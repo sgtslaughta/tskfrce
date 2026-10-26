@@ -1,7 +1,9 @@
 """Apprise notifications: queued on the session, sent only after commit."""
 
+import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo
 
 import apprise
@@ -88,6 +90,22 @@ def ping(db, event: str, title: str, body: str | None = None, path: str | None =
         db.info.setdefault("pings", []).append((urls, title, text))
 
 
+def _redact(msg: str, urls: list[str]) -> str:
+    """Mask every URL and credential-ish piece of it, then cap at 300 chars."""
+    secrets = set()
+    for u in urls:
+        secrets.add(u)
+        parts = urlsplit(u)
+        for chunk in (u.split("://", 1)[-1], parts.netloc, parts.path, parts.query):
+            secrets.add(chunk)
+            secrets.update(re.split(r"[/@:?&=]", chunk))
+    scheme = {u.split("://", 1)[0] for u in urls}
+    for sec in sorted(secrets, key=len, reverse=True):
+        if len(sec) >= 4 and sec not in scheme:
+            msg = msg.replace(sec, "••••")
+    return msg[:300]
+
+
 def deliver(urls: list[str], title: str, body: str) -> tuple[bool, str | None]:
     try:
         ap = apprise.Apprise()
@@ -98,9 +116,9 @@ def deliver(urls: list[str], title: str, body: str) -> tuple[bool, str | None]:
         if ok:
             return True, None
         lines = [x for x in cap.getvalue().splitlines() if x.strip()]
-        return False, (lines[-1][:300] if lines else "It didn't go through.")
+        return False, _redact(lines[-1] if lines else "It didn't go through.", urls)
     except Exception as exc:  # noqa: BLE001 - delivery must never raise
-        return False, str(exc)[:300]
+        return False, _redact(str(exc), urls)
 
 
 def _submit(fn, *args) -> None:

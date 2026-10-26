@@ -94,3 +94,47 @@ def test_deliver_swallows_errors(monkeypatch):
 
     monkeypatch.setattr(apprise.Apprise, "notify", boom)
     assert notify.deliver(["json://localhost/x"], "t", "b") == (False, "boom")
+
+
+URL = "discord://12345/tok123secret"
+
+
+def test_deliver_redacts_exception(monkeypatch, caplog):
+    import apprise
+
+    def boom(*a, **k):
+        raise RuntimeError(f"failed for {URL} at 12345/tok123secret")
+
+    monkeypatch.setattr(apprise.Apprise, "notify", boom)
+    ok, err = notify.deliver([URL], "t", "b")
+    assert not ok and "tok123" not in err
+    assert all("tok123" not in r.getMessage() for r in caplog.records)
+
+
+def test_deliver_redacts_log_capture(monkeypatch):
+    import apprise
+
+    def fail(*a, **k):
+        apprise.logger.warning("Could not reach %s", URL)
+        return False
+
+    monkeypatch.setattr(apprise.Apprise, "notify", fail)
+    ok, err = notify.deliver([URL], "t", "b")
+    assert not ok and "tok123" not in err and err.endswith("Could not reach ••••")
+
+
+def test_send_logs_no_secret(monkeypatch):
+    import apprise
+
+    seen = []
+
+    class Spy:
+        def warning(self, *a, **k):
+            seen.append(repr((a, k)))
+
+    monkeypatch.setattr(notify, "log", Spy())
+    monkeypatch.setattr(
+        apprise.Apprise, "notify", lambda *a, **k: (_ for _ in ()).throw(RuntimeError(URL))
+    )
+    notify._send([URL], "t", "b")
+    assert seen and all("tok123" not in x for x in seen)
