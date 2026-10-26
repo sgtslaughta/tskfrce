@@ -94,3 +94,14 @@ def test_group_and_kid_allowed_both_required():
     f = facts(allowed_sets=((INSIDE,), (OUTSIDE,)))
     assert not is_online(f, NOW)
     assert is_online(replace(f, allowed_sets=((INSIDE,), (INSIDE, OUTSIDE))), NOW)
+
+
+def test_bonus_any_hours_unlocks_outside_window():
+    f = facts(
+        allowed_sets=((OUTSIDE,),),
+        owners=PENDING,
+        bonus_active=True,
+        points_unlock_early=True,
+    )
+    assert not is_online(f, NOW)
+    assert is_online(replace(f, bonus_any_hours=True), NOW)

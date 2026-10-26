@@ -1,5 +1,7 @@
 """Kid API: rewards shop, redeeming and award pop-ups."""
 
+from datetime import UTC, datetime
+
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -10,7 +12,7 @@ from app.api.rewards import redemption_name
 from app.models.family import get_family
 from app.models.reward import Redemption, Reward
 from app.models.user import User
-from app.services import economy
+from app.services import economy, screen_time
 
 router = APIRouter(prefix="/api/v1/kid", tags=["kid"])
 
@@ -27,8 +29,23 @@ def rewards(db: Session = Depends(get_db), kid: User = Depends(view_kid)):
     pending = db.query(Redemption).filter(
         Redemption.kid_id == kid.id, Redemption.status == "pending"
     )
+    now = datetime.now(UTC)
+    cap, min_points = screen_time.limit_for(db, fam, kid.id)
+    got = screen_time.bought_today(db, fam, [kid.id], now)[kid.id]
+    screen = {
+        "enabled": bool(fam.points_unlock_early),
+        "price": fam.screen_time_price,
+        "auto": bool(fam.screen_auto_approve),
+        "only_in_hours": bool(fam.screen_only_allowed_hours),
+        "max_today": cap,
+        "bought_today": got,
+        "left_today": None if cap is None else max(cap - got, 0),
+        "min_points": min_points,
+        "in_hours": screen_time.in_allowed_hours(db, kid, now),
+    }
     return {
         "balance": economy.balance(db, kid.id),
+        "screen": screen,
         "screen_time_price": fam.screen_time_price,
         "screen_time_enabled": bool(fam.points_unlock_early),
         "rewards": [

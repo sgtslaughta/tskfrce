@@ -134,6 +134,8 @@ def award_chore(db: Session, run: ChoreRun, fam: FamilySettings) -> int:
 
 def _auto(fam: FamilySettings, kind: str, reward: Reward | None) -> bool:
     """True when a request is approved on the spot, with no parent."""
+    if kind == "screen_time":
+        return bool(fam.screen_auto_approve)
     return kind == "reward" and not reward.needs_approval
 
 
@@ -164,6 +166,10 @@ def request(
     short = cost - balance(db, kid.id)
     if short > 0:
         raise HTTPException(409, f"You need {short} more points for that.")
+    if kind == "screen_time":
+        from app.services import screen_time  # screen_time imports this module
+
+        screen_time.check(db, fam, kid, minutes, datetime.now(UTC))
     red = Redemption(kid_id=kid.id, kind=kind, reward_id=reward_id, minutes=minutes, cost=cost)
     db.add(red)
     db.flush()
@@ -173,7 +179,9 @@ def request(
             db,
             inbox.parents(db),
             "redemption_decided",
-            f"{kid.full_name} got {label}",
+            f"{kid.full_name} bought {label}"
+            if kind == "screen_time"
+            else f"{kid.full_name} got {label}",
             f"Approved automatically · {cost} points",
             redemption_id=red.id,
         )
