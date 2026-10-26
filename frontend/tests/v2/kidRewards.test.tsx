@@ -140,6 +140,15 @@ describe('Plan E rewards', () => {
     route({ 'GET /kid/rewards': rewards({ balance: 10, screen: scr({ min_points: 50, only_in_hours: true, in_hours: false }) }) })
     wrap(<RewardsSection onExpired={() => {}} />)
     expect(await screen.findByText('You can buy screen time once you have 50 points.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Request screen time' })).toBeDisabled()
+  })
+
+  test('left_today under 15 offers no odd option', async () => {
+    route({ 'GET /kid/rewards': rewards({ screen: scr({ left_today: 10, max_today: 60, bought_today: 50 }) }) })
+    wrap(<RewardsSection onExpired={() => {}} />)
+    expect(await screen.findByText("You've had all your screen time for today.")).toBeInTheDocument()
+    expect(screen.queryAllByRole('option')).toHaveLength(0)
+    expect(screen.getByRole('button', { name: 'Request screen time' })).toBeDisabled()
   })
 
   test('outside allowed hours reason', async () => {

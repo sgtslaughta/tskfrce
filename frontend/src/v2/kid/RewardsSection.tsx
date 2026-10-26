@@ -7,7 +7,7 @@ import { useKidRewards, useRedeem } from '../hooks/useKidRewards'
 const STEPS = [15, 30, 45, 60, 75, 90, 105, 120]
 const opts = (left: number | null) => {
   const m = left === null ? STEPS : STEPS.filter((x) => x <= left)
-  return (m.length || !left ? m : [left]).map((x) => ({ value: String(x), label: `${x} minutes` }))
+  return m.map((x) => ({ value: String(x), label: `${x} minutes` }))
 }
 
 export function RewardsSection({ onExpired, heading = 'Rewards' }: { onExpired: () => void; heading?: string }) {
@@ -20,7 +20,7 @@ export function RewardsSection({ onExpired, heading = 'Rewards' }: { onExpired: 
   const data = opts(sc.left_today)
   const mins = data.some((o) => o.value === minutes) ? minutes : (data.find((o) => Number(o.value) >= 30) ?? data[data.length - 1])?.value ?? minutes
   const why =
-    sc.left_today === 0
+    sc.left_today !== null && sc.left_today < 15
       ? "You've had all your screen time for today."
       : sc.min_points !== null && d.balance < sc.min_points
         ? `You can buy screen time once you have ${sc.min_points} points.`
@@ -75,7 +75,7 @@ export function RewardsSection({ onExpired, heading = 'Rewards' }: { onExpired: 
           const instant = r.needs_approval === false
           return (
             <div key={r.id} style={{ display: 'grid', gap: 6 }}>
-              <strong>
+              <strong style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 <Icon name={r.icon ?? 'redeem'} size={22} /> {r.name} · <span className="f-num">{r.price}</span> points
               </strong>
               <Progress
