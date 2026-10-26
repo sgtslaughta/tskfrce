@@ -127,3 +127,31 @@ def test_dismiss_own_only(client, db, parent, parent_headers, kid_headers):
     assert client.delete(f"{N}/{n.id}", headers=kid_headers).status_code == 404
     assert client.delete(f"{N}/{n.id}", headers=parent_headers).status_code == 204
     assert client.get(N, headers=parent_headers).json()["items"] == []
+
+
+def _item(client, headers, kind):
+    items = client.get(N, headers=headers).json()["items"]
+    return next(i for i in items if i["kind"] == kind)
+
+
+def test_items_carry_kid_glyph_points_pending(client, db, parent, kid, parent_headers):
+    r = _submit(db, parent, kid)
+    it = _item(client, parent_headers, "chore_submitted")
+    assert it["glyph"] == "task_alt" and it["points"] == r.assignment.chore.points
+    assert it["kid_id"] == kid.id and it["kid_name"] == kid.full_name and it["pending"] is True
+    assert client.post(f"/api/v1/chores/{r.id}/approve", headers=parent_headers).status_code == 200
+    assert _item(client, parent_headers, "chore_submitted")["pending"] is False
+
+
+def test_note_pending_until_flag_clears(client, db, parent, kid, parent_headers):
+    r = make_run(db, parent, kid, day=svc.today(db, datetime.now(UTC)))
+    mkdev(db, kid)
+    kh = kid_hdr(db, kid)
+    res = from_ip("192.168.1.50").post(
+        f"/api/v1/kid/chores/{r.id}/note", json={"label": "Need help"}, headers=kh
+    )
+    assert res.status_code == 200
+    assert _item(client, parent_headers, "chore_note")["pending"] is True
+    tid = client.get(f"/api/v1/chat/threads/chore/{r.id}", headers=parent_headers).json()["id"]
+    client.post(f"/api/v1/chat/threads/{tid}/messages", json={"body": "ok"}, headers=parent_headers)
+    assert _item(client, parent_headers, "chore_note")["pending"] is False

@@ -20,7 +20,7 @@ from app.models.reward import Redemption, Reward
 from app.models.user import User, UserRole
 from app.schemas.lock import FamilyPatch
 from app.services import chores as svc
-from app.services import progression
+from app.services import inbox, progression
 
 router = APIRouter(prefix="/api/v1", tags=["family"], dependencies=[Depends(require_parent)])
 
@@ -127,7 +127,21 @@ def _needs_you(
         }
         for r in reds
     ]
-    return sorted(items, key=lambda x: x["submitted_at"] or "")
+    items.sort(key=lambda x: x["submitted_at"] or "")
+    for r in runs:
+        if inbox.is_pending_note(r):
+            kid_id = (svc.run_kid_ids(r) or [None])[0]
+            items.append(
+                {
+                    "type": "note",
+                    "id": r.id,
+                    "kid_id": kid_id,
+                    "kid_name": names.get(kid_id),
+                    "title": svc.chore_of(r).title,
+                    "note": r.note_label,
+                }
+            )
+    return items
 
 
 def _chore_out(

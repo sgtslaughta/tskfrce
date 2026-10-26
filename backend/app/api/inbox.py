@@ -3,12 +3,17 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_active_user, get_db
+from app.models.chores import Chore, ChoreAssignment, ChoreRun
 from app.models.inbox import Notification
+from app.models.lock import Device
+from app.models.reward import Redemption
 from app.models.user import User
 from app.schemas.lock import utc_z
+from app.services import chores as svc
+from app.services import inbox
 
 router = APIRouter()
 PAGE = 50
@@ -26,8 +31,75 @@ def _out(n: Notification) -> dict:
         "redemption_id": n.redemption_id,
         "device_id": n.device_id,
         "thread_id": n.thread_id,
-        "points": getattr(n, "points", None),
+        "kid_id": None,
+        "kid_name": None,
+        "glyph": None,
+        "points": None,
+        "pending": False,
     }
+
+
+def _enrich(db: Session, rows: list[Notification]) -> list[dict]:
+    """Add kid, glyph, points and pending; one query per ref type plus one User query."""
+    out = [_out(n) for n in rows]
+    run_ids = {n.run_id for n in rows if n.run_id}
+    red_ids = {n.redemption_id for n in rows if n.redemption_id}
+    dev_ids = {n.device_id for n in rows if n.device_id}
+    runs = (
+        {
+            r.id: r
+            for r in db.query(ChoreRun)
+            .options(
+                selectinload(ChoreRun.assignment)
+                .selectinload(ChoreAssignment.chore)
+                .selectinload(Chore.type),
+                selectinload(ChoreRun.kids),
+            )
+            .filter(ChoreRun.id.in_(run_ids))
+        }
+        if run_ids
+        else {}
+    )
+    reds = (
+        {r.id: r for r in db.query(Redemption).filter(Redemption.id.in_(red_ids))}
+        if red_ids
+        else {}
+    )
+    devs = (
+        {
+            d.id: d
+            for d in db.query(Device)
+            .options(selectinload(Device.owners))
+            .filter(Device.id.in_(dev_ids))
+        }
+        if dev_ids
+        else {}
+    )
+    for n, o in zip(rows, out, strict=True):
+        if n.run_id in runs:
+            r = runs[n.run_id]
+            c = svc.chore_of(r)
+            o["glyph"], o["points"] = c.type.glyph, c.points
+            o["kid_id"] = r.submitted_by_id or (svc.run_kid_ids(r) or [None])[0]
+            if n.kind == "chore_submitted":
+                o["pending"] = r.status == "submitted"
+            elif n.kind == "chore_note":
+                o["pending"] = inbox.is_pending_note(r)
+        elif n.redemption_id in reds:
+            r = reds[n.redemption_id]
+            o["kid_id"], o["pending"] = r.kid_id, r.status == "pending"
+        elif n.device_id in devs:
+            owners = sorted(o_.id for o_ in devs[n.device_id].owners)
+            o["kid_id"] = owners[0] if owners else None
+    ids = {o["kid_id"] for o in out if o["kid_id"]}
+    names = (
+        {i: nm for i, nm in db.query(User.id, User.full_name).filter(User.id.in_(ids))}
+        if ids
+        else {}
+    )
+    for o in out:
+        o["kid_name"] = names.get(o["kid_id"])
+    return out
 
 
 def _mine(db: Session, user: User):
@@ -48,7 +120,7 @@ def list_notifications(
         q = q.filter(Notification.id < before)
     rows = q.order_by(Notification.id.desc()).limit(PAGE + 1).all()
     return {
-        "items": [_out(n) for n in rows[:PAGE]],
+        "items": _enrich(db, rows[:PAGE]),
         "unread": _mine(db, user).filter(Notification.read_at.is_(None)).count(),
         "has_more": len(rows) > PAGE,
     }
@@ -72,7 +144,7 @@ def read_one(
         raise HTTPException(404, "That notification isn't yours.")
     n.read_at = n.read_at or datetime.utcnow()
     db.commit()
-    return _out(n)
+    return _enrich(db, [n])[0]
 
 
 @router.delete("/{nid}", status_code=204)

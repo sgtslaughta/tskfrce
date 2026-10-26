@@ -7,6 +7,11 @@ from app.models.user import User, UserRole
 from app.services import notify as _notify
 
 
+def is_pending_note(run) -> bool:
+    """A kid note still waiting on a parent (the one definition, bell and Today)."""
+    return run.note_label is not None and run.status == "todo"
+
+
 def parents(db: Session) -> list[int]:
     return [
         i for (i,) in db.query(User.id).filter(User.role == UserRole.PARENT, User.is_active).all()
