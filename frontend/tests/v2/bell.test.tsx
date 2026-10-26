@@ -278,6 +278,15 @@ describe('Bell', () => {
     expect(document.querySelector('.p-bell-arrow')).toBeNull()
   })
 
+  test('kid row keeps the old icon and no time suffix', async () => {
+    serve([item(1, { kind: 'level_up', body: 'Nice work' })])
+    wrap(<Bell kid />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    const row = (await screen.findByText('Item 1')).closest('.p-bell-item') as HTMLElement
+    expect(row.querySelector('.p-bell-sub')?.textContent).toBe('Nice work')
+    expect(row.querySelector('.p-bell-icon')?.textContent).toContain('whatshot')
+  })
+
   test('parent Earlier rows keep the unread dot', async () => {
     serve([item(1, { created_at: new Date(Date.now() - 2 * 86400000).toISOString(), read: false })])
     wrap(<Bell />)

@@ -50,3 +50,12 @@ export const when = (iso: string, now = new Date()): string => {
   if (sameDay(then, y)) return 'Yesterday'
   return then.toLocaleDateString([], { weekday: 'short', day: 'numeric' })
 }
+
+/** The kid bell's original icons (unchanged by the parent redesign). */
+export const kidSeverity = (n: InboxItem): { name: string; tone: Tone } => {
+  if (n.kind === 'device_resisting') return { name: 'gpp_maybe', tone: 'hi' }
+  if (n.kind === 'new_device') return { name: 'device_unknown', tone: 'md' }
+  if (n.kind === 'chore_submitted') return { name: 'school', tone: 'lv' }
+  if (n.kind === 'redemption_request') return { name: 'redeem', tone: 'lv' }
+  return { name: 'whatshot', tone: 'ok' }
+}

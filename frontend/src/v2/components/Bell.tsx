@@ -12,7 +12,7 @@ import { useDecideRedemption } from '../hooks/useRewards'
 import { Icon } from '../parent/Icon'
 import { toastFail, toastOk } from '../notify'
 import { api } from '../api'
-import { isAlert, isNeedsYou, isToday, severity, when } from './bellRules'
+import { isAlert, isNeedsYou, isToday, kidSeverity, severity, when } from './bellRules'
 import { BellActions } from './BellActions'
 
 type FilterKind = 'all' | 'needs-you' | 'alerts'
@@ -115,8 +115,8 @@ export function List({ kid, onGo, sheet, page }: { kid: boolean; onGo: () => voi
     if (to) void router.push(to)
   }
   const row = (n: InboxItem, today: boolean) => {
-    const sev = severity(n)
-    const sub = [n.body, when(n.created_at)].filter(Boolean).join(' · ')
+    const sev = kid ? kidSeverity(n) : severity(n)
+    const sub = (kid ? [n.body] : [n.body, when(n.created_at)]).filter(Boolean).join(' · ')
     return (
       <div key={n.id} className={`p-bell-item ${!n.read && (today || !kid) ? 'unread' : ''}`}>
         <div className={`p-bell-icon ${sev.tone}`}>

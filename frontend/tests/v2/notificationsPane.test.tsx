@@ -90,6 +90,21 @@ describe('NotificationsPane', () => {
     expect(body.events).toEqual(expect.arrayContaining(['chore_ok', 'kid_note']))
   })
 
+  test('chips are locked while a patch is saving', async () => {
+    let done: (v: unknown) => void = () => {}
+    apiMock.mockImplementation(async (p, i) => {
+      if (p === '/notify/places' && !i?.method) return [place]
+      if (p === '/notify/settings' && !i?.method) return settings
+      if (i?.method === 'PATCH') return new Promise((r) => (done = r))
+      return {}
+    })
+    wrap(<NotificationsPane />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Kid note' }))
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Chore needs OK' }) as HTMLButtonElement).disabled).toBe(true))
+    done(place)
+    await waitFor(() => expect((screen.getByRole('button', { name: 'Chore needs OK' }) as HTMLButtonElement).disabled).toBe(false))
+  })
+
   test('a failed test shows the error text', async () => {
     serve([place], { ok: false, error: '401 Unauthorized' })
     wrap(<NotificationsPane />)

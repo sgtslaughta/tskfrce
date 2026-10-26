@@ -60,6 +60,7 @@ export function PlaceCard({ place, events }: { place: Place; events: NotifyEvent
             type="button"
             className="pn-ev"
             aria-pressed={place.events.includes(ev.key)}
+            disabled={patch.isPending}
             onClick={() => toggle(ev.key)}
           >
             {ev.label}
