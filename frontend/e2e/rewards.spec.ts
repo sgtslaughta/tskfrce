@@ -126,6 +126,11 @@ test('rewards, screen time, badges and chat', async ({ page }) => {
     const thread = await (await api.get(`/api/proxy/chat/threads/chore/${run.id}`)).json()
     expect(thread.messages.filter((m: { body: string }) => m.body === 'Looks good')).toHaveLength(0)
   } finally {
+    // leave the family thread as we found it
+    const fam = await (await api.get('/api/proxy/chat/threads/family/family')).json()
+    for (const m of fam.messages.filter((m: { body: string }) => m.body?.includes(hello))) {
+      await api.delete(`/api/proxy/chat/messages/${m.id}`)
+    }
     if (rewardId) await api.delete(`/api/proxy/rewards/${rewardId}`)
     if (choreId) await api.delete(`/api/proxy/chores/${choreId}`)
     if (badgeId) await api.delete(`/api/proxy/badges/${badgeId}`)
