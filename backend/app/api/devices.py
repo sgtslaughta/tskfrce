@@ -8,12 +8,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db, require_parent
-from app.lock import blocker_client
+from app.lock import activity, blocker_client, hours
 from app.lock.loop import trigger
 from app.lock.overrides import clear_override, set_override
-from app.lock.rules import is_online
+from app.lock.rules import block_reason, open_reason
 from app.lock.schedule import local_now
 from app.lock.state import Prefetch, device_facts
+from app.models.device_activity import DeviceEvent, DevicePresence
 from app.models.family import FamilySettings, get_family
 from app.models.hours import HourRuleTarget
 from app.models.lock import Device, DeviceGroup, Override, device_group_members
@@ -33,10 +34,12 @@ def device_out(
     now: datetime,
     pre: Prefetch | None = None,
     addresses: bool = False,
+    stats: dict | None = None,
 ) -> dict:
     """Device JSON; `now` is aware UTC. Pass `pre` when rendering many devices.
 
-    `addresses` adds ip, ipv6, hostname, first_seen (the Network tab); Today skips them.
+    `addresses` adds ip, ipv6, hostname, first_seen, address_changes, blocked_since (the
+    Network tab); Today skips them. `stats` is activity.device_stats(); missing = 0 alerts.
     """
     if pre:
         ov = next((o for o in pre.overrides[d.id] if o.source == "manual"), None)
@@ -49,7 +52,14 @@ def device_out(
         )
     if ov and ov.expires_at and ov.expires_at <= now.replace(tzinfo=None):
         ov = None
-    online = is_online(device_facts(db, d, fam, now, pre), local_now(fam.timezone, now))
+    f = device_facts(db, d, fam, now, pre)
+    now_local = local_now(fam.timezone, now)
+    reason = block_reason(f, now_local)
+    online = reason is None
+    alerts, changes = (stats or {}).get(d.id, (0, 0))
+    lock_at = None
+    if f.status == "assigned" and not f.exempt:
+        lock_at = hours.locks_at(f.allowed_sets, f.off, now_local)
     # two or more kids share this device and someone can sign in without a PIN
     active_kids = [k for k in d.owners if k.role == UserRole.KID and k.is_active]
     needs_pins = len(active_kids) >= 2 and any(not k.pin_hash for k in active_kids)
@@ -67,6 +77,11 @@ def device_out(
         "resisting": d.resisting_since is not None,
         "needs_pins": needs_pins,
         "exempt": bool(d.exempt),
+        "reason": reason or open_reason(f, now_local),
+        "chores_done": sum(o.approved for o in f.owners),
+        "chores_total": sum(o.total for o in f.owners),
+        "locks_at": utc_z(lock_at),
+        "alerts": alerts,
     }
     if addresses:
         out |= {
@@ -74,6 +89,8 @@ def device_out(
             "ip": d.ip,
             "ipv6": d.ipv6,
             "hostname": d.hostname,
+            "address_changes": changes,
+            "blocked_since": utc_z(d.blocked_since),
         }
     return out
 
@@ -120,7 +137,8 @@ def list_devices(db: Session = Depends(get_db)):
         .all()
     )
     pre = Prefetch(db, devs)
-    return [device_out(db, d, fam, now, pre, addresses=True) for d in devs]
+    stats = activity.device_stats(db, now)
+    return [device_out(db, d, fam, now, pre, addresses=True, stats=stats) for d in devs]
 
 
 @router.patch("/devices/{device_id}")
@@ -146,7 +164,9 @@ def patch_device(device_id: int, body: DevicePatch, db: Session = Depends(get_db
         d.groups = groups
     _commit(db, "That device just changed somewhere else. Refresh and try again.")
     trigger()
-    return device_out(db, d, get_family(db), datetime.now(UTC), addresses=True)
+    now = datetime.now(UTC)
+    stats = activity.device_stats(db, now, [d.id])
+    return device_out(db, d, get_family(db), now, addresses=True, stats=stats)
 
 
 @router.post("/devices/{device_id}/override")
@@ -181,14 +201,23 @@ def test_block(device_id: int, db: Session = Depends(get_db)):
     return result
 
 
-@router.delete("/devices/{device_id}")
-def delete_device(device_id: int, db: Session = Depends(get_db)):
-    d = _device(db, device_id)
+def purge_device(db: Session, d: Device) -> None:
+    """Remove a device and everything that points at it. Caller commits."""
     d.owners = []
     db.query(Override).filter(Override.device_id == d.id).delete()
     db.execute(delete(device_group_members).where(device_group_members.c.device_id == d.id))
+    db.query(DeviceEvent).filter(DeviceEvent.device_id == d.id).delete()
+    db.query(DeviceEvent).filter(DeviceEvent.other_device_id == d.id).update(
+        {"other_device_id": None}
+    )
+    db.query(DevicePresence).filter(DevicePresence.device_id == d.id).delete()
     db.expire(d)
     db.delete(d)
+
+
+@router.delete("/devices/{device_id}")
+def delete_device(device_id: int, db: Session = Depends(get_db)):
+    purge_device(db, _device(db, device_id))
     db.commit()
     trigger()
     return {"ok": True}

@@ -27,6 +27,7 @@ from app.api.chore_photos import router as chore_photos_router
 from app.api.chore_types import router as chore_types_router
 from app.api.chores import router as chores_router
 from app.api.community import router as community_router
+from app.api.device_activity import router as device_activity_router
 from app.api.devices import router as devices_router
 from app.api.family import router as family_router
 from app.api.flair import router as flair_router
@@ -141,6 +142,7 @@ fastapi_app.include_router(chore_photos_router)
 fastapi_app.include_router(chat_router)
 fastapi_app.include_router(internal_router)
 fastapi_app.include_router(devices_router)
+fastapi_app.include_router(device_activity_router)
 fastapi_app.include_router(hours_router)
 fastapi_app.include_router(kids_router)
 fastapi_app.include_router(kid_router)

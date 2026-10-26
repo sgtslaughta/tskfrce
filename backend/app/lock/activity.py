@@ -1,13 +1,13 @@
 """Device activity log: lock history, left-Wi-Fi alerts, pruning. Times are naive UTC; callers commit."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func
 from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session
 
 from app.lock.rules import DeviceFacts, block_reason, open_reason
-from app.models.device_activity import DeviceEvent, DevicePresence
+from app.models.device_activity import ALERT_KINDS, DeviceEvent, DevicePresence
 from app.models.lock import Device, Override
 
 SLOT = timedelta(minutes=10)
@@ -109,6 +109,27 @@ def _left_wifi(db: Session, d: Device, now: datetime) -> None:
     ):
         return
     log(db, d.id, "left_wifi", now, minutes=max(0, round((seen - b).total_seconds() / 60)))
+
+
+def device_stats(
+    db: Session, now: datetime, ids: list[int] | None = None
+) -> dict[int, tuple[int, int]]:
+    """Device id -> (unreviewed alerts, address changes) over the last 7 days."""
+    if now.tzinfo:
+        now = now.astimezone(UTC).replace(tzinfo=None)
+    since = now - timedelta(days=7)
+    out: dict[int, list[int]] = {}
+
+    def run(i, *conds):
+        q = db.query(DeviceEvent.device_id, func.count()).filter(DeviceEvent.at >= since, *conds)
+        if ids is not None:
+            q = q.filter(DeviceEvent.device_id.in_(ids))
+        for did, n in q.group_by(DeviceEvent.device_id):
+            out.setdefault(did, [0, 0])[i] = n
+
+    run(0, DeviceEvent.kind.in_(ALERT_KINDS), DeviceEvent.reviewed_at.is_(None))
+    run(1, DeviceEvent.kind == "address_change")
+    return {k: (a, c) for k, (a, c) in out.items()}
 
 
 def prune(db: Session, now: datetime) -> None:
