@@ -4,6 +4,7 @@ import pytest
 from app.core.config import settings
 from app.lock.overrides import set_override
 from app.models.device_activity import DeviceEvent, DevicePresence
+from app.models.inbox import Notification
 from app.models.lock import Device
 
 SEEN = "/api/v1/internal/devices/seen"
@@ -61,17 +62,20 @@ def _locked_device(db, minutes_ago):
     return d
 
 
-def test_new_address_after_lock(client, db):
+def test_new_address_after_lock(client, db, parent):
     old = _locked_device(db, 2)
     new_id = _seen(client, mac=MAC2, ip="192.168.1.60", hostname="mias-ipad")
     (e,) = _events(db, "new_address")
     assert (e.device_id, e.other_device_id, e.minutes) == (old.id, new_id, 2)
+    titles = [n.title for n in db.query(Notification).filter_by(kind="device_bypass")]
+    assert titles and set(titles) == {"Mias-iPad got around the lock"}
 
 
-def test_new_address_ignored_when_lock_old(client, db):
+def test_new_address_ignored_when_lock_old(client, db, parent):
     _locked_device(db, 15)
     _seen(client, mac=MAC2, ip="192.168.1.60", hostname="mias-ipad")
     assert _events(db, "new_address") == []
+    assert db.query(Notification).filter_by(kind="device_bypass").count() == 0
 
 
 def test_bypass_open_and_close(client, db):

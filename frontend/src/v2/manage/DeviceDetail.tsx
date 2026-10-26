@@ -184,7 +184,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
           {device.resisting && (
             <div className="pk-chips">
               <Chip tone="red" icon="gpp_maybe">
-                getting around the block
+                got around the lock
               </Chip>
             </div>
           )}

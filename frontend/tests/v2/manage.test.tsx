@@ -142,12 +142,12 @@ describe('devices', () => {
 
   test('shows resisting pill when device.resisting', () => {
     render(wrap(<DeviceDetail device={{ ...device, resisting: true }} kids={kids} onRequestOverride={() => {}} />))
-    expect(screen.getByText('getting around the block')).toBeInTheDocument()
+    expect(screen.getByText('got around the lock')).toBeInTheDocument()
   })
 
   test('hides pill otherwise', () => {
     render(wrap(<DeviceDetail device={device} kids={kids} onRequestOverride={() => {}} />))
-    expect(screen.queryByText('getting around the block')).toBeNull()
+    expect(screen.queryByText('got around the lock')).toBeNull()
   })
 
   test('Test block button posts and toasts message', async () => {

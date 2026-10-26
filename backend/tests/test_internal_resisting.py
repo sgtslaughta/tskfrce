@@ -38,7 +38,7 @@ def test_flag_sets_since_and_notifies_each_parent_once(client, db, parent):
     assert d.resisting_since is not None
     assert _count(db) == 2
     n = db.query(Notification).first()
-    assert n.title == "Pad is getting around the block"
+    assert n.title == "Pad got around the lock"
     assert n.body == (
         "Pad is still reaching the internet while it should be paused. "
         "Someone may have changed its network settings. Tap for what to check."

@@ -158,6 +158,15 @@ def _note_new_address(db: Session, new: Device, now: datetime) -> None:
     if other:
         mins = round((now - other.blocked_since).total_seconds() / 60)
         activity.log(db, other.id, "new_address", now, other_device_id=new.id, minutes=mins)
+        # security ping: ignores quiet hours like the resist detector's bypass
+        inbox.notify_parents(
+            db,
+            "device_bypass",
+            f"{other.name} got around the lock",
+            f"A new address showed up {mins} min after {other.name} was locked. "
+            "It may be the same device with a new Wi-Fi address. Tap to check.",
+            device_id=other.id,
+        )
 
 
 @router.get("/state", dependencies=[Depends(require_token)])
@@ -184,7 +193,7 @@ def devices_resisting(body: ResistingReport, db: Session = Depends(get_db)) -> d
                 inbox.notify_parents(
                     db,
                     "device_bypass",
-                    f"{dev.name} is getting around the block",
+                    f"{dev.name} got around the lock",
                     f"{dev.name} is still reaching the internet while it "
                     "should be paused. Someone may have changed its network "
                     "settings. Tap for what to check.",

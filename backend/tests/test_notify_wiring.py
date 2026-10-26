@@ -62,4 +62,4 @@ def test_bypass_report_pings_parents_even_in_quiet_hours(client, db, parent, pin
     client.post("/api/v1/internal/devices/resisting", json={"resisting": [d.mac]}, headers=hdr)
     rows = db.query(Notification).filter_by(kind="device_bypass").all()
     assert [(n.user_id, n.device_id) for n in rows] == [(parent.id, d.id)]
-    assert len(pings) == 1 and pings[0][1] == "Pad is getting around the block"
+    assert len(pings) == 1 and pings[0][1] == "Pad got around the lock"
