@@ -274,6 +274,7 @@
 /* Badges (mockup 02 Kids & chores → Badges): tier pips, badge cards, award, recent */
 [data-look='parent'] .bd-pips { display: inline-flex; flex: none; gap: 3px; }
 [data-look='parent'] .bd-pips i, [data-look='parent'] .bd-tlg i { width: 14px; height: 8px; border-radius: 3px; background: var(--p-soft); border: 1px solid var(--p-line); box-sizing: border-box; }
+/* tier colours are mockup 02's (Kids & chores → Badges), not TIER_COLORS in tiers.ts: keep them */
 [data-look='parent'] :is(.bd-pips, .bd-tlg) i.t1 { background: #b87333; border-color: #b87333; }
 [data-look='parent'] :is(.bd-pips, .bd-tlg) i.t2 { background: #c0c0c0; border-color: #c0c0c0; }
 [data-look='parent'] :is(.bd-pips, .bd-tlg) i.t3 { background: #ffd23f; border-color: #ffd23f; }

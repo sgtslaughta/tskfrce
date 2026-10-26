@@ -4,7 +4,7 @@ import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { notifications } from '@mantine/notifications'
 import { KidsPage } from '@/v2/manage/KidsPage'
-import { calls, detail, list, mockRoute, serve, setupLibrary, wrap } from './libraryHelpers'
+import { apiMock, calls, detail, list, mockRoute, serve, setupLibrary, wrap } from './libraryHelpers'
 
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn(), hide: jest.fn() } }))
 jest.mock('next/router', () => ({
@@ -141,5 +141,21 @@ describe('badges panes', () => {
     await waitFor(() =>
       expect(calls('POST')[0]).toEqual(['/custom-badges', { method: 'POST', body: { name: 'Pet hero', icon: 'pets', description: '' } }]),
     )
+  })
+  test('saving or deleting a badge refetches the overview and recent awards', async () => {
+    data({ '/custom-badges/3': {} })
+    mockRoute.query = { section: 'badges', item: 'custom', pick: '3' }
+    render(wrap(<KidsPage />))
+    const fetched = (p: string) => apiMock.mock.calls.filter(([path, i]) => path === p && !i?.method).length
+    await waitFor(() => expect(fetched('/badges/overview')).toBeGreaterThan(0))
+    const o = fetched('/badges/overview')
+    const r = fetched('/badges/recent')
+    await userEvent.click(await within(detail()).findByRole('button', { name: 'Save badge' }))
+    await waitFor(() => expect(fetched('/badges/overview')).toBeGreaterThan(o))
+    await waitFor(() => expect(fetched('/badges/recent')).toBeGreaterThan(r))
+    const o2 = fetched('/badges/overview')
+    await userEvent.click(within(detail()).getByRole('button', { name: 'Delete badge' }))
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(fetched('/badges/overview')).toBeGreaterThan(o2))
   })
 })
