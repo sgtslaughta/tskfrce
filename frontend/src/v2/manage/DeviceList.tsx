@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import { Fold } from '@/v2/parent/Fold'
 import { MakerLogo } from '@/v2/parent/MakerLogo'
