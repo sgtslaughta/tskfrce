@@ -1,5 +1,6 @@
 """Points economy: all point math lives here so routes stay thin."""
 
+import threading
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -17,6 +18,10 @@ from app.services import inbox
 
 SCREEN_MINUTES = range(15, 121, 15)
 
+# ponytail: serializes balance check + spend; relies on a single uvicorn process
+# (backend/entrypoint.sh). Multiple processes would need DB-level locking.
+SPEND_LOCK = threading.RLock()
+
 
 def balance(db: Session, kid_id: int) -> int:
     total = db.query(func.coalesce(func.sum(Points.amount), 0)).filter(Points.user_id == kid_id)
@@ -26,25 +31,28 @@ def balance(db: Session, kid_id: int) -> int:
 def deduct(
     db: Session, kid_id: int, amount: int, note: str, by_id: int, run_id: int | None = None
 ) -> int:
-    """Take points off with a reason the kid sees; never below zero. Returns what was taken."""
-    take = min(amount, max(balance(db, kid_id), 0))
-    if take:
-        db.add(
-            Points(
-                user_id=kid_id,
-                points_type=PointsType.PENALTY,
-                amount=-take,
-                reason="deduction",
-                description=note,
-                by_id=by_id,
-                run_id=run_id,
-                seen_by_kid=False,
+    """Take points off with a reason the kid sees; never below zero. Commits."""
+    with SPEND_LOCK:
+        db.commit()  # fresh snapshot: see other threads' debits
+        take = min(amount, max(balance(db, kid_id), 0))
+        if take:
+            db.add(
+                Points(
+                    user_id=kid_id,
+                    points_type=PointsType.PENALTY,
+                    amount=-take,
+                    reason="deduction",
+                    description=note,
+                    by_id=by_id,
+                    run_id=run_id,
+                    seen_by_kid=False,
+                )
             )
-        )
-        from app.services import kid_events  # late: kid_events -> chores -> economy
+            from app.services import kid_events  # late: kid_events -> chores -> economy
 
-        kid_events.points_taken(db, kid_id, take, note, by_id)
-    return take
+            kid_events.points_taken(db, kid_id, take, note, by_id)
+        db.commit()
+        return take
 
 
 def deadline_utc(fam: FamilySettings, chore_day: date, due_time: str | None) -> datetime | None:
@@ -134,17 +142,33 @@ def award_chore(db: Session, run: ChoreRun, fam: FamilySettings) -> int:
     return (base + bonus) * n
 
 
+def _auto(fam: FamilySettings, kind: str, reward: Reward | None) -> bool:
+    """True when a request is approved on the spot, with no parent."""
+    if kind == "screen_time":
+        return bool(fam.screen_auto_approve)
+    return kind == "reward" and not reward.needs_approval
+
+
 def request(
     db: Session, kid: User, kind: str, reward_id: int | None, minutes: int | None
 ) -> Redemption:
     """Create a pending spend request and notify parents. Commits."""
+    with SPEND_LOCK:
+        db.commit()  # end any open snapshot so the balance below sees other commits
+        return _request(db, kid, kind, reward_id, minutes)
+
+
+def _request(
+    db: Session, kid: User, kind: str, reward_id: int | None, minutes: int | None
+) -> Redemption:
     fam = get_family(db)
     if kind == "reward":
         reward = db.get(Reward, reward_id) if reward_id else None
-        if reward is None or not reward.active:
+        if reward is None or not reward.active or not reward.visible:
             raise HTTPException(400, "That reward isn't available. Pick another.")
         cost, minutes = reward.price, None
         label = reward.name
+        auto = _auto(fam, kind, reward)
     elif kind == "screen_time":
         if minutes not in SCREEN_MINUTES:
             raise HTTPException(400, "Pick 15 to 120 minutes, in steps of 15.")
@@ -153,15 +177,33 @@ def request(
         if not kid.devices:
             raise HTTPException(400, "Ask a parent to add your device first.")
         cost, reward_id = minutes // 15 * fam.screen_time_price, None
+        auto = _auto(fam, kind, None)
         label = f"{minutes} min of screen time"
     else:
         raise HTTPException(400, "Pick screen time or a reward.")
     short = cost - balance(db, kid.id)
     if short > 0:
         raise HTTPException(409, f"You need {short} more points for that.")
+    if kind == "screen_time":
+        from app.services import screen_time  # screen_time imports this module
+
+        screen_time.check(db, fam, kid, minutes, datetime.now(UTC))
     red = Redemption(kid_id=kid.id, kind=kind, reward_id=reward_id, minutes=minutes, cost=cost)
     db.add(red)
     db.flush()
+    if auto:
+        _decide(db, red, None, True)  # commits
+        inbox.notify_parents(
+            db,
+            "redemption_decided",
+            f"{kid.full_name} bought {label}"
+            if kind == "screen_time"
+            else f"{kid.full_name} got {label}",
+            f"Approved automatically · {cost} points",
+            redemption_id=red.id,
+        )
+        db.commit()
+        return red
     inbox.notify_parents(
         db,
         "redemption_request",
@@ -173,8 +215,27 @@ def request(
     return red
 
 
-def decide(db: Session, redemption: Redemption, parent: User, approve: bool) -> Redemption:
+def decide(
+    db: Session,
+    redemption: Redemption,
+    parent: User | None,
+    approve: bool,
+    note: str | None = None,
+) -> Redemption:
     """Approve or deny a pending request. Commits; pokes the lock loop on screen time."""
+    with SPEND_LOCK:
+        db.commit()  # fresh snapshot: see other threads' debits and decisions
+        db.refresh(redemption)
+        return _decide(db, redemption, parent, approve, note)
+
+
+def _decide(
+    db: Session,
+    redemption: Redemption,
+    parent: User | None,
+    approve: bool,
+    note: str | None = None,
+) -> Redemption:
     if redemption.status != "pending":
         raise HTTPException(409, "Someone already answered this request.")
     now = datetime.now(UTC).replace(tzinfo=None)
@@ -203,18 +264,21 @@ def decide(db: Session, redemption: Redemption, parent: User, approve: bool) -> 
                         source="bonus",
                         expires_at=expires,
                         created_at=now,
-                        created_by_id=parent.id,
+                        created_by_id=parent.id if parent else None,
                     )
                 )
             screen = True
     redemption.status = "approved" if approve else "denied"
-    redemption.decided_at, redemption.decided_by_id = now, parent.id
+    redemption.decided_at = now
+    redemption.decided_by_id = parent.id if parent else None
+    redemption.auto = parent is None
+    redemption.note = note
     inbox.notify(
         db,
         [redemption.kid_id],
         "redemption_decided",
         "Request approved" if approve else "Request not approved",
-        "Check your rewards." if approve else "Ask a parent if you want to know why.",
+        note or ("Check your rewards." if approve else "Ask a parent if you want to know why."),
         redemption_id=redemption.id,
     )
     if approve:

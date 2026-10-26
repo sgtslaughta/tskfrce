@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Icon } from '@/v2/parent/Icon'
 import { Chip, type ChipTone } from '@/v2/parent/Chip'
-import { choreIcon } from '@/v2/today/choreIcon'
+import { threadGlyph } from '@/v2/today/choreIcon'
 import { useApproveChore, useSendBack, useToday } from '@/v2/hooks/useToday'
 import { useDeduct } from '@/v2/hooks/useKids'
 import { withUndo } from '@/v2/notify'
@@ -17,7 +17,7 @@ const STATE: Record<RunDetail['state'], { tone: ChipTone; icon: string; label: s
 const AMOUNTS = [5, 10, 20]
 
 /** Type tile + title; chore threads add state/points chips and Approve / Send back / Deduct from the run. */
-export function ThreadHead({ kind, title, run }: { kind: ThreadKind; title: string; run?: RunDetail }) {
+export function ThreadHead({ kind, title, run, glyph }: { kind: ThreadKind; title: string; run?: RunDetail; glyph?: string | null }) {
   const approve = useApproveChore()
   const sendBack = useSendBack()
   const deduct = useDeduct()
@@ -30,7 +30,7 @@ export function ThreadHead({ kind, title, run }: { kind: ThreadKind; title: stri
   const take = amount ?? Number(custom)
   const toggle = (f: 'back' | 'deduct') => setForm(form === f ? null : f)
   const tile =
-    kind === 'chore' ? <Icon name={choreIcon(title)} size={24} /> : kind === 'family' ? <Icon name="group" size={24} /> : <b>{(title.trim()[0] ?? '?').toUpperCase()}</b>
+    kind === 'chore' ? <Icon name={threadGlyph(glyph, title)} size={24} /> : kind === 'family' ? <Icon name="group" size={24} /> : <b>{(title.trim()[0] ?? '?').toUpperCase()}</b>
   const s = run && STATE[run.state]
 
   return (

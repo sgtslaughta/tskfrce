@@ -476,3 +476,24 @@ def test_device_exempt_patch(client, db, parent_headers):
     assert got()["exempt"] is True
     client.patch(f"/api/v1/devices/{d.id}", json={"name": "New"}, headers=parent_headers)
     assert got()["exempt"] is True and got()["name"] == "New"
+
+
+def test_quick_replies_roundtrip(client, parent_headers):
+    d = client.get("/api/v1/family", headers=parent_headers).json()["quick_replies"]
+    assert d == ["Looks good", "Can you redo it?", "Retake the photo"]
+    r = client.patch("/api/v1/family", json={"quick_replies": ["A", " B "]}, headers=parent_headers)
+    assert r.json()["quick_replies"] == ["A", "B"]
+    assert client.get("/api/v1/family", headers=parent_headers).json()["quick_replies"] == [
+        "A",
+        "B",
+    ]
+    bad = client.patch("/api/v1/family", json={"quick_replies": ["x"] * 9}, headers=parent_headers)
+    assert bad.status_code == 422
+    bad = client.patch("/api/v1/family", json={"quick_replies": ["x" * 61]}, headers=parent_headers)
+    assert bad.status_code == 422
+
+
+def test_quick_replies_bad_json_falls_back(client, db, parent_headers):
+    get_family(db).quick_replies = "{nope"
+    db.commit()
+    assert len(client.get("/api/v1/family", headers=parent_headers).json()["quick_replies"]) == 3

@@ -25,13 +25,15 @@ class DeviceFacts:
     off: tuple[Window, ...] = ()  # internet-off windows
     chores_apply: bool = True  # False: family or a group switched the chore check off
     exempt: bool = False  # never locked by hours or chores
+    bonus_any_hours: bool = False  # bonus screen time also opens outside hours
 
 
 def _in_any(ws: tuple[Window, ...], now_local: datetime) -> bool:
     return any(in_window(w, now_local) for w in ws)
 
 
-def _hours_ok(f: DeviceFacts, now_local: datetime) -> bool:
+def in_allowed(f: DeviceFacts, now_local: datetime) -> bool:
+    """Inside allowed hours: no off window and every allowed set has one containing now."""
     return not _in_any(f.off, now_local) and all(_in_any(s, now_local) for s in f.allowed_sets)
 
 
@@ -50,7 +52,9 @@ def block_reason(f: DeviceFacts, now_local: datetime) -> str | None:
         return None if ok else "new_device"
     if f.exempt:
         return None
-    if not _hours_ok(f, now_local):
+    if f.bonus_active and f.points_unlock_early and f.bonus_any_hours:
+        return None
+    if not in_allowed(f, now_local):
         return "schedule"
     if (
         _chores_ok(f)
@@ -78,6 +82,8 @@ def open_reason(f: DeviceFacts, now_local: datetime) -> str | None:
         return "unassigned"
     if f.exempt:
         return "exempt"
+    if f.bonus_active and f.points_unlock_early and not in_allowed(f, now_local):
+        return "bonus"  # bonus_any_hours opened it outside hours
     if f.chores_apply and any(o.total > 0 for o in f.owners) and _chores_ok(f):
         return "chores"
     if not f.chores_apply or all(o.total == 0 for o in f.owners):

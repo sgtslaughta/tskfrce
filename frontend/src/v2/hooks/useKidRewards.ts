@@ -31,7 +31,7 @@ export function useRedeem(onExpired: () => void) {
   const as = useAsKid()
   return useMutation({
     mutationFn: (body: RedeemBody) => as ? blocked() : api('/kid/redeem', { method: 'POST', body, kid: true }),
-    onSuccess: () => toastOk('Asked! A parent will see it.'),
+    onSuccess: (r) => toastOk((r as { status?: string } | undefined)?.status === 'approved' ? "It's yours!" : 'Asked! A parent will see it.'),
     onError: (e: Error) => {
       if (e instanceof AuthError) onExpired()
       else toastFail(e)

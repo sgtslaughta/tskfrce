@@ -1,3 +1,4 @@
+import type { KidScreen } from './rewardTypes'
 /** Shapes of the v2 backend responses (backend/app/api/{family,kid,devices,kids,hours,chores,setup}.py). */
 
 export type ChoreState = 'done' | 'needs_you' | 'todo' | 'skipped'
@@ -90,6 +91,7 @@ export interface Family {
   giphy_key_set: boolean
   ntfy_upstream_relay: boolean
   chores_lock: boolean
+  quick_replies: string[]
 }
 
 /** GET /chore-types item */
@@ -321,7 +323,8 @@ export interface KidRewards {
   balance: number
   screen_time_price: number
   screen_time_enabled: boolean
-  rewards: { id: number; name: string; price: number; icon: string | null }[]
+  screen: KidScreen
+  rewards: { id: number; name: string; price: number; icon: string | null; needs_approval: boolean }[]
   pending: { id: number; kind: 'reward' | 'screen_time'; reward_id: number | null; minutes: number | null; cost: number }[]
 }
 
@@ -332,6 +335,7 @@ export interface KidCelebration {
   title: string
   detail: string
   size: 'big' | 'small'
+  glyph?: string | null
   /** level celebrations: flair newly unlocked */
   unlocked?: { id: string; label: string; emblem: string | null }[]
 }
@@ -350,6 +354,8 @@ export interface Reward {
   name: string
   price: number
   icon: string | null
+  visible: boolean
+  needs_approval: boolean
 }
 
 /** GET /redemptions item (pending requests) */
@@ -359,10 +365,14 @@ export interface PendingRedemption {
   kid_name: string | null
   kind: 'screen_time' | 'reward'
   name: string
+  /** the reward's glyph; null for screen time or a missing reward */
+  icon: string | null
   minutes: number | null
   cost: number
   created_at: string
   kid_balance: number
+  kid_balance_after: number
+  note?: string | null
 }
 
 /** progress block in GET /today kids and GET /kid/today */
@@ -438,3 +448,4 @@ export interface FlairCatalog {
 }
 
 export * from './hoursTypes'
+export * from './rewardTypes'

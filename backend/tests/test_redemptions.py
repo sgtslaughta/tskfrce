@@ -174,3 +174,141 @@ def test_parents_notified_and_listed(client, db, parent, kid, kid_headers, paren
     assert rows[0]["kid_name"] == kid.full_name and rows[0]["kid_balance"] == 150
     assert rows[0]["name"] == "Movie night" and rows[0]["cost"] == 100
     assert db.query(Redemption).count() == 1
+
+
+def _notes(db, uid, kind):
+    return db.query(Notification).filter_by(user_id=uid, kind=kind).all()
+
+
+def test_hidden_reward_invisible_to_kid(client, db, kid, kid_headers):
+    _fund(db, kid, 500)
+    rw = _reward(db)
+    rw.visible = False
+    db.commit()
+    assert client.get("/api/v1/kid/rewards", headers=kid_headers).json()["rewards"] == []
+    assert _ask(client, kid_headers, rw.id).status_code == 400
+
+
+def test_no_approval_reward_pays_now(client, db, kid, parent, kid_headers):
+    _fund(db, kid, 500)
+    rw = _reward(db, 120)
+    rw.needs_approval = False
+    db.commit()
+    r = _ask(client, kid_headers, rw.id)
+    assert r.json()["status"] == "approved"
+    assert _balance(client, kid_headers) == 380
+    red = db.query(Redemption).one()
+    assert red.auto and red.decided_by_id is None
+    assert len(_notes(db, parent.id, "redemption_decided")) == 1
+    assert _notes(db, parent.id, "redemption_request") == []
+
+
+def test_decline_note_reaches_kid(client, db, kid, kid_headers, parent_headers):
+    _fund(db, kid, 150)
+    rid = _ask(client, kid_headers, _reward(db).id).json()["id"]
+    r = client.post(
+        f"/api/v1/redemptions/{rid}/deny", json={"note": "let's talk Sat"}, headers=parent_headers
+    )
+    assert r.status_code == 200
+    assert _notes(db, kid.id, "redemption_decided")[0].body == "let's talk Sat"
+    assert db.get(Redemption, rid).note == "let's talk Sat"
+
+
+def test_approve_all_skips_unaffordable(client, db, kid, kid_headers, parent_headers):
+    _fund(db, kid, 300)
+    rw = _reward(db, 200)
+    a = _ask(client, kid_headers, rw.id).json()["id"]
+    b = _ask(client, kid_headers, rw.id).json()["id"]
+    r = client.post("/api/v1/redemptions/approve-all", headers=parent_headers)
+    assert r.json() == {"approved": 1, "skipped": 1}
+    assert _balance(client, kid_headers) == 100
+    assert db.get(Redemption, a).status == "approved"
+    assert db.get(Redemption, b).status == "pending"
+    row = client.get("/api/v1/redemptions", headers=parent_headers).json()[0]
+    assert row["kid_balance_after"] == row["kid_balance"] - row["cost"]
+
+
+def test_history_filters_and_totals(client, db, kid, parent, parent_headers):
+    kid2 = _make_user(db, "sally", UserRole.KID)
+    rw = _reward(db, 200)
+    now = datetime.utcnow()
+
+    def red(k, status, cost, by=parent.id, ago=1, **kw):
+        r = Redemption(kid_id=k.id, cost=cost, status=status, decided_by_id=by, **kw)
+        r.created_at = now - timedelta(days=ago)
+        r.decided_at = r.created_at + timedelta(minutes=5)
+        db.add(r)
+
+    red(kid, "approved", 40, by=None, kind="screen_time", minutes=30, auto=True)
+    red(kid, "approved", 200, kind="reward", reward_id=rw.id)
+    red(kid2, "denied", 150, kind="reward", reward_id=rw.id, note="Not this week")
+    red(kid, "approved", 200, ago=40, kind="reward", reward_id=rw.id)  # too old
+    db.add(Redemption(kid_id=kid.id, cost=10, kind="reward", reward_id=rw.id))  # pending
+    db.commit()
+    H = "/api/v1/redemptions/history"
+    d = client.get(H, headers=parent_headers).json()
+    assert d["totals"] == {"spent": 240, "screen_minutes": 30, "approved": 2, "declined": 1}
+    assert len(d["rows"]) == 3
+    assert d["rows"][0]["created_at"] >= d["rows"][-1]["created_at"]
+    denied = next(r for r in d["rows"] if r["status"] == "denied")
+    assert denied["kid_name"] == "Sally" and denied["note"] == "Not this week"
+    assert denied["name"] == "Movie night" and denied["decided_by_name"] == "Mom"
+    d = client.get(H, params={"kid_id": kid.id}, headers=parent_headers).json()
+    assert d["totals"]["approved"] == 2 and d["totals"]["declined"] == 0
+    d = client.get(H, params={"kind": "screen_time"}, headers=parent_headers).json()
+    assert len(d["rows"]) == 1 and d["rows"][0]["auto"] is True
+    assert d["rows"][0]["decided_by_name"] is None and d["rows"][0]["minutes"] == 30
+    d = client.get(H, params={"days": 60}, headers=parent_headers).json()
+    assert len(d["rows"]) == 4
+    assert client.get(H, params={"days": 0}, headers=parent_headers).status_code == 422
+
+
+def test_history_parent_only(client, kid_headers):
+    assert client.get("/api/v1/redemptions/history", headers=kid_headers).status_code == 403
+
+
+def test_pending_list_carries_the_reward_icon(client, db, kid, parent_headers):
+    movie = Reward(name="Treat", price=10, icon="movie")
+    other = Reward(name="Treat", price=10, icon="cake")
+    db.add_all([movie, other])
+    db.commit()
+    db.add_all(
+        [
+            Redemption(kid_id=kid.id, kind="reward", reward_id=other.id, cost=10),
+            Redemption(kid_id=kid.id, kind="screen_time", minutes=15, cost=20),
+            Redemption(kid_id=kid.id, kind="reward", reward_id=movie.id, cost=10),
+        ]
+    )
+    db.commit()
+    rows = client.get("/api/v1/redemptions", headers=parent_headers).json()
+    assert [r["icon"] for r in rows] == ["cake", None, "movie"]
+
+
+def test_approve_all_skips_concurrently_answered(
+    client, db, kid, kid_headers, parent_headers, monkeypatch
+):
+    from app.services import economy
+    from fastapi import HTTPException
+
+    _fund(db, kid, 500)
+    rw = _reward(db, 100)
+    a = _ask(client, kid_headers, rw.id).json()["id"]
+    b = _ask(client, kid_headers, rw.id).json()["id"]
+    real = economy.decide
+
+    def flaky(db_, r, *args, **kw):
+        if r.id == a:
+            raise HTTPException(409, "Someone already answered this request.")
+        return real(db_, r, *args, **kw)
+
+    monkeypatch.setattr(economy, "decide", flaky)
+    r = client.post("/api/v1/redemptions/approve-all", headers=parent_headers)
+    assert r.status_code == 200
+    assert r.json() == {"approved": 1, "skipped": 1}
+    assert db.get(Redemption, b).status == "approved"
+
+
+def test_approve_all_kid_forbidden_and_empty(client, kid_headers, parent_headers):
+    url = "/api/v1/redemptions/approve-all"
+    assert client.post(url, headers=kid_headers).status_code == 403
+    assert client.post(url, headers=parent_headers).json() == {"approved": 0, "skipped": 0}

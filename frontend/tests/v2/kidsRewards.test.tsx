@@ -273,25 +273,34 @@ describe('kids: create, delete, points', () => {
 })
 
 describe('rewards and badges', () => {
-  test('rewards tab lists cards with price and a dashed New reward card; detail edits the price', async () => {
+  test('rewards catalogue lists cards with price and a New reward button; pick edits the price', async () => {
     serve({
-      '/rewards': [{ id: 3, name: 'Movie night', price: 150, icon: null }],
+      '/rewards': [{ id: 3, name: 'Movie night', price: 150, icon: null, visible: true, needs_approval: true }],
     })
-    mockRoute.query = { section: 'rewards', item: '3' }
+    mockRoute.query = { section: 'rewards', item: 'catalogue', pick: '3' }
     render(wrap(<KidsPage />))
     expect(
-      await within(list()).findByRole('button', { name: /Movie night/ }),
+      await within(detail()).findByRole('button', { name: /^Movie night/ }),
     ).toHaveTextContent('150 pts')
     expect(
-      within(list()).getByRole('button', { name: 'New reward' }),
-    ).toBeInTheDocument()
+      within(detail()).getAllByRole('button', { name: 'New reward' }).length,
+    ).toBeGreaterThan(0)
+    expect(within(list()).getByRole('button', { name: /Catalogue/ })).toHaveTextContent('1 reward · 0 hidden')
     expect(within(detail()).getByLabelText('Price (points)')).toHaveValue(
       '150',
     )
   })
 
+  test('rewards with no item opens Requests on desktop', async () => {
+    mockRoute.query = { section: 'rewards' }
+    render(wrap(<KidsPage />))
+    expect(
+      await within(detail()).findByRole('heading', { name: 'Requests' }),
+    ).toBeInTheDocument()
+  })
+
   test('new reward posts name and price', async () => {
-    mockRoute.query = { section: 'rewards', item: 'new' }
+    mockRoute.query = { section: 'rewards', item: 'catalogue', pick: 'new' }
     render(wrap(<KidsPage />))
     await userEvent.type(await screen.findByLabelText('Reward'), 'Pizza')
     await userEvent.clear(screen.getByLabelText('Price (points)'))
@@ -305,29 +314,29 @@ describe('rewards and badges', () => {
     )
   })
 
-  test('badges tab lists custom badges; detail awards the picked kid', async () => {
+  test('custom badges pane lists cards; Award it awards the picked kid', async () => {
     serve({
       '/custom-badges': [
         { id: 3, name: 'Helper', icon: 'star', description: 'Helped out' },
       ],
+      '/badges/overview': [],
+      '/badges/recent': [],
       '/custom-badges/3/award': { tier: 2 },
     })
-    mockRoute.query = { section: 'badges', item: '3' }
+    mockRoute.query = { section: 'badges', item: 'custom', pick: '3' }
     render(wrap(<KidsPage />))
     expect(
-      await within(list()).findByRole('button', { name: /Helper/ }),
+      await within(detail()).findByRole('button', { name: /^Helper/ }),
     ).toHaveTextContent('Helped out')
     expect(
-      within(list()).getByRole('button', { name: 'New badge' }),
-    ).toBeInTheDocument()
-    const award = await within(detail()).findByRole('button', {
-      name: 'Award',
-    })
-    expect(award).toBeDisabled()
+      within(list()).getByRole('button', { name: /Custom badges/ }),
+    ).toHaveTextContent('1 made by you')
     await userEvent.click(
       within(detail()).getByRole('button', { name: 'Leo' }),
     )
-    await userEvent.click(award)
+    await userEvent.click(
+      within(detail()).getByRole('button', { name: 'Award to Leo' }),
+    )
     await waitFor(() =>
       expect(calls('POST')[0]).toEqual([
         '/custom-badges/3/award',
@@ -337,7 +346,8 @@ describe('rewards and badges', () => {
   })
 
   test('new badge posts name, icon and description', async () => {
-    mockRoute.query = { section: 'badges', item: 'new' }
+    serve({ '/badges/overview': [], '/badges/recent': [] })
+    mockRoute.query = { section: 'badges', item: 'custom', pick: 'new' }
     render(wrap(<KidsPage />))
     await userEvent.type(await screen.findByLabelText('Badge name'), 'Kind')
     await userEvent.click(screen.getByTitle('star'))
@@ -356,30 +366,25 @@ describe('rewards and badges', () => {
 })
 
 describe('rewards and badges: icon and delete confirmation', () => {
-  test('reward emoji icon is sent with the price and name', async () => {
-    mockRoute.query = { section: 'rewards', item: 'new' }
+  test('reward glyph icon is sent with the price and name', async () => {
+    mockRoute.query = { section: 'rewards', item: 'catalogue', pick: 'new' }
     render(wrap(<KidsPage />))
     await userEvent.type(await screen.findByLabelText('Reward'), 'Pizza')
-    await userEvent.click(
-      screen.getByRole('button', { name: /Icon \(an emoji/ }),
-    )
-    await userEvent.click(
-      await screen.findByRole('button', { name: 'Pick 🍕' }),
-    )
+    await userEvent.click(screen.getByTitle('local_pizza'))
     await userEvent.click(screen.getByRole('button', { name: 'Add reward' }))
     await waitFor(() =>
       expect(calls('POST')[0]).toEqual([
         '/rewards',
-        { method: 'POST', body: { name: 'Pizza', price: 50, icon: '🍕' } },
+        { method: 'POST', body: { name: 'Pizza', price: 50, icon: 'local_pizza' } },
       ]),
     )
   })
 
   test('deleting a reward asks first, then DELETEs', async () => {
     serve({
-      '/rewards': [{ id: 3, name: 'Movie night', price: 150, icon: null }],
+      '/rewards': [{ id: 3, name: 'Movie night', price: 150, icon: null, visible: true, needs_approval: true }],
     })
-    mockRoute.query = { section: 'rewards', item: '3' }
+    mockRoute.query = { section: 'rewards', item: 'catalogue', pick: '3' }
     render(wrap(<KidsPage />))
     await userEvent.click(
       await within(detail()).findByRole('button', { name: 'Delete reward' }),
@@ -400,8 +405,10 @@ describe('rewards and badges: icon and delete confirmation', () => {
       '/custom-badges': [
         { id: 3, name: 'Helper', icon: 'star', description: '' },
       ],
+      '/badges/overview': [],
+      '/badges/recent': [],
     })
-    mockRoute.query = { section: 'badges', item: '3' }
+    mockRoute.query = { section: 'badges', item: 'custom', pick: '3' }
     render(wrap(<KidsPage />))
     await userEvent.click(
       await within(detail()).findByRole('button', { name: 'Delete badge' }),

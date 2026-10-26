@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.chat import ChatPhoto, MessageReaction, Thread, ThreadMessage, ThreadRead
-from app.models.chores import ChoreAssignment, ChoreRun
+from app.models.chores import Chore, ChoreAssignment, ChoreRun
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
 from app.services import kid_events
@@ -260,19 +260,23 @@ def unread(db: Session, user: User) -> dict:
         .options(joinedload(ThreadMessage.author))
     }
     run_ids = [t.run_id for t in threads if t.kind == "chore"]
-    chores, run_kids = {}, {}
+    chores, run_kids, notes, glyphs = {}, {}, {}, {}
     if run_ids:
         runs = (
             db.query(ChoreRun)
             .filter(ChoreRun.id.in_(run_ids))
             .options(
-                joinedload(ChoreRun.assignment).joinedload(ChoreAssignment.chore),
+                joinedload(ChoreRun.assignment)
+                .joinedload(ChoreAssignment.chore)
+                .joinedload(Chore.type),
                 selectinload(ChoreRun.kids),
             )
             .all()
         )
         chores = {r.id: r.assignment.chore.title for r in runs}
         run_kids = {r.id: run_kid_ids(r) for r in runs}
+        notes = {r.id: bool(r.note_label) for r in runs}
+        glyphs = {r.id: r.assignment.chore.type.glyph for r in runs}
     out = [
         {
             **_preview(latest.get(t.id)),
@@ -283,6 +287,8 @@ def unread(db: Session, user: User) -> dict:
             "kid_ids": run_kids.get(t.run_id, []) if t.kind == "chore" else [],
             "title": _title(db, t, names, chores),
             "unread": counts.get(t.id, 0),
+            "note": notes.get(t.run_id, False) if t.kind == "chore" else False,
+            "glyph": glyphs.get(t.run_id) if t.kind == "chore" else None,
         }
         for t in threads
     ]

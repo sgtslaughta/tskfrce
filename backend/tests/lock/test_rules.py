@@ -141,3 +141,19 @@ def test_manual_unlock_wins_open_reason():
     assert open_reason(facts(override="unlock", owners=(OwnerChores(0, 0),)), NOW) == "manual"
     inside = facts(override="unlock", chores_apply=False, allowed_sets=((INSIDE,),))
     assert open_reason(inside, NOW) == "manual"
+
+
+def test_bonus_any_hours_unlocks_outside_window():
+    f = facts(
+        allowed_sets=((OUTSIDE,),),
+        owners=PENDING,
+        bonus_active=True,
+        points_unlock_early=True,
+    )
+    assert not is_online(f, NOW)
+    assert is_online(replace(f, bonus_any_hours=True), NOW)
+
+
+def test_bonus_any_hours_reads_as_bonus():
+    f = facts(allowed_sets=((OUTSIDE,),), bonus_active=True, points_unlock_early=True)
+    assert open_reason(replace(f, bonus_any_hours=True), NOW) == "bonus"

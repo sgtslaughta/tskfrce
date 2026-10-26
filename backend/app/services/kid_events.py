@@ -69,6 +69,18 @@ def points_taken(db: Session, kid_id: int, amount: int, note: str, by_id: int) -
     )
 
 
+def reply_targets(db: Session, thread: Thread, author: User | None) -> list[int]:
+    """Kids who get the parent_reply ping for a parent message in this thread."""
+    if author is None or author.role != UserRole.PARENT:
+        return []
+    if thread.kind == "chore":
+        run = db.get(ChoreRun, thread.run_id)
+        return list(svc.run_kid_ids(run)) if run else []
+    if thread.kind == "private":
+        return [thread.kid_id]
+    return []
+
+
 def parent_reply(db: Session, thread: Thread, author: User | None, body: str | None) -> None:
     if author is None or author.role != UserRole.PARENT:
         return

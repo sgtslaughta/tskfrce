@@ -22,6 +22,7 @@ from app.api import (
     auth_router,
     users_router,
 )
+from app.api.badges import overview_router as badges_overview_router
 from app.api.badges import router as badges_router
 from app.api.chat import router as chat_router
 from app.api.chore_library import router as chore_library_router
@@ -38,11 +39,13 @@ from app.api.inbox import router as notifications_router
 from app.api.internal import router as internal_router
 from app.api.kid import router as kid_router
 from app.api.kid_push import router as kid_push_router
+from app.api.kid_rewards import router as kid_rewards_router
 from app.api.kids import router as kids_router
 from app.api.notify import router as notify_router
 from app.api.password_reset import router as password_reset_router
 from app.api.rewards import redemptions_router
 from app.api.rewards import router as rewards_router
+from app.api.screen_time import router as screen_time_router
 from app.api.setup import router as setup_router
 from app.api.tips import router as tips_router
 from app.core.logging import configure_logging, get_logger
@@ -151,10 +154,13 @@ fastapi_app.include_router(hours_router)
 fastapi_app.include_router(kids_router)
 fastapi_app.include_router(kid_push_router)
 fastapi_app.include_router(kid_router)
+fastapi_app.include_router(kid_rewards_router)
 fastapi_app.include_router(family_router)
 fastapi_app.include_router(notify_router)
 fastapi_app.include_router(rewards_router)
+fastapi_app.include_router(screen_time_router)
 fastapi_app.include_router(badges_router)
+fastapi_app.include_router(badges_overview_router)
 fastapi_app.include_router(community_router)
 fastapi_app.include_router(flair_router)
 fastapi_app.include_router(redemptions_router)

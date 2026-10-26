@@ -1,5 +1,6 @@
 """Parent API: family settings and the /today home screen."""
 
+import json
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -26,8 +27,21 @@ from app.services import inbox, progression, push
 router = APIRouter(prefix="/api/v1", tags=["family"], dependencies=[Depends(require_parent)])
 
 
+DEFAULT_QUICK_REPLIES = ["Looks good", "Can you redo it?", "Retake the photo"]
+
+
+def _quick_replies(fam) -> list[str]:
+    try:
+        v = json.loads(fam.quick_replies) if fam.quick_replies else None
+    except ValueError:
+        v = None
+    ok = isinstance(v, list) and all(isinstance(x, str) for x in v)
+    return v if ok else list(DEFAULT_QUICK_REPLIES)
+
+
 def _fam_out(fam) -> dict:
     return {
+        "quick_replies": _quick_replies(fam),
         "name": fam.name,
         "timezone": fam.timezone,
         "reset_time": fam.reset_time,
@@ -63,6 +77,8 @@ def patch_family(body: FamilyPatch, db: Session = Depends(get_db)):
     for k, v in body.model_dump(exclude_unset=True).items():
         if k == "giphy_api_key" and v is not None:
             fam.giphy_api_key = v.strip() or None
+        elif k == "quick_replies" and v is not None:
+            fam.quick_replies = json.dumps(v)
         elif v is not None:
             setattr(fam, k, v)
     db.commit()

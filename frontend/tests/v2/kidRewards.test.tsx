@@ -5,6 +5,8 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
 import { RewardsSection } from '@/v2/kid/RewardsSection'
+import { BadgeGrid } from '@/v2/components/BadgeGrid'
+import { notifications } from '@mantine/notifications'
 import { AwardOverlay } from '@/v2/kid/AwardOverlay'
 import { api } from '@/v2/api'
 import { fridgeTheme } from '@/v2/theme'
@@ -21,6 +23,7 @@ const rewards = (over: object = {}) => ({
   balance: 120,
   screen_time_price: 20,
   screen_time_enabled: true,
+  screen: { enabled: true, price: 20, auto: false, only_in_hours: false, max_today: null, bought_today: 0, left_today: null, min_points: null, in_hours: true },
   rewards: [],
   pending: [],
   ...over,
@@ -94,6 +97,98 @@ describe('RewardsSection', () => {
     wrap(<RewardsSection onExpired={() => {}} />)
     await screen.findByText(/Rewards/)
     expect(screen.queryByText('Screen time')).toBeNull()
+  })
+})
+
+const scr = (o: object) => ({ enabled: true, price: 20, auto: false, only_in_hours: false, max_today: null, bought_today: 0, left_today: null, min_points: null, in_hours: true, ...o })
+const rw = (o: object = {}) => ({ id: 3, name: 'Movie night', price: 50, icon: 'movie', needs_approval: true, ...o })
+
+describe('Plan E rewards', () => {
+  test('reward glyph renders as an icon', async () => {
+    route({ 'GET /kid/rewards': rewards({ screen_time_enabled: false, rewards: [rw()] }) })
+    const { container } = wrap(<RewardsSection onExpired={() => {}} />)
+    await screen.findByText(/Movie night/)
+    expect(container.querySelector('[data-icon="movie"]')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  test('Get it on instant reward shows It\'s yours', async () => {
+    route({
+      'GET /kid/rewards': rewards({ screen_time_enabled: false, rewards: [rw({ needs_approval: false, icon: null })] }),
+      'POST /kid/redeem': { status: 'approved' },
+    })
+    const { container } = wrap(<RewardsSection onExpired={() => {}} />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Get it' }))
+    expect(await screen.findByText("It's yours!")).toBeInTheDocument()
+    expect(container.querySelector('[data-icon="redeem"]')).toBeTruthy()
+  })
+
+  test('left_today caps minute options', async () => {
+    route({ 'GET /kid/rewards': rewards({ screen: scr({ left_today: 15, max_today: 60, bought_today: 45 }) }) })
+    wrap(<RewardsSection onExpired={() => {}} />)
+    await screen.findByText('45 of 60 min today')
+    expect(screen.getAllByRole('option').map((o) => o.textContent)).toEqual(['15 minutes'])
+  })
+
+  test('left_today 0 disables with server wording', async () => {
+    route({ 'GET /kid/rewards': rewards({ screen: scr({ left_today: 0, max_today: 60, bought_today: 60 }) }) })
+    wrap(<RewardsSection onExpired={() => {}} />)
+    expect(await screen.findByText("You've had all your screen time for today.")).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Request screen time' })).toBeDisabled()
+  })
+
+  test('min_points and hours reasons', async () => {
+    route({ 'GET /kid/rewards': rewards({ balance: 10, screen: scr({ min_points: 50, only_in_hours: true, in_hours: false }) }) })
+    wrap(<RewardsSection onExpired={() => {}} />)
+    expect(await screen.findByText('You can buy screen time once you have 50 points.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Request screen time' })).toBeDisabled()
+  })
+
+  test('left_today under 15 offers no odd option', async () => {
+    route({ 'GET /kid/rewards': rewards({ screen: scr({ left_today: 10, max_today: 60, bought_today: 50 }) }) })
+    wrap(<RewardsSection onExpired={() => {}} />)
+    expect(await screen.findByText("You've had all your screen time for today.")).toBeInTheDocument()
+    expect(screen.queryAllByRole('option')).toHaveLength(0)
+    expect(screen.getByRole('button', { name: 'Request screen time' })).toBeDisabled()
+  })
+
+  test('outside allowed hours reason', async () => {
+    route({ 'GET /kid/rewards': rewards({ screen: scr({ only_in_hours: true, in_hours: false }) }) })
+    wrap(<RewardsSection onExpired={() => {}} />)
+    expect(await screen.findByText('Screen time only works during your allowed hours.')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Request screen time' })).toBeDisabled()
+  })
+
+  test('auto screen time says Get screen time', async () => {
+    route({ 'GET /kid/rewards': rewards({ screen: scr({ auto: true }) }) })
+    wrap(<RewardsSection onExpired={() => {}} />)
+    expect(await screen.findByRole('button', { name: 'Get screen time' })).toBeEnabled()
+  })
+
+  test('409 detail is shown', async () => {
+    const { ApiError } = jest.requireActual('@/v2/api') as { ApiError: new (s: number, d: string) => Error }
+    route({ 'GET /kid/rewards': rewards() })
+    apiMock.mockImplementation(async (p, i) => {
+      if (i?.method === 'POST') throw new ApiError(409, 'You can have 15 more minutes today.')
+      return rewards()
+    })
+    wrap(<RewardsSection onExpired={() => {}} />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Request screen time' }))
+    await screen.findByRole('button', { name: 'Request screen time' })
+    expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'You can have 15 more minutes today.' }))
+  })
+
+  test('badge grid: custom glyph, built-in emoji', () => {
+    const b = (o: object) => ({ key: 'k', name: 'N', icon: '🏅', description: '', tier: 1, tier_name: 'Copper', custom: false, ...o })
+    const { container } = wrap(<BadgeGrid badges={[b({ key: 'a', icon: 'star', custom: true }), b({ key: 'b', icon: '🌟' })]} />)
+    expect(container.querySelector('[data-icon="star"]')).toBeTruthy()
+    expect(container).toHaveTextContent('🌟')
+  })
+
+  test('overlay shows glyph', async () => {
+    route({ 'GET /kid/celebrations': [{ key: 'b:2', kind: 'badge', title: 'Helper', detail: 'copper', size: 'small', glyph: 'volunteer_activism' }] })
+    wrap(<AwardOverlay onExpired={() => {}} />)
+    const d = await screen.findByRole('dialog')
+    expect(d.querySelector('[data-icon="volunteer_activism"]')).toBeTruthy()
   })
 })
 

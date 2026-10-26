@@ -101,32 +101,6 @@ export function FamilyCard({ fam }: { fam: Family }) {
   )
 }
 
-export function ScreenTimeCard({ fam }: { fam: Family }) {
-  return (
-    <Card title="Screen time" fam={fam}>
-      {({ val, set }) => (
-        <>
-          <Switch
-            label="Kids can spend points on screen time"
-            checked={val('points_unlock_early')}
-            onChange={(e) => set({ points_unlock_early: e.currentTarget.checked })}
-          />
-          <Help>Lets kids trade points for Wi-Fi time before their chores are done, inside their allowed hours.</Help>
-          <NumberInput
-            label="Screen time price (points per 15 min)"
-            min={1}
-            max={1000}
-            allowDecimal={false}
-            value={val('screen_time_price')}
-            onChange={(v) => typeof v === 'number' && set({ screen_time_price: v })}
-          />
-          <Help>How many points 15 minutes of extra time costs.</Help>
-        </>
-      )}
-    </Card>
-  )
-}
-
 export function GifsCard({ fam }: { fam: Family }) {
   return (
     <Card title="GIFs in chat" fam={fam}>

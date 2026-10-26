@@ -1,3 +1,5 @@
+import { useCallback, useEffect, useRef } from 'react'
+import { useDebouncedValue } from '@mantine/hooks'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/v2/api'
 
@@ -16,6 +18,10 @@ export interface ThreadSummary {
   last_author?: string | null
   /** one-line text of the newest message; "Photo" for a photo-only one */
   last_text?: string | null
+  /** chore threads: the run has a note */
+  note: boolean
+  /** chore threads: the chore type's glyph */
+  glyph: string | null
 }
 
 export interface ChatMessage {
@@ -52,6 +58,9 @@ export interface ThreadPage {
   run_id?: number
   /** chore threads: the kid(s) it is about */
   who?: string | null
+  /** first names typing now (not me) */
+  typing: string[]
+  members: { id: number; name: string }[]
 }
 
 /** URL ref for a thread: chore task id, kid id, or "family". */
@@ -200,3 +209,30 @@ export const usePickGif = (kid = false) =>
         kid,
       }),
   })
+
+const PING_MS = 3_000
+
+/** Returns a function to call on each keystroke; it POSTs a typing ping at most once per 3 s. */
+export function useTypingPing(threadId: number | null, kid = false): () => void {
+  const last = useRef(0)
+  useEffect(() => {
+    last.current = 0
+  }, [threadId])
+  return useCallback(() => {
+    const now = Date.now()
+    if (threadId == null || now - last.current < PING_MS) return
+    last.current = now
+    api(`/chat/threads/${Number(threadId)}/typing`, { method: 'POST', kid }).catch(() => {})
+  }, [threadId, kid])
+}
+
+/** GET /chat/search?q=: ids of threads with a matching message (min 2 chars, 300 ms debounce). */
+export function useChatSearch(q: string, kid = false) {
+  const [dq] = useDebouncedValue(q.trim(), 300)
+  return useQuery({
+    queryKey: ['chat-search', kid, dq],
+    queryFn: () => api<{ thread_ids: number[] }>(`/chat/search?q=${encodeURIComponent(dq)}`, { kid }),
+    enabled: dq.length >= 2 && q.trim().length >= 2,
+    staleTime: 30_000,
+  })
+}

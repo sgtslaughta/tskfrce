@@ -88,3 +88,40 @@
 .msg-react[aria-pressed='true'] { background: var(--p-soft, rgba(128,128,128,.18)); border-color: var(--p-ink, currentColor); }
 .msg-react:focus-visible { outline: 2px solid var(--p-ink, currentColor); outline-offset: 1px; }
 .msg-edit { width: 100%; min-width: 220px; resize: none; font: inherit; padding: 6px; border-radius: 8px; border: 1.5px solid currentColor; background: transparent; color: inherit; }
+
+/* typing line (both looks): three dots + who */
+.pc-typing { align-self: flex-start; display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--p-sub, var(--f-sub)); }
+.pc-typing i { display: inline-block; width: 6px; height: 6px; margin-right: 2px; border-radius: 50%; background: currentColor; opacity: .6; animation: pc-dot 1.2s ease-in-out infinite; }
+.pc-typing i:nth-child(2) { animation-delay: .2s; }
+.pc-typing i:nth-child(3) { animation-delay: .4s; }
+@keyframes pc-dot { 0%, 60%, 100% { opacity: .6; transform: none; } 30% { opacity: 1; transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) { .pc-typing i { animation: none; } }
+
+/* @mention: bold name; menu = solid popover card (2px ink border, sticker shadow) above the composer */
+.pc-mention { font-weight: 700; }
+.pc-reply { position: relative; }
+.pc-mentions {
+  position: absolute; left: 8px; bottom: calc(100% + 6px); z-index: 5; min-width: 180px; max-height: 220px; overflow-y: auto;
+  margin: 0; padding: 4px; list-style: none; border-radius: 12px;
+  background: var(--p-card, var(--f-card)); color: var(--p-ink, var(--f-ink));
+  border: 2px solid var(--p-ink, var(--f-ink)); box-shadow: 3px 3px 0 var(--p-acc, var(--f-sun));
+}
+.pc-mentions li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.pc-mentions li[aria-selected='true'], .pc-mentions li:hover { background: var(--p-soft, var(--f-line)); }
+.pc-mentions-av { width: 24px; height: 24px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--p-acc, var(--f-sun)); color: #292928; font-size: 12px; font-weight: 700; }
+
+/* quick replies row (parent): pills; the Approve chip is an accent fill with ink text */
+.pc-qr { flex: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 0 12px 8px; }
+.pc-qr button {
+  display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: 12px; color: var(--p-ink); background: var(--p-card); border: 1px solid var(--p-line);
+}
+.pc-qr button:hover { border-color: var(--p-ink); }
+.pc-qr button[data-ok] { background: var(--p-acc); border-color: var(--p-acc); color: #292928; font-weight: 700; }
+.pc-qr button:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 1px; }
+.pc-qre { display: flex; flex-direction: column; gap: 6px; margin: 0 0 12px; padding: 0; list-style: none; }
+.pc-qre li { display: flex; align-items: center; gap: 2px; }
+.pc-qre li input { flex: 1; min-width: 0; margin-right: 4px; }
+.pc-qre .pc-ib:disabled { opacity: .35; cursor: default; }
+.pc-qre-add { display: flex; gap: 8px; margin-bottom: 16px; }
+.pc-qre-add input { flex: 1; min-width: 0; }

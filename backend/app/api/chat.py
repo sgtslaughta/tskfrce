@@ -15,7 +15,7 @@ from app.models.chat import ChatPhoto, Thread, ThreadMessage
 from app.models.family import get_family
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services import chat, giphy
+from app.services import chat, chat_extras, giphy, inbox, kid_events, typing
 from app.services.photos import chat_storage, put, put_gif
 
 router = APIRouter(prefix="/api/v1/chat", tags=["chat"])
@@ -95,6 +95,10 @@ def thread(
         "who": chat.who(db, t),
         "messages": [_msg(t, m, rx) for m in reversed(rows[:PAGE])],
         "has_more": len(rows) > PAGE,
+        "typing": typing.who(t.id, user.id),
+        "members": [
+            {"id": u.id, "name": chat_extras.first_name(u)} for u in chat_extras.members(db, t)
+        ],
     }
     db.commit()  # lazily created thread
     return out
@@ -113,8 +117,44 @@ def send(
     if body.step_id is not None and not chat.step_ok(db, t, body.step_id):
         raise HTTPException(422, "We couldn't find that step.")
     m = chat.post(db, t, user, body.body, body.photo_id, step_id=body.step_id)
+    ids = chat_extras.mentioned(chat_extras.members(db, t), body.body, user.id)
+    covered = set(kid_events.reply_targets(db, t, user))  # already pinged by parent_reply
+    ids = [i for i in ids if i not in covered]
+    if ids:
+        name = user.full_name or user.username
+        inbox.notify(
+            db,
+            ids,
+            "chat_message",
+            f"{name} mentioned you",
+            (body.body or "")[:120],
+            thread_id=t.id,
+        )
     db.commit()
     return _msg(t, m)
+
+
+@router.post("/threads/{thread_id}/typing", status_code=204, response_class=Response)
+def typing_ping(
+    thread_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    t = _thread(db, user, thread_id)
+    typing.ping(t.id, user.id, user.full_name or user.username)
+    return Response(status_code=204)
+
+
+@router.get("/search")
+def search(
+    q: str = Query(max_length=100),
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_active_user),
+):
+    q = q.strip()
+    if len(q) < 2:
+        raise HTTPException(422, "Type at least 2 characters to search.")
+    return {"thread_ids": chat_extras.search(db, user, q)}
 
 
 @router.post("/threads/{thread_id}/photos")

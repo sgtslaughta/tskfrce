@@ -3,6 +3,7 @@ import type { ChatMessage } from '@/v2/hooks/useChat'
 import { Photo } from './ChatPhoto'
 import { EditBox, MessageActions } from './MessageActions'
 import { ReactionChips } from './Reactions'
+import { renderMentions } from './mentions'
 import { useState } from 'react'
 
 export const timeLabel = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
@@ -21,8 +22,8 @@ export const DaySep = ({ label }: { label: string }) => (
   </div>
 )
 
-/** Parent chat bubble: others soft, mine inverse (--p-tbg), system lines centred with a tick. */
-export function ParentBubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
+/** Parent chat bubble: others soft, mine inverse (--p-tbg), system lines centred with a tick; `names` = members to bold as @mentions. */
+export function ParentBubble({ m, mine, names = [] }: { m: ChatMessage; mine: boolean; names?: string[] }) {
   const [editing, setEditing] = useState(false)
   if (m.kind === 'system') {
     return (
@@ -56,7 +57,7 @@ export function ParentBubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
             </span>
           )}
           {m.photo_url && <Photo url={m.photo_url} className="pc-photo" />}
-          {editing ? <EditBox m={m} kid={false} onDone={() => setEditing(false)} /> : m.body}
+          {editing ? <EditBox m={m} kid={false} onDone={() => setEditing(false)} /> : m.body && <span>{renderMentions(m.body, names)}</span>}
         </MessageActions>
       </div>
       <ReactionChips m={m} kid={false} mine={mine} />
