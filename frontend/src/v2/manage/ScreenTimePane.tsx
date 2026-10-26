@@ -56,7 +56,7 @@ function HowItWorks({ st }: { st: ScreenTime }) {
       </div>
       <Switch id="st-auto" label="Approve automatically" on={val('auto_approve')} onChange={(v) => set({ auto_approve: v })} />
       <Switch id="st-hours" label="Only during allowed hours" on={val('only_in_allowed_hours')} onChange={(v) => set({ only_in_allowed_hours: v })} />
-      {!val('only_in_allowed_hours') && <span className="pk-hint pk-hint-tight">Bought minutes work even outside allowed hours.</span>}
+      {!val('only_in_allowed_hours') && <span className="pk-hint pk-hint-tight">Bought minutes work even outside allowed hours, but never during off hours like bedtime.</span>}
       <div className="pk-actions">
         <button type="button" className="p-btn" data-variant="accent" disabled={!dirty || patch.isPending} aria-busy={patch.isPending} onClick={save}>
           <Icon name="check" />

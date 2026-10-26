@@ -7,7 +7,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.lock.reset import current_chore_day
-from app.lock.rules import in_allowed
+from app.lock.rules import in_allowed, in_off
 from app.lock.schedule import local_now
 from app.lock.state import device_facts
 from app.models.family import FamilySettings, get_family
@@ -59,6 +59,15 @@ def in_allowed_hours(db: Session, kid: User, now_utc: datetime) -> bool:
     return any(in_allowed(device_facts(db, d, fam, now_utc), now_local) for d in kid.devices)
 
 
+def all_in_off_window(db: Session, kid: User, now_utc: datetime) -> bool:
+    """Every device of the kid is inside an internet-off window (bonus can't open those)."""
+    if not kid.devices:
+        return False
+    fam = get_family(db)
+    now_local = local_now(fam.timezone, now_utc)
+    return all(in_off(device_facts(db, d, fam, now_utc), now_local) for d in kid.devices)
+
+
 def check(db: Session, fam: FamilySettings, kid: User, minutes: int, now_utc: datetime) -> None:
     cap, min_points = limit_for(db, fam, kid.id)
     if min_points and economy.balance(db, kid.id) < min_points:
@@ -73,3 +82,5 @@ def check(db: Session, fam: FamilySettings, kid: User, minutes: int, now_utc: da
             )
     if fam.screen_only_allowed_hours and not in_allowed_hours(db, kid, now_utc):
         raise HTTPException(409, "Screen time only works during your allowed hours.")
+    if not fam.screen_only_allowed_hours and all_in_off_window(db, kid, now_utc):
+        raise HTTPException(409, "Screen time can't turn the internet on during off hours.")

@@ -157,3 +157,15 @@ def test_bonus_any_hours_unlocks_outside_window():
 def test_bonus_any_hours_reads_as_bonus():
     f = facts(allowed_sets=((OUTSIDE,),), bonus_active=True, points_unlock_early=True)
     assert open_reason(replace(f, bonus_any_hours=True), NOW) == "bonus"
+
+
+def test_bonus_any_hours_never_opens_an_off_window():
+    f = facts(
+        owners=PENDING,
+        off=(INSIDE,),
+        bonus_active=True,
+        points_unlock_early=True,
+        bonus_any_hours=True,
+    )
+    assert block_reason(f, NOW) == "schedule"
+    assert open_reason(f, NOW) is None

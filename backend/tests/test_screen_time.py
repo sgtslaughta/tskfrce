@@ -145,3 +145,25 @@ def test_patch_and_limits_api(client, db, kid, kid_headers, parent_headers):
     assert client.delete(f"{S}/limits/{kid.id}", headers=parent_headers).status_code == 204
     assert client.get(S, headers=parent_headers).json()["kids"][0]["limit"] is None
     assert client.get(S, headers=kid_headers).status_code == 403
+
+
+def test_any_hours_bonus_cannot_buy_or_open_an_off_window(client, db, kid, kid_headers):
+    from app.lock.state import desired_blocked
+
+    dev = _setup(db, kid, screen_only_allowed_hours=False, screen_auto_approve=True)
+    make_rule(db, kind="off", times=(("00:00", "00:00"),), kid_ids=(kid.id,))  # off all day
+    before = _counts(db)
+    r = _ask(client, kid_headers)
+    assert r.status_code == 409
+    assert r.json()["detail"] == "Screen time can't turn the internet on during off hours."
+    assert _counts(db) == before
+    db.add(
+        Override(
+            device_id=dev.id,
+            action="unlock",
+            source="bonus",
+            expires_at=_now() + timedelta(minutes=30),
+        )
+    )
+    db.commit()
+    assert dev.mac in desired_blocked(db, datetime.now(UTC))
