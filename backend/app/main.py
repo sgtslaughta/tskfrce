@@ -30,6 +30,7 @@ from app.api.community import router as community_router
 from app.api.devices import router as devices_router
 from app.api.family import router as family_router
 from app.api.flair import router as flair_router
+from app.api.hours import router as hours_router
 from app.api.inbox import router as notifications_router
 from app.api.internal import router as internal_router
 from app.api.kid import router as kid_router
@@ -140,6 +141,7 @@ fastapi_app.include_router(chore_photos_router)
 fastapi_app.include_router(chat_router)
 fastapi_app.include_router(internal_router)
 fastapi_app.include_router(devices_router)
+fastapi_app.include_router(hours_router)
 fastapi_app.include_router(kids_router)
 fastapi_app.include_router(kid_router)
 fastapi_app.include_router(family_router)

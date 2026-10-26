@@ -35,6 +35,7 @@ def _fam_out(fam) -> dict:
         "points_unlock_early": fam.points_unlock_early,
         "early_bonus_cap": fam.early_bonus_cap,
         "screen_time_price": fam.screen_time_price,
+        "chores_lock": fam.chores_lock,
         "gifs_enabled": fam.gifs_enabled,
         "gif_rating": fam.gif_rating,
         "accent": fam.accent,

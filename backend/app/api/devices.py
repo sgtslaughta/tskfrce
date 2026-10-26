@@ -66,6 +66,7 @@ def device_out(
         "last_seen": utc_z(d.last_seen),
         "resisting": d.resisting_since is not None,
         "needs_pins": needs_pins,
+        "exempt": bool(d.exempt),
     }
     if addresses:
         out |= {
@@ -129,6 +130,8 @@ def patch_device(device_id: int, body: DevicePatch, db: Session = Depends(get_db
         d.name = body.name
     if body.status is not None:
         d.status = body.status
+    if body.exempt is not None:
+        d.exempt = body.exempt
     if body.owner_ids is not None:
         kids = db.query(User).filter(User.id.in_(body.owner_ids), User.role == UserRole.KID).all()
         if len(kids) != len(set(body.owner_ids)):
@@ -195,7 +198,13 @@ def delete_device(device_id: int, db: Session = Depends(get_db)):
 
 
 def _group_out(g: DeviceGroup) -> dict:
-    return {"id": g.id, "name": g.name, "device_ids": sorted(d.id for d in g.devices)}
+    return {
+        "id": g.id,
+        "name": g.name,
+        "device_ids": sorted(d.id for d in g.devices),
+        "icon": g.icon,
+        "chore_lock": g.chore_lock,
+    }
 
 
 def _group(db: Session, group_id: int) -> DeviceGroup:
@@ -221,7 +230,9 @@ def list_groups(db: Session = Depends(get_db)):
 @router.post("/groups")
 def create_group(body: GroupIn, db: Session = Depends(get_db)):
     _name_free(db, body.name)
-    g = DeviceGroup(name=body.name)
+    g = DeviceGroup(name=body.name, icon=body.icon or "devices")
+    if body.chore_lock is not None:
+        g.chore_lock = body.chore_lock
     g.devices = _devices(db, body.device_ids)
     db.add(g)
     _commit(db, "A group with that name already exists. Pick another name.", 400)
@@ -234,6 +245,10 @@ def patch_group(group_id: int, body: GroupIn, db: Session = Depends(get_db)):
     g = _group(db, group_id)
     _name_free(db, body.name, g.id)
     g.name = body.name
+    if body.icon is not None:
+        g.icon = body.icon
+    if body.chore_lock is not None:
+        g.chore_lock = body.chore_lock
     g.devices = _devices(db, body.device_ids)
     _commit(db, "A group with that name already exists. Pick another name.", 400)
     trigger()

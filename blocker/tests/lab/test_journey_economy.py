@@ -60,16 +60,17 @@ def test_bedtime_beats_screen_time():
     s = h + 2 if h <= 20 else h - 3
     w = parent(
         "POST",
-        "/api/v1/windows",
+        "/api/v1/hours",
         {
+            "name": "Lab hours",
+            "category": "other",
             "kind": "allowed",
             "days": "0123456",
-            "start": f"{s:02d}:00",
-            "end": f"{s + 1:02d}:00",
-            "kid_id": a["id"],
+            "kid_ids": [a["id"]],
+            "times": [{"start": f"{s:02d}:00", "end": f"{s + 1:02d}:00"}],
         },
     )
-    on_cleanup(lambda: parent("DELETE", f"/api/v1/windows/{w['id']}"))
+    on_cleanup(lambda: parent("DELETE", f"/api/v1/hours/{w['id']}"))
     make_chore([a["id"]])
     wait_online("kid1", False)
     r = request_screen(a)

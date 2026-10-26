@@ -219,7 +219,9 @@ def test_delete_device_removes_overrides_and_memberships(client, db, parent_head
     assert client.delete(f"/api/v1/devices/{d.id}", headers=parent_headers).status_code == 200
     assert db.query(Override).count() == 0 and db.query(Device).count() == 0
     got = client.get("/api/v1/groups", headers=parent_headers).json()
-    assert got == [{"id": g["id"], "name": "G", "device_ids": []}]
+    assert got == [
+        {"id": g["id"], "name": "G", "device_ids": [], "icon": "devices", "chore_lock": True}
+    ]
 
 
 def test_delete_group_removes_rule_targets(client, db, parent_headers):
@@ -422,3 +424,46 @@ def test_run_detail_kid_forbidden(client, db, parent, kid, kid_headers):
 
     r = client.get(f"/api/v1/chores/{run.id}", headers=kid_headers)
     assert r.status_code == 403
+
+
+def test_group_icon_and_chore_lock(client, parent_headers):
+    r = client.post(
+        "/api/v1/groups",
+        json={"name": "TVs", "icon": "tv", "chore_lock": False},
+        headers=parent_headers,
+    ).json()
+    assert r["icon"] == "tv" and r["chore_lock"] is False
+
+
+def test_group_patch_keeps_icon(client, db, parent_headers):
+    d = mkdev(db)
+    g = client.post(
+        "/api/v1/groups",
+        json={"name": "TVs", "icon": "tv", "chore_lock": False},
+        headers=parent_headers,
+    ).json()
+    r = client.patch(
+        f"/api/v1/groups/{g['id']}",
+        json={"name": "Screens", "device_ids": [d.id]},
+        headers=parent_headers,
+    ).json()
+    assert r["icon"] == "tv" and r["chore_lock"] is False and r["name"] == "Screens"
+
+
+def test_family_chores_lock(client, parent_headers):
+    assert client.get("/api/v1/family", headers=parent_headers).json()["chores_lock"] is True
+    client.patch("/api/v1/family", json={"chores_lock": False}, headers=parent_headers)
+    assert client.get("/api/v1/family", headers=parent_headers).json()["chores_lock"] is False
+
+
+def test_device_exempt_patch(client, db, parent_headers):
+    d = mkdev(db)
+
+    def got():
+        return client.get("/api/v1/devices", headers=parent_headers).json()[0]
+
+    assert got()["exempt"] is False
+    client.patch(f"/api/v1/devices/{d.id}", json={"exempt": True}, headers=parent_headers)
+    assert got()["exempt"] is True
+    client.patch(f"/api/v1/devices/{d.id}", json={"name": "New"}, headers=parent_headers)
+    assert got()["exempt"] is True and got()["name"] == "New"
