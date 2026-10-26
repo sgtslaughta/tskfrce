@@ -220,9 +220,9 @@ Sections: **Family, Hours, Chore types, Notifications, Appearance, GIFs, Parents
 moved to Rewards; see errata).
 - **Hours:** pattern timeline; one texture per kind, drawn in dark ink over the accent:
   School nights = diagonal stripes, Weekends = solid, Holidays = dots, Summer = vertical lines,
-  Per child = crosshatch + kid initial, **Per group = horizontal lines**. Legend + overlap order
-  **Per child › Holiday › Summer › Weekend › School night** (per group sits with per child; see
-  open item). "Today: School night" in the header. **Add holiday**, **Add window**, edit per row.
+  Per child = crosshatch + kid initial, **Per group = horizontal lines**. Legend + overlap line
+  (owner decision 2026-10-26): **Holiday and Summer replace everyday hours. Hours for a child,
+  their groups and Everyone all apply together** (they intersect). "Today: School night" in the header. **Add holiday**, **Add window**, edit per row.
   Rule: lock until today's chores are done.
 - **Notifications:** places (Apprise URLs) with name, masked URL, Test, on/off switch, event
   chips per place; quiet hours with "security alerts still send"; app address for links.

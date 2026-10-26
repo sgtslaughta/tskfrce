@@ -180,3 +180,26 @@ def test_mixed_category_windows_become_other(old_db):
     with Session(create_engine(url)) as db:
         res = resolve(load(db), {1}, set(), date(2026, 10, 26))
     assert _allowing(res.allowed_sets, res.off, datetime(2026, 10, 26, 7, 30))
+
+
+def test_migrated_kid_and_group_windows_both_restrict(old_db):
+    """Upgrade: kid 1 has 07-21 daily, group 1 has school nights 06-08 + 15-20: both apply."""
+    from datetime import date, datetime
+
+    from app.lock.hours import _allowing, load, resolve
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import Session
+
+    path, url = old_db
+    alembic(url, "upgrade", A)
+    with Session(create_engine(url)) as db:
+        res = resolve(load(db), {1}, {1}, date(2026, 10, 26))  # Monday
+
+    def ok(h, m=0):
+        return _allowing(res.allowed_sets, res.off, datetime(2026, 10, 26, h, m))
+
+    assert not ok(6, 30)  # group yes, kid not yet
+    assert ok(7, 30)
+    assert not ok(10)  # kid yes, group no
+    assert ok(16)
+    assert not ok(20, 30)  # kid yes, group closed

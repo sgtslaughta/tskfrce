@@ -107,22 +107,13 @@ export function HoursSection() {
           <span className="ph-p2">
             <span className="sq pt pt-holi" aria-hidden="true" />
             <span className="sq pt pt-summer" aria-hidden="true" />
-            Holiday and Summer
-          </span>
-          <span className="ph-sep" aria-hidden="true">{' › '}</span>
+            Holiday and Summer replace everyday hours.
+          </span>{' '}
           <span className="ph-p2">
             <span className="sq pt pt-kid" aria-hidden="true" />
-            Per child
-          </span>
-          <span className="ph-sep" aria-hidden="true">{' › '}</span>
-          <span className="ph-p2">
             <span className="sq pt pt-group" aria-hidden="true" />
-            Per group
-          </span>
-          <span className="ph-sep" aria-hidden="true">{' › '}</span>
-          <span className="ph-p2">
             <span className="sq pt pt-week" aria-hidden="true" />
-            Everyone
+            Hours for a child, their groups and Everyone all apply together.
           </span>
         </div>
       </div>

@@ -78,12 +78,6 @@ def _pin(r: RuleView, day: date, overnight_only: bool) -> tuple[Window, ...]:
     )
 
 
-def _rank(r: RuleView, keys: set) -> tuple[int, int, int]:
-    t = 0 if any(k[0] == "kid" for k in keys) else 1 if any(k[0] == "group" for k in keys) else 2
-    tier = 0 if r.category in ("holiday", "summer") else 1  # date-range rules always win
-    return (tier, t, CATEGORY_RANK[r.category])
-
-
 def _keys(r: RuleView, p: tuple[str, int], group_ids: set[int]) -> set:
     keys = {("group", g) for g in r.group_ids & group_ids}
     if p[0] == "kid":
@@ -94,15 +88,27 @@ def _keys(r: RuleView, p: tuple[str, int], group_ids: set[int]) -> set:
     return keys
 
 
-def _best(cands: list) -> list:
-    if not cands:
-        return []
-    best = min(_rank(r, k) for r, k in cands)
-    return [(r, k) for r, k in cands if _rank(r, k) == best]
+def _pick(cands: list) -> dict:
+    """Rules in force per key: Holiday/Summer replace everyday rules; within a key the
+    best category wins (same-category rules union). Different keys all apply."""
+    if any(r.category in ("holiday", "summer") for r, _ in cands):
+        cands = [(r, k) for r, k in cands if r.category in ("holiday", "summer")]
+    by_key: dict = {}
+    for r, keys in cands:
+        for k in keys:
+            by_key.setdefault(k, []).append(r)
+    return {
+        k: [
+            r for r in rs if CATEGORY_RANK[r.category] == min(CATEGORY_RANK[x.category] for x in rs)
+        ]
+        for k, rs in by_key.items()
+    }
 
 
 def resolve(rules, owner_ids: set[int], group_ids: set[int], d: date) -> Resolved:
     """Hours for a device on local date `d`, resolved per owner and intersected.
+
+    Holiday/Summer rules replace everyday ones; kid, group and Everyone rules all apply.
 
     Fails closed: a principal with rules in range but none for today is blocked all day.
     """
@@ -130,18 +136,21 @@ def resolve(rules, owner_ids: set[int], group_ids: set[int], d: date) -> Resolve
         allowed = [(r, k) for r, k in mine if r.kind == "allowed"]
         if not any(in_range(r, d) for r, _ in allowed):
             continue  # no hours set for this principal: unrestricted
-        today = _best([(r, k) for r, k in allowed if active_on(r, d)])
-        tail = [
-            w
-            for r, _ in _best([(r, k) for r, k in allowed if active_on(r, y)])
-            for w in _pin(r, y, True)
-        ]
-        by_key: dict = {}
-        for r, keys in today:
-            for k in keys:
-                by_key.setdefault(k, []).extend(_pin(r, d, False))
-        mine_sets = [tuple(v + tail) for v in by_key.values()] or [tuple(tail)]
-        sets.extend(mine_sets)
+        today = {
+            k: [w for r in rs for w in _pin(r, d, False)]
+            for k, rs in _pick([(r, k) for r, k in allowed if active_on(r, d)]).items()
+        }
+        tail = {
+            k: ws
+            for k, rs in _pick([(r, k) for r, k in allowed if active_on(r, y)]).items()
+            if (ws := [w for r in rs for w in _pin(r, y, True)])
+        }
+        # a tail whose key has no rule today only extends (it is yesterday's late night)
+        extra = [w for k, ws in tail.items() if k not in today for w in ws]
+        if today:
+            sets.extend(tuple(ws + tail.get(k, []) + extra) for k, ws in today.items())
+        else:
+            sets.extend([tuple(ws) for ws in tail.values()] or [()])
     return Resolved(tuple(sets), tuple(free), tuple(off))
 
 

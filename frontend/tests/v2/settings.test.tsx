@@ -136,7 +136,9 @@ describe('Hours pane', () => {
   test('shows today and the precedence line', async () => {
     wrap(<SettingsPage />)
     expect(await screen.findByText((_, el) => el?.textContent === 'Today: School night' && el.tagName === 'SPAN')).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: 'When rules overlap' }).textContent).toContain('Holiday and Summer › Per child › Per group › Everyone')
+    expect(screen.getByRole('group', { name: 'When rules overlap' }).textContent).toContain(
+      'Holiday and Summer replace everyday hours. Hours for a child, their groups and Everyone all apply together.',
+    )
   })
 
   test('chores switch patches chores_lock', async () => {

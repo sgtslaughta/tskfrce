@@ -57,7 +57,6 @@
 [data-look='parent'] .ph-prec { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 2px; color: var(--p-sub); font-size: 12px; }
 [data-look='parent'] .ph-p2 { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px 3px 4px; border: 1px solid var(--p-line); border-radius: 999px; color: var(--p-ink); font-weight: 600; white-space: nowrap; }
 [data-look='parent'] .ph-p2 .sq { width: 14px; height: 14px; }
-[data-look='parent'] .ph-sep { color: var(--p-ink); font-size: 17px; line-height: 1; }
 [data-look='parent'] .ph-p2 .sq + .sq { margin-left: -2px; }
 
 /* ── switch rows (mockup .sw: ink track, accent knob when on) ────────────── */

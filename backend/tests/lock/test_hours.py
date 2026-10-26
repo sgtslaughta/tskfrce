@@ -71,13 +71,36 @@ def test_summer_beats_everyday():
     assert spans(r) == (t(summer),)
 
 
-def test_kid_beats_group_beats_everyone_same_tier():
-    kid = rule(1, category="weekend", times=(("10:00", "11:00"),), kids=[1])
-    grp = rule(2, category="weekend", times=(("11:00", "12:00"),), groups=[5])
-    every = rule(3, category="weekend", times=(("12:00", "13:00"),), everyone=True)
-    assert spans(resolve([every, grp, kid], {1}, {5}, D)) == (t(kid),)
-    assert spans(resolve([every, grp], {1}, {5}, D)) == (t(grp),)
-    assert spans(resolve([every], {1}, {5}, D)) == (t(every),)
+def test_kid_group_and_everyone_all_restrict_same_tier():
+    kid = rule(1, category="weekend", times=(("10:00", "12:00"),), kids=[1])
+    grp = rule(2, category="weekend", times=(("11:00", "13:00"),), groups=[5])
+    every = rule(3, category="weekend", times=(("09:00", "11:30"),), everyone=True)
+    r = resolve([every, grp, kid], {1}, {5}, D)
+    assert sorted(spans(r)) == sorted((t(kid), t(grp), t(every)))
+    assert blocked_at(r, datetime(2026, 12, 25, 10, 30))  # group not open yet
+    assert not blocked_at(r, datetime(2026, 12, 25, 11, 15))
+    assert blocked_at(r, datetime(2026, 12, 25, 11, 45))
+
+
+def test_kid_and_group_school_nights_intersect():
+    thu = date(2026, 12, 24)
+    kid = rule(1, category="school_night", days="01236", times=(("18:00", "20:00"),), kids=[1])
+    grp = rule(2, category="school_night", days="01236", times=(("19:00", "21:00"),), groups=[5])
+    r = resolve([kid, grp], {1}, {5}, thu)
+    for hh, mm, ok in ((18, 30, False), (19, 0, True), (19, 59, True), (20, 30, False)):
+        assert blocked_at(r, datetime(2026, 12, 24, hh, mm)) is not ok
+
+
+def test_family_holiday_beats_kid_and_group_everyday():
+    thu = date(2026, 12, 24)
+    hol = rule(
+        1, category="holiday", times=(("08:00", "23:00"),), everyone=True, start=thu, end=thu
+    )
+    kid = rule(2, category="school_night", days="01236", times=(("18:00", "20:00"),), kids=[1])
+    grp = rule(3, category="school_night", days="01236", times=(("19:00", "21:00"),), groups=[5])
+    r = resolve([kid, grp, hol], {1}, {5}, thu)
+    assert spans(r) == (t(hol),)
+    assert not blocked_at(r, datetime(2026, 12, 24, 10, 0))
 
 
 def test_holiday_beats_school_night():
@@ -88,10 +111,13 @@ def test_holiday_beats_school_night():
     assert spans(resolve([school, holiday], {1}, set(), D)) == (t(holiday),)
 
 
-def test_group_below_kid():
-    kid = rule(1, times=(("10:00", "11:00"),), kids=[1])
-    grp = rule(2, times=(("11:00", "12:00"),), groups=[5])
-    assert spans(resolve([grp, kid], {1}, {5}, D)) == (t(kid),)
+def test_group_and_kid_both_restrict():
+    kid = rule(1, times=(("10:00", "12:00"),), kids=[1])
+    grp = rule(2, times=(("11:00", "13:00"),), groups=[5])
+    r = resolve([grp, kid], {1}, {5}, D)
+    assert blocked_at(r, datetime(2026, 12, 25, 10, 30))
+    assert not blocked_at(r, datetime(2026, 12, 25, 11, 30))
+    assert blocked_at(r, datetime(2026, 12, 25, 12, 30))
 
 
 def test_two_owners_intersect():
