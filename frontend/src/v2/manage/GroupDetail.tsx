@@ -3,7 +3,7 @@ import { useDisclosure } from '@mantine/hooks'
 import { useDeleteGroup, useSaveGroup } from '@/v2/hooks/useDevices'
 import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Icon } from '@/v2/parent/Icon'
-import type { Device, Group, Kid, TimeWindow } from '@/v2/types'
+import type { Device, Group, HourRule, Kid } from '@/v2/types'
 import { ActionButton } from './ActionButton'
 import { ConfirmDelete } from './ConfirmDelete'
 import { HoursTimeline } from './HoursTimeline'
@@ -17,7 +17,7 @@ interface Props {
   devices: Device[]
   kids: Kid[]
   groups?: Group[]
-  windows?: TimeWindow[]
+  rules?: HourRule[]
   /** Select a group, or null to close the detail. */
   onSelect: (id: number | null) => void
   onRequestOverride: (req: { kind: string; id: number; action: string }) => void
@@ -29,7 +29,7 @@ interface Props {
  * Group editor. An existing group saves as you go (name on blur, members on tap);
  * a new group is a small form with Create / Cancel.
  */
-export function GroupDetail({ group, devices, kids, groups, windows, onSelect, onRequestOverride, pendingAction = null }: Props) {
+export function GroupDetail({ group, devices, kids, groups, rules, onSelect, onRequestOverride, pendingAction = null }: Props) {
   const save = useSaveGroup()
   const del = useDeleteGroup()
   const once = useSingleFlight()
@@ -142,13 +142,13 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
           )}
         </section>
 
-        {group && windows && (
+        {group && rules && (
           <section className="pk-panel pk-span" aria-label="Hours">
             <h3>
               <Icon name="schedule" size={18} />
               Hours for {group.name}
             </h3>
-            <HoursTimeline windows={windows.filter((w) => w.group_id === group.id)} kids={kids} groups={groups ?? []} />
+            <HoursTimeline rules={rules.filter((r) => r.everyone || r.group_ids.includes(group.id))} kids={kids} groups={groups ?? []} />
           </section>
         )}
       </div>

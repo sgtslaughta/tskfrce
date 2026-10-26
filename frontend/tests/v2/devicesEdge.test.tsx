@@ -139,7 +139,7 @@ describe('GroupDetail with no devices', () => {
   const empty: Group = { id: 3, name: 'Empty group', device_ids: [] }
 
   test('says so, hides the open/locked chips and disables lock, unlock and back-to-schedule', () => {
-    render(wrap(<GroupDetail group={empty} devices={[dev()]} kids={kids} groups={[empty]} windows={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
+    render(wrap(<GroupDetail group={empty} devices={[dev()]} kids={kids} groups={[empty]} rules={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
     expect(screen.getByText('No devices in this group yet. Tap a device to add it.')).toBeTruthy()
     expect(screen.getByText('0 devices')).toBeTruthy()
     expect(screen.queryByText('0 open')).toBeNull()
@@ -148,7 +148,7 @@ describe('GroupDetail with no devices', () => {
 
   test('Create group on a new group sends one POST even when mashed', async () => {
     apiMock.mockImplementation(() => new Promise(() => {}))
-    render(wrap(<GroupDetail devices={[dev({ name: 'Switch' })]} kids={kids} groups={[]} windows={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
+    render(wrap(<GroupDetail devices={[dev({ name: 'Switch' })]} kids={kids} groups={[]} rules={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
     await userEvent.type(screen.getByLabelText('Group name'), 'Twins')
     await userEvent.click(screen.getByRole('button', { name: 'Switch' }))
     await userEvent.dblClick(screen.getByRole('button', { name: 'Create group' }))
@@ -158,7 +158,7 @@ describe('GroupDetail with no devices', () => {
   })
 
   test('tapping a device saves the group with exactly that member', async () => {
-    render(wrap(<GroupDetail group={empty} devices={[dev({ name: 'Switch' })]} kids={kids} groups={[empty]} windows={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
+    render(wrap(<GroupDetail group={empty} devices={[dev({ name: 'Switch' })]} kids={kids} groups={[empty]} rules={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
     await userEvent.click(screen.getByRole('button', { name: 'Switch' }))
     expect(apiMock).toHaveBeenCalledWith('/groups/3', { method: 'PATCH', body: { name: 'Empty group', device_ids: [1] } })
   })

@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals'
-import { CATEGORIES, KINDS, daysLabel, presetDays, rangeLabel, ruleTexture, segments, sortRules, whoLabel } from '@/v2/manage/hoursMeta'
+import { CATEGORIES, KINDS, datesLabel, daysLabel, presetDays, rangeLabel, ruleTexture, segments, sortRules, whoLabel } from '@/v2/manage/hoursMeta'
 import type { HourRule } from '@/v2/types'
 
 const rule = (o: Partial<HourRule>): HourRule => ({
@@ -35,6 +35,22 @@ describe('hoursMeta', () => {
     expect(ruleTexture(rule({ category: 'holiday' }))).toBe('pt-holi')
   })
 
+  test('daysLabel never mislabels: Sun-first ranges like mockup 02', () => {
+    expect(daysLabel('0123456')).toBe('Every day')
+    expect(daysLabel('01236')).toBe('Sun–Thu')
+    expect(daysLabel('45')).toBe('Fri–Sat')
+    expect(daysLabel('56')).toBe('Sat–Sun')
+    expect(daysLabel('024')).toBe('Mon, Wed, Fri')
+    expect(daysLabel('6')).toBe('Sun')
+    expect(daysLabel('')).toBe('No days')
+  })
+
+  test('datesLabel', () => {
+    expect(datesLabel('2026-12-20', '2027-01-03')).toBe('Dec 20 – Jan 3')
+    expect(datesLabel('2026-06-15', '2026-08-31')).toBe('Jun 15 – Aug 31')
+    expect(datesLabel('2026-11-26', '2026-11-26')).toBe('Nov 26')
+  })
+
   test('presetDays', () => {
     expect(presetDays('school_night')).toBe('01236')
     expect(presetDays('weekend')).toBe('45')
@@ -53,7 +69,7 @@ describe('hoursMeta', () => {
   test('meta tables and helpers', () => {
     expect(CATEGORIES.map((c) => c.key)).toEqual(['school_night', 'weekend', 'holiday', 'summer', 'other'])
     expect(KINDS.find((k) => k.key === 'off')?.label).toBe('Internet off')
-    expect(daysLabel('01234')).toBe('Weekdays')
+    expect(daysLabel('01234')).toBe('Mon–Fri')
     expect(segments('22:00', '02:00')).toHaveLength(2)
   })
 })

@@ -1,4 +1,4 @@
-/** Shapes of the v2 backend responses (backend/app/api/{family,kid,devices,kids,windows,chores,setup}.py). */
+/** Shapes of the v2 backend responses (backend/app/api/{family,kid,devices,kids,hours,chores,setup}.py). */
 
 export type ChoreState = 'done' | 'needs_you' | 'todo' | 'skipped'
 export type DeviceStatus = 'unassigned' | 'assigned' | 'guest'
@@ -68,17 +68,6 @@ export interface Kid {
   username: string
   avatar: string | null
   has_pin: boolean
-}
-
-/** GET /windows item. days: digits 0 (Mon)..6 (Sun); start/end "HH:MM". */
-export interface TimeWindow {
-  id: number
-  kind: 'allowed' | 'free'
-  days: string
-  start: string
-  end: string
-  kid_id: number | null
-  group_id: number | null
 }
 
 /** GET/PATCH /family */

@@ -15,16 +15,30 @@ export const KINDS: { key: RuleKind; label: string; times: string }[] = [
   { key: 'off', label: 'Internet off', times: 'Times off' },
 ]
 
-const DAY = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
+const SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+/** Digits in display order: Sunday first (0 = Monday). */
+export const SUN_FIRST = [6, 0, 1, 2, 3, 4, 5]
 
-/** "Every day" / "Weekdays" / "Weekends" / "M W F" from a days string like "01234" (0 = Monday). */
+/** "Every day", "Sun–Thu", "Fri–Sat", else "Mon, Wed, Fri" (Sun-first; days "01236", 0 = Monday). */
 export function daysLabel(days: string): string {
-  const set = Array.from(new Set(days.split(''))).sort().join('')
-  if (set === '0123456') return 'Every day'
-  if (set === '01234') return 'Weekdays'
-  if (set === '56') return 'Weekends'
-  return set.split('').map((d) => DAY[Number(d)]).join(' ')
+  const on = SUN_FIRST.map((d) => days.includes(String(d)))
+  const n = on.filter(Boolean).length
+  if (n === 7) return 'Every day'
+  if (n === 0) return 'No days'
+  // one unbroken run (wrapping past Saturday) reads as a range: start right after an off day
+  const from = on.findIndex((v, i) => v && !on[(i + 6) % 7])
+  const run = Array.from({ length: n }, (_, k) => on[(from + k) % 7]).every(Boolean)
+  const name = (i: number) => SHORT[SUN_FIRST[i % 7]]
+  if (run && n > 1) return `${name(from)}–${name(from + n - 1)}`
+  return SUN_FIRST.filter((_, i) => on[i]).map((d) => SHORT[d]).join(', ')
 }
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const day = (iso: string) => `${MONTHS[Number(iso.slice(5, 7)) - 1]} ${Number(iso.slice(8, 10))}`
+
+/** "Dec 20 – Jan 3" from ISO dates (no time zone shifts: read as text). */
+export const datesLabel = (start: string, end: string): string =>
+  start === end ? day(start) : `${day(start)} – ${day(end)}`
 
 const minutes = (hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number)
