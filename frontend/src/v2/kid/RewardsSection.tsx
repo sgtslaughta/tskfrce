@@ -5,7 +5,7 @@ import { useKidRewards, useRedeem } from '../hooks/useKidRewards'
 
 const MINUTES = [15, 30, 45, 60, 75, 90, 105, 120].map((m) => ({ value: String(m), label: `${m} minutes` }))
 
-export function RewardsSection({ onExpired }: { onExpired: () => void }) {
+export function RewardsSection({ onExpired, heading = 'Rewards' }: { onExpired: () => void; heading?: string }) {
   const { data: d } = useKidRewards(onExpired)
   const redeem = useRedeem(onExpired)
   const [minutes, setMinutes] = useState('30')
@@ -17,7 +17,7 @@ export function RewardsSection({ onExpired }: { onExpired: () => void }) {
     <StickerCard>
       <div style={{ display: 'grid', gap: 12 }}>
         <h2 style={{ margin: 0 }}>
-          Rewards · <span className="f-num">{d.balance}</span> points
+          {heading} · <span className="f-num">{d.balance}</span> points
         </h2>
         {d.screen_time_enabled && (
           <div style={{ display: 'grid', gap: 8 }}>

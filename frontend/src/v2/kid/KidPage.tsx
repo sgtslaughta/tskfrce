@@ -5,28 +5,20 @@ import { Button } from '@mantine/core'
 import { CANT_REACH } from '../api'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { Icon } from '../parent/Icon'
-import { PreviewProvider, useAsKid } from '../hooks/usePreview'
+import { PreviewProvider, setPreviewName, useAsKid } from '../hooks/usePreview'
 import { AuthBrand } from '../components/AuthBrand'
-import { ProgressHeader } from '../components/ProgressHeader'
-import { Bell } from '../components/Bell'
-import { LockBadge } from '../components/LockBadge'
 import { StickerCard } from '../components/StickerCard'
 import { ChatDock } from '../chat/ChatDock'
-import { openChat } from '../chat/dock'
-import { useThreads } from '../hooks/useChat'
 import { useKids } from '../hooks/useKids'
 import { useKidSession, useKidToday, useMarkDone, loginMessage } from '../hooks/useKid'
 import { useLook } from '../parent/useLook'
 import type { KidWhoami } from '../types'
 import { AwardOverlay } from './AwardOverlay'
-import { KidChecklist } from './KidChecklist'
+import { KidApp } from './KidApp'
 import { KidIntroSwipe } from './KidIntroSwipe'
-import { FamilySection } from './FamilySection'
 import { KidPicker } from './KidPicker'
 import { Locker } from './Locker'
 import { PinPad } from './PinPad'
-import { RewardsSection } from './RewardsSection'
-import { UnlockedView } from './UnlockedView'
 
 type K = KidWhoami['kids'][number]
 
@@ -48,94 +40,67 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
   const [lockerOpen, setLockerOpen] = useState(false)
   const [introComplete, setIntroComplete] = useState(false)
   const preview = useAsKid() !== null
-  const threads = useThreads(!preview)
   const today = useKidToday(onExit)
   const done = useMarkDone(onExit)
   const d = today.data
-  const unread = Object.fromEntries(
-    (preview ? [] : threads.data?.threads ?? []).filter((t) => t.kind === 'chore').map((t) => [t.task_id, t.unread]),
-  )
   if (!d && today.isError)
     return (
-      <>
+      <Narrow>
         <Msg>{CANT_REACH}</Msg>
         <Button size="lg" onClick={() => today.refetch()}>
           Retry
         </Button>
-      </>
+      </Narrow>
     )
-  if (!d) return <Msg>Loading…</Msg>
+  if (!d)
+    return (
+      <Narrow>
+        <Msg>Loading…</Msg>
+      </Narrow>
+    )
   if (lockerOpen && d.progress)
     return (
-      <Locker
-        name={name ?? 'You'}
-        avatar={avatar ?? null}
-        level={d.progress.level}
-        title={d.progress.title}
-        onClose={() => setLockerOpen(false)}
-      />
-    )
-  const head = d.progress && (
-    <StickerCard>
-      <ProgressHeader name={name ?? 'You'} avatar={avatar ?? null} kid progress={d.progress} />
-      {!preview && (
-        <Button variant="default" size="md" mt="xs" onClick={() => setLockerOpen(true)}>
-          Customize
-        </Button>
-      )}
-    </StickerCard>
-  )
-  const switcher = canSwitch && <SwitchBtn onClick={onExit} />
-  if (!d.locked)
-    return (
-      <>
-        {head}
-        {!introComplete && !preview && <KidIntroSwipe onComplete={() => setIntroComplete(true)} />}
-        <UnlockedView points={d.points_balance} done={d.chores.filter((c) => c.state === 'done').length} />
-        <RewardsSection onExpired={onExit} />
-        <FamilySection meId={kidId} />
-        {!preview && <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />}
-        {switcher}
-      </>
+      <Narrow wide>
+        <Locker
+          name={name ?? 'You'}
+          avatar={avatar ?? null}
+          level={d.progress.level}
+          title={d.progress.title}
+          onClose={() => setLockerOpen(false)}
+        />
+      </Narrow>
     )
   return (
     <>
-      {head}
-      <StickerCard tone="red">
-        <div style={{ display: 'grid', justifyItems: 'center', gap: 8, padding: 12, textAlign: 'center' }}>
-          <LockBadge online={false} size={120} />
-          <h1 style={{ margin: 0, fontSize: 36 }}>Internet is paused</h1>
-          <p style={{ margin: 0, fontSize: 20 }}>Finish your chores to unlock.</p>
-        </div>
-      </StickerCard>
-      <StickerCard>
-        <h2 style={{ margin: '0 0 8px' }}>{d.progress || !name ? 'Your chores' : name}</h2>
-        <KidChecklist
-          chores={d.chores}
-          timezone={d.timezone}
-          onDone={preview ? undefined : (id) => done.mutate(id)}
-          busyId={done.isPending ? done.variables : null}
-          unread={preview ? undefined : unread}
-          onChat={preview ? undefined : (id) => openChat('chore', String(id))}
-        />
-      </StickerCard>
-      <RewardsSection onExpired={onExit} />
-      <FamilySection meId={kidId} />
+      <KidApp
+        d={d}
+        name={name ?? 'You'}
+        avatar={avatar ?? null}
+        kidId={kidId}
+        preview={preview}
+        onExit={onExit}
+        onLocker={() => setLockerOpen(true)}
+        canSwitch={canSwitch}
+        done={done}
+      >
+        {!d.locked && !introComplete && !preview && <KidIntroSwipe onComplete={() => setIntroComplete(true)} />}
+      </KidApp>
       {!preview && <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />}
-      {switcher}
+      {!preview && d.age_group !== 'little' && <ChatDock kid launcher={false} meId={kidId ?? null} />}
     </>
   )
 }
 
-const Shell = ({ children }: { children: React.ReactNode }) => (
+/** Narrow centred column for the sign-in, loading and locker screens. */
+const Narrow = ({ children, wide }: { children: React.ReactNode; wide?: boolean }) => (
   <main className="f-shell" style={{ minHeight: '100vh' }}>
-    <div className="f-main" style={{ maxWidth: 520 }}>
+    <div className={wide ? 'f-main' : 'f-main f-auth'} style={wide ? { maxWidth: 640 } : undefined}>
       {children}
     </div>
   </main>
 )
 
-/** Parent-only read-only look at a kid's screen (/kid?as=<id>). */
+/** Parent-only read-only look at a kid's screen (/kid?as=<id>), full width like the real one (08 phone 3 bar). */
 function KidPreview({ id }: { id: number }) {
   useLook('kid')
   const router = useRouter()
@@ -147,22 +112,23 @@ function KidPreview({ id }: { id: number }) {
     window.addEventListener('keydown', esc)
     return () => window.removeEventListener('keydown', esc)
   }, [router, id])
+  useEffect(() => {
+    setPreviewName(kid?.full_name ?? null)
+    return () => setPreviewName(null)
+  }, [kid?.full_name])
   return (
     <PreviewProvider value={id}>
-      <main className="f-shell" style={{ minHeight: '100vh' }}>
-        <div className="f-main" style={{ maxWidth: 520 }}>
-          <div className="kid-preview-bar" role="status" style={{ backgroundColor: '#292928', color: '#f4f4f2', padding: '8px 16px', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: 16 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 14 }}>
-              <span className="ms" style={{ fontSize: 20 }}>visibility</span>
-              {`Viewing as ${name} · preview`}
-            </span>
-            <Button size="xs" variant="filled" color="var(--p-acc)" style={{ color: '#292928', flex: 'none' }} leftSection={<Icon name="arrow_back" size={14} />} onClick={() => router.push(backFrom(router.query.back, id))}>
-              Back to parent
-            </Button>
-          </div>
-          <Session name={kid?.full_name ?? undefined} avatar={kid?.avatar} kidId={id} onExit={() => {}} canSwitch={false} />
+      <div className="k-preview">
+        <div className="k-pv" role="status" style={{ backgroundColor: '#292928' }}>
+          <Icon name="visibility" />
+          <span>{`Viewing as ${name} · preview`}</span>
+          <button type="button" onClick={() => router.push(backFrom(router.query.back, id))}>
+            <Icon name="arrow_back" />
+            Back to parent
+          </button>
         </div>
-      </main>
+        <Session name={kid?.full_name ?? undefined} avatar={kid?.avatar} kidId={id} onExit={() => {}} canSwitch={false} />
+      </div>
     </PreviewProvider>
   )
 }
@@ -170,7 +136,12 @@ function KidPreview({ id }: { id: number }) {
 /** Gate: only a logged-in parent gets the preview; anyone else sees the normal kid screen. */
 function PreviewGate({ id }: { id: number }) {
   const { user, isLoading } = useUnifiedAuth()
-  if (isLoading) return <Shell><Msg>Loading…</Msg></Shell>
+  if (isLoading)
+    return (
+      <Narrow>
+        <Msg>Loading…</Msg>
+      </Narrow>
+    )
   return user?.role === 'parent' ? <KidPreview id={id} /> : <KidScreen />
 }
 
@@ -211,7 +182,6 @@ function KidScreen() {
 
   let body
   if (!ready || (!authed && whoami.isPending)) body = <Msg>Loading…</Msg>
-  else if (authed) body = <Session name={who?.full_name ?? undefined} avatar={who?.avatar} kidId={who?.id ?? kidId} onExit={exit} canSwitch={kids.length > 1} />
   else if (whoami.isError) body = <Msg>{CANT_REACH}</Msg>
   else if (!whoami.data?.device) body = <Msg>This device isn&apos;t set up yet. Ask a parent to add it.</Msg>
   else if (!kids.length) body = <Msg>No kid is set up on this device. Ask a parent to add one.</Msg>
@@ -244,18 +214,13 @@ function KidScreen() {
       <Msg>Loading…</Msg>
     )
 
+  if (authed) return <Session name={who?.full_name ?? undefined} avatar={who?.avatar} kidId={who?.id ?? kidId} onExit={exit} canSwitch={kids.length > 1} />
   return (
     <main className="f-shell" style={{ minHeight: '100vh' }}>
-      <div className={authed ? 'f-main' : 'f-main f-auth'} style={{ maxWidth: 520 }}>
-        {!authed && <AuthBrand />}
-        {authed && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-            <Bell kid />
-          </div>
-        )}
+      <div className="f-main f-auth">
+        <AuthBrand />
         {body}
       </div>
-      {authed && <ChatDock kid meId={who?.id ?? kidId ?? null} />}
     </main>
   )
 }

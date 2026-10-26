@@ -122,6 +122,7 @@ describe('kid page family', () => {
       return []
     })
     wrap(<KidPage />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Me' }))
     expect(await screen.findByText('Lv 2 · Rookie')).toBeInTheDocument()
     await userEvent.click(await screen.findByRole('button', { name: /^Ben/ }))
     await waitFor(() => expect(screen.getByText('On Fire')).toBeInTheDocument())

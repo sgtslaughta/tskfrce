@@ -35,6 +35,7 @@ type Routes = Record<string, () => unknown>
 function route(r: Routes) {
   apiMock.mockImplementation(async (p, i) => {
     const h = r[`${i?.method ?? 'GET'} ${p}`]
+    if (!h && p.endsWith('/seen')) return {}
     if (!h) throw new Error(`unrouted ${p}`)
     const v = h()
     if (v instanceof Error) throw v
@@ -42,6 +43,8 @@ function route(r: Routes) {
   })
 }
 const calls = (p: string) => apiMock.mock.calls.filter((c) => c[0] === p)
+const openDishes = async () => userEvent.click(await screen.findByRole('button', { name: 'Open Dishes' }))
+const doneBtn = () => screen.getByRole('button', { name: /I'm done!/ })
 
 function renderKid() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -81,8 +84,8 @@ describe('kid lock screen', () => {
     expect(await screen.findByText('Internet is paused')).toBeInTheDocument()
     expect(apiMock).toHaveBeenCalledWith('/kid/login', { method: 'POST', body: { kid_id: 1 }, kid: true })
     expect(localStorage.getItem(KID_TOKEN_KEY)).toBe('tok')
-    expect(screen.getByText('Waiting for Mom or Dad')).toBeInTheDocument()
-    expect(screen.getByText('+5')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Open Dishes' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Open Bed' })).toBeInTheDocument()
   })
 
   test('two kids show the picker and never auto-pick', async () => {
@@ -135,7 +138,8 @@ describe('kid lock screen', () => {
       'POST /kid/chores/7/done': () => ({ id: 7 }),
     })
     renderKid()
-    await userEvent.click(await screen.findByRole('button', { name: 'Mark done' }))
+    await openDishes()
+    await userEvent.click(doneBtn())
     await waitFor(() => expect(calls('/kid/today').length).toBeGreaterThan(1))
     expect(apiMock).toHaveBeenCalledWith('/kid/chores/7/done', { method: 'POST', kid: true })
     expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Marked done' }))
@@ -152,9 +156,11 @@ describe('kid lock screen', () => {
     renderKid()
     expect(await screen.findByText('Internet is paused')).toBeInTheDocument()
     locked = false
-    await userEvent.click(screen.getByRole('button', { name: 'Mark done' }))
-    expect(await screen.findByText("You're online")).toBeInTheDocument()
-    expect(screen.getByText('1 chore done today')).toBeInTheDocument()
+    await openDishes()
+    await userEvent.click(doneBtn())
+    await userEvent.click(await screen.findByRole('button', { name: /All chores/ }))
+    expect(await screen.findByText('Internet is on')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Open Dishes' })).toBeInTheDocument()
   })
 
   test('kid 401 clears the token and restarts at whoami', async () => {
@@ -194,7 +200,7 @@ describe('kid lock screen', () => {
     localStorage.setItem(KID_TOKEN_KEY, 'tok')
     route({ 'GET /kid/whoami': () => whoami([ana]), 'GET /kid/today': () => today() })
     renderKid()
-    expect(await screen.findByRole('heading', { name: 'Ana' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Hi Ana!' })).toBeInTheDocument()
   })
 
   test('mark-done 401 restarts at whoami', async () => {
@@ -205,7 +211,8 @@ describe('kid lock screen', () => {
       'POST /kid/chores/7/done': () => new AuthError('Please log in again.', true),
     })
     renderKid()
-    await userEvent.click(await screen.findByRole('button', { name: 'Mark done' }))
+    await openDishes()
+    await userEvent.click(doneBtn())
     expect(await screen.findByRole('button', { name: /Ben/ })).toBeInTheDocument()
     expect(localStorage.getItem(KID_TOKEN_KEY)).toBeNull()
   })
@@ -247,7 +254,8 @@ describe('kid chore extras', () => {
   test('Mark done is disabled until every step is ticked', async () => {
     withChores([{ ...base, subtasks: sub(false) }])
     renderKid()
-    expect(await screen.findByRole('button', { name: 'Mark done' })).toBeDisabled()
+    await openDishes()
+    expect(doneBtn()).toBeDisabled()
     await userEvent.click(screen.getByRole('checkbox', { name: 'Wipe table' }))
     expect(apiMock).toHaveBeenCalledWith('/kid/chores/7/subtasks/11', { method: 'POST', body: { done: true }, kid: true })
   })
@@ -255,25 +263,29 @@ describe('kid chore extras', () => {
   test('Mark done is enabled once all steps are ticked', async () => {
     withChores([{ ...base, subtasks: sub(true) }])
     renderKid()
-    expect(await screen.findByRole('button', { name: 'Mark done' })).toBeEnabled()
+    await openDishes()
+    expect(doneBtn()).toBeEnabled()
   })
 
   test('needs-photo chore keeps Mark done disabled until a photo exists', async () => {
     withChores([{ ...base, needs_photo: true, photo_count_current: 0 }])
     renderKid()
-    expect(await screen.findByRole('button', { name: 'Mark done' })).toBeDisabled()
+    await openDishes()
+    expect(doneBtn()).toBeDisabled()
   })
 
   test('photo with a current-attempt upload enables Mark done', async () => {
     withChores([{ ...base, needs_photo: true, photo_count_current: 2 }])
     renderKid()
-    expect(await screen.findByRole('button', { name: 'Mark done' })).toBeEnabled()
+    await openDishes()
+    expect(doneBtn()).toBeEnabled()
     expect(screen.getByText('2 photos added')).toBeInTheDocument()
   })
 
   test('upload posts FormData with file', async () => {
     withChores([{ ...base, needs_photo: true, photo_count_current: 0 }])
     renderKid()
+    await openDishes()
     const input = (await screen.findByLabelText('Add photo')) as HTMLInputElement
     const file = new File(['x'], 'p.jpg', { type: 'image/jpeg' })
     await userEvent.upload(input, file)
@@ -287,19 +299,15 @@ describe('kid chore extras', () => {
   test('sent-back chore shows the parent note', async () => {
     withChores([{ ...base, last_note: 'Do the pans too' }])
     renderKid()
+    await openDishes()
     expect(await screen.findByText('Sent back: Do the pans too')).toBeInTheDocument()
   })
 
   test('race taken by a sibling shows who and no Done button', async () => {
     withChores([{ ...base, state: 'needs_you', mode: 'race', taken_by: 'Maya' }])
     renderKid()
+    await openDishes()
     expect(await screen.findByText('Taken by Maya')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Mark done' })).toBeNull()
-  })
-
-  test('team chore is tagged', async () => {
-    withChores([{ ...base, mode: 'team' }])
-    renderKid()
-    expect(await screen.findByText('Team')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /I'm done!/ })).toBeNull()
   })
 })

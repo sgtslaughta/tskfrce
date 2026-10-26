@@ -35,7 +35,8 @@
 
 /* tiles (10 .tile) */
 .k-tiles { display: grid; grid-template-columns: 1fr; gap: 18px; }
-@media (min-width: 600px) { .k-tiles { grid-template-columns: repeat(2, 1fr); } }
+/* content width, not viewport: the 132px rail eats ≥ 768px viewports (KidApp .k-inner container) */
+@container k-main (min-width: 720px) { .k-tiles { grid-template-columns: repeat(2, 1fr); } }
 .k-tile {
   background: var(--k-card); border: 2px solid var(--k-line); border-radius: 20px; padding: 20px; display: flex;
   gap: 16px; align-items: center; cursor: pointer; min-height: 122px; transition: transform 0.1s; font: inherit;

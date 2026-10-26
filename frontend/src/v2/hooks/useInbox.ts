@@ -24,10 +24,12 @@ export interface Inbox {
 
 const key = (kid: boolean) => ['inbox', kid ? 'kid' : 'parent']
 
-/** Own notifications, refetched every 30 s, in the background too (OS notifications). */
-export const useInbox = (kid = false) =>
+/** Own notifications, refetched every 30 s, in the background too (OS notifications).
+ *  `enabled = false` never fetches (parent preview, Little mode). */
+export const useInbox = (kid = false, enabled = true) =>
   useQuery({
     queryKey: key(kid),
+    enabled,
     queryFn: () => api<Inbox>('/notifications', { kid }),
     refetchInterval: 30_000,
     refetchIntervalInBackground: true,

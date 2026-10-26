@@ -61,9 +61,10 @@ export const refOf = (t: Pick<ThreadSummary, 'kind' | 'task_id' | 'kid_id'>) =>
 const poll = (ms: number) => ({ refetchInterval: ms, refetchIntervalInBackground: false })
 
 /** GET /chat/threads: threads with unread counts, refreshed every 15 s while the tab is visible. */
-export const useThreads = (kid = false) =>
+export const useThreads = (kid = false, enabled = true) =>
   useQuery({
     queryKey: ['chat-threads', kid],
+    enabled,
     queryFn: () => api<{ total: number; threads: ThreadSummary[]; gifs_enabled?: boolean }>('/chat/threads', { kid }),
     ...poll(15_000),
   })

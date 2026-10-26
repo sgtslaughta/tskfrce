@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
@@ -127,5 +127,58 @@ describe('KidMode', () => {
     render(wrap(props({ d: today({ chores: [{ ...dog, deductions: [] }] }) })))
     await userEvent.click(screen.getByRole('button', { name: 'Open Feed the dog' }))
     expect(screen.queryByText('0')).not.toBeInTheDocument()
+  })
+
+  // moved from the v2 KidChecklist tests
+  const open = async (c: KidChore, over: Partial<KidToday> = {}) => {
+    render(wrap(props({ d: today({ chores: [c], ...over }) })))
+    await userEvent.click(screen.getByRole('button', { name: `Open ${c.title}` }))
+  }
+
+  test('step deadlines show in the step hints', async () => {
+    const soon = new Date(Date.now() + 3600e3).toISOString()
+    const past = new Date(Date.now() - 3600e3).toISOString()
+    const steps = [
+      { id: 1, title: 'Rinse', done: false, due_at: soon },
+      { id: 2, title: 'Dry', done: false, due_at: past },
+    ]
+    await open({ ...dog, deductions: [], subtasks: steps })
+    expect(screen.getByText(/^Do this next · by \d/)).toBeInTheDocument()
+    expect(screen.getByText(/^Any time · by \d/)).toBeInTheDocument()
+  })
+
+  test('step deadline is shown in the family time zone', async () => {
+    const steps = [{ id: 1, title: 'Rinse', done: false, due_at: '2099-01-01T00:00:00Z' }]
+    await open({ ...dog, deductions: [], subtasks: steps }, { timezone: 'Pacific/Auckland' })
+    expect(screen.getByText('Do this next · by 1:00 PM')).toBeInTheDocument()
+    expect(apiMock.mock.calls.some(([p]) => p === '/family')).toBe(false)
+  })
+
+  test('the note sheet presses the picked note and closes after a send', async () => {
+    await open(kitchen)
+    await userEvent.click(screen.getByRole('button', { name: /Tell Mom\/Dad/ }))
+    const b = await screen.findByRole('button', { name: 'Need help' })
+    await userEvent.click(b)
+    expect(b).toHaveAttribute('aria-pressed', 'true')
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
+    await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/kid/chores/1/note', expect.objectContaining({ method: 'POST' })))
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Need help' })).toBeNull())
+  })
+
+  test('a sent note shows as "Note sent"', async () => {
+    await open({ ...kitchen, note: { label: 'Need help', text: null, at: '', kid_name: 'Leo' } })
+    expect(screen.getByText('Note sent: Need help')).toBeInTheDocument()
+  })
+
+  test('a photo chore says why until a photo exists', async () => {
+    await open({ ...dog, deductions: [], needs_photo: true, photo_count_current: 0 })
+    expect(screen.getByRole('button', { name: /I'm done!/ })).toBeDisabled()
+    expect(screen.getByText('Add a photo first')).toBeInTheDocument()
+  })
+
+  test('a photo chore with a photo is ready', async () => {
+    await open({ ...dog, deductions: [], needs_photo: true, photo_count_current: 1 })
+    expect(screen.getByRole('button', { name: /I'm done!/ })).toBeEnabled()
+    expect(screen.queryByText('Add a photo first')).toBeNull()
   })
 })

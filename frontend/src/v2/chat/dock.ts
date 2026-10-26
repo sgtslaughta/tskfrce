@@ -1,6 +1,12 @@
 import { validRef, type ThreadKind } from '@/v2/hooks/useChat'
 
 export const OPEN_CHAT_EVENT = 'task4ce:open-chat'
+export const OPEN_CHAT_LIST_EVENT = 'task4ce:open-chat-list'
+
+/** Open the floating dock on its thread list (kid nav "Chat"). */
+export function openChatList(): void {
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(OPEN_CHAT_LIST_EVENT))
+}
 
 /** What a new message answers: a chore step or photo. `label` names it in the composer. */
 export type ChatReply = { step_id?: number; label: string }

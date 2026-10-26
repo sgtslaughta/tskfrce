@@ -88,13 +88,14 @@ test('chore model: type, chained steps, kid note, skip, deduction', async ({ pag
       await kp.goto('/kid')
       await kp.waitForTimeout(2500) // the pin pad takes the keyboard once it has hydrated
       await kp.keyboard.type('1234')
+      await kp.getByRole('button', { name: `Open ${choreName}` }).click()
       const step2 = kp.getByRole('checkbox', { name: 'Sweep the floor' })
       await expect(step2).toBeDisabled()
       await expect(kp.getByText('Unlocks after step 1')).toBeVisible()
       await expect(kp.getByRole('checkbox', { name: 'Sort the shelves' })).toBeEnabled()
 
       await cheer(kp)
-      await kp.getByRole('button', { name: 'Something wrong? Tell a parent' }).click()
+      await kp.getByRole('button', { name: 'Tell Mom/Dad' }).click()
       const sheet = kp.getByRole('dialog')
       await sheet.getByRole('button', { name: 'Too cold' }).click()
       const sent = kp.waitForResponse((r) => r.url().includes('/note'))
@@ -121,7 +122,7 @@ test('chore model: type, chained steps, kid note, skip, deduction', async ({ pag
         .toBe(true)
       await kp.reload()
       await cheer(kp)
-      await expect(kp.getByText("You're online")).toBeVisible()
+      await expect(kp.getByText('Internet is on')).toBeVisible()
 
       // 5. a new open chore; the parent deducts 5 (preset) with a reason and the kid sees who took what
       const third = await (await api.post('/api/proxy/chores/', { data: { title: thirdName, points: 10 } })).json()
@@ -140,6 +141,7 @@ test('chore model: type, chained steps, kid note, skip, deduction', async ({ pag
 
       await kp.reload()
       await cheer(kp)
+      await kp.getByRole('button', { name: `Open ${thirdName}` }).click()
       await expect(kp.getByText('Lab Parent took 5 points')).toBeVisible()
       await expect(kp.getByText('Left a mess')).toBeVisible()
     } finally {

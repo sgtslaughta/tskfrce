@@ -53,10 +53,9 @@ const renderKid = () =>
   )
 
 describe('kid chat', () => {
-  test('dock lists only what the API returns, with a summed unread badge', async () => {
+  test('the Chat nav item opens the dock list, with a summed unread badge', async () => {
     renderKid()
-    expect(await screen.findByTestId('dock-unread')).toHaveTextContent('5')
-    await userEvent.click(screen.getByRole('button', { name: /^Chat, 5 unread/ }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Chat, 5' }))
     const list = await screen.findByRole('list', { name: 'Conversations' })
     expect(list).toHaveTextContent('Family')
     expect(list).toHaveTextContent('Mom & Dad')
@@ -65,16 +64,19 @@ describe('kid chat', () => {
 
   test('chore chat link opens its thread with the kid token', async () => {
     renderKid()
-    await userEvent.click(await screen.findByRole('button', { name: /^Chat about Dishes/ }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Open Dishes' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Chat' }))
     await waitFor(() =>
       expect(apiMock).toHaveBeenCalledWith('/chat/threads/chore/7', expect.objectContaining({ kid: true })),
     )
     expect(await screen.findByRole('region', { name: 'Dishes' })).toBeInTheDocument()
   })
 
-  test('chore link shows its unread count', async () => {
+  test('the floating launcher is hidden: the nav has Chat', async () => {
     renderKid()
-    expect(await screen.findByRole('button', { name: 'Chat about Dishes, 4 unread' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Chat, 5' })).toBeInTheDocument()
+    expect(screen.queryByTestId('dock-unread')).toBeNull()
+    expect(screen.queryByRole('button', { name: /unread/ })).toBeNull()
   })
 
   test('a text-less note and a step reply render their label and quote', async () => {
@@ -84,7 +86,8 @@ describe('kid chat', () => {
       { ...base, id: 2, body: 'on it', step_title: 'Rinse' },
     ]
     renderKid()
-    await userEvent.click(await screen.findByRole('button', { name: /^Chat about Dishes/ }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Open Dishes' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Chat' }))
     expect(await screen.findByText('Note: Need help')).toBeInTheDocument()
     expect(screen.getByText(/Rinse/)).toBeInTheDocument()
   })
