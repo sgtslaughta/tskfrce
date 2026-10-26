@@ -327,3 +327,15 @@ def test_today_has_type_and_notes(client, db, parent, kid, kid_headers):
         "Ran out of time",
         "Can't do it today",
     ]
+
+
+def test_wrong_pin_logged_per_device(kc, db, kid):
+    from app.models.device_activity import DeviceEvent
+
+    kid.pin_hash = AuthService(db).get_password_hash("1234")
+    db.commit()
+    d = mkdev(db, kid)
+    for _ in range(2):
+        assert kc.post("/api/v1/kid/login", json={"kid_id": kid.id, "pin": "0"}).status_code == 401
+    (e,) = db.query(DeviceEvent).filter_by(kind="sign_in").all()
+    assert (e.device_id, e.count, e.kid_id) == (d.id, 2, kid.id)

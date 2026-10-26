@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 
 from sqlalchemy import func
+from sqlalchemy.dialects.sqlite import insert
 from sqlalchemy.orm import Session
 
 from app.lock.rules import DeviceFacts, block_reason, open_reason
@@ -49,6 +50,16 @@ def log(
     db.add(ev)
     db.flush()
     return ev
+
+
+def sample(db: Session, device: Device, now: datetime) -> None:
+    """Record that the box saw `device` in this 10-minute slot (once per slot)."""
+    slot = now.replace(minute=now.minute // 10 * 10, second=0, microsecond=0)
+    db.execute(
+        insert(DevicePresence)
+        .values(device_id=device.id, slot=slot, locked=device.blocked_since is not None)
+        .on_conflict_do_nothing()
+    )
 
 
 def _manual_fields(db: Session, device_id: int, now: datetime) -> dict:

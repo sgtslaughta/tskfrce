@@ -4,16 +4,22 @@ import hmac
 import ipaddress
 import re
 from datetime import UTC, datetime
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 from pydantic import BaseModel, Field, field_validator
+from sqlalchemy import func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.core.config import settings
+from app.lock import activity
 from app.lock.loop import trigger
-from app.lock.state import desired_blocked
+from app.lock.rules import block_reason
+from app.lock.schedule import local_now
+from app.lock.state import Prefetch, desired_blocked, device_facts
+from app.models.device_activity import DeviceEvent
 from app.models.family import get_family
 from app.models.lock import Device
 from app.services import inbox
@@ -77,6 +83,18 @@ class ResistingReport(BaseModel):
         return out
 
 
+class HitsReport(BaseModel):
+    hits: dict[str, Annotated[int, Field(ge=1, le=10000)]] = Field(max_length=1000)
+
+    @field_validator("hits")
+    @classmethod
+    def _macs(cls, v: dict[str, int]) -> dict[str, int]:
+        out = {m.strip().lower().replace("-", ":"): n for m, n in v.items()}
+        if not all(MAC_RE.match(m) for m in out):
+            raise ValueError("MAC address must look like aa:bb:cc:dd:ee:ff.")
+        return out
+
+
 def _apply(dev: Device, body: SeenReport, now: datetime) -> None:
     dev.ip, dev.last_seen = body.ip, now
     dev.ipv6 = body.ipv6
@@ -116,9 +134,31 @@ def devices_seen(body: SeenReport, db: Session = Depends(get_db)) -> dict:
     if new:
         trigger()
     else:
+        old_ip = dev.ip
         _apply(dev, body, now)
-        db.commit()
+        if old_ip is not None and old_ip != body.ip:
+            activity.log(db, dev.id, "address_change", now, detail=f"{old_ip} → {body.ip}")
+    if new and dev.hostname:
+        _note_new_address(db, dev, now)
+    activity.sample(db, dev, now)
+    db.commit()
     return {"id": dev.id}
+
+
+def _note_new_address(db: Session, new: Device, now: datetime) -> None:
+    """A fresh device sharing a hostname with one locked moments ago is probably the same hardware."""
+    other = (
+        db.query(Device)
+        .filter(
+            Device.id != new.id,
+            func.lower(Device.hostname) == new.hostname.lower(),
+            Device.blocked_since >= now - activity.SLOT,
+        )
+        .first()
+    )
+    if other:
+        mins = round((now - other.blocked_since).total_seconds() / 60)
+        activity.log(db, other.id, "new_address", now, other_device_id=new.id, minutes=mins)
 
 
 @router.get("/state", dependencies=[Depends(require_token)])
@@ -141,6 +181,7 @@ def devices_resisting(body: ResistingReport, db: Session = Depends(get_db)) -> d
                     continue
                 dev.resisting_since = now
                 flagged += 1
+                activity.log(db, dev.id, "bypass", now)
                 inbox.notify(
                     db,
                     parents,
@@ -154,8 +195,39 @@ def devices_resisting(body: ResistingReport, db: Session = Depends(get_db)) -> d
             elif dev.resisting_since is not None:
                 dev.resisting_since = None
                 cleared += 1
+                open_ev = (
+                    db.query(DeviceEvent)
+                    .filter(
+                        DeviceEvent.device_id == dev.id,
+                        DeviceEvent.kind == "bypass",
+                        DeviceEvent.last_at.is_(None),
+                    )
+                    .order_by(DeviceEvent.at.desc(), DeviceEvent.id.desc())
+                    .first()
+                )
+                if open_ev:
+                    open_ev.last_at = now
         db.commit()
     except Exception:
         db.rollback()
         raise
     return {"flagged": flagged, "cleared": cleared}
+
+
+@router.post("/devices/hits", dependencies=[Depends(require_token)])
+def devices_hits(body: HitsReport, db: Session = Depends(get_db)) -> dict:
+    """Portal hits from blocked devices become 'tried while locked' alerts."""
+    _touch(db)
+    now = datetime.now(UTC).replace(tzinfo=None)
+    devs = (
+        db.query(Device).filter(Device.mac.in_(body.hits), Device.blocked_since.isnot(None)).all()
+    )
+    fam, logged = get_family(db), 0
+    local, pre = local_now(fam.timezone, now), Prefetch(db, devs)
+    for d in devs:
+        reason = block_reason(device_facts(db, d, fam, now, pre), local)
+        kind = "outside_hours" if reason == "schedule" else "locked_try"
+        activity.log(db, d.id, kind, now, merge_minutes=30, count=body.hits[d.mac], reason=reason)
+        logged += 1
+    db.commit()
+    return {"logged": logged}
