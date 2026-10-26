@@ -191,3 +191,14 @@ def test_device_out_reason_and_locks_at(db, parent, kid):
     full = device_out(db, d, fam, datetime(2026, 10, 20, 19, 30, tzinfo=UTC), addresses=True)
     assert full["address_changes"] == 0 and full["blocked_since"] is None
     assert date(2026, 10, 20) == DAY
+
+
+def test_kid_override_route_defined_once():
+    from app.main import fastapi_app
+
+    posts = [
+        r
+        for r in fastapi_app.routes
+        if getattr(r, "path", "") == "/api/v1/kids/{kid_id}/override" and "POST" in r.methods
+    ]
+    assert len(posts) == 1

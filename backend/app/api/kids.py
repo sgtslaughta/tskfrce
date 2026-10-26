@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db, require_parent
 from app.core.auth import AuthService
 from app.lock.loop import trigger
-from app.lock.overrides import clear_override, set_override
+from app.lock.overrides import clear_override
 from app.models.badge import BadgeAward
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import ChoreAssignment, ChoreRun, RunStepTick, assignment_kids, run_kids
@@ -23,7 +23,7 @@ from app.models.points import Points, PointsType
 from app.models.reward import Redemption
 from app.models.tips import DismissedTip
 from app.models.user import User, UserRole
-from app.schemas.lock import KidCreate, KidPatch, OverrideIn
+from app.schemas.lock import KidCreate, KidPatch
 from app.services import chat, economy
 from app.services import chores as svc
 from app.services.photos import storage
@@ -188,20 +188,7 @@ def deduct_points(
     return {"balance": economy.balance(db, kid.id), "deducted": take}
 
 
-@router.post("/{kid_id}/override")
-def kid_override(
-    kid_id: int,
-    body: OverrideIn,
-    db: Session = Depends(get_db),
-    parent: User = Depends(require_parent),
-):
-    kid = _kid(db, kid_id)
-    set_override(db, [d.id for d in kid.devices], body.action, body.minutes, parent.id)
-    db.commit()
-    trigger()
-    return {"ok": True}
-
-
+# POST /kids/{kid_id}/override lives in device_activity.py (409 when the kid has no devices)
 @router.delete("/{kid_id}/override")
 def kid_clear_override(kid_id: int, db: Session = Depends(get_db)):
     kid = _kid(db, kid_id)
