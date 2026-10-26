@@ -5,7 +5,7 @@ import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api, ApiError } from '@/v2/api'
-import type { Device, Kid, SetupStatus } from '@/v2/types'
+import type { Device, HoursPayload, Kid, RuleBody, SetupStatus } from '@/v2/types'
 import { markSetupDone } from '@/v2/components/RequireParent'
 import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import { WizardFrame } from '@/v2/setup/WizardFrame'
@@ -14,7 +14,7 @@ import { StepParent, parentErrors, type ParentForm } from '@/v2/setup/StepParent
 import { StepKids } from '@/v2/setup/StepKids'
 import { StepDevices } from '@/v2/setup/StepDevices'
 import { StepChores } from '@/v2/setup/StepChores'
-import { StepWindows } from '@/v2/setup/StepWindows'
+import { DEFAULT_DRAFTS, StepHours } from '@/v2/setup/StepHours'
 import { StepRemote } from '@/v2/setup/StepRemote'
 import { StepFinish } from '@/v2/setup/StepFinish'
 
@@ -37,7 +37,8 @@ export default function SetupPage() {
   const [parent, setParent] = useState<ParentForm>({ username: '', password: '', fullName: '' })
   const [kids, setKids] = useState<Kid[]>([])
   const [chores, setChores] = useState<string[]>([])
-  const [bedtime, setBedtime] = useState(false)
+  const [hours, setHours] = useState<RuleBody[]>(DEFAULT_DRAFTS)
+  const [choresLock, setChoresLock] = useState(true)
   const applied = useRef(new Set<string>())
   const choreIds = useRef(new Map<string, number>()) // created chores, so a retry only redoes the assignment
 
@@ -147,18 +148,16 @@ export default function SetupPage() {
       )
     }
     if (step === 6) {
-      return run(
-        bedtime
-          ? kids.map((k) => ({
-              key: `window:${k.id}`,
-              run: () =>
-                api('/windows', {
-                  method: 'POST',
-                  body: { kind: 'allowed', days: '0123456', start: '07:00', end: '21:00', kid_id: k.id },
-                }),
-            }))
-          : [],
-      )
+      return run([
+        ...hours.map((body) => ({
+          key: `rule:${body.name}`,
+          run: async () => {
+            const have = await api<HoursPayload>('/hours') // a re-run (or an earlier try) must not duplicate
+            if (!have?.rules?.some((r) => r.name === body.name)) await api('/hours', { method: 'POST', body })
+          },
+        })),
+        { key: `chores_lock:${choresLock}`, run: () => api('/family', { method: 'PATCH', body: { chores_lock: choresLock } }) },
+      ])
     }
     if (step > LAST) return void router.push('/')
     if (step === 3 && kidDraft.trim()) return setTried(true)
@@ -178,7 +177,7 @@ export default function SetupPage() {
   } as const
 
   const devices = (qc.getQueryData<Device[]>(['setup-devices']) ?? []).filter((d) => d.status !== 'unassigned').length
-  const schedules = bedtime ? kids.length : 0
+  const schedules = Array.from(applied.current).filter((k) => k.startsWith('rule:')).length
 
   return (
     <>
@@ -213,7 +212,7 @@ export default function SetupPage() {
               draftError={tried && kidDraft.trim() ? `Add ${kidDraft.trim()} first or clear the field.` : undefined} />}
           {step === 4 && <StepChores selected={chores} hasKids={kids.length > 0} onChange={setChores} />}
           {step === 5 && <StepDevices kids={kids} />}
-          {step === 6 && <StepWindows bedtime={bedtime} hasKids={kids.length > 0} onChange={setBedtime} />}
+          {step === 6 && <StepHours drafts={hours} onChange={setHours} choresLock={choresLock} onChoresLock={setChoresLock} />}
           {step === 7 && <StepRemote />}
           {step > LAST && <StepFinish kids={kids.length} chores={chores.length} devices={devices} schedules={schedules} />}
           {err && <p role="alert">Something went wrong: {err} Try again.</p>}
