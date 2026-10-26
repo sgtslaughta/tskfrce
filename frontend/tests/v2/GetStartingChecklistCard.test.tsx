@@ -41,7 +41,7 @@ jest.mock('@mantine/core', () => ({
 }))
 let windows: unknown[] = []
 let parents: unknown[] = [{ id: 1 }]
-jest.mock('@/v2/hooks/useWindows', () => ({ useWindows: () => ({ data: windows }) }))
+jest.mock('@/v2/hooks/useHours', () => ({ useHours: () => ({ data: { today: null, rules: windows } }) }))
 jest.mock('@/v2/hooks/useFamily', () => ({ useParents: () => ({ data: parents }) }))
 const dismissed = new Set<string>()
 const dismiss = jest.fn((k: string) => dismissed.add(k))

@@ -11,7 +11,6 @@ import { api } from '@/v2/api'
 import { DeviceDetail } from '@/v2/manage/DeviceDetail'
 import { GroupDetail } from '@/v2/manage/GroupDetail'
 import { KidEditor } from '@/v2/manage/KidEditor'
-import { WindowEditor } from '@/v2/manage/WindowEditor'
 import { DevicesPage } from '@/v2/manage/DevicesPage'
 import { SettingsPage } from '@/v2/manage/SettingsPage'
 import type { Device, Family, Kid } from '@/v2/types'
@@ -107,7 +106,7 @@ beforeEach(() => {
   jest.mocked(notifications.show).mockClear()
   apiMock.mockReset().mockImplementation(async (path) => {
     if (path === '/family') return family
-    if (path === '/windows') return []
+    if (path === '/hours') return { today: null, rules: [] }
     if (path === '/groups') return []
     if (path === '/kids') return kids
     return {}
@@ -328,37 +327,6 @@ describe('PIN', () => {
   })
 })
 
-describe('windows', () => {
-  test('overnight hint shows when end is before start', async () => {
-    render(wrap(<WindowEditor target={{ kid_id: 7 }} label="Maya" />))
-    expect(screen.queryByText('Ends the next morning')).toBeNull()
-    await userEvent.click(screen.getByRole('button', { name: 'Add allowed hours' }))
-    const start = await screen.findByLabelText('Start')
-    const end = screen.getByLabelText('End')
-    await userEvent.clear(start)
-    await userEvent.type(start, '21:00')
-    await userEvent.clear(end)
-    await userEvent.type(end, '07:00')
-    expect(await screen.findByText('Ends the next morning')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Add' }))
-    await waitFor(() =>
-      expect(calls('POST')[0]).toEqual([
-        '/windows',
-        { method: 'POST', body: { kind: 'allowed', days: '0123456', start: '21:00', end: '07:00', kid_id: 7 } },
-      ]),
-    )
-  })
-
-  test('same start and end is rejected', async () => {
-    render(wrap(<WindowEditor target={{ kid_id: 7 }} label="Maya" />))
-    await userEvent.click(screen.getByRole('button', { name: 'Add free time' }))
-    await userEvent.clear(await screen.findByLabelText('End'))
-    await userEvent.type(screen.getByLabelText('End'), '15:00')
-    expect(await screen.findByText("Start and end can't be the same.")).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Add' })).toBeDisabled()
-  })
-})
-
 describe('settings', () => {
   test('Save is disabled until something changes', async () => {
     render(wrap(<SettingsPage />))
@@ -366,23 +334,6 @@ describe('settings', () => {
     expect(save).toBeDisabled()
     await userEvent.type(screen.getByLabelText('Family name'), 'x')
     expect(save).toBeEnabled()
-  })
-
-  test.skip('Hours kid chips switch the kid', async () => {
-    // Updated in Plan A: now uses HoursTimeline with Chip selection instead of WindowEditor
-    mockRouter.query = { section: 'hours' }
-    apiMock.mockImplementation(async (path) =>
-      path === '/kids'
-        ? kids
-        : path === '/windows'
-          ? [{ id: 1, kind: 'allowed', days: '01', start: '08:00', end: '09:00', kid_id: 8, group_id: null }]
-          : [],
-    )
-    render(wrap(<SettingsPage />))
-    expect(await screen.findByRole('region', { name: 'Maya hours' })).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Leo' }))
-    expect(await screen.findByRole('region', { name: 'Leo hours' })).toBeInTheDocument()
-    expect(screen.getByText('08:00-09:00')).toBeInTheDocument()
   })
 
   // Screen time section removed from SettingsPage (moved to RewardsPages in Task 7)
@@ -413,14 +364,13 @@ describe('settings', () => {
 })
 
 describe('props passing', () => {
-  test('DevicesPage passes groups and windows props correctly', async () => {
+  test('DevicesPage passes groups and hour rules props correctly', async () => {
     const testGroup = { id: 1, name: 'Test Group', device_ids: [1], owner_ids: [7] }
-    const testWindow = { id: 1, kid_id: 7, start: '09:00', end: '17:00', kind: 'allowed' as const }
     apiMock.mockImplementation(async (path) => {
       if (path === '/devices') return [device]
       if (path === '/kids') return kids
       if (path === '/groups') return [testGroup]
-      if (path === '/windows') return [testWindow]
+      if (path === '/hours') return { today: null, rules: [] }
       return {}
     })
     mockRouter.query = { item: '1' }
@@ -428,7 +378,7 @@ describe('props passing', () => {
     await waitFor(() => {
       expect(apiMock).toHaveBeenCalledWith('/devices')
       expect(apiMock).toHaveBeenCalledWith('/groups')
-      expect(apiMock).toHaveBeenCalledWith('/windows')
+      expect(apiMock).toHaveBeenCalledWith('/hours')
     })
   })
 })

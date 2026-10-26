@@ -28,6 +28,7 @@ class FamilySettings(Base):
     giphy_api_key = Column(String(100), nullable=True)  # write-only through the API
     gif_rating = Column(String(2), nullable=False, default="g", server_default="g")
     accent = Column(String(12), nullable=True, default="neon", server_default="neon")
+    chores_lock = Column(Boolean, nullable=False, default=True, server_default="1")
     last_reset_date = Column(Date, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     ntfy_upstream_relay = Column(Boolean, nullable=False, default=False, server_default="0")

@@ -9,7 +9,7 @@ from app.models.reward import Redemption
 from app.models.user import UserRole
 
 from tests.conftest import _headers, _make_user
-from tests.factories import api_chore
+from tests.factories import api_chore, make_rule
 
 DAY = date(2026, 10, 20)
 
@@ -121,14 +121,12 @@ def test_shared_race_under_both_kids_and_taken_by(client, db, parent_headers):
 
 
 def test_kid_points_next_reward_and_locks_at(client, db, parent_headers):
-    from app.models.lock import TimeWindow
     from app.models.reward import Reward
 
     a, b, _, _ = _setup(db)
     db.add(Points(user_id=a.id, points_type=PointsType.BONUS, amount=30, description="t"))
     db.add_all([Reward(name="Cheap", price=20), Reward(name="Big", price=70)])
-    db.add(TimeWindow(kind="allowed", days="0123456", start="00:00", end="23:59", kid_id=a.id))
-    db.commit()
+    make_rule(db, kid_ids=[a.id])
     kids = {k["id"]: k for k in _today(client, parent_headers)["kids"]}
     assert kids[a.id]["points"] == 30
     assert kids[a.id]["next_reward"] == 40  # 70 - 30; "Cheap" is already affordable

@@ -26,6 +26,7 @@ const deviceState = (d: Device): { tone: Tone; tip: string; icon: string } => {
   // a lock you pressed beats the schedule; one that already ran out doesn't count
   const ov = d.override
   if (ov?.action === 'lock' && !(ov.expires_at && new Date(ov.expires_at).getTime() <= Date.now())) return { tone: 'red', tip: 'Locked by you', icon: 'lock' }
+  if (d.exempt) return { tone: 'grey', tip: 'Exempt · always allowed', icon: 'verified_user' }
   if (d.status === 'unassigned') return { tone: 'amb', tip: "Who's this? New device, pick an owner", icon: 'help' }
   if (d.status === 'guest') return { tone: 'grey', tip: 'Guest · internet on', icon: 'person' }
   return d.online
@@ -112,7 +113,10 @@ export function DeviceList({
         <div className="p-device-info">
           <div className="p-device-name" title={d.name}>{d.name}</div>
           <div className="p-device-meta">
-            {owner} · {d.last_seen ? ago(d.last_seen) : 'never seen'}
+            <span>{owner} · {d.last_seen ? ago(d.last_seen) : 'never seen'}</span>
+            {d.exempt && (
+              <span className="p-chip" data-tone="lav">Exempt</span>
+            )}
           </div>
         </div>
         <Tooltip label={state.tip} openDelay={300}>
@@ -181,7 +185,7 @@ export function DeviceList({
                     onClick={() => onSelectGroup?.(g.id)}
                   >
                     <div className="p-device-icon">
-                      <Icon name={DEVICE_TYPE_ICON[firstType]} size={18} />
+                      <Icon name={g.icon || DEVICE_TYPE_ICON[firstType]} size={18} />
                     </div>
                     <div className="p-device-info">
                       <div className="p-device-name" title={g.name}>{g.name}</div>

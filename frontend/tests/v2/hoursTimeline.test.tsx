@@ -1,24 +1,60 @@
-import { expect, test } from '@jest/globals'
+import { describe, expect, jest, test } from '@jest/globals'
 import { render, screen } from '@testing-library/react'
-import { HoursTimeline, daysLabel, segments } from '@/v2/manage/HoursTimeline'
+import userEvent from '@testing-library/user-event'
+import { HoursTimeline } from '@/v2/manage/HoursTimeline'
+import type { Group, HourRule, Kid } from '@/v2/types'
 
-test('overnight windows split into two bars; equal ends mean all day', () => {
-  expect(segments('16:00', '20:00')).toEqual([[(16 / 24) * 100, (20 / 24) * 100]])
-  expect(segments('22:00', '02:00')).toEqual([[(22 / 24) * 100, 100], [0, (2 / 24) * 100]])
-  expect(segments('07:00', '07:00')).toEqual([[0, 100]])
+const kids = [
+  { id: 2, username: 'mia', full_name: 'Mia' },
+  { id: 3, username: 'leo', full_name: 'Leo' },
+] as Kid[]
+const groups = [{ id: 1, name: 'Game consoles', device_ids: [] }] as unknown as Group[]
+
+const rule = (o: Partial<HourRule>): HourRule => ({
+  id: 1, name: 'r', category: 'other', kind: 'allowed', days: '0123456', start_date: null, end_date: null,
+  everyone: true, kid_ids: [], group_ids: [], times: [{ start: '15:00', end: '20:00' }], ...o,
 })
 
-test('days read like a person would say them', () => {
-  expect(daysLabel('0123456')).toBe('Every day')
-  expect(daysLabel('01234')).toBe('Weekdays')
-  expect(daysLabel('65')).toBe('Weekends')
-  expect(daysLabel('024')).toBe('M W F')
-})
+const rules = [
+  rule({ id: 1, name: 'Mia only', everyone: false, kid_ids: [2], category: 'school_night', days: '01236' }),
+  rule({ id: 2, name: 'Consoles', everyone: false, group_ids: [1] }),
+  rule({ id: 3, name: 'Winter break', category: 'holiday', start_date: '2026-12-20', end_date: '2027-01-03' }),
+  rule({ id: 4, name: 'Weekends', category: 'weekend', days: '45', times: [{ start: '08:00', end: '22:00' }] }),
+  rule({ id: 5, name: 'School nights', category: 'school_night', days: '01236', times: [{ start: '06:00', end: '08:00' }, { start: '15:00', end: '20:00' }] }),
+  rule({ id: 6, name: 'Homework', kind: 'off', everyone: false, kid_ids: [3], days: '0123' }),
+]
 
-test('rows name the kid and days; an overnight window draws two bars', () => {
-  const kids = [{ id: 2, full_name: 'Bobby', username: 'bobby' }] as never
-  const w = { id: 1, kind: 'allowed', days: '01234', start: '18:00', end: '02:00', kid_id: 2, group_id: null }
-  const { container } = render(<HoursTimeline windows={[w] as never} kids={kids} groups={[]} />)
-  expect(screen.getByText('Bobby · Allowed · Weekdays')).toBeInTheDocument()
-  expect(container.querySelectorAll('.timeline-bar')).toHaveLength(2)
+describe('HoursTimeline', () => {
+  test('one row per rule in sortRules order, pencils call onEdit', async () => {
+    const onEdit = jest.fn()
+    render(<HoursTimeline rules={rules} kids={kids} groups={groups} onEdit={onEdit} />)
+    const pencils = screen.getAllByRole('button', { name: /^Edit / })
+    expect(pencils.map((b) => b.getAttribute('aria-label'))).toEqual([
+      'Edit School nights', 'Edit Weekends', 'Edit Winter break', 'Edit Consoles', 'Edit Mia only', 'Edit Homework',
+    ])
+    await userEvent.click(screen.getByRole('button', { name: 'Edit Weekends' }))
+    expect(onEdit).toHaveBeenCalledWith(rules[3])
+  })
+
+  test('kid rule shows its initial; sub line is who and days or dates; bars carry kind and range', () => {
+    const { container } = render(<HoursTimeline rules={rules} kids={kids} groups={groups} />)
+    expect(screen.getByText('M')).toHaveClass('avx')
+    expect(screen.getByText('Mia · Sun–Thu')).toBeInTheDocument()
+    expect(screen.getByText('Everyone · Dec 20 – Jan 3')).toBeInTheDocument()
+    expect(screen.getByText('Everyone · Fri–Sat')).toBeInTheDocument()
+    expect(screen.getByText('6–8a')).toBeInTheDocument()
+    expect(container.querySelector('[data-kind="off"]')).not.toBeNull()
+    expect(screen.queryByRole('button', { name: /^Edit / })).toBeNull()
+    for (const t of ['12a', '6a', '12p', '6p']) expect(screen.getAllByText(t).length).toBeGreaterThan(0)
+  })
+
+  test('an overnight time draws two bars', () => {
+    const { container } = render(<HoursTimeline rules={[rule({ times: [{ start: '22:00', end: '02:00' }] })]} kids={kids} groups={groups} />)
+    expect(container.querySelectorAll('[data-kind="allowed"]')).toHaveLength(2)
+  })
+
+  test('empty state', () => {
+    render(<HoursTimeline rules={[]} kids={kids} groups={groups} />)
+    expect(screen.getByText('No hours yet. Devices can be online any time until you add some.')).toBeInTheDocument()
+  })
 })

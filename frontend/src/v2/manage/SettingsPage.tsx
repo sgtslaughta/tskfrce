@@ -65,12 +65,6 @@ function SettingsBody() {
         )}
         {section === 'screen' && family.data && <ScreenTimeCard fam={family.data} />}
         {section === 'gifs' && family.data && <GifsCard fam={family.data} />}
-        {section === 'hours' && (
-          <InfoBlock
-            icon="schedule"
-            text="Outside these hours a kid's devices stay off, even with every chore done. Inside them, devices come on once today's chores are approved, or any time in a free-time slot."
-          />
-        )}
         {section === 'hours' && <HoursSection />}
         {section === 'notify' && <KidPushPane />}
         {section === 'parents' && (

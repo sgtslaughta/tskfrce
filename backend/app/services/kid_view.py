@@ -4,9 +4,9 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.orm import Session
 
-from app.lock.schedule import Window, local_now, window_end
+from app.lock import hours
+from app.lock.schedule import local_now
 from app.models.chores import ChoreRun, ChoreSeen
-from app.models.lock import TimeWindow
 from app.models.user import User
 from app.services import chores as svc
 
@@ -69,7 +69,8 @@ def mine(deds: list[dict], kid_id: int) -> list[dict]:
 
 
 def locks_at(db: Session, kid: User, fam, now_utc: datetime) -> str | None:
-    """End of the kid's current allowed hours today (their own windows), as UTC ...Z."""
-    rows = db.query(TimeWindow).filter(TimeWindow.kid_id == kid.id, TimeWindow.kind == "allowed")
-    end = window_end([Window.from_row(r) for r in rows], local_now(fam.timezone, now_utc))
+    """When the kid's hours next stop allowing (rules applying to them as owner), as UTC ...Z."""
+    now_local = local_now(fam.timezone, now_utc)
+    r = hours.resolve(hours.load(db), {kid.id}, set(), now_local.date())
+    end = hours.locks_at(r.allowed_sets, r.off, now_local)
     return svc.iso_z(end.astimezone(UTC).replace(tzinfo=None)) if end else None

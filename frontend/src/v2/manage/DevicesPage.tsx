@@ -5,9 +5,10 @@ import { ParentShell } from '@/v2/parent/ParentShell'
 import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { HELP_URL } from '@/v2/components/AccountMenu'
 import { RequireParent } from '@/v2/components/RequireParent'
+import { useFamily } from '@/v2/hooks/useFamily'
 import { useDevices, useGroups } from '@/v2/hooks/useDevices'
 import { useKids } from '@/v2/hooks/useKids'
-import { useWindows } from '@/v2/hooks/useWindows'
+import { useHours } from '@/v2/hooks/useHours'
 import { useOverride, type OverrideTarget } from '@/v2/hooks/useOverride'
 import { DevicesSection } from './DevicesSection'
 import { DeviceDetail } from './DeviceDetail'
@@ -22,7 +23,8 @@ function DevicesBody() {
   const devices = useDevices()
   const kids = useKids()
   const groups = useGroups()
-  const windows = useWindows()
+  const hours = useHours()
+  const family = useFamily().data
   const all = devices.data ?? []
   // the tab lives in the URL: device and group ids overlap, so ?item alone can't say which one it is
   const tab = first(query.tab) === 'groups' ? 'groups' : 'devices'
@@ -115,7 +117,8 @@ function DevicesBody() {
           devices={all}
           kids={kids.data ?? []}
           groups={groups.data ?? []}
-          windows={windows.data ?? []}
+          rules={hours.data?.rules ?? []}
+          timeZone={family?.timezone}
           onSelect={pick}
           onRequestOverride={handleRequestOverride}
           pendingAction={pending}

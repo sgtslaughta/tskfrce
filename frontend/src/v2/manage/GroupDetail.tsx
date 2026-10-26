@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react'
 import { useDisclosure } from '@mantine/hooks'
 import { useDeleteGroup, useSaveGroup } from '@/v2/hooks/useDevices'
+import Link from 'next/link'
+import { GlyphPicker } from '@/v2/parent/GlyphPicker'
 import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Icon } from '@/v2/parent/Icon'
-import type { Device, Group, Kid, TimeWindow } from '@/v2/types'
+import type { Device, Group, HourRule, Kid } from '@/v2/types'
 import { ActionButton } from './ActionButton'
 import { ConfirmDelete } from './ConfirmDelete'
+import { GroupStats } from './GroupStats'
 import { HoursTimeline } from './HoursTimeline'
 import { nameOf } from './choreMeta'
 import { toastFail, toastOk, toasts } from '../notify'
 import { useSingleFlight } from './useSingleFlight'
+
+export const GROUP_ICONS = ['tablet_mac', 'sports_esports', 'tv', 'laptop', 'smartphone', 'speaker', 'router', 'devices_other', 'devices']
 
 interface Props {
   /** Omit to create a new group. */
@@ -17,10 +22,12 @@ interface Props {
   devices: Device[]
   kids: Kid[]
   groups?: Group[]
-  windows?: TimeWindow[]
+  rules?: HourRule[]
   /** Select a group, or null to close the detail. */
   onSelect: (id: number | null) => void
   onRequestOverride: (req: { kind: string; id: number; action: string }) => void
+  /** Family time zone for the next-lock time. */
+  timeZone?: string
   /** Override action in flight (lock / unlock / clear), if any. */
   pendingAction?: string | null
 }
@@ -29,15 +36,18 @@ interface Props {
  * Group editor. An existing group saves as you go (name on blur, members on tap);
  * a new group is a small form with Create / Cancel.
  */
-export function GroupDetail({ group, devices, kids, groups, windows, onSelect, onRequestOverride, pendingAction = null }: Props) {
+export function GroupDetail({ group, devices, kids, groups, rules, onSelect, onRequestOverride, timeZone, pendingAction = null }: Props) {
   const save = useSaveGroup()
   const del = useDeleteGroup()
   const once = useSingleFlight()
   const [confirm, { open, close }] = useDisclosure(false)
   const [name, setName] = useState(group?.name ?? '')
   const [draftIds, setDraftIds] = useState<number[]>([])
+  const [draft, setDraft] = useState<{ icon?: string; chore_lock?: boolean }>({})
   useEffect(() => setName(group?.name ?? ''), [group?.name])
 
+  const icon = group?.icon ?? draft.icon ?? 'devices'
+  const choreLock = group?.chore_lock ?? draft.chore_lock ?? true
   const ids = group ? group.device_ids : draftIds
   const members = devices.filter((d) => ids.includes(d.id))
   const locked = members.filter((d) => d.override?.action === 'lock').length
@@ -61,10 +71,14 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
     if (!n) setName(group.name)
     else if (n !== group.name) once((settled) => save.mutate({ id: group.id, name: n, device_ids: group.device_ids }, { ...toasts('Renamed'), ...settled }))
   }
+  const setExtra = (extra: { icon?: string; chore_lock?: boolean }) => {
+    if (group) once((settled) => save.mutate({ id: group.id, name: group.name, device_ids: group.device_ids, icon, chore_lock: choreLock, ...extra }, { ...toasts('Saved'), ...settled }))
+    else setDraft({ ...draft, ...extra })
+  }
   const create = () =>
     once((settled) =>
       save.mutate(
-        { name: name.trim(), device_ids: draftIds },
+        { name: name.trim(), device_ids: draftIds, ...draft },
         {
           onError: toastFail,
           onSuccess: (g) => {
@@ -80,7 +94,7 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
     <div className="pk-detail">
       <header className="pk-head">
         <span className="pk-tile pk-tile-lg">
-          <Icon name="devices" size={30} />
+          <Icon name={icon} size={30} />
         </span>
         <div className="pk-head-t">
           <h2>{(group ? group.name : name).trim() || 'New group'}</h2>
@@ -105,24 +119,6 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
       </header>
 
       <div className="pk-grid">
-        <section className="pk-panel" aria-label="Name">
-          <h3>
-            <Icon name="edit" size={18} />
-            Group name
-          </h3>
-          <input
-            className="pk-input"
-            aria-label="Group name"
-            aria-busy={save.isPending || undefined}
-            placeholder="Group name"
-            maxLength={100}
-            value={name}
-            onChange={(e) => setName(e.currentTarget.value)}
-            onBlur={rename}
-            onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
-          />
-        </section>
-
         <section className="pk-panel" aria-label="Devices in group">
           <h3>
             <Icon name="devices_other" size={18} />
@@ -142,16 +138,52 @@ export function GroupDetail({ group, devices, kids, groups, windows, onSelect, o
           )}
         </section>
 
-        {group && windows && (
+        <section className="pk-panel" aria-label="Group">
+          <h3>
+            <Icon name="edit" size={18} />
+            Group
+          </h3>
+          <label className="pk-field">
+            <span className="pk-label">Group name</span>
+            <input
+              className="pk-input"
+              aria-label="Group name"
+              aria-busy={save.isPending || undefined}
+              placeholder="Group name"
+              maxLength={100}
+              value={name}
+              onChange={(e) => setName(e.currentTarget.value)}
+              onBlur={rename}
+              onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+            />
+          </label>
+          <div className="pk-field">
+            <span className="pk-label">Icon</span>
+            <div className="pk-type-icons pk-group-icons">
+              <GlyphPicker value={icon} onChange={(g) => g !== icon && setExtra({ icon: g })} choices={GROUP_ICONS} />
+            </div>
+          </div>
+          <div className="pk-switch ph-sw-row">
+            <span id="group-chore-label">Lock with the kids&apos; chores</span>
+            <button type="button" role="switch" aria-checked={choreLock} aria-labelledby="group-chore-label" aria-disabled={(save.isPending && !!group) || undefined} onClick={() => !(save.isPending && group) && setExtra({ chore_lock: !choreLock })} />
+          </div>
+          <p className="pk-hint">Off: these devices skip the chore check. Hours and manual locks still apply.</p>
+        </section>
+        {group && rules && (
           <section className="pk-panel pk-span" aria-label="Hours">
             <h3>
-              <Icon name="schedule" size={18} />
-              Hours for {group.name}
+              <Icon name="calendar_month" size={18} />
+              Hours for this group
+              <Link className="pk-h3-link" href="/settings?section=hours">
+                Edit in Settings → Hours
+              </Link>
             </h3>
-            <HoursTimeline windows={windows.filter((w) => w.group_id === group.id)} kids={kids} groups={groups ?? []} />
+            <HoursTimeline rules={rules.filter((r) => r.everyone || r.group_ids.includes(group.id))} kids={kids} groups={groups ?? []} thisGroup />
           </section>
         )}
       </div>
+
+      {group && <GroupStats members={members} open={members.length - locked} timeZone={timeZone} />}
 
       {!group && (
         <div className="pk-foot">

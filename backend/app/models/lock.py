@@ -1,8 +1,9 @@
-"""Lock models: devices, groups, time windows, overrides."""
+"""Lock models: devices, groups, overrides."""
 
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     CheckConstraint,
     Column,
     DateTime,
@@ -46,6 +47,8 @@ class Device(Base):
     first_seen = Column(DateTime, nullable=False, default=datetime.utcnow)
     last_seen = Column(DateTime, nullable=True)
     resisting_since = Column(DateTime, nullable=True)
+    blocked_since = Column(DateTime, nullable=True)
+    exempt = Column(Boolean, nullable=False, default=False, server_default="0")  # never locked
 
     ipv6_rows = relationship("DeviceIPv6", cascade="all, delete-orphan")
     owners = relationship("User", secondary=device_owners, backref="devices")
@@ -79,22 +82,8 @@ class DeviceGroup(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, unique=True)
-
-
-class TimeWindow(Base):
-    __tablename__ = "time_windows"
-    __table_args__ = (
-        CheckConstraint("kind IN ('allowed','free')", name="ck_window_kind"),
-        CheckConstraint("(kid_id IS NULL) != (group_id IS NULL)", name="ck_window_one_target"),
-    )
-
-    id = Column(Integer, primary_key=True)
-    kind = Column(String(10), nullable=False)
-    days = Column(String(7), nullable=False)  # digits 0=Mon..6=Sun
-    start = Column(String(5), nullable=False)  # HH:MM
-    end = Column(String(5), nullable=False)  # HH:MM
-    kid_id = Column(Integer, ForeignKey("users.id"), nullable=True)
-    group_id = Column(Integer, ForeignKey("device_groups.id"), nullable=True)
+    icon = Column(String(40), nullable=False, default="devices", server_default="devices")
+    chore_lock = Column(Boolean, nullable=False, default=True, server_default="1")
 
 
 class Override(Base):

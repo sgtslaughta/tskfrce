@@ -17,7 +17,8 @@ from app.models.badge import BadgeAward
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import ChoreAssignment, ChoreRun, RunStepTick, assignment_kids, run_kids
 from app.models.flair import KidFlair
-from app.models.lock import Override, TimeWindow, device_owners
+from app.models.hours import HourRuleTarget
+from app.models.lock import Override, device_owners
 from app.models.points import Points, PointsType
 from app.models.reward import Redemption
 from app.models.tips import DismissedTip
@@ -126,7 +127,7 @@ def delete_kid(kid_id: int, db: Session = Depends(get_db)):
         elif len(a.kids) == 1:
             a.mode = "each"
     db.flush()  # expire_all below would drop unflushed changes
-    db.query(TimeWindow).filter(TimeWindow.kid_id == kid.id).delete()
+    db.query(HourRuleTarget).filter_by(kid_id=kid.id).delete()
     db.query(Override).filter(Override.created_by_id == kid.id).update({"created_by_id": None})
     db.execute(delete(device_owners).where(device_owners.c.user_id == kid.id))
     chat.purge_kid(db, kid.id)

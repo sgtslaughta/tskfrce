@@ -2,11 +2,10 @@ from datetime import UTC, date, datetime, timedelta
 
 from app.models.chores import ChoreSeen
 from app.models.family import get_family
-from app.models.lock import TimeWindow
 from app.models.user import UserRole
 
 from tests.conftest import _headers, _make_user
-from tests.factories import make_run
+from tests.factories import make_rule, make_run
 
 DAY = date(2026, 10, 20)  # a Tuesday
 NOON = datetime(2026, 10, 20, 12, 0, tzinfo=UTC)
@@ -35,7 +34,7 @@ def _run(db, parent, kid, **kw):
 def test_today_has_age_group_and_locks_at(client, db, parent, kid, kid_headers, monkeypatch):
     _fixed_now(monkeypatch)
     kid.age_group = "teen"
-    db.add(TimeWindow(kind="allowed", days="0123456", start="00:00", end="21:00", kid_id=kid.id))
+    make_rule(db, times=(("00:00", "21:00"),), kid_ids=(kid.id,))
     db.commit()
     j = _today(client, kid_headers)
     assert j["age_group"] == "teen"

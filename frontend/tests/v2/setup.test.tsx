@@ -1,12 +1,13 @@
 import { beforeAll, beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import SetupPage from '../../pages/setup'
 import { api, ApiError } from '@/v2/api'
 import { fridgeTheme } from '@/v2/theme'
+import { DEFAULT_DRAFTS } from '@/v2/setup/StepHours'
 
 const replace = jest.fn()
 const push = jest.fn()
@@ -181,8 +182,8 @@ describe('setup wizard', () => {
     await user.click(await screen.findByLabelText('Make bed'))
     await user.click(screen.getByRole('button', { name: 'Next' })) // Step 4 → 5 (Devices)
     expect(await screen.findByText('No devices yet — you can add them later from Devices.')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Next' })) // Step 5 → 6 (Windows)
-    await user.click(await screen.findByLabelText(/Add bedtime/))
+    await user.click(screen.getByRole('button', { name: 'Next' })) // Step 5 → 6 (Hours)
+    await screen.findByText('Allowed hours')
     await user.click(screen.getByRole('button', { name: 'Back' }))
     await user.click(await screen.findByRole('button', { name: 'Next' }))
     await user.click(await screen.findByRole('button', { name: 'Next' }))
@@ -198,11 +199,70 @@ describe('setup wizard', () => {
       method: 'POST',
       body: { kid_ids: [7], mode: 'each', repeat: { type: 'daily', days: [] }, on_date: null, due_time: null },
     })
-    expect(posts('/windows')).toHaveLength(1)
-    expect(posts('/windows')[0][1]).toEqual({
-      method: 'POST',
-      body: { kind: 'allowed', days: '0123456', start: '07:00', end: '21:00', kid_id: 7 },
+    expect(posts('/hours')).toHaveLength(2) // posted once on the way past, never again
+  })
+
+  const toHours = async (user: ReturnType<typeof userEvent.setup>) => {
+    await finishAccount(user)
+    for (let i = 0; i < 3; i++) await user.click(screen.getByRole('button', { name: 'Skip' }))
+    await screen.findByText('Allowed hours')
+  }
+  const rowText = (name: string) => screen.getByRole('button', { name: `Edit ${name}` }).parentElement!.textContent
+
+  test('step 6 shows the default rules and bedtime edits the range', async () => {
+    const user = userEvent.setup()
+    wrap()
+    await toHours(user)
+    expect(rowText('School nights')).toContain('6–8a')
+    expect(rowText('School nights')).toContain('3–8p')
+    expect(rowText('Weekends')).toContain('8a–10p')
+    expect(screen.getByLabelText('Bedtime on school nights')).toHaveValue('20:00')
+    fireEvent.change(screen.getByLabelText('Bedtime on weekends'), { target: { value: '23:00' } })
+    expect(rowText('Weekends')).toContain('8a–11p')
+  })
+
+  test('Next posts both rules for everyone and PATCHes chores_lock', async () => {
+    const user = userEvent.setup()
+    wrap()
+    await toHours(user)
+    await user.click(screen.getByRole('switch', { name: "Lock until today's chores are done" }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByText('Reach it from anywhere')
+    const bodies = posts('/hours').map(([, i]) => (i as { body: Record<string, unknown> }).body)
+    expect(bodies.map((b) => b.name)).toEqual(['School nights', 'Weekends'])
+    expect(bodies[0]).toEqual({
+      name: 'School nights', category: 'school_night', kind: 'allowed', days: '01236', everyone: true,
+      kid_ids: [], group_ids: [], start_date: null, end_date: null,
+      times: [{ start: '06:00', end: '08:00' }, { start: '15:00', end: '20:00' }],
     })
+    expect(bodies[1]).toMatchObject({ category: 'weekend', days: '45', everyone: true, times: [{ start: '08:00', end: '22:00' }] })
+    expect(apiMock).toHaveBeenCalledWith('/family', { method: 'PATCH', body: { chores_lock: false } })
+  })
+
+  test('a rule already on the server is not posted again', async () => {
+    const base = apiMock.getMockImplementation()!
+    apiMock.mockImplementation(async (path, init) =>
+      path === '/hours' && !init?.method ? { today: null, rules: [{ id: 5, ...DEFAULT_DRAFTS[0] }] } : base(path, init),
+    )
+    const user = userEvent.setup()
+    wrap()
+    await toHours(user)
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByText('Reach it from anywhere')
+    expect(posts('/hours').map(([, i]) => (i as { body: { name: string } }).body.name)).toEqual(['Weekends'])
+  })
+
+  test('a server rule with the same name but a different body does not suppress the post', async () => {
+    const base = apiMock.getMockImplementation()!
+    apiMock.mockImplementation(async (path, init) =>
+      path === '/hours' && !init?.method ? { today: null, rules: [{ id: 5, ...DEFAULT_DRAFTS[0], days: '0123456' }] } : base(path, init),
+    )
+    const user = userEvent.setup()
+    wrap()
+    await toHours(user)
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByText('Reach it from anywhere')
+    expect(posts('/hours').map(([, i]) => (i as { body: { name: string } }).body.name)).toEqual(['School nights', 'Weekends'])
   })
 
   test('a typed but unadded kid name blocks Next', async () => {

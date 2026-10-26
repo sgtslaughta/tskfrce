@@ -9,8 +9,9 @@ from sqlalchemy.orm import Session, selectinload
 from app.api.deps import get_db, require_parent
 from app.api.devices import device_out
 from app.api.rewards import redemption_name
+from app.lock import hours
 from app.lock.loop import trigger
-from app.lock.schedule import Window, local_now, window_end
+from app.lock.schedule import local_now
 from app.lock.state import Prefetch
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import ChoreRun
@@ -34,6 +35,7 @@ def _fam_out(fam) -> dict:
         "points_unlock_early": fam.points_unlock_early,
         "early_bonus_cap": fam.early_bonus_cap,
         "screen_time_price": fam.screen_time_price,
+        "chores_lock": fam.chores_lock,
         "gifs_enabled": fam.gifs_enabled,
         "gif_rating": fam.gif_rating,
         "accent": fam.accent,
@@ -166,9 +168,9 @@ def _next_reward(prices: list[int], balance: int) -> int | None:
 
 
 def _locks_at(pre: Prefetch, kid_id: int, now_local: datetime) -> str | None:
-    """End of the kid's current allowed hours today (their own windows, not groups')."""
-    rows = pre.windows.get(("kid_id", kid_id), [])
-    end = window_end([Window.from_row(r) for r in rows if r.kind == "allowed"], now_local)
+    """When the kid's hours next stop allowing (what applies to them as owner)."""
+    r = hours.resolve(pre.rules, {kid_id}, set(), now_local.date())
+    end = hours.locks_at(r.allowed_sets, r.off, now_local)
     return _iso(end.astimezone(UTC).replace(tzinfo=None)) if end else None
 
 

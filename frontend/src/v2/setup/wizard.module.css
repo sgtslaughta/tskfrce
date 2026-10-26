@@ -272,3 +272,11 @@
     display: none;
   }
 }
+
+/* Step 6: hours (mockup 07 .kv rows under the Allowed hours card) */
+.addHours { margin-left: auto; padding: 6px 12px; font-size: 13px; }
+.rules { gap: 0; }
+.kv { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 13.5px; color: var(--p-ink); }
+.kv + .kv { border-top: 1px solid var(--p-line); }
+.kv input[type='time'] { font: inherit; color: var(--p-ink); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; padding: 6px 10px; }
+.kv input[type='time']:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }

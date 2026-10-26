@@ -39,11 +39,14 @@ class DevicePatch(BaseModel):
     status: Literal["unassigned", "assigned", "guest"] | None = None
     owner_ids: list[int] | None = None
     group_ids: list[int] | None = None
+    exempt: bool | None = None
 
 
 class GroupIn(BaseModel):
     name: str = Field(min_length=1, max_length=100)
     device_ids: list[int] = []
+    icon: str | None = Field(default=None, min_length=1, max_length=40)
+    chore_lock: bool | None = None
 
 
 class KidCreate(BaseModel):
@@ -65,24 +68,6 @@ class KidPatch(BaseModel):
     _pin = field_validator("pin")(_pin)
 
 
-class WindowIn(BaseModel):
-    kind: Literal["allowed", "free"]
-    days: str
-    start: str
-    end: str
-    kid_id: int | None = None
-    group_id: int | None = None
-
-    @field_validator("days")
-    @classmethod
-    def _days(cls, v):
-        if not (1 <= len(v) <= 7 and len(set(v)) == len(v) and re.fullmatch(r"[0-6]+", v)):
-            raise ValueError("Days must be 1-7 different digits from 0 (Mon) to 6 (Sun).")
-        return v
-
-    _times = field_validator("start", "end")(_hhmm)
-
-
 class FamilyPatch(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=100)
     timezone: str | None = None
@@ -91,6 +76,7 @@ class FamilyPatch(BaseModel):
     points_unlock_early: bool | None = None
     early_bonus_cap: int | None = Field(default=None, ge=0, le=50)
     screen_time_price: int | None = Field(default=None, ge=1, le=1000)
+    chores_lock: bool | None = None
     gifs_enabled: bool | None = None
     gif_rating: Literal["g", "pg"] | None = None
     ntfy_upstream_relay: bool | None = None

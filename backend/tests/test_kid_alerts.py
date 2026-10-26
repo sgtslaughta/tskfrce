@@ -2,10 +2,10 @@ from datetime import UTC, datetime, timedelta
 
 from app.models.family import get_family
 from app.models.inbox import Notification
-from app.models.lock import Device, TimeWindow
+from app.models.lock import Device
 from app.services import inbox, kid_alerts
 
-from tests.factories import make_run
+from tests.factories import make_rule, make_run
 
 
 def at(h, m=0):
@@ -66,7 +66,7 @@ def _device(db, kid, end, kind="allowed"):
     d = Device(mac="aa:bb:cc:dd:ee:01", name="Tab", status="assigned")
     d.owners = [kid]
     db.add(d)
-    db.add(TimeWindow(kind=kind, days="0123456", start="00:00", end=end, kid_id=kid.id))
+    make_rule(db, kind=kind, times=(("00:00", end),), kid_ids=(kid.id,))
     db.commit()
 
 
@@ -84,7 +84,7 @@ def test_lock_warning(db, parent, kid):
 def test_lock_warning_counts_chores_left(db, parent, kid):
     _fam(db)
     _device(db, kid, "18:00", kind="free")
-    db.add(TimeWindow(kind="allowed", days="0123456", start="00:00", end="23:59", kid_id=kid.id))
+    make_rule(db, kid_ids=(kid.id,))
     make_run(db, parent, kid, title="A")
     make_run(db, parent, kid, title="B")
     kid_alerts.scan(db, at(17, 55))

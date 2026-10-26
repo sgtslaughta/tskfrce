@@ -9,10 +9,12 @@ from .chat import ChatPhoto, MessageReaction, Thread, ThreadMessage, ThreadRead
 from .chore_extra import ChorePhoto
 from .chore_type import ChoreType, ChoreTypeNote
 from .chores import Chore, ChoreAssignment, ChoreRun, ChoreSeen, ChoreStep, RunStepTick
+from .device_activity import DeviceEvent, DevicePresence
 from .family import FamilySettings, get_family
 from .flair import KidFlair
+from .hours import HourRule, HourRuleTarget, HourRuleTime
 from .inbox import Notification
-from .lock import Device, DeviceGroup, Override, TimeWindow
+from .lock import Device, DeviceGroup, Override
 from .password_reset import PasswordReset
 from .points import Points, PointsType
 from .reward import Redemption, Reward
@@ -46,7 +48,11 @@ __all__ = [
     "PointsType",
     "Device",
     "DeviceGroup",
-    "TimeWindow",
+    "HourRule",
+    "HourRuleTime",
+    "HourRuleTarget",
+    "DeviceEvent",
+    "DevicePresence",
     "Override",
     "Notification",
     "Reward",

@@ -61,26 +61,25 @@ describe('device time helpers', () => {
 })
 
 describe('DeviceDetail', () => {
-  test('an unlock that expires while the screen is open goes back to "None, on schedule"', async () => {
+  test('an unlock that expires while the screen is open goes back to "None · on schedule"', async () => {
     jest.useFakeTimers({ now: new Date('2026-10-25T10:00:00Z') })
     const d = dev({ override: { action: 'unlock', expires_at: '2026-10-25T10:00:02Z' } })
     render(wrap(<DeviceDetail device={d} kids={kids} onRequestOverride={() => {}} />))
     const right = screen.getByRole('region', { name: 'Right now' })
-    expect(within(right).getByText('Unlocked')).toBeTruthy()
-    expect(within(right).getByText('Expires at')).toBeTruthy()
+    expect(within(right).getByText(/^Unlocked until/)).toBeTruthy()
     await act(async () => {
       jest.advanceTimersByTime(3000)
     })
-    expect(within(right).getByText('None, on schedule')).toBeTruthy()
-    expect(within(right).queryByText('Expires at')).toBeNull()
+    expect(within(right).getByText('None · on schedule')).toBeTruthy()
+    expect(within(right).queryByText(/until/)).toBeNull()
   })
 
-  test('Expires at is in the family time zone', async () => {
+  test('an override expiry is in the family time zone', async () => {
     const d = dev({ override: { action: 'lock', expires_at: new Date(Date.now() + 3600000).toISOString() } })
     render(wrap(<DeviceDetail device={d} kids={kids} onRequestOverride={() => {}} />))
     await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/family'))
-    const want = inFamilyZone(d.override!.expires_at!, 'Pacific/Auckland')
-    expect(await screen.findByText(want)).toBeTruthy()
+    const want = inFamilyZone(d.override!.expires_at!, 'Pacific/Auckland', { timeStyle: 'short' })
+    expect(await screen.findByText(`Locked until ${want}`)).toBeTruthy()
   })
 
   test('a double click on Delete in the dialog sends exactly one DELETE', async () => {
@@ -122,6 +121,14 @@ describe('DeviceList status glyph', () => {
     expect(glyph(/Was locked/)).toBe('Internet on')
   })
 
+  test('an exempt device shows the Exempt chip and glyph; a manual lock still wins', () => {
+    const future = new Date(Date.now() + 600000).toISOString()
+    list([dev({ id: 1, name: 'Free one', online: true, exempt: true }), dev({ id: 2, name: 'Held one', online: false, exempt: true, override: { action: 'lock', expires_at: future } })])
+    expect(within(screen.getByRole('button', { name: /Free one/ })).getByText('Exempt')).toBeTruthy()
+    expect(glyph(/Free one/)).toBe('Exempt · always allowed')
+    expect(glyph(/Held one/)).toBe('Locked by you')
+  })
+
   test('a kid device cut off by hours or chores shows Internet off, not Open', () => {
     list([dev({ id: 1, name: 'Blocked', online: false })])
     expect(glyph(/Blocked/)).toBe('Internet off · hours or chores')
@@ -136,10 +143,10 @@ describe('DeviceList status glyph', () => {
 })
 
 describe('GroupDetail with no devices', () => {
-  const empty: Group = { id: 3, name: 'Empty group', device_ids: [] }
+  const empty: Group = { id: 3, name: 'Empty group', device_ids: [], icon: 'devices', chore_lock: true }
 
   test('says so, hides the open/locked chips and disables lock, unlock and back-to-schedule', () => {
-    render(wrap(<GroupDetail group={empty} devices={[dev()]} kids={kids} groups={[empty]} windows={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
+    render(wrap(<GroupDetail group={empty} devices={[dev()]} kids={kids} groups={[empty]} rules={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
     expect(screen.getByText('No devices in this group yet. Tap a device to add it.')).toBeTruthy()
     expect(screen.getByText('0 devices')).toBeTruthy()
     expect(screen.queryByText('0 open')).toBeNull()
@@ -148,7 +155,7 @@ describe('GroupDetail with no devices', () => {
 
   test('Create group on a new group sends one POST even when mashed', async () => {
     apiMock.mockImplementation(() => new Promise(() => {}))
-    render(wrap(<GroupDetail devices={[dev({ name: 'Switch' })]} kids={kids} groups={[]} windows={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
+    render(wrap(<GroupDetail devices={[dev({ name: 'Switch' })]} kids={kids} groups={[]} rules={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
     await userEvent.type(screen.getByLabelText('Group name'), 'Twins')
     await userEvent.click(screen.getByRole('button', { name: 'Switch' }))
     await userEvent.dblClick(screen.getByRole('button', { name: 'Create group' }))
@@ -158,8 +165,53 @@ describe('GroupDetail with no devices', () => {
   })
 
   test('tapping a device saves the group with exactly that member', async () => {
-    render(wrap(<GroupDetail group={empty} devices={[dev({ name: 'Switch' })]} kids={kids} groups={[empty]} windows={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
+    render(wrap(<GroupDetail group={empty} devices={[dev({ name: 'Switch' })]} kids={kids} groups={[empty]} rules={[]} onSelect={() => {}} onRequestOverride={() => {}} />))
     await userEvent.click(screen.getByRole('button', { name: 'Switch' }))
     expect(apiMock).toHaveBeenCalledWith('/groups/3', { method: 'PATCH', body: { name: 'Empty group', device_ids: [1] } })
+  })
+})
+
+describe('GroupDetail icon, chore switch, hours and summary', () => {
+  const g: Group = { id: 3, name: 'Consoles', device_ids: [1, 2, 4], icon: 'devices', chore_lock: true }
+  const rule = (id: number, name: string, over: Record<string, unknown> = {}) =>
+    ({ id, name, category: 'other', kind: 'allowed', days: '0123456', start_date: null, end_date: null, everyone: false, kid_ids: [], group_ids: [], times: [{ start: '08:00', end: '20:00' }], ...over }) as never
+  const members = [
+    dev({ id: 1, name: 'Switch', alerts: 1, locks_at: '2026-10-26T23:30:00Z' }),
+    dev({ id: 2, name: 'Xbox', alerts: 2, override: { action: 'unlock', expires_at: null } as never }),
+    dev({ id: 4, name: 'PS5', override: { action: 'lock', expires_at: null } as never, locks_at: '2026-10-27T03:00:00Z' }),
+  ]
+  const show = (rules: never[] = []) =>
+    render(wrap(<GroupDetail group={g} devices={members} kids={kids} groups={[g]} rules={rules} timeZone="America/New_York" onSelect={() => {}} onRequestOverride={() => {}} />))
+
+  test('picking tv saves icon tv', async () => {
+    show()
+    await userEvent.click(screen.getByTitle('tv'))
+    expect(apiMock).toHaveBeenCalledWith('/groups/3', { method: 'PATCH', body: expect.objectContaining({ icon: 'tv', chore_lock: true }) })
+  })
+
+  test('switching off the chore lock saves chore_lock false', async () => {
+    show()
+    await userEvent.click(screen.getByRole('switch', { name: /Lock with the kids/ }))
+    expect(apiMock).toHaveBeenCalledWith('/groups/3', { method: 'PATCH', body: expect.objectContaining({ chore_lock: false }) })
+    expect(screen.getByText(/these devices skip the chore check/)).toBeTruthy()
+  })
+
+  test('hours card lists everyone and this group rules, not another group', () => {
+    show([rule(1, 'Family hours', { everyone: true }), rule(2, 'Tablets only', { group_ids: [3] }), rule(3, 'Other group rule', { group_ids: [9] })] as never)
+    const card = within(screen.getByRole('region', { name: 'Hours' }))
+    expect(card.getByText('Family hours')).toBeTruthy()
+    expect(card.getByText('Tablets only')).toBeTruthy()
+    expect(card.queryByText('Other group rule')).toBeNull()
+    expect(card.getByText(/only this group/)).toBeTruthy()
+    expect(card.getByRole('link', { name: /Edit in Settings/ }).getAttribute('href')).toBe('/settings?section=hours')
+  })
+
+  test('summary strip shows open count, alerts, overrides and next lock in family time', () => {
+    show()
+    const strip = within(screen.getByRole('group', { name: 'Group summary' }))
+    expect(strip.getByText('2 of 3')).toBeTruthy()
+    expect(strip.getByText('3')).toBeTruthy()
+    expect(strip.getByText('Overrides today').nextSibling?.textContent).toBe('2')
+    expect(strip.getByText('Next lock').nextSibling?.textContent).toMatch(/7:30\s?PM/)
   })
 })

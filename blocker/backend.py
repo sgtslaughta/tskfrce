@@ -62,3 +62,12 @@ def report_resisting(cfg: Config, macs: set[str]) -> bool:
     except Exception as e:
         log.warning("report_resisting failed: %s", e)
         return False
+
+
+def report_hits(cfg: Config, hits: dict[str, int]) -> bool:
+    try:
+        _request(cfg, "/devices/hits", {"hits": hits})
+        return True
+    except Exception as e:
+        log.warning("report_hits failed: %s", e)
+        return False

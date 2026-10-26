@@ -324,6 +324,30 @@ def test_apply_updates_watch_and_loop_reports_full_set():
     assert reports[-1] == set()
 
 
+def test_mac_for_ip_after_apply():
+    svc, _, _ = _svc()
+    svc._on_seen(Seen(mac=MAC, ip="192.168.1.42", ipv6=["fd00::42"], hostname=None, vendor=None))
+    svc.store.set_blocked([MAC])
+    assert svc._mac_for_ip("192.168.1.42") == MAC
+    assert svc._mac_for_ip("fd00::42") == MAC
+    assert svc._mac_for_ip("192.168.1.99") is None
+
+
+def test_resist_once_reports_drained_hits_and_skips_empty():
+    watch = SimpleNamespace(
+        set_watched=Mock(), stop=Mock(), counter=Mock(resisting=Mock(return_value=set()))
+    )
+    sent = []
+    svc, _, _ = _svc(watch=watch, report=lambda c, m: True, report_hits=lambda c, h: sent.append(h))
+    svc._resist_once()
+    assert sent == []
+    svc._on_seen(Seen(mac=MAC, ip="192.168.1.42", ipv6=[], hostname=None, vendor=None))
+    svc.store.set_blocked([MAC])
+    svc.hits.add("192.168.1.42")
+    svc._resist_once()
+    assert sent == [{MAC: 1}]
+
+
 GW = "aa:aa:aa:aa:aa:aa"
 BOX = "bb:bb:bb:bb:bb:bb"
 

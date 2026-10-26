@@ -12,6 +12,7 @@ from app.api.rewards import redemption_name
 from app.core.auth import AuthService
 from app.core.client_ip import client_ip, norm_ip
 from app.core.ratelimit import check, hit
+from app.lock import activity
 from app.lock.loop import trigger
 from app.lock.rules import is_online
 from app.lock.schedule import local_now
@@ -115,6 +116,15 @@ def login(body: KidLogin, request: Request, db: Session = Depends(get_db)):
     auth = AuthService(db)
     if kid.pin_hash and not (body.pin and auth.verify_password(body.pin, kid.pin_hash)):
         hit(key, 60)
+        activity.log(
+            db,
+            dev.id,
+            "sign_in",
+            datetime.now(UTC).replace(tzinfo=None),
+            merge_minutes=10,
+            kid_id=kid.id,
+        )
+        db.commit()
         raise HTTPException(status_code=401, detail="Wrong PIN. Try again.")
     return {"access_token": auth.create_access_token(data={"sub": str(kid.id)})}
 
