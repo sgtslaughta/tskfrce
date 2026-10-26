@@ -244,3 +244,12 @@ def test_close_discards_stale_pings(db, pings):
     db.add(NotifyHeld(place_id=1, title="x", body="y"))
     db.commit()
     assert pings == []
+
+
+def test_chat_mentions_are_defanged(db, pings):
+    _place(db)
+    notify.ping(db, "chore_ok", "@everyone look", "hi @here <@123> <@&9> mia@x.org", None)
+    db.commit()
+    z = "​"
+    assert pings[0][1] == f"@{z}everyone look"
+    assert pings[0][2] == f"hi @{z}here <@{z}123> <@{z}&9> mia@x.org"

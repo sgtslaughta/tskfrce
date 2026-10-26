@@ -155,8 +155,16 @@ def _submit(fn, *args) -> None:
     _pool.submit(fn, *args)
 
 
+_MENTION = re.compile(r"@(?=everyone|here)|(?<=<)@", re.IGNORECASE)
+
+
+def defang(s: str) -> str:
+    """Kid notes and device names go out verbatim: stop @everyone/@here/<@id> pings."""
+    return _MENTION.sub("@\u200b", s)
+
+
 def _send(urls, title, text) -> None:
-    ok, err = deliver(urls, title, text)
+    ok, err = deliver(urls, defang(title), defang(text))
     if not ok:
         log.warning("notify delivery failed", error=err)
 
