@@ -121,8 +121,52 @@ def test_lock_changes_baseline_then_diff(db, pings, kid):
     assert [p[1] for p in pings][-1] == "Unlocked: Mia's iPad" and len(pings) == 2
 
 
-def test_tick_runs_all_and_commits(db, pings):
-    notify_jobs.tick(db, at(db, "12:00"), [])
+def test_overdue_skips_downtime_gap(db, pings, parent, kid):
+    _place(db, events=tuple(notify.EVENTS))
+    make_run(db, parent, kid, day=svc.today(db), due_time="12:00")
+    get_family(db).notify_scan_at = at(db, "08:00").replace(tzinfo=None)
+    db.commit()
+    notify_jobs.overdue(db, at(db, "17:00"))
+    db.commit()
+    assert pings == []
+    assert get_family(db).notify_scan_at == at(db, "17:00").replace(tzinfo=None)
+
+
+def test_overdue_plural_verb(db, pings, parent, kid):
+    from app.models.user import User, UserRole
+
+    _place(db, events=tuple(notify.EVENTS))
+    o = User(username="leo", email="l@x.l", hashed_password="x", full_name="Leo", role=UserRole.KID)
+    db.add(o)
+    db.commit()
+    make_run(db, parent, kids=[kid, o], mode="team", day=svc.today(db), due_time="17:00")
+    notify_jobs.overdue(db, at(db, "16:59"))
+    notify_jobs.overdue(db, at(db, "17:01"))
+    db.commit()
+    assert " and " in pings[0][1] and "haven't finished" in pings[0][1]
+
+
+def test_summary_and_overdue_dropped_in_quiet(db, pings, parent, kid, monkeypatch):
+    _place(db, events=tuple(notify.EVENTS))
+    make_run(db, parent, kid, day=svc.today(db), due_time="17:00")
+    monkeypatch.setattr(notify, "in_quiet", lambda *a: True)
+    notify_jobs.overdue(db, at(db, "16:59"))
+    notify_jobs.overdue(db, at(db, "17:01"))
+    notify_jobs.daily_summary(db, at(db, "19:00"))
+    db.commit()
+    assert pings == []
+
+
+def test_tick_runs_all_and_commits(db, pings, parent):
+    _place(db, events=tuple(notify.EVENTS))
+    fam = get_family(db)
+    now = at(db, "12:00")
+    fam.blocker_last_seen = (now - timedelta(minutes=11)).replace(tzinfo=None)
+    notify_jobs.tick(db, now, [])
+    db.rollback()  # tick already committed: state survives
+    assert fam.blocker_alerted is True
+    assert fam.notify_scan_at == now.replace(tzinfo=None)
+    assert len(pings) == 1
 
 
 def test_loop_survives_notify_failure(db, monkeypatch):

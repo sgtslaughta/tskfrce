@@ -17,6 +17,7 @@ from app.services import inbox, notify
 log = get_logger(__name__)
 SUMMARY_AT = "19:00"
 OFFLINE_AFTER = timedelta(minutes=10)
+SCAN_GAP = timedelta(minutes=5)  # longer gap between scans = server was down: re-baseline
 _last: set[str] | None = None  # blocked MACs at the previous tick (None = no baseline yet)
 
 
@@ -66,7 +67,7 @@ def overdue(db: Session, now_utc: datetime) -> None:
     fam = get_family(db)
     now = _naive(now_utc)
     prev, fam.notify_scan_at = fam.notify_scan_at, now
-    if prev is None:
+    if prev is None or now - prev > SCAN_GAP:
         return
     tz = ZoneInfo(fam.timezone)
     runs = db.query(ChoreRun).filter(ChoreRun.day == svc.today(db, now_utc)).all()
@@ -81,10 +82,11 @@ def overdue(db: Session, now_utc: datetime) -> None:
         loc = due.replace(tzinfo=UTC).astimezone(tz)
         at = f"{loc.hour % 12 or 12}:{loc.minute:02d} {'AM' if loc.hour < 12 else 'PM'}"
         title = svc.chore_of(r).title
+        verb = "hasn't" if len(kids) == 1 else "haven't"
         notify.ping(
             db,
             "overdue",
-            f"{names} hasn't finished {title}",
+            f"{names} {verb} finished {title}",
             f"It was due at {at}.",
             f"/?chore={r.id}",
         )
