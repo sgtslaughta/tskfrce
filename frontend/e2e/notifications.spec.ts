@@ -1,8 +1,11 @@
 import { expect, request, test } from '@playwright/test'
 import { loginUi, parentApi } from './seed'
 
-const BACKEND = process.env.E2E_BACKEND_URL ?? 'http://127.0.0.1:8886'
-const TOKEN = process.env.E2E_INTERNAL_TOKEN ?? 'planftoken'
+// Test 2 seeds a kid device through the backend directly, so it needs E2E_BACKEND_URL (e.g. http://127.0.0.1:8886)
+// and E2E_INTERNAL_TOKEN. It assumes the backend trusts X-Real-IP from the test runner (loopback), so run it
+// on the same host as the backend. Without both vars it is skipped.
+const BACKEND = process.env.E2E_BACKEND_URL
+const TOKEN = process.env.E2E_INTERNAL_TOKEN
 
 test.use({ actionTimeout: 15_000 })
 
@@ -11,6 +14,7 @@ test('apprise place: add, mask, test, chip, quiet hours, bell, delete', async ({
   const api = await parentApi()
   const tag = Date.now().toString(36).slice(-4)
   const name = `E2E ${tag}`
+  const before = await (await api.get('/api/proxy/notify/settings')).json()
   try {
     await loginUi(page)
     await page.goto('/settings?section=notifications')
@@ -24,7 +28,8 @@ test('apprise place: add, mask, test, chip, quiet hours, bell, delete', async ({
     await expect(page.getByText('json://127.0.0.1:9/nowhere')).toHaveCount(0)
 
     await card.getByRole('button', { name: 'Test', exact: true }).click()
-    await expect(page.locator('.mantine-Notification-root').first()).toBeVisible()
+    // the "Saved" toast may still be up: look for the failure toast specifically (nothing listens at port 9)
+    await expect(page.locator('.mantine-Notification-root').filter({ hasText: "That didn't work" })).toBeVisible()
 
     const chip = card.getByRole('button', { name: 'Badge / level up' })
     const was = await chip.getAttribute('aria-pressed')
@@ -36,6 +41,7 @@ test('apprise place: add, mask, test, chip, quiet hours, bell, delete', async ({
 
     const quiet = page.getByRole('switch', { name: 'Quiet hours' })
     if (!(await quiet.isChecked())) await quiet.click()
+    await expect(quiet).toBeChecked()
     await expect(page.getByLabel('From')).toHaveValue('21:30')
     await page.reload()
     await expect(page.getByLabel('From')).toHaveValue('21:30') // 9:30 PM
@@ -51,11 +57,15 @@ test('apprise place: add, mask, test, chip, quiet hours, bell, delete', async ({
   } finally {
     const places: { id: number; name: string }[] = await (await api.get('/api/proxy/notify/places')).json()
     for (const p of places.filter((p) => p.name === name)) await api.delete(`/api/proxy/notify/places/${p.id}`)
+    await api.patch('/api/proxy/notify/settings', {
+      data: { quiet_start: before.quiet_start, quiet_end: before.quiet_end },
+    })
     await api.dispose()
   }
 })
 
 test('kid note shows in the bell under Needs you and Reply opens the chore chat', async ({ page }) => {
+  test.skip(!BACKEND || !TOKEN, 'Set E2E_BACKEND_URL and E2E_INTERNAL_TOKEN to seed a kid device')
   const api = await parentApi()
   const tag = Date.now().toString(36).slice(-4)
   const kidName = `Note ${tag}`
@@ -63,14 +73,14 @@ test('kid note shows in the bell under Needs you and Reply opens the chore chat'
   const kid = await (await api.post('/api/proxy/kids', { data: { full_name: kidName, pin: '1234' } })).json()
   let choreId: number | undefined
   let deviceId: number | undefined
-  const bk = await request.newContext({ baseURL: BACKEND })
+  const bk = await request.newContext({ baseURL: BACKEND! })
   try {
     // smallest seeding route: report a device (what the blocker does) at a unique fake LAN address, give it to the kid,
     // and present that address as X-Real-IP (the backend trusts it from loopback)
     const ip = `10.77.${Date.now() % 250}.${(Date.now() >> 8) % 250 + 1}`
     const real = { 'X-Real-IP': ip }
     const seen = await bk.post('/api/v1/internal/devices/seen', {
-      headers: { 'X-Internal-Token': TOKEN },
+      headers: { 'X-Internal-Token': TOKEN! },
       data: { mac: `02:e2:00:00:${tag.padEnd(4, '0').replace(/[^0-9a-f]/g, '0').replace(/(..)(..)/, '$1:$2')}`, ip, hostname: `e2e-notes-${tag}` },
     })
     expect(seen.ok()).toBe(true)
