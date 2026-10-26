@@ -8,7 +8,7 @@ from .badge import BadgeAward, CustomBadge
 from .chat import ChatPhoto, MessageReaction, Thread, ThreadMessage, ThreadRead
 from .chore_extra import ChorePhoto
 from .chore_type import ChoreType, ChoreTypeNote
-from .chores import Chore, ChoreAssignment, ChoreRun, ChoreStep, RunStepTick
+from .chores import Chore, ChoreAssignment, ChoreRun, ChoreSeen, ChoreStep, RunStepTick
 from .family import FamilySettings, get_family
 from .flair import KidFlair
 from .inbox import Notification
@@ -36,6 +36,7 @@ __all__ = [
     "ChoreAssignment",
     "ChoreRun",
     "RunStepTick",
+    "ChoreSeen",
     "UsedInvite",
     "User",
     "FamilySettings",

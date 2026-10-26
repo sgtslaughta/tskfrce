@@ -364,7 +364,7 @@ def test_drop_legacy_keeps_what_parents_and_lock_see(tmp_path):
     from app.models.lock import Device
     from app.models.user import User
     from sqlalchemy import create_engine
-    from sqlalchemy.orm import Session
+    from sqlalchemy.orm import Session, load_only
 
     url = f"sqlite:///{tmp_path / 'm.db'}"
     _alembic(url, OLD)
@@ -374,7 +374,9 @@ def test_drop_legacy_keeps_what_parents_and_lock_see(tmp_path):
     con.close()
     _alembic(url, "d0e1f2a3b4c5")
     with Session(create_engine(url)) as db:
-        for i, kid in enumerate(db.query(User).filter(User.id.in_([2, 3]))):
+        for i, kid in enumerate(
+            db.query(User).options(load_only(User.id)).filter(User.id.in_([2, 3]))
+        ):
             db.add(
                 Device(mac=f"aa:bb:cc:dd:ee:0{i}", name=f"d{i}", status="assigned", owners=[kid])
             )

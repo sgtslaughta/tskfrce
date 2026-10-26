@@ -127,3 +127,18 @@ def test_dismiss_own_only(client, db, parent, parent_headers, kid_headers):
     assert client.delete(f"{N}/{n.id}", headers=kid_headers).status_code == 404
     assert client.delete(f"{N}/{n.id}", headers=parent_headers).status_code == 204
     assert client.get(N, headers=parent_headers).json()["items"] == []
+
+
+def test_notify_dedup(db, kid):
+    from app.services import inbox
+
+    n1 = inbox.notify(db, [kid.id], "due_soon", "x", dedup_key="soon:r1")
+    db.commit()
+    n2 = inbox.notify(db, [kid.id], "due_soon", "x", dedup_key="soon:r1")
+    db.commit()
+    assert (n1, n2) == (1, 0)
+    assert len(_all(db, user_id=kid.id, kind="due_soon")) == 1
+
+
+def test_family_relay_defaults_off(db):
+    assert get_family(db).ntfy_upstream_relay is False

@@ -5,6 +5,22 @@ from sqlalchemy.orm import Session
 from app.models.inbox import Notification
 from app.models.user import User, UserRole
 
+KID_KINDS = frozenset(
+    {
+        "chore_new",
+        "due_soon",
+        "missed_deadline",
+        "chore_approved",
+        "chore_sent_back",
+        "points_taken",
+        "lock_warning",
+        "chat_message",
+        "redemption_decided",
+        "badge_earned",
+        "level_up",
+    }
+)
+
 
 def parents(db: Session) -> list[int]:
     return [
@@ -23,8 +39,16 @@ def notify(
     redemption_id: int | None = None,
     device_id: int | None = None,
     thread_id: int | None = None,
-) -> None:
+    dedup_key: str | None = None,
+) -> int:
+    """Add one row per recipient; returns rows added (dedup_key skips existing)."""
+    n = 0
     for uid in user_ids:
+        if dedup_key and (
+            db.query(Notification.id).filter_by(user_id=uid, dedup_key=dedup_key).first()
+        ):
+            continue
+        n += 1
         db.add(
             Notification(
                 user_id=uid,
@@ -35,5 +59,8 @@ def notify(
                 redemption_id=redemption_id,
                 device_id=device_id,
                 thread_id=thread_id,
+                dedup_key=dedup_key,
             )
         )
+        db.flush()
+    return n

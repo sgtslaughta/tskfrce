@@ -2,7 +2,15 @@
 
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, Column, DateTime, ForeignKey, Integer, String
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    UniqueConstraint,
+)
 
 from app.core.database import Base
 
@@ -16,6 +24,13 @@ KINDS = (
     "level_up",
     "chat_message",
     "chore_note",
+    "chore_new",
+    "due_soon",
+    "missed_deadline",
+    "chore_approved",
+    "chore_sent_back",
+    "points_taken",
+    "lock_warning",
 )
 
 
@@ -29,6 +44,7 @@ class Notification(Base):
         CheckConstraint(
             "kind IN (" + ",".join(f"'{k}'" for k in KINDS) + ")", name="ck_notification_kind"
         ),
+        UniqueConstraint("user_id", "dedup_key", name="uq_notification_dedup"),
     )
 
     id = Column(Integer, primary_key=True)
@@ -44,3 +60,4 @@ class Notification(Base):
     redemption_id = _fk("redemptions")
     device_id = _fk("devices")
     thread_id = _fk("threads")
+    dedup_key = Column(String(60), nullable=True)

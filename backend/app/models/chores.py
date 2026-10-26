@@ -149,6 +149,18 @@ class ChoreRun(Base):
     ticks = relationship("RunStepTick", cascade="all, delete-orphan")
 
 
+class ChoreSeen(Base):
+    """A kid has seen this assignment (drives the "new" badge)."""
+
+    __tablename__ = "chore_seen"
+
+    assignment_id = Column(
+        Integer, ForeignKey("chore_assignments.id", ondelete="CASCADE"), primary_key=True
+    )
+    kid_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), primary_key=True)
+    seen_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
 class RunStepTick(Base):
     __tablename__ = "run_step_ticks"
 

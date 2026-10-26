@@ -7,7 +7,7 @@ This module contains the User model for authentication and user management.
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, Column, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Integer, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
@@ -46,6 +46,9 @@ class User(Base):
     """
 
     __tablename__ = "users"
+    __table_args__ = (
+        CheckConstraint("age_group IN ('little','kid','teen')", name="ck_user_age_group"),
+    )
 
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(50), unique=True, index=True, nullable=False)
@@ -63,6 +66,8 @@ class User(Base):
     pin_hash = Column(String(255), nullable=True)
     avatar = Column(String(255), nullable=True)
     celebrated_level = Column(Integer, nullable=False, default=1, server_default="1")
+    age_group = Column(String(6), nullable=False, default="kid", server_default="kid")
+    push_topic = Column(String(40), nullable=True, unique=True)
 
     # Relationships
     points = relationship("Points", back_populates="user", foreign_keys="Points.user_id")

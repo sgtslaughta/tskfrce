@@ -30,6 +30,7 @@ class FamilySettings(Base):
     accent = Column(String(12), nullable=True, default="neon", server_default="neon")
     last_reset_date = Column(Date, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    ntfy_upstream_relay = Column(Boolean, nullable=False, default=False, server_default="0")
     blocker_last_seen = Column(DateTime, nullable=True)  # naive UTC; home box heartbeat
 
 
