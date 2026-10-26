@@ -281,3 +281,33 @@ def test_pending_list_carries_the_reward_icon(client, db, kid, parent_headers):
     db.commit()
     rows = client.get("/api/v1/redemptions", headers=parent_headers).json()
     assert [r["icon"] for r in rows] == ["cake", None, "movie"]
+
+
+def test_approve_all_skips_concurrently_answered(
+    client, db, kid, kid_headers, parent_headers, monkeypatch
+):
+    from app.services import economy
+    from fastapi import HTTPException
+
+    _fund(db, kid, 500)
+    rw = _reward(db, 100)
+    a = _ask(client, kid_headers, rw.id).json()["id"]
+    b = _ask(client, kid_headers, rw.id).json()["id"]
+    real = economy.decide
+
+    def flaky(db_, r, *args, **kw):
+        if r.id == a:
+            raise HTTPException(409, "Someone already answered this request.")
+        return real(db_, r, *args, **kw)
+
+    monkeypatch.setattr(economy, "decide", flaky)
+    r = client.post("/api/v1/redemptions/approve-all", headers=parent_headers)
+    assert r.status_code == 200
+    assert r.json() == {"approved": 1, "skipped": 1}
+    assert db.get(Redemption, b).status == "approved"
+
+
+def test_approve_all_kid_forbidden_and_empty(client, kid_headers, parent_headers):
+    url = "/api/v1/redemptions/approve-all"
+    assert client.post(url, headers=kid_headers).status_code == 403
+    assert client.post(url, headers=parent_headers).json() == {"approved": 0, "skipped": 0}

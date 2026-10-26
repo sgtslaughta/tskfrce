@@ -61,13 +61,14 @@ def patch_reward(reward_id: int, body: RewardPatch, db: Session = Depends(get_db
 @router.delete("/{reward_id}", status_code=204)
 def delete_reward(reward_id: int, db: Session = Depends(get_db)):
     r = _get(db, reward_id)
-    r.active = False
-    pending = db.query(Redemption).filter(
-        Redemption.reward_id == r.id, Redemption.status == "pending"
-    )
-    for p in pending:
-        p.status, p.decided_at = "denied", datetime.utcnow()
-    db.commit()
+    with economy.SPEND_LOCK:  # same lock as decide, so a request isn't answered twice
+        r.active = False
+        pending = db.query(Redemption).filter(
+            Redemption.reward_id == r.id, Redemption.status == "pending"
+        )
+        for p in pending:
+            p.status, p.decided_at = "denied", datetime.utcnow()
+        db.commit()
     return Response(status_code=204)
 
 
@@ -182,7 +183,12 @@ def approve_all(db: Session = Depends(get_db), parent: User = Depends(require_pa
             if r.cost > economy.balance(db, r.kid_id):
                 skipped += 1
                 continue
-            economy.decide(db, r, parent, True)
+            try:
+                economy.decide(db, r, parent, True)
+            except HTTPException:  # answered or changed meanwhile: skip, keep earlier approvals
+                db.rollback()
+                skipped += 1
+                continue
             approved += 1
     return {"approved": approved, "skipped": skipped}
 
