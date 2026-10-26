@@ -44,7 +44,7 @@
 - Age groups: `little` (Little 5–8), `kid` (Kid 9–12, default), `teen` (Teen 13+).
 - Kid alert kinds (the only kinds a kid ever gets, in-app or push): `chore_new`, `due_soon`, `missed_deadline`, `chore_approved`, `chore_sent_back`, `points_taken`, `lock_warning`, `chat_message`, `redemption_decided`, `badge_earned`, `level_up`.
 - Alert timing: "due soon" fires from 30 min before a chore or step deadline. The lock warning looks 10 min ahead. A missed step deadline means late only: no deduction.
-- Push stays in the house: the backend posts only to the box's own ntfy service. No ntfy.sh upstream and no other cloud service.
+- Push stays in the house: the backend posts only to the box's own ntfy service. The box's ntfy server forwards a content-free poll request to ntfy.sh only when the parent turns on `ntfy_upstream_relay` (default off). No other cloud service.
 
 ## Decisions taken (owner may override)
 
@@ -79,6 +79,17 @@
 13. **Blocker**: no rule change needed. Locked devices already reach LAN and docker-bridge addresses (`172.16.0.0/12` is in `DEFAULT_LAN_CIDRS`), and prerouting only redirects ports 53/80. Task 6 pins this with a test.
 14. **Parent chat reply alerts** go out for chore threads and the kid's private thread only. Family-thread messages don't alert.
 
+## Owner decisions (2026-10-26)
+
+1. **iPhone push: optional relay switch.**
+   - New family setting `ntfy_upstream_relay` (bool, default false). Settings → Notifications shows "Instant alerts on iPhones (relays through ntfy.sh)", with the help line "When on, notification text passes through ntfy.sh. Off keeps everything in your home; iPhones then get alerts late."
+   - When on, the box's ntfy server config sets `upstream-base-url: "https://ntfy.sh"` (checked against the ntfy docs, config.md "iOS instant notifications"). Android is instant either way.
+   - ntfy reads this key only at start (SIGHUP hot-reloads log levels only), so the backend writes `server.yml` to a shared `ntfy_conf` volume and the ntfy container restarts its server when the file changes (Task 6). Don't also set `NTFY_UPSTREAM_BASE_URL` in the env.
+2. **ntfy auth:** none. The secret topic is the key, and LAN port 2586 stays open. As in Decision 11.
+3. **Little mode:** no chat. As in Decision 8.
+4. **Lock warning:** always fires, even when all chores are done. As in Decision 6.
+5. **`segno` 1.6.6:** approved.
+
 ## Review Focus
 
 1. **Parent "View as kid" at full width.** It renders the kid's age mode, never writes, and any write toasts "Preview only. Log in as {name} to do this." → Task 12 `kidApp.test.tsx` "preview: …".
@@ -93,11 +104,12 @@
 
 **Files:**
 - Create: `backend/alembic/versions/l5e6f7a8b9c0_kid_app_v3.py` (down_revision `k4d5e6f7a8b9`)
-- Modify: `backend/app/models/user.py`, `backend/app/models/chores.py`, `backend/app/models/inbox.py`, `backend/app/models/__init__.py`, `backend/app/services/inbox.py`
+- Modify: `backend/app/models/user.py`, `backend/app/models/family.py`, `backend/app/models/chores.py`, `backend/app/models/inbox.py`, `backend/app/models/__init__.py`, `backend/app/services/inbox.py`
 - Test: `backend/tests/test_migrations.py` (existing parity test), `backend/tests/test_inbox.py`
 
 **Interfaces — Produces:**
 - `User.age_group = Column(String(6), nullable=False, default="kid", server_default="kid")`, check `ck_user_age_group`: `age_group IN ('little','kid','teen')`.
+- `FamilySettings.ntfy_upstream_relay = Column(Boolean, nullable=False, default=False, server_default="0")`.
 - `User.push_topic = Column(String(40), nullable=True, unique=True)` (constraint name `uq_user_push_topic`).
 - `ChoreSeen` in `models/chores.py`:
   - `__tablename__ = "chore_seen"`
@@ -113,9 +125,10 @@
 - [ ] **Step 1:** Write `test_notify_dedup` in `tests/test_inbox.py`.
   - Call `inbox.notify(db, [kid.id], "due_soon", "x", dedup_key="soon:r1")` twice, committing after each.
   - Assert the returns are 1 then 0, and there is exactly one row.
+- [ ] **Step 1b:** Add `test_family_relay_defaults_off` in `tests/test_inbox.py`: `get_family(db).ntfy_upstream_relay is False`. The existing migration parity test covers the new column.
 - [ ] **Step 2:** Run `…/python -m pytest tests/test_inbox.py tests/test_migrations.py -q`. Expected: FAIL (unknown kind / no column).
 - [ ] **Step 3:** Write the migration.
-  - Use `batch_alter_table` for `users` (two columns, check, unique) and for `notifications` (column + unique). Recreate `ck_notification_kind` with the 7 new kinds, copying the `_in`/`KINDS` pattern from `h1a2b3c4d5e6_chore_model_v3.py`.
+  - Use `batch_alter_table` for `users` (two columns, check, unique), for `family_settings` (`ntfy_upstream_relay`) and for `notifications` (column + unique). Recreate `ck_notification_kind` with the 7 new kinds, copying the `_in`/`KINDS` pattern from `h1a2b3c4d5e6_chore_model_v3.py`.
   - Create `chore_seen`.
   - Downgrade: delete notifications of the new kinds, then drop everything in reverse.
 - [ ] **Step 4:** Add the models and the `notify` change.
@@ -236,8 +249,11 @@
 - Settings:
   - `NTFY_URL: str | None = None`: internal, backend → ntfy, e.g. `http://ntfy:80`.
   - `NTFY_PUBLIC_URL: str | None = None`: what phones use.
+  - `NTFY_CONF_FILE: str | None = None`: e.g. `/ntfy-conf/server.yml`, the shared file the ntfy container reads.
 - `push.public_url() -> str | None`: `NTFY_PUBLIC_URL`, else `f"http://{host}:2586"` from the `BOX_URL` hostname, else None.
 - `push.enabled() -> bool`: `bool(settings.NTFY_URL and public_url())`.
+- `push.conf_text(relay: bool) -> str`: `'upstream-base-url: "https://ntfy.sh"\n'` when `relay`, else `'# relay off\n'`.
+- `push.write_conf(fam) -> None`: writes `conf_text(fam.ntfy_upstream_relay)` to `settings.NTFY_CONF_FILE` via a temp file plus `os.replace`, only when the text differs. No-op when `NTFY_CONF_FILE` is unset. Errors → `logger.warning`, never raised.
 - `push.queue(db, user_id, kind, title, body) -> None`:
   - No-op unless `enabled()`, `kind in inbox.KID_KINDS`, and the user is a kid with a `push_topic`.
   - Otherwise appends `{"topic", "title", "message": body or "", "click": f"{BOX_URL}/kid" or None, "priority": 4 if kind in {"due_soon","missed_deadline","lock_warning"} else 3}` to `db.info.setdefault("push_out", [])`.
@@ -255,6 +271,8 @@
   - `test_parent_kind_never_pushes`: `new_device` to a kid id → no send.
   - `test_send_swallows_errors`: `httpx.post` raises `httpx.ConnectError` → no exception.
   - `test_public_url_from_box_url`: `BOX_URL=http://192.168.1.20:3000` → `http://192.168.1.20:2586`.
+  - `test_conf_text_relay`: `True` contains `upstream-base-url: "https://ntfy.sh"`; `False` contains no `upstream`.
+  - `test_write_conf_writes_on_change_only`: `tmp_path` file; the first write creates it, a second identical write leaves the mtime alone, flipping the flag rewrites it; unset `NTFY_CONF_FILE` writes nothing.
 - [ ] **Step 2:** Run → FAIL.
 - [ ] **Step 3:** Implement.
 - [ ] **Step 4:** Run → PASS; full backend checks (the conftest leaves `NTFY_URL` unset, so nothing sends).
@@ -264,7 +282,7 @@
 
 **Files:**
 - Create: `backend/app/api/kid_push.py`
-- Modify: `backend/app/main.py` (include the router), `backend/requirements.txt` (add `segno==1.6.6`; install it into the venv with `…/pip install segno==1.6.6`), `docker-compose.prod.yml`
+- Modify: `backend/app/main.py` (include the router), `backend/app/api/family.py`, `backend/app/schemas/lock.py`, `backend/requirements.txt` (add `segno==1.6.6`; install it into the venv with `…/pip install segno==1.6.6`), `docker-compose.prod.yml`
 - Test: `backend/tests/test_kid_push.py` (new), `blocker/tests/test_firewall.py`, `blocker/tests/test_compose.py`
 
 **Interfaces — Produces** (parent only, prefix `/api/v1/kids`):
@@ -274,21 +292,24 @@
   - `link = f"ntfy://{host[:port]}/{topic}?display={quote_plus(name + ' chores')}"`, plus `&secure=false` when the server is http.
   - `qr_svg` = segno SVG text of `link` (`segno.make(link).save(buf, kind="svg", scale=6, border=2, xmldecl=False)`).
 - `POST /{kid_id}/push/reset` → the same shape with a new topic.
+- Family: `FamilyPatch.ntfy_upstream_relay: bool | None = None`; `_fam_out` returns it. `patch_family` calls `push.write_conf(fam)` after the commit when the field was in the body. The app also calls `write_conf` once at startup (in `main.py`), so a fresh volume gets the file.
 - Unknown kid → 404 "That kid doesn't exist. Pick a kid from the list."
 - Prod compose:
   - New service `ntfy`: image `binwiederhier/ntfy:v2.11.0`, `command: serve`.
   - Its env: `NTFY_BASE_URL: ${NTFY_PUBLIC_URL:-http://task4ce.local:2586}`, `NTFY_CACHE_FILE: /var/cache/ntfy/cache.db`, `NTFY_CACHE_DURATION: 12h`.
+  - Config: volume `ntfy_conf:/etc/ntfy:ro`, so ntfy reads `/etc/ntfy/server.yml`. Its `entrypoint` is a short `sh -c` loop: start `ntfy serve` in the background, poll the file's mtime every 5s, and on a change kill the server and start it again (the container stays up; `restart: unless-stopped` still covers crashes).
   - Its ports: `"${NTFY_PORT:-0.0.0.0:2586}:80"`; volume `ntfy_cache:/var/cache/ntfy`; network `task4ce`; `restart: unless-stopped`.
-  - Backend env gains `NTFY_URL: http://ntfy:80` and `NTFY_PUBLIC_URL: ${NTFY_PUBLIC_URL:-}`. Add the `ntfy_cache` volume.
+  - Backend env gains `NTFY_URL: http://ntfy:80` and `NTFY_PUBLIC_URL: ${NTFY_PUBLIC_URL:-}`. Backend also gets `NTFY_CONF_FILE: /ntfy-conf/server.yml` and the volume `ntfy_conf:/ntfy-conf`. Add the `ntfy_cache` and `ntfy_conf` volumes.
 
 - [ ] **Step 1:** Write the backend tests:
   - `test_push_disabled_shape`.
   - `test_push_creates_topic_once`: two GETs → same topic; `link` starts `ntfy://192.168.1.20:2586/` and has `secure=false`; `qr_svg` starts `<svg`.
   - `test_reset_rotates`.
+  - `test_patch_family_relay_writes_conf`: `NTFY_CONF_FILE` in `tmp_path`; PATCH `{"ntfy_upstream_relay": true}` → `/family` returns true and the file has `upstream-base-url`; PATCH false → no `upstream`. A non-bool → 422.
   - `test_kid_token_forbidden`.
 - [ ] **Step 2:** Write the blocker tests:
   - `test_locked_device_reaches_box_services` in `test_firewall.py`: render with `DEFAULT_LAN_CIDRS` and portal ip `192.168.1.2`. Assert the `ether saddr @blocked_mac ip daddr { … 172.16.0.0/12 … } accept` line comes before `ether saddr @blocked_mac drop`, and no prerouting line contains `2586`.
-  - `test_prod_compose_has_ntfy` in `test_compose.py`, following that file's loading pattern: service `ntfy` exists, container port 80, network `task4ce`, and backend env has `NTFY_URL`.
+  - `test_prod_compose_has_ntfy` in `test_compose.py`, following that file's loading pattern: service `ntfy` exists, container port 80, network `task4ce`, backend env has `NTFY_URL` and `NTFY_CONF_FILE`, and the ntfy service mounts `ntfy_conf` read-only at `/etc/ntfy` and does not set `NTFY_UPSTREAM_BASE_URL`.
 - [ ] **Step 3:** Run backend `pytest tests/test_kid_push.py` and `cd blocker && /home/user/code/tskfrce-redesign/.venv/bin/python -m pytest -q tests/test_firewall.py tests/test_compose.py`. Expected: FAIL only on the new tests.
 - [ ] **Step 4:** Implement.
 - [ ] **Step 5:** Run → PASS; full backend checks; blocker tests from Step 3 → PASS.
@@ -597,7 +618,7 @@
 **Files:**
 - Create: `frontend/src/v2/manage/KidPushPane.tsx`
 - Modify: `frontend/src/v2/manage/KidEditor.tsx`, `frontend/src/v2/manage/SettingsPage.tsx`, `frontend/src/v2/manage/KidDetail.tsx` (show the age group in the Profile card)
-- Test: `frontend/tests/v2/kidEditor.test.tsx` (existing or new), `frontend/tests/v2/kidPushPane.test.tsx` (new)
+- Test: `frontend/tests/v2/kidEditor.test.tsx` (existing or new), `frontend/tests/v2/kidPushPane.test.tsx` (new); types: add `ntfy_upstream_relay: boolean` to the family type in `frontend/src/v2/types.ts`
 
 **Interfaces — Produces:**
 - `KidEditor`: an **Age group** field (after Avatar) of three cards, as in mockup 11 `.ages`:
@@ -606,19 +627,22 @@
   - "Teen (13+)": "List + detail, stats, filters, smaller type."
   - Selected = 2px ink outline + 3px accent offset shadow (`aria-pressed`). Default "kid" for a new kid; only a changed value is sent as `age_group`.
 - Settings: new section `{ id: 'notify', label: 'Notifications', description: 'Kid phones', icon: 'notifications' }` (after Hours) → `KidPushPane`.
-- `KidPushPane`: `InfoBlock` "Kids get chore alerts on their own phone through the box. Nothing leaves your home." Then one `pk-panel` card per kid (`useKids`):
+- `KidPushPane`: `InfoBlock` (copy below), then the relay switch, then one `pk-panel` card per kid (`useKids`):
   - Avatar + name.
   - QR `<img alt="Kid phone code for {name}" src={`data:image/svg+xml;utf8,${encodeURIComponent(qr_svg)}`} width=168>`.
   - Steps "1. Install the ntfy app on {name}'s phone. 2. Scan this code with the phone camera." and "Or add it by hand: server {server}, topic {topic}" (mono).
   - **New code** button → `ConfirmDelete` "Make a new code?" / "{name}'s phone stops getting alerts until you scan the new code." → `useResetKidPush`.
   - `enabled: false` → one `InfoBlock`: "Kid phone alerts need the ntfy service on the box. Update the box, then come back here."
   - Fetch push info per kid only when the section is open.
+- Relay switch, at the top of the pane under the `InfoBlock` (family-level, not per kid): `Switch` labelled "Instant alerts on iPhones (relays through ntfy.sh)" bound to `ntfy_upstream_relay` through `usePatchFamily`, with the help line "When on, notification text passes through ntfy.sh. Off keeps everything in your home; iPhones then get alerts late." Hidden when `enabled: false`.
+- Reword the `InfoBlock` to "Kids get chore alerts on their own phone through the box. Nothing leaves your home unless you turn on iPhone alerts below."
 
 - [ ] **Step 1:** Write the tests:
   - The editor sends `{age_group: 'teen'}` after picking Teen, and nothing when unchanged.
   - The pane renders the QR img alt and server/topic.
   - The New code confirm posts the reset.
-  - The disabled copy.
+  - The disabled copy (the relay switch is hidden).
+  - The relay switch shows the label and help line, reflects `ntfy_upstream_relay`, and toggling it patches `{ntfy_upstream_relay: true}`.
 - [ ] **Step 2:** FAIL.
 - [ ] **Step 3:** Implement with parent tokens (`pk-*`, `p-btn`, `Icon`; no emojis except the kid avatar).
 - [ ] **Step 4:** PASS; tsc, lint, full jest.
