@@ -93,6 +93,16 @@ def ping(db, event: str, title: str, body: str | None = None, path: str | None =
         db.info.setdefault("pings", []).append((urls, title, text))
 
 
+def send_to(db, place: NotifyPlace, title: str, text: str) -> None:
+    """Queue one message to a single place (sent after commit); skips unreadable URLs."""
+    try:
+        urls = [unseal(place.url_enc)]
+    except ValueError:
+        log.warning("notify place unreadable", place_id=place.id)
+        return
+    db.info.setdefault("pings", []).append((urls, title, text))
+
+
 def _redact(msg: str, urls: list[str]) -> str:
     """Mask every URL and credential-ish piece of it, then cap at 300 chars."""
     try:
