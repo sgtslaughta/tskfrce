@@ -163,10 +163,20 @@ def _send(urls, title, text) -> None:
 
 @event.listens_for(Session, "after_commit")
 def _after_commit(session) -> None:
+    if session.in_nested_transaction():
+        return
     for urls, title, text in session.info.pop("pings", []):
         _submit(_send, urls, title, text)
 
 
 @event.listens_for(Session, "after_rollback")
 def _after_rollback(session) -> None:
+    if session.in_nested_transaction():
+        return
     session.info.pop("pings", None)
+
+
+@event.listens_for(Session, "after_transaction_end")
+def _after_end(session, transaction) -> None:
+    if transaction.parent is None:  # close() without commit/rollback
+        session.info.pop("pings", None)

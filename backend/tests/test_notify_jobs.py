@@ -180,3 +180,14 @@ def test_loop_survives_notify_failure(db, monkeypatch):
     monkeypatch.setattr(db, "close", lambda: None)
     loop._run_once()
     assert pushed == [["aa"]]
+
+
+def test_flush_held_caps_body(db, pings):
+    p = _place(db, events=tuple(notify.EVENTS))
+    db.add_all([NotifyHeld(place_id=p.id, title=f"T{i}", body="b") for i in range(25)])
+    db.commit()
+    notify_jobs.flush_held(db, at(db, "08:00"))
+    db.commit()
+    assert pings[0][1] == "While you were away: 25 updates"
+    body = pings[0][2]
+    assert body.count("• ") == 20 and "and 5 more" in body

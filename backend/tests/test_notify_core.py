@@ -208,3 +208,39 @@ def test_failed_add_silent_on_stderr(client, parent_headers, capfd):
     notify.deliver(["discord://tok123"], "t", "b")
     out = capfd.readouterr()
     assert "tok123" not in out.out + out.err
+
+
+def test_ping_dropped_when_outer_rolls_back_after_savepoint_release(db, pings):
+    _place(db)
+    db.commit()
+    notify.ping(db, "chore_ok", "T", "B", None)
+    with db.begin_nested():
+        db.add(NotifyHeld(place_id=1, title="x", body="y"))
+    assert pings == []
+    db.rollback()
+    assert pings == []
+
+
+def test_ping_survives_failed_savepoint(db, pings):
+    import pytest
+    from sqlalchemy import insert
+    from sqlalchemy.exc import IntegrityError
+
+    p = _place(db)
+    notify.ping(db, "chore_ok", "T", "B", None)
+    row = dict(id=p.id, name="D", url_enc=seal("json://localhost/y"), url_mask="m", events="")
+    with pytest.raises(IntegrityError), db.begin_nested():
+        db.execute(insert(NotifyPlace.__table__).values(**row))
+    assert pings == []
+    db.commit()
+    assert len(pings) == 1
+
+
+def test_close_discards_stale_pings(db, pings):
+    _place(db)
+    db.commit()
+    notify.ping(db, "chore_ok", "T", "B", None)
+    db.close()
+    db.add(NotifyHeld(place_id=1, title="x", body="y"))
+    db.commit()
+    assert pings == []

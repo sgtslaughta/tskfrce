@@ -39,6 +39,9 @@ def tick(db: Session, now_utc: datetime, blocked: list[str] | None = None) -> No
     db.commit()
 
 
+HELD_CAP = 20
+
+
 def flush_held(db: Session, now_utc: datetime) -> None:
     if notify.in_quiet(get_family(db), now_utc):
         return
@@ -58,7 +61,9 @@ def flush_held(db: Session, now_utc: datetime) -> None:
             continue
         n = len(rows)
         title = f"While you were away: {n} update{'s' if n != 1 else ''}"
-        text = "\n".join(f"• {r.title}" for r in rows)
+        text = "\n".join(f"• {r.title}" for r in rows[:HELD_CAP])
+        if n > HELD_CAP:
+            text += f"\nand {n - HELD_CAP} more"
         url = notify.link(fam, "/?tab=needs")
         notify.send_to(db, place, title, text + (f"\n\n{url}" if url else ""))
 
