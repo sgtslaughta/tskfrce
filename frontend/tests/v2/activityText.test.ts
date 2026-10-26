@@ -32,7 +32,7 @@ describe('eventText', () => {
   })
   test('sign_in', () => {
     expect(eventText(ev({ kind: 'sign_in', count: 3, kid_name: 'Mia' }), 'Switch')).toMatchObject({
-      icon: 'pin', title: '3 wrong PIN tries on Mia’s sign-in, from this device', sub: 'Someone on Switch tried to sign in as Mia.',
+      icon: 'pin', sev: 'lo', title: '3 wrong PIN tries on Mia’s sign-in, from this device', sub: 'Someone on Switch tried to sign in as Mia.',
     })
     expect(eventText(ev({ kind: 'sign_in', count: 1, kid_name: 'Mia' }), 'x').title).toBe('1 wrong PIN try on Mia’s sign-in, from this device')
   })
@@ -101,4 +101,12 @@ describe('whenLabel', () => {
   test('yesterday', () => expect(whenLabel('2026-10-26T00:00:00Z', tz, now)).toBe('Yesterday 8:00 PM'))
   test('within a week', () => expect(whenLabel('2026-10-21T13:14:00Z', tz, now)).toBe('Wed 9:14 AM'))
   test('older', () => expect(whenLabel('2026-10-12T20:03:00Z', tz, now)).toBe('Oct 12, 4:03 PM'))
+})
+
+describe('eventText timezone', () => {
+  test('outside_hours sub-line uses the family zone when given', () => {
+    const e = ev({ kind: 'outside_hours', count: 2, at: '2026-10-26T02:40:00Z', last_at: '2026-10-26T03:55:00Z' })
+    expect(eventText(e, 'x', 'America/New_York').sub).toMatch(/between 10:40\s?PM and 11:55\s?PM/)
+    expect(eventText(e, 'x', 'UTC').sub).toMatch(/between 2:40\s?AM and 3:55\s?AM/)
+  })
 })

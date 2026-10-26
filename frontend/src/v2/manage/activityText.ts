@@ -13,7 +13,7 @@ const time = (iso: string, tz?: string) => {
 const LOCKED_WHY: Record<string, string> = { chores: 'chores not done', manual: 'locked by a parent', new_device: 'new device' }
 
 /** Alert row copy for the Activity tab. */
-export function eventText(e: DeviceEvent, deviceName: string): { icon: string; sev: Sev; title: string; sub: string } {
+export function eventText(e: DeviceEvent, deviceName: string, tz?: string): { icon: string; sev: Sev; title: string; sub: string } {
   const kid = e.kid_name ?? 'a kid'
   switch (e.kind) {
     case 'bypass':
@@ -37,8 +37,8 @@ export function eventText(e: DeviceEvent, deviceName: string): { icon: string; s
         title: 'Tried to get online outside allowed hours',
         sub:
           e.count === 1 || !e.last_at
-            ? `${e.count} ${e.count === 1 ? 'try' : 'tries'} at ${time(e.at)}. ${e.count === 1 ? 'It hit' : 'Each try hit'} the lock page.`
-            : `${e.count} tries between ${time(e.at)} and ${time(e.last_at)}. Each try hit the lock page.`,
+            ? `${e.count} ${e.count === 1 ? 'try' : 'tries'} at ${time(e.at, tz)}. ${e.count === 1 ? 'It hit' : 'Each try hit'} the lock page.`
+            : `${e.count} tries between ${time(e.at, tz)} and ${time(e.last_at, tz)}. Each try hit the lock page.`,
       }
     case 'left_wifi':
       return {
@@ -50,7 +50,7 @@ export function eventText(e: DeviceEvent, deviceName: string): { icon: string; s
     case 'sign_in':
       return {
         icon: 'pin',
-        sev: 'md',
+        sev: 'lo',
         title: `${e.count} wrong PIN ${e.count === 1 ? 'try' : 'tries'} on ${kid}’s sign-in, from this device`,
         sub: `Someone on ${deviceName} tried to sign in as ${kid}.`,
       }

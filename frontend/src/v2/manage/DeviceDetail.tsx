@@ -11,6 +11,7 @@ import { SegmentedControl } from '@/v2/parent/SegmentedControl'
 import type { Device, Group, Kid } from '@/v2/types'
 import { ActionButton } from './ActionButton'
 import { ConfirmDelete } from './ConfirmDelete'
+import { DeviceActivity } from './DeviceActivity'
 import { DeviceNetwork } from './DeviceNetwork'
 import { DeviceRightNow } from './DeviceRightNow'
 import { OnlineWeek } from './OnlineWeek'
@@ -237,6 +238,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
         </div>
       )}
       {tab === 'network' && <DeviceNetwork device={device} timeZone={family?.timezone} />}
+      {tab === 'activity' && <DeviceActivity device={device} kids={kids} timeZone={family?.timezone} />}
 
       <ConfirmDelete
         opened={confirm}
