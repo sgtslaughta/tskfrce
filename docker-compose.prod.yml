@@ -19,7 +19,8 @@ services:
       # Only the frontend proxy may set X-Real-IP
       TRUSTED_PROXY_IPS: 127.0.0.1,::1,${TASK4CE_FRONTEND_IP:-172.29.50.10}
       NTFY_URL: http://ntfy:80
-      NTFY_PUBLIC_URL: ${NTFY_PUBLIC_URL:-http://task4ce.local:2586}
+      NTFY_PUBLIC_URL: ${NTFY_PUBLIC_URL:-}
+      NTFY_PORT: ${NTFY_PORT:-0.0.0.0:2586}
       NTFY_CONF_FILE: /ntfy-conf/server.yml
     volumes:
       - task4ce_data:/app/data

@@ -136,6 +136,15 @@ def test_public_url_from_box_url(monkeypatch):
     assert push.public_url() == "http://192.168.1.20:2586"
 
 
+def test_public_url_follows_ntfy_port(monkeypatch):
+    monkeypatch.setattr(settings, "NTFY_PUBLIC_URL", None)
+    monkeypatch.setattr(settings, "BOX_URL", "http://192.168.1.20:3000")
+    monkeypatch.setattr(settings, "NTFY_PORT", "0.0.0.0:8093")
+    assert push.public_url() == "http://192.168.1.20:8093"
+    monkeypatch.setattr(settings, "NTFY_PORT", "8094")
+    assert push.public_url() == "http://192.168.1.20:8094"
+
+
 def test_conf_text_relay():
     assert 'upstream-base-url: "https://ntfy.sh"' in push.conf_text(True)
     assert "upstream" not in push.conf_text(False)
