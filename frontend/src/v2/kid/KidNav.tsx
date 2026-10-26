@@ -53,15 +53,14 @@ export function KidNav({
         type="button"
         className="k-nb"
         aria-current={on ? 'page' : undefined}
-        aria-label={n > 0 ? `${label}, ${n}` : label}
+        aria-label={n > 0 ? `${label} ${n}` : label}
         onClick={() => onTab(t)}
       >
         <Icon name={icon} fill={on} />
         {label}
         {n > 0 && (
-          <span className="k-bd" aria-hidden="true">
-            {n > 99 ? '99+' : n}
-          </span>
+          // count drawn by CSS (::after), so the visible text stays inside the name "Chores 3" (WCAG 2.5.3)
+          <span className="k-bd" aria-hidden="true" data-n={n > 99 ? '99+' : n} />
         )}
       </button>
     )

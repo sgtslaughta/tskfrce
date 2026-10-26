@@ -55,7 +55,7 @@ const renderKid = () =>
 describe('kid chat', () => {
   test('the Chat nav item opens the dock list, with a summed unread badge', async () => {
     renderKid()
-    await userEvent.click(await screen.findByRole('button', { name: 'Chat, 5' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Chat 5' }))
     const list = await screen.findByRole('list', { name: 'Conversations' })
     expect(list).toHaveTextContent('Family')
     expect(list).toHaveTextContent('Mom & Dad')
@@ -64,7 +64,7 @@ describe('kid chat', () => {
 
   test('chore chat link opens its thread with the kid token', async () => {
     renderKid()
-    await userEvent.click(await screen.findByRole('button', { name: 'Open Dishes' }))
+    await userEvent.click(await screen.findByRole('button', { name: /^Open Dishes/ }))
     await userEvent.click(screen.getByRole('button', { name: 'Chat' }))
     await waitFor(() =>
       expect(apiMock).toHaveBeenCalledWith('/chat/threads/chore/7', expect.objectContaining({ kid: true })),
@@ -74,7 +74,7 @@ describe('kid chat', () => {
 
   test('the floating launcher is hidden: the nav has Chat', async () => {
     renderKid()
-    expect(await screen.findByRole('button', { name: 'Chat, 5' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: 'Chat 5' })).toBeInTheDocument()
     expect(screen.queryByTestId('dock-unread')).toBeNull()
     expect(screen.queryByRole('button', { name: /unread/ })).toBeNull()
   })
@@ -86,7 +86,7 @@ describe('kid chat', () => {
       { ...base, id: 2, body: 'on it', step_title: 'Rinse' },
     ]
     renderKid()
-    await userEvent.click(await screen.findByRole('button', { name: 'Open Dishes' }))
+    await userEvent.click(await screen.findByRole('button', { name: /^Open Dishes/ }))
     await userEvent.click(screen.getByRole('button', { name: 'Chat' }))
     expect(await screen.findByText('Note: Need help')).toBeInTheDocument()
     expect(screen.getByText(/Rinse/)).toBeInTheDocument()

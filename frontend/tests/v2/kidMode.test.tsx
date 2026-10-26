@@ -56,19 +56,26 @@ describe('KidMode', () => {
     expect(screen.getByLabelText('0 of 2 done')).toBeInTheDocument()
   })
 
+  test('a tile is named by its visible text (WCAG 2.5.3), prefixed with Open', () => {
+    render(wrap(props()))
+    const tile = screen.getByRole('button', { name: /^Open Clean Kitchen/ })
+    expect(tile).not.toHaveAttribute('aria-label')
+    expect(tile).toHaveAccessibleName(/^Open Clean Kitchen \+\d+/)
+  })
+
   test('unlocked shows tiles and deduction', async () => {
     render(wrap(props({ d: today({ locked: false }) })))
     expect(screen.getByText('Internet is on')).toBeInTheDocument()
     expect(screen.getByText('2 chores left today')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Open Clean Kitchen' })).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Open Feed the dog' }))
+    expect(screen.getByRole('button', { name: /^Open Clean Kitchen/ })).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /^Open Feed the dog/ }))
     expect(screen.getByText('Dad took 5 points')).toBeInTheDocument()
   })
 
   test('opening a tile calls onSeen and shows the back pill', async () => {
     const p = props()
     render(wrap(p))
-    await userEvent.click(screen.getByRole('button', { name: 'Open Clean Kitchen' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Open Clean Kitchen/ }))
     expect(p.onSeen).toHaveBeenCalledWith(1)
     expect(screen.getByRole('button', { name: /All chores/ })).toBeInTheDocument()
     expect(screen.getByText('Do steps 1 → 3 in order')).toBeInTheDocument()
@@ -79,7 +86,7 @@ describe('KidMode', () => {
   test("I'm done! is disabled until the steps are ticked, with the hint", async () => {
     const p = props()
     const { rerender } = render(wrap(p))
-    await userEvent.click(screen.getByRole('button', { name: 'Open Clean Kitchen' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Open Clean Kitchen/ }))
     expect(screen.getByRole('button', { name: /I'm done!/ })).toBeDisabled()
     expect(screen.getByText('Finish all the steps to press “I\'m done!”')).toBeInTheDocument()
     const ticked = { ...kitchen, subtasks: kitchen.subtasks!.map((s) => ({ ...s, done: true, locked: false })) }
@@ -92,27 +99,27 @@ describe('KidMode', () => {
 
   test('the New tile shows exactly 2 chips', () => {
     render(wrap(props()))
-    const tile = screen.getByRole('button', { name: 'Open Clean Kitchen' })
+    const tile = screen.getByRole('button', { name: /^Open Clean Kitchen/ })
     expect(tile.querySelectorAll('.k-chip')).toHaveLength(2)
     expect(within(tile).getByText('New')).toBeInTheDocument()
   })
 
   test('Chat is absent without onChat and present with it', async () => {
     const { unmount } = render(wrap(props()))
-    await userEvent.click(screen.getByRole('button', { name: 'Open Clean Kitchen' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Open Clean Kitchen/ }))
     expect(screen.queryByRole('button', { name: /^Chat$/ })).toBeNull()
     expect(screen.getByRole('button', { name: /Tell Mom\/Dad/ })).toBeInTheDocument()
     unmount()
     const onChat = jest.fn()
     render(wrap(props({ onChat })))
-    await userEvent.click(screen.getByRole('button', { name: 'Open Clean Kitchen' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Open Clean Kitchen/ }))
     await userEvent.click(screen.getByRole('button', { name: /^Chat$/ }))
     expect(onChat).toHaveBeenCalledWith(1)
   })
 
   test('waiting chore shows no actions', async () => {
     render(wrap(props({ d: today({ chores: [{ ...dog, state: 'needs_you' }] }) })))
-    await userEvent.click(screen.getByRole('button', { name: 'Open Feed the dog' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Open Feed the dog/ }))
     expect(screen.getByText('Waiting for Mom or Dad')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /I'm done!/ })).toBeNull()
   })
@@ -125,14 +132,14 @@ describe('KidMode', () => {
 
   test('empty deductions render no stray "0" in the chore view', async () => {
     render(wrap(props({ d: today({ chores: [{ ...dog, deductions: [] }] }) })))
-    await userEvent.click(screen.getByRole('button', { name: 'Open Feed the dog' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Open Feed the dog/ }))
     expect(screen.queryByText('0')).not.toBeInTheDocument()
   })
 
   // moved from the v2 KidChecklist tests
   const open = async (c: KidChore, over: Partial<KidToday> = {}) => {
     render(wrap(props({ d: today({ chores: [c], ...over }) })))
-    await userEvent.click(screen.getByRole('button', { name: `Open ${c.title}` }))
+    await userEvent.click(screen.getByRole('button', { name: new RegExp(`^Open ${c.title}`) }))
   }
 
   test('step deadlines show in the step hints', async () => {

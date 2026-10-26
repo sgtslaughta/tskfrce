@@ -54,7 +54,7 @@ function renderKid() {
 describe('parent view-as-kid', () => {
   test('shows banner, loads with asKid, never uses the kid token or polls inbox/threads', async () => {
     renderKid()
-    expect(await screen.findByRole('button', { name: 'Open Dishes' })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /^Open Dishes/ })).toBeInTheDocument()
     expect(await screen.findByText(/Viewing as Ana · preview/)).toBeInTheDocument()
     expect(apiMock).toHaveBeenCalledWith('/kid/today', { asKid: 3 })
     expect(apiMock.mock.calls.some((c) => c[1]?.kid)).toBe(false)

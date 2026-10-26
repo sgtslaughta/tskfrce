@@ -43,7 +43,7 @@ function route(r: Routes) {
   })
 }
 const calls = (p: string) => apiMock.mock.calls.filter((c) => c[0] === p)
-const openDishes = async () => userEvent.click(await screen.findByRole('button', { name: 'Open Dishes' }))
+const openDishes = async () => userEvent.click(await screen.findByRole('button', { name: /^Open Dishes/ }))
 const doneBtn = () => screen.getByRole('button', { name: /I'm done!/ })
 
 function renderKid() {
@@ -84,8 +84,8 @@ describe('kid lock screen', () => {
     expect(await screen.findByText('Internet is paused')).toBeInTheDocument()
     expect(apiMock).toHaveBeenCalledWith('/kid/login', { method: 'POST', body: { kid_id: 1 }, kid: true })
     expect(localStorage.getItem(KID_TOKEN_KEY)).toBe('tok')
-    expect(screen.getByRole('button', { name: 'Open Dishes' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Open Bed' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Open Dishes/ })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Open Bed/ })).toBeInTheDocument()
   })
 
   test('two kids show the picker and never auto-pick', async () => {
@@ -160,7 +160,7 @@ describe('kid lock screen', () => {
     await userEvent.click(doneBtn())
     await userEvent.click(await screen.findByRole('button', { name: /All chores/ }))
     expect(await screen.findByText('Internet is on')).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Open Dishes' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Open Dishes/ })).toBeInTheDocument()
   })
 
   test('kid 401 clears the token and restarts at whoami', async () => {

@@ -95,7 +95,10 @@ describe('KidApp', () => {
 
   test('chores badge counts the to-do chores', () => {
     renderApp(today('kid'))
-    expect(screen.getByRole('button', { name: 'Chores, 1' })).toBeInTheDocument()
+    const chores = screen.getByRole('button', { name: 'Chores 1' })
+    // the count is CSS-drawn: visible text "Chores" stays inside the name (WCAG 2.5.3)
+    expect(chores).toHaveTextContent(/^checklistChores$/)
+    expect(chores.querySelector('.k-bd')).toHaveAttribute('data-n', '1')
   })
 
   test('Alerts tab lists inbox items and "Mark all read" posts', async () => {
@@ -105,7 +108,7 @@ describe('KidApp', () => {
       has_more: false,
     }
     renderApp(today('kid'))
-    await userEvent.click(await screen.findByRole('button', { name: 'Alerts, 1' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Alerts 1' }))
     expect(screen.getByText('Dishes approved')).toBeInTheDocument()
     expect(screen.getByText('+5 points')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: 'Mark all read' }))
@@ -120,7 +123,7 @@ describe('KidApp', () => {
     const list = jest.fn()
     window.addEventListener('task4ce:open-chat-list', list)
     renderApp(today('kid'))
-    await userEvent.click(await screen.findByRole('button', { name: 'Alerts, 2' }))
+    await userEvent.click(await screen.findByRole('button', { name: 'Alerts 2' }))
     await userEvent.click(screen.getByRole('button', { name: /t2/ }))
     expect(list).toHaveBeenCalled()
     await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/notifications/2/read', { method: 'POST', kid: true }))
@@ -164,7 +167,7 @@ describe('preview', () => {
   test("I'm done! toasts the preview message, never calls /seen, and shows the bar", async () => {
     renderPage()
     expect(await screen.findByText('Viewing as Leo · preview')).toBeInTheDocument()
-    await userEvent.click(await screen.findByRole('button', { name: 'Open Dishes' }))
+    await userEvent.click(await screen.findByRole('button', { name: /^Open Dishes/ }))
     await userEvent.click(screen.getByRole('button', { name: /I'm done!/ }))
     await waitFor(() =>
       expect(notifications.show).toHaveBeenCalledWith(expect.objectContaining({ message: 'Preview only. Log in as Leo to do this.' })),

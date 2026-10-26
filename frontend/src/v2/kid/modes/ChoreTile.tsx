@@ -1,3 +1,4 @@
+import { VisuallyHidden } from '@mantine/core'
 import { Icon } from '@/v2/parent/Icon'
 import type { KidChore } from '../../types'
 import { KidChip, PointsChip } from '../KidChip'
@@ -12,7 +13,9 @@ export function ChoreTile({ c, now, tz, onOpen }: { c: KidChore; now: number; tz
   const steps = c.subtasks ?? []
   const done = steps.filter((s) => s.done).length
   return (
-    <button type="button" className="k-tile" data-dim={dim || undefined} aria-label={`Open ${c.title}`} onClick={onOpen}>
+    <button type="button" className="k-tile" data-dim={dim || undefined} onClick={onOpen}>
+      {/* named by its visible text (WCAG 2.5.3), "Open …" for screen readers */}
+      <VisuallyHidden component="span">Open </VisuallyHidden>
       <span className="k-ticon">
         <Icon name={dim ? 'check' : glyph(c)} />
       </span>

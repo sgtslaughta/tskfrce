@@ -14,10 +14,11 @@
 }
 .k-status-big .ms { font-size: 40px; }
 .k-status[data-open] .k-status-big { background: var(--k-green); }
-.k-status > div:not(.k-dots) { flex: 1 1 0; min-width: 0; }
+/* the title keeps room for one line; many dots wrap onto rows instead (820px with 8 chores) */
+.k-status > div:not(.k-dots) { flex: 1 0 240px; min-width: 0; }
 .k-status-t { font-family: var(--font-display), 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; line-height: 1.1; }
 .k-status-s { font-size: 17px; color: var(--k-sub); font-weight: 600; margin-top: 4px; }
-.k-dots { display: flex; flex-wrap: wrap; gap: 10px; margin-left: auto; }
+.k-dots { display: flex; flex-wrap: wrap; gap: 10px; margin-left: auto; flex: 0 1 auto; min-width: 0; }
 .k-dots i {
   width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--k-ink); display: grid; place-items: center;
   font-style: normal; color: var(--k-navy);
@@ -54,7 +55,8 @@
   display: grid; place-items: center; flex: none;
 }
 .k-go .ms { font-size: 30px; }
-.k-tile[data-dim] { opacity: 0.75; }
+/* dim only icon + name: a faded chip fails contrast (axe), so chips stay full strength */
+.k-tile[data-dim] .k-ticon, .k-tile[data-dim] .k-tname, .k-tile[data-dim] .k-mini { opacity: 0.75; }
 .k-tile[data-dim] .k-tname { text-decoration: line-through; }
 .k-tile[data-dim] .k-ticon { background: var(--k-green); color: var(--k-navy); }
 .k-mini { display: block; height: 10px; border-radius: 6px; background: var(--k-soft); margin-top: 10px; overflow: hidden; width: 100%; }
@@ -177,7 +179,10 @@
   background: var(--k-card); border: 1px solid var(--k-line); border-radius: 14px; padding: 20px;
   display: flex; flex-direction: column; gap: 14px; min-width: 0;
 }
-.t-aside { position: sticky; top: 16px; }
+.t-aside { position: sticky; top: calc(var(--k-top, 0px) + 16px); }
+/* 11 .detail: fills the screen height, actions at the bottom */
+.t-aside > .t-detail { min-height: calc(100dvh - var(--k-top, 0px) - 48px); }
+.t-aside .t-acts { margin-top: auto; }
 .t-back {
   display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; font: inherit; font-weight: 700; font-size: 14px;
   color: var(--k-ink); background: var(--k-soft); border: 1px solid var(--k-line); border-radius: 999px; padding: 6px 14px 6px 10px; cursor: pointer;
@@ -249,7 +254,8 @@
 .l-stars i[data-ok] { background: var(--k-sun); }
 .l-stars i[data-ok] .ms { color: var(--k-navy); }
 .l-stage { display: grid; grid-template-columns: minmax(0, 1fr); gap: 24px; }
-@media (min-width: 900px) { .l-stage { grid-template-columns: minmax(0, 1fr) 300px; } }
+/* the card keeps its own height (a long Next queue must not push "I did it!" under the nav) */
+@media (min-width: 900px) { .l-stage { grid-template-columns: minmax(0, 1fr) 300px; } .l-now { align-self: start; } }
 .l-now {
   background: var(--k-card); border: 4px solid var(--k-ink); border-radius: 32px; box-shadow: var(--l-shadow);
   padding: 26px 30px; display: flex; flex-direction: column; align-items: center; justify-content: center;
