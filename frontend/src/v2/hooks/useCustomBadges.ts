@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/v2/api'
-import type { CustomBadge } from '@/v2/types'
+import type { BadgeOverview, CustomBadge, RecentAward } from '@/v2/types'
 
 export type BadgeBody = Omit<CustomBadge, 'id'>
 
@@ -23,8 +23,15 @@ export function useDeleteBadge() {
   })
 }
 
-export const useAwardBadge = () =>
-  useMutation({
-    mutationFn: ({ id, kid_id }: { id: number; kid_id: number }) =>
-      api<{ tier: number }>(`/custom-badges/${id}/award`, { method: 'POST', body: { kid_id } }),
+export const useBadgeOverview = () => useQuery({ queryKey: ['badge-overview'], queryFn: () => api<BadgeOverview[]>('/badges/overview') })
+
+export const useRecentAwards = () => useQuery({ queryKey: ['recent-awards'], queryFn: () => api<RecentAward[]>('/badges/recent') })
+
+export function useAwardBadge() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, kid_id, note }: { id: number; kid_id: number; note?: string }) =>
+      api<{ tier: number }>(`/custom-badges/${id}/award`, { method: 'POST', body: note ? { kid_id, note } : { kid_id } }),
+    onSuccess: () => Promise.all(['badge-overview', 'recent-awards'].map((k) => qc.invalidateQueries({ queryKey: [k] }))),
   })
+}
