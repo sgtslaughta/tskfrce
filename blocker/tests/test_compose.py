@@ -34,3 +34,9 @@ def test_prod_compose_has_ntfy():
     assert "NTFY_URL" in env and "NTFY_CONF_FILE" in env
     assert "ntfy_conf:/etc/ntfy:ro" in ntfy["volumes"]
     assert "NTFY_UPSTREAM_BASE_URL" not in ntfy["environment"]
+
+
+def test_backend_image_owns_ntfy_conf_volume():
+    # Docker copies image dir ownership into a fresh named volume; without this appuser can't write.
+    df = (COMPOSE.parent / "backend" / "Dockerfile").read_text()
+    assert "chown appuser:appuser /app/data /ntfy-conf" in df

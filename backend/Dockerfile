@@ -36,7 +36,7 @@ RUN chmod +x entrypoint.sh
 # Create non-root user
 # Code stays root-owned (not writable by appuser); only /app/data is writable
 RUN adduser --disabled-password --gecos '' appuser \
-    && mkdir -p /app/data && chown appuser:appuser /app/data
+    && mkdir -p /app/data /ntfy-conf && chown appuser:appuser /app/data /ntfy-conf
 USER appuser
 
 # Expose port
