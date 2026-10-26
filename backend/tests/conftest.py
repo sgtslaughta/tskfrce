@@ -106,3 +106,18 @@ def parent_headers(db, parent):
 @pytest.fixture
 def kid_headers(db, kid):
     return _headers(db, kid)
+
+
+@pytest.fixture
+def pings(monkeypatch):
+    """Run notify sends inline and record them instead of calling Apprise."""
+    from app.services import notify
+
+    sent = []
+    monkeypatch.setattr(notify, "_submit", lambda fn, *a: fn(*a))
+    monkeypatch.setattr(
+        notify,
+        "deliver",
+        lambda urls, title, body: (sent.append((urls, title, body)), (True, None))[1],
+    )
+    return sent
