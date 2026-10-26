@@ -55,7 +55,7 @@ export function ChoreView({ c, d, now, onBack, onDone, busyId, onChat }: ChoreVi
           </div>
         </div>
       </div>
-      {(c.note || c.last_note || c.deductions?.length) && (
+      {!!(c.note || c.last_note || c.deductions?.length) && (
         <div className="k-cards">
           <NoteSent c={c} />
           <SentBackCard c={c} onChat={chat} />

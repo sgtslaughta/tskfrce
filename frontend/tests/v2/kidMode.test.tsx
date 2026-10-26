@@ -122,4 +122,10 @@ describe('KidMode', () => {
     expect(screen.getByText('No chores today. Enjoy the free time.')).toBeInTheDocument()
     expect(screen.getByText('All done for today. Nice work!')).toBeInTheDocument()
   })
+
+  test('empty deductions render no stray "0" in the chore view', async () => {
+    render(wrap(props({ d: today({ chores: [{ ...dog, deductions: [] }] }) })))
+    await userEvent.click(screen.getByRole('button', { name: 'Open Feed the dog' }))
+    expect(screen.queryByText('0')).not.toBeInTheDocument()
+  })
 })
