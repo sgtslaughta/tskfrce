@@ -61,7 +61,7 @@ export function StepHours({ drafts, onChange, choresLock, onChoresLock }: Props)
             </label>
           )
         })}
-        <div className={`pk-switch ${styles.kv}`}>
+        <div className="pk-switch ph-sw-row">
           <span id="setup-chores-lock">Lock until today&apos;s chores are done</span>
           <button type="button" role="switch" aria-checked={choresLock} aria-labelledby="setup-chores-lock" onClick={() => onChoresLock(!choresLock)} />
         </div>

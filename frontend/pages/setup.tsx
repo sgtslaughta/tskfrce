@@ -5,7 +5,7 @@ import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api, ApiError } from '@/v2/api'
-import type { Device, HoursPayload, Kid, RuleBody, SetupStatus } from '@/v2/types'
+import type { Device, HourRule, HoursPayload, Kid, RuleBody, SetupStatus } from '@/v2/types'
 import { markSetupDone } from '@/v2/components/RequireParent'
 import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import { WizardFrame } from '@/v2/setup/WizardFrame'
@@ -149,11 +149,12 @@ export default function SetupPage() {
     }
     if (step === 6) {
       return run([
-        ...hours.map((body) => ({
-          key: `rule:${body.name}`,
+        ...hours.map((body, i) => ({
+          key: `rule:${i}`,
           run: async () => {
-            const have = await api<HoursPayload>('/hours') // a re-run (or an earlier try) must not duplicate
-            if (!have?.rules?.some((r) => r.name === body.name)) await api('/hours', { method: 'POST', body })
+            const have = await api<HoursPayload>('/hours') // an earlier try must not duplicate an identical rule
+            const same = (r: HourRule) => r.name === body.name && r.category === body.category && r.kind === body.kind && r.days === body.days && r.everyone === body.everyone && r.start_date === body.start_date && r.end_date === body.end_date && JSON.stringify(r.times.map((t) => [t.start, t.end])) === JSON.stringify(body.times.map((t) => [t.start, t.end]))
+            if (!have?.rules?.some(same)) await api('/hours', { method: 'POST', body })
           },
         })),
         { key: `chores_lock:${choresLock}`, run: () => api('/family', { method: 'PATCH', body: { chores_lock: choresLock } }) },

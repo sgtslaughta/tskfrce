@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import SetupPage from '../../pages/setup'
 import { api, ApiError } from '@/v2/api'
 import { fridgeTheme } from '@/v2/theme'
+import { DEFAULT_DRAFTS } from '@/v2/setup/StepHours'
 
 const replace = jest.fn()
 const push = jest.fn()
@@ -241,7 +242,7 @@ describe('setup wizard', () => {
   test('a rule already on the server is not posted again', async () => {
     const base = apiMock.getMockImplementation()!
     apiMock.mockImplementation(async (path, init) =>
-      path === '/hours' && !init?.method ? { today: null, rules: [{ id: 5, name: 'School nights' }] } : base(path, init),
+      path === '/hours' && !init?.method ? { today: null, rules: [{ id: 5, ...DEFAULT_DRAFTS[0] }] } : base(path, init),
     )
     const user = userEvent.setup()
     wrap()
@@ -249,6 +250,19 @@ describe('setup wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await screen.findByText('Reach it from anywhere')
     expect(posts('/hours').map(([, i]) => (i as { body: { name: string } }).body.name)).toEqual(['Weekends'])
+  })
+
+  test('a server rule with the same name but a different body does not suppress the post', async () => {
+    const base = apiMock.getMockImplementation()!
+    apiMock.mockImplementation(async (path, init) =>
+      path === '/hours' && !init?.method ? { today: null, rules: [{ id: 5, ...DEFAULT_DRAFTS[0], days: '0123456' }] } : base(path, init),
+    )
+    const user = userEvent.setup()
+    wrap()
+    await toHours(user)
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByText('Reach it from anywhere')
+    expect(posts('/hours').map(([, i]) => (i as { body: { name: string } }).body.name)).toEqual(['School nights', 'Weekends'])
   })
 
   test('a typed but unadded kid name blocks Next', async () => {
