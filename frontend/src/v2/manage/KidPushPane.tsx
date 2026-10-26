@@ -57,11 +57,14 @@ export function KidPushPane() {
   const on = useKidPush(first?.id ?? 0, !!first).data?.enabled
   return (
     <>
-      <InfoBlock
-        icon="notifications"
-        text="Kids get chore alerts on their own phone through the box. Nothing leaves your home unless you turn on iPhone alerts below."
-      />
-      {on === false && <InfoBlock icon="info" text="Kid phone alerts need the ntfy service on the box. Update the box, then come back here." />}
+      {on === false ? (
+        <InfoBlock icon="info" text="Kid phone alerts need the ntfy service on the box. Update the box, then come back here." />
+      ) : (
+        <InfoBlock
+          icon="notifications"
+          text="Kids get chore alerts on their own phone through the box. Nothing leaves your home unless you turn on iPhone alerts below."
+        />
+      )}
       {on && fam && (
         <section className="pk-panel" aria-label="iPhone alerts">
           <Switch

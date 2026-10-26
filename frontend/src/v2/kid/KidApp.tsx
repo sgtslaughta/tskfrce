@@ -36,7 +36,7 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canS
   const [tab, setTab] = useState<KidTab>('chores')
   const mode = d.age_group === 'little' || d.age_group === 'teen' ? d.age_group : 'kid'
   const seen = useMarkSeen()
-  const threads = useThreads(true, !preview)
+  const threads = useThreads(true, !preview && mode !== 'little')
   const inbox = useInbox(true, !preview && mode !== 'little')
   useOsNotify(inbox.data?.items, noop) // OS pop-ups while the tab is in the background, as the old bell did
   useEffect(() => {

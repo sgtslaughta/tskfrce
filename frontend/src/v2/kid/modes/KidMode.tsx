@@ -29,7 +29,7 @@ export function KidMode({ d, name, now, onDone, busyId, onSeen, onChat }: ModePr
               now={now}
               tz={d.timezone}
               onOpen={() => {
-                onSeen(c.id)
+                if (c.new) onSeen(c.id)
                 setOpenId(c.id)
               }}
             />

@@ -18,7 +18,7 @@ const NOW = Date.parse('2026-10-26T17:00:00Z')
 const at = (h: number, m = 0) => `2026-10-26T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:00Z`
 
 const dog: KidChore = {
-  id: 1, title: 'Feed the dog', points: 10, state: 'todo', due_at: at(16, 30),
+  id: 1, title: 'Feed the dog', points: 10, state: 'todo', due_at: at(16, 30), new: true,
   type: { id: 1, name: 'Pets', glyph: 'pets' },
   notes: [{ label: 'Need help', glyph: 'help', universal: true }],
   deductions: [{ amount: 5, note: 'Bowl left out', by_name: 'Dad', at: '' }],
@@ -104,6 +104,18 @@ describe('LittleMode', () => {
     expect(screen.getByText('Dad took 5 points')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /Reply/ })).toBeNull()
     expect(row('Take out trash')).toBeInTheDocument()
+  })
+
+  test('a chore that is not new is not marked seen again', () => {
+    const p = props({ d: today({ chores: [{ ...dog, new: false }] }) })
+    render(wrap(p))
+    expect(p.onSeen).not.toHaveBeenCalled()
+  })
+
+  test('the send-back reason shows on the Do-this-now card, without a chat button', () => {
+    render(wrap(props({ d: today({ chores: [{ ...dog, last_note: 'Under the bed too' }] }) })))
+    expect(within(now()).getByText('Sent back: Under the bed too')).toBeInTheDocument()
+    expect(within(now()).queryByRole('button', { name: /See the chat/ })).toBeNull()
   })
 
   test('nothing to do + one waiting shows "Waiting for Mom or Dad"', () => {

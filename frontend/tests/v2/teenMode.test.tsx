@@ -32,7 +32,7 @@ const at = (h: number, m = 0) => `2026-10-26T${String(h).padStart(2, '0')}:${Str
 
 const bathroom: KidChore = { id: 1, title: 'Clean bathroom', points: 40, state: 'todo', due_at: at(16, 30) }
 const homework: KidChore = {
-  id: 2, title: 'Homework', points: 30, state: 'todo', due_at: at(19),
+  id: 2, title: 'Homework', points: 30, state: 'todo', due_at: at(19), new: true,
   type: { id: 1, name: 'School', glyph: 'school' },
   subtasks: [
     { id: 21, title: 'Math worksheet', done: true, after_previous: false },
@@ -93,6 +93,13 @@ describe('TeenMode', () => {
     expect(screen.getByText('done today')).toBeInTheDocument()
     expect(screen.getByText('860')).toBeInTheDocument()
     expect(screen.getByText('6 days')).toBeInTheDocument()
+  })
+
+  test('picking a chore that is not new does not call onSeen', async () => {
+    const p = props()
+    render(wrap(p))
+    await userEvent.click(screen.getByRole('button', { name: /Clean bathroom/ }))
+    expect(p.onSeen).not.toHaveBeenCalled()
   })
 
   test('first row starts selected at 1280; disabled Mark done label; selecting calls onSeen', async () => {

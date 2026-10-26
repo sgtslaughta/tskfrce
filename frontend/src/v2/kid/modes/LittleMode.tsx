@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Icon } from '@/v2/parent/Icon'
 import type { KidChore, KidToday } from '../../types'
-import { DeductionCards, NoteSent, PhotoButton, isReady, whyNot } from '../ChoreParts'
+import { DeductionCards, NoteSent, PhotoButton, SentBackCard, isReady, whyNot } from '../ChoreParts'
 import { KidChip, PointsChip } from '../KidChip'
 import { kidChips, kidSort, tally } from '../kidChips'
 import { KidSteps } from '../KidSteps'
@@ -49,9 +49,10 @@ function Now({ c, d, now, onDone, busyId }: { c: KidChore; d: KidToday; now: num
         {chip && <KidChip chip={chip} size="lg" />}
         <PointsChip points={c.points} size="lg" />
       </div>
-      {!!(c.note || c.deductions?.length) && (
+      {!!(c.note || c.last_note || c.deductions?.length) && (
         <div className="k-cards l-cards">
           <NoteSent c={c} />
+          <SentBackCard c={c} />
           <DeductionCards c={c} />
         </div>
       )}
@@ -105,11 +106,12 @@ export function LittleMode({ d, name, avatar, now, onDone, busyId, onSeen }: Mod
   const cur = list.find((c) => c.state === 'todo' && !c.taken_by)
   const rest = list.filter((c) => c !== cur)
   const curId = cur?.id
+  const curNew = cur?.new
   useEffect(() => {
-    if (curId !== undefined) onSeen(curId)
+    if (curId !== undefined && curNew) onSeen(curId)
     // only when the shown chore changes, not when the parent re-creates onSeen
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [curId])
+  }, [curId, curNew])
   const waiting = list.some((c) => c.state === 'needs_you')
   return (
     <section className="l-view">

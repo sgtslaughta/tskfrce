@@ -65,7 +65,7 @@ export function TeenMode({ d, name, now, onDone, busyId, onSeen, onChat }: ModeP
   const list = kidSort(d.chores, now).filter(match[filter])
   const sel = d.chores.find((c) => c.id === picked) ?? (wide ? list[0] : undefined)
   const pick = (id: number) => {
-    onSeen(id)
+    if (d.chores.find((c) => c.id === id)?.new) onSeen(id)
     setPicked(id)
   }
   const detail = (back?: () => void) =>

@@ -79,6 +79,14 @@ describe('KidApp', () => {
     expect(apiMock.mock.calls.some(([p]) => p.startsWith('/notifications'))).toBe(false)
   })
 
+  test('Little does not poll chat threads; Kid does', () => {
+    const polled = () => apiMock.mock.calls.some(([p]) => p.startsWith('/chat'))
+    renderApp(today('little'))
+    expect(polled()).toBe(false)
+    renderApp(today('kid'))
+    expect(polled()).toBe(true)
+  })
+
   test('at 1280px the rail renders and the app has no 520px max-width', async () => {
     renderApp(today('kid'))
     expect(await screen.findByRole('navigation', { name: 'Kid menu' })).toHaveAttribute('data-kind', 'rail')

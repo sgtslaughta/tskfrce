@@ -72,6 +72,13 @@ describe('KidMode', () => {
     expect(screen.getByText('Dad took 5 points')).toBeInTheDocument()
   })
 
+  test('opening a chore that is not new does not call onSeen', async () => {
+    const p = props()
+    render(wrap(p))
+    await userEvent.click(screen.getByRole('button', { name: /^Open Feed the dog/ }))
+    expect(p.onSeen).not.toHaveBeenCalled()
+  })
+
   test('opening a tile calls onSeen and shows the back pill', async () => {
     const p = props()
     render(wrap(p))
