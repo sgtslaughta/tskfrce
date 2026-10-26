@@ -18,7 +18,7 @@ def tok():
 
 
 def _count(db):
-    return db.query(Notification).filter_by(kind="device_resisting").count()
+    return db.query(Notification).filter_by(kind="device_bypass").count()
 
 
 def _device(db):

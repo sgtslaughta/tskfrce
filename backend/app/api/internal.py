@@ -180,9 +180,10 @@ def devices_resisting(body: ResistingReport, db: Session = Depends(get_db)) -> d
                 dev.resisting_since = now
                 flagged += 1
                 activity.log(db, dev.id, "bypass", now)
+                # security ping: notify.ping applies quiet hours (quiet_security)
                 inbox.notify_parents(
                     db,
-                    "device_resisting",
+                    "device_bypass",
                     f"{dev.name} is getting around the block",
                     f"{dev.name} is still reaching the internet while it "
                     "should be paused. Someone may have changed its network "

@@ -59,9 +59,7 @@ def test_resisting_and_new_device_notify_parents(client, db, parent, kid):
     db.add(d)
     db.commit()
     client.post("/api/v1/internal/devices/resisting", json={"resisting": [d.mac]}, headers=tok())
-    assert [(n.user_id, n.device_id) for n in _all(db, kind="device_resisting")] == [
-        (parent.id, d.id)
-    ]
+    assert [(n.user_id, n.device_id) for n in _all(db, kind="device_bypass")] == [(parent.id, d.id)]
     client.post(
         "/api/v1/internal/devices/seen",
         json={"mac": "aa:bb:cc:dd:ee:77", "hostname": "Newbie"},

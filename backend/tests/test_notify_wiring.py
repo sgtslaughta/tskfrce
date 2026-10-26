@@ -46,3 +46,19 @@ def test_path_for():
     assert inbox.path_for("redemption_request", redemption_id=2) == "/?tab=needs"
     assert inbox.path_for("box_offline") == "/devices"
     assert inbox.path_for("level_up") == "/"
+
+
+def test_bypass_report_pings_parents_even_in_quiet_hours(client, db, parent, pings, monkeypatch):
+    from app.core.config import settings
+    from app.models.lock import Device
+
+    monkeypatch.setattr(notify, "in_quiet", lambda f, n: True)
+    _place(db)
+    d = Device(mac="aa:bb:cc:dd:ee:31", name="Pad", status="assigned")
+    db.add(d)
+    db.commit()
+    hdr = {"X-Internal-Token": settings.INTERNAL_TOKEN}
+    client.post("/api/v1/internal/devices/resisting", json={"resisting": [d.mac]}, headers=hdr)
+    rows = db.query(Notification).filter_by(kind="device_bypass").all()
+    assert [(n.user_id, n.device_id) for n in rows] == [(parent.id, d.id)]
+    assert len(pings) == 1 and pings[0][1] == "Pad is getting around the block"
