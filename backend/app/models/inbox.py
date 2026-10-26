@@ -16,6 +16,8 @@ KINDS = (
     "level_up",
     "chat_message",
     "chore_note",
+    "device_bypass",
+    "box_offline",
 )
 
 

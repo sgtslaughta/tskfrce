@@ -31,6 +31,13 @@ class FamilySettings(Base):
     last_reset_date = Column(Date, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     blocker_last_seen = Column(DateTime, nullable=True)  # naive UTC; home box heartbeat
+    quiet_start = Column(String(5), nullable=True)
+    quiet_end = Column(String(5), nullable=True)
+    quiet_security = Column(Boolean, nullable=False, default=True, server_default="1")
+    app_address = Column(String(200), nullable=True)
+    summary_date = Column(Date, nullable=True)
+    notify_scan_at = Column(DateTime, nullable=True)  # naive UTC
+    blocker_alerted = Column(Boolean, nullable=False, default=False, server_default="0")
 
 
 def get_family(db: Session) -> FamilySettings:
