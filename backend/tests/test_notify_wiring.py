@@ -45,6 +45,7 @@ def test_path_for():
     assert inbox.path_for("chore_note", run_id=7) == "/?chore=7"
     assert inbox.path_for("redemption_request", redemption_id=2) == "/?tab=needs"
     assert inbox.path_for("box_offline") == "/devices"
+    assert inbox.path_for("redemption_decided") == "/kids?section=rewards&item=history"
     assert inbox.path_for("level_up") == "/"
 
 
