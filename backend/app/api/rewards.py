@@ -120,14 +120,16 @@ def _decide(db: Session, rid: int, parent: User, approve: bool, body: DecideIn |
 
 @redemptions_router.post("/approve-all")
 def approve_all(db: Session = Depends(get_db), parent: User = Depends(require_parent)):
-    pending = db.query(Redemption).filter(Redemption.status == "pending").order_by(Redemption.id)
     approved = skipped = 0
-    for r in pending.all():
-        if r.cost > economy.balance(db, r.kid_id):
-            skipped += 1
-            continue
-        economy.decide(db, r, parent, True)
-        approved += 1
+    with economy.SPEND_LOCK:
+        db.commit()  # fresh snapshot before reading pending and balances
+        pending = db.query(Redemption).filter(Redemption.status == "pending")
+        for r in pending.order_by(Redemption.id).all():
+            if r.cost > economy.balance(db, r.kid_id):
+                skipped += 1
+                continue
+            economy.decide(db, r, parent, True)
+            approved += 1
     return {"approved": approved, "skipped": skipped}
 
 

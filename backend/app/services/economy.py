@@ -1,5 +1,6 @@
 """Points economy: all point math lives here so routes stay thin."""
 
+import threading
 from datetime import UTC, date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
@@ -16,6 +17,10 @@ from app.models.user import User
 from app.services import inbox
 
 SCREEN_MINUTES = range(15, 121, 15)
+
+# ponytail: serializes balance check + spend; relies on a single uvicorn process
+# (backend/entrypoint.sh). Multiple processes would need DB-level locking.
+SPEND_LOCK = threading.RLock()
 
 
 def balance(db: Session, kid_id: int) -> int:
@@ -143,6 +148,14 @@ def request(
     db: Session, kid: User, kind: str, reward_id: int | None, minutes: int | None
 ) -> Redemption:
     """Create a pending spend request and notify parents. Commits."""
+    with SPEND_LOCK:
+        db.commit()  # end any open snapshot so the balance below sees other commits
+        return _request(db, kid, kind, reward_id, minutes)
+
+
+def _request(
+    db: Session, kid: User, kind: str, reward_id: int | None, minutes: int | None
+) -> Redemption:
     fam = get_family(db)
     if kind == "reward":
         reward = db.get(Reward, reward_id) if reward_id else None
@@ -174,7 +187,7 @@ def request(
     db.add(red)
     db.flush()
     if auto:
-        decide(db, red, None, True)  # commits
+        _decide(db, red, None, True)  # commits
         inbox.notify(
             db,
             inbox.parents(db),
@@ -207,6 +220,19 @@ def decide(
     note: str | None = None,
 ) -> Redemption:
     """Approve or deny a pending request. Commits; pokes the lock loop on screen time."""
+    with SPEND_LOCK:
+        db.commit()  # fresh snapshot: see other threads' debits and decisions
+        db.refresh(redemption)
+        return _decide(db, redemption, parent, approve, note)
+
+
+def _decide(
+    db: Session,
+    redemption: Redemption,
+    parent: User | None,
+    approve: bool,
+    note: str | None = None,
+) -> Redemption:
     if redemption.status != "pending":
         raise HTTPException(409, "Someone already answered this request.")
     now = datetime.now(UTC).replace(tzinfo=None)
