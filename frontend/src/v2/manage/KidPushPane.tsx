@@ -72,7 +72,7 @@ export function KidPushPane() {
             checked={fam.ntfy_upstream_relay}
             onChange={(e) => patch.mutate({ ntfy_upstream_relay: e.currentTarget.checked }, { onError: toastFail })}
           />
-          <Text className="m-help">When on, notification text passes through ntfy.sh. Off keeps everything in your home; iPhones then get alerts late.</Text>
+          <Text className="m-help">When on, the box asks ntfy.sh to wake iPhones with a content-free poll request; the alert text stays in your home. Off sends nothing outside; iPhones then get alerts late.</Text>
         </section>
       )}
       {on && kids.map((k) => <KidPhone key={k.id} kid={k} />)}

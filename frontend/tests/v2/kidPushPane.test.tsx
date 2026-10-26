@@ -70,7 +70,7 @@ describe('KidPushPane', () => {
     render(wrap(<KidPushPane />))
     const sw = await screen.findByLabelText('Instant alerts on iPhones (relays through ntfy.sh)')
     expect(sw).not.toBeChecked()
-    expect(screen.getByText(/passes through ntfy.sh. Off keeps everything in your home/)).toBeInTheDocument()
+    expect(screen.getByText(/content-free poll request; the alert text stays in your home/)).toBeInTheDocument()
     await userEvent.click(sw)
     await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/family', { method: 'PATCH', body: { ntfy_upstream_relay: true } }))
   })
