@@ -49,7 +49,7 @@ export function stepChip(s: KidStep, now: number, tz?: string): { tone: 'late' |
   if (s.done || !s.due_at) return null
   const due = Date.parse(s.due_at)
   const tone = due < now ? 'late' : due - now <= HOUR ? 'soon' : 'later'
-  return { tone, time: clock(s.due_at, tz) }
+  return { tone, time: clockShort(s.due_at, tz) }
 }
 
 export const stepBadge = (steps: KidStep[], i: number): string =>

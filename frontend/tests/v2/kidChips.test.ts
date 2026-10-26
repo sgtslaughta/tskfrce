@@ -70,7 +70,7 @@ describe('steps', () => {
     expect(stepChip(step({ done: true, due_at: '2026-10-26T21:00:00Z' }), NOW, TZ)).toBeNull()
     expect(stepChip(step(), NOW, TZ)).toBeNull()
     expect(stepChip(step({ due_at: '2026-10-26T21:00:00Z' }), NOW, TZ)?.tone).toBe('late')
-    expect(stepChip(step({ due_at: '2026-10-26T22:00:00Z' }), NOW, TZ)).toEqual({ tone: 'soon', time: '6:00 PM' })
+    expect(stepChip(step({ due_at: '2026-10-26T22:00:00Z' }), NOW, TZ)).toEqual({ tone: 'soon', time: '6:00' })
     expect(stepChip(step({ due_at: '2026-10-26T23:30:00Z' }), NOW, TZ)?.tone).toBe('later')
   })
 })

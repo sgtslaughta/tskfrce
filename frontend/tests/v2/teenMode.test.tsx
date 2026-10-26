@@ -59,7 +59,7 @@ const wrap = (p: ModeProps) => (
     </MantineProvider>
   </QueryClientProvider>
 )
-const rows = () => screen.getAllByRole('button', { pressed: undefined }).filter((b) => b.classList.contains('t-row'))
+const rows = () => screen.getAllByRole('button').filter((b) => b.classList.contains('t-row'))
 
 describe('TeenMode', () => {
   test('overdue row sorts first and shows "Was due 4:30 PM"', () => {
@@ -153,5 +153,31 @@ describe('TeenMode', () => {
     expect(screen.getByRole('heading', { name: 'Clean bathroom' })).toBeInTheDocument()
     expect(screen.queryByText('Latest')).not.toBeInTheDocument()
     expect(apiMock.mock.calls.some(([path]) => path.startsWith('/chat'))).toBe(false)
+  })
+
+  test('empty deductions render no stray "0"; unlocked still shows a deduction in the detail', () => {
+    const { unmount } = render(wrap(props({ d: today({ chores: [{ ...bathroom, deductions: [] }] }) })))
+    const detail = screen.getByRole('heading', { name: 'Clean bathroom' }).closest('.t-detail') as HTMLElement
+    expect(within(detail).queryByText('0')).not.toBeInTheDocument()
+    unmount()
+    const fined: KidChore = { ...bathroom, deductions: [{ amount: 5, note: 'Mirror smeared', by_name: 'Dad', at: '' }] }
+    render(wrap(props({ d: today({ locked: false, chores: [fined] }) })))
+    expect(screen.getByText('Internet on')).toBeInTheDocument()
+    expect(screen.getByText('Dad took 5 points')).toBeInTheDocument()
+    expect(screen.getByText('“Mirror smeared”')).toBeInTheDocument()
+  })
+
+  test('weekday and clocks use the family time zone, and step chips drop AM/PM', () => {
+    // 17:00Z Monday = 06:00 Tuesday in Auckland (NZDT, +13)
+    render(wrap(props({ d: today({ timezone: 'Pacific/Auckland', chores: [homework, bathroom] }) })))
+    expect(screen.getByText('Tuesday · Mia')).toBeInTheDocument()
+    expect(screen.getByText('Was due 5:30 AM')).toBeInTheDocument()
+    expect(screen.getByText('Step 2 of 3 · next by 6:30 AM')).toBeInTheDocument()
+  })
+
+  test('step time chip is short (no AM/PM)', async () => {
+    render(wrap(props()))
+    await userEvent.click(screen.getByRole('button', { name: /Homework/ }))
+    expect(screen.getByText('5:30', { selector: '.k-steps .k-chip' })).toBeInTheDocument()
   })
 })
