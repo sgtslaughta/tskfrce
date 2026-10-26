@@ -132,6 +132,11 @@ def award_chore(db: Session, run: ChoreRun, fam: FamilySettings) -> int:
     return (base + bonus) * n
 
 
+def _auto(fam: FamilySettings, kind: str, reward: Reward | None) -> bool:
+    """True when a request is approved on the spot, with no parent."""
+    return kind == "reward" and not reward.needs_approval
+
+
 def request(
     db: Session, kid: User, kind: str, reward_id: int | None, minutes: int | None
 ) -> Redemption:
@@ -139,10 +144,11 @@ def request(
     fam = get_family(db)
     if kind == "reward":
         reward = db.get(Reward, reward_id) if reward_id else None
-        if reward is None or not reward.active:
+        if reward is None or not reward.active or not reward.visible:
             raise HTTPException(400, "That reward isn't available. Pick another.")
         cost, minutes = reward.price, None
         label = reward.name
+        auto = _auto(fam, kind, reward)
     elif kind == "screen_time":
         if minutes not in SCREEN_MINUTES:
             raise HTTPException(400, "Pick 15 to 120 minutes, in steps of 15.")
@@ -151,6 +157,7 @@ def request(
         if not kid.devices:
             raise HTTPException(400, "Ask a parent to add your device first.")
         cost, reward_id = minutes // 15 * fam.screen_time_price, None
+        auto = _auto(fam, kind, None)
         label = f"{minutes} min of screen time"
     else:
         raise HTTPException(400, "Pick screen time or a reward.")
@@ -160,6 +167,18 @@ def request(
     red = Redemption(kid_id=kid.id, kind=kind, reward_id=reward_id, minutes=minutes, cost=cost)
     db.add(red)
     db.flush()
+    if auto:
+        decide(db, red, None, True)  # commits
+        inbox.notify(
+            db,
+            inbox.parents(db),
+            "redemption_decided",
+            f"{kid.full_name} got {label}",
+            f"Approved automatically · {cost} points",
+            redemption_id=red.id,
+        )
+        db.commit()
+        return red
     inbox.notify(
         db,
         inbox.parents(db),
@@ -172,7 +191,13 @@ def request(
     return red
 
 
-def decide(db: Session, redemption: Redemption, parent: User, approve: bool) -> Redemption:
+def decide(
+    db: Session,
+    redemption: Redemption,
+    parent: User | None,
+    approve: bool,
+    note: str | None = None,
+) -> Redemption:
     """Approve or deny a pending request. Commits; pokes the lock loop on screen time."""
     if redemption.status != "pending":
         raise HTTPException(409, "Someone already answered this request.")
@@ -202,18 +227,21 @@ def decide(db: Session, redemption: Redemption, parent: User, approve: bool) -> 
                         source="bonus",
                         expires_at=expires,
                         created_at=now,
-                        created_by_id=parent.id,
+                        created_by_id=parent.id if parent else None,
                     )
                 )
             screen = True
     redemption.status = "approved" if approve else "denied"
-    redemption.decided_at, redemption.decided_by_id = now, parent.id
+    redemption.decided_at = now
+    redemption.decided_by_id = parent.id if parent else None
+    redemption.auto = parent is None
+    redemption.note = note
     inbox.notify(
         db,
         [redemption.kid_id],
         "redemption_decided",
         "Request approved" if approve else "Request not approved",
-        "Check your rewards." if approve else "Ask a parent if you want to know why.",
+        note or ("Check your rewards." if approve else "Ask a parent if you want to know why."),
         redemption_id=redemption.id,
     )
     if approve:

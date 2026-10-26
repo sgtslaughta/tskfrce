@@ -173,3 +173,55 @@ def test_parents_notified_and_listed(client, db, parent, kid, kid_headers, paren
     assert rows[0]["kid_name"] == kid.full_name and rows[0]["kid_balance"] == 150
     assert rows[0]["name"] == "Movie night" and rows[0]["cost"] == 100
     assert db.query(Redemption).count() == 1
+
+
+def _notes(db, uid, kind):
+    return db.query(Notification).filter_by(user_id=uid, kind=kind).all()
+
+
+def test_hidden_reward_invisible_to_kid(client, db, kid, kid_headers):
+    _fund(db, kid, 500)
+    rw = _reward(db)
+    rw.visible = False
+    db.commit()
+    assert client.get("/api/v1/kid/rewards", headers=kid_headers).json()["rewards"] == []
+    assert _ask(client, kid_headers, rw.id).status_code == 400
+
+
+def test_no_approval_reward_pays_now(client, db, kid, parent, kid_headers):
+    _fund(db, kid, 500)
+    rw = _reward(db, 120)
+    rw.needs_approval = False
+    db.commit()
+    r = _ask(client, kid_headers, rw.id)
+    assert r.json()["status"] == "approved"
+    assert _balance(client, kid_headers) == 380
+    red = db.query(Redemption).one()
+    assert red.auto and red.decided_by_id is None
+    assert len(_notes(db, parent.id, "redemption_decided")) == 1
+    assert _notes(db, parent.id, "redemption_request") == []
+
+
+def test_decline_note_reaches_kid(client, db, kid, kid_headers, parent_headers):
+    _fund(db, kid, 150)
+    rid = _ask(client, kid_headers, _reward(db).id).json()["id"]
+    r = client.post(
+        f"/api/v1/redemptions/{rid}/deny", json={"note": "let's talk Sat"}, headers=parent_headers
+    )
+    assert r.status_code == 200
+    assert _notes(db, kid.id, "redemption_decided")[0].body == "let's talk Sat"
+    assert db.get(Redemption, rid).note == "let's talk Sat"
+
+
+def test_approve_all_skips_unaffordable(client, db, kid, kid_headers, parent_headers):
+    _fund(db, kid, 300)
+    rw = _reward(db, 200)
+    a = _ask(client, kid_headers, rw.id).json()["id"]
+    b = _ask(client, kid_headers, rw.id).json()["id"]
+    r = client.post("/api/v1/redemptions/approve-all", headers=parent_headers)
+    assert r.json() == {"approved": 1, "skipped": 1}
+    assert _balance(client, kid_headers) == 100
+    assert db.get(Redemption, a).status == "approved"
+    assert db.get(Redemption, b).status == "pending"
+    row = client.get("/api/v1/redemptions", headers=parent_headers).json()[0]
+    assert row["kid_balance_after"] == row["kid_balance"] - row["cost"]

@@ -34,6 +34,7 @@ from app.api.inbox import router as notifications_router
 from app.api.internal import router as internal_router
 from app.api.kid import router as kid_router
 from app.api.kid_push import router as kid_push_router
+from app.api.kid_rewards import router as kid_rewards_router
 from app.api.kids import router as kids_router
 from app.api.password_reset import router as password_reset_router
 from app.api.rewards import redemptions_router
@@ -145,6 +146,7 @@ fastapi_app.include_router(devices_router)
 fastapi_app.include_router(kids_router)
 fastapi_app.include_router(kid_push_router)
 fastapi_app.include_router(kid_router)
+fastapi_app.include_router(kid_rewards_router)
 fastapi_app.include_router(windows_router)
 fastapi_app.include_router(family_router)
 fastapi_app.include_router(rewards_router)

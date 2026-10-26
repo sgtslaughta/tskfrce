@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db, require_parent
 from app.models.reward import Redemption, Reward
 from app.models.user import User
-from app.schemas.reward import RewardCreate, RewardPatch
+from app.schemas.reward import DecideIn, RewardCreate, RewardPatch
 from app.services import economy
 
 router = APIRouter(
@@ -18,7 +18,14 @@ router = APIRouter(
 
 
 def _out(r: Reward) -> dict:
-    return {"id": r.id, "name": r.name, "price": r.price, "icon": r.icon}
+    return {
+        "id": r.id,
+        "name": r.name,
+        "price": r.price,
+        "icon": r.icon,
+        "visible": r.visible,
+        "needs_approval": r.needs_approval,
+    }
 
 
 def _get(db: Session, reward_id: int) -> Reward:
@@ -84,6 +91,7 @@ def list_redemptions(
     out = []
     for r in rows:
         kid = db.get(User, r.kid_id)
+        bal = economy.balance(db, r.kid_id)
         out.append(
             {
                 "id": r.id,
@@ -94,25 +102,50 @@ def list_redemptions(
                 "minutes": r.minutes,
                 "cost": r.cost,
                 "created_at": r.created_at.isoformat() + "Z",
-                "kid_balance": economy.balance(db, r.kid_id),
+                "kid_balance": bal,
+                "kid_balance_after": bal - r.cost,
+                "note": r.note,
             }
         )
     return out
 
 
-def _decide(db: Session, rid: int, parent: User, approve: bool) -> dict:
+def _decide(db: Session, rid: int, parent: User, approve: bool, body: DecideIn | None) -> dict:
     r = db.get(Redemption, rid)
     if r is None:
         raise HTTPException(404, "That request doesn't exist.")
-    r = economy.decide(db, r, parent, approve)
+    r = economy.decide(db, r, parent, approve, body.note if body else None)
     return {"id": r.id, "status": r.status}
 
 
+@redemptions_router.post("/approve-all")
+def approve_all(db: Session = Depends(get_db), parent: User = Depends(require_parent)):
+    pending = db.query(Redemption).filter(Redemption.status == "pending").order_by(Redemption.id)
+    approved = skipped = 0
+    for r in pending.all():
+        if r.cost > economy.balance(db, r.kid_id):
+            skipped += 1
+            continue
+        economy.decide(db, r, parent, True)
+        approved += 1
+    return {"approved": approved, "skipped": skipped}
+
+
 @redemptions_router.post("/{rid}/approve")
-def approve(rid: int, db: Session = Depends(get_db), parent: User = Depends(require_parent)):
-    return _decide(db, rid, parent, True)
+def approve(
+    rid: int,
+    body: DecideIn | None = None,
+    db: Session = Depends(get_db),
+    parent: User = Depends(require_parent),
+):
+    return _decide(db, rid, parent, True, body)
 
 
 @redemptions_router.post("/{rid}/deny")
-def deny(rid: int, db: Session = Depends(get_db), parent: User = Depends(require_parent)):
-    return _decide(db, rid, parent, False)
+def deny(
+    rid: int,
+    body: DecideIn | None = None,
+    db: Session = Depends(get_db),
+    parent: User = Depends(require_parent),
+):
+    return _decide(db, rid, parent, False, body)
