@@ -17,10 +17,12 @@ import { KidDetail } from './KidDetail'
 import { KidEditor } from './KidEditor'
 import { KidsList } from './KidsList'
 import { KidsTabs, SECTIONS, type Section } from './KidsTabs'
-import { RewardDetail } from './RewardDetail'
-import { RewardsList } from './RewardsList'
+import { RewardsCatalogue } from './RewardsCatalogue'
+import { RewardsNav } from './RewardsNav'
+import { RewardsRequests } from './RewardsRequests'
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
+const FIXED: Partial<Record<Section, string>> = { rewards: 'requests' }
 
 function KidsBody() {
   const router = useRouter()
@@ -33,19 +35,23 @@ function KidsBody() {
   const section: Section = SECTIONS.some((s) => s.id === want) ? (want as Section) : 'chores'
   const kidList = kids.data ?? []
   const small = useMediaQuery('(max-width: 767px)')
+  // rewards is a fixed set of panes (Requests, Catalogue, ...), not a list of records
+  const fixed = FIXED[section]
   // desktop opens the section's first item rather than an empty pane; phone stays on the list
-  const firstId = { chores: chores.data, kids: kids.data, rewards: rewards.data, badges: badges.data }[section]?.[0]?.id
-  const item = first(query.item) ?? (small || firstId == null || query.kid ? undefined : String(firstId))
-  const pick = (id: number | 'new' | null) => {
-    const { item: _drop, ...rest } = query
+  const firstId = { chores: chores.data, kids: kids.data, rewards: undefined, badges: badges.data }[section]?.[0]?.id
+  const item = first(query.item) ?? (small || query.kid ? undefined : (fixed ?? (firstId == null ? undefined : String(firstId))))
+  const pick = (id: number | string | null) => {
+    const { item: _drop, pick: _pick, ...rest } = query
     router.push({ pathname: '/kids', query: id === null ? { section } : { ...rest, section, item: id } }, undefined, { shallow: true })
   }
+  const pickReward = (id: number | 'new' | null) =>
+    router.push({ pathname: '/kids', query: { section, item: 'catalogue', ...(id !== null && { pick: id }) } }, undefined, { shallow: true })
 
   // A deleted (or stale) ?item= falls back to the section's list
   const loaded = { chores, kids, rewards, badges }[section]
   const known = loaded.data?.some((x) => String(x.id) === item)
   useEffect(() => {
-    if (loaded.isSuccess && item && item !== 'new' && !known) pick(null)
+    if (!fixed && loaded.isSuccess && item && item !== 'new' && !known) pick(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded.isSuccess, item, known])
 
@@ -59,14 +65,13 @@ function KidsBody() {
   const lists = {
     chores: <ChoresList chores={chores.data ?? []} kids={kidList} selected={item} onSelect={pick} />,
     kids: <KidsList kids={kidList} selected={item} onSelect={pick} />,
-    rewards: <RewardsList rewards={rewards.data ?? []} selected={item} onSelect={pick} />,
+    rewards: <RewardsNav selected={item} onSelect={pick} />,
     badges: <BadgesList badges={badges.data ?? []} selected={item} onSelect={pick} />,
   }
 
   const id = Number(item)
   const chore = chores.data?.find((c) => c.id === id)
   const kid = kidList.find((k) => k.id === id)
-  const reward = rewards.data?.find((r) => r.id === id)
   const badge = badges.data?.find((b) => b.id === id)
   const select = (n: number | null) => pick(n)
   const details = {
@@ -77,7 +82,12 @@ function KidsBody() {
       ) : (
         kid && <KidDetail key={kid.id} kid={kid} focusPin={first(query.pin) === '1'} onDeleted={() => pick(null)} />
       ),
-    rewards: item === 'new' ? <RewardDetail key="new" onSelect={select} /> : reward && <RewardDetail key={reward.id} reward={reward} onSelect={select} />,
+    rewards:
+      item === 'requests' ? (
+        <RewardsRequests onHistory={() => pick('history')} />
+      ) : item === 'catalogue' ? (
+        <RewardsCatalogue pick={first(query.pick)} onPick={pickReward} />
+      ) : null,
     badges: item === 'new' ? <BadgeDetail key="new" kids={kidList} onSelect={select} /> : badge && <BadgeDetail key={badge.id} badge={badge} kids={kidList} onSelect={select} />,
   }
 
@@ -103,7 +113,7 @@ function KidsBody() {
     >
       {kids.isError && <ErrorPanel kind="unreachable" error={kids.error} onRetry={() => kids.refetch()} />}
       {details[section] ||
-        (!kids.isError && total === 0 && (
+        (!fixed && !kids.isError && total === 0 && (
           <EmptyState
             icon={EMPTY_ICON[section]}
             title={`No ${noun}s yet`}

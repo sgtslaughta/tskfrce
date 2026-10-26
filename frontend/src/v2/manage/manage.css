@@ -162,3 +162,59 @@
 .m-chips .mantine-Chip-label { min-width: 0; max-width: 100%; box-sizing: border-box; }
 .m-chips .mantine-Chip-label > span:not([class*="iconWrapper"]) { display: block; min-width: 0; max-width: 100%; }
 .m-chip-t { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Rewards (mockup 02 Kids & chores → Rewards): nav count, requests, catalogue */
+[data-look='parent'] .rw-badge { flex: none; min-width: 20px; height: 20px; padding: 0 6px; display: grid; place-items: center; border-radius: 10px; background: var(--p-acc); color: #292928; font-size: 11px; font-weight: 700; }
+[data-look='parent'] .p-header-chip[data-tone='lav'] { background: var(--p-lav); border-color: var(--p-lav); color: var(--p-lav-ink); }
+[data-look='parent'] .p-header-chip[data-tone='lav'] .ms { color: var(--p-lav-ink); }
+[data-look='parent'] .rw-sub { margin: 0; color: var(--p-sub); font-size: 13px; }
+[data-look='parent'] .rw-grow { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+[data-look='parent'] .rw-self-start { align-self: flex-start; }
+
+[data-look='parent'] .rw-rq { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 14px 16px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 18px; }
+[data-look='parent'] .rw-glyph { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 14px; background: var(--p-acc); color: #292928; }
+[data-look='parent'] .rw-t2 { font-size: 14.5px; font-weight: 600; color: var(--p-ink); overflow-wrap: anywhere; }
+[data-look='parent'] .rw-t2 small { display: flex; align-items: center; gap: 4px; margin-top: 2px; color: var(--p-sub); font-size: 12px; font-weight: 400; }
+[data-look='parent'] .rw-avx { flex: none; width: 18px; height: 18px; display: inline-grid; place-items: center; border-radius: 50%; background: var(--p-ink); color: var(--p-card); font-size: 10px; font-weight: 700; }
+[data-look='parent'] .rw-math { text-align: right; color: var(--p-sub); font-size: 12px; }
+[data-look='parent'] .rw-math b { display: block; color: var(--p-ink); font-size: 16px; white-space: nowrap; }
+[data-look='parent'] .rw-short { color: var(--p-red); font-weight: 600; }
+[data-look='parent'] .rw-short-msg { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; }
+[data-look='parent'] .rw-ra { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding-top: 10px; border-top: 1px solid var(--p-line); }
+/* mockup: a disabled Approve stays accent, faded (base .p-btn:disabled adds the opacity) */
+[data-look='parent'] .rw-ra .p-btn[data-variant='accent']:disabled { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
+[data-look='parent'] .rw-note { flex: 1; min-width: 140px; padding: 7px 12px; border: 1px solid var(--p-line); border-radius: 999px; background: var(--p-soft); color: var(--p-ink); font: inherit; font-size: 12.5px; }
+[data-look='parent'] .rw-note::placeholder { color: var(--p-sub); }
+[data-look='parent'] .rw-note:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 1px; }
+
+[data-look='parent'] .rw-cat { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 12px; }
+[data-look='parent'] .rw-ci { position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 18px; color: var(--p-ink); font: inherit; text-align: left; cursor: pointer; }
+[data-look='parent'] .rw-ci:hover { border-color: var(--p-sub); }
+[data-look='parent'] .rw-ci:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+[data-look='parent'] .rw-ci[data-selected='true'] { border-color: var(--p-ink); box-shadow: inset 0 0 0 1px var(--p-ink); }
+[data-look='parent'] .rw-ci .rw-glyph { width: 42px; height: 42px; border-radius: 13px; background: var(--p-soft); color: var(--p-ink); }
+[data-look='parent'] .rw-ci[data-selected='true'] .rw-glyph { background: var(--p-acc); color: #292928; }
+[data-look='parent'] .rw-ci b { font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+[data-look='parent'] .rw-ci small { color: var(--p-sub); font-size: 12.5px; }
+[data-look='parent'] .rw-ci[data-hidden] > :not(.rw-off) { opacity: 0.55; }
+[data-look='parent'] .rw-off { position: absolute; top: 12px; right: 12px; }
+[data-look='parent'] .rw-add { align-items: center; justify-content: center; min-height: 150px; border-style: dashed; color: var(--p-sub); font-weight: 600; }
+[data-look='parent'] .rw-add:hover { color: var(--p-ink); }
+[data-look='parent'] .rw-dots { display: flex; gap: 3px; margin-top: 2px; }
+[data-look='parent'] .rw-dot { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: var(--p-soft); box-shadow: inset 0 0 0 1px var(--p-line); color: var(--p-sub); font-size: 9px; font-weight: 700; }
+[data-look='parent'] .rw-dot[data-ok] { background: var(--p-acc); box-shadow: none; color: #292928; }
+
+/* mockup 02 switch: ink track with an accent knob when on, line track when off */
+[data-look='parent'] .rw-sw button { background: var(--p-line); border-color: var(--p-line); }
+[data-look='parent'] .rw-sw button::after { background: var(--p-card); }
+[data-look='parent'] .rw-sw button[aria-checked='true'] { background: var(--p-ink); border-color: var(--p-ink); }
+[data-look='parent'] .rw-sw button[aria-checked='true']::after { background: var(--p-acc); }
+[data-look='parent'] .rw-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+[data-look='parent'] .rw-icons .p-glyph-grid { grid-template-columns: repeat(10, 1fr); }
+@media (max-width: 767px) {
+  [data-look='parent'] .rw-form { grid-template-columns: minmax(0, 1fr); }
+  [data-look='parent'] .rw-icons .p-glyph-grid { grid-template-columns: repeat(6, 1fr); }
+  [data-look='parent'] .rw-cat { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  [data-look='parent'] .rw-rq { grid-template-columns: auto minmax(0, 1fr); }
+  [data-look='parent'] .rw-math { grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: baseline; text-align: left; }
+}

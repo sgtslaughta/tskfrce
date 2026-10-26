@@ -273,25 +273,34 @@ describe('kids: create, delete, points', () => {
 })
 
 describe('rewards and badges', () => {
-  test('rewards tab lists cards with price and a dashed New reward card; detail edits the price', async () => {
+  test('rewards catalogue lists cards with price and a New reward button; pick edits the price', async () => {
     serve({
-      '/rewards': [{ id: 3, name: 'Movie night', price: 150, icon: null }],
+      '/rewards': [{ id: 3, name: 'Movie night', price: 150, icon: null, visible: true, needs_approval: true }],
     })
-    mockRoute.query = { section: 'rewards', item: '3' }
+    mockRoute.query = { section: 'rewards', item: 'catalogue', pick: '3' }
     render(wrap(<KidsPage />))
     expect(
-      await within(list()).findByRole('button', { name: /Movie night/ }),
+      await within(detail()).findByRole('button', { name: /^Movie night/ }),
     ).toHaveTextContent('150 pts')
     expect(
-      within(list()).getByRole('button', { name: 'New reward' }),
-    ).toBeInTheDocument()
+      within(detail()).getAllByRole('button', { name: 'New reward' }).length,
+    ).toBeGreaterThan(0)
+    expect(within(list()).getByRole('button', { name: /Catalogue/ })).toHaveTextContent('1 reward · 0 hidden')
     expect(within(detail()).getByLabelText('Price (points)')).toHaveValue(
       '150',
     )
   })
 
+  test('rewards with no item opens Requests on desktop', async () => {
+    mockRoute.query = { section: 'rewards' }
+    render(wrap(<KidsPage />))
+    expect(
+      await within(detail()).findByRole('heading', { name: 'Requests' }),
+    ).toBeInTheDocument()
+  })
+
   test('new reward posts name and price', async () => {
-    mockRoute.query = { section: 'rewards', item: 'new' }
+    mockRoute.query = { section: 'rewards', item: 'catalogue', pick: 'new' }
     render(wrap(<KidsPage />))
     await userEvent.type(await screen.findByLabelText('Reward'), 'Pizza')
     await userEvent.clear(screen.getByLabelText('Price (points)'))
@@ -356,30 +365,25 @@ describe('rewards and badges', () => {
 })
 
 describe('rewards and badges: icon and delete confirmation', () => {
-  test('reward emoji icon is sent with the price and name', async () => {
-    mockRoute.query = { section: 'rewards', item: 'new' }
+  test('reward glyph icon is sent with the price and name', async () => {
+    mockRoute.query = { section: 'rewards', item: 'catalogue', pick: 'new' }
     render(wrap(<KidsPage />))
     await userEvent.type(await screen.findByLabelText('Reward'), 'Pizza')
-    await userEvent.click(
-      screen.getByRole('button', { name: /Icon \(an emoji/ }),
-    )
-    await userEvent.click(
-      await screen.findByRole('button', { name: 'Pick 🍕' }),
-    )
+    await userEvent.click(screen.getByTitle('local_pizza'))
     await userEvent.click(screen.getByRole('button', { name: 'Add reward' }))
     await waitFor(() =>
       expect(calls('POST')[0]).toEqual([
         '/rewards',
-        { method: 'POST', body: { name: 'Pizza', price: 50, icon: '🍕' } },
+        { method: 'POST', body: { name: 'Pizza', price: 50, icon: 'local_pizza' } },
       ]),
     )
   })
 
   test('deleting a reward asks first, then DELETEs', async () => {
     serve({
-      '/rewards': [{ id: 3, name: 'Movie night', price: 150, icon: null }],
+      '/rewards': [{ id: 3, name: 'Movie night', price: 150, icon: null, visible: true, needs_approval: true }],
     })
-    mockRoute.query = { section: 'rewards', item: '3' }
+    mockRoute.query = { section: 'rewards', item: 'catalogue', pick: '3' }
     render(wrap(<KidsPage />))
     await userEvent.click(
       await within(detail()).findByRole('button', { name: 'Delete reward' }),
