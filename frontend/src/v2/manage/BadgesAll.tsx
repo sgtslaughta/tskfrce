@@ -72,7 +72,7 @@ export function BadgesAll() {
   const items = overview.data ?? []
   const custom = items.filter((b) => b.custom).length
   return (
-    <div className="pk-detail">
+    <div className="pk-detail" tabIndex={0}>
       <header className="pk-head">
         <div className="pk-head-t">
           <h2>Badges</h2>

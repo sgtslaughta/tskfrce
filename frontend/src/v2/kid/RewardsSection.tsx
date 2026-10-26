@@ -81,7 +81,6 @@ export function RewardsSection({ onExpired, heading = 'Rewards' }: { onExpired: 
               <Progress
                 value={Math.min(d.balance / r.price, 1) * 100}
                 aria-label={`Progress toward ${r.name}`}
-                aria-valuenow={Math.round(Math.min(d.balance / r.price, 1) * 100)}
               />
               {got.includes(r.id) ? (
                 <span className="f-pill" data-tone="ok">It&apos;s yours!</span>

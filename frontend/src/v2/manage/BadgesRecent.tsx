@@ -39,7 +39,7 @@ export function BadgesRecent() {
   const recent = useRecentAwards()
   const rows = recent.data ?? []
   return (
-    <div className="pk-detail">
+    <div className="pk-detail" tabIndex={0}>
       <header className="pk-head">
         <div className="pk-head-t">
           <h2>Recent awards</h2>

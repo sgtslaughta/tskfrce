@@ -25,7 +25,7 @@ export function QuickRepliesEditor({ replies, onClose }: { replies: string[]; on
   const clean = list.map((r) => r.trim())
 
   return (
-    <Modal opened onClose={onClose} title="Quick replies" centered zIndex={400} styles={{ title: { fontWeight: 700, color: 'var(--p-ink)' } }}>
+    <Modal opened onClose={onClose} title="Quick replies" closeButtonProps={{ 'aria-label': 'Close' }} centered zIndex={400} styles={{ title: { fontWeight: 700, color: 'var(--p-ink)' } }}>
       <ul className="pc-qre">
         {list.map((r, i) => (
           <li key={i}>

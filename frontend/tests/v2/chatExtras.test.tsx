@@ -271,6 +271,7 @@ describe('quick replies', () => {
     chore()
     await userEvent.click(await screen.findByRole('button', { name: 'Edit replies' }))
     const dlg = await screen.findByRole('dialog', { name: 'Quick replies' })
+    expect(within(dlg).getByRole('button', { name: 'Close' })).toBeInTheDocument()
     await userEvent.click(within(dlg).getByRole('button', { name: 'Remove “Retake the photo”' }))
     await userEvent.click(within(dlg).getByRole('button', { name: 'Move “Can you redo it?” up' }))
     await userEvent.type(within(dlg).getByLabelText('New reply'), 'Nice work')
