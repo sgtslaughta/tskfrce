@@ -54,7 +54,13 @@ db.commit()  # the ping leaves only after this commit
 
 Apprise-only (no bell row): `notify.ping(db, event: str, title: str, body: str | None = None, path: str | None = None) -> None` with an event key from the table above.
 
-## Decisions taken (owner may override)
+## Owner decisions (2026-10-26)
+
+Accepted as planned: Decision 1 (held vs dropped in quiet hours), Decision 3 (19:00 summary, fixed), Decision 2 (box offline uses the blocker heartbeat, no recovery ping), Decision 4/5 and the Apprise-only rule (locked/unlocked and overdue pings have no bell rows), `apprise` and `cryptography` dependencies, and the controller runs the demo DB migration (Task 2 note; agents never migrate the demo DB themselves).
+
+**New requirement:** the Today page's **Needs you** list also shows kid notes, using the same server-computed rule as the bell: a note is "needs you" while its run has `note_label is not None and status == "todo"`. One helper, `inbox.is_pending_note(run)`, is the single definition, used by Task 7 (`pending` on bell items) and by the Today payload (`_needs_you` in `api/family.py`). Backend in Task 7, frontend in Task 9.
+
+## Decisions taken (owner answers applied, see above)
 
 1. **Held vs dropped** in quiet hours: actionable events held and batched, informational ones dropped (table above).
 2. **Box offline** = the blocker heartbeat (`family.blocker_last_seen`) is older than 10 min; one ping per outage, nothing on recovery. Never fires before the first heartbeat.
@@ -74,6 +80,7 @@ Apprise-only (no bell row): `notify.ping(db, event: str, title: str, body: str |
 3. A place whose stored URL can't be decrypted (secret rotated) must not break other places or the request. → Task 3 `test_unreadable_place_is_skipped`.
 4. Apprise raising (bad network, plugin bug) inside the background send must be logged, never re-raised. → Task 3 `test_deliver_swallows_errors`.
 5. Bell action on a stale item (chore already approved by the other parent) shows no buttons. → Task 9 test `no actions when not pending`.
+6. A kid note counts as "needs you" on the bell and on Today by the same rule, and leaves both once the flag clears. → Task 7 `test_today_needs_you_includes_pending_notes`, Task 9 `needsYouList.test.tsx`.
 
 ---
 
@@ -357,8 +364,8 @@ def test_device_bypass_is_security(db, parent, pings, monkeypatch):
 ### Task 7: Richer `/notifications` items
 
 **Files:**
-- Modify: `backend/app/api/inbox.py`
-- Test: `backend/tests/test_inbox.py` (add tests), `backend/tests/test_query_counts.py` (must stay ≤ its limit)
+- Modify: `backend/app/api/inbox.py`, `backend/app/services/inbox.py` (`is_pending_note`), `backend/app/api/family.py` (`_needs_you` adds note items)
+- Test: `backend/tests/test_inbox.py` (add tests), `backend/tests/test_today_payload.py`, `backend/tests/test_query_counts.py` (must stay ≤ its limit)
 
 **Interfaces:**
 - Produces: each item gains `kid_id: int | None`, `kid_name: str | None`, `glyph: str | None`, `points: int | None` (replaces the `getattr` stub), `pending: bool`.
@@ -366,11 +373,13 @@ def test_device_bypass_is_security(db, parent, pings, monkeypatch):
   - Redemption-linked: kid = `redemption.kid_id`; `pending` = `status == "pending"`.
   - Device-linked: kid = first owner (lowest id); `pending` = False.
   - Everything else: `pending` False, others None.
+- `services/inbox.is_pending_note(run) -> bool` = `run.note_label is not None and run.status == "todo"`; `chore_note` `pending` uses it. `_needs_you` appends one item per today run where `is_pending_note(run)`: `{type: "note", id: run.id, kid_id, kid_name, title: chore title, note: run.note_label}` (kid = first of `svc.run_kid_ids(run)`), ordered after the existing items, one per run (a run already listed as chore/redo for the same run still gets its own note row).
 - Batch loading: one query per ref type for the page (`ChoreRun` with `selectinload(assignment → chore → type)` and `selectinload(ChoreRun.kids)`; `Redemption`; `Device` with `selectinload(owners)`), plus one `User` name query for the collected kid ids. Helper `_enrich(db, rows) -> list[dict]` in `api/inbox.py`.
 
 - [ ] **Step 1: Write the failing tests** in `tests/test_inbox.py`: `test_items_carry_kid_glyph_points_pending` — after `_submit`, the parent's item has `glyph == "task_alt"` (Other, the factory default type; adjust if the factory sets another type), `points == r.assignment.chore.points`, `kid_name == kid.full_name`, `pending is True`; approve the run → `pending is False`. `test_note_pending_until_flag_clears` — kid posts a note (pattern in `tests/test_kid_notes.py`) → `pending True`; parent approves or replies → `False`.
+`test_today_needs_you_includes_pending_notes` (in `test_today_payload.py`: kid posts a note → `/today` `needs_you` has a `type == "note"` item with the run id, kid name and note, and the same run's bell item has `pending True`; parent replies/approves → the note item is gone and `pending False`; a run with no note adds none).
 - [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** `_enrich`; `list_notifications` returns `_enrich(db, rows[:PAGE])`; `read_one` returns `_enrich(db, [n])[0]`.
+- [ ] **Step 3: Implement** `_enrich` and the `_needs_you` note items; `list_notifications` returns `_enrich(db, rows[:PAGE])`; `read_one` returns `_enrich(db, [n])[0]`.
 - [ ] **Step 4: Run** `tests/test_inbox.py tests/test_query_counts.py` → PASS.
 - [ ] **Step 5: Commit** `feat(inbox): kid, glyph, points and pending on notifications`.
 
@@ -405,8 +414,8 @@ Pane layout (mockup 02 `#sp-notif`, copy verbatim): header `h2` "Notifications",
 
 **Files:**
 - Create: `frontend/src/v2/components/bellRules.ts`, `frontend/src/v2/components/BellActions.tsx`, `frontend/src/v2/components/NotificationsPage.tsx`, `frontend/pages/notifications.tsx`
-- Modify: `frontend/src/v2/components/Bell.tsx`, `frontend/src/v2/components/bell.css`, `frontend/src/v2/hooks/useInbox.ts`, `frontend/src/v2/osNotify.ts`
-- Test: `frontend/tests/v2/bell.test.tsx` (extend), `frontend/tests/v2/bellRules.test.ts`
+- Modify: `frontend/src/v2/components/Bell.tsx`, `frontend/src/v2/components/bell.css`, `frontend/src/v2/hooks/useInbox.ts`, `frontend/src/v2/osNotify.ts`, `frontend/src/v2/types.ts` (`NeedsItem.type` adds `'note'`, `note?: string`), `frontend/src/v2/today/NeedsYouList.tsx`
+- Test: `frontend/tests/v2/bell.test.tsx` (extend), `frontend/tests/v2/bellRules.test.ts`, `frontend/tests/v2/needsYouList.test.tsx`
 
 **Interfaces:**
 - Consumes: Task 7 fields.
@@ -416,10 +425,11 @@ Pane layout (mockup 02 `#sp-notif`, copy verbatim): header `h2` "Notifications",
   - `BellActions({ n, busy, ... })` renders, only when `isNeedsYou(n)` or for device/alert kinds: chore_submitted → **Approve +{points}** / **Send back** (existing note flow); redemption_request → **Approve** / **Decline**; chore_note → **Reply** (icon `chat`): `router.push('/?chore=' + run_id)` then `openChat('chore', String(run_id))`; new_device → **Who's this?** (icon `person_add`); resisting/bypass → **View** (icon `devices`) and, when `kid_id`, **Ask {kid_name}** (icon `chat`) → `openChat('private', String(kid_id))`; box_offline → **View** → `/devices`.
   - `List` is exported from `Bell.tsx` with an extra prop `page?: boolean` (full width, no popover chrome).
   - `osNotify.dest`: add `box_offline` → `/devices`.
+  - `NeedsYouList`: renders `type: 'note'` items (flag icon, amber tone, `{kid_name}: {note}` under the chore title) with one **Reply** action (icon `chat`) that opens the chore thread (`router.push('/?chore=' + id)` then `openChat('chore', String(id))`, same as the bell's Reply); no Approve or Send back; the empty state only shows when there are no items of any type. The list never decides what a note is: it only renders what the server sent.
 
 Changes in `Bell.tsx` (after moving rules + actions out): drop the `useToday` pending cross-read (use `n.pending`); item sub-line = `[n.body, when(n.created_at)].filter(Boolean).join(' · ')`; Earlier items keep the unread dot when unread (no actions, as in the mockup); footer (parent only, not kid) `<div className="p-bell-foot">` with `Link` "Notification settings" (icon `tune`) → `/settings?section=notifications` and `Link` "See all" (icon `chevron_right` after the text) → `/notifications`, both closing the popover; Popover gets `withArrow` and `position={placement === 'rail' ? 'right-start' : 'bottom-end'}`, arrow styled with the card background + 2px ink border (§2.2). `NotificationsPage` = `RequireParent` + `ParentShell title="Notifications"` + `<List kid={false} onGo={() => {}} page />`; `pages/notifications.tsx` default-exports it.
 
-- [ ] **Step 1: Write the failing tests.** `bellRules.test.ts`: `isNeedsYou` true for pending chore_note, false for a read-but-not-pending one; `isAlert` false for `new_device`, true for `device_bypass` and `box_offline`; `severity` returns the item's glyph for chore_submitted; `when` returns "Yesterday" for 24 h ago. `bell.test.tsx` additions: tabs show `All · 3`, `Needs you · 1`, `Alerts · 1` for [pending chore_submitted, read new_device, device_bypass]; a pending `chore_note` shows **Reply**; a `device_bypass` with `kid_id: 4, kid_name: 'Mia'` shows **Ask Mia**; **no actions when not pending** (`chore_submitted` with `pending:false` has no Approve); footer links point to `/settings?section=notifications` and `/notifications`; kid bell has no footer. Update existing tests that served `/today` for pending to set `pending` on items instead.
+- [ ] **Step 1: Write the failing tests.** `bellRules.test.ts`: `isNeedsYou` true for pending chore_note, false for a read-but-not-pending one; `isAlert` false for `new_device`, true for `device_bypass` and `box_offline`; `severity` returns the item's glyph for chore_submitted; `when` returns "Yesterday" for 24 h ago. `bell.test.tsx` additions: tabs show `All · 3`, `Needs you · 1`, `Alerts · 1` for [pending chore_submitted, read new_device, device_bypass]; a pending `chore_note` shows **Reply**; a `device_bypass` with `kid_id: 4, kid_name: 'Mia'` shows **Ask Mia**; **no actions when not pending** (`chore_submitted` with `pending:false` has no Approve); footer links point to `/settings?section=notifications` and `/notifications`; kid bell has no footer. `needsYouList.test.tsx`: a `type: 'note'` item renders "Mia: stuck on step 3" with a **Reply** button and no Approve; Reply opens the chore thread; a list with only a note item does not show "All caught up". Update existing tests that served `/today` for pending to set `pending` on items instead.
 - [ ] **Step 2: Run** `npx jest tests/v2/bell.test.tsx tests/v2/bellRules.test.ts` → FAIL.
 - [ ] **Step 3: Implement.** Check every touched file is < 500 lines (`wc -l`).
 - [ ] **Step 4: Run** → PASS; frontend CI.
