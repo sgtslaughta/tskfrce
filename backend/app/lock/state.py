@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 from sqlalchemy.orm import Session
 
-from app.lock import hours
+from app.lock import activity, hours
 from app.lock.reset import current_chore_day, reset_due
 from app.lock.rules import DeviceFacts, OwnerChores, is_online
 from app.lock.schedule import local_now
@@ -100,8 +100,14 @@ def tick(db: Session, now_utc: datetime) -> list[str]:
     now_local = local_now(fam.timezone, _aware_utc(now_utc))
     if reset_due(fam, now_local):
         chores.run_reset(db, now_local.date())
-    db.query(Override).filter(
-        Override.expires_at.isnot(None), Override.expires_at <= _naive_utc(now_utc)
-    ).delete()
+    now = _naive_utc(now_utc)
+    db.query(Override).filter(Override.expires_at.isnot(None), Override.expires_at <= now).delete()
     db.commit()
-    return desired_blocked(db, now_utc)
+    devices = db.query(Device).all()
+    pre = Prefetch(db, devices)
+    rows = [(d, device_facts(db, d, fam, now_utc, pre)) for d in devices]
+    blocked = sorted(d.mac for d, f in rows if not is_online(f, now_local))
+    activity.record_transitions(db, rows, now, now_local)
+    activity.prune(db, now)
+    db.commit()
+    return blocked
