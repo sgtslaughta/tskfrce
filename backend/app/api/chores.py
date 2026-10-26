@@ -227,8 +227,9 @@ def send_back(
     r.status = "todo"
     r.attempt = (r.attempt or 1) + 1
     r.last_note = body.note
+    submitter = r.submitted_by_id
     r.submitted_at = r.submitted_by_id = None
     chat.system(db, r, f"Sent back: {body.note}")
-    kid_events.chore_decided(db, r, False, body.note)
+    kid_events.chore_decided(db, r, False, body.note, submitter)
     db.commit()
     return svc.chore_out(r, get_family(db))

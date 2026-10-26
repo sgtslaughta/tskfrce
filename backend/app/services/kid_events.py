@@ -11,19 +11,29 @@ from app.services import chores as svc
 from app.services import inbox
 
 
-def chore_decided(db: Session, run: ChoreRun, approved: bool, note: str | None = None) -> None:
+def chore_decided(
+    db: Session,
+    run: ChoreRun,
+    approved: bool,
+    note: str | None = None,
+    submitter_id: int | None = None,
+) -> None:
     title = svc.chore_of(run).title
+    kids = svc.run_kid_ids(run)
+    if svc.mode_of(run) == "race":  # only the kid who submitted hears about it
+        sid = submitter_id or run.submitted_by_id
+        kids = [sid] if sid in kids else []
     if not approved:
         inbox.notify(
             db,
-            svc.run_kid_ids(run),
+            kids,
             "chore_sent_back",
             f"{title} was sent back",
             note or "Take another look.",
             run_id=run.id,
         )
         return
-    for kid_id in svc.run_kid_ids(run):
+    for kid_id in kids:
         pts = (
             db.query(func.coalesce(func.sum(Points.amount), 0))
             .filter(Points.run_id == run.id, Points.user_id == kid_id, Points.amount > 0)

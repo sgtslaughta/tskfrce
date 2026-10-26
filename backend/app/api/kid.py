@@ -4,6 +4,7 @@ from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, File, HTTPException, Request, Response, UploadFile
 from pydantic import BaseModel, Field
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_active_user, get_db
@@ -347,7 +348,10 @@ def chore_seen(run_id: int, db: Session = Depends(get_db), kid: User = Depends(r
         raise HTTPException(404, "We couldn't find that chore.")
     if db.get(ChoreSeen, (r.assignment_id, kid.id)) is None:
         db.add(ChoreSeen(assignment_id=r.assignment_id, kid_id=kid.id))
-        db.commit()
+        try:
+            db.commit()
+        except IntegrityError:  # double tap raced us; already seen
+            db.rollback()
     return Response(status_code=204)
 
 

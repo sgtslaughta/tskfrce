@@ -122,3 +122,31 @@ def test_parent_never_gets_kid_kinds(client, db, parent, kid, parent_headers):
     db.commit()
     assert not {n.kind for n in _rows(db, parent)} & NEW_KINDS
     assert _rows(db, kid)
+
+
+def _race(db, parent, a, b, status="submitted"):
+    return make_run(db, parent, kids=[a, b], mode="race", status=status, submitted_by=a, title="T")
+
+
+def test_race_approve_alerts_only_winner(client, db, parent, kid, parent_headers):
+    b = _make_user(db, "maya", UserRole.KID)
+    r = _race(db, parent, kid, b)
+    client.post(f"/api/v1/chores/{r.id}/approve", headers=parent_headers)
+    assert len(_rows(db, kid, "chore_approved")) == 1
+    assert _rows(db, b, "chore_approved") == []
+
+
+def test_race_send_back_alerts_only_submitter(client, db, parent, kid, parent_headers):
+    b = _make_user(db, "maya", UserRole.KID)
+    r = _race(db, parent, kid, b)
+    client.post(f"/api/v1/chores/{r.id}/send-back", json={"note": "x"}, headers=parent_headers)
+    assert len(_rows(db, kid, "chore_sent_back")) == 1
+    assert _rows(db, b, "chore_sent_back") == []
+
+
+def test_team_send_back_alerts_everyone(client, db, parent, kid, parent_headers):
+    b = _make_user(db, "maya", UserRole.KID)
+    r = make_run(db, parent, kids=[kid, b], mode="team", status="submitted", submitted_by=kid)
+    client.post(f"/api/v1/chores/{r.id}/send-back", json={"note": "x"}, headers=parent_headers)
+    assert len(_rows(db, kid, "chore_sent_back")) == 1
+    assert len(_rows(db, b, "chore_sent_back")) == 1

@@ -76,3 +76,18 @@ def test_done_at_after_submit(client, db, parent, kid, kid_headers):
     rid = _today(client, kid_headers)["chores"][0]["id"]
     assert client.post(f"/api/v1/kid/chores/{rid}/done", headers=kid_headers).status_code == 200
     assert _today(client, kid_headers)["chores"][0]["done_at"].endswith("Z")
+
+
+def test_seen_double_tap_race_is_idempotent(client, db, parent, kid, kid_headers, monkeypatch):
+    from sqlalchemy.orm import Session
+
+    r = _run(db, parent, kid)
+    db.add(ChoreSeen(assignment_id=r.assignment_id, kid_id=kid.id))
+    db.commit()
+    real = Session.get
+    monkeypatch.setattr(
+        Session, "get", lambda s, e, *a, **k: None if e is ChoreSeen else real(s, e, *a, **k)
+    )
+    res = client.post(f"/api/v1/kid/chores/{r.id}/seen", headers=kid_headers)
+    assert res.status_code == 204
+    assert db.query(ChoreSeen).count() == 1
