@@ -62,9 +62,7 @@ export const useTestBlock = () =>
   })
 export const useDeleteDevice = () => useRefreshing((id: number) => api(`/devices/${id}`, { method: 'DELETE' }), 'Deleted')
 export const useSaveGroup = () =>
-  useRefreshing(({ id, name, device_ids }: { id?: number; name: string; device_ids: number[] }) =>
-    id
-      ? api(`/groups/${id}`, { method: 'PATCH', body: { name, device_ids } })
-      : api('/groups', { method: 'POST', body: { name, device_ids } }),
+  useRefreshing(({ id, ...body }: { id?: number; name: string; device_ids: number[]; icon?: string; chore_lock?: boolean }) =>
+    id ? api(`/groups/${id}`, { method: 'PATCH', body }) : api('/groups', { method: 'POST', body }),
   )
 export const useDeleteGroup = () => useRefreshing((id: number) => api(`/groups/${id}`, { method: 'DELETE' }), 'Deleted')

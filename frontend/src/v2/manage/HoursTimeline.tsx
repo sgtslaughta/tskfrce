@@ -1,5 +1,8 @@
 import { useMemo } from 'react'
 import type { Kid, Group, TimeWindow } from '@/v2/types'
+import { daysLabel, segments } from './hoursMeta'
+
+export { daysLabel, segments }
 
 interface HoursTimelineProps {
   windows: TimeWindow[]
@@ -15,17 +18,6 @@ function getTextureForWindow(window: TimeWindow): TextureType {
   return 'solid'
 }
 
-const DAY = ['M', 'T', 'W', 'T', 'F', 'S', 'S']
-
-/** "Every day" / "Weekdays" / "Weekends" / "M W F" from a days string like "01234" (0 = Monday). */
-export function daysLabel(days: string): string {
-  const set = Array.from(new Set(days.split(''))).sort().join('')
-  if (set === '0123456') return 'Every day'
-  if (set === '01234') return 'Weekdays'
-  if (set === '56') return 'Weekends'
-  return set.split('').map((d) => DAY[Number(d)]).join(' ')
-}
-
 function getWindowLabel(window: TimeWindow, kids: Kid[], groups: Group[]): string {
   const who = window.kid_id
     ? kids.find((k) => k.id === window.kid_id)?.full_name ?? 'A kid'
@@ -33,19 +25,6 @@ function getWindowLabel(window: TimeWindow, kids: Kid[], groups: Group[]): strin
       ? groups.find((g) => g.id === window.group_id)?.name ?? 'A group'
       : 'Everyone'
   return `${who} · ${window.kind === 'free' ? 'Free time' : 'Allowed'} · ${daysLabel(window.days)}`
-}
-
-const minutes = (hhmm: string) => {
-  const [h, m] = hhmm.split(':').map(Number)
-  return h * 60 + m
-}
-
-/** Bar segments in % of the day; an overnight window (22:00-02:00) becomes two. */
-export function segments(start: string, end: string): Array<[number, number]> {
-  const s = (minutes(start) / 1440) * 100
-  const e = (minutes(end) / 1440) * 100
-  if (s === e) return [[0, 100]]
-  return s < e ? [[s, e]] : [[s, 100], [0, e]]
 }
 
 function TimelineRow({ window, kids, groups }: { window: TimeWindow; kids: Kid[]; groups: Group[] }) {

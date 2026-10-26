@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Tooltip } from '@mantine/core'
 import { Icon } from '../parent/Icon'
 import { useTipState } from '../hooks/useTips'
-import { useWindows } from '../hooks/useWindows'
+import { useHours } from '../hooks/useHours'
 import { useParents } from '../hooks/useFamily'
 import type { TodayKid } from '../types'
 
@@ -12,7 +12,7 @@ interface Props {
 
 export function GetStartingChecklistCard({ kids }: Props) {
   const { isDismissed, dismiss } = useTipState()
-  const hours = (useWindows().data?.length ?? 0) > 0
+  const hours = (useHours().data?.rules.length ?? 0) > 0
   const parents = useParents().data?.length ?? 0
 
   const items = [
