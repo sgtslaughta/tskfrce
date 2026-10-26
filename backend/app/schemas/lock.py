@@ -93,6 +93,7 @@ class FamilyPatch(BaseModel):
     screen_time_price: int | None = Field(default=None, ge=1, le=1000)
     gifs_enabled: bool | None = None
     gif_rating: Literal["g", "pg"] | None = None
+    ntfy_upstream_relay: bool | None = None
     giphy_api_key: str | None = Field(default=None, max_length=100)  # "" clears
     accent: (
         Literal[

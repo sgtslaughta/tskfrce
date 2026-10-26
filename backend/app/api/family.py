@@ -20,7 +20,7 @@ from app.models.reward import Redemption, Reward
 from app.models.user import User, UserRole
 from app.schemas.lock import FamilyPatch
 from app.services import chores as svc
-from app.services import progression
+from app.services import progression, push
 
 router = APIRouter(prefix="/api/v1", tags=["family"], dependencies=[Depends(require_parent)])
 
@@ -37,6 +37,7 @@ def _fam_out(fam) -> dict:
         "gifs_enabled": fam.gifs_enabled,
         "gif_rating": fam.gif_rating,
         "accent": fam.accent,
+        "ntfy_upstream_relay": fam.ntfy_upstream_relay,
         "giphy_key_set": bool(fam.giphy_api_key),  # the key itself is never returned
     }
 
@@ -63,6 +64,8 @@ def patch_family(body: FamilyPatch, db: Session = Depends(get_db)):
         elif v is not None:
             setattr(fam, k, v)
     db.commit()
+    if "ntfy_upstream_relay" in body.model_fields_set:
+        push.write_conf(fam)
     trigger()
     return _fam_out(fam)
 

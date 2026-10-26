@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from blocker.firewall import render_ruleset
+from blocker.service import DEFAULT_LAN_CIDRS
 
 LAN = ["192.168.1.0/24", "fe80::/10"]
 
@@ -83,3 +84,19 @@ def test_render_dns_to_port_53_http_to_portal_port():
     http = [ln for ln in r.splitlines() if "dport 80 dnat" in ln]
     assert len(dns) == 2 and all(ln.endswith(":53") for ln in dns)
     assert len(http) == 1 and http[0].endswith(":8080")
+
+
+def test_locked_device_reaches_box_services():
+    # ntfy (:2586) lives on the box's LAN address: a locked kid phone must still reach it.
+    r = render_ruleset(set(), set(), MAC, DEFAULT_LAN_CIDRS, "192.168.1.2", 80)
+    lines = [ln.strip() for ln in r.splitlines()]
+    accept = next(
+        i
+        for i, ln in enumerate(lines)
+        if ln.startswith("ether saddr @blocked_mac ip daddr {")
+        and "172.16.0.0/12" in ln
+        and ln.endswith("accept")
+    )
+    assert accept < lines.index("ether saddr @blocked_mac drop")
+    pre = r.split("chain prerouting")[1].split("chain forward")[0]
+    assert "2586" not in pre

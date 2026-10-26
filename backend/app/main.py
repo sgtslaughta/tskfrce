@@ -33,6 +33,7 @@ from app.api.flair import router as flair_router
 from app.api.inbox import router as notifications_router
 from app.api.internal import router as internal_router
 from app.api.kid import router as kid_router
+from app.api.kid_push import router as kid_push_router
 from app.api.kids import router as kids_router
 from app.api.password_reset import router as password_reset_router
 from app.api.rewards import redemptions_router
@@ -142,6 +143,7 @@ fastapi_app.include_router(chat_router)
 fastapi_app.include_router(internal_router)
 fastapi_app.include_router(devices_router)
 fastapi_app.include_router(kids_router)
+fastapi_app.include_router(kid_push_router)
 fastapi_app.include_router(kid_router)
 fastapi_app.include_router(windows_router)
 fastapi_app.include_router(family_router)
@@ -257,6 +259,14 @@ async def startup_event():
 
     init_database()
     logger.info("Database ready")
+
+    from app.core.database import SessionLocal
+    from app.models.family import get_family
+    from app.services import push
+
+    with SessionLocal() as db:
+        push.write_conf(get_family(db))
+        db.commit()
 
     from app.core.config import settings
 

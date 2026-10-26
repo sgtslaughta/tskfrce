@@ -18,8 +18,12 @@ services:
       CORS_ORIGINS: ${BOX_URL:-http://localhost:3000}
       # Only the frontend proxy may set X-Real-IP
       TRUSTED_PROXY_IPS: 127.0.0.1,::1,${TASK4CE_FRONTEND_IP:-172.29.50.10}
+      NTFY_URL: http://ntfy:80
+      NTFY_PUBLIC_URL: ${NTFY_PUBLIC_URL:-}
+      NTFY_CONF_FILE: /ntfy-conf/server.yml
     volumes:
       - task4ce_data:/app/data
+      - ntfy_conf:/ntfy-conf
     networks:
       - task4ce
     restart: unless-stopped
@@ -55,6 +59,39 @@ services:
       retries: 5
       start_period: 30s
 
+  # Kid-phone alerts. Reads /etc/ntfy/server.yml (written by the backend) and
+  # restarts the server inside the container when that file changes.
+  ntfy:
+    image: binwiederhier/ntfy:v2.11.0
+    command: serve
+    entrypoint:
+      - sh
+      - -c
+      - |
+        f=/etc/ntfy/server.yml
+        m() { stat -c %Y "$$f" 2>/dev/null; }
+        while true; do
+          last=$$(m)
+          ntfy "$$@" &
+          pid=$$!
+          while kill -0 $$pid 2>/dev/null && [ "$$(m)" = "$$last" ]; do sleep 5; done
+          kill $$pid 2>/dev/null
+          wait $$pid
+        done
+      - ntfy
+    environment:
+      NTFY_BASE_URL: ${NTFY_PUBLIC_URL:-http://task4ce.local:2586}
+      NTFY_CACHE_FILE: /var/cache/ntfy/cache.db
+      NTFY_CACHE_DURATION: 12h
+    ports:
+      - "${NTFY_PORT:-0.0.0.0:2586}:80"
+    volumes:
+      - ntfy_cache:/var/cache/ntfy
+      - ntfy_conf:/etc/ntfy:ro
+    networks:
+      - task4ce
+    restart: unless-stopped
+
   # Pauses chosen devices' internet (docs/blocker.md). Host network, two capabilities, never privileged.
   blocker:
     build:
@@ -73,6 +110,8 @@ services:
 
 volumes:
   task4ce_data:
+  ntfy_cache:
+  ntfy_conf:
 
 networks:
   task4ce:
