@@ -1,6 +1,16 @@
 """Family settings (single row, id=1)."""
 
-from sqlalchemy import Boolean, CheckConstraint, Column, Date, DateTime, ForeignKey, Integer, String
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Session
 
 from app.core.database import Base
@@ -31,6 +41,10 @@ class FamilySettings(Base):
     last_reset_date = Column(Date, nullable=True)
     owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     ntfy_upstream_relay = Column(Boolean, nullable=False, default=False, server_default="0")
+    screen_max_minutes = Column(Integer, nullable=True)  # NULL = no daily max
+    screen_auto_approve = Column(Boolean, nullable=False, default=False, server_default="0")
+    screen_only_allowed_hours = Column(Boolean, nullable=False, default=True, server_default="1")
+    quick_replies = Column(Text, nullable=True)  # JSON list; NULL = defaults
     blocker_last_seen = Column(DateTime, nullable=True)  # naive UTC; home box heartbeat
 
 

@@ -13,8 +13,10 @@ class Reward(Base):
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False)
     price = Column(Integer, nullable=False)
-    icon = Column(String(8), nullable=True)
+    icon = Column(String(40), nullable=True)
     active = Column(Boolean, nullable=False, default=True)
+    visible = Column(Boolean, nullable=False, default=True, server_default="1")
+    needs_approval = Column(Boolean, nullable=False, default=True, server_default="1")
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
@@ -40,3 +42,5 @@ class Redemption(Base):
     decided_at = Column(DateTime, nullable=True)
     decided_by_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     seen_by_kid = Column(Boolean, nullable=False, default=False)
+    auto = Column(Boolean, nullable=False, default=False, server_default="0")
+    note = Column(String(200), nullable=True)

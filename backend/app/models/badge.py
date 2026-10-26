@@ -21,7 +21,7 @@ class CustomBadge(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(60), nullable=False)
-    icon = Column(String(8), nullable=False)
+    icon = Column(String(40), nullable=False)
     description = Column(String(200), nullable=False, default="")
     active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
@@ -44,3 +44,5 @@ class BadgeAward(Base):
     tier = Column(Integer, nullable=False)
     earned_at = Column(DateTime, default=datetime.utcnow)
     seen_by_kid = Column(Boolean, nullable=False, default=False)
+    note = Column(String(200), nullable=True)
+    awarded_by_id = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
