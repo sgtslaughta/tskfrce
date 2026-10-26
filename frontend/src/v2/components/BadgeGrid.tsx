@@ -1,3 +1,4 @@
+import { Icon } from '../parent/Icon'
 import type { Badge } from '../types'
 
 const tierCls = (b: Badge) => `tier-${b.tier_name.toLowerCase().replace(/[\s_]+/g, '-')}`
@@ -9,7 +10,7 @@ export function BadgeGrid({ badges }: { badges: Badge[] }) {
       {badges.map((b) => (
         <li key={b.key} title={b.description} style={{ display: 'grid', justifyItems: 'center', gap: 2, width: 84, textAlign: 'center' }}>
           <span className={`tier-ring ${tierCls(b)}`} aria-hidden>
-            {b.icon}
+            {b.custom ? <Icon name={b.icon} /> : b.icon}
           </span>
           <b style={{ fontSize: 13 }}>{b.name}</b>
           <span className="f-cap">{b.tier_name}</span>

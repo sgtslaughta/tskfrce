@@ -1,18 +1,35 @@
 import { useState } from 'react'
 import { Button, NativeSelect, Progress } from '@mantine/core'
+import { Icon } from '../parent/Icon'
 import { StickerCard } from '../components/StickerCard'
 import { useKidRewards, useRedeem } from '../hooks/useKidRewards'
 
-const MINUTES = [15, 30, 45, 60, 75, 90, 105, 120].map((m) => ({ value: String(m), label: `${m} minutes` }))
+const STEPS = [15, 30, 45, 60, 75, 90, 105, 120]
+const opts = (left: number | null) => {
+  const m = left === null ? STEPS : STEPS.filter((x) => x <= left)
+  return (m.length || !left ? m : [left]).map((x) => ({ value: String(x), label: `${x} minutes` }))
+}
 
 export function RewardsSection({ onExpired, heading = 'Rewards' }: { onExpired: () => void; heading?: string }) {
   const { data: d } = useKidRewards(onExpired)
   const redeem = useRedeem(onExpired)
   const [minutes, setMinutes] = useState('30')
+  const [got, setGot] = useState<number[]>([])
   if (!d?.pending) return null
+  const sc = d.screen
+  const data = opts(sc.left_today)
+  const mins = data.some((o) => o.value === minutes) ? minutes : (data.find((o) => Number(o.value) >= 30) ?? data[data.length - 1])?.value ?? minutes
+  const why =
+    sc.left_today === 0
+      ? "You've had all your screen time for today."
+      : sc.min_points !== null && d.balance < sc.min_points
+        ? `You can buy screen time once you have ${sc.min_points} points.`
+        : sc.only_in_hours && !sc.in_hours
+          ? 'Screen time only works during your allowed hours.'
+          : null
   const pendingReward = (id: number) => d.pending.some((p) => p.kind === 'reward' && p.reward_id === id)
   const pendingTime = d.pending.some((p) => p.kind === 'screen_time')
-  const cost = (Number(minutes) / 15) * d.screen_time_price
+  const cost = (Number(mins) / 15) * d.screen_time_price
   return (
     <StickerCard>
       <div style={{ display: 'grid', gap: 12 }}>
@@ -23,21 +40,27 @@ export function RewardsSection({ onExpired, heading = 'Rewards' }: { onExpired: 
           <div style={{ display: 'grid', gap: 8 }}>
             <NativeSelect
               label="Screen time"
-              data={MINUTES}
-              value={minutes}
+              data={data}
+              value={mins}
               onChange={(e) => setMinutes(e.currentTarget.value)}
             />
             <p style={{ margin: 0 }}>
               Costs <span className="f-num">{cost}</span> points
             </p>
+            {sc.max_today !== null && (
+              <p className="f-cap" style={{ margin: 0 }}>
+                {sc.bought_today} of {sc.max_today} min today
+              </p>
+            )}
+            {why && <p style={{ margin: 0, color: 'var(--f-sub)' }}>{why}</p>}
             {pendingTime ? (
               <span className="f-pill" data-tone="wait">Waiting for a parent</span>
             ) : (
               <Button
-                disabled={cost > d.balance || redeem.isPending}
-                onClick={() => redeem.mutate({ kind: 'screen_time', minutes: Number(minutes) })}
+                disabled={!!why || !data.length || cost > d.balance || redeem.isPending}
+                onClick={() => redeem.mutate({ kind: 'screen_time', minutes: Number(mins) })}
               >
-                Request screen time
+                {sc.auto ? 'Get screen time' : 'Request screen time'}
               </Button>
             )}
           </div>
@@ -49,24 +72,32 @@ export function RewardsSection({ onExpired, heading = 'Rewards' }: { onExpired: 
         )}
         {d.rewards.map((r) => {
           const pending = pendingReward(r.id)
+          const instant = r.needs_approval === false
           return (
             <div key={r.id} style={{ display: 'grid', gap: 6 }}>
               <strong>
-                {r.icon} {r.name} · <span className="f-num">{r.price}</span> points
+                <Icon name={r.icon ?? 'redeem'} size={22} /> {r.name} · <span className="f-num">{r.price}</span> points
               </strong>
               <Progress
                 value={Math.min(d.balance / r.price, 1) * 100}
                 aria-label={`Progress toward ${r.name}`}
                 aria-valuenow={Math.round(Math.min(d.balance / r.price, 1) * 100)}
               />
-              {pending ? (
+              {got.includes(r.id) ? (
+                <span className="f-pill" data-tone="ok">It&apos;s yours!</span>
+              ) : pending ? (
                 <span className="f-pill" data-tone="wait">Waiting for a parent</span>
               ) : (
                 <Button
                   disabled={d.balance < r.price || redeem.isPending}
-                  onClick={() => redeem.mutate({ kind: 'reward', reward_id: r.id })}
+                  onClick={() =>
+                    redeem.mutate(
+                      { kind: 'reward', reward_id: r.id },
+                      { onSuccess: (res) => (res as { status?: string } | undefined)?.status === 'approved' && setGot((g) => [...g, r.id]) },
+                    )
+                  }
                 >
-                  Request
+                  {instant ? 'Get it' : 'Request'}
                 </Button>
               )}
             </div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Button } from '@mantine/core'
 import { useCelebrations, useMarkCelebrationSeen } from '../hooks/useKidRewards'
+import { Icon } from '../parent/Icon'
 import { TIER_COLORS, TIER_NAMES } from '../tiers'
 
 export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; onLocker?: () => void }) {
@@ -38,6 +39,7 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
         className={big ? 'award-card' : 'award-card award-toast'}
       >
         {big && Array.from({ length: 20 }, (_, i) => <span key={i} className="award-confetti" style={{ '--i': i } as React.CSSProperties} />)}
+        {award.glyph && <Icon name={award.glyph} size={big ? 56 : 36} />}
         <p id="award-heading" className="f-display" style={{ margin: 0, fontSize: big ? 28 : 20 }}>
           {heading}
         </p>
