@@ -39,7 +39,7 @@ const mockFamily: Family = {
   screen_time_price: 4,
   early_bonus_cap: 20,
   gif_rating: 'g',
-  giphy_key_set: true,
+  giphy_key_set: true, ntfy_upstream_relay: false,
 }
 
 const mockKids: Kid[] = [

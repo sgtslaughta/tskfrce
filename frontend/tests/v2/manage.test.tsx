@@ -81,7 +81,7 @@ const family: Family = {
   screen_time_price: 20,
   gifs_enabled: false,
   gif_rating: 'g',
-  giphy_key_set: false,
+  giphy_key_set: false, ntfy_upstream_relay: false,
 }
 
 const wrap = (ui: ReactNode) => (

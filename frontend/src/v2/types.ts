@@ -88,6 +88,7 @@ export interface Family {
   gif_rating: 'g' | 'pg'
   accent?: AccentKey
   giphy_key_set: boolean
+  ntfy_upstream_relay: boolean
 }
 
 /** GET /chore-types item */

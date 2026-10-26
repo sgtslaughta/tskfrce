@@ -3,8 +3,8 @@ import { api } from '@/v2/api'
 import { toastFail } from '@/v2/notify'
 import type { KidPush } from '@/v2/types'
 
-export const useKidPush = (kidId: number) =>
-  useQuery({ queryKey: ['kid-push', kidId], queryFn: () => api<KidPush>(`/kids/${kidId}/push`) })
+export const useKidPush = (kidId: number, enabled = true) =>
+  useQuery({ queryKey: ['kid-push', kidId], queryFn: () => api<KidPush>(`/kids/${kidId}/push`), enabled })
 
 export const useResetKidPush = () => {
   const qc = useQueryClient()

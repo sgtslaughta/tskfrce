@@ -9,6 +9,7 @@ import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import { choreIcon } from '@/v2/today/choreIcon'
 import type { Kid } from '@/v2/types'
+import { AGE_LABEL } from './ageGroups'
 import { KidEditor } from './KidEditor'
 import { PointsForm } from './PointsForm'
 import { initial, nameOf, schedules } from './choreMeta'
@@ -91,6 +92,7 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
             Profile
           </h3>
           <div className="pk-kv"><span>Name</span><b>{name}</b></div>
+          <div className="pk-kv"><span>Age group</span><b>{AGE_LABEL[kid.age_group]}</b></div>
           <div className="pk-kv"><span>PIN</span><b>{kid.has_pin ? '•••• set' : 'Not set'}</b></div>
           {t?.points !== undefined && <div className="pk-kv"><span>Points</span><b>{t.points}</b></div>}
           {t?.next_reward != null && <div className="pk-kv"><span>Next reward</span><b>{t.next_reward} pts away</b></div>}

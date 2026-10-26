@@ -308,3 +308,19 @@ html[data-look='parent'] .mantine-Modal-content { background: var(--p-card); col
 html[data-look='parent'] .mantine-Modal-header { background: var(--p-card); }
 html[data-look='parent'] .mantine-Modal-title { color: var(--p-ink); font-size: 16px; font-weight: 700; }
 html[data-look='parent'] .mantine-Modal-close { color: var(--p-sub); }
+
+/* Age group cards (mockup 11 .ages) */
+[data-look='parent'] .pk-ages { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 6px; }
+[data-look='parent'] .pk-age {
+  text-align: left; font: inherit; color: var(--p-ink); background: var(--p-card);
+  border: 1px solid var(--p-line); border-radius: 12px; padding: 12px; cursor: pointer;
+}
+[data-look='parent'] .pk-age b { display: block; font-size: 15px; font-weight: 700; }
+[data-look='parent'] .pk-age small { display: block; color: var(--p-sub); font-size: 12.5px; margin-top: 2px; }
+[data-look='parent'] .pk-age[aria-pressed='true'] { border: 2px solid var(--p-ink); padding: 11px; box-shadow: 3px 3px 0 var(--p-acc); }
+[data-look='parent'] .pk-age:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+@media (max-width: 599px) { [data-look='parent'] .pk-ages { grid-template-columns: 1fr; } }
+
+/* Kid phone codes */
+[data-look='parent'] .pk-qr { display: block; background: #fff; border-radius: 10px; padding: 8px; margin: 10px 0; }
+[data-look='parent'] .pk-mono { font-family: ui-monospace, monospace; overflow-wrap: anywhere; }

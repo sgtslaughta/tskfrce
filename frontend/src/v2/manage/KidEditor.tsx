@@ -2,8 +2,9 @@ import { useState } from 'react'
 import { useDisclosure } from '@mantine/hooks'
 import { useCreateKid, useDeleteKid, usePatchKid, type KidBody } from '@/v2/hooks/useKids'
 import { Icon } from '@/v2/parent/Icon'
-import type { Kid } from '@/v2/types'
+import type { AgeGroup, Kid } from '@/v2/types'
 import { EmojiPicker } from '@/v2/components/EmojiPicker'
+import { AGES } from './ageGroups'
 import { ConfirmDelete } from './ConfirmDelete'
 import { useSingle } from './useSingle'
 import { toastFail, toastOk } from '../notify'
@@ -18,6 +19,7 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
   const delOnce = useSingle(del)
   const [name, setName] = useState(kid?.full_name ?? '')
   const [avatar, setAvatar] = useState(kid?.avatar ?? '')
+  const [age, setAge] = useState<AgeGroup>(kid?.age_group ?? 'kid')
   const [pin, setPin] = useState('')
   const [letters, setLetters] = useState(false)
   const [confirm, { open, close }] = useDisclosure(false)
@@ -30,6 +32,7 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
     const body: KidBody = {}
     if (name.trim() !== (kid?.full_name ?? '')) body.full_name = name.trim()
     if (avatar !== (kid?.avatar ?? '')) body.avatar = avatar
+    if (age !== (kid?.age_group ?? 'kid')) body.age_group = age
     if (pin) body.pin = pin
     const opts = {
       onError: toastFail,
@@ -56,6 +59,17 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
           <input className="pk-input" value={name} maxLength={100} onChange={(e) => setName(e.currentTarget.value)} />
         </label>
         <EmojiPicker label="Avatar (an emoji)" value={avatar} onChange={setAvatar} />
+        <div role="group" aria-labelledby="pk-age-l">
+          <div className="pk-label" id="pk-age-l">Age group</div>
+          <div className="pk-ages">
+            {AGES.map((a) => (
+              <button key={a.id} type="button" className="pk-age" aria-pressed={age === a.id} onClick={() => setAge(a.id)}>
+                <b>{a.label}</b>
+                <small>{a.blurb}</small>
+              </button>
+            ))}
+          </div>
+        </div>
         <label className="pk-field">
           <span className="pk-label">{kid?.has_pin ? 'New PIN (4 digits)' : 'PIN (4 digits)'}</span>
           <input

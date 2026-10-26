@@ -78,7 +78,7 @@ describe("GIFs in chat", () => {
   test("settings card never shows the key and Save waits for a change", async () => {
     const fam = {
       name: "S", timezone: "UTC", reset_time: "06:00", new_devices_blocked: true, points_unlock_early: false,
-      early_bonus_cap: 5, screen_time_price: 20, gifs_enabled: false, gif_rating: "g", giphy_key_set: true,
+      early_bonus_cap: 5, screen_time_price: 20, gifs_enabled: false, gif_rating: "g", giphy_key_set: true, ntfy_upstream_relay: false,
     } as Family;
     wrap(<GifsCard fam={fam} />);
     const key = screen.getByLabelText("GIPHY key");
