@@ -2,6 +2,7 @@
 
 import logging
 import re
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
 from urllib.parse import unquote, urlsplit
@@ -19,7 +20,14 @@ from app.models.notify import NotifyHeld, NotifyPlace
 
 log = get_logger(__name__)
 # apprise log lines can contain secret URLs: keep them off the root/app handlers
-logging.getLogger("apprise").propagate = False
+_alog = logging.getLogger("apprise")
+_alog.propagate = False
+_alog.addHandler(logging.NullHandler())  # no handlers would fall back to stderr
+_alog.setLevel(logging.CRITICAL + 1)  # silent outside LogCapture, which lowers it itself
+# ponytail: serialises all apprise work (LogCapture is process-global, so overlapping sends
+# would read each other's secret-bearing log lines); fine for a home box, swap for per-call
+# log handlers if sends pile up
+apprise_lock = threading.Lock()
 
 EVENTS = {
     "chore_ok": "Chore needs OK",
@@ -131,7 +139,7 @@ def _redact(msg: str, urls: list[str]) -> str:
 def deliver(urls: list[str], title: str, body: str) -> tuple[bool, str | None]:
     try:
         ap = apprise.Apprise()
-        with apprise.LogCapture(level=apprise.logging.WARNING) as cap:
+        with apprise_lock, apprise.LogCapture(level=apprise.logging.WARNING) as cap:
             for u in urls:
                 ap.add(u)
             ok = ap.notify(title=title, body=body, body_format=apprise.NotifyFormat.TEXT)

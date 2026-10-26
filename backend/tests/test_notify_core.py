@@ -166,3 +166,45 @@ def test_deliver_bad_url_not_on_root_logger(caplog):
     assert not ok and "SECRETPW" not in (err or "")
     assert all("SECRETPW" not in r.getMessage() for r in caplog.records)
     assert "SECRETPW" not in caplog.text
+
+
+def test_concurrent_deliveries_dont_cross_secrets(monkeypatch):
+    import logging
+    import time
+    from concurrent.futures import ThreadPoolExecutor
+
+    import apprise
+    from app.services import notify
+
+    def fake(self, *a, **k):
+        url = self.servers[0].url() if hasattr(self, "servers") else ""
+        logging.getLogger("apprise").warning("failed for %s", self._u)
+        time.sleep(0.2)
+        return False
+
+    real_add = apprise.Apprise.add
+
+    def add(self, url, *a, **k):
+        self._u = url
+        return real_add(self, url, *a, **k)
+
+    monkeypatch.setattr(apprise.Apprise, "add", add)
+    monkeypatch.setattr(apprise.Apprise, "notify", fake)
+    urls = ["json://secretA_tok/x", "json://secretB_tok/x"]
+    with ThreadPoolExecutor(2) as ex:
+        res = list(ex.map(lambda u: notify.deliver([u], "t", "b"), urls))
+    assert "secretB_tok" not in (res[0][1] or "") and "secretA_tok" not in (res[1][1] or "")
+    assert not res[0][0] and not res[1][0]
+
+
+def test_failed_add_silent_on_stderr(client, parent_headers, capfd):
+    from app.services import notify
+
+    client.post(
+        "/api/v1/notify/places",
+        json={"name": "x", "url": "discord://tok123"},
+        headers=parent_headers,
+    )
+    notify.deliver(["discord://tok123"], "t", "b")
+    out = capfd.readouterr()
+    assert "tok123" not in out.out + out.err

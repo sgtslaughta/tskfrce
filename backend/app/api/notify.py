@@ -37,7 +37,9 @@ def _check_url(url: str) -> str:
     if not 1 <= len(url) <= 1000:
         raise HTTPException(422, BAD_URL)
     # apprise logs don't propagate (see services/notify.py), so a failed add stays silent
-    if not apprise.Apprise().add(url):
+    with notify.apprise_lock:
+        ok = apprise.Apprise().add(url)
+    if not ok:
         raise HTTPException(422, BAD_URL)
     return url
 
