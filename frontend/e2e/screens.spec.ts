@@ -10,7 +10,9 @@ const PARENT_ROUTES = [
   '/devices',
   '/chat',
   '/settings',
-  '/settings?section=screen',
+  '/kids?section=rewards&item=screen',
+  '/settings?section=hours',
+  '/settings?section=notifications',
   '/more',
 ]
 const PUBLIC_ROUTES = ['/login', '/register', '/kid']
