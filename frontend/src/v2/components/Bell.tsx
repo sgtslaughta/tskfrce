@@ -69,7 +69,7 @@ export function List({ kid, onGo, sheet, page }: { kid: boolean; onGo: () => voi
     [filtered],
   )
   const counts: Record<FilterKind, number> = useMemo(
-    () => ({ all: items.length, 'needs-you': items.filter(isNeedsYou).length, alerts: items.filter(isAlert).length }),
+    () => ({ all: items.filter((n) => !n.read || isToday(n.created_at)).length, 'needs-you': items.filter(isNeedsYou).length, alerts: items.filter(isAlert).length }),
     [items],
   )
 

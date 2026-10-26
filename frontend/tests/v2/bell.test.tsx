@@ -202,10 +202,14 @@ describe('Bell', () => {
       item(1, { kind: 'chore_submitted', run_id: 1, pending: true }),
       item(2, { kind: 'new_device', read: true }),
       item(3, { kind: 'device_bypass', device_id: 9 }),
+      // Earlier and read: listed under Earlier but not counted in All (mockup: All · 5 with 2 Earlier)
+      item(4, { kind: 'level_up', read: true, created_at: new Date(Date.now() - 2 * 86400000).toISOString() }),
+      // Earlier but still unread: counted
+      item(5, { kind: 'badge_earned', read: false, created_at: new Date(Date.now() - 2 * 86400000).toISOString() }),
     ])
     wrap(<Bell />)
     await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
-    expect(await screen.findByRole('button', { name: 'All · 3', hidden: true })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'All · 4', hidden: true })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Needs you · 1', hidden: true })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Alerts · 1', hidden: true })).toBeTruthy()
   })
