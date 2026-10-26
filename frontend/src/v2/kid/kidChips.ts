@@ -7,7 +7,7 @@ export interface KidChipT {
   label: string
 }
 
-const fmt = (iso: string, tz: string | undefined, hour12Digits: boolean) => {
+const fmt = (iso: string, tz: string | undefined, short: boolean) => {
   const o = { hour: 'numeric', minute: '2-digit' } as const
   let s: string
   try {
@@ -15,7 +15,8 @@ const fmt = (iso: string, tz: string | undefined, hour12Digits: boolean) => {
   } catch {
     s = new Date(iso).toLocaleTimeString('en-US', o)
   }
-  return hour12Digits ? s.replace(/\s?[AP]M$/i, '') : s
+  s = s.replace(/\u202f/g, ' ')
+  return short ? s.replace(/\s?[AP]M$/i, '') : s
 }
 /** "4:30 PM" */
 export const clock = (iso: string, tz?: string) => fmt(iso, tz, false)
@@ -63,13 +64,14 @@ export function stepHint(steps: KidStep[], i: number, tz?: string): string {
   if (s.locked) {
     let j = i - 1
     while (j >= 0 && steps[j].done) j--
-    parts.push(`Unlocks after step ${j + 1}`)
+    parts.push(j >= 0 ? `Unlocks after step ${j + 1}` : 'Locked')
   } else if (nextStep(steps) === i) parts.push('Do this next')
   else if (stepBadge(steps, i) === '–') parts.push('Any time')
   if (s.due_at) parts.push(`by ${clock(s.due_at, tz)}`)
   return parts.join(' · ')
 }
 
+/** Sorts for display; drops skipped chores. */
 export function kidSort(chores: KidChore[], now: number): KidChore[] {
   const rank = (c: KidChore) =>
     c.state === 'done' ? 3 : c.state === 'needs_you' ? 2 : c.due_at && Date.parse(c.due_at) < now ? 0 : 1

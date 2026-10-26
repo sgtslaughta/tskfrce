@@ -1,5 +1,5 @@
 import { describe, test, expect } from '@jest/globals'
-import { kidChips, kidSort, nextStep, stepBadge, stepChip, stepHint, tally } from '@/v2/kid/kidChips'
+import { clock, kidChips, kidSort, nextStep, stepBadge, stepChip, stepHint, tally } from '@/v2/kid/kidChips'
 import type { KidChore, KidStep } from '@/v2/types'
 
 const NOW = Date.parse('2026-10-26T21:30:00Z')
@@ -23,6 +23,15 @@ describe('kidChips', () => {
     const c = mk({ due_at: '2026-10-26T23:30:00Z' })
     expect(labels(c)).toEqual(['Due 7:30'])
     expect(labels(c, true)).toEqual(['By 7:30'])
+  })
+  test('times follow the given zone, not the device', () => {
+    const c = mk({ due_at: '2026-10-26T23:30:00Z' })
+    expect(kidChips(c, NOW, 'UTC')[0].label).toBe('Due 11:30')
+    expect(kidChips(c, NOW, 'Asia/Tokyo')[0].label).toBe('Due 8:30')
+    expect(clock('2026-10-26T23:30:00Z', 'Asia/Tokyo')).toBe('8:30 AM')
+  })
+  test('invalid zone falls back without throwing', () => {
+    expect(() => clock('2026-10-26T23:30:00Z', 'Not/AZone')).not.toThrow()
   })
   test('sent back comes first', () => {
     expect(labels(mk({ sent_back: true, due_at: '2026-10-26T21:00:00Z' }))[0]).toBe('Sent back')
@@ -49,6 +58,9 @@ describe('steps', () => {
     expect(nextStep([step({ done: true }), step({ locked: true })])).toBe(-1)
   })
   test('hint locked', () => expect(stepHint(steps, 2, TZ)).toBe('Unlocks after step 2 · by 6:00 PM'))
+  test('hint locked with no earlier undone step', () => {
+    expect(stepHint([step({ locked: true })], 0, TZ)).toBe('Locked')
+  })
   test('hint next / any time / done', () => {
     expect(stepHint(steps, 0, TZ)).toBe('Do this next')
     expect(stepHint(steps, 3, TZ)).toBe('Any time')
