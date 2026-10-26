@@ -1,7 +1,7 @@
 """Schedule helpers: time windows and chore recurrence."""
 
 from dataclasses import dataclass
-from datetime import UTC, date, datetime, time, timedelta
+from datetime import UTC, date, datetime, time
 from zoneinfo import ZoneInfo
 
 
@@ -43,19 +43,3 @@ def local_now(tz: str, now_utc: datetime) -> datetime:
     if now_utc.tzinfo is None:
         now_utc = now_utc.replace(tzinfo=UTC)
     return now_utc.astimezone(ZoneInfo(tz))
-
-
-def window_end(windows: list[Window], now_local: datetime) -> datetime | None:
-    """When the allowed windows next stop covering `now_local` (within 24 h), else None.
-
-    None also when outside every window already, or when there are no windows.
-    """
-    # ponytail: minute scan (1440 steps); window edges are whole minutes
-    if not any(in_window(w, now_local) for w in windows):
-        return None
-    t = now_local.replace(second=0, microsecond=0)
-    for _ in range(24 * 60):
-        t += timedelta(minutes=1)
-        if not any(in_window(w, t) for w in windows):
-            return t
-    return None

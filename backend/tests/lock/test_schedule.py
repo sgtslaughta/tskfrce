@@ -76,14 +76,3 @@ def test_local_now_dst_fallback():
     # 2026-11-01 06:00 UTC is the instant NY falls back: 02:00 EDT -> 01:00 EST
     n = local_now("America/New_York", datetime(2026, 11, 1, 6, tzinfo=UTC))
     assert (n.hour, n.minute, n.utcoffset().total_seconds()) == (1, 0, -5 * 3600)
-
-
-def test_window_end_finds_bedtime():
-    from app.lock.schedule import window_end
-
-    ws = [Window(frozenset(range(7)), time(7), time(20))]
-    assert window_end(ws, at(MON, 15, 3)) == at(MON, 20)
-    assert window_end(ws, at(MON, 21)) is None  # already outside: locked now
-    assert window_end([], at(MON, 15)) is None  # no hours set: never locks by schedule
-    # overnight window runs past midnight
-    assert window_end([Window(frozenset({0}), time(18), time(2))], at(MON, 23)) == at(TUE, 2)

@@ -39,7 +39,6 @@ from app.api.rewards import redemptions_router
 from app.api.rewards import router as rewards_router
 from app.api.setup import router as setup_router
 from app.api.tips import router as tips_router
-from app.api.windows import router as windows_router
 from app.core.logging import configure_logging, get_logger
 from app.core.monitoring import (
     MetricsMiddleware,
@@ -143,7 +142,6 @@ fastapi_app.include_router(internal_router)
 fastapi_app.include_router(devices_router)
 fastapi_app.include_router(kids_router)
 fastapi_app.include_router(kid_router)
-fastapi_app.include_router(windows_router)
 fastapi_app.include_router(family_router)
 fastapi_app.include_router(rewards_router)
 fastapi_app.include_router(badges_router)

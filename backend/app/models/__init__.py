@@ -14,7 +14,7 @@ from .family import FamilySettings, get_family
 from .flair import KidFlair
 from .hours import HourRule, HourRuleTarget, HourRuleTime
 from .inbox import Notification
-from .lock import Device, DeviceGroup, Override, TimeWindow
+from .lock import Device, DeviceGroup, Override
 from .password_reset import PasswordReset
 from .points import Points, PointsType
 from .reward import Redemption, Reward
@@ -47,7 +47,6 @@ __all__ = [
     "PointsType",
     "Device",
     "DeviceGroup",
-    "TimeWindow",
     "HourRule",
     "HourRuleTime",
     "HourRuleTarget",

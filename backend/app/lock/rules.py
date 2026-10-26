@@ -17,26 +17,71 @@ class DeviceFacts:
     status: str  # unassigned | assigned | guest
     owners: tuple[OwnerChores, ...]
     allowed_sets: tuple[tuple[Window, ...], ...]  # one per owner/group with windows
-    free: tuple[Window, ...]  # union of owners' + groups' free windows
+    free: tuple[Window, ...]  # free windows that apply to this device
     override: str | None  # newest unexpired manual: "lock" | "unlock" | None
     bonus_active: bool
     new_devices_blocked: bool
     points_unlock_early: bool
+    off: tuple[Window, ...] = ()  # internet-off windows
+    chores_apply: bool = True  # False: family or a group switched the chore check off
+    exempt: bool = False  # never locked by hours or chores
+
+
+def _in_any(ws: tuple[Window, ...], now_local: datetime) -> bool:
+    return any(in_window(w, now_local) for w in ws)
+
+
+def _hours_ok(f: DeviceFacts, now_local: datetime) -> bool:
+    return not _in_any(f.off, now_local) and all(_in_any(s, now_local) for s in f.allowed_sets)
+
+
+def _chores_ok(f: DeviceFacts) -> bool:
+    return not f.chores_apply or all(o.total == 0 or o.approved == o.total for o in f.owners)
+
+
+def block_reason(f: DeviceFacts, now_local: datetime) -> str | None:
+    """Why the device is offline: manual | new_device | schedule | chores; None when online."""
+    if f.override == "lock":
+        return "manual"
+    if f.status == "guest":
+        return None
+    if f.status == "unassigned":
+        ok = f.override == "unlock" or not f.new_devices_blocked
+        return None if ok else "new_device"
+    if f.exempt:
+        return None
+    if not _hours_ok(f, now_local):
+        return "schedule"
+    if (
+        _chores_ok(f)
+        or _in_any(f.free, now_local)
+        or f.override == "unlock"
+        or (f.bonus_active and f.points_unlock_early)
+    ):
+        return None
+    return "chores"
 
 
 def is_online(f: DeviceFacts, now_local: datetime) -> bool:
-    if f.override == "lock":
-        return False
+    return block_reason(f, now_local) is None
+
+
+def open_reason(f: DeviceFacts, now_local: datetime) -> str | None:
+    """Why the device is online; None when blocked."""
+    if block_reason(f, now_local) is not None:
+        return None
     if f.status == "guest":
-        return True
+        return "guest"
     if f.status == "unassigned":
-        return f.override == "unlock" or not f.new_devices_blocked
-    if not all(any(in_window(w, now_local) for w in s) for s in f.allowed_sets):
-        return False
-    chores_ok = all(o.total == 0 or o.approved == o.total for o in f.owners)
-    return (
-        chores_ok
-        or any(in_window(w, now_local) for w in f.free)
-        or f.override == "unlock"
-        or (f.bonus_active and f.points_unlock_early)
-    )
+        return "unassigned"
+    if f.exempt:
+        return "exempt"
+    if f.chores_apply and any(o.total > 0 for o in f.owners) and _chores_ok(f):
+        return "chores"
+    if not f.chores_apply or all(o.total == 0 for o in f.owners):
+        return "schedule"
+    if _in_any(f.free, now_local):
+        return "free_time"
+    if f.override == "unlock":
+        return "manual"
+    return "bonus"

@@ -5,10 +5,12 @@ from app.lock.schedule import local_now
 from app.lock.state import device_facts
 from app.models.family import get_family
 from app.models.inbox import Notification
-from app.models.lock import Device, Override, TimeWindow
+from app.models.lock import Device, Override
 from app.models.points import Points, PointsType
 from app.models.reward import Redemption, Reward
 from app.models.user import UserRole
+
+from tests.factories import make_rule
 
 from .conftest import _headers, _make_user
 
@@ -150,8 +152,7 @@ def test_bonus_not_online_outside_window(client, db, kid, kid_headers, parent_he
     start = (local + timedelta(hours=2)).strftime("%H:%M")
     end = (local + timedelta(hours=3)).strftime("%H:%M")
     if start < end:  # skip the midnight-wrap edge
-        db.add(TimeWindow(kind="allowed", days="0123456", start=start, end=end, kid_id=kid.id))
-        db.commit()
+        make_rule(db, times=((start, end),), kid_ids=[kid.id])
         facts = device_facts(db, dev, fam, now)
         assert facts.bonus_active and not is_online(facts, local)
 

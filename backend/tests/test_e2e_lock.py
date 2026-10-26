@@ -11,6 +11,8 @@ from app.models.lock import Override
 from app.services import chores as svc
 from fastapi.testclient import TestClient
 
+from tests.factories import make_rule
+
 KID_IP = "192.168.1.50"
 MAC = "aa:bb:cc:dd:ee:01"
 GMAC = "aa:bb:cc:dd:ee:02"
@@ -111,35 +113,14 @@ def test_full_flow(client, db):
     grp = client.post(
         "/api/v1/groups", json={"name": "Tabs", "device_ids": [dev["id"]]}, headers=ph
     ).json()
-    r = client.post(
-        "/api/v1/windows",
-        json={
-            "kind": "allowed",
-            "days": "0123456",
-            "start": start,
-            "end": end,
-            "group_id": grp["id"],
-        },
-        headers=ph,
-    )
-    assert r.status_code == 200, r.text
+    make_rule(db, times=((start, end),), group_ids=[grp["id"]])
     assert MAC in blocked(client)
 
 
 def test_kid_free_window_unlocks(client, db):
     ph, kid, dev, *_ = _kid_with_chore(client)
     assert blocked(client) == [MAC]
-    client.post(
-        "/api/v1/windows",
-        json={
-            "kind": "free",
-            "days": "0123456",
-            "start": "00:00",
-            "end": "00:00",
-            "kid_id": kid["id"],
-        },
-        headers=ph,
-    )
+    make_rule(db, kind="free", times=(("00:00", "00:00"),), kid_ids=[kid["id"]])
     assert blocked(client) == []
 
 

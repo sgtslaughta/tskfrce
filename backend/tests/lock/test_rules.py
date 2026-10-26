@@ -1,7 +1,7 @@
 from dataclasses import replace
 from datetime import datetime, time
 
-from app.lock.rules import DeviceFacts, OwnerChores, is_online
+from app.lock.rules import DeviceFacts, OwnerChores, block_reason, is_online, open_reason
 from app.lock.schedule import Window
 
 NOW = datetime(2026, 10, 19, 17, 0)  # Monday 17:00
@@ -94,3 +94,42 @@ def test_group_and_kid_allowed_both_required():
     f = facts(allowed_sets=((INSIDE,), (OUTSIDE,)))
     assert not is_online(f, NOW)
     assert is_online(replace(f, allowed_sets=((INSIDE,), (INSIDE, OUTSIDE))), NOW)
+
+
+def test_off_window_blocks_with_schedule_reason():
+    f = facts(allowed_sets=((INSIDE,),), off=(INSIDE,))
+    assert not is_online(f, NOW)
+    assert block_reason(f, NOW) == "schedule"
+
+
+def test_exempt_skips_hours_and_chores_but_not_manual_lock():
+    f = facts(exempt=True, owners=PENDING, allowed_sets=((OUTSIDE,),), off=(INSIDE,))
+    assert is_online(f, NOW) and open_reason(f, NOW) == "exempt"
+    assert block_reason(replace(f, override="lock"), NOW) == "manual"
+
+
+def test_chores_apply_false_skips_chores():
+    assert is_online(facts(owners=PENDING, chores_apply=False), NOW)
+
+
+def test_block_reasons():
+    assert block_reason(facts(), NOW) is None
+    assert block_reason(facts(override="lock"), NOW) == "manual"
+    assert block_reason(facts(status="unassigned"), NOW) == "new_device"
+    assert block_reason(facts(owners=PENDING), NOW) == "chores"
+    assert block_reason(facts(allowed_sets=((OUTSIDE,),)), NOW) == "schedule"
+
+
+def test_open_reasons():
+    assert open_reason(facts(owners=PENDING), NOW) is None
+    assert open_reason(facts(status="guest"), NOW) == "guest"
+    assert open_reason(facts(status="unassigned", new_devices_blocked=False), NOW) == "unassigned"
+    assert open_reason(facts(), NOW) == "chores"
+    assert open_reason(facts(owners=(OwnerChores(0, 0),)), NOW) == "schedule"
+    assert open_reason(facts(chores_apply=False), NOW) == "schedule"
+    assert open_reason(facts(owners=PENDING, free=(INSIDE,)), NOW) == "free_time"
+    assert open_reason(facts(owners=PENDING, override="unlock"), NOW) == "manual"
+    assert (
+        open_reason(facts(owners=PENDING, bonus_active=True, points_unlock_early=True), NOW)
+        == "bonus"
+    )

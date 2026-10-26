@@ -5,13 +5,14 @@ from app.models.badge import BadgeAward
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import ChoreAssignment, ChoreRun, RunStepTick
 from app.models.family import get_family
-from app.models.lock import Device, DeviceGroup, Override, TimeWindow
+from app.models.hours import HourRule, HourRuleTarget
+from app.models.lock import Device, DeviceGroup, Override
 from app.models.points import Points, PointsType
 from app.models.reward import Redemption
 from app.models.tips import DismissedTip
 from app.services import chores as svc
 
-from tests.factories import api_chore, make_run
+from tests.factories import api_chore, make_rule, make_run
 
 DAY = date(2026, 10, 20)
 
@@ -117,33 +118,6 @@ def test_override_minutes_validated(client, db, parent_headers):
     assert r.status_code == 422
 
 
-def test_window_both_targets_400(client, db, kid, parent_headers):
-    g = DeviceGroup(name="G")
-    db.add(g)
-    db.commit()
-    body = {"kind": "allowed", "days": "0123456", "start": "08:00", "end": "20:00"}
-    r = client.post(
-        "/api/v1/windows", json={**body, "kid_id": kid.id, "group_id": g.id}, headers=parent_headers
-    )
-    assert r.status_code == 400 and r.json()["detail"] == "Pick a kid or a group, not both."
-    ok = client.post("/api/v1/windows", json={**body, "kid_id": kid.id}, headers=parent_headers)
-    assert ok.status_code == 200
-    assert len(client.get(f"/api/v1/windows?kid_id={kid.id}", headers=parent_headers).json()) == 1
-    assert (
-        client.delete(f"/api/v1/windows/{ok.json()['id']}", headers=parent_headers).status_code
-        == 200
-    )
-
-
-def test_window_validation(client, kid, parent_headers):
-    base = {"kind": "allowed", "kid_id": kid.id, "start": "08:00", "end": "20:00"}
-    for bad in ({"days": "00"}, {"days": "7"}, {"days": ""}, {"days": "1", "start": "24:00"}):
-        r = client.post(
-            "/api/v1/windows", json={**base, "days": "1", **bad}, headers=parent_headers
-        )
-        assert r.status_code == 422, bad
-
-
 def test_bad_timezone_400(client, db, parent_headers):
     r = client.patch("/api/v1/family", json={"timezone": "Mars/Base"}, headers=parent_headers)
     assert r.status_code == 400 and r.json()["detail"] == "Unknown time zone."
@@ -224,13 +198,13 @@ def test_delete_kid_cleans_up(client, db, parent, kid, parent_headers):
         json={"owner_ids": [kid.id, other["id"]]},
         headers=parent_headers,
     )
-    db.add(TimeWindow(kind="allowed", days="1", start="08:00", end="09:00", kid_id=kid.id))
+    make_rule(db, days="1", times=(("08:00", "09:00"),), kid_ids=[kid.id])
     db.add(Override(device_id=d.id, action="lock", source="manual", created_by_id=kid.id))
     db.commit()
     r = client.delete(f"/api/v1/kids/{kid.id}", headers=parent_headers)
     assert r.status_code == 200
     db.expire_all()
-    assert db.query(TimeWindow).count() == 0
+    assert db.query(HourRuleTarget).count() == 0
     assert db.query(Override).one().created_by_id is None
     assert d.status == "unassigned" and d.owners == []
     assert shared.status == "assigned" and [o.id for o in shared.owners] == [other["id"]]
@@ -248,15 +222,18 @@ def test_delete_device_removes_overrides_and_memberships(client, db, parent_head
     assert got == [{"id": g["id"], "name": "G", "device_ids": []}]
 
 
-def test_delete_group_removes_windows(client, db, parent_headers):
+def test_delete_group_removes_rule_targets(client, db, parent_headers):
     d = mkdev(db)
     g = client.post(
         "/api/v1/groups", json={"name": "G", "device_ids": [d.id]}, headers=parent_headers
     ).json()
-    db.add(TimeWindow(kind="free", days="1", start="08:00", end="09:00", group_id=g["id"]))
-    db.commit()
+    r = make_rule(db, kind="free", days="1", group_ids=[g["id"]])
     assert client.delete(f"/api/v1/groups/{g['id']}", headers=parent_headers).status_code == 200
-    assert db.query(TimeWindow).count() == 0 and db.query(Device).count() == 1
+    assert (
+        db.query(HourRuleTarget).count() == 0
+        and db.get(HourRule, r.id)
+        and db.query(Device).count() == 1
+    )
 
 
 def test_delete_kid_removes_points_and_requests(client, db, parent, kid, parent_headers):
@@ -358,17 +335,6 @@ def test_owner_ids_keep_explicit_guest(client, db, kid, parent_headers):
     client.patch(url, json={"owner_ids": [kid.id], "status": "assigned"}, headers=parent_headers)
     r = client.patch(url, json={"owner_ids": []}, headers=parent_headers)
     assert r.json()["status"] == "unassigned"
-
-
-def test_hhmm_rejects_trailing_newline(client, kid, parent_headers):
-    body = {"kind": "allowed", "kid_id": kid.id, "days": "1", "start": "08:00\n", "end": "20:00"}
-    assert client.post("/api/v1/windows", json=body, headers=parent_headers).status_code == 422
-
-
-def test_window_needs_a_target(client, parent_headers):
-    body = {"kind": "allowed", "days": "1", "start": "08:00", "end": "20:00"}
-    r = client.post("/api/v1/windows", json=body, headers=parent_headers)
-    assert r.status_code == 400 and r.json()["detail"] == "Pick a kid or a group."
 
 
 def test_today_online_all_false_without_devices(client, db, kid, parent_headers):

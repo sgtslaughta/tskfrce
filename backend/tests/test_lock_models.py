@@ -1,7 +1,8 @@
-"""Lock models: devices, groups, windows, overrides."""
+"""Lock models: devices, groups, overrides, rule targets."""
 
 import pytest
-from app.models.lock import Device, DeviceGroup, TimeWindow
+from app.models.hours import HourRule, HourRuleTarget
+from app.models.lock import Device, DeviceGroup
 from app.models.user import User
 from sqlalchemy.exc import IntegrityError
 
@@ -23,28 +24,27 @@ def test_device_mac_unique(db):
 
 
 @pytest.mark.parametrize("kid,group", [(True, True), (False, False)])
-def test_window_requires_exactly_one_target(db, kid, group):
+def test_rule_target_requires_exactly_one(db, kid, group):
     k = _user(db)
     g = DeviceGroup(name="g")
     db.add(g)
     db.commit()
+    r = HourRule(name="r", kind="allowed", days="01234")
+    db.add(r)
+    db.commit()
     db.add(
-        TimeWindow(
-            kind="allowed",
-            days="01234",
-            start="08:00",
-            end="09:00",
-            kid_id=k.id if kid else None,
-            group_id=g.id if group else None,
-        )
+        HourRuleTarget(rule_id=r.id, kid_id=k.id if kid else None, group_id=g.id if group else None)
     )
     with pytest.raises(IntegrityError):
         db.commit()
 
 
-def test_window_one_target_ok(db):
+def test_rule_target_one_ok(db):
     k = _user(db)
-    db.add(TimeWindow(kind="free", days="5", start="08:00", end="09:00", kid_id=k.id))
+    r = HourRule(name="r", kind="free", days="5")
+    db.add(r)
+    db.commit()
+    db.add(HourRuleTarget(rule_id=r.id, kid_id=k.id))
     db.commit()
 
 

@@ -198,7 +198,6 @@ def _import_all_models():
             Thread,
             ThreadMessage,
             ThreadRead,
-            TimeWindow,
             UsedInvite,
             User,
         )

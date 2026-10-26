@@ -11,6 +11,7 @@ import pytest
 BACKEND = Path(__file__).resolve().parent.parent
 PREV = "k4d5e6f7a8b9"
 A = "p0d1e2f3a4b5"
+B = "p1d2e3f4a5b6"
 
 
 def alembic(url, *args):
@@ -57,7 +58,7 @@ def old_db(tmp_path):
 
 def test_migration_merges_windows(old_db):
     path, url = old_db
-    alembic(url, "upgrade", "head")
+    alembic(url, "upgrade", A)
     con = sqlite3.connect(path)
     rules = con.execute(
         "SELECT id, name, category, kind, days, everyone FROM hour_rules ORDER BY id"
@@ -122,4 +123,28 @@ def test_downgrade_a_drops_rules(old_db):
     assert "icon" not in {r[1] for r in con.execute("PRAGMA table_info(device_groups)")}
     assert "chores_lock" not in {r[1] for r in con.execute("PRAGMA table_info(family_settings)")}
     assert con.execute("SELECT count(*) FROM time_windows").fetchone()[0] == 5
+    con.close()
+
+
+def _window_set(con):
+    return {
+        tuple(r)
+        for r in con.execute('SELECT kind, days, start, "end", kid_id, group_id FROM time_windows')
+    }
+
+
+def test_drop_and_restore_windows(old_db):
+    path, url = old_db
+    con = sqlite3.connect(path)
+    original = _window_set(con)
+    con.close()
+    alembic(url, "upgrade", "head")
+    con = sqlite3.connect(path)
+    tables = {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+    assert "time_windows" not in tables
+    assert con.execute("SELECT count(*) FROM hour_rules").fetchone()[0] == 3
+    con.close()
+    alembic(url, "downgrade", A)
+    con = sqlite3.connect(path)
+    assert len(original) == 5 and _window_set(con) == original
     con.close()

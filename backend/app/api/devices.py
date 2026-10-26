@@ -15,7 +15,8 @@ from app.lock.rules import is_online
 from app.lock.schedule import local_now
 from app.lock.state import Prefetch, device_facts
 from app.models.family import FamilySettings, get_family
-from app.models.lock import Device, DeviceGroup, Override, TimeWindow, device_group_members
+from app.models.hours import HourRuleTarget
+from app.models.lock import Device, DeviceGroup, Override, device_group_members
 from app.models.user import User, UserRole
 from app.schemas.lock import DevicePatch, GroupIn, OverrideIn, utc_z
 
@@ -242,7 +243,7 @@ def patch_group(group_id: int, body: GroupIn, db: Session = Depends(get_db)):
 @router.delete("/groups/{group_id}")
 def delete_group(group_id: int, db: Session = Depends(get_db)):
     g = _group(db, group_id)
-    db.query(TimeWindow).filter(TimeWindow.group_id == g.id).delete()
+    db.query(HourRuleTarget).filter_by(group_id=g.id).delete()
     g.devices = []
     db.flush()
     db.delete(g)
