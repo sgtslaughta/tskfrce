@@ -225,3 +225,42 @@ def test_approve_all_skips_unaffordable(client, db, kid, kid_headers, parent_hea
     assert db.get(Redemption, b).status == "pending"
     row = client.get("/api/v1/redemptions", headers=parent_headers).json()[0]
     assert row["kid_balance_after"] == row["kid_balance"] - row["cost"]
+
+
+def test_history_filters_and_totals(client, db, kid, parent, parent_headers):
+    kid2 = _make_user(db, "sally", UserRole.KID)
+    rw = _reward(db, 200)
+    now = datetime.utcnow()
+
+    def red(k, status, cost, by=parent.id, ago=1, **kw):
+        r = Redemption(kid_id=k.id, cost=cost, status=status, decided_by_id=by, **kw)
+        r.created_at = now - timedelta(days=ago)
+        r.decided_at = r.created_at + timedelta(minutes=5)
+        db.add(r)
+
+    red(kid, "approved", 40, by=None, kind="screen_time", minutes=30, auto=True)
+    red(kid, "approved", 200, kind="reward", reward_id=rw.id)
+    red(kid2, "denied", 150, kind="reward", reward_id=rw.id, note="Not this week")
+    red(kid, "approved", 200, ago=40, kind="reward", reward_id=rw.id)  # too old
+    db.add(Redemption(kid_id=kid.id, cost=10, kind="reward", reward_id=rw.id))  # pending
+    db.commit()
+    H = "/api/v1/redemptions/history"
+    d = client.get(H, headers=parent_headers).json()
+    assert d["totals"] == {"spent": 240, "screen_minutes": 30, "approved": 2, "declined": 1}
+    assert len(d["rows"]) == 3
+    assert d["rows"][0]["created_at"] >= d["rows"][-1]["created_at"]
+    denied = next(r for r in d["rows"] if r["status"] == "denied")
+    assert denied["kid_name"] == "Sally" and denied["note"] == "Not this week"
+    assert denied["name"] == "Movie night" and denied["decided_by_name"] == "Mom"
+    d = client.get(H, params={"kid_id": kid.id}, headers=parent_headers).json()
+    assert d["totals"]["approved"] == 2 and d["totals"]["declined"] == 0
+    d = client.get(H, params={"kind": "screen_time"}, headers=parent_headers).json()
+    assert len(d["rows"]) == 1 and d["rows"][0]["auto"] is True
+    assert d["rows"][0]["decided_by_name"] is None and d["rows"][0]["minutes"] == 30
+    d = client.get(H, params={"days": 60}, headers=parent_headers).json()
+    assert len(d["rows"]) == 4
+    assert client.get(H, params={"days": 0}, headers=parent_headers).status_code == 422
+
+
+def test_history_parent_only(client, kid_headers):
+    assert client.get("/api/v1/redemptions/history", headers=kid_headers).status_code == 403
