@@ -23,7 +23,7 @@ export default defineConfig({
     ...projects,
     {
       name: 'journeys',
-      testMatch: ['parent.spec.ts', 'chore-model.spec.ts'],
+      testMatch: ['parent.spec.ts', 'chore-model.spec.ts', 'notifications.spec.ts'],
       dependencies: projects.map((p) => p.name),
       use: { viewport: size.desktop, colorScheme: 'light' },
     },

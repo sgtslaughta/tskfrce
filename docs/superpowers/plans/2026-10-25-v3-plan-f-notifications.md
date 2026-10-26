@@ -94,9 +94,9 @@ Accepted as planned: Decision 1 (held vs dropped in quiet hours), Decision 3 (19
 **Interfaces:**
 - Produces: `seal(text: str) -> str`, `unseal(token: str) -> str` (raises `ValueError("unreadable")` on a bad/foreign token).
 
-- [ ] **Step 1: Install and pin packages.** Run `$V/pip index versions apprise` and `$V/pip index versions cryptography`; pick the newest version of each released at least two weeks ago; `$V/pip install apprise==<a> cryptography==<c>`. Add under a new `# Notifications` heading in `requirements.txt`: `apprise==<a>` and `cryptography==<c>`.
+- [x] **Step 1: Install and pin packages.** Run `$V/pip index versions apprise` and `$V/pip index versions cryptography`; pick the newest version of each released at least two weeks ago; `$V/pip install apprise==<a> cryptography==<c>`. Add under a new `# Notifications` heading in `requirements.txt`: `apprise==<a>` and `cryptography==<c>`.
 
-- [ ] **Step 2: Write the failing test** `tests/test_crypto.py`:
+- [x] **Step 2: Write the failing test** `tests/test_crypto.py`:
 
 ```python
 import pytest
@@ -111,13 +111,13 @@ def test_garbage_raises_value_error():
         unseal("not-a-token")
 ```
 
-- [ ] **Step 3: Run** `$V/python -m pytest tests/test_crypto.py -q` → FAIL (ImportError).
+- [x] **Step 3: Run** `$V/python -m pytest tests/test_crypto.py -q` → FAIL (ImportError).
 
-- [ ] **Step 4: Implement `app/core/crypto.py`.** Fernet key = `base64.urlsafe_b64encode(hashlib.sha256(("apprise:" + settings.SECRET_KEY).encode()).digest())`, built lazily (functools.cache). `unseal` catches `cryptography.fernet.InvalidToken` and re-raises `ValueError("unreadable")`.
+- [x] **Step 4: Implement `app/core/crypto.py`.** Fernet key = `base64.urlsafe_b64encode(hashlib.sha256(("apprise:" + settings.SECRET_KEY).encode()).digest())`, built lazily (functools.cache). `unseal` catches `cryptography.fernet.InvalidToken` and re-raises `ValueError("unreadable")`.
 
-- [ ] **Step 5: Run** the test → PASS. Run backend CI commands.
+- [x] **Step 5: Run** the test → PASS. Run backend CI commands.
 
-- [ ] **Step 6: Commit** `feat(notify): apprise + url sealing` (stage `requirements.txt`, `app/core/crypto.py`, the test).
+- [x] **Step 6: Commit** `feat(notify): apprise + url sealing` (stage `requirements.txt`, `app/core/crypto.py`, the test).
 
 ---
 
@@ -136,7 +136,7 @@ def test_garbage_raises_value_error():
   - `FamilySettings` new columns: `quiet_start` String(5) null; `quiet_end` String(5) null; `quiet_security` Boolean not null default true (server_default `"1"`); `app_address` String(200) null; `summary_date` Date null; `notify_scan_at` DateTime null (naive UTC); `blocker_alerted` Boolean not null default false (server_default `"0"`).
   - `inbox.KINDS` gains `"device_bypass"` and `"box_offline"` (append, keep order).
 
-- [ ] **Step 1: Write the failing test** `tests/test_notify_models.py`:
+- [x] **Step 1: Write the failing test** `tests/test_notify_models.py`:
 
 ```python
 from app.models.family import get_family
@@ -157,11 +157,11 @@ def test_family_defaults_and_kinds(db):
     assert {"device_bypass", "box_offline"} <= set(KINDS)
 ```
 
-- [ ] **Step 2: Run** → FAIL (ImportError).
-- [ ] **Step 3: Implement** the models and columns above. Register `NotifyPlace`, `NotifyHeld` in `app/models/__init__.py`.
-- [ ] **Step 4: Run** `$V/alembic heads` (see Global Constraints), then write the migration: `revision = "l5f6a7b8c9d0"`, `down_revision = <the head>`. Upgrade: `op.create_table` both tables (index `ix_notify_held_place_id`); `batch_alter_table("family_settings")` add the 7 columns (booleans with the server_defaults above); `batch_alter_table("notifications")` drop + recreate `ck_notification_kind` with the full new `KINDS` list **written out literally in the migration** (copy the pattern at `alembic/versions/h1a2b3c4d5e6_chore_model_v3.py:149-151`). If another plan's migration landed first and changed the kind list, include its kinds too. Downgrade: `DELETE FROM notifications WHERE kind IN ('device_bypass','box_offline')`, restore the previous CHECK list, drop the columns and tables.
-- [ ] **Step 5: Run** `$V/python -m pytest tests/test_notify_models.py tests/test_migrations.py -q` → PASS.
-- [ ] **Step 6: Commit** `feat(notify): places, held pings, quiet-hour columns`.
+- [x] **Step 2: Run** → FAIL (ImportError).
+- [x] **Step 3: Implement** the models and columns above. Register `NotifyPlace`, `NotifyHeld` in `app/models/__init__.py`.
+- [x] **Step 4: Run** `$V/alembic heads` (see Global Constraints), then write the migration: `revision = "l5f6a7b8c9d0"`, `down_revision = <the head>`. Upgrade: `op.create_table` both tables (index `ix_notify_held_place_id`); `batch_alter_table("family_settings")` add the 7 columns (booleans with the server_defaults above); `batch_alter_table("notifications")` drop + recreate `ck_notification_kind` with the full new `KINDS` list **written out literally in the migration** (copy the pattern at `alembic/versions/h1a2b3c4d5e6_chore_model_v3.py:149-151`). If another plan's migration landed first and changed the kind list, include its kinds too. Downgrade: `DELETE FROM notifications WHERE kind IN ('device_bypass','box_offline')`, restore the previous CHECK list, drop the columns and tables.
+- [x] **Step 5: Run** `$V/python -m pytest tests/test_notify_models.py tests/test_migrations.py -q` → PASS.
+- [x] **Step 6: Commit** `feat(notify): places, held pings, quiet-hour columns`.
 
 ---
 
@@ -186,7 +186,7 @@ def test_family_defaults_and_kinds(db):
 
 `in_quiet` rule: either bound `None` or `start == end` → False; local `t = HH:MM` in `ZoneInfo(fam.timezone)`; `start < end` → `start <= t < end`; else `t >= start or t < end`. `link`: base = `fam.app_address or settings.BOX_URL`; `None` if no base or no path; else `base.rstrip("/") + path`. Ping text = `body`, then `"\n\n" + link` when link; if no body, just the link (or `""`).
 
-- [ ] **Step 1: Write the failing tests** `tests/test_notify_core.py` (helper `_place(db, events=DEFAULT_EVENTS, url="json://localhost/x")` creates a place with `seal(url)`):
+- [x] **Step 1: Write the failing tests** `tests/test_notify_core.py` (helper `_place(db, events=DEFAULT_EVENTS, url="json://localhost/x")` creates a place with `seal(url)`):
 
 ```python
 def test_ping_sends_after_commit_only(db, pings):
@@ -245,10 +245,10 @@ def test_deliver_swallows_errors(monkeypatch):
 
 (`deliver` is the real function in the last test: don't request the `pings` fixture there.)
 
-- [ ] **Step 2: Run** `$V/python -m pytest tests/test_notify_core.py -q` → FAIL.
-- [ ] **Step 3: Implement** `services/notify.py` and the `pings` fixture as specified. Use `app.core.logging.get_logger`. Import `notify` from `app/main.py` is **not** needed (listeners register when `inbox` imports it in Task 4); in this task the tests import it directly.
-- [ ] **Step 4: Run** → PASS; run full backend CI.
-- [ ] **Step 5: Commit** `feat(notify): apprise dispatch after commit with quiet hours`.
+- [x] **Step 2: Run** `$V/python -m pytest tests/test_notify_core.py -q` → FAIL.
+- [x] **Step 3: Implement** `services/notify.py` and the `pings` fixture as specified. Use `app.core.logging.get_logger`. Import `notify` from `app/main.py` is **not** needed (listeners register when `inbox` imports it in Task 4); in this task the tests import it directly.
+- [x] **Step 4: Run** → PASS; run full backend CI.
+- [x] **Step 5: Commit** `feat(notify): apprise dispatch after commit with quiet hours`.
 
 ---
 
@@ -265,7 +265,7 @@ def test_deliver_swallows_errors(monkeypatch):
   - `notify_parents(db, kind, title, body=None, *, run_id=None, redemption_id=None, device_id=None, thread_id=None) -> None` — `notify(db, parents(db), …)` then, if `kind in KIND_EVENT`, `notify.ping(db, KIND_EVENT[kind], title[:120], body, path_for(...))`.
   - `notify()` itself is unchanged (kid-addressed rows never ping).
 
-- [ ] **Step 1: Write the failing tests** `tests/test_notify_wiring.py` (reuse helpers from `tests/test_inbox.py`: `_submit`, plus `_place` from `tests/test_notify_core.py`):
+- [x] **Step 1: Write the failing tests** `tests/test_notify_wiring.py` (reuse helpers from `tests/test_inbox.py`: `_submit`, plus `_place` from `tests/test_notify_core.py`):
 
 ```python
 def test_submit_pings_with_chore_link(client, db, parent, kid, pings):
@@ -293,12 +293,12 @@ def test_device_bypass_is_security(db, parent, pings, monkeypatch):
 
 (If `level_check(db, kid.id, before=0)` doesn't cross a level for a fresh kid, give the kid points first with the same pattern as `tests/test_progression.py`.)
 
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** `path_for` and `notify_parents` in `inbox.py` (inbox imports `app.services.notify`, which registers the listeners). Replace every `inbox.notify(db, inbox.parents(db), …)` / `inbox.notify(db, parents, …)` call listed under Files with `inbox.notify_parents(db, …)` (same kind, title, body, refs; in `internal.py` resisting loop drop the local `parents` variable). Add parent rows:
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** `path_for` and `notify_parents` in `inbox.py` (inbox imports `app.services.notify`, which registers the listeners). Replace every `inbox.notify(db, inbox.parents(db), …)` / `inbox.notify(db, parents, …)` call listed under Files with `inbox.notify_parents(db, …)` (same kind, title, body, refs; in `internal.py` resisting loop drop the local `parents` variable). Add parent rows:
   - `economy.level_check`: after the kid row, `inbox.notify_parents(db, "level_up", f"{name} levelled up to {now}")` where `name = db.get(User, kid_id).full_name`.
   - `badges.check_badges` (line 168 only, not the custom-award at 233): `inbox.notify_parents(db, "badge_earned", f"{kid.full_name} reached {b.name} · {TIERS[tier - 1]}")`.
-- [ ] **Step 4: Run** `$V/python -m pytest tests/test_notify_wiring.py tests/test_inbox.py tests/test_badges.py tests/test_progression.py tests/test_query_counts.py -q` → PASS. If a test asserted exact notification counts for parents and now sees the extra badge/level rows, update that assertion (the new rows are intended).
-- [ ] **Step 5: Commit** `feat(notify): notify_parents pings apprise from the inbox choke point`.
+- [x] **Step 4: Run** `$V/python -m pytest tests/test_notify_wiring.py tests/test_inbox.py tests/test_badges.py tests/test_progression.py tests/test_query_counts.py -q` → PASS. If a test asserted exact notification counts for parents and now sees the extra badge/level rows, update that assertion (the new rows are intended).
+- [x] **Step 5: Commit** `feat(notify): notify_parents pings apprise from the inbox choke point`.
 
 ---
 
@@ -321,11 +321,11 @@ def test_device_bypass_is_security(db, parent, pings, monkeypatch):
   - `PATCH /settings` body any of `{quiet_start: "HH:MM" | null, quiet_end: "HH:MM" | null, quiet_security: bool, app_address: str ≤200 | ""}` → same shape as GET. `app_address` must start with `http://` or `https://` (422 "Start the address with http:// or https://."), stored with trailing `/` stripped; `""` clears to null. Reuse `_hhmm` from `app/schemas/lock.py` for the times.
   - `mask(url: str) -> str` (module function): `scheme://` + first 4 chars after `://` + `"••••"`; no `://` → `"••••"`. Truncate to 80.
 
-- [ ] **Step 1: Write the failing tests** `tests/test_notify_api.py` covering: create → list shows `url_mask` and never the raw URL (`"abcdef" not in res.text`); bad URL 422 with the exact detail; unknown event 422; kid token → 403; PATCH events round-trip; delete 204 then 404 on PATCH; test endpoint with `monkeypatch.setattr(notify, "deliver", lambda u, t, b: (False, "401 Unauthorized"))` → `{"ok": False, "error": "401 Unauthorized"}`; settings PATCH `{"quiet_start": "21:30", "quiet_end": "07:00", "app_address": "http://chores.local/"}` → GET returns `"http://chores.local"`; `app_address: "chores.local"` → 422; `events` list length 10 with `security` true only for `resisting` and `box_offline`.
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** `api/notify.py` (pydantic bodies inline in the module) and include the router.
-- [ ] **Step 4: Run** → PASS; backend CI.
-- [ ] **Step 5: Commit** `feat(notify): places and quiet-hours API`.
+- [x] **Step 1: Write the failing tests** `tests/test_notify_api.py` covering: create → list shows `url_mask` and never the raw URL (`"abcdef" not in res.text`); bad URL 422 with the exact detail; unknown event 422; kid token → 403; PATCH events round-trip; delete 204 then 404 on PATCH; test endpoint with `monkeypatch.setattr(notify, "deliver", lambda u, t, b: (False, "401 Unauthorized"))` → `{"ok": False, "error": "401 Unauthorized"}`; settings PATCH `{"quiet_start": "21:30", "quiet_end": "07:00", "app_address": "http://chores.local/"}` → GET returns `"http://chores.local"`; `app_address: "chores.local"` → 422; `events` list length 10 with `security` true only for `resisting` and `box_offline`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** `api/notify.py` (pydantic bodies inline in the module) and include the router.
+- [x] **Step 4: Run** → PASS; backend CI.
+- [x] **Step 5: Commit** `feat(notify): places and quiet-hours API`.
 
 ---
 
@@ -347,17 +347,17 @@ def test_device_bypass_is_security(db, parent, pings, monkeypatch):
   - `lock_changes(db, blocked: list[str] | None)` — module `_last: set[str] | None`. `None` blocked → return. First call → baseline. Else for MACs newly in / newly out of the set, take `Device` rows **with owners**; one `notify.ping(db, "lock_change", "Locked: " + ", ".join(names), None, "/devices")` and one for `"Unlocked: …"` when non-empty. Update `_last`.
 - `loop._run_once`: keep `blocked = tick(db, now)`; `push_blocked(blocked)`; then in its own `try/except Exception` (log `"Notify jobs failed"`) call `notify_jobs.tick(db, now, blocked)`.
 
-- [ ] **Step 1: Write the failing tests** `tests/test_notify_jobs.py` (use `pings` + `_place(db, events=tuple(notify.EVENTS))`; build runs with `tests.factories.make_run(..., due_time="17:00")` on `svc.today(db)`; family timezone `UTC` for easy times):
+- [x] **Step 1: Write the failing tests** `tests/test_notify_jobs.py` (use `pings` + `_place(db, events=tuple(notify.EVENTS))`; build runs with `tests.factories.make_run(..., due_time="17:00")` on `svc.today(db)`; family timezone `UTC` for easy times):
   - `test_flush_held_batches_per_place`: two `NotifyHeld` rows on one place, `in_quiet` patched False → one ping titled `"While you were away: 2 updates"`, body starts with `"• "`, table empty afterwards; patched True → nothing sent, rows kept.
   - `test_overdue_fires_once_in_window`: first `overdue(now=16:59)` sets baseline (no ping); `overdue(now=17:01)` → one ping containing `"hasn't finished"`; `overdue(now=17:02)` → still one.
   - `test_box_offline_once_and_resets`: `blocker_last_seen = now-11min` → one bell row `box_offline` per parent + one ping; second call → no more; `blocker_last_seen = now` → flag cleared.
   - `test_box_offline_never_before_first_heartbeat`: `blocker_last_seen=None` → nothing.
   - `test_summary_once_a_day_after_19`: 18:59 → nothing; 19:00 → one ping with `"0 of 1 done"`; 20:00 same day → still one.
   - `test_lock_changes_baseline_then_diff`: reset `notify_jobs._last = None`; owned device `aa:…:01` named "Mia's iPad" plus an un-owned one; `lock_changes(db, [])` → nothing; `lock_changes(db, [both macs])` → exactly one ping `"Locked: Mia's iPad"`; `lock_changes(db, [])` → `"Unlocked: Mia's iPad"`.
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** `notify_jobs.py`, `notify.send_to`, and the loop hook.
-- [ ] **Step 4: Run** → PASS; backend CI (incl. `tests/lock`).
-- [ ] **Step 5: Commit** `feat(notify): quiet-hour batch, overdue, box offline, summary, lock pings`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** `notify_jobs.py`, `notify.send_to`, and the loop hook.
+- [x] **Step 4: Run** → PASS; backend CI (incl. `tests/lock`).
+- [x] **Step 5: Commit** `feat(notify): quiet-hour batch, overdue, box offline, summary, lock pings`.
 
 ---
 
@@ -376,12 +376,12 @@ def test_device_bypass_is_security(db, parent, pings, monkeypatch):
 - `services/inbox.is_pending_note(run) -> bool` = `run.note_label is not None and run.status == "todo"`; `chore_note` `pending` uses it. `_needs_you` appends one item per today run where `is_pending_note(run)`: `{type: "note", id: run.id, kid_id, kid_name, title: chore title, note: run.note_label}` (kid = first of `svc.run_kid_ids(run)`), ordered after the existing items, one per run (a run already listed as chore/redo for the same run still gets its own note row).
 - Batch loading: one query per ref type for the page (`ChoreRun` with `selectinload(assignment → chore → type)` and `selectinload(ChoreRun.kids)`; `Redemption`; `Device` with `selectinload(owners)`), plus one `User` name query for the collected kid ids. Helper `_enrich(db, rows) -> list[dict]` in `api/inbox.py`.
 
-- [ ] **Step 1: Write the failing tests** in `tests/test_inbox.py`: `test_items_carry_kid_glyph_points_pending` — after `_submit`, the parent's item has `glyph == "task_alt"` (Other, the factory default type; adjust if the factory sets another type), `points == r.assignment.chore.points`, `kid_name == kid.full_name`, `pending is True`; approve the run → `pending is False`. `test_note_pending_until_flag_clears` — kid posts a note (pattern in `tests/test_kid_notes.py`) → `pending True`; parent approves or replies → `False`.
+- [x] **Step 1: Write the failing tests** in `tests/test_inbox.py`: `test_items_carry_kid_glyph_points_pending` — after `_submit`, the parent's item has `glyph == "task_alt"` (Other, the factory default type; adjust if the factory sets another type), `points == r.assignment.chore.points`, `kid_name == kid.full_name`, `pending is True`; approve the run → `pending is False`. `test_note_pending_until_flag_clears` — kid posts a note (pattern in `tests/test_kid_notes.py`) → `pending True`; parent approves or replies → `False`.
 `test_today_needs_you_includes_pending_notes` (in `test_today_payload.py`: kid posts a note → `/today` `needs_you` has a `type == "note"` item with the run id, kid name and note, and the same run's bell item has `pending True`; parent replies/approves → the note item is gone and `pending False`; a run with no note adds none).
-- [ ] **Step 2: Run** → FAIL.
-- [ ] **Step 3: Implement** `_enrich` and the `_needs_you` note items; `list_notifications` returns `_enrich(db, rows[:PAGE])`; `read_one` returns `_enrich(db, [n])[0]`.
-- [ ] **Step 4: Run** `tests/test_inbox.py tests/test_query_counts.py` → PASS.
-- [ ] **Step 5: Commit** `feat(inbox): kid, glyph, points and pending on notifications`.
+- [x] **Step 2: Run** → FAIL.
+- [x] **Step 3: Implement** `_enrich` and the `_needs_you` note items; `list_notifications` returns `_enrich(db, rows[:PAGE])`; `read_one` returns `_enrich(db, [n])[0]`.
+- [x] **Step 4: Run** `tests/test_inbox.py tests/test_query_counts.py` → PASS.
+- [x] **Step 5: Commit** `feat(inbox): kid, glyph, points and pending on notifications`.
 
 ---
 
@@ -402,11 +402,11 @@ def test_device_bypass_is_security(db, parent, pings, monkeypatch):
 
 Pane layout (mockup 02 `#sp-notif`, copy verbatim): header `h2` "Notifications", sub "Send t@sk4ce pings to the chat apps your family already uses.", accent button "Add a place" (icon `add`) opening `PlaceForm`. One `PlaceCard` per place: `h3` with icon `forum`, name, Mantine `Switch` (aria-label `Send to <name>`) on the right; row with icon `key`, the mask in mono, and a `p-btn` "Test"; event chips as `<button aria-pressed>` (accent fill when on) for each `settings.events` label, toggling via PATCH; a `p-btn` icon button `delete` (aria-label `Remove <name>`) using `ConfirmDelete` ("Remove this place?" / "t@sk4ce will stop sending pings there."). Unreadable place: amber banner "Re-enter this address" with "Change address" opening `PlaceForm` in edit mode (URL only). Below, a two-column grid: **Quiet hours** card (icon `bedtime`; `Switch` "Quiet hours" — turning on sets 21:30 / 07:00; two `TimeInput`s "From" / "To"; `Switch` "Security alerts still send" bound to `quiet_security`) and **App address** card (icon `link`; "Used for the link in each ping."; `TextInput` placeholder = `app_address_default ?? 'http://chores.local'`, saved on blur). Empty state when no places: `EmptyState` icon `notifications`, title "No places yet", body "Add a Signal group, Discord channel, email or any Apprise address." `PlaceForm` (Mantine `Modal`, title "Add a place"/"Change address"): `TextInput` "Name" (max 60), `TextInput` "Apprise address" (max 1000, description "Like discord://webhook_id/token. See the Apprise wiki for your app."), Save. Test result: ok → `toastOk('Test sent')`; else `toastFail(new Error(error))`.
 
-- [ ] **Step 1: Write the failing tests** (mock `@/v2/api` like `tests/v2/bell.test.tsx`): renders a place's name and mask, never a raw URL; clicking the "Kid note" chip PATCHes `/notify/places/1` with `events` including `kid_note`; "Test" with `{ok:false,error:'401 Unauthorized'}` shows that text; empty list shows "No places yet"; "Add a place" → fill → Save POSTs `{name, url}`; Settings list renders a "Notifications" link to `/settings?section=notifications`.
-- [ ] **Step 2: Run** `npx jest tests/v2/notificationsPane.test.tsx` → FAIL.
-- [ ] **Step 3: Implement** the hooks, components and the three modifications. Keep each file < 200 lines.
-- [ ] **Step 4: Run** → PASS; frontend CI (`npx tsc --noEmit && npm run lint && npx jest`).
-- [ ] **Step 5: Commit** `feat(settings): notifications pane with apprise places and quiet hours`.
+- [x] **Step 1: Write the failing tests** (mock `@/v2/api` like `tests/v2/bell.test.tsx`): renders a place's name and mask, never a raw URL; clicking the "Kid note" chip PATCHes `/notify/places/1` with `events` including `kid_note`; "Test" with `{ok:false,error:'401 Unauthorized'}` shows that text; empty list shows "No places yet"; "Add a place" → fill → Save POSTs `{name, url}`; Settings list renders a "Notifications" link to `/settings?section=notifications`.
+- [x] **Step 2: Run** `npx jest tests/v2/notificationsPane.test.tsx` → FAIL.
+- [x] **Step 3: Implement** the hooks, components and the three modifications. Keep each file < 200 lines.
+- [x] **Step 4: Run** → PASS; frontend CI (`npx tsc --noEmit && npm run lint && npx jest`).
+- [x] **Step 5: Commit** `feat(settings): notifications pane with apprise places and quiet hours`.
 
 ---
 
@@ -429,12 +429,12 @@ Pane layout (mockup 02 `#sp-notif`, copy verbatim): header `h2` "Notifications",
 
 Changes in `Bell.tsx` (after moving rules + actions out): drop the `useToday` pending cross-read (use `n.pending`); item sub-line = `[n.body, when(n.created_at)].filter(Boolean).join(' · ')`; Earlier items keep the unread dot when unread (no actions, as in the mockup); footer (parent only, not kid) `<div className="p-bell-foot">` with `Link` "Notification settings" (icon `tune`) → `/settings?section=notifications` and `Link` "See all" (icon `chevron_right` after the text) → `/notifications`, both closing the popover; Popover gets `withArrow` and `position={placement === 'rail' ? 'right-start' : 'bottom-end'}`, arrow styled with the card background + 2px ink border (§2.2). `NotificationsPage` = `RequireParent` + `ParentShell title="Notifications"` + `<List kid={false} onGo={() => {}} page />`; `pages/notifications.tsx` default-exports it.
 
-- [ ] **Step 1: Write the failing tests.** `bellRules.test.ts`: `isNeedsYou` true for pending chore_note, false for a read-but-not-pending one; `isAlert` false for `new_device`, true for `device_bypass` and `box_offline`; `severity` returns the item's glyph for chore_submitted; `when` returns "Yesterday" for 24 h ago. `bell.test.tsx` additions: tabs show `All · 3`, `Needs you · 1`, `Alerts · 1` for [pending chore_submitted, read new_device, device_bypass]; a pending `chore_note` shows **Reply**; a `device_bypass` with `kid_id: 4, kid_name: 'Mia'` shows **Ask Mia**; **no actions when not pending** (`chore_submitted` with `pending:false` has no Approve); footer links point to `/settings?section=notifications` and `/notifications`; kid bell has no footer. `needsYouList.test.tsx`: a `type: 'note'` item renders "Mia: stuck on step 3" with a **Reply** button and no Approve; Reply opens the chore thread; a list with only a note item does not show "All caught up". Update existing tests that served `/today` for pending to set `pending` on items instead.
-- [ ] **Step 2: Run** `npx jest tests/v2/bell.test.tsx tests/v2/bellRules.test.ts` → FAIL.
-- [ ] **Step 3: Implement.** Check every touched file is < 500 lines (`wc -l`).
-- [ ] **Step 4: Run** → PASS; frontend CI.
-- [ ] **Step 5: Visual check.** Start nothing new: use the running demo (frontend dev server already up) and screenshot the bell popover (light + dark) and Settings → Notifications next to `02-parent-screens.html` (bell + `#sp-notif`) and `05-states.html` "Bell · empty". Fix drift in layout, wording, chip/tone colours. Attach the screenshots to the task report.
-- [ ] **Step 6: Commit** `feat(bell): notes, alerts, inline actions, footer and see-all page`.
+- [x] **Step 1: Write the failing tests.** `bellRules.test.ts`: `isNeedsYou` true for pending chore_note, false for a read-but-not-pending one; `isAlert` false for `new_device`, true for `device_bypass` and `box_offline`; `severity` returns the item's glyph for chore_submitted; `when` returns "Yesterday" for 24 h ago. `bell.test.tsx` additions: tabs show `All · 3`, `Needs you · 1`, `Alerts · 1` for [pending chore_submitted, read new_device, device_bypass]; a pending `chore_note` shows **Reply**; a `device_bypass` with `kid_id: 4, kid_name: 'Mia'` shows **Ask Mia**; **no actions when not pending** (`chore_submitted` with `pending:false` has no Approve); footer links point to `/settings?section=notifications` and `/notifications`; kid bell has no footer. `needsYouList.test.tsx`: a `type: 'note'` item renders "Mia: stuck on step 3" with a **Reply** button and no Approve; Reply opens the chore thread; a list with only a note item does not show "All caught up". Update existing tests that served `/today` for pending to set `pending` on items instead.
+- [x] **Step 2: Run** `npx jest tests/v2/bell.test.tsx tests/v2/bellRules.test.ts` → FAIL.
+- [x] **Step 3: Implement.** Check every touched file is < 500 lines (`wc -l`).
+- [x] **Step 4: Run** → PASS; frontend CI.
+- [x] **Step 5: Visual check.** Start nothing new: use the running demo (frontend dev server already up) and screenshot the bell popover (light + dark) and Settings → Notifications next to `02-parent-screens.html` (bell + `#sp-notif`) and `05-states.html` "Bell · empty". Fix drift in layout, wording, chip/tone colours. Attach the screenshots to the task report.
+- [x] **Step 6: Commit** `feat(bell): notes, alerts, inline actions, footer and see-all page`.
 
 ---
 
@@ -444,7 +444,7 @@ Changes in `Bell.tsx` (after moving rules + actions out): drop the `useToday` pe
 - Create: `frontend/e2e/notifications.spec.ts`
 - Modify: `docs/superpowers/plans/2026-10-25-v3-plan-f-notifications.md` (tick boxes only)
 
-- [ ] **Step 1: Write the e2e** (pattern: `e2e/chore-model.spec.ts`, `loginUi`, `parentApi` from `e2e/seed.ts`): parent opens `/settings?section=notifications` → "Add a place" → name `E2E ${tag}`, address `json://127.0.0.1:9/nowhere` → Save → card shows `json://127.…` mask, never the full address → "Test" → an error toast appears → toggle "Badge / level up" chip and reload: still on → set Quiet hours on, reload: "From" shows 9:30 PM → open the bell → footer "See all" lands on `/notifications` → delete the place. Second test: kid leaves a note via API (`/api/proxy/kid/chores/{id}/note` with the kid session, as in `chore-model.spec.ts`), parent bell shows the note under **Needs you** with **Reply**, clicking Reply opens Today with that chore and its chat.
-- [ ] **Step 2: Run** `npx playwright test e2e/notifications.spec.ts` against the demo (`E2E_BASE_URL` as the other specs use) → PASS. If the demo DB isn't migrated yet (Task 2 note), report BLOCKED instead of migrating it yourself.
-- [ ] **Step 3: Full CI** both sides; `$V/alembic heads` shows one head.
-- [ ] **Step 4: Commit** `test(e2e): apprise places and bell notes`.
+- [x] **Step 1: Write the e2e** (pattern: `e2e/chore-model.spec.ts`, `loginUi`, `parentApi` from `e2e/seed.ts`): parent opens `/settings?section=notifications` → "Add a place" → name `E2E ${tag}`, address `json://127.0.0.1:9/nowhere` → Save → card shows `json://127.…` mask, never the full address → "Test" → an error toast appears → toggle "Badge / level up" chip and reload: still on → set Quiet hours on, reload: "From" shows 9:30 PM → open the bell → footer "See all" lands on `/notifications` → delete the place. Second test: kid leaves a note via API (`/api/proxy/kid/chores/{id}/note` with the kid session, as in `chore-model.spec.ts`), parent bell shows the note under **Needs you** with **Reply**, clicking Reply opens Today with that chore and its chat.
+- [x] **Step 2: Run** `npx playwright test e2e/notifications.spec.ts` against the demo (`E2E_BASE_URL` as the other specs use) → PASS. If the demo DB isn't migrated yet (Task 2 note), report BLOCKED instead of migrating it yourself.
+- [x] **Step 3: Full CI** both sides; `$V/alembic heads` shows one head.
+- [x] **Step 4: Commit** `test(e2e): apprise places and bell notes`.
