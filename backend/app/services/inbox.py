@@ -4,6 +4,13 @@ from sqlalchemy.orm import Session
 
 from app.models.inbox import Notification
 from app.models.user import User, UserRole
+from app.services import notify as _notify
+
+
+def is_pending_note(run) -> bool:
+    """A kid note still waiting on a parent (the one definition, bell and Today)."""
+    return run.note_label is not None and run.status == "todo"
+
 
 KID_KINDS = frozenset(
     {
@@ -66,3 +73,31 @@ def notify(
         db.flush()
         push.queue(db, uid, kind, title, body, row=row)
     return n
+
+
+def path_for(kind: str, *, run_id=None, redemption_id=None, device_id=None) -> str:
+    if device_id is not None:
+        return f"/devices?item={device_id}"
+    if run_id is not None:
+        return f"/?chore={run_id}"
+    if kind == "redemption_request":
+        return "/?tab=needs"
+    return "/devices" if kind == "box_offline" else "/"
+
+
+def notify_parents(
+    db: Session,
+    kind: str,
+    title: str,
+    body: str | None = None,
+    *,
+    run_id: int | None = None,
+    redemption_id: int | None = None,
+    device_id: int | None = None,
+    thread_id: int | None = None,
+) -> None:
+    """Bell rows for every parent, plus the Apprise ping (leaves after commit)."""
+    refs = dict(run_id=run_id, redemption_id=redemption_id, device_id=device_id)
+    notify(db, parents(db), kind, title, body, thread_id=thread_id, **refs)
+    if kind in _notify.KIND_EVENT:
+        _notify.ping(db, _notify.KIND_EVENT[kind], title[:120], body, path_for(kind, **refs))

@@ -14,6 +14,12 @@ export interface InboxItem {
   device_id: number | null
   thread_id: number | null
   points: number | null
+  kid_id: number | null
+  kid_name: string | null
+  /** the chore's picture (Material Symbols name) */
+  glyph: string | null
+  /** still waiting on a parent (server-computed) */
+  pending: boolean
 }
 
 export interface Inbox {

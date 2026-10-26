@@ -20,7 +20,16 @@ export function StepFinish({ kids, chores, devices, schedules }: Props) {
           {devices} {devices === 1 ? 'device' : 'devices'}, {schedules} {schedules === 1 ? 'schedule' : 'schedules'}.
         </p>
       </div>
-      <Button leftSection={<span className="ms" aria-hidden="true">home</span>} onClick={() => router.push('/')}>Go to Today</Button>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+        <Button leftSection={<span className="ms" aria-hidden="true">home</span>} onClick={() => router.push('/')}>Go to Today</Button>
+        <Button
+          variant="default"
+          leftSection={<span className="ms" aria-hidden="true">notifications</span>}
+          onClick={() => router.push('/settings?section=notifications')}
+        >
+          Set up notifications
+        </Button>
+      </div>
     </>
   )
 }

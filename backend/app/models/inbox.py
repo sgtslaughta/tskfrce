@@ -31,6 +31,8 @@ KINDS = (
     "chore_sent_back",
     "points_taken",
     "lock_warning",
+    "device_bypass",
+    "box_offline",
 )
 
 

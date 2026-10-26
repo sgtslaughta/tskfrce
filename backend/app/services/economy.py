@@ -88,6 +88,8 @@ def level_check(db: Session, kid_id: int, before: int) -> None:
     now = level_of(db, kid_id)
     if now > before:
         inbox.notify(db, [kid_id], "level_up", f"You reached level {now}!")
+        name = db.get(User, kid_id).full_name
+        inbox.notify_parents(db, "level_up", f"{name} levelled up to {now}")
 
 
 def award_chore(db: Session, run: ChoreRun, fam: FamilySettings) -> int:
@@ -160,9 +162,8 @@ def request(
     red = Redemption(kid_id=kid.id, kind=kind, reward_id=reward_id, minutes=minutes, cost=cost)
     db.add(red)
     db.flush()
-    inbox.notify(
+    inbox.notify_parents(
         db,
-        inbox.parents(db),
         "redemption_request",
         "New request",
         f"{kid.full_name} wants {label} ({cost} points)",

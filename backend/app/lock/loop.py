@@ -10,7 +10,7 @@ from app.core.database import SessionLocal
 from app.core.logging import get_logger
 from app.lock.blocker_client import push_blocked
 from app.lock.state import tick
-from app.services import kid_alerts
+from app.services import kid_alerts, notify_jobs
 
 logger = get_logger(__name__)
 _loop: asyncio.AbstractEventLoop | None = None
@@ -33,12 +33,19 @@ def _run_once() -> None:
     global _busy_ticks
     db = SessionLocal()
     try:
-        push_blocked(tick(db, datetime.now(UTC)))
+        now = datetime.now(UTC)
+        blocked = tick(db, now)
+        push_blocked(blocked)
         try:
-            kid_alerts.scan(db, datetime.now(UTC))
+            kid_alerts.scan(db, now)
         except Exception as exc:
             db.rollback()
             logger.error("Kid alerts failed", error=str(exc))
+        try:
+            notify_jobs.tick(db, now, blocked)
+        except Exception as exc:
+            db.rollback()
+            logger.error("Notify jobs failed", error=str(exc))
     except OperationalError as exc:
         if "database is locked" not in str(exc):
             logger.error("Lock tick failed", error=str(exc))

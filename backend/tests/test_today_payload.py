@@ -133,3 +133,31 @@ def test_kid_points_next_reward_and_locks_at(client, db, parent_headers):
     locks = kids[a.id]["locks_at"]  # None only in the last minute of the local day
     assert locks is None or datetime.fromisoformat(locks.replace("Z", "+00:00")) > datetime.now(UTC)
     assert kids[b.id]["locks_at"] is None and kids[b.id]["next_reward"] == 20
+
+
+def test_today_needs_you_includes_pending_notes(client, db, parent_headers):
+    a, b, ha, _ = _setup(db)
+    _create(client, parent_headers, [a], title="Dishes")
+    _create(client, parent_headers, [b], title="Bins")
+    rid = _ids(client, ha)[0]
+    assert [x for x in _today(client, parent_headers)["needs_you"] if x["type"] == "note"] == []
+    res = client.post(f"/api/v1/kid/chores/{rid}/note", json={"label": "Need help"}, headers=ha)
+    assert res.status_code == 200
+    notes = [x for x in _today(client, parent_headers)["needs_you"] if x["type"] == "note"]
+    assert notes == [
+        {
+            "type": "note",
+            "id": rid,
+            "kid_id": a.id,
+            "kid_name": a.full_name,
+            "title": "Dishes",
+            "note": "Need help",
+        }
+    ]
+    bell = client.get("/api/v1/notifications", headers=parent_headers).json()["items"]
+    assert next(i for i in bell if i["kind"] == "chore_note")["pending"] is True
+    tid = client.get(f"/api/v1/chat/threads/chore/{rid}", headers=parent_headers).json()["id"]
+    client.post(f"/api/v1/chat/threads/{tid}/messages", json={"body": "ok"}, headers=parent_headers)
+    assert [x for x in _today(client, parent_headers)["needs_you"] if x["type"] == "note"] == []
+    bell = client.get("/api/v1/notifications", headers=parent_headers).json()["items"]
+    assert next(i for i in bell if i["kind"] == "chore_note")["pending"] is False

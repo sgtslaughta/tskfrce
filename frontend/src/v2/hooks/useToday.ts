@@ -19,7 +19,7 @@ function useChoreAction<V, R = unknown>(fn: (v: V) => Promise<R>) {
     mutationFn: fn,
     onSuccess: () =>
       Promise.all(
-        ['today', 'chore-lib', 'chores-today', 'run', 'chat-thread', 'chat-threads'].map((k) => qc.invalidateQueries({ queryKey: [k] })),
+        ['today', 'chore-lib', 'chores-today', 'run', 'chat-thread', 'chat-threads', 'inbox'].map((k) => qc.invalidateQueries({ queryKey: [k] })),
       ),
   })
 }

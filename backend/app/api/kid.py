@@ -226,9 +226,8 @@ def leave_note(
         db, chat.thread_for(db, "chore", run_id=r.id), kid, text or None, note_label=body.label
     )
     r.note_label, r.note_at = body.label, datetime.now(UTC).replace(tzinfo=None)
-    inbox.notify(
+    inbox.notify_parents(
         db,
-        inbox.parents(db),
         "chore_note",
         f"{kid.full_name} left a note on {c.title}",
         body.label + (f' · "{text}"' if text else ""),
@@ -270,9 +269,8 @@ def done(chore_id: int, db: Session = Depends(get_db), kid: User = Depends(requi
     r.status = "submitted"
     r.submitted_at = now
     r.submitted_by_id = kid.id
-    inbox.notify(
+    inbox.notify_parents(
         db,
-        inbox.parents(db),
         "chore_submitted",
         f"{kid.full_name} finished {c.title}",
         "Take a look and approve it.",

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import { EmptyState, ErrorPanel } from '@/v2/parent/states'
 import { useRouter } from 'next/router'
 import { Drawer, Popover, Tooltip } from '@mantine/core'
@@ -6,48 +7,24 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useMediaQuery } from '@mantine/hooks'
 import { useDismiss, useInbox, useMarkAllRead, useMarkRead, type Inbox, type InboxItem } from '../hooks/useInbox'
 import { askOnFirstClick, dest, useOsNotify } from '../osNotify'
-import { useApproveChore, useSendBack, useToday } from '../hooks/useToday'
+import { useApproveChore, useSendBack } from '../hooks/useToday'
 import { useDecideRedemption } from '../hooks/useRewards'
 import { Icon } from '../parent/Icon'
 import { toastFail, toastOk } from '../notify'
 import { api } from '../api'
+import { isAlert, isNeedsYou, isToday, kidSeverity, severity, when } from './bellRules'
+import { BellActions } from './BellActions'
 
 type FilterKind = 'all' | 'needs-you' | 'alerts'
+const TABS: { key: FilterKind; label: string }[] = [
+  { key: 'all', label: 'All' },
+  { key: 'needs-you', label: 'Needs you' },
+  { key: 'alerts', label: 'Alerts' },
+]
+const SETTINGS = '/settings?section=notifications'
 
-/** Chore runs and redemptions still waiting on a parent (a stale notification gets no buttons). */
-type Pending = { runs: Set<number>; redemptions: Set<number> }
-
-const isNeedsYou = (n: InboxItem, p: Pending): boolean =>
-  (n.kind === 'chore_submitted' && !!n.run_id && p.runs.has(n.run_id)) ||
-  (n.kind === 'redemption_request' && !!n.redemption_id && p.redemptions.has(n.redemption_id))
-
-const isAlert = (n: InboxItem): boolean =>
-  n.kind === 'new_device' || n.kind === 'device_resisting'
-
-const severityIcon = (n: InboxItem): { name: string; tone: 'hi' | 'md' | 'lv' | 'ok' } => {
-  if (n.kind === 'device_resisting') return { name: 'gpp_maybe', tone: 'hi' }
-  if (n.kind === 'new_device') return { name: 'device_unknown', tone: 'md' }
-  if (n.kind === 'chore_submitted') return { name: 'school', tone: 'lv' }
-  if (n.kind === 'redemption_request') return { name: 'redeem', tone: 'lv' }
-  return { name: 'whatshot', tone: 'ok' }
-}
-
-const isToday = (iso: string): boolean => {
-  const now = new Date()
-  const then = new Date(iso)
-  return (
-    then.getFullYear() === now.getFullYear() &&
-    then.getMonth() === now.getMonth() &&
-    then.getDate() === now.getDate()
-  )
-}
-
-const ago = (iso: string) => {
-  const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000))
-  return m < 1 ? 'now' : m < 60 ? `${m} min` : m < 1440 ? `${Math.round(m / 60)} h` : `${Math.round(m / 1440)} d`
-}
-
-function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: boolean }) {
+/** The notification list: inside the bell popover, the phone sheet (`sheet`) or the see-all page (`page`). */
+export function List({ kid, onGo, sheet, page }: { kid: boolean; onGo: () => void; sheet?: boolean; page?: boolean }) {
   const router = useRouter()
   const inbox = useInbox(kid)
   const read = useMarkRead(kid)
@@ -56,14 +33,6 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
   const approve = useApproveChore()
   const sendBack = useSendBack()
   const decideRedemption = useDecideRedemption()
-  const today = useToday(!kid).data
-  const pending = useMemo<Pending>(() => {
-    const needs = today?.needs_you ?? []
-    return {
-      runs: new Set(needs.filter((i) => i.type === 'chore' || i.type === 'redo').map((i) => i.id)),
-      redemptions: new Set(needs.filter((i) => i.type === 'reward' || i.type === 'screen_time').map((i) => i.id)),
-    }
-  }, [today?.needs_you])
   // the server sends the newest page; "Show older" appends further pages (the 30 s poll only refreshes the first)
   const [older, setOlder] = useState<{ items: InboxItem[]; more: boolean } | null>(null)
   const [loadingOlder, setLoadingOlder] = useState(false)
@@ -91,30 +60,18 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
   const [sending, setSending] = useState<number | null>(null)
   const [note, setNote] = useState('')
 
-  const filtered = useMemo(() => {
-    return items.filter((n) => {
-      if (filter === 'needs-you') return isNeedsYou(n, pending)
-      if (filter === 'alerts') return isAlert(n)
-      return true
-    })
-  }, [items, filter, pending])
-
-  const byGroup = useMemo(() => {
-    const today: InboxItem[] = []
-    const earlier: InboxItem[] = []
-    filtered.forEach((n) => {
-      if (isToday(n.created_at)) today.push(n)
-      else earlier.push(n)
-    })
-    return { today, earlier }
-  }, [filtered])
-
-  const counts = useMemo(() => {
-    const all = items.length
-    const needsYou = items.filter((n) => isNeedsYou(n, pending)).length
-    const alerts = items.filter(isAlert).length
-    return { all, needsYou, alerts }
-  }, [items, pending])
+  const filtered = useMemo(
+    () => items.filter((n) => (filter === 'needs-you' ? isNeedsYou(n) : filter === 'alerts' ? isAlert(n) : true)),
+    [items, filter],
+  )
+  const byGroup = useMemo(
+    () => ({ today: filtered.filter((n) => isToday(n.created_at)), earlier: filtered.filter((n) => !isToday(n.created_at)) }),
+    [filtered],
+  )
+  const counts: Record<FilterKind, number> = useMemo(
+    () => ({ all: items.length, 'needs-you': items.filter(isNeedsYou).length, alerts: items.filter(isAlert).length }),
+    [items],
+  )
 
   // one request per notification at a time (a double click or Enter-mash must not send twice)
   const qc = useQueryClient()
@@ -125,7 +82,7 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
     inflight.current.add(n.id)
     setBusy(n.id)
     return go()
-      .then(() => (toastOk(ok), true), (e) => (toastFail(e), qc.invalidateQueries({ queryKey: ['today'] }), false))
+      .then(() => (toastOk(ok), true), (e) => (toastFail(e), qc.invalidateQueries({ queryKey: ['inbox'] }), qc.invalidateQueries({ queryKey: ['today'] }), false))
       .finally(() => (inflight.current.delete(n.id), setBusy((b) => (b === n.id ? null : b))))
   }
   const markRead = (n: InboxItem) => { if (!n.read) read.mutate(n.id) }
@@ -134,8 +91,9 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
     if (n.run_id) void act(n, () => approve.mutateAsync(n.run_id!), 'Approved').then((ok) => ok && markRead(n))
   }
 
-  /** The note box stays open (with its text) when the request fails. */
+  /** First click opens the note box; the box stays open (with its text) when the request fails. */
   const handleSendBack = async (n: InboxItem) => {
+    if (sending !== n.id) return (setSending(n.id), setNote(''))
     if (!n.run_id || !note.trim()) return
     const ok = await act(n, () => sendBack.mutateAsync({ id: n.run_id!, note: note.trim() }), 'Sent back')
     if (!ok) return
@@ -148,41 +106,51 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
     if (n.redemption_id)
       void act(n, () => decideRedemption.mutateAsync({ id: n.redemption_id!, approve: yes }), yes ? 'Approved' : 'Declined').then((ok) => ok && markRead(n))
   }
-  const handleRedeem = (n: InboxItem) => handleDecide(n, true)
-  const handleDecline = (n: InboxItem) => handleDecide(n, false)
 
-  /** Click a notification: mark it read and go where it points (kid notifications just get read). */
-  const go = (n: InboxItem) => {
+  /** Mark read, close the bell and go to `to` (kid notifications just get read). */
+  const goTo = (n: InboxItem, to: string | null) => {
     markRead(n)
-    const to = kid ? null : dest(n)
-    if (!to) return
+    if (kid) return
     onGo()
-    void router.push(to)
+    if (to) void router.push(to)
   }
-  const text = (n: InboxItem) => (
-    <>
-      <button type="button" className="p-bell-text" onClick={() => go(n)}>
-        <span className="p-bell-title">{n.title}</span>
-        {n.body && <span className="p-bell-sub">{n.body}</span>}
-      </button>
-      <button type="button" className="p-bell-x" aria-label={`Dismiss ${n.title}`} onClick={() => dismiss.mutate(n.id)}>
-        <Icon name="close" size={16} />
-      </button>
-    </>
-  )
-
-  const handleView = (n: InboxItem) => {
-    if (!n.read) read.mutate(n.id)
-    if (n.device_id) {
-      onGo()
-      router.push(`/devices?item=${n.device_id}`)
-    }
+  const row = (n: InboxItem, today: boolean) => {
+    const sev = kid ? kidSeverity(n) : severity(n)
+    const sub = (kid ? [n.body] : [n.body, when(n.created_at)]).filter(Boolean).join(' · ')
+    return (
+      <div key={n.id} className={`p-bell-item ${!n.read && (today || !kid) ? 'unread' : ''}`}>
+        <div className={`p-bell-icon ${sev.tone}`}>
+          <Icon name={sev.name} />
+        </div>
+        <button type="button" className="p-bell-text" onClick={() => (kid || !dest(n) ? markRead(n) : goTo(n, dest(n)))}>
+          <span className="p-bell-title">{n.title}</span>
+          <span className="p-bell-sub">{sub}</span>
+        </button>
+        <button type="button" className="p-bell-x" aria-label={`Dismiss ${n.title}`} onClick={() => dismiss.mutate(n.id)}>
+          <Icon name="close" size={16} />
+        </button>
+        {today && !kid && (
+          <BellActions
+            n={n}
+            busy={busy === n.id}
+            sending={sending === n.id}
+            note={note}
+            onNote={setNote}
+            onApprove={() => handleApprove(n)}
+            onSendBack={() => void handleSendBack(n)}
+            onDecide={(yes) => handleDecide(n, yes)}
+            go={(to) => goTo(n, to)}
+          />
+        )}
+      </div>
+    )
   }
+  const empty = items.length === 0
 
   return (
-    <div className="p-bell-list" data-sheet={sheet || undefined}>
+    <div className="p-bell-list" data-sheet={sheet || undefined} data-page={page || undefined}>
       <div className="p-bell-head">
-        {sheet ? <span /> : <strong>Notifications</strong>}
+        {sheet || page ? <span /> : <strong>Notifications</strong>}
         {(inbox.data?.unread ?? 0) > 0 && (
           <button type="button" className="p-bell-mark-read" onClick={() => readAll.mutate(undefined)}>
             Mark all read
@@ -190,27 +158,11 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
         )}
       </div>
       <div className="p-bell-tabs">
-        <button
-          type="button"
-          className={`p-bell-tab ${filter === 'all' ? 'on' : ''}`}
-          onClick={() => setFilter('all')}
-        >
-          All · {counts.all}{more}
-        </button>
-        <button
-          type="button"
-          className={`p-bell-tab ${filter === 'needs-you' ? 'on' : ''}`}
-          onClick={() => setFilter('needs-you')}
-        >
-          Needs you · {counts.needsYou}{more}
-        </button>
-        <button
-          type="button"
-          className={`p-bell-tab ${filter === 'alerts' ? 'on' : ''}`}
-          onClick={() => setFilter('alerts')}
-        >
-          Alerts · {counts.alerts}{more}
-        </button>
+        {TABS.map((t) => (
+          <button key={t.key} type="button" className={`p-bell-tab ${filter === t.key ? 'on' : ''}`} onClick={() => setFilter(t.key)}>
+            {t.label} · {counts[t.key]}{more}
+          </button>
+        ))}
       </div>
       {filtered.length === 0 ? (
         kid ? (
@@ -218,102 +170,37 @@ function List({ kid, onGo, sheet }: { kid: boolean; onGo: () => void; sheet?: bo
         ) : inbox.isError ? (
           <ErrorPanel kind="unreachable" error={inbox.error} onRetry={() => inbox.refetch()} />
         ) : (
-          <EmptyState icon="notifications_off" title="No notifications" body="We'll ping you when a chore needs your OK." />
+          <EmptyState
+            icon="notifications_off"
+            title="No notifications"
+            body="We'll ping you when a chore needs your OK."
+            actions={empty && !page ? [{ icon: 'tune', label: 'Notification settings', href: SETTINGS }] : []}
+          />
         )
       ) : (
         <div className="p-bell-scroll" tabIndex={0} role="region" aria-label="Notification list">
-          {byGroup.today.length > 0 && (
-            <>
-              <div className="p-bell-group">Today</div>
-              {byGroup.today.map((n) => {
-                const sev = severityIcon(n)
-                return (
-                  <div key={n.id} className={`p-bell-item ${!n.read ? 'unread' : ''}`}>
-                    <div className={`p-bell-icon ${sev.tone}`}>
-                      <Icon name={sev.name} />
-                    </div>
-                    {text(n)}
-                    <div className="p-bell-actions">
-                      {isNeedsYou(n, pending) && n.kind === 'chore_submitted' && (
-                        <>
-                          {sending === n.id && (
-                            <input
-                              className="p-bell-note"
-                              aria-label="Note for sending back"
-                              placeholder="What should they fix?"
-                              value={note}
-                              maxLength={500}
-                              autoFocus
-                              onChange={(e) => setNote(e.target.value)}
-                            />
-                          )}
-                          <button type="button" className="p-btn" data-variant="accent" disabled={busy === n.id} data-loading={busy === n.id} onClick={() => handleApprove(n)}>
-                            <Icon name="check" size={16} />
-                            Approve {n.points ? `+${n.points}` : ''}
-                          </button>
-                          <button
-                            type="button"
-                            className="p-btn"
-                            disabled={busy === n.id || (sending === n.id && !note.trim())}
-                            onClick={() => (sending === n.id ? handleSendBack(n) : (setSending(n.id), setNote('')))}
-                          >
-                            <Icon name="undo" size={16} />
-                            Send back
-                          </button>
-                        </>
-                      )}
-                      {isNeedsYou(n, pending) && n.kind === 'redemption_request' && (
-                        <>
-                          <button type="button" className="p-btn" data-variant="accent" disabled={busy === n.id} data-loading={busy === n.id} onClick={() => handleRedeem(n)}>
-                            <Icon name="check" size={16} />
-                            Approve
-                          </button>
-                          <button type="button" className="p-btn" disabled={busy === n.id} onClick={() => handleDecline(n)}>
-                            <Icon name="close" size={16} />
-                            Decline
-                          </button>
-                        </>
-                      )}
-                      {n.kind === 'new_device' && (
-                        <button type="button" className="p-btn" onClick={() => handleView(n)}>
-                          <Icon name="person_add" size={16} />
-                          Who&apos;s this?
-                        </button>
-                      )}
-                      {n.kind === 'device_resisting' && (
-                        <button type="button" className="p-btn" onClick={() => handleView(n)}>
-                          <Icon name="devices" size={16} />
-                          View
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
-            </>
-          )}
-          {byGroup.earlier.length > 0 && (
-            <>
-              <div className="p-bell-group">Earlier</div>
-              {byGroup.earlier.map((n) => {
-                const sev = severityIcon(n)
-                return (
-                  <div key={n.id} className="p-bell-item">
-                    <div className={`p-bell-icon ${sev.tone}`}>
-                      <Icon name={sev.name} />
-                    </div>
-                    {text(n)}
-                  </div>
-                )
-              })}
-            </>
-          )}
+          {byGroup.today.length > 0 && <div className="p-bell-group">Today</div>}
+          {byGroup.today.map((n) => row(n, true))}
+          {byGroup.earlier.length > 0 && <div className="p-bell-group">Earlier</div>}
+          {byGroup.earlier.map((n) => row(n, false))}
         </div>
       )}
       {hasMore && (
         <button type="button" className="p-btn p-bell-older" disabled={loadingOlder} data-loading={loadingOlder} onClick={showOlder}>
           Show older
         </button>
+      )}
+      {!kid && !page && !empty && (
+        <div className="p-bell-foot">
+          <Link href={SETTINGS} onClick={onGo}>
+            <Icon name="tune" size={16} />
+            Notification settings
+          </Link>
+          <Link href="/notifications" onClick={onGo}>
+            See all
+            <Icon name="chevron_right" size={16} />
+          </Link>
+        </div>
       )}
     </div>
   )
@@ -376,7 +263,15 @@ export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; pla
       </>
     )
   return (
-    <Popover opened={opened} onChange={setOpened} position="bottom-end" width={400} shadow="md">
+    <Popover
+      opened={opened}
+      onChange={setOpened}
+      position={!kid && placement === 'rail' ? 'right-start' : 'bottom-end'}
+      width={400}
+      // kid popover stays as before; parent gets the §2.2 pointer and sticker shadow (CSS)
+      shadow={kid ? 'md' : undefined}
+      {...(kid ? {} : { withArrow: true, arrowSize: 14, arrowOffset: 20, offset: 12, classNames: { arrow: 'p-bell-arrow' } })}
+    >
       <Tooltip label="Notifications" openDelay={400} disabled={opened}>
         <Popover.Target>{btn}</Popover.Target>
       </Tooltip>

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { useRouter } from 'next/router'
 import { useQueryClient } from '@tanstack/react-query'
 import { Tooltip } from '@mantine/core'
 import type { NeedsItem } from '../types'
@@ -19,6 +20,7 @@ const KIND: Record<NeedsItem['type'], { label: string; icon: string; tone: 'lav'
   redo: { label: 'Redo', icon: 'undo', tone: 'red' },
   screen_time: { label: 'Screen time', icon: 'timer', tone: 'amb' },
   reward: { label: 'Reward', icon: 'redeem', tone: 'amb' },
+  note: { label: 'Note', icon: 'flag', tone: 'amb' },
 }
 const isChore = (i: NeedsItem) => i.type === 'chore' || i.type === 'redo'
 const ordinal = (n: number) => (n === 2 ? '2nd' : n === 3 ? '3rd' : `${n}th`)
@@ -33,9 +35,11 @@ function Thumb({ item, onOpen }: { item: NeedsItem; onOpen: () => void }) {
   )
 }
 
-/** "Needs you": chores, redos, screen time and reward requests waiting on a parent, all kids. */
+/** "Needs you": chores, redos, screen time, reward requests and kid notes waiting on a parent, all kids.
+ *  The server decides what is listed (a note leaves once its flag clears). */
 export function NeedsYouList({ items }: { items: NeedsItem[] }) {
   const clock = useClock()
+  const router = useRouter()
   const qc = useQueryClient()
   const refresh = () => qc.invalidateQueries({ queryKey: ['today'] }) // a failed item may be gone or already handled
   const approve = useApproveChore()
@@ -51,6 +55,7 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
     return <EmptyState icon="celebration" tone="acc" title="All caught up" body="Nothing needs your OK right now. Nice." />
   }
 
+  const approvable = items.filter((i) => i.type !== 'note')
   const approveOne = (i: NeedsItem) => (isChore(i) ? approve.mutateAsync(i.id) : decide.mutateAsync({ id: i.id, approve: true }))
   const run = (go: () => Promise<unknown>, ok: string, key?: string) => {
     if (lock.current) return Promise.resolve()
@@ -67,7 +72,7 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
     setBusy('all')
     let n = 0
     let failed: unknown[] = []
-    for (const i of items) {
+    for (const i of approvable) {
       try {
         await approveOne(i)
         n++
@@ -95,10 +100,10 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
 
   return (
     <section className="p-needs-list" aria-label="Needs you">
-      {items.length > 1 && (
+      {approvable.length > 1 && (
         <button type="button" className="p-btn" data-variant="accent" disabled={!!busy} data-loading={busy === 'all'} onClick={approveAll}>
           <Icon name="done_all" size={17} />
-          Approve all {items.length}
+          Approve all {approvable.length}
         </button>
       )}
       {items.map((i) => {
@@ -118,7 +123,9 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
                 <b>{i.title}</b>
                 <small>
                   {i.kid_name ?? 'A kid'}
-                  {chore
+                  {i.type === 'note'
+                    ? `: ${i.note ?? ''}`
+                    : chore
                     ? `${i.attempt && i.attempt > 1 ? ` · ${ordinal(i.attempt)} try` : ''}${i.subtasks_total ? ` · ${i.subtasks_done}/${i.subtasks_total} steps` : ''}${i.submitted_at ? ` · ${clock(i.submitted_at)}` : ''}`
                     : ` · ${i.cost} pts · has ${i.kid_balance}`}
                 </small>
@@ -138,37 +145,46 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
                 onChange={(e) => setNote(e.target.value)}
               />
             )}
-            <div className="p-needs-actions">
-              <button type="button" className="p-btn" data-variant="accent" disabled={!!busy} data-loading={busy === `a${i.type}${i.id}`} onClick={() => run(() => approveOne(i), 'Approved', `a${i.type}${i.id}`)}>
-                <Icon name="check" size={16} />
-                Approve
-              </button>
-              {chore ? (
-                sending === i.id ? (
-                  <button type="button" className="p-btn" disabled={!note.trim() || !!busy} data-loading={busy === `s${i.id}`} onClick={() => submitSendBack(i.id, note.trim())}>
-                    <Icon name="undo" size={16} />
-                    Send back
-                  </button>
-                ) : (
-                  <button type="button" className="p-btn" onClick={() => (setSending(i.id), setNote(''))}>
-                    <Icon name="undo" size={16} />
-                    Send back
-                  </button>
-                )
-              ) : (
-                <button type="button" className="p-btn" data-variant="red" disabled={!!busy} data-loading={busy === `d${i.id}`} onClick={() => run(() => decide.mutateAsync({ id: i.id, approve: false }), 'Declined', `d${i.id}`)}>
-                  <Icon name="close" size={16} />
-                  Decline
+            {i.type === 'note' ? (
+              <div className="p-needs-actions">
+                <button type="button" className="p-btn" onClick={() => (void router.push(`/?chore=${i.id}`), openChat('chore', String(i.id)))}>
+                  <Icon name="chat" size={16} />
+                  Reply
                 </button>
-              )}
-              {chore && (
-                <Tooltip label="Open chat" openDelay={400}>
-                  <button type="button" className="p-btn" aria-label={`Chat about ${i.title}`} onClick={() => openChat('chore', String(i.id))}>
-                    <Icon name="chat" size={16} />
+              </div>
+            ) : (
+              <div className="p-needs-actions">
+                <button type="button" className="p-btn" data-variant="accent" disabled={!!busy} data-loading={busy === `a${i.type}${i.id}`} onClick={() => run(() => approveOne(i), 'Approved', `a${i.type}${i.id}`)}>
+                  <Icon name="check" size={16} />
+                  Approve
+                </button>
+                {chore ? (
+                  sending === i.id ? (
+                    <button type="button" className="p-btn" disabled={!note.trim() || !!busy} data-loading={busy === `s${i.id}`} onClick={() => submitSendBack(i.id, note.trim())}>
+                      <Icon name="undo" size={16} />
+                      Send back
+                    </button>
+                  ) : (
+                    <button type="button" className="p-btn" onClick={() => (setSending(i.id), setNote(''))}>
+                      <Icon name="undo" size={16} />
+                      Send back
+                    </button>
+                  )
+                ) : (
+                  <button type="button" className="p-btn" data-variant="red" disabled={!!busy} data-loading={busy === `d${i.id}`} onClick={() => run(() => decide.mutateAsync({ id: i.id, approve: false }), 'Declined', `d${i.id}`)}>
+                    <Icon name="close" size={16} />
+                    Decline
                   </button>
-                </Tooltip>
-              )}
-            </div>
+                )}
+                {chore && (
+                  <Tooltip label="Open chat" openDelay={400}>
+                    <button type="button" className="p-btn" aria-label={`Chat about ${i.title}`} onClick={() => openChat('chore', String(i.id))}>
+                      <Icon name="chat" size={16} />
+                    </button>
+                  </Tooltip>
+                )}
+              </div>
+            )}
           </div>
         )
       })}

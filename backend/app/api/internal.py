@@ -118,9 +118,8 @@ def devices_seen(body: SeenReport, db: Session = Depends(get_db)) -> dict:
         db.add(dev)
         try:
             db.flush()
-            inbox.notify(
+            inbox.notify_parents(
                 db,
-                inbox.parents(db),
                 "new_device",
                 f"New device: {dev.name}",
                 "Say whose it is so it follows their rules.",
@@ -174,7 +173,6 @@ def devices_resisting(body: ResistingReport, db: Session = Depends(get_db)) -> d
     listed = set(body.resisting)
     flagged = cleared = 0
     try:
-        parents = inbox.parents(db)
         for dev in db.query(Device).all():
             if dev.mac in listed:
                 if dev.resisting_since is not None:
@@ -182,9 +180,8 @@ def devices_resisting(body: ResistingReport, db: Session = Depends(get_db)) -> d
                 dev.resisting_since = now
                 flagged += 1
                 activity.log(db, dev.id, "bypass", now)
-                inbox.notify(
+                inbox.notify_parents(
                     db,
-                    parents,
                     "device_resisting",
                     f"{dev.name} is getting around the block",
                     f"{dev.name} is still reaching the internet while it "

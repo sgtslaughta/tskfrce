@@ -15,6 +15,7 @@ from .flair import KidFlair
 from .hours import HourRule, HourRuleTarget, HourRuleTime
 from .inbox import Notification
 from .lock import Device, DeviceGroup, Override
+from .notify import NotifyHeld, NotifyPlace
 from .password_reset import PasswordReset
 from .points import Points, PointsType
 from .reward import Redemption, Reward
@@ -55,6 +56,8 @@ __all__ = [
     "DevicePresence",
     "Override",
     "Notification",
+    "NotifyPlace",
+    "NotifyHeld",
     "Reward",
     "Redemption",
     "DismissedTip",
