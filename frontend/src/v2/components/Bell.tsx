@@ -118,7 +118,7 @@ export function List({ kid, onGo, sheet, page }: { kid: boolean; onGo: () => voi
     const sev = severity(n)
     const sub = [n.body, when(n.created_at)].filter(Boolean).join(' · ')
     return (
-      <div key={n.id} className={`p-bell-item ${!n.read ? 'unread' : ''}`}>
+      <div key={n.id} className={`p-bell-item ${!n.read && (today || !kid) ? 'unread' : ''}`}>
         <div className={`p-bell-icon ${sev.tone}`}>
           <Icon name={sev.name} />
         </div>
@@ -266,13 +266,11 @@ export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; pla
     <Popover
       opened={opened}
       onChange={setOpened}
-      position={placement === 'rail' ? 'right-start' : 'bottom-end'}
+      position={!kid && placement === 'rail' ? 'right-start' : 'bottom-end'}
       width={400}
-      withArrow={!kid}
-      arrowSize={14}
-      arrowOffset={20}
-      offset={12}
-      classNames={{ arrow: 'p-bell-arrow' }}
+      // kid popover stays as before; parent gets the §2.2 pointer and sticker shadow (CSS)
+      shadow={kid ? 'md' : undefined}
+      {...(kid ? {} : { withArrow: true, arrowSize: 14, arrowOffset: 20, offset: 12, classNames: { arrow: 'p-bell-arrow' } })}
     >
       <Tooltip label="Notifications" openDelay={400} disabled={opened}>
         <Popover.Target>{btn}</Popover.Target>

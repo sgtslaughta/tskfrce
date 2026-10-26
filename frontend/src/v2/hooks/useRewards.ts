@@ -32,5 +32,5 @@ export const useDecideRedemption = () =>
   useInvalidating(
     ({ id, approve }: { id: number; approve: boolean }) =>
       api(`/redemptions/${id}/${approve ? 'approve' : 'deny'}`, { method: 'POST' }),
-    ['redemptions', 'today', 'family'],
+    ['redemptions', 'today', 'family', 'inbox'],
   )

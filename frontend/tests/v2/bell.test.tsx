@@ -253,4 +253,37 @@ describe('Bell', () => {
     await screen.findByText('Item 1')
     expect(screen.queryByRole('link', { name: /See all/, hidden: true })).toBeNull()
   })
+
+  test('approving an already-read item refetches the inbox and the buttons go', async () => {
+    let pending = true
+    apiMock.mockImplementation(async (p, i) => {
+      if (p === '/notifications') return { items: [item(1, { run_id: 7, read: true, pending })], unread: 0, has_more: false }
+      if (p === '/chores/7/approve' && i?.method === 'POST') pending = false
+      return undefined
+    })
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /Approve/, hidden: true }))
+    await waitFor(() => expect(screen.queryByRole('button', { name: /Approve/, hidden: true })).toBeNull())
+    expect(posts('/notifications/1/read')).toHaveLength(0)
+    expect(apiMock.mock.calls.filter((c) => c[0] === '/notifications').length).toBeGreaterThan(1)
+  })
+
+  test('kid bell: no pointer, and Earlier rows have no unread dot', async () => {
+    serve([item(1, { created_at: new Date(Date.now() - 2 * 86400000).toISOString(), read: false })])
+    wrap(<Bell kid />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    const row = (await screen.findByText('Item 1')).closest('.p-bell-item') as HTMLElement
+    expect(row.classList.contains('unread')).toBe(false)
+    expect(document.querySelector('.p-bell-arrow')).toBeNull()
+  })
+
+  test('parent Earlier rows keep the unread dot', async () => {
+    serve([item(1, { created_at: new Date(Date.now() - 2 * 86400000).toISOString(), read: false })])
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    const row = (await screen.findByText('Item 1')).closest('.p-bell-item') as HTMLElement
+    expect(row.classList.contains('unread')).toBe(true)
+  })
 })
+
