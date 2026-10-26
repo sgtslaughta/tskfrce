@@ -1,6 +1,10 @@
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render as rtl, screen, fireEvent } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThreadList, nest } from '@/v2/chat/ThreadList'
 import type { ThreadSummary } from '@/v2/hooks/useChat'
+
+// the list asks /chat/search while searching, so it needs a query client
+const render = (ui: React.ReactElement) => rtl(<QueryClientProvider client={new QueryClient()}>{ui}</QueryClientProvider>)
 
 describe('ThreadList', () => {
   const mockThreads: ThreadSummary[] = [
@@ -14,6 +18,8 @@ describe('ThreadList', () => {
       last_text: 'Milk needed',
       last_author: 'Mom',
       unread: 0,
+      note: false,
+      glyph: null,
     },
     {
       id: 2,
@@ -25,6 +31,8 @@ describe('ThreadList', () => {
       last_text: 'Check this out',
       last_author: 'Dad',
       unread: 2,
+      note: false,
+      glyph: null,
     },
     {
       id: 3,
@@ -36,6 +44,8 @@ describe('ThreadList', () => {
       last_text: 'Please tidy up',
       last_author: 'Mom',
       unread: 1,
+      note: false,
+      glyph: null,
     },
     {
       id: 4,
@@ -47,10 +57,12 @@ describe('ThreadList', () => {
       last_text: 'Need help',
       last_author: 'Leo',
       unread: 0,
+      note: false,
+      glyph: null,
     },
   ]
 
-  it('renders tabs: All, Chores, Family (no Notes until the backend has notes)', () => {
+  it('renders tabs: All, Chores, Notes, Family', () => {
     render(
       <ThreadList
         threads={mockThreads}
@@ -61,7 +73,7 @@ describe('ThreadList', () => {
 
     expect(screen.getByText(/^All$/)).toBeInTheDocument()
     expect(screen.getByText(/^Chores/)).toBeInTheDocument()
-    expect(screen.queryByText(/^Notes/)).toBeNull()
+    expect(screen.getByText('Notes · 0')).toBeInTheDocument()
     expect(screen.getByText(/^Family$/)).toBeInTheDocument()
   })
 

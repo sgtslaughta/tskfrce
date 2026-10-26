@@ -26,13 +26,17 @@ import { ReactionChips } from './Reactions'
 import { DaySep, ParentBubble, dayName } from './ParentBubble'
 import { ThreadHead } from './ThreadHead'
 import { ThreadSidePanel } from './ThreadSidePanel'
+import { MentionMenu, useComposerBox } from './MentionMenu'
+import { QuickReplies } from './QuickReplies'
+import { TypingLine } from './TypingLine'
+import { renderMentions } from './mentions'
 import type { ChatReply } from './dock'
 
 const dayLabel = (iso: string) =>
   new Date(iso).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })
 const timeLabel = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 
-function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
+function Bubble({ m, mine, names }: { m: ChatMessage; mine: boolean; names: string[] }) {
   const [editing, setEditing] = useState(false)
   if (m.kind === 'system') {
     return (
@@ -67,7 +71,7 @@ function Bubble({ m, mine }: { m: ChatMessage; mine: boolean }) {
           )}
           {m.note_label && <strong style={{ display: 'block' }}>Note: {m.note_label}</strong>}
           {m.photo_url && <Photo url={m.photo_url} />}
-          {editing ? <EditBox m={m} kid onDone={() => setEditing(false)} /> : m.body}
+          {editing ? <EditBox m={m} kid onDone={() => setEditing(false)} /> : m.body && renderMentions(m.body, names)}
         </div>
         </MessageActions>
       </div>
@@ -105,7 +109,8 @@ export function ThreadView({
   const thread = useThread(kind, refId, kid)
   const post = usePost(kid)
   const upload = useUploadChatPhoto(kid)
-  const gifsOn = !!useThreads(kid).data?.gifs_enabled
+  const list = useThreads(kid).data
+  const gifsOn = !!list?.gifs_enabled
   const [gifOpen, setGifOpen] = useState(false)
   const markRead = useMarkRead(kid)
   const [older, setOlder] = useState<ChatMessage[]>([])
@@ -118,7 +123,7 @@ export function ThreadView({
   const wideLay = useMediaQuery('(min-width: 1250px)')
 
   const data = thread.data
-  const runDetail = useRunDetail(kind === 'chore' ? Number(refId) : null)
+  const runDetail = useRunDetail(kind === 'chore' && !kid ? Number(refId) : null) // parent-only route
   const latest = data?.messages ?? []
   const lastId = latest.length ? latest[latest.length - 1].id : 0
   // the last bubble growing a chip row would otherwise push it below the fold
@@ -179,6 +184,10 @@ export function ThreadView({
     await post.mutateAsync({ threadId: data.id, body: text.trim(), photoId: id })
     setText('')
   }
+  const box = useComposerBox({ text, setText, send, members: data?.members, meId, threadId: data?.id ?? null, kid })
+  const names = (data?.members ?? []).map((x) => x.name)
+  const typing = data?.typing?.length ? <TypingLine names={data.typing} /> : null
+  const at = <MentionMenu {...box.menu} />
   const pick = async (file?: File) => {
     if (!file || !data) return
     try {
@@ -198,7 +207,7 @@ export function ThreadView({
     return (
       <div className="pc-grid" data-side={side} data-bare={bare}>
         <section className="pc-thread" aria-label={data?.title ?? 'Conversation'}>
-          {data && !bare && <ThreadHead kind={kind} title={data.title} run={run} />}
+          {data && !bare && <ThreadHead kind={kind} title={data.title} run={run} glyph={list?.threads.find((t) => t.id === data.id)?.glyph} />}
           {thread.isError && !data && <ErrorPanel kind="unreachable" error={thread.error} onRetry={() => thread.refetch()} />}
           {thread.isError && data && <p className="pc-empty" role="alert">Can&apos;t reach your home box. Showing what we have.</p>}
           {thread.isPending && !thread.isError && <Skeleton rows={3} />}
@@ -216,12 +225,14 @@ export function ThreadView({
               return (
                 <Fragment key={m.id}>
                   {sep && <DaySep label={d} />}
-                  <ParentBubble m={m} mine={m.author_id !== null && m.author_id === meId} />
+                  <ParentBubble m={m} mine={m.author_id !== null && m.author_id === meId} names={names} />
                 </Fragment>
               )
             })}
+            {typing}
             <div ref={endRef} />
           </div>
+          {kind === 'chore' && data && <QuickReplies threadId={data.id} run={run} onFill={box.fill} />}
           <form
             className="pc-reply"
             onSubmit={(e) => {
@@ -241,6 +252,7 @@ export function ThreadView({
                 </button>
               </span>
             )}
+            {at}
             <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden aria-label="Photo file" onChange={(e) => pick(e.target.files?.[0])} />
             <button type="button" className="pc-ib" data-on={!!photoId} aria-label={photoId ? 'Photo added' : 'Add photo'} title={photoId ? 'Photo added' : 'Add photo'} disabled={upload.isPending} onClick={() => fileRef.current?.click()}>
               <Icon name={photoId ? 'image' : 'add_photo_alternate'} size={20} />
@@ -250,19 +262,18 @@ export function ThreadView({
                 <Icon name="gif_box" size={20} />
               </button>
             )}
+            <button type="button" className="pc-ib" aria-label="Mention someone" title="Mention someone" disabled={!data} onClick={box.mention}>
+              <Icon name="alternate_email" size={20} />
+            </button>
             <textarea
+              ref={box.box}
               aria-label="Message"
               value={text}
               rows={1}
               maxLength={2000}
               placeholder={reply ? 'Reply…' : 'Message…'}
-              onChange={(e) => setText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault()
-                  void send()
-                }
-              }}
+              onChange={box.onChange}
+              onKeyDown={box.onKeyDown}
             />
             <button type="submit" className="pc-send" aria-label="Send" title="Send" aria-busy={post.isPending} disabled={!canSend}>
               <Icon name={post.isPending ? "progress_activity" : "send"} size={16} className={post.isPending ? "pc-spin" : undefined} />
@@ -296,10 +307,11 @@ export function ThreadView({
           return (
             <div key={m.id} style={{ display: 'flex', flexDirection: 'column' }}>
               {sep && <div className="f-cap" data-testid="day-sep" style={{ textAlign: 'center', margin: '8px 0' }}>{d}</div>}
-              <Bubble m={m} mine={m.author_id !== null && m.author_id === meId} />
+              <Bubble m={m} mine={m.author_id !== null && m.author_id === meId} names={names} />
             </div>
           )
         })}
+        {typing}
         <div ref={endRef} />
       </div>
       <form
@@ -310,6 +322,7 @@ export function ThreadView({
           void send()
         }}
       >
+        {at}
         <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden aria-label="Photo file" onChange={(e) => pick(e.target.files?.[0])} />
         <Button
           variant={photoId ? 'filled' : 'default'}
@@ -324,19 +337,18 @@ export function ThreadView({
             GIF
           </Button>
         )}
+        <Button variant="default" aria-label="Mention someone" disabled={!data} onClick={box.mention}>
+          <Icon name="alternate_email" size={18} />
+        </Button>
         <textarea
+          ref={box.box}
           aria-label="Message"
           value={text}
           rows={1}
           maxLength={2000}
           placeholder="Write a message"
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-              e.preventDefault()
-              void send()
-            }
-          }}
+          onChange={box.onChange}
+          onKeyDown={box.onKeyDown}
           style={{ flex: 1, minWidth: 0, resize: 'none', font: 'inherit', padding: 8 }}
         />
         <Button type="submit" disabled={!canSend}>

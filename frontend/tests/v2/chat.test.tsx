@@ -116,15 +116,11 @@ describe("ThreadView", () => {
 describe("Chat page (parent restyle)", () => {
   test("search filters threads", async () => {
     const sampleThreads = [
-      { id: 1, kind: "private" as const, task_id: null, kid_id: 3, title: "Maya chat", unread: 0, last_message_at: "2020-01-01T10:00:00Z", last_author: "Maya", last_text: "hello" },
-      { id: 2, kind: "chore" as const, task_id: 5, kid_id: null, title: "Dishes", unread: 0, last_message_at: "2020-01-02T10:00:00Z", last_author: "Maya", last_text: "looks good" },
-      { id: 3, kind: "family" as const, task_id: null, kid_id: null, title: "Family", unread: 0, last_message_at: "2020-01-03T10:00:00Z", last_author: "Sam", last_text: "family chat" },
+      { id: 1, kind: "private" as const, task_id: null, kid_id: 3, title: "Maya chat", unread: 0, last_message_at: "2020-01-01T10:00:00Z", last_author: "Maya", last_text: "hello", note: false, glyph: null },
+      { id: 2, kind: "chore" as const, task_id: 5, kid_id: null, title: "Dishes", unread: 0, last_message_at: "2020-01-02T10:00:00Z", last_author: "Maya", last_text: "looks good", note: true, glyph: null },
+      { id: 3, kind: "family" as const, task_id: null, kid_id: null, title: "Family", unread: 0, last_message_at: "2020-01-03T10:00:00Z", last_author: "Sam", last_text: "family chat", note: false, glyph: null },
     ];
-    render(
-      <MantineProvider>
-        <ThreadList threads={sampleThreads} selected={null} onPick={() => {}} />
-      </MantineProvider>,
-    );
+    wrap(<ThreadList threads={sampleThreads} selected={null} onPick={() => {}} />);
     const searchBox = screen.getByLabelText("Search threads") as HTMLInputElement;
 
     // Verify all threads are visible initially (the chore nests under Family until expanded)
@@ -147,6 +143,18 @@ describe("Chat page (parent restyle)", () => {
     await userEvent.type(searchBox, "family chat");
     expect(screen.getAllByText("Family")[0]).toBeInTheDocument();
     expect(screen.queryByText("Dishes")).toBeNull();
+  });
+
+  test("tabs: All, Chores, Notes and Family with counts", async () => {
+    const t = (id: number, kind: "private" | "chore" | "family", note = false) =>
+      ({ id, kind, task_id: id, kid_id: 3, title: `T${id}`, unread: 0, last_message_at: null, note, glyph: null });
+    wrap(<ThreadList threads={[t(1, "family"), t(2, "chore"), t(3, "chore", true), t(4, "private")]} selected={null} onPick={() => {}} />);
+    const tabs = screen.getByRole("group", { name: "Filter chats" });
+    expect(within(tabs).getAllByRole("button").map((b) => b.textContent)).toEqual(["All", "Chores · 2", "Notes · 1", "Family"]);
+    await userEvent.click(within(tabs).getByRole("button", { name: "Notes · 1" }));
+    const rows = screen.getByLabelText("Conversations");
+    expect(rows).toHaveTextContent("T3");
+    expect(rows).not.toHaveTextContent("T2");
   });
 
   test("side panel hidden below 1250px", async () => {

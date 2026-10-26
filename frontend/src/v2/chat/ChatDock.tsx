@@ -155,6 +155,7 @@ export function ChatDock({ kid = false, meId, meName, launcher: showLauncher = t
                   threads={threads.data?.threads ?? []}
                   selected={null}
                   meName={meName}
+                  kid={kid}
                   onPick={(t) => set(true, { kind: t.kind, ref: refOf(t) })}
                 />
               </>

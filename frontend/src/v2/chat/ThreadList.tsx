@@ -1,17 +1,17 @@
 import { useState, useMemo } from 'react'
-import { refOf, type ThreadSummary } from '@/v2/hooks/useChat'
+import { refOf, useChatSearch, type ThreadSummary } from '@/v2/hooks/useChat'
+import { Chip } from '../parent/Chip'
 import { Icon } from '../parent/Icon'
 import { ListHeader } from '../parent/ListHeader'
 import { SegmentedControl } from '../parent/SegmentedControl'
 import { EmptyState } from '../parent/states'
 import { choreIcon } from '../today/choreIcon'
 
-// ponytail: no Notes tab until kid notes reach the backend (Plan C)
-type FilterTab = 'all' | 'chores' | 'family'
+type FilterTab = 'all' | 'chores' | 'notes' | 'family'
 
 function Tile({ t }: { t: ThreadSummary }) {
   if (t.kind === 'private') return <b>{(t.title.trim()[0] ?? '?').toUpperCase()}</b>
-  return <Icon name={t.kind === 'family' ? 'group' : choreIcon(t.title)} size={20} />
+  return <Icon name={t.kind === 'family' ? 'group' : (t.glyph ?? choreIcon(t.title))} size={20} />
 }
 
 /** Nest each chore under its kid's chat; a chore shared by several kids (or whose kid has no row) goes under Family. */
@@ -38,28 +38,35 @@ export function ThreadList({
   selected,
   onPick,
   meName,
+  kid = false,
 }: {
   threads: ThreadSummary[]
   selected: string | null
   onPick: (t: ThreadSummary) => void
   meName?: string
+  kid?: boolean
 }) {
   const [filter, setFilter] = useState<FilterTab>('all')
   const [search, setSearch] = useState('')
   const [open, setOpen] = useState<Record<number, boolean>>({})
+  const found = useChatSearch(search, kid).data?.thread_ids
 
   const filtered = useMemo(() => {
     let result = threads
     if (filter === 'chores') result = result.filter((t) => t.kind === 'chore')
+    else if (filter === 'notes') result = result.filter((t) => t.note)
     else if (filter === 'family') result = result.filter((t) => t.kind === 'family')
     if (search.trim()) {
       const q = search.toLowerCase()
-      result = result.filter((t) => t.title.toLowerCase().includes(q) || (t.last_text?.toLowerCase().includes(q) ?? false))
+      result = result.filter(
+        (t) => t.title.toLowerCase().includes(q) || (t.last_text?.toLowerCase().includes(q) ?? false) || !!found?.includes(t.id),
+      )
     }
     return result
-  }, [threads, filter, search])
+  }, [threads, filter, search, found])
 
-  const choreCount = useMemo(() => threads.filter((t) => t.kind === 'chore').length, [threads])
+  const choreCount = threads.filter((t) => t.kind === 'chore').length
+  const noteCount = threads.filter((t) => t.note).length
   const lastLine = (t: ThreadSummary) => {
     if (!t.last_text) return 'No messages yet'
     if (!t.last_author) return t.last_text
@@ -78,6 +85,11 @@ export function ThreadList({
           <b>{t.title}</b>
           <span>{lastLine(t)}</span>
         </span>
+        {t.note && (
+          <Chip tone="amb" icon="flag">
+            Note
+          </Chip>
+        )}
         {t.unread > 0 ? (
           <span className="pc-badge" data-testid={`unread-${t.id}`} aria-label={`${t.unread} unread`}>
             {t.unread}
@@ -102,6 +114,7 @@ export function ThreadList({
           options={[
             { value: 'all', label: 'All' },
             { value: 'chores', label: `Chores · ${choreCount}` },
+            { value: 'notes', label: `Notes · ${noteCount}` },
             { value: 'family', label: 'Family' },
           ]}
         />
