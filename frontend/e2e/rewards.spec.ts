@@ -24,7 +24,8 @@ test('rewards, screen time, badges and chat', async ({ page }) => {
 
   const devs: { id: number; name: string; owner_ids: number[] }[] = await (await api.get('/api/proxy/devices')).json()
   const dev = devs.find((d) => d.name.includes(DEVICE))
-  test.skip(!dev, `no device named like "${DEVICE}" (set E2E_KID_DEVICE)`)
+  if (process.env.E2E_KID_TOKEN) expect(dev, 'lab e2e device registered').toBeTruthy()
+  else test.skip(!dev, `no device named like "${DEVICE}" (set E2E_KID_DEVICE)`)
 
   const before = await (await api.get('/api/proxy/screen-time')).json()
   const kid = await (await api.post('/api/proxy/kids', { data: { full_name: `${first} Kid` } })).json()
@@ -108,8 +109,13 @@ test('rewards, screen time, badges and chat', async ({ page }) => {
     await expect(box).toHaveValue(new RegExp(`@${first} `))
     await page.getByRole('button', { name: 'Send' }).click()
     await expect(page.getByText(hello)).toBeVisible()
+    // the text is only in a message body, so only a server body search can keep the Family row
+    const list = page.getByRole('list', { name: 'Conversations' })
+    const kidRow = list.getByRole('button', { name: new RegExp(`${first} Kid`) })
+    await expect(kidRow).toBeVisible()
     await page.getByLabel('Search threads').fill(hello)
-    await expect(page.getByRole('list', { name: 'Conversations' }).getByRole('button', { name: /^Family/ })).toBeVisible()
+    await expect(list.getByRole('button', { name: /^Family/ })).toBeVisible()
+    await expect(kidRow).toHaveCount(0)
 
     // 7. chore chat: a quick reply fills the box for editing, it does not send
     const chore = await (await api.post('/api/proxy/chores/', { data: { title: choreName, points: 10 } })).json()
@@ -127,9 +133,13 @@ test('rewards, screen time, badges and chat', async ({ page }) => {
     expect(thread.messages.filter((m: { body: string }) => m.body === 'Looks good')).toHaveLength(0)
   } finally {
     // leave the family thread as we found it
-    const fam = await (await api.get('/api/proxy/chat/threads/family/family')).json()
-    for (const m of fam.messages.filter((m: { body: string }) => m.body?.includes(hello))) {
-      await api.delete(`/api/proxy/chat/messages/${m.id}`)
+    try {
+      const fam = await (await api.get('/api/proxy/chat/threads/family/family')).json()
+      for (const m of fam.messages.filter((m: { body: string }) => m.body?.includes(hello))) {
+        await api.delete(`/api/proxy/chat/messages/${m.id}`)
+      }
+    } catch {
+      // best effort: the rest of the cleanup must still run
     }
     if (rewardId) await api.delete(`/api/proxy/rewards/${rewardId}`)
     if (choreId) await api.delete(`/api/proxy/chores/${choreId}`)
