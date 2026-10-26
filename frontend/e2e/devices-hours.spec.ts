@@ -2,8 +2,8 @@ import { expect, test, type APIRequestContext } from '@playwright/test'
 import { loginUi, makeKid, parentApi } from './seed'
 
 // Seeding a device needs the blocker's internal endpoint (not behind the app proxy).
-const API = process.env.E2E_API_URL ?? 'http://127.0.0.1:8866'
-const TOKEN = process.env.E2E_INTERNAL_TOKEN ?? 'plandtoken'
+const API = process.env.E2E_API_URL ?? 'http://10.99.0.3:8000'
+const TOKEN = process.env.E2E_INTERNAL_TOKEN ?? 'labtoken'
 
 test.use({ actionTimeout: 15_000 })
 test.setTimeout(240_000)
@@ -33,11 +33,12 @@ test('hour rules and device activity: one rule, every target', async ({ page }) 
 
   try {
     // seed: a device (as the blocker would report it) owned by the kid, plus a group holding it
-    await api.fetch(`${API}/api/v1/internal/devices/seen`, {
+    const seen = await api.fetch(`${API}/api/v1/internal/devices/seen`, {
       method: 'POST',
       headers: { 'X-Internal-Token': TOKEN },
       data: { mac: mac, ip: '10.99.0.77', hostname: `e2e-kid1-${tag}` },
     })
+    expect(seen.ok(), `device seeding at ${API} failed (${seen.status()}): set E2E_API_URL and E2E_INTERNAL_TOKEN`).toBe(true)
     const devs: { id: number; name: string }[] = await (await api.get('/api/proxy/devices')).json()
     deviceId = devs.find((d) => d.name === `e2e-kid1-${tag}`)?.id
     expect(deviceId, 'seeded device').toBeTruthy()
