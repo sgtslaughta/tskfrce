@@ -46,6 +46,7 @@
   background-size: 28px 28px;
   font-family: var(--font-body), Inter, system-ui, sans-serif;
 }
+.k-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .k-disp { font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif; }
 
 /* chips (mockup 11 .chip.c-*; md = 10 .tag; lg = 09 .badge) */
@@ -123,6 +124,7 @@
 .k-step[data-state='locked'] .k-cb .ms { font-size: 26px; }
 .k-sx { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .k-sx small { display: block; font-size: 15px; color: var(--k-sub); font-weight: 600; }
+.k-step[data-state='next'] .k-sx small { color: var(--k-ink); }
 .k-step[data-state='done'] .k-sx > span { text-decoration: line-through; color: var(--k-sub); }
 .k-steps[data-size='small'] .k-step { gap: 10px; padding: 8px 0; font-size: 14px; border-radius: 0; }
 .k-steps[data-size='small'] .k-step + .k-step { border-top: 1px solid var(--k-line); }

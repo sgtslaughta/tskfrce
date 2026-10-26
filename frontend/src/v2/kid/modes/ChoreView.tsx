@@ -47,7 +47,7 @@ export function ChoreView({ c, d, now, onBack, onDone, busyId, onChat }: ChoreVi
           <Icon name={glyph(c)} />
         </span>
         <div>
-          <h2 className="k-disp">{c.title}</h2>
+          <h1 className="k-disp">{c.title}</h1>
           <div className="k-tmeta">
             <PointsChip points={c.points} long />
             {order && <KidChip chip={{ tone: 'today', icon: 'format_list_numbered', label: order }} />}

@@ -24,7 +24,9 @@ export function KidSteps({
       {steps.map((s, i) => {
         const state = s.done ? 'done' : s.locked ? 'locked' : i === next ? 'next' : 'open'
         const badge = stepBadge(steps, i)
-        const chip = size === 'small' ? stepChip(s, now, timezone) : null
+        const due = stepChip(s, now, timezone)
+        // big steps say the time in words; only a missed one adds the Late chip (§2.6)
+        const chip = size === 'small' || due?.tone === 'late' ? due : null
         const hint = stepHint(steps, i, timezone)
         return (
           <div key={s.id} className="k-step" data-state={state}>
@@ -48,7 +50,8 @@ export function KidSteps({
             </span>
             {chip && (
               <span className="k-chip" data-tone={chip.tone} data-size="sm">
-                {chip.time}
+                {chip.tone === 'late' && <Icon name="alarm" />}
+                {size === 'big' ? `Late · ${chip.time}` : chip.time}
               </span>
             )}
           </div>

@@ -72,7 +72,7 @@
 .k-chead { display: flex; align-items: center; gap: 18px; }
 .k-chead .k-ticon { width: 88px; height: 88px; background: var(--k-sun); color: var(--k-navy); border: 3px solid var(--k-ink); }
 .k-chead .k-ticon .ms { font-size: 50px; }
-.k-chead h2 { margin: 0; font-size: 40px; line-height: 1; overflow-wrap: anywhere; }
+.k-chead h1 { margin: 0; font-size: 40px; line-height: 1; overflow-wrap: anywhere; }
 .k-cards { display: flex; flex-direction: column; align-items: flex-start; gap: 0; }
 .k-cards > * { align-self: stretch; }
 .k-cards > .k-note-pill { align-self: flex-start; }
@@ -95,7 +95,8 @@
   .k-hi { font-size: 28px; }
   .k-chead .k-ticon { width: 64px; height: 64px; }
   .k-chead .k-ticon .ms { font-size: 36px; }
-  .k-chead h2 { font-size: 30px; }
+  .k-chead h1 { font-size: 30px; }
+  .k-bigacts[data-n='2'] > :last-child { grid-column: 1 / -1; }
   .k-bigacts, .k-bigacts[data-n='2'] { grid-template-columns: 1fr 1fr; gap: 10px; }
   .k-bigacts > :first-child { grid-column: 1 / -1; }
   .k-bb { height: 64px; font-size: 17px; gap: 6px; white-space: nowrap; }

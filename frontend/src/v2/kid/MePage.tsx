@@ -26,6 +26,7 @@ export function MePage({
 }) {
   return (
     <section className="k-view k-narrow">
+      <h1 className="k-sr">{`${name} · Me`}</h1>
       {progress && (
         <StickerCard>
           <ProgressHeader name={name} avatar={avatar} kid progress={progress} />

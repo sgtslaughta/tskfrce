@@ -38,12 +38,24 @@
   background: var(--p-card); color: var(--p-ink); border: 1px solid var(--p-line);
   box-shadow: 0 4px 16px rgba(0,0,0,0.12);
 }
-[data-look='parent'] .f-dock .p-list-header-top { display: none; }
+[data-look='parent'] .f-dock .p-list-header-top,
+.f-dock[data-look='parent'] .p-list-header-top { display: none; }
+/* Kid dock: parent chat layout in the kid palette (fridge font, sun accent, both schemes) */
+.f-dock.k-chat[data-look='parent'] {
+  --p-bg: var(--k-bg); --p-card: var(--k-card); --p-soft: var(--k-soft); --p-ink: var(--k-ink);
+  --p-sub: var(--k-sub); --p-line: var(--k-line); --p-lav: var(--k-lav); --p-lav-ink: var(--k-ink);
+  --p-red: var(--k-back); --p-redbg: var(--k-coral-bg); --p-amb: color-mix(in srgb, var(--k-amber) 22%, var(--k-card));
+  --p-ambink: var(--k-ink); --p-grid: var(--k-grid); --p-meter: var(--k-ink); --p-track: var(--k-line);
+  --p-acc: var(--k-sun);
+  background: var(--k-card); color: var(--k-ink); border: 2px solid var(--k-ink); box-shadow: var(--k-shadow);
+  border-radius: 16px; font-family: inherit;
+}
 [data-look='parent'] .f-dock-head { border-bottom: 1px solid var(--p-line); }
 
 @media (max-width: 767px) {
   .f-dock { inset: 0; width: auto; height: auto; max-height: none; border-radius: 0; border: 0; }
   .f-dock-open .f-dock-btn { display: none; }
+  .f-dock.k-chat[data-look='parent'] { border-radius: 0; border: 0; box-shadow: none; }
 }
 .f-dock-who { font-size: 13px; font-weight: 500; opacity: 0.7; }
 
@@ -125,3 +137,11 @@
 .pc-qre .pc-ib:disabled { opacity: .35; cursor: default; }
 .pc-qre-add { display: flex; gap: 8px; margin-bottom: 16px; }
 .pc-qre-add input { flex: 1; min-width: 0; }
+/* Kid dock composer: compact sticker buttons so the message box keeps its room */
+.f-dock.k-chat form.f-row { gap: 6px; background: var(--k-card) !important; }
+.f-dock.k-chat form.f-row .mantine-Button-root { padding: 0 10px; min-width: 0; flex: none; }
+.f-dock.k-chat form.f-row textarea {
+  background: var(--k-soft); color: var(--k-ink); border: 1.5px solid var(--k-line); border-radius: 12px;
+  min-height: 36px; box-sizing: border-box;
+}
+.f-dock.k-chat form.f-row textarea::placeholder { color: var(--k-sub); }

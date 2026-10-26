@@ -33,9 +33,9 @@ export function RewardsSection({ onExpired, heading = 'Rewards' }: { onExpired: 
   return (
     <StickerCard>
       <div style={{ display: 'grid', gap: 12 }}>
-        <h2 style={{ margin: 0 }}>
+        <h1 style={{ margin: 0, fontSize: 24 }}>
           {heading} · <span className="f-num">{d.balance}</span> points
-        </h2>
+        </h1>
         {d.screen_time_enabled && (
           <div style={{ display: 'grid', gap: 8 }}>
             <NativeSelect

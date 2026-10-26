@@ -48,12 +48,12 @@ export const toastOk = (message: string, options?: { undo?: () => void }) => {
 }
 
 /** Error toast shows the backend detail from ApiError. */
-export const toastFail = (e: unknown) =>
-  notifications.show({
-    title: "That didn't work",
-    message: errorText(e),
-    color: 'fridgeRed',
-  })
+export const toastFail = (e: unknown) => {
+  const message = errorText(e)
+  // view-as-kid refusals are expected, not failures: neutral toast, no error title
+  if (message.startsWith('Preview only.')) return notifications.show({ message, color: 'gray' })
+  return notifications.show({ title: "That didn't work", message, color: 'fridgeRed' })
+}
 
 /** Mutation callbacks: toast on success and on failure. */
 export const toasts = (done: string) => ({ onSuccess: () => toastOk(done), onError: toastFail })

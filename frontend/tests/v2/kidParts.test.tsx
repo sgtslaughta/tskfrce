@@ -64,6 +64,22 @@ describe('KidSteps', () => {
     expect(screen.getByText('Do this next')).toBeInTheDocument()
     expect(screen.getByRole('checkbox', { name: 'Mirror' })).toBeEnabled()
   })
+  test('big steps show a Late chip only for a missed step deadline', () => {
+    const past = new Date(Date.now() - 3600_000).toISOString()
+    const later = new Date(Date.now() + 5 * 3600_000).toISOString()
+    const c = chore({
+      subtasks: [
+        { id: 1, title: 'Sink', done: false, after_previous: false, due_at: past },
+        { id: 2, title: 'Mirror', done: false, after_previous: false, due_at: later },
+      ],
+    } as Partial<KidChore>)
+    const { container } = render(wrap(<KidSteps c={c} timezone="UTC" />))
+    const chips = container.querySelectorAll('.k-chip')
+    expect(chips).toHaveLength(1)
+    expect(chips[0].getAttribute('data-tone')).toBe('late')
+    expect(chips[0].textContent).toMatch(/^alarmLate · /)
+  })
+
   test('readOnly disables every step', () => {
     render(wrap(<KidSteps c={chore()} readOnly />))
     expect(screen.getByRole('checkbox', { name: 'Mirror' })).toBeDisabled()

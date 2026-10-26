@@ -113,7 +113,9 @@ export function ChatDock({ kid = false, meId, meName, launcher: showLauncher = t
           role="dialog"
           aria-label="Chat"
           tabIndex={-1}
-          className="f-dock"
+          className={kid ? 'f-dock k-tok k-chat' : 'f-dock'}
+          // kid dock reuses the parent chat layout, with --p-* mapped to kid tokens (chatDock.css)
+          data-look={kid ? 'parent' : undefined}
           onKeyDown={(e) => {
             if (e.key === 'Escape') {
               e.stopPropagation()
