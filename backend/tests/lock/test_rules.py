@@ -133,3 +133,11 @@ def test_open_reasons():
         open_reason(facts(owners=PENDING, bonus_active=True, points_unlock_early=True), NOW)
         == "bonus"
     )
+
+
+def test_manual_unlock_wins_open_reason():
+    """A parent's unlock of a device already inside its hours reads as the parent's."""
+    assert open_reason(facts(override="unlock"), NOW) == "manual"
+    assert open_reason(facts(override="unlock", owners=(OwnerChores(0, 0),)), NOW) == "manual"
+    inside = facts(override="unlock", chores_apply=False, allowed_sets=((INSIDE,),))
+    assert open_reason(inside, NOW) == "manual"

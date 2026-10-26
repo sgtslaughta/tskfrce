@@ -70,6 +70,8 @@ def open_reason(f: DeviceFacts, now_local: datetime) -> str | None:
     """Why the device is online; None when blocked."""
     if block_reason(f, now_local) is not None:
         return None
+    if f.override == "unlock":  # a parent's unlock wins, even inside hours
+        return "manual"
     if f.status == "guest":
         return "guest"
     if f.status == "unassigned":
@@ -82,6 +84,4 @@ def open_reason(f: DeviceFacts, now_local: datetime) -> str | None:
         return "schedule"
     if _in_any(f.free, now_local):
         return "free_time"
-    if f.override == "unlock":
-        return "manual"
     return "bonus"

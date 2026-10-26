@@ -113,8 +113,8 @@ test('hour rules and device activity: one rule, every target', async ({ page }) 
       await page.reload()
       await page.getByRole('button', { name: 'Activity' }).click()
       await expect(log.getByText('Locked by Lab Parent')).toBeVisible({ timeout: 10_000 })
-      // newest first: the unlock reads "Unlocked … by <parent>" when chores apply, else "Opened by schedule"
-      await expect(log.locator('.pk-kv').first()).toContainText(/Unlocked .*by Lab Parent|Opened by schedule/, { timeout: 10_000 })
+      // newest first: a parent's unlock always reads as theirs, even inside allowed hours
+      await expect(log.locator('.pk-kv').first()).toContainText(/Unlocked .*by Lab Parent/, { timeout: 10_000 })
     }).toPass({ timeout: 90_000, intervals: [1_000] })
 
     // 5. the group lists the rule under Hours for this group

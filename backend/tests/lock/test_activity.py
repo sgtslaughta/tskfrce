@@ -57,6 +57,22 @@ def test_manual_lock_records_who(db, parent, kid):
     assert (e.kind, e.reason, e.by_id, e.minutes) == ("locked", "manual", parent.id, 30)
 
 
+def test_manual_unlock_inside_hours_logs_parent(db, parent, kid):
+    d = Device(mac="aa:bb:cc:dd:ee:03", name="Dev", status="assigned")
+    d.owners = [kid]
+    db.add(d)
+    get_family(db).last_reset_date = DAY  # no chores today: open by schedule
+    db.commit()
+    set_override(db, [d.id], "lock", 30, parent.id)
+    db.commit()
+    tick(db, NOW)
+    set_override(db, [d.id], "unlock", 30, parent.id)
+    db.commit()
+    tick(db, NOW + timedelta(minutes=1))
+    (e,) = _events(db, "unlocked")
+    assert (e.reason, e.by_id) == ("manual", parent.id)
+
+
 def test_left_wifi(db, parent, kid):
     d = _kid_device(db, parent, kid)
     t = NOW.replace(tzinfo=None)
