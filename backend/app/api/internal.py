@@ -226,6 +226,8 @@ def devices_hits(body: HitsReport, db: Session = Depends(get_db)) -> dict:
     local, pre = local_now(fam.timezone, now), Prefetch(db, devs)
     for d in devs:
         reason = block_reason(device_facts(db, d, fam, now, pre), local)
+        if reason is None:  # open now; the next tick clears blocked_since
+            continue
         kind = "outside_hours" if reason == "schedule" else "locked_try"
         activity.log(db, d.id, kind, now, merge_minutes=30, count=body.hits[d.mac], reason=reason)
         logged += 1

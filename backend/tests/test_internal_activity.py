@@ -1,6 +1,8 @@
 from datetime import UTC, datetime, timedelta
 
+import pytest
 from app.core.config import settings
+from app.lock.overrides import set_override
 from app.models.device_activity import DeviceEvent, DevicePresence
 from app.models.lock import Device
 
@@ -117,3 +119,33 @@ def test_hits_unknown_or_unblocked_ignored(client, db):
 
 def test_hits_requires_token(client):
     assert client.post(HITS, json={"hits": {}}).status_code == 403
+
+
+def _macs(n):
+    return {
+        f"aa:bb:cc:{i // 65536 % 256:02x}:{i // 256 % 256:02x}:{i % 256:02x}": 1 for i in range(n)
+    }
+
+
+@pytest.mark.parametrize(
+    "hits",
+    [{"nonsense": 1}, {MAC: 0}, {MAC: 10001}, _macs(1001)],
+    ids=["bad-mac", "zero", "too-big", "too-many"],
+)
+def test_hits_rejects_bad_input(client, hits):
+    assert client.post(HITS, json={"hits": hits}, headers=tok()).status_code == 422
+
+
+def test_hits_manual_lock_logged_unpatched(client, db, parent):
+    d = _blocked(db)
+    set_override(db, [d.id], "lock", 30, parent.id)
+    db.commit()
+    assert client.post(HITS, json={"hits": {MAC: 1}}, headers=tok()).json() == {"logged": 1}
+    (e,) = _events(db, "locked_try")
+    assert e.reason == "manual"
+
+
+def test_hits_skips_device_that_is_open_now(client, db):
+    _blocked(db)  # blocked_since set, but nothing locks it
+    assert client.post(HITS, json={"hits": {MAC: 1}}, headers=tok()).json() == {"logged": 0}
+    assert _events(db, "locked_try") == []
