@@ -10,6 +10,7 @@ from app.models.chat import ChatPhoto, MessageReaction, Thread, ThreadMessage, T
 from app.models.chores import ChoreAssignment, ChoreRun
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
+from app.services import kid_events
 from app.services.chores import chore_of, clear_note, kid_runs_filter, run_kid_ids
 
 
@@ -100,6 +101,7 @@ def post(
         if run:
             clear_note(run)
     db.flush()
+    kid_events.parent_reply(db, thread, author, body)
     return m
 
 

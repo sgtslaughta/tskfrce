@@ -41,6 +41,9 @@ def deduct(
                 seen_by_kid=False,
             )
         )
+        from app.services import kid_events  # late: kid_events -> chores -> economy
+
+        kid_events.points_taken(db, kid_id, take, note, by_id)
     return take
 
 

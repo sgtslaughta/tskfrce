@@ -13,7 +13,7 @@ from app.models.family import get_family
 from app.models.lock import Device
 from app.models.points import Points
 from app.models.user import User, UserRole
-from app.services import badges, chat, economy
+from app.services import badges, chat, economy, kid_events
 from app.services import chores as svc
 from app.services.economy import award_chore
 
@@ -105,6 +105,7 @@ def approve(run_id: int, db: Session = Depends(get_db), parent: User = Depends(r
     pts = award_chore(db, r, fam)
     chat.system(db, r, f"Approved · +{pts}")
     badges.check_for_run(db, r, fam)
+    kid_events.chore_decided(db, r, True)
     db.commit()
     return svc.chore_out(r, fam)
 
@@ -228,5 +229,6 @@ def send_back(
     r.last_note = body.note
     r.submitted_at = r.submitted_by_id = None
     chat.system(db, r, f"Sent back: {body.note}")
+    kid_events.chore_decided(db, r, False, body.note)
     db.commit()
     return svc.chore_out(r, get_family(db))

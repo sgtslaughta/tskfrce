@@ -19,6 +19,7 @@ from app.schemas.chore import (
     Repeat,
 )
 from app.services import chores as svc
+from app.services import kid_events
 from app.services.chore_types import other_id
 
 router = APIRouter(tags=["chores"], dependencies=[Depends(require_parent)])
@@ -254,6 +255,7 @@ def add_assignment(chore_id: int, body: AssignmentIn, db: Session = Depends(get_
     db.add(a)
     db.flush()
     svc.make_runs(db, a, day)
+    kid_events.chore_new(db, a)
     db.commit()
     return assignment_out(a)
 
