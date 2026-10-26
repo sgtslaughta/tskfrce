@@ -13,7 +13,8 @@ import { toastFail, toastOk } from '../notify'
 /** A reward's stored icon as a Material Symbols name; none or not a glyph name → `redeem`. */
 export const rewardGlyph = (icon: string | null | undefined) => (icon && /^[a-z0-9_]{1,40}$/.test(icon) ? icon : 'redeem')
 
-function Switch({ id, label, on, onChange }: { id: string; label: string; on: boolean; onChange: (v: boolean) => void }) {
+/** Mockup 02 switch (`rw-sw`: ink track, accent knob). */
+export function Switch({ id, label, on, onChange }: { id: string; label: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
     <div className="pk-switch rw-sw">
       <span id={id}>{label}</span>

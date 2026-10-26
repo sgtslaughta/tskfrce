@@ -18,8 +18,10 @@ import { KidEditor } from './KidEditor'
 import { KidsList } from './KidsList'
 import { KidsTabs, SECTIONS, type Section } from './KidsTabs'
 import { RewardsCatalogue } from './RewardsCatalogue'
+import { RewardsHistory } from './RewardsHistory'
 import { RewardsNav } from './RewardsNav'
 import { RewardsRequests } from './RewardsRequests'
+import { ScreenTimePane } from './ScreenTimePane'
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
 const FIXED: Partial<Record<Section, string>> = { rewards: 'requests' }
@@ -87,6 +89,10 @@ function KidsBody() {
         <RewardsRequests onHistory={() => pick('history')} />
       ) : item === 'catalogue' ? (
         <RewardsCatalogue pick={first(query.pick)} onPick={pickReward} />
+      ) : item === 'screen' ? (
+        <ScreenTimePane />
+      ) : item === 'history' ? (
+        <RewardsHistory />
       ) : null,
     badges: item === 'new' ? <BadgeDetail key="new" kids={kidList} onSelect={select} /> : badge && <BadgeDetail key={badge.id} badge={badge} kids={kidList} onSelect={select} />,
   }

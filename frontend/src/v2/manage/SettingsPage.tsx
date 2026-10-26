@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { useMediaQuery } from '@mantine/hooks'
 import { useRouter } from 'next/router'
@@ -6,7 +7,7 @@ import { InfoBlock } from '@/v2/components/InfoBlock'
 import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useFamily, usePatchFamily } from '@/v2/hooks/useFamily'
-import { FamilyCard, GifsCard, ScreenTimeCard } from './FamilyCards'
+import { FamilyCard, GifsCard } from './FamilyCards'
 import { HoursSection } from './HoursSection'
 import { InviteSection } from './InviteSection'
 import { ParentsList } from './ParentsList'
@@ -15,10 +16,9 @@ import { KidPushPane } from './KidPushPane'
 import { AppearancePane } from './AppearancePane'
 import { toastFail, toastOk } from '@/v2/notify'
 
-type S = 'family' | 'screen' | 'hours' | 'notify' | 'look' | 'gifs' | 'parents'
+type S = 'family' | 'hours' | 'notify' | 'look' | 'gifs' | 'parents'
 const SETTINGS_SECTIONS: SettingsSection<S>[] = [
   { id: 'family', label: 'Family', description: 'Name, time zone, points rules', icon: 'home' },
-  { id: 'screen', label: 'Screen time', description: 'Price and early unlock', icon: 'timer' },
   { id: 'hours', label: 'Hours', description: 'School nights, weekends', icon: 'schedule' },
   { id: 'notify', label: 'Notifications', description: 'Kid phones', icon: 'notifications' },
   { id: 'look', label: 'Appearance', description: 'Accent colour, dark mode', icon: 'palette' },
@@ -29,10 +29,14 @@ const SETTINGS_SECTIONS: SettingsSection<S>[] = [
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
 
 function SettingsBody() {
-  const { query } = useRouter()
+  const { query, replace } = useRouter()
   const family = useFamily()
   const patch = usePatchFamily()
   const want = first(query.section)
+  // Screen time moved to Kids & chores → Rewards (spec §11 erratum 1)
+  useEffect(() => {
+    if (want === 'screen') replace('/kids?section=rewards&item=screen')
+  }, [want, replace])
   const small = useMediaQuery('(max-width: 767px)')
   const valid = SETTINGS_SECTIONS.some((s) => s.id === want)
   const section: S = valid ? (want as S) : 'family'
@@ -44,7 +48,7 @@ function SettingsBody() {
     >
       {family.isError && <ErrorPanel kind="unreachable" error={family.error} onRetry={() => family.refetch()} />}
       <div className="ps-detail">
-        {family.isPending && ['family', 'screen', 'look', 'gifs'].includes(section) && <Skeleton />}
+        {family.isPending && ['family', 'look', 'gifs'].includes(section) && <Skeleton />}
         {section === 'family' && family.data && <FamilyCard fam={family.data} />}
         {section === 'look' && family.data && (
           <AppearancePane
@@ -57,13 +61,6 @@ function SettingsBody() {
             }
           />
         )}
-        {section === 'screen' && (
-          <InfoBlock
-            icon="timer"
-            text="With screen time on, kids can trade points for Wi-Fi time before their chores are done. It never reaches past their allowed hours."
-          />
-        )}
-        {section === 'screen' && family.data && <ScreenTimeCard fam={family.data} />}
         {section === 'gifs' && family.data && <GifsCard fam={family.data} />}
         {section === 'hours' && (
           <InfoBlock
