@@ -144,3 +144,13 @@ def test_redact_decoded_credentials():
     url = "mailto://bob:p%40ss%20word9@gmail.com"
     out = notify._redact("login failed bob p@ss word9 for gmail.com p%40ss%20word9", [url])
     assert "p@ss word9" not in out and "p%40ss" not in out and "bob" not in out
+
+
+def test_deliver_fails_closed_on_malformed_url(monkeypatch):
+    import apprise
+
+    def boom(*a, **k):
+        raise RuntimeError("json://[::1/x")
+
+    monkeypatch.setattr(apprise.Apprise, "notify", boom)
+    assert notify.deliver(["json://[::1/x"], "t", "b") == (False, "It didn't go through.")

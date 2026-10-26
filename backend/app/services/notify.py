@@ -92,9 +92,12 @@ def ping(db, event: str, title: str, body: str | None = None, path: str | None =
 
 def _redact(msg: str, urls: list[str]) -> str:
     """Mask every URL and credential-ish piece of it, then cap at 300 chars."""
+    try:
+        parsed = [(u, urlsplit(u)) for u in urls]
+    except ValueError:
+        return "It didn't go through."
     secrets, always = set(), set()
-    for u in urls:
-        parts = urlsplit(u)
+    for u, parts in parsed:
         for v in (parts.username, parts.password):
             if v:
                 always.update((v, unquote(v)))
