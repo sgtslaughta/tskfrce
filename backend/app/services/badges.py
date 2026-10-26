@@ -166,6 +166,9 @@ def check_badges(db: Session, kid: User, fam: FamilySettings) -> list[BadgeAward
         a.tier, a.seen_by_kid, a.earned_at = tier, False, datetime.utcnow()
         won.append(a)
         inbox.notify(db, [kid.id], "badge_earned", f"New badge: {b.name}", TIERS[tier - 1])
+        inbox.notify_parents(
+            db, "badge_earned", f"{kid.full_name} reached {b.name} · {TIERS[tier - 1]}"
+        )
     db.flush()
     return won
 
