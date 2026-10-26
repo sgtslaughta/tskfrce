@@ -1,5 +1,6 @@
 """Apprise notifications: queued on the session, sent only after commit."""
 
+import logging
 import re
 from concurrent.futures import ThreadPoolExecutor
 from datetime import UTC, datetime
@@ -17,6 +18,8 @@ from app.models.family import get_family
 from app.models.notify import NotifyHeld, NotifyPlace
 
 log = get_logger(__name__)
+# apprise log lines can contain secret URLs: keep them off the root/app handlers
+logging.getLogger("apprise").propagate = False
 
 EVENTS = {
     "chore_ok": "Chore needs OK",
@@ -118,9 +121,9 @@ def _redact(msg: str, urls: list[str]) -> str:
 def deliver(urls: list[str], title: str, body: str) -> tuple[bool, str | None]:
     try:
         ap = apprise.Apprise()
-        for u in urls:
-            ap.add(u)
         with apprise.LogCapture(level=apprise.logging.WARNING) as cap:
+            for u in urls:
+                ap.add(u)
             ok = ap.notify(title=title, body=body, body_format=apprise.NotifyFormat.TEXT)
         if ok:
             return True, None

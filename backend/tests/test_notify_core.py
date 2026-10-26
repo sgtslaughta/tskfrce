@@ -154,3 +154,15 @@ def test_deliver_fails_closed_on_malformed_url(monkeypatch):
 
     monkeypatch.setattr(apprise.Apprise, "notify", boom)
     assert notify.deliver(["json://[::1/x"], "t", "b") == (False, "It didn't go through.")
+
+
+def test_deliver_bad_url_not_on_root_logger(caplog):
+    import logging
+
+    from app.services import notify
+
+    caplog.set_level(logging.DEBUG)
+    ok, err = notify.deliver(["discord://SECRETPW"], "t", "b")
+    assert not ok and "SECRETPW" not in (err or "")
+    assert all("SECRETPW" not in r.getMessage() for r in caplog.records)
+    assert "SECRETPW" not in caplog.text

@@ -1,6 +1,5 @@
 """Parent API: Apprise notification places and quiet-hours settings."""
 
-import logging
 import re
 from urllib.parse import urlsplit
 
@@ -37,14 +36,8 @@ def _check_url(url: str) -> str:
     # length is checked by hand: pydantic's 422 would echo the URL back
     if not 1 <= len(url) <= 1000:
         raise HTTPException(422, BAD_URL)
-    # apprise logs the raw url when add() fails: swallow its logs
-    alog = logging.getLogger("apprise")
-    was, alog.disabled = alog.disabled, True
-    try:
-        ok = apprise.Apprise().add(url)
-    finally:
-        alog.disabled = was
-    if not ok:
+    # apprise logs don't propagate (see services/notify.py), so a failed add stays silent
+    if not apprise.Apprise().add(url):
         raise HTTPException(422, BAD_URL)
     return url
 
