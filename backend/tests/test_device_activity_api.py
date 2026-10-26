@@ -42,7 +42,7 @@ def test_activity_counts_and_feed(client, db, kid, parent_headers):
     j = r.json()
     assert j["counts"] == {"bypass": 1, "locked_tries": 4, "outside_hours": 2, "wrong_pins": 3}
     assert [e["kind"] for e in j["events"]] == ["sign_in", "outside_hours", "locked_try", "bypass"]
-    assert j["events"][0]["kid_name"] == kid.full_name or kid.username
+    assert j["events"][0]["kid_name"] == (kid.full_name or kid.username)
     assert j["events"][0]["reviewed"] is False
     assert [e["kind"] for e in j["history"]] == ["unlocked", "locked"]
     assert len(j["days"]) == 7

@@ -88,10 +88,10 @@ def device_facts(
 def desired_blocked(db: Session, now_utc: datetime) -> list[str]:
     fam = get_family(db)
     now_local = local_now(fam.timezone, _aware_utc(now_utc))
+    devs = db.query(Device).all()
+    pre = Prefetch(db, devs)
     return sorted(
-        d.mac
-        for d in db.query(Device).all()
-        if not is_online(device_facts(db, d, fam, now_utc), now_local)
+        d.mac for d in devs if not is_online(device_facts(db, d, fam, now_utc, pre), now_local)
     )
 
 

@@ -467,7 +467,7 @@ export interface DeviceEvent {
   other_device_id: number | null
   other_device_name: string | null
   minutes: number | null
-  detail: string
+  detail: string | null
   reviewed: boolean
 }
 

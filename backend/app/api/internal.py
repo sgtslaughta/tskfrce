@@ -136,7 +136,7 @@ def devices_seen(body: SeenReport, db: Session = Depends(get_db)) -> dict:
     else:
         old_ip = dev.ip
         _apply(dev, body, now)
-        if old_ip is not None and old_ip != body.ip:
+        if old_ip is not None and body.ip is not None and old_ip != body.ip:
             activity.log(db, dev.id, "address_change", now, detail=f"{old_ip} → {body.ip}")
     if new and dev.hostname:
         _note_new_address(db, dev, now)

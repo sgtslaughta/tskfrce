@@ -1,4 +1,8 @@
-"""Drop time_windows (replaced by hour rules); downgrade rebuilds it from the rules."""
+"""Drop time_windows (replaced by hour rules); downgrade rebuilds it from the rules.
+
+Lossy downgrade: date ranges are dropped (dated rules become permanent windows) and
+`off` rules are dropped (time_windows has no equivalent).
+"""
 
 import sqlalchemy as sa
 from alembic import op
