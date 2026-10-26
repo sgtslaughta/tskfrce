@@ -64,7 +64,7 @@ def test_migration_merges_windows(old_db):
         "SELECT id, name, category, kind, days, everyone FROM hour_rules ORDER BY id"
     ).fetchall()
     assert [r[1:] for r in rules] == [
-        ("Online hours", "other", "allowed", "0123456", 0),
+        ("Online hours · Every day", "other", "allowed", "0123456", 0),
         ("Weekends", "weekend", "free", "45", 0),
         ("School nights", "school_night", "allowed", "01236", 0),
     ]
@@ -165,9 +165,9 @@ def test_mixed_category_windows_become_other(old_db):
     con.close()
     alembic(url, "upgrade", A)
     con = sqlite3.connect(path)
-    assert con.execute("SELECT category FROM hour_rules ORDER BY id").fetchall() == [
-        ("other",),
-        ("other",),
+    assert con.execute("SELECT name, category FROM hour_rules ORDER BY id").fetchall() == [
+        ("Online hours · Sun–Thu", "other"),
+        ("Online hours · Every day", "other"),
     ]
     con.close()
     # Monday 07:30 local must be allowed (not hidden by the school-night rule)
@@ -203,3 +203,19 @@ def test_migrated_kid_and_group_windows_both_restrict(old_db):
     assert not ok(10)  # kid yes, group no
     assert ok(16)
     assert not ok(20, 30)  # kid yes, group closed
+
+
+def test_days_label():
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "mig_a", BACKEND / "alembic" / "versions" / "p0d1e2f3a4b5_devices_hours_v3.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    assert mod.days_label("0123456") == "Every day"
+    assert mod.days_label("01236") == "Sun–Thu"
+    assert mod.days_label("45") == "Fri–Sat"
+    assert mod.days_label("024") == "Mon, Wed, Fri"
+    assert mod.days_label("56") == "Sat–Sun"
+    assert mod.days_label("6") == "Sun"

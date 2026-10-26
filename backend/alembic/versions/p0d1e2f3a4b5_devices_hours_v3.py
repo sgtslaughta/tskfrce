@@ -22,6 +22,22 @@ KINDS = (
 )
 CAT = {frozenset("01236"): "school_night", frozenset("45"): "weekend"}
 NAME = {"school_night": "School nights", "weekend": "Weekends"}
+SHORT = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+SUN_FIRST = (6, 0, 1, 2, 3, 4, 5)
+
+
+def days_label(days: str) -> str:
+    """Same as the frontend daysLabel: "Every day", "Sun–Thu", "Fri–Sat", "Mon, Wed, Fri"."""
+    on = [str(d) in days for d in SUN_FIRST]
+    n = sum(on)
+    if n == 7:
+        return "Every day"
+    if n == 0:
+        return "No days"
+    start = next(i for i in range(7) if on[i] and not on[(i + 6) % 7])
+    if n > 1 and all(on[(start + k) % 7] for k in range(n)):
+        return f"{SHORT[SUN_FIRST[start]]}–{SHORT[SUN_FIRST[(start + n - 1) % 7]]}"
+    return ", ".join(SHORT[d] for d, v in zip(SUN_FIRST, on, strict=True) if v)
 
 
 def _convert(bind) -> None:
@@ -61,7 +77,8 @@ def _convert(bind) -> None:
     for (kind, days, times, category), entry in sorted(
         rules.items(), key=lambda kv: kv[1]["first"]
     ):
-        name = NAME.get(category) or ("Free time" if kind == "free" else "Online hours")
+        base = "Free time" if kind == "free" else "Online hours"
+        name = NAME.get(category) or f"{base} · {days_label(days)}"
         rid = bind.execute(
             sa.text(
                 "INSERT INTO hour_rules (name, category, kind, days, everyone) "
