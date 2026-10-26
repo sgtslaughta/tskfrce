@@ -1,7 +1,8 @@
 import type { HistoryRow } from '@/v2/types'
 
 const cell = (v: string | number | null): string => {
-  const s = v == null ? '' : String(v)
+  let s = v == null ? '' : String(v)
+  if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = `'${s}` // stop spreadsheet formula injection
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
 }
 

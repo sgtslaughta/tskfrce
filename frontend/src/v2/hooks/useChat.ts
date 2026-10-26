@@ -1,4 +1,4 @@
-import { useRef } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { useDebouncedValue } from '@mantine/hooks'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/v2/api'
@@ -215,12 +215,15 @@ const PING_MS = 3_000
 /** Returns a function to call on each keystroke; it POSTs a typing ping at most once per 3 s. */
 export function useTypingPing(threadId: number | null, kid = false): () => void {
   const last = useRef(0)
-  return () => {
+  useEffect(() => {
+    last.current = 0
+  }, [threadId])
+  return useCallback(() => {
     const now = Date.now()
     if (threadId == null || now - last.current < PING_MS) return
     last.current = now
     api(`/chat/threads/${Number(threadId)}/typing`, { method: 'POST', kid }).catch(() => {})
-  }
+  }, [threadId, kid])
 }
 
 /** GET /chat/search?q=: ids of threads with a matching message (min 2 chars, 300 ms debounce). */

@@ -1,8 +1,13 @@
 import { describe, expect, test } from '@jest/globals'
+import { renderHook } from '@testing-library/react'
+import { api } from '@/v2/api'
+import { useTypingPing } from '@/v2/hooks/useChat'
 import { BADGE_GLYPH, badgeGlyph } from '@/v2/badgeGlyphs'
 import { REWARD_GLYPHS } from '@/v2/parent/glyphs'
 import { toCsv } from '@/v2/manage/historyCsv'
 import type { HistoryRow } from '@/v2/types'
+
+jest.mock('@/v2/api', () => ({ api: jest.fn() }))
 
 const CATALOG = ['first_blood', 'task_master', 'workhorse', 'on_fire', 'comeback_kid', 'weekend_warrior', 'variety_pack', 'early_bird', 'speedrunner', 'clutch', 'never_late', 'stacking', 'saver', 'big_spender', 'goal_getter', 'patience_pays', 'time_lord', 'drip']
 const MIGRATION_TARGETS = ['movie', 'icecream', 'bedtime', 'local_pizza', 'restaurant', 'sports_esports', 'park', 'cake', 'toys', 'timer', 'payments', 'menu_book', 'redeem', 'shopping_bag', 'sports_soccer', 'palette', 'music_note', 'pool', 'pedal_bike', 'cookie', 'celebration', 'star']
@@ -40,5 +45,32 @@ describe('toCsv', () => {
     const csv = toCsv([row({ note: "let's talk, Sat" }), row({ note: 'say "hi"' })])
     expect(csv).toContain('"let\'s talk, Sat"')
     expect(csv).toContain('"say ""hi"""')
+  })
+})
+
+describe('toCsv formula safety', () => {
+  test('neutralises leading formula chars in text, keeps numbers', () => {
+    const csv = toCsv([row({ note: '=1+1', name: '-cmd', cost: -200 })])
+    expect(csv).toContain("'=1+1")
+    expect(csv).toContain("'-cmd")
+    expect(csv).toContain(',-200,')
+  })
+})
+
+describe('useTypingPing', () => {
+  test('throttles to one POST per 3 s and resets on thread change', () => {
+    jest.useFakeTimers()
+    const post = api as unknown as jest.Mock
+    post.mockClear(); post.mockResolvedValue(null)
+    const { result, rerender } = renderHook(({ id }) => useTypingPing(id), { initialProps: { id: 1 } })
+    result.current(); result.current(); result.current()
+    expect(post).toHaveBeenCalledTimes(1)
+    jest.advanceTimersByTime(3100)
+    result.current()
+    expect(post).toHaveBeenCalledTimes(2)
+    rerender({ id: 2 })
+    result.current()
+    expect(post).toHaveBeenCalledTimes(3)
+    jest.useRealTimers()
   })
 })
