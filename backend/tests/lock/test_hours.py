@@ -32,9 +32,22 @@ def w(s, e, days=ALL):
     return Window(frozenset(int(c) for c in days), time.fromisoformat(s), time.fromisoformat(e))
 
 
+def spans(r):
+    """Allowed sets as tuples of (start, end) strings, for comparing without day pinning."""
+    return tuple(
+        tuple((w.start.strftime("%H:%M"), w.end.strftime("%H:%M")) for w in ws)
+        for ws in r.allowed_sets
+    )
+
+
+def t(rule_):
+    return tuple((w.start.strftime("%H:%M"), w.end.strftime("%H:%M")) for w in rule_.windows)
+
+
 def test_family_holiday_beats_kid_school_night():
+    thu = date(2026, 12, 24)  # weekday 3: inside the school-night days
     holiday = rule(
-        1, category="holiday", times=(("08:00", "23:00"),), everyone=True, start=D, end=D
+        1, category="holiday", times=(("08:00", "23:00"),), everyone=True, start=thu, end=thu
     )
     school = rule(
         2,
@@ -42,11 +55,12 @@ def test_family_holiday_beats_kid_school_night():
         days="01236",
         times=(("15:00", "20:00"),),
         kids=[1],
-        start=D,
-        end=D,
+        start=thu,
+        end=thu,
     )
-    r = resolve([holiday, school], {1}, set(), D)
-    assert r.allowed_sets == (holiday.windows,)
+    assert hours.active_on(school, thu)
+    r = resolve([holiday, school], {1}, set(), thu)
+    assert spans(r) == (t(holiday),)
 
 
 def test_summer_beats_everyday():
@@ -54,16 +68,16 @@ def test_summer_beats_everyday():
     weekend = rule(2, category="weekend", days="45", times=(("10:00", "12:00"),), kids=[1])
     other = rule(3, kids=[1], times=(("13:00", "14:00"),))
     r = resolve([weekend, other, summer], {1}, set(), D)
-    assert r.allowed_sets == (summer.windows,)
+    assert spans(r) == (t(summer),)
 
 
 def test_kid_beats_group_beats_everyone_same_tier():
     kid = rule(1, category="weekend", times=(("10:00", "11:00"),), kids=[1])
     grp = rule(2, category="weekend", times=(("11:00", "12:00"),), groups=[5])
     every = rule(3, category="weekend", times=(("12:00", "13:00"),), everyone=True)
-    assert resolve([every, grp, kid], {1}, {5}, D).allowed_sets == (kid.windows,)
-    assert resolve([every, grp], {1}, {5}, D).allowed_sets == (grp.windows,)
-    assert resolve([every], {1}, {5}, D).allowed_sets == (every.windows,)
+    assert spans(resolve([every, grp, kid], {1}, {5}, D)) == (t(kid),)
+    assert spans(resolve([every, grp], {1}, {5}, D)) == (t(grp),)
+    assert spans(resolve([every], {1}, {5}, D)) == (t(every),)
 
 
 def test_holiday_beats_school_night():
@@ -71,32 +85,32 @@ def test_holiday_beats_school_night():
     holiday = rule(
         2, category="holiday", times=(("08:00", "23:00"),), everyone=True, start=D, end=D
     )
-    assert resolve([school, holiday], {1}, set(), D).allowed_sets == (holiday.windows,)
+    assert spans(resolve([school, holiday], {1}, set(), D)) == (t(holiday),)
 
 
 def test_group_below_kid():
     kid = rule(1, times=(("10:00", "11:00"),), kids=[1])
     grp = rule(2, times=(("11:00", "12:00"),), groups=[5])
-    assert resolve([grp, kid], {1}, {5}, D).allowed_sets == (kid.windows,)
+    assert spans(resolve([grp, kid], {1}, {5}, D)) == (t(kid),)
 
 
 def test_two_owners_intersect():
     a = rule(1, times=(("15:00", "20:00"),), kids=[1])
     b = rule(2, times=(("17:00", "22:00"),), kids=[2])
-    assert resolve([a, b], {1, 2}, set(), D).allowed_sets == (a.windows, b.windows)
+    assert spans(resolve([a, b], {1, 2}, set(), D)) == (t(a), t(b))
 
 
 def test_off_rule_does_not_replace_allowed():
     fam = rule(1, times=(("08:00", "20:00"),), everyone=True)
     off = rule(2, kind="off", times=(("16:00", "18:00"),), kids=[1])
     r = resolve([fam, off], {1}, set(), D)
-    assert r.allowed_sets == (fam.windows,)
-    assert r.off == off.windows
+    assert spans(r) == (t(fam),)
+    assert [(w.start.hour, w.end.hour) for w in r.off] == [(16, 18)]
 
 
 def test_free_adds_on_top():
     free = rule(1, kind="free", times=(("10:00", "12:00"),), kids=[1])
-    assert resolve([free], {1}, set(), D).free == free.windows
+    assert [(w.start.hour, w.end.hour) for w in resolve([free], {1}, set(), D).free] == [(10, 12)]
 
 
 def test_dates_inclusive():
@@ -141,3 +155,47 @@ def test_today_category_lowest_rank_of_everyone_allowed():
     ]
     assert hours.today_category(rules, D) == "weekend"
     assert hours.today_category([], D) is None
+
+
+MON = date(2026, 12, 21)
+SUN = date(2026, 12, 20)
+SAT = date(2026, 12, 26)
+
+
+def blocked_at(r, now):
+    return not hours._allowing(r.allowed_sets, r.off, now)
+
+
+def test_overnight_tail_survives_midnight():
+    sun = rule(1, days="6", times=(("20:00", "07:00"),), kids=[1])
+    r = resolve([sun], {1}, set(), MON)
+    assert not blocked_at(r, datetime(2026, 12, 21, 1, 0))
+    assert blocked_at(r, datetime(2026, 12, 21, 8, 0))
+
+
+def test_no_rule_today_fails_closed():
+    wk = rule(1, days="0123", times=(("08:00", "20:00"),), kids=[1])
+    r = resolve([wk], {1}, set(), SAT)
+    assert () in r.allowed_sets
+    assert blocked_at(r, datetime(2026, 12, 26, 12, 0))
+
+
+def test_unrestricted_without_any_rule():
+    assert resolve([], {1}, set(), SAT).allowed_sets == ()
+
+
+def test_shared_device_resolved_per_owner():
+    thu = date(2026, 12, 24)
+    a = rule(1, category="holiday", times=(("08:00", "23:00"),), kids=[1], start=thu, end=thu)
+    fam = rule(2, category="school_night", days="01236", times=(("15:00", "20:00"),), everyone=True)
+    r = resolve([a, fam], {1, 2}, set(), thu)
+    assert spans(r) == ((("08:00", "23:00"),), (("15:00", "20:00"),))
+    assert blocked_at(r, datetime(2026, 12, 24, 10, 0))
+    assert not blocked_at(r, datetime(2026, 12, 24, 16, 0))
+
+
+def test_own_rule_for_one_owner_does_not_free_the_other():
+    a = rule(1, times=(("08:00", "23:00"),), kids=[1])
+    fam = rule(2, times=(("15:00", "20:00"),), everyone=True)
+    r = resolve([a, fam], {1, 2}, set(), D)
+    assert blocked_at(r, datetime(2026, 12, 25, 10, 0))  # B only has 15-20

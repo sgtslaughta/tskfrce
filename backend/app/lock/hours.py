@@ -62,48 +62,87 @@ def load(db: Session) -> list[RuleView]:
     return out
 
 
-def active_on(r: RuleView, d: date) -> bool:
-    if d.weekday() not in r.days:
-        return False
+def in_range(r: RuleView, d: date) -> bool:
     return (r.start_date is None or d >= r.start_date) and (r.end_date is None or d <= r.end_date)
 
 
-def resolve(rules, owner_ids: set[int], group_ids: set[int], d: date) -> Resolved:
-    matched = []
-    for r in rules:
-        if not active_on(r, d):
-            continue
-        keys = {("kid", k) for k in r.kid_ids & owner_ids} | {
-            ("group", g) for g in r.group_ids & group_ids
-        }
-        if r.everyone and owner_ids:
+def active_on(r: RuleView, d: date) -> bool:
+    return d.weekday() in r.days and in_range(r, d)
+
+
+def _pin(r: RuleView, day: date, overnight_only: bool) -> tuple[Window, ...]:
+    """Windows pinned to one weekday: that day's evening, or only the next morning's tail."""
+    wd = frozenset({day.weekday()})
+    return tuple(
+        Window(wd, w.start, w.end) for w in r.windows if not overnight_only or w.start > w.end
+    )
+
+
+def _rank(r: RuleView, keys: set) -> tuple[int, int, int]:
+    t = 0 if any(k[0] == "kid" for k in keys) else 1 if any(k[0] == "group" for k in keys) else 2
+    tier = 0 if r.category in ("holiday", "summer") else 1  # date-range rules always win
+    return (tier, t, CATEGORY_RANK[r.category])
+
+
+def _keys(r: RuleView, p: tuple[str, int], group_ids: set[int]) -> set:
+    keys = {("group", g) for g in r.group_ids & group_ids}
+    if p[0] == "kid":
+        if p[1] in r.kid_ids:
+            keys.add(("kid", p[1]))
+        if r.everyone:
             keys.add(("all", 0))
-        if keys:
-            matched.append((r, keys))
-    free = tuple(w for r, _ in matched if r.kind == "free" for w in r.windows)
-    off = tuple(w for r, _ in matched if r.kind == "off" for w in r.windows)
-    allowed = [(r, k) for r, k in matched if r.kind == "allowed"]
+    return keys
 
-    def rank(r, keys):
-        t = (
-            0
-            if any(k[0] == "kid" for k in keys)
-            else 1
-            if any(k[0] == "group" for k in keys)
-            else 2
-        )
-        tier = 0 if r.category in ("holiday", "summer") else 1  # date-range rules always win
-        return (tier, t, CATEGORY_RANK[r.category])
 
-    if not allowed:
-        return Resolved((), free, off)
-    best = min(rank(r, k) for r, k in allowed)
-    sets: dict = {}
-    for r, keys in allowed:
-        if rank(r, keys) == best:
+def _best(cands: list) -> list:
+    if not cands:
+        return []
+    best = min(_rank(r, k) for r, k in cands)
+    return [(r, k) for r, k in cands if _rank(r, k) == best]
+
+
+def resolve(rules, owner_ids: set[int], group_ids: set[int], d: date) -> Resolved:
+    """Hours for a device on local date `d`, resolved per owner and intersected.
+
+    Fails closed: a principal with rules in range but none for today is blocked all day.
+    """
+    # ponytail: rules are picked by local date; an overnight tail follows the previous day's pick
+    y = d - timedelta(days=1)
+    principals = (
+        [("kid", k) for k in sorted(owner_ids)]
+        if owner_ids
+        else [("device", 0)]
+        if group_ids
+        else []
+    )
+    sets: list[tuple[Window, ...]] = []
+    free: list[Window] = []
+    off: list[Window] = []
+    for p in principals:
+        mine = [(r, k) for r in rules if (k := _keys(r, p, group_ids))]
+        for r, _ in mine:
+            if r.kind in ("free", "off"):
+                out = free if r.kind == "free" else off
+                if active_on(r, d):
+                    out.extend(_pin(r, d, False))
+                if active_on(r, y):
+                    out.extend(_pin(r, y, True))
+        allowed = [(r, k) for r, k in mine if r.kind == "allowed"]
+        if not any(in_range(r, d) or in_range(r, y) for r, _ in allowed):
+            continue  # no hours set for this principal: unrestricted
+        today = _best([(r, k) for r, k in allowed if active_on(r, d)])
+        tail = [
+            w
+            for r, _ in _best([(r, k) for r, k in allowed if active_on(r, y)])
+            for w in _pin(r, y, True)
+        ]
+        by_key: dict = {}
+        for r, keys in today:
             for k in keys:
-                sets.setdefault(k, []).extend(r.windows)
-    return Resolved(tuple(tuple(v) for v in sets.values()), free, off)
+                by_key.setdefault(k, []).extend(_pin(r, d, False))
+        mine_sets = [tuple(v + tail) for v in by_key.values()] or [tuple(tail)]
+        sets.extend(mine_sets)
+    return Resolved(tuple(sets), tuple(free), tuple(off))
 
 
 def _allowing(allowed_sets, off, t: datetime) -> bool:
