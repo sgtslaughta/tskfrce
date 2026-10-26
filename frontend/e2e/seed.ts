@@ -1,6 +1,9 @@
 import { request, type APIRequestContext, type Page } from '@playwright/test'
 
-export const PARENT = { username: 'labparent', password: 'labpassword1' }
+export const PARENT = {
+  username: process.env.E2E_PARENT_USER ?? 'labparent',
+  password: process.env.E2E_PARENT_PASSWORD ?? 'labpassword1',
+}
 const BASE = process.env.E2E_BASE_URL ?? 'http://10.99.0.5:3000'
 
 /** Log in through the form (the same path a parent takes). */
