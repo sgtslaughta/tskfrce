@@ -51,12 +51,15 @@ export interface Group {
 }
 
 /** GET /kids item */
+export type AgeGroup = 'little' | 'kid' | 'teen'
+
 export interface Kid {
   id: number
   full_name: string | null
   username: string
   avatar: string | null
   has_pin: boolean
+  age_group: AgeGroup
 }
 
 /** GET /windows item. days: digits 0 (Mon)..6 (Sun); start/end "HH:MM". */
@@ -139,6 +142,8 @@ export interface TodayChore {
   /** points taken off, total */
   deducted?: number
   can_move?: boolean
+  /** kid hasn't opened it yet (kid view) */
+  new?: boolean
 }
 
 /** GET /api/v1/chores/{run_id} - run detail with steps and photos */
@@ -271,6 +276,7 @@ export interface KidStep {
   due_at?: string | null
   after_previous?: boolean
   locked?: boolean
+  done_at?: string | null
 }
 
 /** GET /kid/today */
@@ -292,6 +298,18 @@ export interface KidToday {
   progress?: Progress
   /** family time zone, for step deadlines (kids can't read /family) */
   timezone?: string
+  age_group: AgeGroup
+  /** UTC ISO when the kid next locks; null = not today */
+  locks_at: string | null
+}
+
+/** GET /kids/{id}/push */
+export interface KidPush {
+  enabled: boolean
+  server: string
+  topic: string
+  link: string
+  qr_svg: string
 }
 
 /** GET /kid/rewards */

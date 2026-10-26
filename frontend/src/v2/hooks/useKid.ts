@@ -149,3 +149,15 @@ export function useSendNote() {
     onSettled: () => refetch(qc),
   })
 }
+
+/** Mark a chore as opened (clears "New"). Silent no-op while previewing. */
+export function useMarkSeen() {
+  const qc = useQueryClient()
+  const as = useAsKid()
+  return useMutation({
+    mutationFn: async (id: number) => {
+      if (!as) await api(`/kid/chores/${id}/seen`, { method: 'POST', kid: true })
+    },
+    onSettled: () => refetch(qc),
+  })
+}

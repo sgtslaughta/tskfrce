@@ -1,7 +1,11 @@
 import { createContext, useContext } from 'react'
 import { ApiError, type ApiInit } from '../api'
 
-export const PREVIEW_MSG = 'Preview only — log in as the kid to do this.'
+let previewName: string | null = null
+export const setPreviewName = (name: string | null) => {
+  previewName = name
+}
+export const previewMsg = (): string => `Preview only. Log in as ${previewName ?? 'the kid'} to do this.`
 
 /** Kid id a parent is previewing, or null on the real kid screen. */
 const Preview = createContext<number | null>(null)
@@ -12,4 +16,4 @@ export const useAsKid = () => useContext(Preview)
 export const kidInit = (as: number | null): ApiInit => (as ? { asKid: as } : { kid: true })
 
 /** Mutation body that refuses (and toasts via onError) while previewing. */
-export const blocked = (): Promise<never> => Promise.reject(new ApiError(403, PREVIEW_MSG))
+export const blocked = (): Promise<never> => Promise.reject(new ApiError(403, previewMsg()))

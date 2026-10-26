@@ -1,13 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/v2/api'
 import { toastFail, toastOk } from '@/v2/notify'
-import type { Kid } from '@/v2/types'
+import type { AgeGroup, Kid } from '@/v2/types'
 
 export interface KidBody {
   full_name?: string
   avatar?: string
   pin?: string
   clear_pin?: boolean
+  age_group?: AgeGroup
 }
 
 export const useKids = () => useQuery({ queryKey: ['kids'], queryFn: () => api<Kid[]>('/kids') })
