@@ -10,6 +10,8 @@ import time
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
@@ -226,6 +228,15 @@ async def not_found_handler(request: Request, exc: Exception) -> JSONResponse:
     if not detail or detail == "Not Found":
         detail = "Endpoint not found"
     return JSONResponse(status_code=404, content={"detail": detail})
+
+
+@fastapi_app.exception_handler(RequestValidationError)
+async def validation_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Notify bodies hold secret URLs: never echo `input`/`ctx` back in a 422."""
+    if not request.url.path.startswith("/api/v1/notify"):
+        return await request_validation_exception_handler(request, exc)
+    errs = [{k: v for k, v in e.items() if k not in ("input", "ctx")} for e in exc.errors()]
+    return JSONResponse(status_code=422, content={"detail": errs})
 
 
 @fastapi_app.exception_handler(OperationalError)

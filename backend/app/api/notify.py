@@ -1,5 +1,9 @@
 """Parent API: Apprise notification places and quiet-hours settings."""
 
+import logging
+import re
+from urllib.parse import urlsplit
+
 import apprise
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field, field_validator
@@ -8,8 +12,10 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db, require_parent
 from app.core.config import settings
 from app.core.crypto import seal, unseal
+from app.core.ratelimit import limit
 from app.models.family import get_family
 from app.models.notify import NotifyPlace
+from app.models.user import User
 from app.schemas.lock import _hhmm
 from app.services import notify
 
@@ -29,7 +35,16 @@ def mask(url: str) -> str:
 
 def _check_url(url: str) -> str:
     # length is checked by hand: pydantic's 422 would echo the URL back
-    if not 1 <= len(url) <= 1000 or not apprise.Apprise().add(url):
+    if not 1 <= len(url) <= 1000:
+        raise HTTPException(422, BAD_URL)
+    # apprise logs the raw url when add() fails: swallow its logs
+    alog = logging.getLogger("apprise")
+    was, alog.disabled = alog.disabled, True
+    try:
+        ok = apprise.Apprise().add(url)
+    finally:
+        alog.disabled = was
+    if not ok:
         raise HTTPException(422, BAD_URL)
     return url
 
@@ -117,7 +132,8 @@ def delete_place(place_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/places/{place_id}/test")
-def test_place(place_id: int, db: Session = Depends(get_db)):
+def test_place(place_id: int, db: Session = Depends(get_db), user: User = Depends(require_parent)):
+    limit(f"notify-test:{user.id}", 5, 60)
     p = _get(db, place_id)
     try:
         url = unseal(p.url_enc)
@@ -127,6 +143,15 @@ def test_place(place_id: int, db: Session = Depends(get_db)):
         [url], "t@sk4ce test", "If you can read this, pings will reach this place."
     )
     return {"ok": ok, "error": error}
+
+
+def _addr_ok(addr: str) -> bool:
+    if not addr.startswith(("http://", "https://")) or re.search(r"\s", addr):
+        return False
+    try:
+        return bool(urlsplit(addr).netloc)
+    except ValueError:
+        return False
 
 
 class SettingsPatch(BaseModel):
@@ -165,7 +190,7 @@ def patch_settings(body: SettingsPatch, db: Session = Depends(get_db)):
     data = body.model_dump(exclude_unset=True)
     if "app_address" in data:
         addr = data["app_address"]
-        if addr and not addr.startswith(("http://", "https://")):
+        if addr and not _addr_ok(addr):
             raise HTTPException(422, "Start the address with http:// or https://.")
         data["app_address"] = addr.rstrip("/") if addr else None
     for k, v in data.items():

@@ -90,3 +90,75 @@ def test_settings(client, parent_headers):
     assert r.json()["app_address"] is None
     r = client.patch("/api/v1/notify/settings", json={"quiet_start": "25:99"}, headers=h)
     assert r.status_code == 422
+
+
+def test_422_never_echoes_url(client, parent_headers):
+    r = client.post(
+        "/api/v1/notify/places",
+        json={"url": "json://abcdef:SECRETPW@localhost/x"},
+        headers=parent_headers,
+    )
+    assert r.status_code == 422 and "SECRETPW" not in r.text and "input" not in r.text
+    pid = _mk(client, parent_headers).json()["id"]
+    r = client.patch(
+        f"/api/v1/notify/places/{pid}",
+        json={"url": "json://abcdef:SECRETPW@localhost/x", "enabled": {"x": "SECRETPW"}},
+        headers=parent_headers,
+    )
+    assert r.status_code == 422 and "SECRETPW" not in r.text
+
+
+def test_other_422s_keep_default_shape(client, parent_headers):
+    r = client.post("/api/v1/chores", json={}, headers=parent_headers)
+    assert r.status_code == 422 and "input" in r.text
+
+
+def test_failed_add_not_logged(client, parent_headers, caplog):
+    import logging
+
+    caplog.set_level(logging.DEBUG)
+    r = client.post(
+        "/api/v1/notify/places",
+        json={"name": "x", "url": "discord://SECRETPW"},
+        headers=parent_headers,
+    )
+    assert r.status_code == 422
+    assert "SECRETPW" not in caplog.text and "SECRETPW" not in r.text
+
+
+def test_app_address_strict(client, parent_headers):
+    for bad in ("http://", "https:////", "http://   ", "http://a b"):
+        r = client.patch(
+            "/api/v1/notify/settings", json={"app_address": bad}, headers=parent_headers
+        )
+        assert r.status_code == 422, bad
+        assert r.json()["detail"] == "Start the address with http:// or https://."
+
+
+def test_test_endpoint_rate_limited(client, parent_headers, monkeypatch):
+    pid = _mk(client, parent_headers).json()["id"]
+    monkeypatch.setattr(notify, "deliver", lambda u, t, b: (True, None))
+    codes = [
+        client.post(f"/api/v1/notify/places/{pid}/test", headers=parent_headers).status_code
+        for _ in range(6)
+    ]
+    assert codes == [200] * 5 + [429]
+
+
+def test_kid_403_everywhere(client, parent_headers, kid_headers):
+    pid = _mk(client, parent_headers).json()["id"]
+    b = "/api/v1/notify"
+    calls = [
+        ("get", f"{b}/places", None),
+        ("post", f"{b}/places", {"name": "x", "url": U}),
+        ("patch", f"{b}/places/{pid}", {"name": "y"}),
+        ("delete", f"{b}/places/{pid}", None),
+        ("post", f"{b}/places/{pid}/test", None),
+        ("get", f"{b}/settings", None),
+        ("patch", f"{b}/settings", {"quiet_security": False}),
+    ]
+    for m, u, j in calls:
+        assert (
+            getattr(client, m)(u, headers=kid_headers, **({"json": j} if j else {})).status_code
+            == 403
+        ), (m, u)
