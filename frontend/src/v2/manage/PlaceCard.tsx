@@ -23,7 +23,7 @@ export function PlaceCard({ place, events }: { place: Place; events: NotifyEvent
     })
 
   return (
-    <section className="pn-card" aria-label={place.name}>
+    <section className="pn-card" aria-label={place.name} data-off={!place.enabled || undefined}>
       <h3 className="pn-h">
         <Icon name="forum" size={18} />
         <span className="pn-name">{place.name}</span>

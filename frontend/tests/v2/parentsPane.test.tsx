@@ -63,4 +63,15 @@ describe('ParentsPane', () => {
     expect(await screen.findByLabelText('Invite link')).toHaveValue(`${window.location.origin}/register?token=tok`)
     expect(screen.getByText('The link works once and expires in 24 hours.')).toBeInTheDocument()
   })
+
+  test('a fresh invite reads 24 h and Create is off until the name changes', async () => {
+    serve([{ jti: 'j1', username: 'grandma', expires_in: 86397 }])
+    wrap()
+    expect(await screen.findByText('Invite sent · expires in 24 h')).toBeInTheDocument()
+    await userEvent.click(await screen.findByRole('button', { name: 'Invite a parent' }))
+    await userEvent.type(screen.getByLabelText('Their username'), 'grandma')
+    await userEvent.click(screen.getByRole('button', { name: 'Create invite link' }))
+    await screen.findByLabelText('Invite link')
+    expect(screen.getByRole('button', { name: 'Create invite link' })).toBeDisabled()
+  })
 })

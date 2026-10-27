@@ -69,7 +69,7 @@ export function List({ onGo, sheet, page }: { onGo: () => void; sheet?: boolean;
     [filtered],
   )
   const counts: Record<FilterKind, number> = useMemo(
-    () => ({ all: items.filter((n) => !n.read || isToday(n.created_at)).length, 'needs-you': items.filter(isNeedsYou).length, alerts: items.filter(isAlert).length }),
+    () => ({ all: items.length, 'needs-you': items.filter(isNeedsYou).length, alerts: items.filter(isAlert).length }),
     [items],
   )
 
@@ -108,10 +108,10 @@ export function List({ onGo, sheet, page }: { onGo: () => void; sheet?: boolean;
   }
 
   /** Mark read, close the bell and go to `to`. */
-  const goTo = (n: InboxItem, to: string | null) => {
+  const goTo = (n: InboxItem, to: string | null): Promise<unknown> => {
     markRead(n)
     onGo()
-    if (to) void router.push(to)
+    return to ? router.push(to) : Promise.resolve()
   }
   const row = (n: InboxItem, today: boolean) => {
     const sev = severity(n)
@@ -169,8 +169,12 @@ export function List({ onGo, sheet, page }: { onGo: () => void; sheet?: boolean;
         ) : (
           <EmptyState
             icon="notifications_off"
-            title="No notifications"
-            body="We'll ping you when a chore needs your OK."
+            title={filter === 'alerts' ? 'No alerts' : 'No notifications'}
+            body={
+              filter === 'alerts'
+                ? "We'll tell you if a device resists or the box goes offline."
+                : "We'll ping you when a chore needs your OK."
+            }
             actions={empty && !page ? [{ icon: 'tune', label: 'Notification settings', href: SETTINGS }] : []}
           />
         )

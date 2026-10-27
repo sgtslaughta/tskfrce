@@ -321,10 +321,12 @@ html[data-look='parent'] .pn-addr .f-input.f-input { font: 12.5px ui-monospace, 
 /* Settings > Family / Appearance / GIFs / Parents (mockup 02 #sp-family, #sp-look, #sp-gifs, #sp-parents) */
 [data-look='parent'] .pn-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 [data-look='parent'] .pn-fields .mantine-InputWrapper-label { color: var(--p-sub); font-size: 12px; font-weight: 600; }
+[data-look='parent'] .pn-link { color: var(--p-ink); text-decoration: underline; }
+[data-look='parent'] .pn-card[data-off] > :not(.pn-h) { opacity: 0.55; }
 [data-look='parent'] .pn-note { margin: 8px 0 0; }
 [data-look='parent'] .pn-row { display: flex; flex-wrap: wrap; gap: 8px; }
 [data-look='parent'] .pn-cap { margin-top: 6px; padding-top: 10px; border-top: 1px solid var(--p-line); color: var(--p-sub); font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-[data-look='parent'] .pn-swatches { display: flex; flex-wrap: wrap; gap: 28px 16px; padding-bottom: 18px; }
+[data-look='parent'] .pn-swatches { display: flex; flex-wrap: wrap; gap: 28px 24px; padding-bottom: 18px; }
 [data-look='parent'] .pn-swatch { position: relative; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 11px; cursor: pointer; }
 [data-look='parent'] .pn-swatch[aria-pressed='true'] { outline: 2px solid var(--p-ink); outline-offset: 2px; }
 [data-look='parent'] .pn-swatch:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }

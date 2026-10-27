@@ -9,11 +9,11 @@ export interface SettingsSection<S extends string = string> {
   icon: string
 }
 
-/** Settings list column: one card per section (icon tile, name, one-liner, chevron). */
-export function SettingsList<S extends string>({ sections, section }: { sections: SettingsSection<S>[]; section?: S }) {
+/** Settings list column: one card per section (icon tile, name, one-liner, chevron). `bare`: the page header already names it. */
+export function SettingsList<S extends string>({ sections, section, bare }: { sections: SettingsSection<S>[]; section?: S; bare?: boolean }) {
   return (
     <>
-      <ListHeader title="Settings" />
+      {!bare && <ListHeader title="Settings" />}
       <nav className="pk-items" aria-label="Settings sections">
         {sections.map((s) => (
           <Link

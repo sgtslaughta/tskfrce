@@ -46,7 +46,7 @@
 }
 
 .p-bell-list[data-sheet] { max-height: none; height: calc(100dvh - 84px); }
-.p-bell-list[data-page] { max-height: none; max-width: 720px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 16px; }
+.p-bell-list[data-page] { max-height: none; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 16px; }
 
 .p-bell-head {
   display: flex;

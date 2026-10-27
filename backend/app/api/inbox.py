@@ -110,6 +110,7 @@ def _enrich(db: Session, rows: list[Notification]) -> list[dict]:
         elif n.device_id in devs:
             owners = sorted(o_.id for o_ in devs[n.device_id].owners)
             o["kid_id"] = owners[0] if owners else None
+            o["pending"] = n.kind == "new_device" and devs[n.device_id].status == "unassigned"
     ids = {o["kid_id"] for o in out if o["kid_id"]}
     names = (
         {i: nm for i, nm in db.query(User.id, User.full_name).filter(User.id.in_(ids))}

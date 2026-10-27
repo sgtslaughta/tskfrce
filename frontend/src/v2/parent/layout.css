@@ -354,6 +354,11 @@
   border-top: none;
 }
 
+[data-look='parent'] .p-more-section > .p-more-link {
+  border: 1px solid var(--p-line);
+  border-radius: 12px;
+}
+
 [data-look='parent'] .p-more-link {
   display: flex;
   align-items: center;

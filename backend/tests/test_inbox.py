@@ -182,3 +182,16 @@ def test_two_notes_on_one_run_count_once(client, db, parent, kid, parent_headers
     items = client.get(N, headers=parent_headers).json()["items"]
     notes = [i for i in items if i["kind"] == "chore_note"]
     assert len(notes) == 2 and [i["pending"] for i in notes] == [True, False]
+
+
+def test_new_device_pending_until_assigned(client, db, parent, kid, parent_headers):
+    d = Device(mac="aa:bb:cc:dd:ee:66", name="Y", status="unassigned")
+    db.add(d)
+    db.commit()
+    db.add(Notification(user_id=parent.id, kind="new_device", title="t", device_id=d.id))
+    db.commit()
+    get = lambda: client.get(N, headers=parent_headers).json()["items"][0]["pending"]  # noqa: E731
+    assert get() is True
+    d.status = "assigned"
+    db.commit()
+    assert get() is False

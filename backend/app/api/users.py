@@ -127,6 +127,11 @@ async def invite_parent(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="That username is taken. Pick another one.",
         )
+    for old in db.query(PendingInvite).filter(PendingInvite.username == body.username).all():
+        # a new link replaces the live one for the same name
+        if db.get(UsedInvite, old.jti) is None:
+            db.add(UsedInvite(jti=old.jti))
+        db.delete(old)
     auth = AuthService(db)
     token = auth.create_invite_token(body.username, current_user.id)
     jti = auth.read_invite(token)[1]
@@ -150,7 +155,8 @@ async def list_invites(
     now = datetime.utcnow()
     db.query(PendingInvite).filter(PendingInvite.expires_at <= now).delete()
     db.commit()
-    rows = db.query(PendingInvite).order_by(PendingInvite.created_at).all()
+    taken = db.query(User.username).filter(User.username == PendingInvite.username).exists()
+    rows = db.query(PendingInvite).filter(~taken).order_by(PendingInvite.created_at).all()
     return [
         {
             "jti": r.jti,

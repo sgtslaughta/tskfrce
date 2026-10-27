@@ -6,7 +6,7 @@ import { Icon } from '@/v2/parent/Icon'
 import { toastFail } from '../notify'
 import { PaneCard, PaneHead } from './PaneParts'
 
-const left = (s: number) => (s >= 3600 ? `${Math.floor(s / 3600)} h` : `${Math.max(1, Math.ceil(s / 60))} min`)
+const left = (s: number) => (s >= 3600 ? `${Math.ceil(s / 3600)} h` : `${Math.max(1, Math.ceil(s / 60))} min`)
 
 /** A link to copy, with its one-line note. */
 function LinkRow({ label, url, note }: { label: string; url: string; note: string }) {
@@ -44,7 +44,7 @@ function InviteCard({ onDone }: { onDone: () => void }) {
       >
         <TextInput label="Their username" value={username} onChange={(e) => setUsername(e.currentTarget.value)} />
         <div className="pn-row">
-          <button type="submit" className="p-btn" data-variant="accent" disabled={name.length < 3 || invite.isPending}>
+          <button type="submit" className="p-btn" data-variant="accent" disabled={name.length < 3 || invite.isPending || (!!invite.data && invite.variables === name)}>
             Create invite link
           </button>
           <button type="button" className="p-btn" onClick={onDone}>

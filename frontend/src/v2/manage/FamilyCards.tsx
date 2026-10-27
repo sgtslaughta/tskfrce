@@ -28,6 +28,7 @@ function Pane({ title, sub, fam, children }: { title: string; sub: string; fam: 
     Object.entries(draft).filter(([k, v]) => v !== (fam as Fields)[k as keyof Fields]),
   ) as Partial<Fields>
   const dirty = Object.keys(changed).length > 0
+  const blankName = !val('name').trim()
   const once = useSingleFlight()
   const save = () =>
     once(() =>
@@ -46,12 +47,12 @@ function Pane({ title, sub, fam, children }: { title: string; sub: string; fam: 
         className="pn"
         onSubmit={(e) => {
           e.preventDefault() // Enter in a field saves, once
-          if (dirty && !patch.isPending) save()
+          if (dirty && !blankName && !patch.isPending) save()
         }}
       >
         {children({ val, set })}
         <div>
-          <button type="submit" className="p-btn" data-variant="accent" disabled={!dirty || patch.isPending} aria-busy={patch.isPending}>
+          <button type="submit" className="p-btn" data-variant="accent" disabled={!dirty || blankName || patch.isPending} aria-busy={patch.isPending}>
             Save settings
           </button>
         </div>
@@ -73,7 +74,12 @@ export function FamilyCard({ fam }: { fam: Family }) {
         <>
           <PaneCard icon="home" title="Household">
             <div className="pn-fields">
-              <TextInput label="Family name" value={val('name')} onChange={(e) => set({ name: e.currentTarget.value })} />
+              <TextInput
+                label="Family name"
+                value={val('name')}
+                error={val('name').trim() ? undefined : 'Give your family a name.'}
+                onChange={(e) => set({ name: e.currentTarget.value })}
+              />
               <NativeSelect
                 label="Time zone"
                 data={zones(fam.timezone)}
@@ -140,7 +146,7 @@ export function GifsCard({ fam }: { fam: Family }) {
           </div>
           <p className="pn-help pn-note">
             Free. Create an app, copy its API key.{' '}
-            <a href="https://developers.giphy.com/dashboard/" target="_blank" rel="noreferrer">
+            <a className="pn-link" href="https://developers.giphy.com/dashboard/" target="_blank" rel="noreferrer">
               developers.giphy.com/dashboard
             </a>
             . When on, GIF searches are sent to GIPHY through your home box. Your kids&apos; devices never talk to GIPHY directly.

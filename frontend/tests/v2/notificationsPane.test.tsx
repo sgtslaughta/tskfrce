@@ -146,4 +146,18 @@ describe('Settings list', () => {
     const link = await screen.findByRole('link', { name: /Notifications/ })
     expect(link.getAttribute('href')).toBe('/settings?section=notifications')
   })
+
+  test('an app address the box refuses goes back to the saved one', async () => {
+    apiMock.mockImplementation(async (p, i) => {
+      if (p === '/notify/places') return []
+      if (p === '/notify/settings' && i?.method === 'PATCH') throw new Error('bad address')
+      if (p === '/notify/settings') return settings
+      return {}
+    })
+    wrap(<NotificationsPane />)
+    const field = await screen.findByRole('textbox', { name: 'App address' })
+    await userEvent.type(field, 'chores.local')
+    await userEvent.tab()
+    await waitFor(() => expect(field).toHaveValue(''))
+  })
 })

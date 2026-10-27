@@ -12,13 +12,13 @@ import { PlaceForm } from './PlaceForm'
 const QUIET = { quiet_start: '21:30', quiet_end: '07:00' }
 
 /** Saves a text field when it loses focus, if it changed. */
-function useBlurField(saved: string, save: (v: string) => void) {
+function useBlurField(saved: string, save: (v: string) => unknown) {
   const [v, setV] = useState(saved)
   useEffect(() => setV(saved), [saved])
-  return { value: v, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setV(e.currentTarget.value), onBlur: () => v !== saved && save(v) }
+  return { value: v, onChange: (e: React.ChangeEvent<HTMLInputElement>) => setV(e.currentTarget.value), onBlur: () => v !== saved && void Promise.resolve(save(v)).then((ok) => ok === false && setV(saved)) }
 }
 
-function QuietCard({ s, save }: { s: NotifySettings; save: (p: SettingsPatch) => void }) {
+function QuietCard({ s, save }: { s: NotifySettings; save: (p: SettingsPatch) => unknown }) {
   const on = s.quiet_start !== null && s.quiet_end !== null
   const from = useBlurField(s.quiet_start ?? '', (v) => v && save({ quiet_start: v }))
   const to = useBlurField(s.quiet_end ?? '', (v) => v && save({ quiet_end: v }))
@@ -56,7 +56,7 @@ function QuietCard({ s, save }: { s: NotifySettings; save: (p: SettingsPatch) =>
   )
 }
 
-function AddressCard({ s, save }: { s: NotifySettings; save: (p: SettingsPatch) => void }) {
+function AddressCard({ s, save }: { s: NotifySettings; save: (p: SettingsPatch) => unknown }) {
   const field = useBlurField(s.app_address ?? '', (v) => save({ app_address: v.trim() || null }))
   return (
     <section className="pn-card" aria-label="App address">
@@ -81,7 +81,8 @@ export function NotificationsPane() {
   const settings = useNotifySettings()
   const patch = usePatchNotifySettings()
   const [adding, setAdding] = useState(false)
-  const save = (p: SettingsPatch) => patch.mutate(p, { onError: toastFail })
+  /** resolves false when the box refused it */
+  const save = (p: SettingsPatch) => patch.mutateAsync(p).then(() => true, (e) => (toastFail(e), false))
   const err = places.error ?? settings.error
   return (
     <div className="pn">

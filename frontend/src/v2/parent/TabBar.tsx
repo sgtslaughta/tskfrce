@@ -10,6 +10,10 @@ interface TabItem {
   badge?: number
 }
 
+/** Settings and the notifications page are reached from More on a phone. */
+const current = (path: string, href: string) =>
+  path === href || (href === '/more' && (path.startsWith('/settings') || path === '/notifications'))
+
 export function TabBar() {
   const router = useRouter()
   const threads = useThreads()
@@ -30,7 +34,7 @@ export function TabBar() {
           key={item.href}
           href={item.href}
           className="p-tabbar-item"
-          aria-current={router.pathname === item.href ? 'page' : undefined}
+          aria-current={current(router.pathname, item.href) ? 'page' : undefined}
         >
           <Icon name={item.icon} />
           <span className="p-tabbar-label">{item.label}</span>

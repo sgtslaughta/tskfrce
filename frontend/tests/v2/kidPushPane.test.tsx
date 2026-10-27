@@ -59,7 +59,7 @@ describe('KidPushPane', () => {
   test('disabled: copy shown, relay switch hidden', async () => {
     serve(false)
     render(wrap(<KidPushPane />))
-    expect(await screen.findByText(/need the ntfy service on the box/)).toBeInTheDocument()
+    expect(await screen.findByText(/need the ntfy service/)).toBeInTheDocument()
     expect(screen.queryByText(/Instant alerts on iPhones/)).toBeNull()
     expect(screen.queryByText(/unless you turn on iPhone alerts below/)).toBeNull()
     expect(screen.queryByAltText(/Kid phone code/)).toBeNull()

@@ -14,8 +14,8 @@ type Props = {
   /** first click opens the note box, the second sends it */
   onSendBack: () => void
   onDecide: (yes: boolean) => void
-  /** mark read, close the bell and go to `to` (null: just close) */
-  go: (to: string | null) => void
+  /** mark read, close the bell and go to `to` (null: just close); resolves once the page has changed */
+  go: (to: string | null) => Promise<unknown>
 }
 
 const Btn = ({ icon, label, onClick, accent, busy, disabled }: { icon: string; label: string; onClick: () => void; accent?: boolean; busy?: boolean; disabled?: boolean }) => (
@@ -48,13 +48,13 @@ export function BellActions({ n, busy, sending, note, onNote, onApprove, onSendB
       </>
     )
   else if (needs && n.kind === 'chore_note' && n.run_id)
-    body = <Btn icon="chat" label="Reply" onClick={() => (go(`/?chore=${n.run_id}`), openChat('chore', String(n.run_id)))} />
-  else if (n.kind === 'new_device') body = <Btn icon="person_add" label="Who's this?" onClick={() => go(device)} />
+    body = <Btn icon="chat" label="Reply" onClick={() => void go(`/?chore=${n.run_id}`).then(() => openChat('chore', String(n.run_id)))} />
+  else if (n.kind === 'new_device' && n.pending) body = <Btn icon="person_add" label="Who's this?" onClick={() => go(device)} />
   else if (n.kind === 'device_resisting' || n.kind === 'device_bypass')
     body = (
       <>
         <Btn icon="devices" label="View" onClick={() => go(device)} />
-        {n.kid_id && <Btn icon="chat" label={`Ask ${n.kid_name ?? 'kid'}`} onClick={() => (go(null), openChat('private', String(n.kid_id)))} />}
+        {n.kid_id && <Btn icon="chat" label={`Ask ${n.kid_name ?? 'kid'}`} onClick={() => void go(null).then(() => openChat('private', String(n.kid_id)))} />}
       </>
     )
   else if (n.kind === 'box_offline') body = <Btn icon="devices" label="View" onClick={() => go('/devices')} />

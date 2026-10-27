@@ -58,8 +58,8 @@ export function KidPushPane() {
   return (
     <>
       {on === false ? (
-        <InfoBlock icon="info" text="Kid phone alerts need the ntfy service on the box. Update the box, then come back here." />
-      ) : (
+        <InfoBlock icon="info" text="Kid phone alerts need the ntfy service. Set BOX_URL / NTFY_URL on the box." />
+      ) : on === undefined ? null : (
         <InfoBlock
           icon="notifications"
           text="Kids get chore alerts on their own phone through the box. Nothing leaves your home unless you turn on iPhone alerts below."

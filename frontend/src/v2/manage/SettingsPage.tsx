@@ -43,7 +43,7 @@ function SettingsBody() {
   return (
     <ParentShell
       title="Settings"
-      list={<SettingsList sections={SETTINGS_SECTIONS} section={small && !valid ? undefined : section} />}
+      list={<SettingsList sections={SETTINGS_SECTIONS} section={small && !valid ? undefined : section} bare={small} />}
       phone={valid ? <Link href="/settings" className="p-back-link">← Settings</Link> : undefined}
     >
       {family.isError && <ErrorPanel kind="unreachable" error={family.error} onRetry={() => family.refetch()} />}

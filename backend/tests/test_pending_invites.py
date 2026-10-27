@@ -59,3 +59,22 @@ def test_parents_flag_the_owner(client, db, parent, parent_headers):
     db.commit()
     rows = client.get("/api/v1/parents", headers=parent_headers).json()
     assert rows[0]["is_owner"] is True
+
+
+def test_new_invite_replaces_live_one_for_same_name(client, parent_headers):
+    old = _invite(client, parent_headers)["token"]
+    new = _invite(client, parent_headers)["token"]
+    rows = client.get("/api/v1/users/invites", headers=parent_headers).json()
+    assert len(rows) == 1
+    assert (
+        client.post(
+            "/api/v1/auth/register", json={"token": old, "password": "pw-123456"}
+        ).status_code
+        == 403
+    )
+    assert (
+        client.post(
+            "/api/v1/auth/register", json={"token": new, "password": "pw-123456"}
+        ).status_code
+        == 201
+    )

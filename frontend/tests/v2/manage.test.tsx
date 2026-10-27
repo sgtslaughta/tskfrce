@@ -335,6 +335,14 @@ describe('settings', () => {
     await userEvent.type(screen.getByLabelText('Family name'), 'x')
     expect(save).toBeEnabled()
   })
+
+  test('an empty family name asks for one and cannot be saved', async () => {
+    render(wrap(<SettingsPage />))
+    const save = await screen.findByRole('button', { name: 'Save settings' })
+    await userEvent.clear(screen.getByLabelText('Family name'))
+    expect(screen.getByText('Give your family a name.')).toBeInTheDocument()
+    expect(save).toBeDisabled()
+  })
 })
 
 describe('props passing', () => {

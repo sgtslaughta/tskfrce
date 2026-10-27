@@ -32,7 +32,7 @@ const posts = (p: string) => apiMock.mock.calls.filter((c) => c[0] === p && c[1]
 
 beforeEach(() => {
   apiMock.mockReset()
-  push.mockReset()
+  push.mockReset().mockResolvedValue(true)
   ;(openChat as unknown as Mock).mockReset()
   window.matchMedia =
     window.matchMedia ||
@@ -193,14 +193,14 @@ describe('Bell', () => {
       item(1, { kind: 'chore_submitted', run_id: 1, pending: true }),
       item(2, { kind: 'new_device', read: true }),
       item(3, { kind: 'device_bypass', device_id: 9 }),
-      // Earlier and read: listed under Earlier but not counted in All (mockup: All · 5 with 2 Earlier)
+      // Earlier and read: listed, so counted in All (the count matches the rows)
       item(4, { kind: 'level_up', read: true, created_at: new Date(Date.now() - 2 * 86400000).toISOString() }),
       // Earlier but still unread: counted
       item(5, { kind: 'badge_earned', read: false, created_at: new Date(Date.now() - 2 * 86400000).toISOString() }),
     ])
     wrap(<Bell />)
     await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
-    expect(await screen.findByRole('button', { name: 'All · 4', hidden: true })).toBeTruthy()
+    expect(await screen.findByRole('button', { name: 'All · 5', hidden: true })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Needs you · 1', hidden: true })).toBeTruthy()
     expect(screen.getByRole('button', { name: 'Alerts · 1', hidden: true })).toBeTruthy()
   })
@@ -211,7 +211,26 @@ describe('Bell', () => {
     await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
     await userEvent.click(await screen.findByRole('button', { name: /Reply/, hidden: true }))
     expect(push).toHaveBeenCalledWith('/?chore=7')
-    expect(openChat).toHaveBeenCalledWith('chore', '7')
+    await waitFor(() => expect(openChat).toHaveBeenCalledWith('chore', '7'))
+  })
+
+  test("Who's this? shows for an unassigned device on any day, not once assigned", async () => {
+    const old = new Date(Date.now() - 3 * 86400000).toISOString()
+    serve([
+      item(1, { kind: 'new_device', device_id: 5, pending: true, created_at: old }),
+      item(2, { kind: 'new_device', device_id: 6, pending: false }),
+    ])
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    expect(await screen.findAllByRole('button', { name: /Who's this/, hidden: true })).toHaveLength(1)
+  })
+
+  test('empty Alerts tab has its own copy', async () => {
+    serve([item(1, { kind: 'level_up' })])
+    wrap(<Bell />)
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
+    await userEvent.click(await screen.findByRole('button', { name: /^Alerts/, hidden: true }))
+    expect(await screen.findByText('No alerts')).toBeTruthy()
   })
 
   test('a bypass alert offers View and Ask <kid>', async () => {
