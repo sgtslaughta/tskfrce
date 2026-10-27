@@ -148,14 +148,15 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
 
 function PointsHistory({ kidId }: { kidId: number }) {
   const { data } = useKidPoints(kidId)
+  const rows = Array.isArray(data) ? data : []
   return (
     <section className="pk-panel pk-span" aria-label="Points history">
       <h3>
         <Icon name="history" size={18} />
         Points history
       </h3>
-      {data?.length === 0 && <p className="pk-hint">No points yet.</p>}
-      {data?.map((p) => (
+      {data && rows.length === 0 && <p className="pk-hint">No points yet.</p>}
+      {rows.map((p) => (
         <div key={p.id} className="pk-kv">
           <span className="pk-ph-l">{`${when(p.at)} · ${p.label}`}</span>
           <b data-neg={p.amount < 0 || undefined} className="pk-ph-n">

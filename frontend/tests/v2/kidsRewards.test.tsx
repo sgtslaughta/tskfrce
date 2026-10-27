@@ -145,7 +145,7 @@ describe('kids', () => {
     await userEvent.click(
       await within(detail()).findByRole('button', { name: 'Bonus' }),
     )
-    await userEvent.type(within(detail()).getByLabelText(/Points/), '8')
+    await userEvent.type(within(detail()).getByLabelText(/^Points \(/), '8')
     await userEvent.type(within(detail()).getByLabelText('Why?'), 'Helped out')
     const send = within(detail()).getByRole('button', { name: 'Send points' })
     fireEvent.click(send)
@@ -166,7 +166,7 @@ describe('kids', () => {
     expect(
       within(detail()).getByRole('button', { name: 'Send points' }),
     ).toBeDisabled()
-    await userEvent.type(within(detail()).getByLabelText(/Points/), '8')
+    await userEvent.type(within(detail()).getByLabelText(/^Points \(/), '8')
     await userEvent.type(within(detail()).getByLabelText('Why?'), 'Helped out')
     await userEvent.click(
       within(detail()).getByRole('button', { name: 'Send points' }),
@@ -181,7 +181,7 @@ describe('kids', () => {
     await userEvent.click(
       within(detail()).getByRole('button', { name: 'Deduct' }),
     )
-    await userEvent.type(within(detail()).getByLabelText(/Points/), '5')
+    await userEvent.type(within(detail()).getByLabelText(/^Points \(/), '5')
     await userEvent.type(
       within(detail()).getByLabelText('Why?'),
       'Broke a rule',
@@ -260,7 +260,7 @@ describe('kids: create, delete, points', () => {
     await userEvent.click(
       await within(detail()).findByRole('button', { name: 'Bonus' }),
     )
-    await userEvent.type(within(detail()).getByLabelText(/Points/), '8')
+    await userEvent.type(within(detail()).getByLabelText(/^Points \(/), '8')
     await userEvent.type(within(detail()).getByLabelText('Why?'), 'Nice')
     const todayCalls = () =>
       apiMock.mock.calls.filter(([p]) => p === '/today').length
