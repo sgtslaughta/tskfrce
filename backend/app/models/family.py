@@ -54,6 +54,7 @@ class FamilySettings(Base):
     summary_date = Column(Date, nullable=True)
     notify_scan_at = Column(DateTime, nullable=True)  # naive UTC
     blocker_alerted = Column(Boolean, nullable=False, default=False, server_default="0")
+    setup_step = Column(Integer, nullable=True)  # wizard step to resume; NULL = done/not started
 
 
 def get_family(db: Session) -> FamilySettings:

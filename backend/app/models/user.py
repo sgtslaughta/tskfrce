@@ -7,7 +7,7 @@ This module contains the User model for authentication and user management.
 from datetime import datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, Integer, String, Text
+from sqlalchemy import Boolean, CheckConstraint, Column, DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.orm import relationship
 
@@ -87,3 +87,15 @@ class UsedInvite(Base):
 
     jti = Column(String(64), primary_key=True)
     used_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+
+
+class PendingInvite(Base):
+    """An invite link a parent made that hasn't been used, cancelled or expired yet."""
+
+    __tablename__ = "pending_invites"
+
+    jti = Column(String(64), primary_key=True)
+    username = Column(String(50), nullable=False)
+    invited_by = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    expires_at = Column(DateTime, nullable=False)

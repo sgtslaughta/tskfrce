@@ -21,7 +21,7 @@ from .points import Points, PointsType
 from .reward import Redemption, Reward
 from .screen_time import ScreenTimeLimit
 from .tips import DismissedTip
-from .user import UsedInvite, User
+from .user import PendingInvite, UsedInvite, User
 
 __all__ = [
     "BadgeAward",
@@ -41,6 +41,7 @@ __all__ = [
     "ChoreRun",
     "RunStepTick",
     "ChoreSeen",
+    "PendingInvite",
     "UsedInvite",
     "User",
     "FamilySettings",
