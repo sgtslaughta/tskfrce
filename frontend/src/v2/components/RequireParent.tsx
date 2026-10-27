@@ -1,10 +1,11 @@
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useRouter } from 'next/router'
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api, KID_TOKEN_KEY } from '../api'
 import { BoxStarting, EmptyState, ErrorPanel, SetupResuming, WaitingState } from '../parent/states'
 import { startingUp } from '../parent/freshness'
+import { markSessionExpired } from '../login/sessionExpired'
 import { useLook } from '../parent/useLook'
 import type { SetupStatus } from '../types'
 
@@ -74,8 +75,12 @@ export function RequireParent({ children }: { children: ReactNode }) {
                 ? '/setup'
                 : ''
 
+  const wasSignedIn = useRef(false)
   useEffect(() => {
-    if (isAuthenticated) cancelSignOut()
+    if (isAuthenticated) {
+      wasSignedIn.current = true
+      cancelSignOut()
+    }
   }, [isAuthenticated])
 
   useEffect(() => {
@@ -86,7 +91,10 @@ export function RequireParent({ children }: { children: ReactNode }) {
   }, [kidDevice])
 
   useEffect(() => {
-    if (target && !kidDevice) router.replace(target)
+    if (target && !kidDevice) {
+      if (wasSignedIn.current && !out && target.startsWith('/login')) markSessionExpired() // dropped while signed in
+      router.replace(target)
+    }
     // re-run only when the target changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target])
@@ -116,6 +124,7 @@ function ForParents({ onGo }: { onGo: () => void }) {
     <Guard>
       <EmptyState
         icon="checklist"
+        tone="sun"
         title="This part is for parents"
         body="Taking you to your checklist…"
         heading="h1"
@@ -150,7 +159,7 @@ function Unreachable({ error, onRetry }: { error: unknown; onRetry: () => void }
   }, [starting])
   return (
     <Guard>
-      {starting ? <BoxStarting /> : <ErrorPanel kind="unreachable" error={error instanceof TypeError ? undefined : error} onRetry={onRetry} />}
+      {starting ? <BoxStarting /> : <ErrorPanel kind="unreachable" heading="h1" error={error instanceof TypeError ? undefined : error} onRetry={onRetry} />}
     </Guard>
   )
 }

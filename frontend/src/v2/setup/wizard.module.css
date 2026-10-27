@@ -1,3 +1,6 @@
+/* flat parent page colour behind the card (mockup 07), not the global body gradient */
+.page { display: flow-root; min-height: 100vh; min-height: 100dvh; background: var(--p-bg); }
+
 .wizard {
   display: grid;
   grid-template-columns: 300px 1fr;

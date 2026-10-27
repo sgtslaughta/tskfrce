@@ -439,6 +439,8 @@
 [data-look='parent'] .p-auth-input input:focus,
 [data-look='parent'] .p-auth-input input:focus-visible {
   outline: none;
+  box-shadow: none; /* the wrapper draws the ring; controls.css would add a second one inside */
+  border-color: transparent;
 }
 
 /* States: keyboard focus, press, busy */

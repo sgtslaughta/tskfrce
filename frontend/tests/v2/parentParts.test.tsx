@@ -170,7 +170,7 @@ describe('states', () => {
 
   test('ErrorPanel expired shows correct copy', () => {
     renderWithMantine(<ErrorPanel kind="expired" />);
-    expect(screen.getByText('This invite has expired')).toBeInTheDocument();
+    expect(screen.getByText("This invite can't be used")).toBeInTheDocument();
   });
 
 });

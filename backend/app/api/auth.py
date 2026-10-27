@@ -52,7 +52,7 @@ async def login(login_data: LoginRequest, request: Request, db: Session = Depend
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="That username and password don't match.",
             headers={"WWW-Authenticate": "Bearer"},
         )
 

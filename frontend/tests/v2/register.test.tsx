@@ -86,7 +86,7 @@ describe('RegisterForm', () => {
         <RegisterForm token="x" />
       </MantineProvider>,
     )
-    expect(await screen.findByText('This invite has expired')).toBeInTheDocument()
+    expect(await screen.findByText("This invite can't be used")).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /back to log in/i })).toHaveAttribute('href', '/login')
     expect(screen.queryByLabelText(/Choose a password/)).not.toBeInTheDocument()
   })

@@ -41,3 +41,23 @@ test('a request that cannot reach the box shows the offline banner until one suc
   await act(() => qc.refetchQueries({ queryKey: ['p'] }))
   expect(screen.queryByText("Can't reach your home box")).toBeNull()
 })
+
+test('no network on this device shows the amber offline banner, not the red box one', async () => {
+  const { QueryClient, QueryClientProvider } = jest.requireActual('@tanstack/react-query')
+  const { act } = jest.requireActual('@testing-library/react')
+  render(
+    <QueryClientProvider client={new QueryClient()}>
+      <BlockerBanner />
+    </QueryClientProvider>,
+  )
+  expect(screen.queryByText("You're offline")).toBeNull()
+  const online = jest.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(false)
+  act(() => void window.dispatchEvent(new Event('offline')))
+  expect(screen.getByText("You're offline")).toBeInTheDocument()
+  expect(screen.getByText('Showing what we had. Changes will wait.')).toBeInTheDocument()
+  expect(screen.queryByText('Home box offline')).toBeNull()
+  online.mockReturnValue(true)
+  act(() => void window.dispatchEvent(new Event('online')))
+  expect(screen.queryByText("You're offline")).toBeNull()
+  online.mockRestore()
+})

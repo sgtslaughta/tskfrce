@@ -2,12 +2,12 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '../api'
 import { Chip } from '../parent/Chip'
 import { Icon } from '../parent/Icon'
-import { InfoBlock } from '../components/InfoBlock'
 import { MakerLogo } from '../parent/MakerLogo'
 import { DEVICE_TYPE_ICON, getDeviceType } from '../manage/deviceMeta'
 import { isPrivateMac } from '../manage/privateMac'
 import type { Device, Kid } from '../types'
 import styles from './devices.module.css'
+import tip from './stepCards.module.css'
 
 const GUEST = 'guest'
 
@@ -31,7 +31,6 @@ export function StepDevices({ kids }: { kids: Kid[] }) {
   const assigned = list.data?.filter((d) => d.status !== 'unassigned').length ?? 0
   return (
     <>
-      {list.data?.length === 0 && <p>No devices yet — you can add them later from Devices.</p>}
       {list.error && <p role="alert">Couldn&apos;t load devices. {list.error.message}</p>}
       {patch.error && <p role="alert">Couldn&apos;t save that. {patch.error.message}</p>}
       <div className={styles.card}>
@@ -83,10 +82,12 @@ export function StepDevices({ kids }: { kids: Kid[] }) {
           )
         })}
       </div>
-      <InfoBlock
-        icon="info"
-        text="Not seeing a device? Unlock it and open a web page so it talks to the network. iPhones and iPads: turn off “Private Wi-Fi Address” for your home Wi-Fi."
-      />
+      <div className={tip.tip}>
+        <Icon name="info" size={20} />
+        <div>
+          <b>Not seeing a device?</b> Unlock it and open a web page so it talks to the network. iPhones and iPads: turn off “Private Wi-Fi Address” for your home Wi-Fi.
+        </div>
+      </div>
     </>
   )
 }

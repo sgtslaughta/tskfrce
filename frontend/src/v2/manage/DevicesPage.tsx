@@ -72,6 +72,15 @@ function DevicesBody() {
   // the action in flight (lock / unlock / clear): the pressed button shows a spinner
   const pending = override.isPending ? override.variables.choice.action : null
 
+  const scan = (
+    <EmptyState
+      icon="wifi_find"
+      title="Looking for devices…"
+      body="Turn on a kid's tablet and open a web page. It'll show up here."
+      actions={[{ label: 'Not showing up?', icon: 'help', href: HELP_URL }]}
+    />
+  )
+
   return (
     <ParentShell
       title="Devices"
@@ -79,26 +88,23 @@ function DevicesBody() {
         devices.isPending ? (
           <Skeleton />
         ) : (
-          <DevicesSection
-            devices={all}
-            kids={kids.data ?? []}
-            groups={groups.data ?? []}
-            focus={selectedId ?? 0}
-            tab={tab}
-            onTabChange={setTab}
-          />
+          <>
+            <DevicesSection
+              devices={all}
+              kids={kids.data ?? []}
+              groups={groups.data ?? []}
+              focus={selectedId ?? 0}
+              tab={tab}
+              onTabChange={setTab}
+            />
+            {/* the phone shows only the list, so the "looking for devices" panel lives here too */}
+            {small && tab === 'devices' && devices.data?.length === 0 && scan}
+          </>
         )
       }
     >
       {devices.isError && <ErrorPanel kind="unreachable" error={devices.error} onRetry={() => devices.refetch()} />}
-      {devices.data?.length === 0 && (
-        <EmptyState
-          icon="wifi_find"
-          title="Looking for devices…"
-          body="Turn on a kid's tablet and open a web page. It'll show up here."
-          actions={[{ label: 'Not showing up?', icon: 'help', href: HELP_URL }]}
-        />
-      )}
+      {devices.data?.length === 0 && !small && scan}
       {!devices.isError && selectedDevice && (
         <DeviceDetail
           key={selectedDevice.id}

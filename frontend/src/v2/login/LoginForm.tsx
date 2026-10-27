@@ -35,7 +35,9 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(true)
   const [expired, setExpired] = useState(false)
-  useEffect(() => setExpired(takeSessionExpired()), [])
+  useEffect(() => {
+    if (takeSessionExpired()) setExpired(true) // read-and-clear, so only ever turn it on (effects can run twice)
+  }, [])
   const [error, setError] = useState('')
   const [showForgot, setShowForgot] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -65,7 +67,7 @@ export function LoginForm() {
       keepSession(remember)
       await login({ username: username.trim(), password, remember }) // the effect above redirects
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Incorrect username or password')
+      setError(err instanceof Error ? err.message : "That username and password don't match.")
       setBusy(false)
     }
   }

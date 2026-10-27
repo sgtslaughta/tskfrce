@@ -1,0 +1,16 @@
+/* Setup steps 3, 5 and 7: card, kid rows and tip (mockup 07 .card / .kidrow / .tip) */
+.card { display: flex; flex-direction: column; padding: 16px 18px; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 18px; }
+.rows { margin-bottom: 14px; }
+.kidrow { display: flex; align-items: center; gap: 12px; padding: 10px 0; }
+.kidrow + .kidrow { border-top: 1px solid var(--p-line); }
+.kidrow:first-child { padding-top: 0; }
+.av { flex: none; width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--p-acc); color: #292928; font-size: 22px; font-weight: 700; }
+.t2 { flex: 1; min-width: 0; font-weight: 600; font-size: 14px; overflow-wrap: anywhere; }
+.t2 small { display: block; color: var(--p-sub); font-weight: 400; font-size: 12px; }
+.chip { flex: none; padding: 4px 8px; border-radius: 6px; background: var(--p-acc); color: #292928; font-size: 9.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+.tip { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: var(--p-amb); color: var(--p-ambink); font-size: 13px; line-height: 1.5; }
+.tip :global(.ms) { flex: none; font-size: 20px; }
+.steps { margin: 0; padding-left: 20px; line-height: 1.7; }
+.card p { margin: 0 0 10px; }
+.card p:last-child { margin-bottom: 0; }
+.card a { color: var(--p-ink); text-decoration: underline; }

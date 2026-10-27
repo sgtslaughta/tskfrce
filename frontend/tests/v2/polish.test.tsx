@@ -31,8 +31,8 @@ beforeEach(() => {
 describe('authService.login messages', () => {
   const fail = (status_code: number, detail = 'x') => (apiPost as unknown as Mock<() => Promise<never>>).mockRejectedValue({ status_code, detail } as never)
   test.each([
-    [401, 'Incorrect username or password'],
-    [400, 'Incorrect username or password'],
+    [401, "That username and password don't match."],
+    [400, "That username and password don't match."],
     [429, 'Too many tries. Wait a minute and try again.'],
     [403, 'Account disabled'],
   ])('%i', async (code, msg) => {

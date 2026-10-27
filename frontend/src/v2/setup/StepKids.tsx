@@ -5,6 +5,7 @@ import { api } from '../api'
 import { useSingleFlight } from '../hooks/useSingleFlight'
 import type { Kid } from '../types'
 import { AVATARS } from './starterChores'
+import styles from './stepCards.module.css'
 
 interface Props {
   kids: Kid[]
@@ -36,11 +37,20 @@ export function StepKids({ kids, name, onName, draftError, onAdd }: Props) {
     if (canAdd) addKid()
   }
   return (
-    <>
+    <div className={styles.card}>
       {kids.length > 0 && (
-        <ul aria-label="Kids added" style={{ paddingLeft: 20 }}>
-          {kids.map((k) => <li key={k.id}>{k.avatar} {k.full_name}{k.has_pin ? ' (has a PIN)' : ''}</li>)}
-        </ul>
+        <div className={styles.rows} aria-label="Kids added" role="list">
+          {kids.map((k) => (
+            <div key={k.id} role="listitem" className={styles.kidrow}>
+              <span className={styles.av} aria-hidden="true">{k.avatar}</span>
+              <div className={styles.t2}>
+                {k.full_name}
+                <small>{k.has_pin ? 'PIN set' : 'No PIN'}</small>
+              </div>
+              <span className={styles.chip}>Added</span>
+            </div>
+          ))}
+        </div>
       )}
       <TextInput label="Name" value={name} onChange={(e) => onName(e.currentTarget.value)} onKeyDown={enterAdds} error={draftError} />
       <div role="group" aria-label="Pick an avatar" className="f-row" style={{ marginTop: 12 }}>
@@ -56,6 +66,6 @@ export function StepKids({ kids, name, onName, draftError, onAdd }: Props) {
       <Group mt="md">
         <Button variant="filled" disabled={!name.trim() || pinBad} loading={add.isPending} onClick={addKid}>Add kid</Button>
       </Group>
-    </>
+    </div>
   )
 }

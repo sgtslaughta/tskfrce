@@ -191,7 +191,7 @@ describe('setup wizard', () => {
     await user.click(await screen.findByRole('button', { name: /^Make bed/ }))
     expect(screen.getByText('1 picked')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Next' })) // Step 4 → 5 (Devices)
-    expect(await screen.findByText('No devices yet — you can add them later from Devices.')).toBeInTheDocument()
+    expect(await screen.findByText(/Looking for devices/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Next' })) // Step 5 → 6 (Hours)
     await screen.findByText('Allowed hours')
     await user.click(screen.getByRole('button', { name: 'Back' }))

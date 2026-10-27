@@ -24,6 +24,8 @@
 [data-look='parent'] .p-state-icon[data-tone='acc'] { background: var(--p-acc); color: #292928; }
 [data-look='parent'] .p-state-icon[data-tone='red'] { background: var(--p-redbg); color: var(--p-red); }
 [data-look='parent'] .p-state-icon[data-tone='amb'] { background: var(--p-amb); color: var(--p-ambink); }
+/* kid-look sticker (mockup 05 "Kid on a parent page") */
+[data-look='parent'] .p-state-icon[data-tone='sun'] { background: #ffc93c; color: #1d2b53; border: 2px solid #1d2b53; box-shadow: 3px 3px 0 #1d2b53; }
 [data-look='parent'] .p-state-title { margin: 0; font-size: 17px; font-weight: 700; color: var(--p-ink); }
 [data-look='parent'] .p-state-body { margin: 0; font-size: 13px; line-height: 1.5; color: var(--p-sub); }
 [data-look='parent'] .p-state-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }

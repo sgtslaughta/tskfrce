@@ -1,3 +1,4 @@
+import React from 'react'
 import { beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
 import { render, screen, waitFor } from '@testing-library/react'
@@ -38,10 +39,10 @@ beforeEach(() => {
 describe('LoginForm', () => {
   test('wrong password shows the message inline and does not log', async () => {
     const spy = jest.spyOn(console, 'error')
-    login.mockRejectedValue(new Error('Incorrect username or password') as never)
+    login.mockRejectedValue(new Error("That username and password don't match.") as never)
     wrap()
     await fill()
-    expect(await screen.findByRole('alert')).toHaveTextContent('Incorrect username or password')
+    expect(await screen.findByRole('alert')).toHaveTextContent("That username and password don't match.")
     expect(replace).not.toHaveBeenCalled()
     expect(spy).not.toHaveBeenCalled()
     spy.mockRestore()
@@ -123,4 +124,16 @@ describe('footer', () => {
     expect(footerText('chores.local', '0.1.0')).toBe('t@sk4ce v0.1.0 · chores.local')
     expect(footerText('', undefined)).toBe('t@sk4ce')
   })
+})
+
+test('the session-expired note survives React strict mode running effects twice', async () => {
+  sessionStorage.setItem('task4ce-session-expired', '1')
+  render(
+    <React.StrictMode>
+      <MantineProvider theme={fridgeTheme}>
+        <LoginForm />
+      </MantineProvider>
+    </React.StrictMode>,
+  )
+  expect(await screen.findByText('Please log in again.')).toBeInTheDocument()
 })

@@ -53,6 +53,7 @@ export function WizardFrame({
   const estimatedMinLeft = Math.max(1, 8 - step)
 
   return (
+    <div className={styles.page}>
     <main className={styles.wizard}>
       {/* Left panel */}
       <aside className={styles.side}>
@@ -144,5 +145,6 @@ export function WizardFrame({
         )}
       </form>
     </main>
+    </div>
   )
 }

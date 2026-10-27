@@ -4,6 +4,8 @@ import { useClock } from './useClock'
 /** First letter, whole code point (an emoji name must not be cut into half a surrogate pair). */
 export const initial = (name: string | null) => (Array.from(name?.trim() ?? '')[0] ?? '?').toUpperCase()
 
+const streakText = (n: number) => `${n} ${n === 1 ? 'day' : 'days'}`
+
 /** Schedule end time; "Locked" when the kid's devices are already off. */
 const locksAt = (kid: TodayKid, clock: (iso: string) => string) => {
   if (kid.locks_at) return clock(kid.locks_at)
@@ -21,7 +23,7 @@ export function KidFacts({ kid }: { kid: TodayKid }) {
       </div>
       <div>
         <span>Streak</span>
-        <b>{kid.progress?.streak ?? 0} days</b>
+        <b>{streakText(kid.progress?.streak ?? 0)}</b>
       </div>
       <div>
         <span>Next reward</span>

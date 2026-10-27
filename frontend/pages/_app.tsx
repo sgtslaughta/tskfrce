@@ -109,6 +109,8 @@ if (typeof window !== 'undefined') {
 }
 
 import Head from 'next/head'
+import { useRouter } from 'next/router'
+import { ErrorBoundary } from '../src/v2/components/ErrorBoundary'
 import { MantineProvider } from '@mantine/core';
 import { Notifications } from '@mantine/notifications';
 import { QueryClientProvider } from '@tanstack/react-query';
@@ -145,6 +147,7 @@ if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
  */
 function AppContent({ Component, pageProps }: { Component: any; pageProps: any }) {
   const [queryClient] = React.useState(makeQueryClient);
+  const { asPath } = useRouter();
 
   // Initialize Bitwarden theme fix
   React.useEffect(() => {
@@ -171,7 +174,9 @@ function AppContent({ Component, pageProps }: { Component: any; pageProps: any }
         <FaviconManager />
         <Notifications position="bottom-center" />
         <UnifiedAuthProvider>
-          <Component {...pageProps} />
+          <ErrorBoundary resetKey={asPath}>
+            <Component {...pageProps} />
+          </ErrorBoundary>
         </UnifiedAuthProvider>
       </MantineProvider>
     </QueryClientProvider>

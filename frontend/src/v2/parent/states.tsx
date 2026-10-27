@@ -15,16 +15,16 @@ export interface EmptyStateProps {
   icon: string
   title: string
   body: ReactNode
-  /** icon tile colour: soft grey (default), accent for good news, red/amber for problems */
-  tone?: 'soft' | 'acc' | 'red' | 'amb'
+  /** icon tile colour: soft grey (default), accent for good news, red/amber for problems, sun = the kid-look sticker */
+  tone?: 'soft' | 'acc' | 'red' | 'amb' | 'sun'
   actions?: StateAction[]
   children?: ReactNode
-  /** h1 when the panel is the whole page (expired link, 404); h2 when no h2 sits above it; h3 inside a page */
+  /** h1 when the panel is the whole page (expired link, 404); h2 inside a page (default); h3 under an h2 */
   heading?: 'h1' | 'h2' | 'h3'
 }
 
 /** Empty / error / done panel from mockup 05: icon tile, title, one line, pill actions. */
-export function EmptyState({ icon, title, body, tone = 'soft', actions = [], children, heading: H = 'h3' }: EmptyStateProps) {
+export function EmptyState({ icon, title, body, tone = 'soft', actions = [], children, heading: H = 'h2' }: EmptyStateProps) {
   return (
     <div className="p-state" role={tone === 'red' ? 'alert' : undefined}>
       <div className="p-state-icon" data-tone={tone}>
@@ -89,17 +89,38 @@ const ERROR_COPY: Record<ErrorKind, { icon: string; title: string; body: string;
   notfound: { icon: 'link_off', title: "That page isn't here", body: 'The link may be old, or the chore was deleted.', tone: 'soft' },
   expired: {
     icon: 'timer_off',
-    title: 'This invite has expired',
-    body: 'Invites last 24 hours and reset links 30 minutes. Ask a parent for a new one.',
+    title: "This invite can't be used",
+    body: 'It may have expired or already been used. Ask a parent for a new one.',
     tone: 'amb',
   },
 }
 
 /** Error panel. Pass `error` to show what actually failed instead of the stock line. */
-export function ErrorPanel({ kind, error, title, onRetry }: { kind: ErrorKind; error?: unknown; title?: string; onRetry?: () => void }) {
+export function ErrorPanel({
+  kind,
+  error,
+  title,
+  onRetry,
+  heading,
+  detail,
+}: {
+  kind: ErrorKind
+  error?: unknown
+  title?: string
+  onRetry?: () => void
+  /** h1 when the panel is the whole page */
+  heading?: 'h1' | 'h2'
+  /** crash only: text behind the "Copy details" button */
+  detail?: string
+}) {
   const copy = ERROR_COPY[kind]
   const actions: StateAction[] =
-    kind === 'notfound'
+    kind === 'crash'
+      ? [
+          { label: 'Reload', icon: 'refresh', onClick: () => window.location.reload() },
+          { label: 'Copy details', icon: 'content_copy', onClick: () => void navigator.clipboard?.writeText(detail ?? '').catch(() => {}) },
+        ]
+      : kind === 'notfound'
       ? [{ label: 'Go to Today', icon: 'home', href: '/' }]
       : kind === 'expired'
         ? [{ label: 'Back to log in', icon: 'login', href: '/login' }]
@@ -111,7 +132,7 @@ export function ErrorPanel({ kind, error, title, onRetry }: { kind: ErrorKind; e
       body={error ? errorText(error) : copy.body}
       tone={copy.tone}
       actions={actions}
-      heading={kind === 'expired' || kind === 'notfound' ? 'h1' : 'h3'}
+      heading={heading ?? (kind === 'expired' || kind === 'notfound' ? 'h1' : 'h2')}
     >
       {kind === 'unreachable' && <AutoRetry onRetry={onRetry ?? (() => window.location.reload())} />}
     </EmptyState>
