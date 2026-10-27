@@ -35,7 +35,7 @@ export const useBonus = () => {
   return useMutation({
     mutationFn: ({ id, amount, note }: { id: number; amount: number; note: string }) =>
       api<{ balance: number }>(`/kids/${id}/points`, { method: 'POST', body: { amount, note } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['today'] }),
+    onSuccess: () => Promise.all(['today', 'kid-points'].map((k) => qc.invalidateQueries({ queryKey: [k] }))),
     onError: toastFail,
   })
 }
@@ -45,7 +45,19 @@ export const useDeduct = () => {
   return useMutation({
     mutationFn: ({ id, amount, note }: { id: number; amount: number; note: string }) =>
       api<{ balance: number; deducted: number }>(`/kids/${id}/deduct`, { method: 'POST', body: { amount, note } }),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['today'] }),
+    onSuccess: () => Promise.all(['today', 'kid-points'].map((k) => qc.invalidateQueries({ queryKey: [k] }))),
     onError: toastFail,
   })
 }
+
+export interface PointsRow {
+  id: number
+  amount: number
+  reason: string
+  label: string
+  at: string
+}
+
+/** Newest ledger rows for a kid's profile (02 Kids → Points history). */
+export const useKidPoints = (id: number) =>
+  useQuery({ queryKey: ['kid-points', id], queryFn: () => api<PointsRow[]>(`/kids/${id}/points?limit=8`) })

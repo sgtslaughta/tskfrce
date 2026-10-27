@@ -188,6 +188,39 @@ def deduct_points(
     return {"balance": economy.balance(db, kid.id), "deducted": take}
 
 
+_REASON_LABEL = {
+    "chore": "Chore approved",
+    "early_bonus": "Early bonus",
+    "team_share": "Team chore",
+    "redemption": "Reward",
+    "bonus": "Bonus",
+    "adjustment": "Adjustment",
+    "deduction": "Points taken",
+}
+
+
+@router.get("/{kid_id}/points")
+def points_history(kid_id: int, limit: int = 20, db: Session = Depends(get_db)):
+    """Newest ledger rows for the kid's profile (02 Kids → Points history)."""
+    kid = _kid(db, kid_id)
+    rows = (
+        db.query(Points)
+        .filter(Points.user_id == kid.id)
+        .order_by(Points.created_at.desc(), Points.id.desc())
+        .limit(max(1, min(limit, 100)))
+    )
+    return [
+        {
+            "id": p.id,
+            "amount": p.amount,
+            "reason": p.reason,
+            "label": p.description or _REASON_LABEL.get(p.reason, "Points"),
+            "at": svc.iso_z(p.created_at),
+        }
+        for p in rows
+    ]
+
+
 # POST /kids/{kid_id}/override lives in device_activity.py (409 when the kid has no devices)
 @router.delete("/{kid_id}/override")
 def kid_clear_override(kid_id: int, db: Session = Depends(get_db)):

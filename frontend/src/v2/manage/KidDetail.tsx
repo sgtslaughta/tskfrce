@@ -5,6 +5,8 @@ import Link from 'next/link'
 import { useDevices } from '@/v2/hooks/useDevices'
 import { useLibrary } from '@/v2/hooks/useChores'
 import { useToday } from '@/v2/hooks/useToday'
+import { useKidPoints } from '@/v2/hooks/useKids'
+import { when } from '@/v2/components/bellRules'
 import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import { choreIcon } from '@/v2/today/choreIcon'
@@ -137,7 +139,30 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
             ))}
           </div>
         </section>
+
+        <PointsHistory kidId={kid.id} />
       </div>
     </div>
+  )
+}
+
+function PointsHistory({ kidId }: { kidId: number }) {
+  const { data } = useKidPoints(kidId)
+  return (
+    <section className="pk-panel pk-span" aria-label="Points history">
+      <h3>
+        <Icon name="history" size={18} />
+        Points history
+      </h3>
+      {data?.length === 0 && <p className="pk-hint">No points yet.</p>}
+      {data?.map((p) => (
+        <div key={p.id} className="pk-kv">
+          <span className="pk-ph-l">{`${when(p.at)} · ${p.label}`}</span>
+          <b data-neg={p.amount < 0 || undefined} className="pk-ph-n">
+            {p.amount < 0 ? `−${-p.amount}` : `+${p.amount}`}
+          </b>
+        </div>
+      ))}
+    </section>
   )
 }
