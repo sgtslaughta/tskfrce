@@ -49,7 +49,7 @@ test.describe('parent journeys', () => {
       await who.getByRole('button', { name: `Race A ${tag}` }).click()
       await who.getByRole('button', { name: `Race B ${tag}` }).click()
       await who.getByText('First one wins', { exact: true }).click()
-      await who.getByRole('button', { name: 'Save', exact: true }).click()
+      await page.getByRole('button', { name: 'Save chore' }).click() // one Save sends the chore and Who & when
       const card = page.getByRole('button', { name: /^E2E race/ }).first()
       await expect(card).toContainText('2 steps')
 
