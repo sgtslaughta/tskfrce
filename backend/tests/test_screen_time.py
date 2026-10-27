@@ -178,3 +178,12 @@ def test_day_start_never_in_the_future(db):
     assert screen_time.day_start_utc(fam, early) == datetime(2026, 10, 26, 6, 0)
     later = datetime(2026, 10, 27, 7, 0, tzinfo=UTC)
     assert screen_time.day_start_utc(fam, later) == datetime(2026, 10, 27, 6, 0)
+
+
+def test_kid_rewards_says_when_an_off_window_blocks_bonus(client, db, kid, kid_headers):
+    _setup(db, kid, screen_only_allowed_hours=False)
+    sc = client.get("/api/v1/kid/rewards", headers=kid_headers).json()["screen"]
+    assert sc["off_now"] is False
+    make_rule(db, kind="off", times=(("00:00", "00:00"),), kid_ids=(kid.id,))
+    sc = client.get("/api/v1/kid/rewards", headers=kid_headers).json()["screen"]
+    assert sc["off_now"] is True

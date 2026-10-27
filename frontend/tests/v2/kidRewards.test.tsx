@@ -158,6 +158,13 @@ describe('Plan E rewards', () => {
     expect(screen.getByRole('button', { name: 'Request screen time' })).toBeDisabled()
   })
 
+  test('off-window reason when bought minutes would not work (bedtime)', async () => {
+    route({ 'GET /kid/rewards': rewards({ screen: scr({ only_in_hours: false, off_now: true }) }) })
+    wrap(<RewardsSection onExpired={() => {}} />)
+    expect(await screen.findByText("Screen time can't turn the internet on during off hours.")).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Request screen time' })).toBeDisabled()
+  })
+
   test('auto screen time says Get screen time', async () => {
     route({ 'GET /kid/rewards': rewards({ screen: scr({ auto: true }) }) })
     wrap(<RewardsSection onExpired={() => {}} />)

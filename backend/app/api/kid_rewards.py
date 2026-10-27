@@ -42,6 +42,8 @@ def rewards(db: Session = Depends(get_db), kid: User = Depends(view_kid)):
         "left_today": None if cap is None else max(cap - got, 0),
         "min_points": min_points,
         "in_hours": screen_time.in_allowed_hours(db, kid, now),
+        # bought minutes never open an off window (bedtime), even when allowed outside hours
+        "off_now": screen_time.all_in_off_window(db, kid, now),
     }
     return {
         "balance": economy.balance(db, kid.id),

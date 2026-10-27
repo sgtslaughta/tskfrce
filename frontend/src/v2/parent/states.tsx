@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 import { Icon } from './Icon'
@@ -111,6 +112,34 @@ export function ErrorPanel({ kind, error, onRetry }: { kind: ErrorKind; error?: 
       tone={copy.tone}
       actions={actions}
       heading={kind === 'expired' || kind === 'notfound' ? 'h1' : 'h3'}
-    />
+    >
+      {kind === 'unreachable' && <AutoRetry onRetry={onRetry ?? (() => window.location.reload())} />}
+    </EmptyState>
+  )
+}
+
+const RETRY_EVERY = 8
+
+/** Mockup 05 "Retrying in 8s…": the can't-reach panel tries again by itself. */
+function AutoRetry({ onRetry }: { onRetry: () => void }) {
+  const [left, setLeft] = useState(RETRY_EVERY)
+  const retry = useRef(onRetry)
+  retry.current = onRetry
+  const count = useRef(RETRY_EVERY)
+  useEffect(() => {
+    const t = setInterval(() => {
+      count.current -= 1
+      if (count.current <= 0) {
+        count.current = RETRY_EVERY
+        retry.current()
+      }
+      setLeft(count.current)
+    }, 1000)
+    return () => clearInterval(t)
+  }, [])
+  return (
+    <p className="p-state-retry" aria-live="off">
+      {`Retrying in ${left}s…`}
+    </p>
   )
 }

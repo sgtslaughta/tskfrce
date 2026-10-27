@@ -5,6 +5,7 @@
  * @version 1.0.0
  */
 
+import { markSessionExpired } from '@/v2/login/sessionExpired';
 import {
   createSafeStorage,
   storeTokens,
@@ -322,6 +323,7 @@ export class TokenManager {
       }
 
       this.emitEvent('invalid');
+      markSessionExpired();
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',
@@ -378,6 +380,7 @@ export class TokenManager {
 
       this.refreshTokens();
     } else if (validation.isExpired && !this.canRefreshToken()) {
+      markSessionExpired();
 
       this.clearTokens();
     }

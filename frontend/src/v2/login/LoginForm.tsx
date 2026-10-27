@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { takeSessionExpired } from './sessionExpired'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
@@ -29,6 +30,8 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [remember, setRemember] = useState(true)
+  const [expired, setExpired] = useState(false)
+  useEffect(() => setExpired(takeSessionExpired()), [])
   const [error, setError] = useState('')
   const [showForgot, setShowForgot] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -76,6 +79,14 @@ export function LoginForm() {
                 <div className="p-auth-error" role="alert">
                   <Icon name="error" />
                   {error}
+                </div>
+              )}
+              {expired && (
+                <div className="p-auth-note" role="status">
+                  <Icon name="lock_clock" />
+                  <span>
+                    <b>Please log in again.</b> You were logged out after a while away. We&apos;ll bring you back to this page.
+                  </span>
                 </div>
               )}
               {router.query?.reset && (

@@ -56,6 +56,8 @@ export interface KidScreen {
   left_today: number | null
   min_points: number | null
   in_hours: boolean
+  /** every device is in an internet-off window: bought minutes would not open it */
+  off_now?: boolean
 }
 
 /** GET /badges/overview item; tiers maps kid id to tier (1+) */

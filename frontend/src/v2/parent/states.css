@@ -77,3 +77,4 @@
 @keyframes p-gate-spin { to { transform: rotate(360deg); } }
 /* full-page error before the shell exists (route guard) */
 [data-look='parent'] .p-guard-state { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--p-bg); }
+[data-look='parent'] .p-state-retry { margin: 6px 0 0; font-size: 12px; color: var(--p-sub); }

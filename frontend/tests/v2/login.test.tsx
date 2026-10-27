@@ -80,6 +80,13 @@ describe('LoginForm', () => {
     expect(safeNext(undefined)).toBe('/')
   })
 
+  test('after a session expiry the login says to log in again (once)', async () => {
+    sessionStorage.setItem('task4ce-session-expired', '1')
+    wrap()
+    expect(await screen.findByText(/Please log in again/)).toBeInTheDocument()
+    expect(sessionStorage.getItem('task4ce-session-expired')).toBeNull()
+  })
+
   test('login panel has no status or activity', () => {
     wrap()
     const container = document.querySelector('.p-auth-form-side') as HTMLElement

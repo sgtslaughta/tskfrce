@@ -26,7 +26,9 @@ export function RewardsSection({ onExpired, heading = 'Rewards' }: { onExpired: 
         ? `You can buy screen time once you have ${sc.min_points} points.`
         : sc.only_in_hours && !sc.in_hours
           ? 'Screen time only works during your allowed hours.'
-          : null
+          : !sc.only_in_hours && sc.off_now
+            ? "Screen time can't turn the internet on during off hours."
+            : null
   const pendingReward = (id: number) => d.pending.some((p) => p.kind === 'reward' && p.reward_id === id)
   const pendingTime = d.pending.some((p) => p.kind === 'screen_time')
   const cost = (Number(mins) / 15) * d.screen_time_price
