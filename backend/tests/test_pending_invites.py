@@ -2,8 +2,9 @@
 
 from datetime import datetime, timedelta
 
+from app.core.auth import AuthService
 from app.models.family import FamilySettings
-from app.models.user import PendingInvite
+from app.models.user import PendingInvite, UsedInvite, User
 
 
 def _invite(client, headers, name="dad"):
@@ -78,3 +79,30 @@ def test_new_invite_replaces_live_one_for_same_name(client, parent_headers):
         ).status_code
         == 201
     )
+
+
+def test_redeeming_one_invite_revokes_the_others_for_that_name(client, db, parent, parent_headers):
+    first = _invite(client, parent_headers)["token"]
+    auth = AuthService(db)
+    second = auth.create_invite_token(
+        "dad", parent.id
+    )  # e.g. made before replace-on-create existed
+    jti2 = auth.read_invite(second)[1]
+    db.add(
+        PendingInvite(
+            jti=jti2,
+            username="dad",
+            invited_by=parent.id,
+            expires_at=datetime.utcnow() + timedelta(hours=1),
+        )
+    )
+    db.commit()
+    r = client.post("/api/v1/auth/register", json={"token": first, "password": "pw-123456"})
+    assert r.status_code == 201
+    assert db.get(UsedInvite, jti2) is not None
+    # even if that parent is removed later, the other link stays dead
+    db.query(User).filter(User.username == "dad").delete()
+    db.commit()
+    assert client.get(f"/api/v1/auth/invite/{second}").status_code == 410
+    r = client.post("/api/v1/auth/register", json={"token": second, "password": "pw-123456"})
+    assert r.status_code == 403

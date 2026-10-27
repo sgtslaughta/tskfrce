@@ -237,7 +237,10 @@ async def register(body: RegisterIn, db: Session = Depends(get_db_session)):
         is_superuser=True,  # same powers as the setup parent (manage kids)
     )
     db.add_all([user, UsedInvite(jti=jti)])
-    db.query(PendingInvite).filter(PendingInvite.username == username).delete()
+    for other in db.query(PendingInvite).filter(PendingInvite.username == username).all():
+        if other.jti != jti and db.get(UsedInvite, other.jti) is None:
+            db.add(UsedInvite(jti=other.jti))  # revoke the other links for this name
+        db.delete(other)
     try:
         db.commit()
     except IntegrityError:  # same invite (or username) redeemed twice at once
