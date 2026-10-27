@@ -148,10 +148,14 @@ describe('Hours pane', () => {
   })
 })
 
-describe('Parents section', () => {
-  test('invite expiry says 24 hours', () => {
-    // InviteSection displays "The link works once and expires in 24 hours."
-    // This is validated in the InviteSection component
-    expect(true).toBe(true)
+describe('Appearance via SettingsPage', () => {
+  test('a failed accent save puts --p-acc back', async () => {
+    mockQuery.section = 'look'
+    mockPatch.mockImplementation((_p: unknown, o: { onError: (e: unknown) => void }) => o.onError(new Error('nope')))
+    wrap(<SettingsPage />)
+    await userEvent.click(await screen.findByRole('button', { name: 'Sun' }))
+    expect(mockPatch).toHaveBeenCalled()
+    expect(document.documentElement.style.getPropertyValue('--p-acc')).toBe(ACCENTS.neon.hex)
+    mockPatch.mockReset()
   })
 })

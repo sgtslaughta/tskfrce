@@ -5,6 +5,7 @@ import { useNotifySettings, usePatchNotifySettings, usePlaces, type NotifySettin
 import { Icon } from '@/v2/parent/Icon'
 import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { toastFail } from '@/v2/notify'
+import { PaneHead } from './PaneParts'
 import { PlaceCard } from './PlaceCard'
 import { PlaceForm } from './PlaceForm'
 
@@ -84,16 +85,12 @@ export function NotificationsPane() {
   const err = places.error ?? settings.error
   return (
     <div className="pn">
-      <div className="pn-mh">
-        <div>
-          <h2>Notifications</h2>
-          <div className="pn-s">Send t@sk4ce pings to the chat apps your family already uses.</div>
-        </div>
+      <PaneHead title="Notifications" sub="Send t@sk4ce pings to the chat apps your family already uses.">
         <button type="button" className="p-btn" data-variant="accent" onClick={() => setAdding(true)}>
           <Icon name="add" size={17} />
           Add a place
         </button>
-      </div>
+      </PaneHead>
       {err && <ErrorPanel kind="unreachable" error={err} onRetry={() => (places.refetch(), settings.refetch())} />}
       {(places.isPending || settings.isPending) && !err && <Skeleton rows={2} />}
       {places.data?.length === 0 && (

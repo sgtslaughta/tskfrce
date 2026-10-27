@@ -27,7 +27,7 @@ jest.mock('@/v2/components/BlockerBanner', () => ({
 }))
 
 jest.mock('@/v2/components/Bell', () => ({
-  Bell: ({ placement, kid }: { placement?: string; kid?: boolean }) => {
+  Bell: ({ placement }: { placement?: string }) => {
     const { useThreads } = require('@/v2/hooks/useChat')
     const threads = useThreads()
     const unread = threads.data?.total ?? 0
@@ -62,6 +62,7 @@ jest.mock('@/v2/hooks/useFamily', () => ({
   useFamily: jest.fn(() => ({
     data: { name: 'The Smiths' },
   })),
+  useParents: jest.fn(() => ({ data: [{ id: 1, is_me: true, is_owner: false }] })),
 }))
 
 jest.mock('@/v2/hooks/useDevices', () => ({
@@ -323,6 +324,14 @@ describe('MorePage', () => {
     render(<MorePage onLogout={jest.fn()} />)
 
     expect(screen.getByText(/Parent · The Smiths/)).toBeInTheDocument()
+  })
+
+  test('more page says Owner for the family owner', () => {
+    const { useParents } = require('@/v2/hooks/useFamily')
+    useParents.mockReturnValueOnce({ data: [{ id: 1, is_me: true, is_owner: true }] })
+    render(<MorePage onLogout={jest.fn()} />)
+
+    expect(screen.getByText(/Owner · The Smiths/)).toBeInTheDocument()
   })
 
   test('more page shows box healthy chip when online', () => {

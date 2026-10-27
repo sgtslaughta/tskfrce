@@ -130,6 +130,14 @@ describe('rewards: catalogue', () => {
     expect(within(movie).getByLabelText("Leo can't afford it yet")).toBeInTheDocument()
   })
 
+  test('with nothing picked the first reward opens in the editor', async () => {
+    data()
+    mockRoute.query = { section: 'rewards', item: 'catalogue' }
+    render(wrap(<KidsPage />))
+    expect(await within(detail()).findByRole('button', { name: 'Save reward' })).toBeInTheDocument()
+    expect(within(detail()).getAllByRole('button', { name: /pts/ })[0]).toHaveAttribute('data-selected', 'true')
+  })
+
   test('turning Needs approval off saves needs_approval:false', async () => {
     data()
     mockRoute.query = { section: 'rewards', item: 'catalogue', pick: '3' }

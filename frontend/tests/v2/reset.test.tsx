@@ -7,7 +7,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fridgeTheme } from '@/v2/theme'
 import { api } from '@/v2/api'
 import { ResetForm } from '@/v2/login/ResetForm'
-import { ParentsList } from '@/v2/manage/ParentsList'
 
 const replace = jest.fn()
 jest.mock('next/router', () => ({ useRouter: () => ({ replace }) }))
@@ -86,26 +85,5 @@ describe('ResetForm', () => {
       await userEvent.click(showButton)
       expect(passwordInput).toHaveAttribute('type', 'text')
     }
-  })
-})
-
-describe('ParentsList', () => {
-  test('other parents get a reset link with a copy button; you do not', async () => {
-    apiMock.mockImplementation(async (p) =>
-      p === '/parents'
-        ? [
-            { id: 1, username: 'mom', full_name: 'Mom', is_me: true },
-            { id: 2, username: 'dad', full_name: 'Dad', is_me: false },
-          ]
-        : { url: 'http://box:3000/reset?token=abc' },
-    )
-    wrap(<ParentsList />)
-    expect(await screen.findByText('Dad')).toBeInTheDocument()
-    expect(screen.getAllByRole('button', { name: 'Reset password' })).toHaveLength(1)
-    await userEvent.click(screen.getByRole('button', { name: 'Reset password' }))
-    expect(await screen.findByLabelText('Reset link')).toHaveValue('http://box:3000/reset?token=abc')
-    expect(screen.getByText(/Send this to Dad. It works once, for 30 minutes./)).toBeInTheDocument()
-    expect(apiMock).toHaveBeenCalledWith('/parents/2/reset-link', { method: 'POST' })
-    expect(screen.getByRole('button', { name: 'Copy link' })).toBeInTheDocument()
   })
 })

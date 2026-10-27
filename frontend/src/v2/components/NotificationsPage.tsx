@@ -7,7 +7,7 @@ export function NotificationsPage() {
   return (
     <RequireParent>
       <ParentShell title="Notifications">
-        <List kid={false} onGo={() => {}} page />
+        <List onGo={() => {}} page />
       </ParentShell>
     </RequireParent>
   )

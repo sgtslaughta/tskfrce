@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { HELP_URL } from '@/v2/components/AccountMenu'
-import { useFamily } from '@/v2/hooks/useFamily'
+import { useFamily, useParents } from '@/v2/hooks/useFamily'
 import { useBlocker } from '@/v2/hooks/useDevices'
 import { Icon } from './Icon'
 
@@ -18,6 +18,7 @@ export function MorePage({ onLogout }: { onLogout: () => void }) {
   const { user } = useUnifiedAuth()
   const family = useFamily()
   const blocker = useBlocker()
+  const owner = useParents().data?.find((p) => p.is_me)?.is_owner
 
   return (
     <div className="p-more">
@@ -28,7 +29,7 @@ export function MorePage({ onLogout }: { onLogout: () => void }) {
         <div className="p-more-info">
           <strong>{user?.username}</strong>
           <p className="p-cap">
-            Parent{family.data?.name ? ` · ${family.data.name}` : ''}
+            {owner ? 'Owner' : 'Parent'}{family.data?.name ? ` · ${family.data.name}` : ''}
           </p>
         </div>
         {blocker.data?.online === false && (

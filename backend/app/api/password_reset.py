@@ -9,6 +9,7 @@ from app.core.client_ip import client_ip
 from app.core.config import settings
 from app.core.database import get_db_session
 from app.core.ratelimit import limit
+from app.models.family import FamilySettings
 from app.models.user import User, UserRole
 from app.services.password_reset import EXPIRED, create_reset, redeem_reset
 
@@ -35,8 +36,16 @@ def list_parents(
         .order_by(User.id)
         .all()
     )
+    fam = db.get(FamilySettings, 1)
+    owner = fam.owner_id if fam and fam.owner_id else (rows[0].id if rows else None)
     return [
-        {"id": u.id, "username": u.username, "full_name": u.full_name, "is_me": u.id == me.id}
+        {
+            "id": u.id,
+            "username": u.username,
+            "full_name": u.full_name,
+            "is_me": u.id == me.id,
+            "is_owner": u.id == owner,
+        }
         for u in rows
     ]
 

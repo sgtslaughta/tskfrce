@@ -71,15 +71,6 @@ describe('Bell', () => {
     expect(posts('/notifications/read-all')).toHaveLength(1)
   })
 
-  test('kid bell uses the kid token and does not navigate', async () => {
-    serve([item(1, { run_id: 7 })])
-    wrap(<Bell kid />)
-    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
-    await userEvent.click(await screen.findByText('Item 1'))
-    expect(apiMock.mock.calls.every((c) => c[1]?.kid === true)).toBe(true)
-    expect(push).not.toHaveBeenCalled()
-  })
-
   test('filters count by kind', async () => {
     serve(
       [
@@ -250,14 +241,6 @@ describe('Bell', () => {
     expect(screen.getByRole('link', { name: /See all/, hidden: true }).getAttribute('href')).toBe('/notifications')
   })
 
-  test('kid bell has no footer', async () => {
-    serve([item(1)])
-    wrap(<Bell kid />)
-    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
-    await screen.findByText('Item 1')
-    expect(screen.queryByRole('link', { name: /See all/, hidden: true })).toBeNull()
-  })
-
   test('approving an already-read item refetches the inbox and the buttons go', async () => {
     let pending = true
     apiMock.mockImplementation(async (p, i) => {
@@ -271,24 +254,6 @@ describe('Bell', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: /Approve/, hidden: true })).toBeNull())
     expect(posts('/notifications/1/read')).toHaveLength(0)
     expect(apiMock.mock.calls.filter((c) => c[0] === '/notifications').length).toBeGreaterThan(1)
-  })
-
-  test('kid bell: no pointer, and Earlier rows have no unread dot', async () => {
-    serve([item(1, { created_at: new Date(Date.now() - 2 * 86400000).toISOString(), read: false })])
-    wrap(<Bell kid />)
-    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
-    const row = (await screen.findByText('Item 1')).closest('.p-bell-item') as HTMLElement
-    expect(row.classList.contains('unread')).toBe(false)
-    expect(document.querySelector('.p-bell-arrow')).toBeNull()
-  })
-
-  test('kid row keeps the old icon and no time suffix', async () => {
-    serve([item(1, { kind: 'level_up', body: 'Nice work' })])
-    wrap(<Bell kid />)
-    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }))
-    const row = (await screen.findByText('Item 1')).closest('.p-bell-item') as HTMLElement
-    expect(row.querySelector('.p-bell-sub')?.textContent).toBe('Nice work')
-    expect(row.querySelector('.p-bell-icon')?.textContent).toContain('whatshot')
   })
 
   test('parent Earlier rows keep the unread dot', async () => {

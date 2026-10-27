@@ -16,7 +16,7 @@ from app.core.client_ip import client_ip
 from app.core.config import settings
 from app.core.database import get_db_session
 from app.core.ratelimit import limit
-from app.models.user import UsedInvite, User, UserRole
+from app.models.user import PendingInvite, UsedInvite, User, UserRole
 from app.schemas.auth import (
     LoginRequest,
     LoginResponse,
@@ -235,6 +235,7 @@ async def register(body: RegisterIn, db: Session = Depends(get_db_session)):
         is_superuser=True,  # same powers as the setup parent (manage kids)
     )
     db.add_all([user, UsedInvite(jti=jti)])
+    db.query(PendingInvite).filter(PendingInvite.jti == jti).delete()
     try:
         db.commit()
     except IntegrityError:  # same invite (or username) redeemed twice at once

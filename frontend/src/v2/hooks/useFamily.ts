@@ -18,17 +18,37 @@ export function usePatchFamily() {
 }
 
 /** POST /users/invite -> one-time sign-up token (24 h). */
-export const useInvite = () =>
-  useMutation({
+export function useInvite() {
+  const qc = useQueryClient()
+  return useMutation({
     mutationFn: (username: string) =>
       api<{ token: string; expires_in: number }>('/users/invite', { method: 'POST', body: { username } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['invites'] }),
   })
+}
+
+export interface PendingInvite {
+  jti: string
+  username: string
+  expires_in: number
+}
+
+export const useInvites = () => useQuery({ queryKey: ['invites'], queryFn: () => api<PendingInvite[]>('/users/invites') })
+
+export function useCancelInvite() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (jti: string) => api<void>(`/users/invites/${jti}`, { method: 'DELETE' }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['invites'] }),
+  })
+}
 
 export interface ParentRow {
   id: number
   username: string
   full_name: string | null
   is_me: boolean
+  is_owner: boolean
 }
 
 export const useParents = () => useQuery({ queryKey: ['parents'], queryFn: () => api<ParentRow[]>('/parents') })

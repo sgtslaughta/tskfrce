@@ -1,3 +1,4 @@
+import { useMediaQuery } from '@mantine/hooks'
 import { useRewards } from '@/v2/hooks/useRewards'
 import { useScreenTime } from '@/v2/hooks/useScreenTime'
 import { Chip } from '@/v2/parent/Chip'
@@ -5,10 +6,13 @@ import { Icon } from '@/v2/parent/Icon'
 import { AffordDots } from './AffordDots'
 import { RewardDetail, rewardGlyph } from './RewardDetail'
 
-/** Catalogue pane: reward card grid (who can afford it now) and the editor for `pick`. */
-export function RewardsCatalogue({ pick, onPick }: { pick?: string; onPick: (id: number | 'new' | null) => void }) {
+/** Catalogue pane: reward card grid (who can afford it now) and the editor for the picked reward. */
+export function RewardsCatalogue({ pick: urlPick, onPick }: { pick?: string; onPick: (id: number | 'new' | null) => void }) {
   const rewards = useRewards().data ?? []
   const kids = useScreenTime().data?.kids ?? []
+  const small = useMediaQuery('(max-width: 767px)')
+  // desktop opens the first reward's editor rather than an empty pane (mockup 02)
+  const pick = urlPick ?? (small || !rewards.length ? undefined : String(rewards[0].id))
   const picked = rewards.find((r) => String(r.id) === pick)
   return (
     <div className="pk-detail">

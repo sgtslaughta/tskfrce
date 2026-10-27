@@ -12,7 +12,7 @@ import { useDecideRedemption } from '../hooks/useRewards'
 import { Icon } from '../parent/Icon'
 import { toastFail, toastOk } from '../notify'
 import { api } from '../api'
-import { isAlert, isNeedsYou, isToday, kidSeverity, severity, when } from './bellRules'
+import { isAlert, isNeedsYou, isToday, severity, when } from './bellRules'
 import { BellActions } from './BellActions'
 
 type FilterKind = 'all' | 'needs-you' | 'alerts'
@@ -24,12 +24,12 @@ const TABS: { key: FilterKind; label: string }[] = [
 const SETTINGS = '/settings?section=notifications'
 
 /** The notification list: inside the bell popover, the phone sheet (`sheet`) or the see-all page (`page`). */
-export function List({ kid, onGo, sheet, page }: { kid: boolean; onGo: () => void; sheet?: boolean; page?: boolean }) {
+export function List({ onGo, sheet, page }: { onGo: () => void; sheet?: boolean; page?: boolean }) {
   const router = useRouter()
-  const inbox = useInbox(kid)
-  const read = useMarkRead(kid)
-  const readAll = useMarkAllRead(kid)
-  const dismiss = useDismiss(kid)
+  const inbox = useInbox(false)
+  const read = useMarkRead(false)
+  const readAll = useMarkAllRead(false)
+  const dismiss = useDismiss(false)
   const approve = useApproveChore()
   const sendBack = useSendBack()
   const decideRedemption = useDecideRedemption()
@@ -47,7 +47,7 @@ export function List({ kid, onGo, sheet, page }: { kid: boolean; onGo: () => voi
     if (!last || loadingOlder) return
     setLoadingOlder(true)
     try {
-      const page = await api<Inbox>(`/notifications?before=${last.id}`, { kid })
+      const page = await api<Inbox>(`/notifications?before=${last.id}`, { kid: false })
       setOlder({ items: [...(older?.items ?? []), ...page.items], more: page.has_more })
     } catch (e) {
       toastFail(e)
@@ -107,29 +107,28 @@ export function List({ kid, onGo, sheet, page }: { kid: boolean; onGo: () => voi
       void act(n, () => decideRedemption.mutateAsync({ id: n.redemption_id!, approve: yes }), yes ? 'Approved' : 'Declined').then((ok) => ok && markRead(n))
   }
 
-  /** Mark read, close the bell and go to `to` (kid notifications just get read). */
+  /** Mark read, close the bell and go to `to`. */
   const goTo = (n: InboxItem, to: string | null) => {
     markRead(n)
-    if (kid) return
     onGo()
     if (to) void router.push(to)
   }
   const row = (n: InboxItem, today: boolean) => {
-    const sev = kid ? kidSeverity(n) : severity(n)
-    const sub = (kid ? [n.body] : [n.body, when(n.created_at)]).filter(Boolean).join(' · ')
+    const sev = severity(n)
+    const sub = [n.body, when(n.created_at)].filter(Boolean).join(' · ')
     return (
-      <div key={n.id} className={`p-bell-item ${!n.read && (today || !kid) ? 'unread' : ''}`}>
+      <div key={n.id} className={`p-bell-item ${!n.read ? 'unread' : ''}`}>
         <div className={`p-bell-icon ${sev.tone}`}>
           <Icon name={sev.name} />
         </div>
-        <button type="button" className="p-bell-text" onClick={() => (kid || !dest(n) ? markRead(n) : goTo(n, dest(n)))}>
+        <button type="button" className="p-bell-text" onClick={() => (dest(n) ? goTo(n, dest(n)) : markRead(n))}>
           <span className="p-bell-title">{n.title}</span>
           {sub && <span className="p-bell-sub">{sub}</span>}
         </button>
         <button type="button" className="p-bell-x" aria-label={`Dismiss ${n.title}`} onClick={() => dismiss.mutate(n.id)}>
           <Icon name="close" size={16} />
         </button>
-        {(today || n.pending) && !kid && (
+        {(today || n.pending) && (
           <BellActions
             n={n}
             busy={busy === n.id}
@@ -165,9 +164,7 @@ export function List({ kid, onGo, sheet, page }: { kid: boolean; onGo: () => voi
         ))}
       </div>
       {filtered.length === 0 ? (
-        kid ? (
-          <p className="p-bell-empty">{inbox.isError ? "Can't load notifications right now." : "You're all caught up."}</p>
-        ) : inbox.isError ? (
+        inbox.isError ? (
           <ErrorPanel kind="unreachable" error={inbox.error} onRetry={() => inbox.refetch()} />
         ) : (
           <EmptyState
@@ -190,7 +187,7 @@ export function List({ kid, onGo, sheet, page }: { kid: boolean; onGo: () => voi
           Show older
         </button>
       )}
-      {!kid && !page && !empty && (
+      {!page && !empty && (
         <div className="p-bell-foot">
           <Link href={SETTINGS} onClick={onGo}>
             <Icon name="tune" size={16} />
@@ -206,17 +203,17 @@ export function List({ kid, onGo, sheet, page }: { kid: boolean; onGo: () => voi
   )
 }
 
-/** Notification bell: popover on desktop, full sheet under 768 px. `kid` uses the kid token. */
-export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; placement?: 'rail' | 'header' }) {
+/** Parent notification bell: popover on desktop, full sheet under 768 px. */
+export function Bell({ placement = 'header' }: { placement?: 'rail' | 'header' }) {
   const [opened, setOpened] = useState(false)
   const small = useMediaQuery('(max-width: 767px)')
-  const inbox = useInbox(kid)
+  const inbox = useInbox(false)
   const unread = inbox.data?.unread ?? 0
   const router = useRouter()
   const fromOs = useCallback((n: InboxItem) => {
-    const to = kid ? null : dest(n)
+    const to = dest(n)
     if (to) void router.push(to)
-  }, [kid, router])
+  }, [router])
   useOsNotify(inbox.data?.items, fromOs)
   useEffect(askOnFirstClick, [])
 
@@ -236,12 +233,12 @@ export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; pla
   const btn = (
     <button
       type="button"
-      className={kid ? 'f-bell' : 'p-bell'}
+      className="p-bell"
       aria-label={unread ? `Notifications, ${unread > 9 ? '9+' : unread} unread` : 'Notifications'}
       onClick={() => setOpened((o) => !o)}
     >
       <Icon name="notifications" size={22} />
-      {unread > 0 && <span className={kid ? 'f-bell-count' : 'p-bell-count'}>{unread > 9 ? '9+' : unread}</span>}
+      {unread > 0 && <span className="p-bell-count">{unread > 9 ? '9+' : unread}</span>}
     </button>
   )
   const close = () => setOpened(false)
@@ -258,7 +255,7 @@ export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; pla
           closeButtonProps={{ 'aria-label': 'Close notifications' }}
           classNames={{ title: 'p-bell-drawer-title', header: 'p-bell-drawer-header', content: 'p-bell-drawer-content', close: 'p-bell-drawer-close' }}
         >
-          <List kid={kid} onGo={close} sheet />
+          <List onGo={close} sheet />
         </Drawer>
       </>
     )
@@ -266,17 +263,20 @@ export function Bell({ kid = false, placement = 'header' }: { kid?: boolean; pla
     <Popover
       opened={opened}
       onChange={setOpened}
-      position={!kid && placement === 'rail' ? 'right-start' : 'bottom-end'}
+      position={placement === 'rail' ? 'right-start' : 'bottom-end'}
       width={400}
-      // kid popover stays as before; parent gets the §2.2 pointer and sticker shadow (CSS)
-      shadow={kid ? 'md' : undefined}
-      {...(kid ? {} : { withArrow: true, arrowSize: 14, arrowOffset: 20, offset: 12, classNames: { arrow: 'p-bell-arrow' } })}
+      // §2.2 pointer and sticker shadow (CSS)
+      withArrow
+      arrowSize={14}
+      arrowOffset={20}
+      offset={12}
+      classNames={{ arrow: 'p-bell-arrow' }}
     >
       <Tooltip label="Notifications" openDelay={400} disabled={opened}>
         <Popover.Target>{btn}</Popover.Target>
       </Tooltip>
-      <Popover.Dropdown aria-label="Notifications" className={kid ? 'f-bell-pop' : 'p-pop p-bell-pop'}>
-        <List kid={kid} onGo={close} />
+      <Popover.Dropdown aria-label="Notifications" className="p-pop p-bell-pop">
+        <List onGo={close} />
       </Popover.Dropdown>
     </Popover>
   )

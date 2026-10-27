@@ -3,18 +3,17 @@ import Link from 'next/link'
 import { useMediaQuery } from '@mantine/hooks'
 import { useRouter } from 'next/router'
 import { ParentShell } from '@/v2/parent/ParentShell'
-import { InfoBlock } from '@/v2/components/InfoBlock'
 import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useFamily, usePatchFamily } from '@/v2/hooks/useFamily'
 import { FamilyCard, GifsCard } from './FamilyCards'
 import { HoursSection } from './HoursSection'
-import { InviteSection } from './InviteSection'
-import { ParentsList } from './ParentsList'
+import { ParentsPane } from './ParentsPane'
 import { SettingsList, type SettingsSection } from './SettingsList'
 import { KidPushPane } from './KidPushPane'
 import { AppearancePane } from './AppearancePane'
 import { NotificationsPane } from './NotificationsPane'
+import { accentHex } from '@/v2/parent/accent'
 import { toastFail, toastOk } from '@/v2/notify'
 
 type S = 'family' | 'hours' | 'notifications' | 'look' | 'gifs' | 'parents'
@@ -56,7 +55,10 @@ function SettingsBody() {
             current={family.data}
             onChange={(p) =>
               patch.mutate(p, {
-                onError: toastFail,
+                onError: (e) => {
+                  document.documentElement.style.setProperty('--p-acc', accentHex(family.data?.accent))
+                  toastFail(e)
+                },
                 onSuccess: () => toastOk('Saved'),
               })
             }
@@ -70,16 +72,7 @@ function SettingsBody() {
             <KidPushPane />
           </>
         )}
-        {section === 'parents' && (
-          <>
-            <InfoBlock
-              icon="supervisor_account"
-              text="Every parent can approve chores, lock devices and change settings. Invite links last 24 hours; reset links 30 minutes."
-            />
-            <ParentsList />
-            <InviteSection />
-          </>
-        )}
+        {section === 'parents' && <ParentsPane />}
       </div>
     </ParentShell>
   )

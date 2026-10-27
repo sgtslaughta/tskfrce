@@ -4,18 +4,16 @@
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  border: 4px solid var(--ring);
+  border: 4px solid;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px var(--edge, var(--ring));
   font-size: 24px;
 }
-.tier-copper { --ring: #b87333; }
-.tier-silver { --ring: #c0c7d1; }
-.tier-gold { --ring: #ffc93c; }
-.tier-platinum { --ring: #9fe3e0; }
 .tier-mega-diamond {
   border-color: transparent;
   background:
     linear-gradient(var(--f-card), var(--f-card)) padding-box,
-    linear-gradient(120deg, #7bd3ff, #c58bff, #ff9ad5, #7bd3ff) border-box;
+    linear-gradient(120deg, var(--mega)) border-box;
   background-size: auto, 300% 300%;
 }
 @media (prefers-reduced-motion: no-preference) {
