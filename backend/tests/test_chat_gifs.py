@@ -273,3 +273,15 @@ def test_transparent_animated_gif_encodes_and_thumb_animates():
     t = Image.open(io.BytesIO(thumb))
     assert Image.open(io.BytesIO(full)).n_frames == 4
     assert t.format == "GIF" and t.n_frames == 4 and max(t.size) <= 320
+
+
+def test_heavy_gif_thumb_falls_back_to_a_still_frame(monkeypatch):
+    monkeypatch.setattr(photos, "THUMB_GIF_MAX_BYTES", 1)  # every animated thumb is "too heavy"
+    full, thumb = photos.encode_gif(_gif(frames=4))
+    assert Image.open(io.BytesIO(full)).n_frames == 4  # the opened GIF still animates
+    assert Image.open(io.BytesIO(thumb)).n_frames == 1
+
+
+def test_light_gif_thumb_stays_animated():
+    _, thumb = photos.encode_gif(_gif(frames=4))
+    assert Image.open(io.BytesIO(thumb)).n_frames == 4

@@ -16,6 +16,7 @@ const PARENT_ROUTES = [
   '/more',
 ]
 const PUBLIC_ROUTES = ['/login', '/register', '/kid']
+const SHOTS = process.env.E2E_SHOTS_DIR ?? 'e2e-artifacts/screens'
 
 const slug = (r: string) => (r === '/' ? 'today' : r.replace(/^\//, '').replace(/[/?=&]+/g, '-'))
 
@@ -36,7 +37,7 @@ test.describe('every screen', () => {
       page.viewportSize()!.width, // not innerWidth: a too-wide page makes phones widen the viewport and hide the overflow
     )
     await page.screenshot({
-      path: `e2e-artifacts/screens/${project}/${slug(route)}.png`,
+      path: `${SHOTS}/${project}/${slug(route)}.png`,
       fullPage: true,
     })
     expect(wide, `${route} scrolls sideways`).toBe(false)
@@ -76,7 +77,7 @@ test.describe('every screen', () => {
     await page.getByRole('button', { name: /^Notifications/ }).click()
     await expect(page.getByText('Notifications', { exact: true }).last()).toBeVisible()
     await page.waitForTimeout(500)
-    await page.screenshot({ path: `e2e-artifacts/screens/${info.project.name}/bell-open.png` })
+    await page.screenshot({ path: `${SHOTS}/${info.project.name}/bell-open.png` })
   })
 
   // v3: desktop logs out from the rail; phones reach settings and log out from the header initial -> More
@@ -90,7 +91,7 @@ test.describe('every screen', () => {
     } else {
       await expect(page.getByRole('button', { name: /log out/i })).toBeVisible()
     }
-    await page.screenshot({ path: `e2e-artifacts/screens/${info.project.name}/account.png` })
+    await page.screenshot({ path: `${SHOTS}/${info.project.name}/account.png` })
   })
 
   test('chat dock open', async ({ page }, info) => {
@@ -99,7 +100,7 @@ test.describe('every screen', () => {
     await page.goto('/')
     await page.getByRole('button', { name: /^Chat(,| *$)/ }).click()
     await page.waitForTimeout(600)
-    await page.screenshot({ path: `e2e-artifacts/screens/${info.project.name}/chat-dock.png` })
+    await page.screenshot({ path: `${SHOTS}/${info.project.name}/chat-dock.png` })
   })
 
   test('setup wizard', async ({ page }, info) => {
@@ -111,13 +112,13 @@ test.describe('every screen', () => {
     await page.waitForTimeout(500)
     const wide = await page.evaluate((w) => document.documentElement.scrollWidth > w, page.viewportSize()!.width)
     expect(wide, 'setup scrolls sideways').toBe(false)
-    await page.screenshot({ path: `e2e-artifacts/screens/${info.project.name}/setup.png`, fullPage: true })
+    await page.screenshot({ path: `${SHOTS}/${info.project.name}/setup.png`, fullPage: true })
   })
 
   // The e2e container is a lab device: give it to Pat so the kid screens render.
   test('kid pages', async ({ page }, info) => {
     const api = await parentApi()
-    const dir = `e2e-artifacts/screens/${info.project.name}`
+    const dir = `${SHOTS}/${info.project.name}`
     const find = async () => {
       const devs: { id: number; name: string }[] = await (await api.get('/api/proxy/devices')).json()
       return devs.filter((d) => d.name.includes('e2e-run'))

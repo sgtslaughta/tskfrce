@@ -19,6 +19,9 @@ FULL, THUMB = 1600, 320
 MAX_PIXELS = 40_000_000
 # Animated GIFs (chat only): total decoded pixels across frames are capped the same way.
 GIF_MAX_BYTES, GIF_MAX_FRAMES = 8 * 1024 * 1024, 300
+# list/side-panel thumbs load on every chat open: an animated thumb over this (noisy photo GIFs
+# reach 10 MB+ at 320px) becomes a still first frame; tapping opens the animated original
+THUMB_GIF_MAX_BYTES = 1_500_000
 
 
 def storage() -> LocalStorage:
@@ -82,7 +85,10 @@ def encode_gif(data: bytes) -> tuple[bytes, bytes]:
             t = c.copy()
             t.thumbnail((THUMB, THUMB))
             small.append(t)
-        return _gif(frames, durations), _gif(small, durations)
+        thumb = _gif(small, durations)
+        if len(thumb) > THUMB_GIF_MAX_BYTES:
+            thumb = _gif(small[:1], durations[:1])
+        return _gif(frames, durations), thumb
     except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError, EOFError):
         raise HTTPException(415, "We couldn't read that GIF. Try another one.") from None
 
