@@ -90,3 +90,12 @@ html[data-look='parent'] .f-cap { color: var(--p-sub); }
 html[data-look='parent'] .f-note { color: var(--p-sub); font-family: inherit; }
 html[data-look='parent'] .f-btn.f-btn[data-variant='light'] { background: var(--p-soft); border-color: var(--p-line); color: var(--p-ink); }
 html[data-look='parent'] .m-d { border-radius: 6px; border-color: var(--p-line); color: var(--p-sub); }
+html[data-look='parent'] .f-sheet-title.f-sheet-title { color: var(--p-ink); }
+/* phone chat sheet (mockup 04): rounded top, grab handle, "Chore · Kid" line */
+html[data-look='parent'] .pt-sheet { border-radius: 20px 20px 0 0; position: relative; }
+html[data-look='parent'] .pt-sheet::before {
+  content: ''; position: absolute; top: 6px; left: 50%; width: 36px; height: 4px; margin-left: -18px;
+  border-radius: 2px; background: var(--p-line); z-index: 1001;
+}
+html[data-look='parent'] .pt-sheet-sub { display: block; font-size: 12px; font-weight: 500; color: var(--p-sub); }
+html[data-look='parent'] .pt-sheet .f-sheet-head { padding-top: 18px; }

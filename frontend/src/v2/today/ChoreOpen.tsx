@@ -232,7 +232,19 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
       </div>
 
       {isMobile ? (
-        <Drawer opened={chat} onClose={() => setChat(false)} position="bottom" size="58%" title={chore.title} classNames={{ body: 'pt-sheet-body' }}>
+        <Drawer
+          opened={chat}
+          onClose={() => setChat(false)}
+          position="bottom"
+          size="58%"
+          title={
+            <>
+              {chore.title}
+              <small className="pt-sheet-sub">{`Chore · ${kid.name}`}</small>
+            </>
+          }
+          classNames={{ content: 'pt-sheet', body: 'pt-sheet-body' }}
+        >
           {thread}
         </Drawer>
       ) : (

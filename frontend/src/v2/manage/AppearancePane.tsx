@@ -33,6 +33,7 @@ export function AppearancePane({ current, onChange }: AppearancePaneProps) {
                 document.documentElement.style.setProperty('--p-acc', accent.hex)
               }}
               aria-label={accent.name}
+              aria-pressed={current.accent === key}
               title={accent.name}
             >
               <span className="swatch-name">{accent.name}</span>
@@ -46,6 +47,7 @@ export function AppearancePane({ current, onChange }: AppearancePaneProps) {
         <div className="mode-buttons">
           <Button
             variant={colorScheme === 'light' ? 'filled' : 'default'}
+            aria-pressed={colorScheme === 'light'}
             onClick={() => setColorScheme('light')}
             className="mode-btn"
           >
@@ -54,6 +56,7 @@ export function AppearancePane({ current, onChange }: AppearancePaneProps) {
           </Button>
           <Button
             variant={colorScheme === 'dark' ? 'filled' : 'default'}
+            aria-pressed={colorScheme === 'dark'}
             onClick={() => setColorScheme('dark')}
             className="mode-btn"
           >
@@ -62,6 +65,7 @@ export function AppearancePane({ current, onChange }: AppearancePaneProps) {
           </Button>
           <Button
             variant={colorScheme === 'auto' ? 'filled' : 'default'}
+            aria-pressed={colorScheme === 'auto'}
             onClick={() => setColorScheme('auto')}
             className="mode-btn"
           >
