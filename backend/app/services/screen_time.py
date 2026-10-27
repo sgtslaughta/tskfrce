@@ -1,6 +1,6 @@
 """Screen-time purchase rules: daily max, per-kid limits, allowed hours."""
 
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from fastapi import HTTPException
 from sqlalchemy import func
@@ -18,8 +18,16 @@ from app.services import economy
 
 
 def day_start_utc(fam: FamilySettings, now_utc: datetime) -> datetime:
-    """Naive UTC start of the current chore day (its reset time)."""
-    return economy.deadline_utc(fam, current_chore_day(fam, _aware(now_utc)), fam.reset_time)
+    """Naive UTC start of the current chore day: its most recent reset, never in the future
+    (a fresh install between midnight and the reset time is still on the previous day)."""
+    day = current_chore_day(fam, _aware(now_utc))
+    start = economy.deadline_utc(fam, day, fam.reset_time)
+    now = _aware(now_utc).astimezone(UTC).replace(tzinfo=None)
+    return (
+        start
+        if start <= now
+        else economy.deadline_utc(fam, day - timedelta(days=1), fam.reset_time)
+    )
 
 
 def _aware(now: datetime) -> datetime:

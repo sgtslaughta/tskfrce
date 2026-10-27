@@ -167,3 +167,14 @@ def test_any_hours_bonus_cannot_buy_or_open_an_off_window(client, db, kid, kid_h
     )
     db.commit()
     assert dev.mac in desired_blocked(db, datetime.now(UTC))
+
+
+def test_day_start_never_in_the_future(db):
+    fam = get_family(db)
+    fam.reset_time = "06:00"
+    fam.last_reset_date = None
+    db.commit()
+    early = datetime(2026, 10, 27, 0, 16, tzinfo=UTC)  # after midnight, before the reset
+    assert screen_time.day_start_utc(fam, early) == datetime(2026, 10, 26, 6, 0)
+    later = datetime(2026, 10, 27, 7, 0, tzinfo=UTC)
+    assert screen_time.day_start_utc(fam, later) == datetime(2026, 10, 27, 6, 0)

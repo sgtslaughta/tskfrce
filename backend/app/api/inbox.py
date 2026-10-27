@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import func
 from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_current_active_user, get_db
@@ -75,8 +76,26 @@ def _enrich(db: Session, rows: list[Notification]) -> list[dict]:
         if dev_ids
         else {}
     )
+    # only the newest row per (kind, run) is actionable: two notes on one run count once
+    newest = (
+        {
+            (k, rid): mid
+            for k, rid, mid in db.query(
+                Notification.kind, Notification.run_id, func.max(Notification.id)
+            )
+            .filter(Notification.user_id == rows[0].user_id, Notification.run_id.in_(run_ids))
+            .group_by(Notification.kind, Notification.run_id)
+        }
+        if run_ids
+        else {}
+    )
     for n, o in zip(rows, out, strict=True):
-        if n.run_id in runs:
+        if n.run_id in runs and newest.get((n.kind, n.run_id)) != n.id:
+            r = runs[n.run_id]
+            c = svc.chore_of(r)
+            o["glyph"], o["points"] = c.type.glyph, c.points
+            o["kid_id"] = r.submitted_by_id or (svc.run_kid_ids(r) or [None])[0]
+        elif n.run_id in runs:
             r = runs[n.run_id]
             c = svc.chore_of(r)
             o["glyph"], o["points"] = c.type.glyph, c.points

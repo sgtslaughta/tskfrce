@@ -120,7 +120,7 @@ def test_deliver_redacts_log_capture(monkeypatch):
 
     monkeypatch.setattr(apprise.Apprise, "notify", fail)
     ok, err = notify.deliver([URL], "t", "b")
-    assert not ok and "tok123" not in err and err.endswith("Could not reach ••••")
+    assert not ok and "tok123" not in err and err == "Could not reach ••••"  # no timestamp prefix
 
 
 def test_send_logs_no_secret(monkeypatch):

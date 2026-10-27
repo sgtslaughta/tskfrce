@@ -168,3 +168,17 @@ def test_note_pending_until_flag_clears(client, db, parent, kid, parent_headers)
     tid = client.get(f"/api/v1/chat/threads/chore/{r.id}", headers=parent_headers).json()["id"]
     client.post(f"/api/v1/chat/threads/{tid}/messages", json={"body": "ok"}, headers=parent_headers)
     assert _item(client, parent_headers, "chore_note")["pending"] is False
+
+
+def test_two_notes_on_one_run_count_once(client, db, parent, kid, parent_headers):
+    r = make_run(db, parent, kid, day=svc.today(db, datetime.now(UTC)))
+    mkdev(db, kid)
+    kh = kid_hdr(db, kid)
+    for label in ("Need help", "Ran out of time"):
+        res = from_ip("192.168.1.50").post(
+            f"/api/v1/kid/chores/{r.id}/note", json={"label": label}, headers=kh
+        )
+        assert res.status_code == 200
+    items = client.get(N, headers=parent_headers).json()["items"]
+    notes = [i for i in items if i["kind"] == "chore_note"]
+    assert len(notes) == 2 and [i["pending"] for i in notes] == [True, False]

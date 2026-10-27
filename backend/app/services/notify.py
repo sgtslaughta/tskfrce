@@ -140,7 +140,10 @@ def _redact(msg: str, urls: list[str]) -> str:
 def deliver(urls: list[str], title: str, body: str) -> tuple[bool, str | None]:
     try:
         ap = apprise.Apprise()
-        with apprise_lock, apprise.LogCapture(level=apprise.logging.WARNING) as cap:
+        with (
+            apprise_lock,
+            apprise.LogCapture(level=apprise.logging.WARNING, fmt="%(message)s") as cap,
+        ):
             for u in urls:
                 ap.add(u)
             ok = ap.notify(title=title, body=body, body_format=apprise.NotifyFormat.TEXT)
