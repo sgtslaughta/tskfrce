@@ -18,16 +18,18 @@ export interface EmptyStateProps {
   tone?: 'soft' | 'acc' | 'red' | 'amb'
   actions?: StateAction[]
   children?: ReactNode
+  /** h1 when the panel is the whole page (expired link, 404); h3 inside a page */
+  heading?: 'h1' | 'h3'
 }
 
 /** Empty / error / done panel from mockup 05: icon tile, title, one line, pill actions. */
-export function EmptyState({ icon, title, body, tone = 'soft', actions = [], children }: EmptyStateProps) {
+export function EmptyState({ icon, title, body, tone = 'soft', actions = [], children, heading: H = 'h3' }: EmptyStateProps) {
   return (
     <div className="p-state" role={tone === 'red' ? 'alert' : undefined}>
       <div className="p-state-icon" data-tone={tone}>
         <Icon name={icon} size={26} />
       </div>
-      <h3 className="p-state-title">{title}</h3>
+      <H className="p-state-title">{title}</H>
       <p className="p-state-body">{body}</p>
       {actions.length > 0 && (
         <div className="p-state-actions">
@@ -108,6 +110,7 @@ export function ErrorPanel({ kind, error, onRetry }: { kind: ErrorKind; error?: 
       body={error ? errorText(error) : copy.body}
       tone={copy.tone}
       actions={actions}
+      heading={kind === 'expired' || kind === 'notfound' ? 'h1' : 'h3'}
     />
   )
 }

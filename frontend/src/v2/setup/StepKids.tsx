@@ -54,7 +54,7 @@ export function StepKids({ kids, name, onName, draftError, onAdd }: Props) {
         error={pinBad ? 'Use exactly 4 digits.' : undefined} />
       {add.error && <p role="alert">Couldn&apos;t add that kid. {add.error.message}</p>}
       <Group mt="md">
-        <Button disabled={!name.trim() || pinBad} loading={add.isPending} onClick={addKid}>Add kid</Button>
+        <Button variant="filled" disabled={!name.trim() || pinBad} loading={add.isPending} onClick={addKid}>Add kid</Button>
       </Group>
     </>
   )

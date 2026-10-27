@@ -1,4 +1,5 @@
 import { Icon } from '@/v2/parent/Icon'
+import { Chip } from '@/v2/parent/Chip'
 import type { ChatMessage } from '@/v2/hooks/useChat'
 import { Photo } from './ChatPhoto'
 import { EditBox, MessageActions } from './MessageActions'
@@ -48,8 +49,12 @@ export function ParentBubble({ m, mine, names = [] }: { m: ChatMessage; mine: bo
                 <span>edited</span>
               </>
             )}
-            {m.note_label && ` · note: ${m.note_label}`}
           </small>
+          {m.note_label && (
+            <Chip tone="amb" icon="flag" className="pc-notechip">
+              {`Note: ${m.note_label}`}
+            </Chip>
+          )}
           {m.step_title && (
             <span className="pc-quote">
               <Icon name="subdirectory_arrow_right" size={14} />

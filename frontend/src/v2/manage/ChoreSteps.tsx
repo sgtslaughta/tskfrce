@@ -98,7 +98,7 @@ export function ChoreSteps({ steps, onChange, next, onNext, choreDue }: Props) {
                   onBlur={() => setEditing(null)}
                 />
               ) : (
-                <button type="button" className="pk-due" data-none={!s.due_time} aria-label={`Due time for ${s.title}`} onClick={() => setEditing(i)}>
+                <button type="button" className="pk-due" data-none={!s.due_time} aria-label={`${s.due_time ? `by ${wallTime(s.due_time)}` : 'Due time'}, due time for ${s.title}`} onClick={() => setEditing(i)}>
                   <Icon name="schedule" size={14} />
                   {s.due_time ? `by ${wallTime(s.due_time)}` : 'Due time'}
                 </button>

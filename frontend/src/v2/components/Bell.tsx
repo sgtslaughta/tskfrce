@@ -124,12 +124,12 @@ export function List({ kid, onGo, sheet, page }: { kid: boolean; onGo: () => voi
         </div>
         <button type="button" className="p-bell-text" onClick={() => (kid || !dest(n) ? markRead(n) : goTo(n, dest(n)))}>
           <span className="p-bell-title">{n.title}</span>
-          <span className="p-bell-sub">{sub}</span>
+          {sub && <span className="p-bell-sub">{sub}</span>}
         </button>
         <button type="button" className="p-bell-x" aria-label={`Dismiss ${n.title}`} onClick={() => dismiss.mutate(n.id)}>
           <Icon name="close" size={16} />
         </button>
-        {today && !kid && (
+        {(today || n.pending) && !kid && (
           <BellActions
             n={n}
             busy={busy === n.id}

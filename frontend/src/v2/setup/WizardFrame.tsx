@@ -1,6 +1,6 @@
 import { Icon } from '@/v2/parent/Icon'
 import type { ReactNode } from 'react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button, Group } from '@mantine/core'
 import { useLook } from '../parent/useLook'
 import styles from './wizard.module.css'
@@ -40,6 +40,14 @@ export function WizardFrame({
     if (step > maxStepReached) setMaxStepReached(step)
   }, [step, maxStepReached])
 
+  // phone: the step strip scrolls sideways; keep the active step in view
+  const stepsRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = stepsRef.current?.querySelector<HTMLElement>('[aria-current="step"]')
+    const strip = stepsRef.current
+    if (el && strip && strip.scrollWidth > strip.clientWidth) strip.scrollLeft = el.offsetLeft - (strip.clientWidth - el.offsetWidth) / 2
+  }, [step])
+
   const estimatedMinLeft = Math.max(1, 8 - step)
 
   return (
@@ -50,7 +58,7 @@ export function WizardFrame({
           <i>@</i>
           <span>t@sk4ce setup</span>
         </div>
-        <div className={styles.steps}>
+        <div className={styles.steps} ref={stepsRef}>
           {STEPS.map((s, i) => {
             const isDone = i + 1 < step
             const isActive = i + 1 === step
@@ -101,7 +109,7 @@ export function WizardFrame({
         {title && (
           <>
             {step <= STEPS.length && <div className={styles.eyebrow}>Step {step} of {STEPS.length}{step === 7 ? ' · optional' : ''}</div>}
-            <h2>{title}</h2>
+            <h1>{title}</h1>
             {subtitle && <div className={styles.s}>{subtitle}</div>}
           </>
         )}
@@ -120,7 +128,7 @@ export function WizardFrame({
                 Skip
               </Button>
             )}
-            <Button type="submit" loading={busy} leftSection={nextLabel === 'Finish' ? <span className="ms" aria-hidden="true">check</span> : <span className="ms" aria-hidden="true">arrow_forward</span>}>
+            <Button type="submit" variant="filled" loading={busy} leftSection={nextLabel === 'Finish' ? <span className="ms" aria-hidden="true">check</span> : <span className="ms" aria-hidden="true">arrow_forward</span>}>
               {nextLabel}
             </Button>
           </Group>

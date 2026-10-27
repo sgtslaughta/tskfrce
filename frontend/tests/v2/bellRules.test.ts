@@ -27,6 +27,13 @@ describe('bellRules', () => {
     expect(severity(n({ kind: 'box_offline' }))).toEqual({ name: 'router', tone: 'hi' })
   })
 
+  test('when names the month for older items (not "24 Sat")', () => {
+    const now = new Date(2026, 9, 26, 12, 0)
+    const out = when(new Date(2026, 9, 24, 12, 0).toISOString(), now)
+    expect(out).toMatch(/Oct/)
+    expect(out).toMatch(/24/)
+  })
+
   test('when says Yesterday for 24 h ago', () => {
     const now = new Date(2026, 9, 26, 12, 0)
     expect(when(new Date(2026, 9, 25, 12, 0).toISOString(), now)).toBe('Yesterday')

@@ -47,6 +47,8 @@ export function TodayPage() {
       phone={
         data?.kids.length ? (
           <KidStrip kids={data.kids} selected={kid?.id} onSelect={setSelectedKid} />
+        ) : data ? (
+          <></> // no kids: phone shows the detail's "Add your first kid" state, not an empty list
         ) : undefined
       }
     >

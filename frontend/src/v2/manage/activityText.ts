@@ -58,7 +58,7 @@ export function eventText(e: DeviceEvent, deviceName: string, tz?: string): { ic
       return {
         icon: 'block',
         sev: 'lo',
-        title: `Tried to get online while locked (${LOCKED_WHY[e.reason ?? ''] ?? 'locked'})`,
+        title: LOCKED_WHY[e.reason ?? ''] ? `Tried to get online while locked (${LOCKED_WHY[e.reason ?? '']})` : 'Tried to get online while locked',
         sub: `${e.count} ${e.count === 1 ? 'try' : 'tries'}`,
       }
   }

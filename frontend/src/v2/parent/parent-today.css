@@ -82,6 +82,7 @@
 /* open chore: left column + optional chat column */
 [data-look='parent'] .pt-open { display: grid; grid-template-columns: 1fr; gap: 16px; padding: 4px 16px 16px; }
 [data-look='parent'] .pt-open[data-chat='true'] { grid-template-columns: 1fr 1fr; }
+[data-look='parent'] .pt-open[data-chat='true'] .pt-acts { margin-top: auto; } /* pinned to the column bottom (§3.2) */
 [data-look='parent'] .pt-open-main { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
 
 [data-look='parent'] .pt-steps { list-style: none; margin: 4px 0 0 10px; padding: 0 0 0 4px; border-left: 2px solid var(--p-line); }
@@ -187,6 +188,10 @@
   [data-look='parent'] .pt-car { display: none; }
   [data-look='parent'] .pt-note-acts { padding: 0 12px 12px 84px; }
   [data-look='parent'] .pt-chips { flex-direction: column; align-items: flex-end; gap: 4px; }
+  /* chained-step chip drops under the title instead of squeezing it to one letter per line */
+  [data-look='parent'] .pt-step { flex-wrap: wrap; }
+  [data-look='parent'] .pt-step .pt-t { flex: 1 1 140px; }
+  [data-look='parent'] .pt-step > .p-chip { order: 3; margin-left: 28px; }
 }
 
 /* phone: avatar strip and the kid's facts (desktop has them on the kid card) */

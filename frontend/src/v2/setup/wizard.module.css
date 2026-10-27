@@ -200,7 +200,7 @@
   color: var(--p-sub);
 }
 
-.main h2 {
+.main h1 {
   margin: 0;
   font-family: var(--font-parent), 'DM Sans', system-ui, sans-serif;
   font-weight: 600;

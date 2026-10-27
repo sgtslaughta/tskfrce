@@ -116,7 +116,7 @@
 
 [data-look='parent'] .pk-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 [data-look='parent'] .pk-actions .pk-push { margin-left: auto; }
-[data-look='parent'] .pk-actions .p-btn[aria-pressed='true'] { border-color: var(--p-ink); background: var(--p-soft); }
+[data-look='parent'] .pk-actions .p-btn[aria-pressed='true'] { border-color: var(--p-ink); background: var(--p-soft); color: var(--p-ink); }
 [data-look='parent'] .pk-foot { display: flex; justify-content: flex-end; gap: 8px; }
 [data-look='parent'] .pk-dirty { display: inline-flex; align-items: center; gap: 6px; margin-right: auto; color: var(--p-sub); font-size: 12.5px; font-weight: 600; }
 

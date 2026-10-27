@@ -123,7 +123,7 @@ export function ThreadList({
 
       {search.trim() && filtered.length === 0 && (
         <EmptyState
-          icon="person_search"
+          icon="search_off"
           title={`No chats match “${search.trim()}”`}
           body="Try a kid's name or a chore title."
           actions={[{ label: 'Clear search', icon: 'close', onClick: () => setSearch('') }]}

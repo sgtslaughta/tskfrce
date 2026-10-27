@@ -82,6 +82,15 @@ describe('device Activity', () => {
     await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/devices/1/events/11/merge', { method: 'POST' }))
   })
 
+  test('a reviewed new address no longer offers merge buttons', async () => {
+    data = { ...data, events: data.events.map((e) => (e.id === 11 ? { ...e, reviewed: true } : e)) }
+    show()
+    const f = await feed()
+    await waitFor(() => expect(within(f).getAllByRole('listitem')).toHaveLength(3))
+    expect(within(f).queryByRole('button', { name: /Same device, merge/ })).toBeNull()
+    expect(within(f).queryByRole('button', { name: 'Different device' })).toBeNull()
+  })
+
   test('Mark OK hides its button once reviewed', async () => {
     show()
     const f = await feed()

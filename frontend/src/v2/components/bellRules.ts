@@ -48,7 +48,7 @@ export const when = (iso: string, now = new Date()): string => {
   const y = new Date(now)
   y.setDate(y.getDate() - 1)
   if (sameDay(then, y)) return 'Yesterday'
-  return then.toLocaleDateString([], { weekday: 'short', day: 'numeric' })
+  return then.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
 }
 
 /** The kid bell's original icons (unchanged by the parent redesign). */

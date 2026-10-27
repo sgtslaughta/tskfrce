@@ -181,7 +181,7 @@
 [data-look='parent'] .pn-ev { font: 11.5px var(--font-parent), system-ui, sans-serif; border: 1px solid var(--p-line); border-radius: 999px; padding: 3px 9px; background: transparent; color: var(--p-sub); cursor: pointer; }
 [data-look='parent'] .pn-ev[aria-pressed='true'] { background: var(--p-ink); color: var(--p-card); border-color: var(--p-ink); }
 [data-look='parent'] .pn-ev:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
-[data-look='parent'] .pn-warn { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px 10px; border-radius: 12px; background: var(--p-amb); color: var(--p-ambink); font-size: 13px; font-weight: 600; }
+[data-look='parent'] .pn-warn { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 8px 10px; border-radius: 12px; background: var(--p-amb); color: var(--p-ambink); border: 1px solid color-mix(in srgb, var(--p-ambink) 30%, transparent); font-size: 13px; font-weight: 600; }
 [data-look='parent'] .pn-warn > span:not(.ms) { flex: 1; }
 [data-look='parent'] .pn-g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 [data-look='parent'] .pn-kv, [data-look='parent'] .pn-times { padding: 8px 0; font-size: 13px; border-top: 1px solid var(--p-line); }

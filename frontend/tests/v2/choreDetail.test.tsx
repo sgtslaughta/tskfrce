@@ -95,12 +95,12 @@ describe('chore editor: type, steps, notes', () => {
 
   test('a step due after the chore shows the warning', async () => {
     await show()
-    await userEvent.click(screen.getByRole('button', { name: 'Due time for Pack backpack' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Due time, due time for Pack backpack' }))
     fireEvent.change(screen.getByLabelText('Due time for Pack backpack'), { target: { value: '20:30' } })
     expect(
       screen.getByText('“Pack backpack” is due after the chore (6:00 PM). The chore will stay open until 8:30 PM.'),
     ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Due time for Math worksheet' })).toHaveTextContent('by 4:30 PM')
+    expect(screen.getByRole('button', { name: 'by 4:30 PM, due time for Math worksheet' })).toHaveTextContent('by 4:30 PM')
   })
 
   test('notes card lists type notes and the universal notes for the assigned kids', async () => {

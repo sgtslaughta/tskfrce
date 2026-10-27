@@ -62,6 +62,9 @@ html[data-look='parent'] body { font-family: var(--mantine-font-family); }
 /* Lilac accent special case: outline for needs-ok chip */
 [data-look='parent'][data-accent='lilac'] .p-chip[data-tone='lav'] {
   background: transparent;
-  border: 1.5px solid var(--p-lav);
+  border: 2px solid var(--p-lav-ink);
   color: var(--p-lav-ink);
 }
+
+/* form error text uses the darker parent red (§2.4), not Mantine's #fa5252 (3:1) */
+html[data-look='parent'][data-mantine-color-scheme] { --mantine-color-error: var(--p-red); }
