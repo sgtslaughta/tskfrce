@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAwardBadge, useBadgeOverview, useCustomBadges } from '@/v2/hooks/useCustomBadges'
+import { useMediaQuery } from '@mantine/hooks'
 import { useKids } from '@/v2/hooks/useKids'
 import { Icon } from '@/v2/parent/Icon'
 import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
@@ -79,7 +80,13 @@ export function BadgesCustom({ pick, onPick }: { pick?: string; onPick: (id: num
   const overview = useBadgeOverview().data ?? []
   const kids = useKids().data ?? []
   const list = badges.data ?? []
+  const small = useMediaQuery('(max-width: 767px)')
+  const detail = useRef<HTMLDivElement>(null)
   const picked = pick === 'new' ? undefined : (list.find((b) => String(b.id) === pick) ?? list[0])
+  // phone: the editor sits under the grid, so bring it into view when a card is tapped
+  useEffect(() => {
+    if (small && pick) detail.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }, [small, pick])
   const tiersOf = (id: number) => overview.find((o) => o.key === `custom:${id}`)?.tiers ?? {}
   return (
     <div className="pk-detail">
@@ -117,9 +124,9 @@ export function BadgesCustom({ pick, onPick }: { pick?: string; onPick: (id: num
         pick !== 'new' && <EmptyState icon="auto_awesome" title="No custom badges yet" body="Make one for the things you want to cheer on." />
       )}
       {(pick === 'new' || picked) && (
-        <div className="rw-g2">
-          {pick === 'new' ? <BadgeDetail key="new" onSelect={onPick} /> : picked && <BadgeDetail key={picked.id} badge={picked} onSelect={onPick} />}
-          {picked && <AwardPanel key={picked.id} badge={picked} kids={kids} tiers={tiersOf(picked.id)} />}
+        <div className="rw-g2" ref={detail}>
+          {pick === 'new' ? <BadgeDetail key="new" onSelect={onPick} /> : picked && <BadgeDetail key={`d${picked.id}`} badge={picked} onSelect={onPick} />}
+          {picked && <AwardPanel key={`a${picked.id}`} badge={picked} kids={kids} tiers={tiersOf(picked.id)} />}
         </div>
       )}
     </div>

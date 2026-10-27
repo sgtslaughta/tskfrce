@@ -72,7 +72,7 @@ export function PlaceCard({ place, events }: { place: Place; events: NotifyEvent
         title="Remove this place?"
         body="t@sk4ce will stop sending pings there."
         confirmLabel="Remove"
-        onConfirm={() => del.mutate(place.id, { onSuccess: () => toastOk('Removed'), onError: toastFail })}
+        onConfirm={() => void del.mutateAsync(place.id).then(() => toastOk('Removed'), toastFail)}
         onClose={() => setConfirm(false)}
       />
       <PlaceForm opened={edit} onClose={() => setEdit(false)} place={place} />

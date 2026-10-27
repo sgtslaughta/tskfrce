@@ -67,6 +67,8 @@ def test_approve_deducts_and_award_seen(client, db, kid, kid_headers, parent_hea
         client.post(f"/api/v1/redemptions/{rid}/approve", headers=parent_headers).status_code == 200
     )
     assert _balance(client, kid_headers) == 50
+    spent = db.query(Points).filter(Points.points_type == PointsType.REDEMPTION).one()
+    assert spent.description == "Movie night"
     aw = client.get("/api/v1/kid/awards", headers=kid_headers).json()
     assert aw[0]["id"] == rid and aw[0]["name"] == "Movie night"
     assert client.post(f"/api/v1/kid/awards/{rid}/seen", headers=kid_headers).status_code == 204

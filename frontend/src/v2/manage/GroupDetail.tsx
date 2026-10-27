@@ -202,7 +202,7 @@ export function GroupDetail({ group, devices, kids, groups, rules, onSelect, onR
           opened={confirm}
           title={`Delete ${group.name}?`}
           body="The devices stay. This group's hours are removed."
-          onConfirm={() => !del.isPending && del.mutate(group.id, { onSuccess: () => onSelect(null) })}
+          onConfirm={() => !del.isPending && void del.mutateAsync(group.id).then(() => onSelect(null), toastFail)}
           onClose={close}
         />
       )}

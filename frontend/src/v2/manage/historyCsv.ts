@@ -9,7 +9,7 @@ const cell = (v: string | number | null): string => {
 export function toCsv(rows: HistoryRow[]): string {
   const head = 'date,kid,item,kind,status,points,decided_by,note'
   const lines = rows.map((r) =>
-    [r.decided_at ?? r.created_at, r.kid_name, r.name, r.kind, r.auto ? 'auto' : r.status === 'denied' ? 'declined' : 'approved', r.cost, r.decided_by_name, r.note]
+    [r.decided_at ?? r.created_at, r.kid_name, r.name, r.kind, r.auto ? 'auto' : r.status === 'denied' ? 'declined' : 'approved', r.status === 'denied' ? 0 : r.cost, r.decided_by_name, r.note]
       .map(cell)
       .join(','),
   )

@@ -35,7 +35,7 @@ export function MoveSkip({ chore }: { chore: TodayChore }) {
           className="p-btn"
           disabled={move.isPending}
           data-loading={move.isPending}
-          onClick={() => move.mutate(chore.id, { onSuccess: () => toastOk('Moved to tomorrow'), onError: toastFail })}
+          onClick={() => void move.mutateAsync(chore.id).then(() => toastOk('Moved to tomorrow'), toastFail)}
         >
           <Icon name="event_repeat" size={17} />
           Move to tomorrow
@@ -46,7 +46,7 @@ export function MoveSkip({ chore }: { chore: TodayChore }) {
         className="p-btn"
         disabled={skip.isPending}
         data-loading={skip.isPending}
-        onClick={() => skip.mutate(chore.id, { onSuccess: () => toastOk('Skipped for today'), onError: toastFail })}
+        onClick={() => void skip.mutateAsync(chore.id).then(() => toastOk('Skipped for today'), toastFail)}
       >
         <Icon name="do_not_disturb_on" size={17} />
         Skip today (no penalty)

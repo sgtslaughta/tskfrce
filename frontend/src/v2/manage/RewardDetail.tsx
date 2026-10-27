@@ -36,6 +36,13 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
   const [approval, setApproval] = useState(reward?.needs_approval ?? true)
   const [confirm, { open, close }] = useDisclosure(false)
   const priceErr = intError(price, 1, 100000)
+  const dirty =
+    !reward ||
+    name.trim() !== reward.name ||
+    Number(price) !== reward.price ||
+    icon !== (reward.icon ? rewardGlyph(reward.icon) : '') ||
+    visible !== reward.visible ||
+    approval !== reward.needs_approval
 
   const submit = () => {
     const body: RewardBody = { name: name.trim(), price: Number(price) }
@@ -102,7 +109,7 @@ export function RewardDetail({ reward, onSelect }: { reward?: Reward; onSelect: 
           className="p-btn"
           data-variant="accent"
           onClick={submit}
-          disabled={!name.trim() || !!priceErr || save.isPending}
+          disabled={!name.trim() || !!priceErr || !dirty || save.isPending}
           aria-busy={save.isPending}
         >
           <Icon name={save.isPending ? 'progress_activity' : 'check'} className={save.isPending ? 'pk-spin' : ''} />

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import { useMediaQuery } from '@mantine/hooks'
 import { useRewards } from '@/v2/hooks/useRewards'
 import { useScreenTime } from '@/v2/hooks/useScreenTime'
@@ -14,6 +15,11 @@ export function RewardsCatalogue({ pick: urlPick, onPick }: { pick?: string; onP
   // desktop opens the first reward's editor rather than an empty pane (mockup 02)
   const pick = urlPick ?? (small || !rewards.length ? undefined : String(rewards[0].id))
   const picked = rewards.find((r) => String(r.id) === pick)
+  const detail = useRef<HTMLDivElement>(null)
+  // phone: the editor sits under the grid, so bring it into view when a card is tapped
+  useEffect(() => {
+    if (small && urlPick) detail.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+  }, [small, urlPick])
   return (
     <div className="pk-detail">
       <header className="pk-head">
@@ -47,7 +53,9 @@ export function RewardsCatalogue({ pick: urlPick, onPick }: { pick?: string; onP
           New reward
         </button>
       </div>
-      {pick === 'new' ? <RewardDetail key="new" onSelect={onPick} /> : picked && <RewardDetail key={picked.id} reward={picked} onSelect={onPick} />}
+      <div ref={detail}>
+        {pick === 'new' ? <RewardDetail key="new" onSelect={onPick} /> : picked && <RewardDetail key={picked.id} reward={picked} onSelect={onPick} />}
+      </div>
     </div>
   )
 }

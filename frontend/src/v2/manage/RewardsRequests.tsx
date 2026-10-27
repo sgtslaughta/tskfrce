@@ -26,7 +26,7 @@ function RequestCard({ req, glyph, hide }: { req: PendingRedemption; glyph: stri
   const kid = req.kid_name ?? 'Kid'
   const send = (approve: boolean) => {
     const v = { id: req.id, approve, ...(note.trim() && { note: note.trim() }) }
-    if (!approve) return decide.mutate(v, { onSuccess: () => toastOk(`Declined ${req.name}`), onError: toastFail })
+    if (!approve) return void decide.mutateAsync(v).then(() => toastOk(`Declined ${req.name}`), toastFail)
     hide(true)
     void withUndo(() => decide.mutateAsync(v), `Approved ${req.name}`).finally(() => hide(false))
   }

@@ -254,7 +254,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
         opened={confirm}
         title={`Delete ${device.name}?`}
         body="It will show up as a new device if it connects again."
-        onConfirm={() => !del.isPending && del.mutate(device.id, { onSuccess: onDeleted })}
+        onConfirm={() => !del.isPending && void del.mutateAsync(device.id).then(onDeleted, toastFail)}
         onClose={close}
       />
     </div>

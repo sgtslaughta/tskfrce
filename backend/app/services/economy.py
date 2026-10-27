@@ -229,6 +229,14 @@ def decide(
         return _decide(db, redemption, parent, approve, note)
 
 
+def _what(db: Session, r: Redemption) -> str:
+    """Ledger description: the reward name, or the screen-time amount."""
+    if r.kind == "screen_time":
+        return f"{r.minutes} min screen time"
+    reward = db.get(Reward, r.reward_id)
+    return reward.name if reward else "Reward"
+
+
 def _decide(
     db: Session,
     redemption: Redemption,
@@ -249,7 +257,7 @@ def _decide(
                 points_type=PointsType.REDEMPTION,
                 amount=-redemption.cost,
                 reason="redemption",
-                description="Screen time" if redemption.kind == "screen_time" else "Reward",
+                description=_what(db, redemption),
                 redemption_id=redemption.id,
             )
         )

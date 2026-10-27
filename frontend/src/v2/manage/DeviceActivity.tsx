@@ -7,7 +7,7 @@ import type { Device, DeviceActivity as Activity, DeviceEvent, EventKind, Kid } 
 import { eventText, whenLabel } from './activityText'
 import { nameOf } from './choreMeta'
 import { LockHistory } from './LockHistory'
-import { toastOk } from '../notify'
+import { toastFail, toastOk } from '../notify'
 
 // mirrors backend FILTERS (app/models/device_activity.py)
 const FILTERS: { key: string; label: string; kinds?: EventKind[] }[] = [
@@ -63,7 +63,7 @@ export function DeviceActivity({ device, kids, timeZone }: Props) {
     if (e.kind === 'new_address')
       return (
         <>
-          <button type="button" className="p-btn" disabled={merge.isPending} onClick={() => merge.mutate(ev(e), { onSuccess: () => toastOk('Merged') })}>
+          <button type="button" className="p-btn" disabled={merge.isPending} onClick={() => void merge.mutateAsync(ev(e)).then(() => toastOk('Merged'), toastFail)}>
             <Icon name="merge" size={16} />
             Same device, merge
           </button>

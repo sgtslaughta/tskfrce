@@ -161,7 +161,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
               data-variant="accent"
               disabled={markDone.isPending}
               data-loading={markDone.isPending}
-              onClick={() => markDone.mutate(chore.id, { onSuccess: () => toastOk(`Marked done +${chore.points}`), onError: toastFail })}
+              onClick={() => void markDone.mutateAsync(chore.id).then(() => toastOk(`Marked done +${chore.points}`), toastFail)}
             >
               <Icon name="task_alt" size={17} />
               Mark done +{chore.points}
@@ -172,7 +172,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
               className="p-btn"
               disabled={markNotDone.isPending}
               data-loading={markNotDone.isPending}
-              onClick={() => markNotDone.mutate(chore.id, { onSuccess: () => toastOk('Marked not done'), onError: toastFail })}
+              onClick={() => void markNotDone.mutateAsync(chore.id).then(() => toastOk('Marked not done'), toastFail)}
             >
               <Icon name="remove_done" size={17} />
               Mark not done
@@ -183,7 +183,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
               className="p-btn"
               disabled={markNotDone.isPending}
               data-loading={markNotDone.isPending}
-              onClick={() => markNotDone.mutate(chore.id, { onSuccess: () => toastOk('Back on today’s list'), onError: toastFail })}
+              onClick={() => void markNotDone.mutateAsync(chore.id).then(() => toastOk('Back on today’s list'), toastFail)}
             >
               <Icon name="undo" size={17} />
               Undo skip
