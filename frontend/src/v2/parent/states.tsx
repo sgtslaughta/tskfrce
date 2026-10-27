@@ -96,7 +96,7 @@ const ERROR_COPY: Record<ErrorKind, { icon: string; title: string; body: string;
 }
 
 /** Error panel. Pass `error` to show what actually failed instead of the stock line. */
-export function ErrorPanel({ kind, error, onRetry }: { kind: ErrorKind; error?: unknown; onRetry?: () => void }) {
+export function ErrorPanel({ kind, error, title, onRetry }: { kind: ErrorKind; error?: unknown; title?: string; onRetry?: () => void }) {
   const copy = ERROR_COPY[kind]
   const actions: StateAction[] =
     kind === 'notfound'
@@ -107,7 +107,7 @@ export function ErrorPanel({ kind, error, onRetry }: { kind: ErrorKind; error?: 
   return (
     <EmptyState
       icon={copy.icon}
-      title={copy.title}
+      title={title ?? copy.title}
       body={error ? errorText(error) : copy.body}
       tone={copy.tone}
       actions={actions}
@@ -143,3 +143,51 @@ function AutoRetry({ onRetry }: { onRetry: () => void }) {
     </p>
   )
 }
+
+/** Whole-page "something is happening" state (mockup 05 redirects and box start): icon or dots, a line, maybe a bar. */
+export function WaitingState({ icon, title, body, bar, note }: { icon?: string; title: string; body?: ReactNode; bar?: boolean; note?: ReactNode }) {
+  return (
+    <div className="p-state" role="status">
+      {icon ? (
+        <div className="p-state-icon" data-tone="acc">
+          <Icon name={icon} size={26} />
+        </div>
+      ) : (
+        <div className="p-dots" aria-hidden="true">
+          <i />
+          <i />
+          <i />
+        </div>
+      )}
+      <h1 className="p-state-title">{title}</h1>
+      {body && <p className="p-state-body">{body}</p>}
+      {bar && (
+        <div className="p-bar" aria-hidden="true">
+          <i />
+        </div>
+      )}
+      {note && <p className="p-state-retry">{note}</p>}
+    </div>
+  )
+}
+
+/** "Starting your home box": the proxy is up but the backend behind it isn't yet. */
+export const BoxStarting = () => (
+  <WaitingState
+    icon="power_settings_new"
+    title="Starting your home box"
+    body="First start on a Raspberry Pi can take a few minutes."
+    bar
+    note="Trying again every few seconds…"
+  />
+)
+
+/** "Let's finish setting up": an unfinished wizard sends the parent back to its step. */
+export const SetupResuming = ({ step }: { step: number }) => (
+  <WaitingState icon="auto_fix_high" title="Let's finish setting up" body={`Taking you to setup, step ${step} of 7…`} bar />
+)
+
+/** "Opening Homework · Mia": a link from a notification, while its page loads. */
+export const OpeningLink = ({ label }: { label?: string }) => (
+  <WaitingState title={label ? `Opening ${label}` : 'Opening your link'} body="From your notification" />
+)

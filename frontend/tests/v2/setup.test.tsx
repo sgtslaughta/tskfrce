@@ -25,7 +25,10 @@ jest.mock('@/v2/api', () => {
   return { api: jest.fn(), ApiError }
 })
 const loginWithToken = jest.fn()
-jest.mock('@/contexts/UnifiedAuthContext', () => ({ useUnifiedAuth: () => ({ loginWithToken }) }))
+let authed = false
+jest.mock('@/contexts/UnifiedAuthContext', () => ({
+  useUnifiedAuth: () => ({ loginWithToken, isInitialized: true, isAuthenticated: authed }),
+}))
 
 const apiMock = api as unknown as Mock<(p: string, i?: { method?: string }) => Promise<unknown>>
 
@@ -56,6 +59,7 @@ beforeEach(() => {
     if (path === '/kids') return { id: 7, full_name: 'Ava', username: 'kid-ava', avatar: '🦊', has_pin: false }
     return {}
   })
+  authed = false
   replace.mockReset()
   push.mockReset()
   loginWithToken.mockReset()
@@ -74,6 +78,7 @@ async function toParent(user: ReturnType<typeof userEvent.setup>) {
 async function toFamily(user: ReturnType<typeof userEvent.setup>) {
   await toParent(user)
   await user.type(screen.getByLabelText(/^Password/), 'longenough1')
+  await user.type(screen.getByLabelText('Type it again'), 'longenough1')
   await user.click(screen.getByRole('button', { name: 'Next' }))
   await user.type(await screen.findByLabelText('Family name'), 'The Sams')
 }
@@ -122,7 +127,9 @@ describe('setup wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await waitFor(() => expect(loginWithToken).toHaveBeenCalledWith('t', 'r', 1800))
     for (let i = 0; i < 5; i++) await user.click(await screen.findByRole('button', { name: 'Skip' }))
-    await user.click(await screen.findByRole('button', { name: 'Finish' }))
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Finish' })).toBeNull()
+    await user.click(await screen.findByRole('button', { name: 'Go to Today' }))
     expect(push).toHaveBeenCalledWith('/')
     expect(replace).not.toHaveBeenCalled()
   })
@@ -140,6 +147,7 @@ describe('setup wizard', () => {
     wrap()
     await toParent(user)
     await user.type(screen.getByLabelText(/^Password/), 'longenough1')
+    await user.type(screen.getByLabelText('Type it again'), 'longenough1')
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await user.click(await screen.findByRole('button', { name: 'Next' }))
     expect(await screen.findByText('Enter a family name.')).toBeInTheDocument()
@@ -189,8 +197,8 @@ describe('setup wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Back' }))
     await user.click(await screen.findByRole('button', { name: 'Next' }))
     await user.click(await screen.findByRole('button', { name: 'Next' }))
-    await user.click(await screen.findByRole('button', { name: 'Next' }))
-    await user.click(await screen.findByRole('button', { name: 'Finish' }))
+    await user.click(await screen.findByRole('button', { name: 'Finish' })) // step 7 → all set
+    await screen.findByText("You're all set")
     expect(posts('/chores/')).toHaveLength(1)
     expect(posts('/chores/')[0][1]).toEqual({
       method: 'POST',
@@ -274,5 +282,52 @@ describe('setup wizard', () => {
     await user.type(screen.getByLabelText('Name'), 'Ben')
     await user.click(screen.getByRole('button', { name: 'Next' }))
     expect(await screen.findByText('Add Ben first or clear the field.')).toBeInTheDocument()
+  })
+
+  test('a mismatched confirm password shows inline and blocks Next', async () => {
+    const user = userEvent.setup()
+    wrap()
+    await toParent(user)
+    await user.type(screen.getByLabelText(/^Password/), 'longenough1')
+    await user.type(screen.getByLabelText('Type it again'), 'different')
+    expect(screen.getByText("The two passwords don't match.")).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    expect(screen.queryByLabelText('Family name')).toBeNull()
+  })
+
+  test('each step after the account is saved on the server; Finish clears it', async () => {
+    const user = userEvent.setup()
+    wrap()
+    await finishAccount(user)
+    const puts = () => apiMock.mock.calls.filter((c) => c[0] === '/setup/step').map((c) => (c[1] as { body: unknown }).body)
+    await user.click(await screen.findByRole('button', { name: 'Skip' })) // 3 → 4
+    await user.click(await screen.findByRole('button', { name: 'Skip' })) // 4 → 5
+    await waitFor(() => expect(puts()).toEqual([{ step: 4 }, { step: 5 }]))
+    for (let i = 0; i < 2; i++) await user.click(await screen.findByRole('button', { name: 'Skip' })) // → 7
+    await user.click(await screen.findByRole('button', { name: 'Finish' }))
+    await waitFor(() => expect(puts().at(-1)).toEqual({ step: null }))
+  })
+})
+
+describe('resuming an unfinished setup', () => {
+  test('a signed-in parent lands on the saved step with their kids loaded', async () => {
+    authed = true
+    apiMock.mockImplementation(async (path) => {
+      if (path === '/setup') return { needed: false }
+      if (path === '/setup/step') return { step: 5 }
+      if (path === '/kids') return [{ id: 7, full_name: 'Ava', username: 'kid-ava', avatar: '🦊', has_pin: false }]
+      return []
+    })
+    wrap()
+    expect(await screen.findByText('Whose devices are these?')).toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalled()
+    expect(apiMock).toHaveBeenCalledWith('/kids')
+  })
+
+  test('nothing to resume goes to log in', async () => {
+    authed = true
+    apiMock.mockImplementation(async (path) => (path === '/setup' ? { needed: false } : { step: null }))
+    wrap()
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/login'))
   })
 })

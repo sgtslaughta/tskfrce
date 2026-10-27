@@ -3,7 +3,7 @@ import type { Mock } from 'jest-mock'
 import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { markSetupDone, RequireParent, startSignOut } from '@/v2/components/RequireParent'
+import { cancelSignOut, markSetupDone, RequireParent, startSignOut } from '@/v2/components/RequireParent'
 import { api } from '@/v2/api'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 
@@ -100,6 +100,58 @@ describe('RequireParent', () => {
     renderGuard()
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/setup'))
     act(() => markSetupDone(client))
+    expect(await screen.findByText('secret')).toBeTruthy()
+  })
+})
+
+describe('RequireParent states', () => {
+  const route = (map: Record<string, unknown>) =>
+    apiMock.mockImplementation(async (p) => {
+      const v = map[p]
+      if (v instanceof Error) throw v
+      return v
+    })
+
+  test('an unfinished setup sends the parent to /setup with the resume panel', async () => {
+    route({ '/setup': { needed: false }, '/setup/step': { step: 5 } })
+    auth({})
+    renderGuard()
+    expect(await screen.findByText("Let's finish setting up")).toBeTruthy()
+    expect(screen.getByText('Taking you to setup, step 5 of 7…')).toBeTruthy()
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/setup'))
+    expect(screen.queryByText('secret')).toBeNull()
+  })
+
+  test('a finished setup (no saved step) shows the page', async () => {
+    route({ '/setup': { needed: false }, '/setup/step': { step: null } })
+    auth({})
+    renderGuard()
+    expect(await screen.findByText('secret')).toBeTruthy()
+  })
+
+  test('a 502 from the proxy right away means the box is starting, and it keeps retrying', async () => {
+    jest.useFakeTimers({ advanceTimers: true })
+    route({ '/setup': Object.assign(new Error('bad gateway'), { status: 502 }) })
+    auth({})
+    renderGuard()
+    expect(await screen.findByText('Starting your home box')).toBeTruthy()
+    const before = apiMock.mock.calls.length
+    await act(async () => void jest.advanceTimersByTime(3100))
+    await waitFor(() => expect(apiMock.mock.calls.length).toBeGreaterThan(before))
+    route({ '/setup': { needed: false }, '/setup/step': { step: null } })
+    await act(async () => void jest.advanceTimersByTime(3100))
+    expect(await screen.findByText('secret')).toBeTruthy()
+    jest.useRealTimers()
+  })
+
+  test('signing out shows the sign-out state, and a failed sign-out brings the page back', async () => {
+    auth({})
+    renderGuard()
+    expect(await screen.findByText('secret')).toBeTruthy()
+    act(() => startSignOut())
+    expect(await screen.findByText('Signing you out…')).toBeTruthy()
+    expect(screen.queryByText('secret')).toBeNull()
+    act(() => cancelSignOut())
     expect(await screen.findByText('secret')).toBeTruthy()
   })
 })

@@ -4,7 +4,9 @@ import { useRouter } from 'next/router'
 import { api } from '@/v2/api'
 import { useLook } from '@/v2/parent/useLook'
 import { Icon } from '@/v2/parent/Icon'
+import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { AuthBrand } from '@/v2/components/AuthBrand'
+import { useLinkCheck } from './useLinkCheck'
 
 /** Set a new password from a parent's one-time reset link. */
 export function ResetForm({ token }: { token: string | undefined }) {
@@ -16,6 +18,9 @@ export function ResetForm({ token }: { token: string | undefined }) {
   const [showAgain, setShowAgain] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+
+  const check = useLinkCheck<void>(token ? `/auth/reset/${encodeURIComponent(token)}` : null)
+  const mismatch = again !== '' && again !== password
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -36,7 +41,16 @@ export function ResetForm({ token }: { token: string | undefined }) {
     <main className="p-auth-container">
       <AuthBrand />
       <div className="p-auth-form-side">
-        {token ? (
+        {token && check.state === 'gone' ? (
+          <div className="p-auth-form">
+            <ErrorPanel kind="expired" title="This reset link has expired" />
+          </div>
+        ) : token && check.state === 'checking' ? (
+          <div className="p-auth-form">
+            <h1>Choose a new password</h1>
+            <Skeleton rows={2} />
+          </div>
+        ) : token ? (
           <form className="p-auth-form" onSubmit={submit}>
             <h1>Choose a new password</h1>
             <div className="p-subtitle">From the reset link another parent made for you.</div>
@@ -71,7 +85,7 @@ export function ResetForm({ token }: { token: string | undefined }) {
             </div>
             <div className="p-auth-form-field">
               <label htmlFor="reset-again">Type it again</label>
-              <div className="p-auth-input">
+              <div className="p-auth-input" aria-invalid={mismatch}>
                 <Icon name="lock" />
                 <input
                   id="reset-again"
@@ -80,6 +94,7 @@ export function ResetForm({ token }: { token: string | undefined }) {
                   onChange={(e) => setAgain(e.currentTarget.value)}
                   autoComplete="new-password"
                   placeholder="Type it again"
+                  aria-describedby={mismatch ? 'reset-again-err' : undefined}
                 />
                 <button
                   type="button"
@@ -91,6 +106,12 @@ export function ResetForm({ token }: { token: string | undefined }) {
                   <Icon name={showAgain ? 'visibility_off' : 'visibility'} />
                 </button>
               </div>
+              {mismatch && (
+                <span id="reset-again-err" className="p-auth-fielderr">
+                  <Icon name="error" size={16} />
+                  The two passwords don&apos;t match.
+                </span>
+              )}
             </div>
             <button type="submit" className="p-auth-button primary" disabled={busy} aria-busy={busy}>
               {busy ? 'Saving…' : 'Save password'}

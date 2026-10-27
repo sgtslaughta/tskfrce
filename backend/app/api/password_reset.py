@@ -11,7 +11,7 @@ from app.core.database import get_db_session
 from app.core.ratelimit import limit
 from app.models.family import FamilySettings
 from app.models.user import User, UserRole
-from app.services.password_reset import EXPIRED, create_reset, redeem_reset
+from app.services.password_reset import EXPIRED, create_reset, redeem_reset, reset_valid
 
 router = APIRouter(tags=["password-reset"])
 
@@ -71,5 +71,14 @@ def reset_password(
 ) -> Response:
     limit(f"reset:{client_ip(request)}", 10, 60)
     if not redeem_reset(db, body.token, body.password):
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, EXPIRED)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/api/v1/auth/reset/{token}", status_code=status.HTTP_204_NO_CONTENT)
+def check_reset(token: str, request: Request, db: Session = Depends(get_db_session)) -> Response:
+    """Public check so the reset page can say 'expired' on open instead of after submit."""
+    limit(f"reset:{client_ip(request)}", 10, 60)
+    if not reset_valid(db, token):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, EXPIRED)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

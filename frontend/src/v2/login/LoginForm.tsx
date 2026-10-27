@@ -21,6 +21,10 @@ export const safeNext = (next: unknown): string => {
   }
 }
 
+/** "t@sk4ce v0.1.0 · box address" (mockup 06 footer). */
+export const footerText = (host: string, version = process.env.NEXT_PUBLIC_APP_VERSION) =>
+  `t@sk4ce${version ? ` v${version}` : ''}${host ? ` · ${host}` : ''}`
+
 /** Parent login. A wrong password shows inline and is never logged or thrown. */
 export function LoginForm() {
   useLook('parent')
@@ -192,7 +196,7 @@ export function LoginForm() {
               </button>
             </div>
           )}
-          <div className="p-auth-footer">t@sk4ce{host && ` · ${host}`}</div>
+          <div className="p-auth-footer">{footerText(host)}</div>
         </form>
       </div>
     </main>

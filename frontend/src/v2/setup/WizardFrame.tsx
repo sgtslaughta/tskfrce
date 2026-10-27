@@ -28,10 +28,12 @@ interface Props {
   onSkip?: () => void
   onStepClick?: (step: number) => void
   busy?: boolean
+  /** the finished screen: accent icon tile above the title, and no Back/Next row (its own buttons lead on) */
+  done?: boolean
 }
 
 export function WizardFrame({
-  step, children, title, subtitle, onBack, onNext, nextLabel = 'Next', onSkip, onStepClick, busy
+  step, children, title, subtitle, onBack, onNext, nextLabel = 'Next', onSkip, onStepClick, busy, done
 }: Props) {
   useLook('parent')
   const [maxStepReached, setMaxStepReached] = useState(step)
@@ -109,11 +111,17 @@ export function WizardFrame({
         {title && (
           <>
             {step <= STEPS.length && <div className={styles.eyebrow}>Step {step} of {STEPS.length}{step === 7 ? ' · optional' : ''}</div>}
+            {done && (
+              <div className={styles.tile} aria-hidden="true">
+                <span className="ms">celebration</span>
+              </div>
+            )}
             <h1>{title}</h1>
             {subtitle && <div className={styles.s}>{subtitle}</div>}
           </>
         )}
         {children}
+        {!done && (
         <Group mt="lg" justify="space-between" wrap="wrap" className={styles.nav}>
           {onBack ? (
             <Button variant="subtle" onClick={onBack} leftSection={<span className="ms" aria-hidden="true">arrow_back</span>}>
@@ -133,6 +141,7 @@ export function WizardFrame({
             </Button>
           </Group>
         </Group>
+        )}
       </form>
     </main>
   )

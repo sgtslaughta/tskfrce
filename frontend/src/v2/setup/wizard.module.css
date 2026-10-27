@@ -208,6 +208,19 @@
   letter-spacing: -0.01em;
 }
 
+.tile {
+  width: 64px;
+  height: 64px;
+  display: grid;
+  place-items: center;
+  border-radius: 20px;
+  background: var(--p-acc);
+  color: #292928;
+}
+.tile :global(.ms) {
+  font-size: 34px;
+}
+
 .s {
   color: var(--p-sub);
   font-size: 14.5px;

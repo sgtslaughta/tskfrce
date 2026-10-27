@@ -9,7 +9,7 @@ from sqlalchemy import update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db
+from app.api.deps import get_db, require_parent
 from app.core.auth import AuthService
 from app.core.client_ip import client_ip
 from app.core.config import settings
@@ -21,6 +21,8 @@ from app.services.chore_types import seed as seed_chore_types
 router = APIRouter(prefix="/api/v1/setup", tags=["setup"])
 
 DONE = "Setup is already done. Log in instead."
+RESUME_AFTER_ACCOUNT = 3  # the account exists from step 2 on; the wizard resumes at step 3
+LAST_STEP = 7
 
 
 class ParentIn(BaseModel):
@@ -54,13 +56,30 @@ def claim_owner(db: Session, user_id: int, name: str, tz: str) -> int:
     return db.execute(
         update(FamilySettings)
         .where(FamilySettings.id == 1, FamilySettings.owner_id.is_(None))
-        .values(owner_id=user_id, name=name, timezone=tz)
+        .values(owner_id=user_id, name=name, timezone=tz, setup_step=RESUME_AFTER_ACCOUNT)
     ).rowcount
 
 
 @router.get("")
 def setup_needed(db: Session = Depends(get_db)):
     return {"needed": db.query(User.id).first() is None and not _owner_set(db)}
+
+
+class StepIn(BaseModel):
+    step: int | None = Field(None, ge=RESUME_AFTER_ACCOUNT, le=LAST_STEP)  # None = wizard finished
+
+
+@router.get("/step")
+def get_step(db: Session = Depends(get_db), _: User = Depends(require_parent)):
+    """The wizard step an unfinished setup should resume at (None = nothing to resume)."""
+    return {"step": get_family(db).setup_step}
+
+
+@router.put("/step")
+def put_step(body: StepIn, db: Session = Depends(get_db), _: User = Depends(require_parent)):
+    get_family(db).setup_step = body.step
+    db.commit()
+    return {"step": body.step}
 
 
 def _limit_setup(request: Request) -> None:

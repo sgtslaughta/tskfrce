@@ -4,7 +4,7 @@ Authentication API router for TaaskMaaster.
 This module contains API endpoints for authentication and authorization.
 """
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.exc import IntegrityError
@@ -16,6 +16,7 @@ from app.core.client_ip import client_ip
 from app.core.config import settings
 from app.core.database import get_db_session
 from app.core.ratelimit import limit
+from app.models.family import get_family
 from app.models.user import PendingInvite, UsedInvite, User, UserRole
 from app.schemas.auth import (
     LoginRequest,
@@ -214,6 +215,7 @@ async def get_current_user_info(
 
 
 ASK_PARENT = "Ask a parent to add you."
+EXPIRED_INVITE = "This invite has expired or was already used. Ask a parent for a new one."
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
@@ -242,3 +244,24 @@ async def register(body: RegisterIn, db: Session = Depends(get_db_session)):
         db.rollback()
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=ASK_PARENT) from None
     return {"user_id": user.id, "username": user.username}
+
+
+@router.get("/invite/{token}")
+async def invite_info(token: str, request: Request, db: Session = Depends(get_db_session)):
+    """Public check for an invite link: who invited you, to which family, until when."""
+    limit(f"invite:{client_ip(request)}", 30, 60)
+    auth = AuthService(db)
+    invite = auth.read_invite(token)
+    if invite is None:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail=EXPIRED_INVITE)
+    username, jti = invite
+    if db.get(UsedInvite, jti) or auth.user_service.get_user_by_username(username):
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail=EXPIRED_INVITE)
+    payload = auth.verify_token(token) or {}
+    inviter = auth.user_service.get_user(int(payload.get("by") or 0))
+    return {
+        "username": username,
+        "inviter": (inviter.full_name or inviter.username) if inviter else None,
+        "family_name": get_family(db).name,
+        "expires_at": datetime.fromtimestamp(payload["exp"], UTC).isoformat(),
+    }

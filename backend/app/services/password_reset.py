@@ -44,15 +44,28 @@ def create_reset(db: Session, user: User, created_by: User | None) -> str:
     return token
 
 
-def redeem_reset(db: Session, token: str, password: str) -> bool:
-    """Set the new password if the token is valid; False if bad, expired or used."""
+def _usable(db: Session, token: str) -> tuple[PasswordReset, User] | None:
     row = db.query(PasswordReset).filter(PasswordReset.token_hash == _hash(token)).first()
-    now = _now()
-    if row is None or row.used_at is not None or row.expires_at <= now:
-        return False
+    if row is None or row.used_at is not None or row.expires_at <= _now():
+        return None
     user = db.get(User, row.user_id)
     if user is None or user.role != UserRole.PARENT or not user.is_active:
+        return None
+    return row, user
+
+
+def reset_valid(db: Session, token: str) -> bool:
+    """Would redeem_reset accept this token right now?"""
+    return _usable(db, token) is not None
+
+
+def redeem_reset(db: Session, token: str, password: str) -> bool:
+    """Set the new password if the token is valid; False if bad, expired or used."""
+    found = _usable(db, token)
+    if found is None:
         return False
+    row, user = found
+    now = _now()
     user.hashed_password = AuthService(db).get_password_hash(password)
     row.used_at = now
     db.commit()

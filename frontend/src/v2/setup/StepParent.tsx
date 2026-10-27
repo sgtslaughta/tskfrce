@@ -1,7 +1,7 @@
 import type { ChangeEvent } from 'react'
 import { PasswordInput, TextInput } from '@mantine/core'
 
-export interface ParentForm { username: string; password: string; fullName: string }
+export interface ParentForm { username: string; password: string; again: string; fullName: string }
 
 export const parentErrors = (p: ParentForm) => ({
   fullName: p.fullName.trim() ? undefined : 'Enter your name.',
@@ -9,6 +9,7 @@ export const parentErrors = (p: ParentForm) => ({
     ? undefined
     : 'Use 3 or more letters, numbers, dots, dashes or underscores.',
   password: p.password.length >= 8 ? undefined : 'Use at least 8 characters.',
+  again: p.again === p.password ? undefined : "The two passwords don't match.",
 })
 
 interface Props {
@@ -28,6 +29,8 @@ export function StepParent({ value, showError, onChange }: Props) {
         error={showError ? err.username : undefined} />
       <PasswordInput mt="md" label="Password" value={value.password} onChange={set('password')} autoComplete="new-password"
         description="At least 8 characters." error={showError ? err.password : undefined} />
+      <PasswordInput mt="md" label="Type it again" value={value.again} onChange={set('again')} autoComplete="new-password"
+        error={showError || value.again ? err.again : undefined} />
     </>
   )
 }

@@ -4,9 +4,12 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useMediaQuery } from "@mantine/hooks";
 import { ParentShell } from "../parent/ParentShell";
-import { EmptyState, ErrorPanel, Skeleton } from "../parent/states";
+import { EmptyState, ErrorPanel, OpeningLink, Skeleton } from "../parent/states";
 import { TipsContainer } from "../components/TipsContainer";
 import { useToday } from "../hooks/useToday";
+import { useRunDetail } from "../hooks/useChores";
+import { useKids } from "../hooks/useKids";
+import { openingLabel } from "./openingLabel";
 import { GetStartingChecklistCard } from "./GetStartingChecklistCard";
 import { KidList } from "./KidList";
 import { KidStrip } from "./KidStrip";
@@ -45,8 +48,18 @@ export function TodayPage() {
     if (runId) setOpenChoreId(runId);
   }, [runId]);
 
+  // link from a notification: say what is opening while the day loads
+  const run = useRunDetail(runId);
+  const kids = useKids(!!runId);
   const kidById = (id?: number) => data?.kids.find((k) => k.id === id);
   const kid = kidById(Number(router.query.item)) || data?.kids.find((k) => k.chores.some((c) => c.id === runId)) || kidById(selectedId) || data?.kids[0];
+
+  if (runId && !data && !isError)
+    return (
+      <main className="p-guard-state">
+        <OpeningLink label={run.data ? openingLabel(run.data.title, run.data.kid_ids, kids.data) : undefined} />
+      </main>
+    );
 
   return (
     <ParentShell

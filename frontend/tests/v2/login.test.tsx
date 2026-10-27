@@ -6,7 +6,7 @@ import { MantineProvider } from '@mantine/core'
 import { fridgeTheme } from '@/v2/theme'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api } from '@/v2/api'
-import { LoginForm, safeNext } from '@/v2/login/LoginForm'
+import { footerText, LoginForm, safeNext } from '@/v2/login/LoginForm'
 
 const replace = jest.fn()
 const login = jest.fn()
@@ -115,5 +115,12 @@ describe('LoginForm', () => {
     await userEvent.click(forgotButton)
     const cliText = await screen.findByText(/docker compose exec backend python -m app.cli reset-password/)
     expect(cliText).toBeInTheDocument()
+  })
+})
+
+describe('footer', () => {
+  test('shows version and box address', () => {
+    expect(footerText('chores.local', '0.1.0')).toBe('t@sk4ce v0.1.0 · chores.local')
+    expect(footerText('', undefined)).toBe('t@sk4ce')
   })
 })

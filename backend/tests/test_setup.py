@@ -4,6 +4,8 @@ from app.models.family import get_family
 from app.models.user import User, UserRole
 from fastapi import HTTPException
 
+from tests.conftest import _headers, _make_user
+
 BODY = {
     "family_name": "Sotos",
     "timezone": "America/New_York",
@@ -79,3 +81,27 @@ def test_role_aliases_resolve_to_parent_kid():
 )
 def test_setup_validates_input(client, patch):
     assert client.post("/api/v1/setup", json={**BODY, **patch}).status_code == 422
+
+
+def _tok(client):
+    t = client.post("/api/v1/setup", json=BODY).json()["access_token"]
+    return {"Authorization": f"Bearer {t}"}
+
+
+def test_setup_step_resumes_after_account(client, db):
+    h = _tok(client)
+    assert get_family(db).setup_step == 3
+    assert client.get("/api/v1/setup/step", headers=h).json() == {"step": 3}
+    assert client.put("/api/v1/setup/step", json={"step": 5}, headers=h).json() == {"step": 5}
+    assert client.get("/api/v1/setup/step", headers=h).json() == {"step": 5}
+    assert client.put("/api/v1/setup/step", json={"step": None}, headers=h).status_code == 200
+    assert client.get("/api/v1/setup/step", headers=h).json() == {"step": None}
+
+
+def test_setup_step_validates_and_is_parent_only(client, db):
+    h = _tok(client)
+    kid = _headers(db, _make_user(db, "kiddo", UserRole.KID))
+    assert client.put("/api/v1/setup/step", json={"step": 1}, headers=h).status_code == 422
+    assert client.put("/api/v1/setup/step", json={"step": 9}, headers=h).status_code == 422
+    assert client.get("/api/v1/setup/step").status_code == 401
+    assert client.put("/api/v1/setup/step", json={"step": 4}, headers=kid).status_code == 403

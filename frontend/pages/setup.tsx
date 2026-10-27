@@ -6,8 +6,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api, ApiError } from '@/v2/api'
 import type { Device, HourRule, HoursPayload, Kid, RuleBody, SetupStatus } from '@/v2/types'
-import { markSetupDone } from '@/v2/components/RequireParent'
+import { markSetupDone, STEP_KEY } from '@/v2/components/RequireParent'
+import { SetupResuming } from '@/v2/parent/states'
+import { LAST, saveStep } from '@/v2/setup/setupStep'
 import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
+import { useLook } from '@/v2/parent/useLook'
 import { WizardFrame } from '@/v2/setup/WizardFrame'
 import { StepFamily, detectTz } from '@/v2/setup/StepFamily'
 import { StepParent, parentErrors, type ParentForm } from '@/v2/setup/StepParent'
@@ -17,14 +20,13 @@ import { StepChores } from '@/v2/setup/StepChores'
 import { starter } from '@/v2/setup/starterChores'
 import { DEFAULT_DRAFTS, StepHours } from '@/v2/setup/StepHours'
 import { StepRemote } from '@/v2/setup/StepRemote'
-import { StepFinish } from '@/v2/setup/StepFinish'
-
-const LAST = 7
+import { finishSummary, StepFinish } from '@/v2/setup/StepFinish'
 
 export default function SetupPage() {
+  useLook('parent')
   const router = useRouter()
   const qc = useQueryClient()
-  const { loginWithToken } = useUnifiedAuth()
+  const { loginWithToken, isInitialized, isAuthenticated } = useUnifiedAuth()
   const [step, setStep] = useState(1)
   const [tried, setTried] = useState(false)
   const [conflict, setConflict] = useState(false)
@@ -35,7 +37,7 @@ export default function SetupPage() {
   const once = useSingleFlight()
   const [family, setFamily] = useState({ name: '', tz: 'UTC' })
   useEffect(() => setFamily((f) => ({ ...f, tz: detectTz() })), []) // after mount: server renders UTC
-  const [parent, setParent] = useState<ParentForm>({ username: '', password: '', fullName: '' })
+  const [parent, setParent] = useState<ParentForm>({ username: '', password: '', again: '', fullName: '' })
   const [kids, setKids] = useState<Kid[]>([])
   const [chores, setChores] = useState<string[]>([])
   const [hours, setHours] = useState<RuleBody[]>(DEFAULT_DRAFTS)
@@ -43,12 +45,29 @@ export default function SetupPage() {
   const applied = useRef(new Set<string>())
   const choreIds = useRef(new Map<string, number>()) // created chores, so a retry only redoes the assignment
 
-  // Already set up (and not by us a moment ago): go log in.
+  // Already set up (and not by us a moment ago): a parent who never reached Finish resumes; anyone else logs in.
   const status = useQuery({ queryKey: ['setup'], queryFn: () => api<SetupStatus>('/setup'), staleTime: Infinity })
+  const returning = status.data?.needed === false && !justCreated.current
+  const resume = useQuery({
+    queryKey: STEP_KEY,
+    queryFn: () => api<{ step: number | null }>('/setup/step'),
+    enabled: returning && !!isInitialized && !!isAuthenticated,
+    staleTime: 0,
+    retry: false,
+  })
+  const resumeAt = typeof resume.data?.step === 'number' ? resume.data.step : null
   useEffect(() => {
-    if (status.data?.needed === false && !justCreated.current) router.replace('/login')
+    if (!returning || isInitialized === false || (isAuthenticated && resume.isPending)) return
+    if (resumeAt === null) router.replace('/login')
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status.data])
+  }, [status.data, isInitialized, isAuthenticated, resume.isPending, resumeAt])
+  useEffect(() => {
+    if (resumeAt === null || accountDone) return
+    setAccountDone(true)
+    setStep(resumeAt)
+    api<Kid[]>('/kids').then(setKids).catch(() => {}) // the wizard forgot them; steps 4-5 need them
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resumeAt])
 
   const create = useMutation({
     mutationFn: async () => {
@@ -98,6 +117,7 @@ export default function SetupPage() {
     create.reset()
     apply.reset()
     setStep(n)
+    if (justCreated.current || accountDone) saveStep(qc, n)
   }
 
   // one request per click even on a double-click; failures show via apply.error
@@ -114,7 +134,7 @@ export default function SetupPage() {
   const next = () => {
     if (step === 1) {
       const e = parentErrors(parent)
-      if (e.fullName || e.username || e.password) return setTried(true)
+      if (e.fullName || e.username || e.password || e.again) return setTried(true)
       return go(2)
     }
     // The family name goes in the same POST /setup that makes the account.
@@ -171,7 +191,7 @@ export default function SetupPage() {
         { key: `chores_lock:${choresLock}`, run: () => api('/family', { method: 'PATCH', body: { chores_lock: choresLock } }) },
       ])
     }
-    if (step > LAST) return void router.push('/')
+    if (step > LAST) return
     if (step === 3 && kidDraft.trim()) return setTried(true)
     go(step + 1)
   }
@@ -191,6 +211,11 @@ export default function SetupPage() {
   const devices = (qc.getQueryData<Device[]>(['setup-devices']) ?? []).filter((d) => d.status !== 'unassigned').length
   const schedules = Array.from(applied.current).filter((k) => k.startsWith('rule:')).length
 
+  if (returning && !accountDone)
+    return (
+      <main className="p-guard-state">{resumeAt !== null && <SetupResuming step={resumeAt} />}</main>
+    )
+
   return (
     <>
       <Head><title>Set up t@sk4ce</title></Head>
@@ -198,16 +223,17 @@ export default function SetupPage() {
         <WizardFrame
           step={step}
           title={step > LAST ? 'You\'re all set' : stepTitles[step as keyof typeof stepTitles].title}
-          subtitle={step > LAST ? 'Everything can be changed later in Settings.' : stepTitles[step as keyof typeof stepTitles].sub}
+          subtitle={step > LAST ? finishSummary(kids.length, chores.length, devices, schedules) : stepTitles[step as keyof typeof stepTitles].sub}
           onBack={step > 2 || (step === 2 && !accountDone) ? () => go(step - 1) : undefined}
           onNext={next}
-          nextLabel={step > LAST ? 'Finish' : 'Next'}
+          nextLabel={step === LAST ? 'Finish' : 'Next'}
           onSkip={step >= 3 && step <= LAST ? () => go(step + 1) : undefined}
           onStepClick={(n) => {
             if (n > step && n > step + 1) return // Can't skip ahead multiple steps
             go(n)
           }}
           busy={create.isPending || apply.isPending}
+          done={step > LAST}
         >
           {step === 1 && <StepParent value={parent} showError={tried} onChange={setParent} />}
           {step === 2 && (
@@ -226,7 +252,7 @@ export default function SetupPage() {
           {step === 5 && <StepDevices kids={kids} />}
           {step === 6 && <StepHours drafts={hours} onChange={setHours} choresLock={choresLock} onChoresLock={setChoresLock} />}
           {step === 7 && <StepRemote />}
-          {step > LAST && <StepFinish kids={kids.length} chores={chores.length} devices={devices} schedules={schedules} />}
+          {step > LAST && <StepFinish />}
           {err && <p role="alert">Something went wrong: {err} Try again.</p>}
         </WizardFrame>
       </div>

@@ -1,26 +1,33 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useRouter } from 'next/router'
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api, KID_TOKEN_KEY } from '../api'
-import { EmptyState, ErrorPanel } from '../parent/states'
+import { BoxStarting, EmptyState, ErrorPanel, SetupResuming, WaitingState } from '../parent/states'
+import { startingUp } from '../parent/freshness'
 import { useLook } from '../parent/useLook'
 import type { SetupStatus } from '../types'
 
 const SETUP_KEY = ['setup']
+export const STEP_KEY = ['setup-step']
 
 /** Call after the setup wizard succeeds so guards stop sending parents back to /setup. */
 export function markSetupDone(queryClient: QueryClient): void {
   queryClient.setQueryData<SetupStatus>(SETUP_KEY, { needed: false })
 }
 
-// set by FridgeShell's Log out so the guard doesn't race it with /login?next=
+// set by ParentShell's Log out so the guard doesn't race it with /login?next= (and can say "Signing you out…")
 let signingOut = false
-export function startSignOut(): void {
-  signingOut = true
+const watchers = new Set<() => void>()
+const setSigningOut = (v: boolean) => {
+  signingOut = v
+  watchers.forEach((w) => w())
 }
-export function cancelSignOut(): void {
-  signingOut = false
+export const startSignOut = () => setSigningOut(true)
+export const cancelSignOut = () => setSigningOut(false)
+const watchSignOut = (w: () => void) => {
+  watchers.add(w)
+  return () => void watchers.delete(w)
 }
 
 /** Parent-only route guard: first-run setup → /setup, logged out → /login?next=, kid → /kid. */
@@ -34,6 +41,17 @@ export function RequireParent({ children }: { children: ReactNode }) {
     staleTime: 30_000,
   })
 
+  const out = useSyncExternalStore(watchSignOut, () => signingOut, () => false)
+  // a parent whose first-run wizard never reached Finish goes back to its step
+  const resume = useQuery({
+    queryKey: STEP_KEY,
+    queryFn: () => api<{ step: number | null }>('/setup/step'),
+    enabled: isAuthenticated && !!user && user.role !== 'kid' && setup.data?.needed === false,
+    staleTime: 30_000,
+    retry: false,
+  })
+  const resumeStep = typeof resume.data?.step === 'number' ? resume.data.step : null
+
   // a kid's own device (kid session, no parent login) opened a parent page: back to the checklist
   const kidDevice =
     isInitialized && !isAuthenticated && typeof window !== 'undefined' && !!localStorage.getItem(KID_TOKEN_KEY)
@@ -45,15 +63,19 @@ export function RequireParent({ children }: { children: ReactNode }) {
       : setup.data.needed
         ? '/setup'
         : !isAuthenticated || !user
-          ? signingOut
+          ? out
             ? '/login'
             : `/login?next=${encodeURIComponent(router.asPath)}`
           : user.role === 'kid'
             ? '/kid'
-            : ''
+            : resume.isPending
+              ? null
+              : resumeStep
+                ? '/setup'
+                : ''
 
   useEffect(() => {
-    if (isAuthenticated) signingOut = false
+    if (isAuthenticated) cancelSignOut()
   }, [isAuthenticated])
 
   useEffect(() => {
@@ -70,28 +92,28 @@ export function RequireParent({ children }: { children: ReactNode }) {
   }, [target])
 
   // signed-in state could not be confirmed while the box was down: reload so auth re-checks the kept tokens
+  if (out) return <Guard><WaitingState title="Signing you out…" /></Guard>
   if (setup.isError)
     return <Unreachable error={setup.error} onRetry={() => (isAuthenticated ? setup.refetch() : window.location.reload())} />
   if (kidDevice && !setup.data?.needed) return <ForParents onGo={() => router.replace('/kid')} />
+  if (target === '/setup' && resumeStep) return <Guard><SetupResuming step={resumeStep} /></Guard>
   if (target !== '') return <Checking />
   return <>{children}</>
 }
 
 /** Deciding where to go (setup / login / kid): a quiet spinner in the parent look. */
 function Checking() {
-  useLook('parent')
   return (
-    <main className="p-guard-state" role="status" aria-label="Loading">
-      <span className="p-gate-spin" />
-    </main>
+    <Guard>
+      <span className="p-gate-spin" role="status" aria-label="Loading" />
+    </Guard>
   )
 }
 
 /** Mockup 05 "Kid on a parent page": short note, then the checklist. */
 function ForParents({ onGo }: { onGo: () => void }) {
-  useLook('parent')
   return (
-    <main className="p-guard-state">
+    <Guard>
       <EmptyState
         icon="checklist"
         title="This part is for parents"
@@ -99,16 +121,36 @@ function ForParents({ onGo }: { onGo: () => void }) {
         heading="h1"
         actions={[{ label: 'Go now', icon: 'arrow_forward', onClick: onGo }]}
       />
-    </main>
+    </Guard>
   )
 }
 
-/** The home box didn't answer the very first request: the mockup-05 panel, in the parent look. */
-function Unreachable({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+/** Full-page state before the shell exists. */
+function Guard({ children }: { children: ReactNode }) {
   useLook('parent')
+  return <main className="p-guard-state">{children}</main>
+}
+
+/**
+ * The home box didn't answer the very first request. A 502 right after it was switched on means it is
+ * still starting (polls quietly); anything else, or waiting too long, is the "can't reach" panel.
+ */
+function Unreachable({ error, onRetry }: { error: unknown; onRetry: () => void }) {
+  const [t0] = useState(Date.now)
+  const [, tick] = useState(0)
+  const starting = startingUp(error, Date.now() - t0)
+  useEffect(() => {
+    if (!starting) return
+    const t = setInterval(() => {
+      tick((n) => n + 1)
+      onRetry()
+    }, 3000)
+    return () => clearInterval(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [starting])
   return (
-    <main className="p-guard-state">
-      <ErrorPanel kind="unreachable" error={error instanceof TypeError ? undefined : error} onRetry={onRetry} />
-    </main>
+    <Guard>
+      {starting ? <BoxStarting /> : <ErrorPanel kind="unreachable" error={error instanceof TypeError ? undefined : error} onRetry={onRetry} />}
+    </Guard>
   )
 }

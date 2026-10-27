@@ -18,6 +18,7 @@ const nextConfig = {
   // Environment variables
   env: {
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME || 'TaaskMaaster',
+    NEXT_PUBLIC_APP_VERSION: require('./package.json').version,
     NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || '/api/proxy',
   },
   

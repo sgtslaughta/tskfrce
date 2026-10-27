@@ -26,6 +26,10 @@ jest.mock('@/v2/components/BlockerBanner', () => ({
   BlockerBanner: () => null,
 }))
 
+jest.mock('@/v2/parent/Freshness', () => ({
+  Freshness: () => null,
+}))
+
 jest.mock('@/v2/components/Bell', () => ({
   Bell: ({ placement }: { placement?: string }) => {
     const { useThreads } = require('@/v2/hooks/useChat')

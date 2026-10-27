@@ -11,7 +11,7 @@ export interface KidBody {
   age_group?: AgeGroup
 }
 
-export const useKids = () => useQuery({ queryKey: ['kids'], queryFn: () => api<Kid[]>('/kids') })
+export const useKids = (enabled = true) => useQuery({ queryKey: ['kids'], queryFn: () => api<Kid[]>('/kids'), enabled })
 
 function useKidMutation<V>(fn: (v: V) => Promise<unknown>, done?: string) {
   const qc = useQueryClient()

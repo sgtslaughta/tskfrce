@@ -11,6 +11,7 @@ import { TabBar } from './TabBar'
 import { ListDetail } from './ListDetail'
 import { Bell } from '@/v2/components/Bell'
 import { BlockerBanner } from '@/v2/components/BlockerBanner'
+import { Freshness } from '@/v2/parent/Freshness'
 import { ChatDock } from '@/v2/chat/ChatDock'
 import { cancelSignOut, startSignOut } from '@/v2/components/RequireParent'
 
@@ -75,6 +76,7 @@ export function ParentShell({
             </header>
           )}
           <BlockerBanner />
+          <Freshness />
           <ListDetail list={list} detail={children} listTitle={title} phone={phone} />
         </div>
         {small && <TabBar />}
@@ -94,6 +96,7 @@ export function ParentShell({
           {small && phoneTools}
         </header>
         <BlockerBanner />
+        <Freshness />
         <main className="p-main">{children}</main>
       </div>
       {small && <TabBar />}
