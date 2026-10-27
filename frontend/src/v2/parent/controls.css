@@ -52,10 +52,13 @@ html[data-look='parent'] .f-seg.f-seg .mantine-SegmentedControl-indicator { bord
 html[data-look='parent'] .f-seg.f-seg [data-active],
 html[data-look='parent'] .f-seg.f-seg [data-active] .mantine-SegmentedControl-label { color: var(--p-card); }
 
-html[data-look='parent'] .f-switch.f-switch { border-radius: 999px; border: 1px solid var(--p-line); background: var(--p-track); }
+/* Mantine Switch matches the one app-wide switch (mockup 02 .sw): line track + card knob, on = ink + accent */
+html[data-look='parent'] .f-switch.f-switch { border-radius: 999px; border: 1px solid var(--p-line); background: var(--p-line); }
 html[data-look='parent'] .f-switch.f-switch::before { border-radius: 50%; }
-html[data-look='parent'] input:checked + .f-switch.f-switch { background: var(--p-acc); border-color: var(--p-acc); }
-html[data-look='parent'] input:checked + .f-switch.f-switch::before { background: #292928; }
+html[data-look='parent'] .f-switch .mantine-Switch-thumb { background: var(--p-card); border: 0; }
+html[data-look='parent'] input:checked + .f-switch.f-switch { background: var(--p-ink); border-color: var(--p-ink); }
+html[data-look='parent'] input:checked + .f-switch.f-switch::before,
+html[data-look='parent'] input:checked + .f-switch .mantine-Switch-thumb { background: var(--p-acc); }
 
 html[data-look='parent'] .f-check.f-check { border-radius: 6px; border: 1.5px solid var(--p-sub); background: var(--p-card); }
 html[data-look='parent'] .f-check.f-check:checked { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
