@@ -52,6 +52,7 @@ beforeEach(() => {
     if (path === '/setup') return { needed: true }
     if (path === '/devices') return []
     if (path === '/chores/') return { id: 31 }
+    if (path === '/chore-types') return [{ id: 4, name: 'Personal' }, { id: 2, name: 'Kitchen' }]
     if (path === '/kids') return { id: 7, full_name: 'Ava', username: 'kid-ava', avatar: '🦊', has_pin: false }
     return {}
   })
@@ -179,7 +180,8 @@ describe('setup wizard', () => {
     await screen.findByText(/Ava/)
     expect(posts('/kids')[0][1]).toEqual({ method: 'POST', body: { full_name: 'Ava', avatar: '🦊', pin: null } })
     await user.click(screen.getByRole('button', { name: 'Next' })) // Step 3 → 4 (Chores)
-    await user.click(await screen.findByLabelText('Make bed'))
+    await user.click(await screen.findByRole('button', { name: /^Make bed/ }))
+    expect(screen.getByText('1 picked')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Next' })) // Step 4 → 5 (Devices)
     expect(await screen.findByText('No devices yet — you can add them later from Devices.')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Next' })) // Step 5 → 6 (Hours)
@@ -192,7 +194,7 @@ describe('setup wizard', () => {
     expect(posts('/chores/')).toHaveLength(1)
     expect(posts('/chores/')[0][1]).toEqual({
       method: 'POST',
-      body: { title: 'Make bed', points: 10, needs_photo: false, steps: [] },
+      body: { title: 'Make bed', points: 10, needs_photo: false, steps: [], type_id: 4 },
     })
     expect(posts('/chores/31/assignments')).toHaveLength(1)
     expect(posts('/chores/31/assignments')[0][1]).toEqual({

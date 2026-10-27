@@ -280,3 +280,22 @@
 .kv + .kv { border-top: 1px solid var(--p-line); }
 .kv input[type='time'] { font: inherit; color: var(--p-ink); background: var(--p-card); border: 1px solid var(--p-line); border-radius: 10px; padding: 6px 10px; }
 .kv input[type='time']:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+
+/* step 4 starter cards (mockup 07 .sc / .scc) */
+.starters { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.starter {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; text-align: left; cursor: pointer;
+  border: 1px solid var(--p-line); border-radius: 14px; background: var(--p-card); color: var(--p-ink);
+  font: inherit; font-size: 13.5px; font-weight: 600;
+}
+.starter[aria-pressed='true'] { border-color: var(--p-ink); }
+.starter:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+.starterTy { width: 30px; height: 30px; border-radius: 9px; background: var(--p-soft); color: var(--p-sub); display: grid; place-items: center; flex: none; }
+.starterT { flex: 1; min-width: 0; }
+.starterT small { display: block; font-weight: 400; color: var(--p-sub); font-size: 11.5px; }
+.starterCb {
+  margin-left: auto; width: 20px; height: 20px; border-radius: 6px; border: 1.5px solid var(--p-sub);
+  display: grid; place-items: center; color: #292928; flex: none;
+}
+.starter[aria-pressed='true'] .starterCb { background: var(--p-acc); border-color: var(--p-acc); }
+.picked { margin: 10px 0 0; font-size: 13px; color: var(--p-sub); text-align: right; }

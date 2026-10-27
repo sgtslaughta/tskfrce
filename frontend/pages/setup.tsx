@@ -14,6 +14,7 @@ import { StepParent, parentErrors, type ParentForm } from '@/v2/setup/StepParent
 import { StepKids } from '@/v2/setup/StepKids'
 import { StepDevices } from '@/v2/setup/StepDevices'
 import { StepChores } from '@/v2/setup/StepChores'
+import { starter } from '@/v2/setup/starterChores'
 import { DEFAULT_DRAFTS, StepHours } from '@/v2/setup/StepHours'
 import { StepRemote } from '@/v2/setup/StepRemote'
 import { StepFinish } from '@/v2/setup/StepFinish'
@@ -100,6 +101,13 @@ export default function SetupPage() {
   }
 
   // one request per click even on a double-click; failures show via apply.error
+  // built-in chore types, fetched once when the first starter chore is created
+  const typesRef = useRef<Promise<{ id: number; name: string }[]> | null>(null)
+  const choreTypes = () =>
+    (typesRef.current ??= api<unknown>('/chore-types')
+      .then((r) => (Array.isArray(r) ? (r as { id: number; name: string }[]) : []))
+      .catch(() => []))
+
   const run = (jobs: { key: string; run: () => Promise<unknown> }[]) =>
     void once(() => apply.mutateAsync(jobs).catch(() => {}))
 
@@ -126,9 +134,12 @@ export default function SetupPage() {
               run: async () => {
                 let id = choreIds.current.get(title)
                 if (id === undefined) {
+                  const st = starter(title)
+                  const types = await choreTypes()
+                  const typeId = types.find((t) => t.name === st?.type)?.id
                   const c = await api<{ id: number }>('/chores/', {
                     method: 'POST',
-                    body: { title, points: 10, needs_photo: false, steps: [] },
+                    body: { title, points: st?.points ?? 10, needs_photo: false, steps: [], ...(typeId ? { type_id: typeId } : {}) },
                   })
                   id = c.id
                   choreIds.current.set(title, id)

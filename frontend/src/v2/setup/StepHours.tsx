@@ -40,7 +40,8 @@ export function StepHours({ drafts, onChange, choresLock, onChoresLock }: Props)
   return (
     <>
       <div className="pk-panel">
-        <h3>
+        {/* first heading under the step h1 (axe heading-order); keeps the panel h3 styling */}
+        <h3 aria-level={2}>
           <Icon name="calendar_month" size={18} />
           Allowed hours
           <button type="button" className={`p-btn ${styles.addHours}`} onClick={() => setEditing(null)}>
