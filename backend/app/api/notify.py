@@ -134,7 +134,7 @@ def test_place(place_id: int, db: Session = Depends(get_db), user: User = Depend
         url = unseal(p.url_enc)
     except ValueError:
         return {"ok": False, "error": "Re-enter this address."}
-    ok, error = notify.deliver(
+    ok, error = notify.deliver_bounded(
         [url], "t@sk4ce test", "If you can read this, pings will reach this place."
     )
     return {"ok": ok, "error": error}

@@ -118,6 +118,6 @@ def pings(monkeypatch):
     monkeypatch.setattr(
         notify,
         "deliver",
-        lambda urls, title, body: (sent.append((urls, title, body)), (True, None))[1],
+        lambda urls, title, body, lt=None: (sent.append((urls, title, body)), (True, None))[1],
     )
     return sent

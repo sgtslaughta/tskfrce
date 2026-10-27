@@ -54,7 +54,7 @@ def test_patch_delete(client, parent_headers):
 
 def test_test_endpoint(client, parent_headers, monkeypatch):
     pid = _mk(client, parent_headers).json()["id"]
-    monkeypatch.setattr(notify, "deliver", lambda u, t, b: (False, "401 Unauthorized"))
+    monkeypatch.setattr(notify, "deliver", lambda u, t, b, lt=None: (False, "401 Unauthorized"))
     r = client.post(f"/api/v1/notify/places/{pid}/test", headers=parent_headers)
     assert r.json() == {"ok": False, "error": "401 Unauthorized"}
 
@@ -108,11 +108,6 @@ def test_422_never_echoes_url(client, parent_headers):
     assert r.status_code == 422 and "SECRETPW" not in r.text
 
 
-def test_other_422s_keep_default_shape(client, parent_headers):
-    r = client.post("/api/v1/chores", json={}, headers=parent_headers)
-    assert r.status_code == 422 and "input" in r.text
-
-
 def test_failed_add_not_logged(client, parent_headers, caplog):
     import logging
 
@@ -137,7 +132,7 @@ def test_app_address_strict(client, parent_headers):
 
 def test_test_endpoint_rate_limited(client, parent_headers, monkeypatch):
     pid = _mk(client, parent_headers).json()["id"]
-    monkeypatch.setattr(notify, "deliver", lambda u, t, b: (True, None))
+    monkeypatch.setattr(notify, "deliver", lambda u, t, b, lt=None: (True, None))
     codes = [
         client.post(f"/api/v1/notify/places/{pid}/test", headers=parent_headers).status_code
         for _ in range(6)
@@ -162,3 +157,22 @@ def test_kid_403_everywhere(client, parent_headers, kid_headers):
             getattr(client, m)(u, headers=kid_headers, **({"json": j} if j else {})).status_code
             == 403
         ), (m, u)
+
+
+def test_422_strips_input_app_wide(client):
+    r = client.post("/api/v1/auth/login", json={"username": {"x": 1}, "password": "SECRETPW"})
+    assert r.status_code == 422
+    assert "SECRETPW" not in r.text and "input" not in r.text
+    assert all(set(e) <= {"loc", "msg", "type"} for e in r.json()["detail"])
+
+
+def test_test_place_times_out_friendly(client, parent_headers, monkeypatch):
+    import threading
+
+    gate = threading.Event()
+    monkeypatch.setattr(notify, "TEST_TIMEOUT", 0.2)
+    monkeypatch.setattr(notify, "deliver", lambda u, t, b, lt=None: gate.wait(2))
+    pid = _mk(client, parent_headers).json()["id"]
+    r = client.post(f"/api/v1/notify/places/{pid}/test", headers=parent_headers)
+    gate.set()
+    assert r.json() == {"ok": False, "error": "That place didn't answer in time."}

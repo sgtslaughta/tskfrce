@@ -10,7 +10,6 @@ import time
 from typing import Any
 
 from fastapi import FastAPI, Request, Response
-from fastapi.exception_handlers import request_validation_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
@@ -242,10 +241,8 @@ async def not_found_handler(request: Request, exc: Exception) -> JSONResponse:
 
 @fastapi_app.exception_handler(RequestValidationError)
 async def validation_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
-    """Notify bodies hold secret URLs: never echo `input`/`ctx` back in a 422."""
-    if not request.url.path.startswith("/api/v1/notify"):
-        return await request_validation_exception_handler(request, exc)
-    errs = [{k: v for k, v in e.items() if k not in ("input", "ctx")} for e in exc.errors()]
+    """Never echo `input`/`ctx`/`url` in a 422: they can hold passwords and secret URLs."""
+    errs = [{k: v for k, v in e.items() if k in ("loc", "msg", "type")} for e in exc.errors()]
     return JSONResponse(status_code=422, content={"detail": errs})
 
 

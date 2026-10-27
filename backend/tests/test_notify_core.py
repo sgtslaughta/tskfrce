@@ -253,3 +253,14 @@ def test_chat_mentions_are_defanged(db, pings):
     z = "​"
     assert pings[0][1] == f"@{z}everyone look"
     assert pings[0][2] == f"hi @{z}here <@{z}123> <@{z}&9> mia@x.org"
+
+
+def test_deliver_lock_timeout_is_friendly():
+    notify.apprise_lock.acquire()
+    try:
+        assert notify.deliver(["json://localhost/x"], "t", "b", lock_timeout=0.05) == (
+            False,
+            "That place didn't answer in time.",
+        )
+    finally:
+        notify.apprise_lock.release()

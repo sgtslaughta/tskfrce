@@ -43,6 +43,12 @@ def _run_once() -> None:
             logger.error("Kid alerts failed", error=str(exc))
         try:
             notify_jobs.tick(db, now, blocked)
+        except OperationalError as exc:
+            db.rollback()
+            if "database is locked" in str(exc):
+                logger.warning("Notify jobs skipped: database busy")
+            else:
+                logger.error("Notify jobs failed", error=str(exc))
         except Exception as exc:
             db.rollback()
             logger.error("Notify jobs failed", error=str(exc))

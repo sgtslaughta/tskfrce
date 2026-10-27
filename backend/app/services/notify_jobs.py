@@ -17,7 +17,10 @@ from app.services import inbox, notify
 log = get_logger(__name__)
 SUMMARY_AT = "19:00"
 OFFLINE_AFTER = timedelta(minutes=10)
+SUMMARY_CUTOFF = timedelta(hours=2)  # later than this after SUMMARY_AT, skip the day's summary
+OFFLINE_GRACE = OFFLINE_AFTER  # after a restart, wait one blocker heartbeat window
 SCAN_GAP = timedelta(minutes=5)  # longer gap between scans = server was down: re-baseline
+_started = datetime.now(UTC)
 _last: set[str] | None = None  # blocked MACs at the previous tick (None = no baseline yet)
 
 
@@ -100,7 +103,7 @@ def overdue(db: Session, now_utc: datetime) -> None:
 def box_offline(db: Session, now_utc: datetime) -> None:
     fam = get_family(db)
     seen = fam.blocker_last_seen
-    if seen is None:
+    if seen is None or now_utc - _started < OFFLINE_GRACE:
         return
     stale = _naive(now_utc) - seen > OFFLINE_AFTER
     if stale and not fam.blocker_alerted:
@@ -121,6 +124,9 @@ def daily_summary(db: Session, now_utc: datetime) -> None:
     if local.strftime("%H:%M") < SUMMARY_AT or fam.summary_date == local.date():
         return
     fam.summary_date = local.date()
+    h, m = map(int, SUMMARY_AT.split(":"))
+    if local - local.replace(hour=h, minute=m, second=0, microsecond=0) > SUMMARY_CUTOFF:
+        return  # backend was down at summary time: too stale to send
     stats: dict[int, list[int]] = {}  # kid id -> [done, total]
     needs = 0
     for r in db.query(ChoreRun).filter(ChoreRun.day == svc.today(db, now_utc)):

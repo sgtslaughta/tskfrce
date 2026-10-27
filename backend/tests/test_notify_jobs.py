@@ -14,6 +14,7 @@ from tests.test_notify_core import _place
 @pytest.fixture(autouse=True)
 def _reset(db):
     notify_jobs._last = None
+    notify_jobs._started = datetime.min.replace(tzinfo=UTC)
     get_family(db).timezone = "UTC"
     db.commit()
     yield
@@ -89,6 +90,28 @@ def test_box_offline_never_before_first_heartbeat(db, pings, parent):
     notify_jobs.box_offline(db, at(db, "12:00"))
     db.commit()
     assert pings == [] and not get_family(db).blocker_alerted
+
+
+def test_box_offline_grace_after_restart(db, pings, parent, monkeypatch):
+    _place(db, events=tuple(notify.EVENTS))
+    fam, now = get_family(db), at(db, "12:00")
+    fam.blocker_last_seen = (now - timedelta(minutes=30)).replace(tzinfo=None)
+    monkeypatch.setattr(notify_jobs, "_started", now - timedelta(minutes=5))
+    notify_jobs.box_offline(db, now)
+    assert pings == [] and not fam.blocker_alerted
+    notify_jobs.box_offline(db, now + timedelta(minutes=6))
+    db.commit()
+    assert len(pings) == 1
+
+
+def test_summary_skipped_when_too_late(db, pings, parent, kid):
+    _place(db, events=tuple(notify.EVENTS))
+    make_run(db, parent, kid, day=svc.today(db), title="Dishes")
+    notify_jobs.daily_summary(db, at(db, "21:30"))
+    db.commit()
+    assert pings == [] and get_family(db).summary_date == svc.today(db)
+    notify_jobs.daily_summary(db, at(db, "22:00"))
+    assert pings == []
 
 
 def test_summary_once_a_day_after_19(db, pings, parent, kid):
@@ -191,3 +214,24 @@ def test_flush_held_caps_body(db, pings):
     assert pings[0][1] == "While you were away: 25 updates"
     body = pings[0][2]
     assert body.count("• ") == 20 and "and 5 more" in body
+
+
+def test_loop_db_locked_logs_warning(db, monkeypatch):
+    from app.lock import loop
+    from sqlalchemy.exc import OperationalError
+
+    warns, errs = [], []
+    monkeypatch.setattr(loop, "SessionLocal", lambda: db)
+    monkeypatch.setattr(loop, "tick", lambda d, n: [])
+    monkeypatch.setattr(loop, "push_blocked", lambda b: None)
+    monkeypatch.setattr(loop.kid_alerts, "scan", lambda *a: None)
+    monkeypatch.setattr(loop.logger, "warning", lambda *a, **k: warns.append(a))
+    monkeypatch.setattr(loop.logger, "error", lambda *a, **k: errs.append(a))
+    monkeypatch.setattr(db, "close", lambda: None)
+
+    def boom(*a):
+        raise OperationalError("x", {}, Exception("database is locked"))
+
+    monkeypatch.setattr(notify_jobs, "tick", boom)
+    loop._run_once()
+    assert warns and not errs

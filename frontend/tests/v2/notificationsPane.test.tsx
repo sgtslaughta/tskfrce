@@ -81,6 +81,14 @@ describe('NotificationsPane', () => {
     expect(document.body.textContent).not.toContain(RAW)
   })
 
+  test('an unreadable place shows the re-enter banner; a readable one does not', async () => {
+    serve([{ ...place, readable: false }, { ...place, id: 2, name: 'Fine one' }])
+    wrap(<NotificationsPane />)
+    expect(await screen.findByText('Re-enter this address')).toBeTruthy()
+    expect(screen.getAllByText('Re-enter this address')).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Change address' })).toBeTruthy()
+  })
+
   test('clicking a chip patches the place events', async () => {
     serve([place])
     wrap(<NotificationsPane />)

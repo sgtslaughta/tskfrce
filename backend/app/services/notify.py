@@ -137,13 +137,20 @@ def _redact(msg: str, urls: list[str]) -> str:
     return msg[:300]
 
 
-def deliver(urls: list[str], title: str, body: str) -> tuple[bool, str | None]:
+TIMED_OUT = "That place didn't answer in time."
+TEST_TIMEOUT = 15.0  # seconds a parent's Test may wait, lock queue included
+_test_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="apprise-test")
+
+
+def deliver(
+    urls: list[str], title: str, body: str, lock_timeout: float | None = None
+) -> tuple[bool, str | None]:
+    """Send now. `lock_timeout` bounds the wait behind other deliveries (None = wait)."""
+    if not apprise_lock.acquire(timeout=-1 if lock_timeout is None else lock_timeout):
+        return False, TIMED_OUT
     try:
         ap = apprise.Apprise()
-        with (
-            apprise_lock,
-            apprise.LogCapture(level=apprise.logging.WARNING, fmt="%(message)s") as cap,
-        ):
+        with apprise.LogCapture(level=apprise.logging.WARNING, fmt="%(message)s") as cap:
             for u in urls:
                 ap.add(u)
             ok = ap.notify(title=title, body=body, body_format=apprise.NotifyFormat.TEXT)
@@ -153,6 +160,17 @@ def deliver(urls: list[str], title: str, body: str) -> tuple[bool, str | None]:
         return False, _redact(lines[-1] if lines else "It didn't go through.", urls)
     except Exception as exc:  # noqa: BLE001 - delivery must never raise
         return False, _redact(str(exc), urls)
+    finally:
+        apprise_lock.release()
+
+
+def deliver_bounded(urls: list[str], title: str, body: str) -> tuple[bool, str | None]:
+    """deliver() for the Test button: never blocks longer than TEST_TIMEOUT overall."""
+    fut = _test_pool.submit(deliver, urls, title, body, TEST_TIMEOUT)
+    try:
+        return fut.result(timeout=TEST_TIMEOUT)
+    except TimeoutError:
+        return False, TIMED_OUT
 
 
 def _submit(fn, *args) -> None:
