@@ -281,7 +281,7 @@ describe('chore detail', () => {
       within(detail()).getByLabelText('Add a step'),
       'Wipe desk{Enter}',
     )
-    expect(within(detail()).getByText('Wipe desk')).toBeInTheDocument()
+    expect(within(detail()).getByDisplayValue('Wipe desk')).toBeInTheDocument()
     expect(within(detail()).getByText('Unsaved changes')).toBeInTheDocument()
     expect(
       within(detail()).getByRole('button', { name: 'Remove Wipe desk' }),
@@ -298,10 +298,12 @@ describe('chore detail', () => {
     ).toBeInTheDocument()
     await userEvent.click(within(who()).getByRole('button', { name: 'Maya' }))
     expect(within(who()).queryByRole('group', { name: 'Mode' })).toBeNull()
-    fireEvent.change(within(who()).getByLabelText('Due by (optional)'), {
+    fireEvent.change(within(detail()).getByLabelText('Due by (optional)'), {
       target: { value: '17:00' },
     })
-    await userEvent.click(within(who()).getByRole('button', { name: 'Save' }))
+    expect(within(who()).queryByLabelText('Due by (optional)')).toBeNull()
+    expect(within(who()).queryByRole('button', { name: 'Save' })).toBeNull()
+    await userEvent.click(within(detail()).getByRole('button', { name: 'Save chore' }))
     await waitFor(() =>
       expect(calls('POST')[0]).toEqual([
         '/chores/9/assignments',
@@ -342,7 +344,7 @@ describe('chore detail', () => {
     await userEvent.click(
       within(who()).getByRole('button', { name: 'Some days' }),
     )
-    const save = within(who()).getByRole('button', { name: 'Save' })
+    const save = within(detail()).getByRole('button', { name: 'Save chore' })
     expect(save).toBeDisabled()
     const wed = within(who()).getByRole('button', { name: 'Wednesday' })
     await userEvent.click(
@@ -365,7 +367,7 @@ describe('chore detail', () => {
     await userEvent.click(
       within(who()).getByRole('button', { name: 'One time' }),
     )
-    const save = within(who()).getByRole('button', { name: 'Save' })
+    const save = within(detail()).getByRole('button', { name: 'Save chore' })
     expect(save).toBeDisabled()
     fireEvent.change(within(who()).getByLabelText('Date'), {
       target: { value: '2026-11-01' },
@@ -386,8 +388,9 @@ describe('chore detail', () => {
       'aria-pressed',
       'true',
     )
-    await userEvent.click(within(who()).getByRole('button', { name: 'Save' }))
-    await waitFor(() => expect(calls('PATCH')[0][0]).toBe('/assignments/11'))
+    await userEvent.click(within(who()).getByRole('button', { name: 'Leo' }))
+    await userEvent.click(within(detail()).getByRole('button', { name: 'Save chore' }))
+    await waitFor(() => expect(calls('PATCH').some(([u]) => u === '/assignments/11')).toBe(true))
     await userEvent.click(
       within(who()).getByRole('button', { name: 'Remove' }),
     )
@@ -403,6 +406,16 @@ describe('chore detail', () => {
         { method: 'DELETE' },
       ]),
     )
+  })
+
+  test('a step can be renamed in place and the new name is saved', async () => {
+    await show({ item: '5' })
+    await userEvent.type(within(detail()).getByLabelText('Add a step'), 'Wipe desk{Enter}')
+    const name = within(detail()).getByLabelText('Step 1 name')
+    await userEvent.clear(name)
+    await userEvent.type(name, 'Dust shelf')
+    await userEvent.click(within(detail()).getByRole('button', { name: 'Save chore' }))
+    await waitFor(() => expect(calls('PATCH').some(([, i]) => JSON.stringify(i?.body).includes('Dust shelf'))).toBe(true))
   })
 
   test('Duplicate POSTs /copy', async () => {

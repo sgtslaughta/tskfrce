@@ -180,6 +180,8 @@
 [data-look='parent'] .pk-steps { display: flex; flex-direction: column; gap: 6px; }
 [data-look='parent'] .pk-step { display: flex; align-items: center; gap: 6px; padding: 4px 4px 4px 10px; border: 1px solid var(--p-line); border-radius: 12px; background: var(--p-soft); font-size: 13.5px; font-weight: 500; color: var(--p-ink); }
 [data-look='parent'] .pk-step-t { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+[data-look='parent'] input.pk-step-t { border: 0; border-radius: 6px; background: transparent; color: inherit; font: inherit; padding: 4px 2px; }
+[data-look='parent'] input.pk-step-t:hover { background: var(--p-card); }
 [data-look='parent'] .pk-step .ms { color: var(--p-sub); }
 [data-look='parent'] .pk-grab { display: grid; cursor: grab; touch-action: none; }
 /* ↑/↓ are for keyboard users (pointer users drag the handle): shown only while the keyboard is in the row */
@@ -329,3 +331,4 @@ html[data-look='parent'] .mantine-Modal-close { color: var(--p-sub); }
 [data-look='parent'] .pk-kv .pk-ph-l { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 [data-look='parent'] .pk-ph-n { color: var(--p-ink); font-variant-numeric: tabular-nums; }
 [data-look='parent'] .pk-ph-n[data-neg] { color: var(--p-red); }
+[data-look='parent'] .pk-card-t.pk-dev { display: flex; flex-direction: row; align-items: center; gap: 8px; }

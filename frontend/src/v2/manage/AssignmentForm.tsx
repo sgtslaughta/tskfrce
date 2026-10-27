@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDisclosure } from '@mantine/hooks'
-import { useDeleteAssignment, useSaveAssignment, type ChoreMode } from '@/v2/hooks/useChores'
+import { useDeleteAssignment, type AssignmentBody, type ChoreMode } from '@/v2/hooks/useChores'
 import { DAYS } from '@/v2/days'
 import { Icon } from '@/v2/parent/Icon'
 import { SegmentedControl } from '@/v2/parent/SegmentedControl'
@@ -8,7 +8,7 @@ import type { Assignment, Kid } from '@/v2/types'
 import { ConfirmDelete } from './ConfirmDelete'
 import { useSingle } from './useSingle'
 import { initial, nameOf } from './choreMeta'
-import { toastFail, toastOk } from '../notify'
+import { toastFail } from '../notify'
 
 const REPEATS = [
   { value: 'daily', label: 'Every day' },
@@ -25,19 +25,28 @@ const FULL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Satu
 
 const toggle = (list: string[], v: string) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
 
+/** What the editor's single Save sends for this form; `dirty` = differs from the saved assignment. */
+export interface PendingAssignment {
+  id?: number
+  body: AssignmentBody
+  dirty: boolean
+  ready: boolean
+}
+
 interface Props {
   kids: Kid[]
-  choreId: number
   assignment?: Assignment
-  /** Called after a save or remove, and by Cancel (shown only when this form can be dismissed). */
+  /** The chore's Due by (Basics), HH:MM or ''. */
+  due: string
+  /** Report this form's pending change to the editor (null on unmount). */
+  report: (key: string, p: PendingAssignment | null) => void
+  /** Called after a remove, and by Cancel (shown only when this form can be dismissed). */
   onClose?: () => void
   dismissable?: boolean
 }
 
 /** Who does a chore, how often and by when. Add or edit one assignment. */
-export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissable }: Props) {
-  const save = useSaveAssignment()
-  const saveOnce = useSingle(save)
+export function AssignmentForm({ kids, assignment: a, due, report, onClose, dismissable }: Props) {
   const del = useDeleteAssignment()
   const delOnce = useSingle(del)
   const [confirm, { open, close }] = useDisclosure(false)
@@ -46,34 +55,27 @@ export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissa
   const [repeat, setRepeat] = useState<string>(a?.repeat.type ?? 'daily')
   const [days, setDays] = useState<string[]>(a?.repeat.days.map(String) ?? [])
   const [date, setDate] = useState(a?.on_date ?? '')
-  const [due, setDue] = useState(a?.due_time ?? '')
 
   const ready = who.length > 0 && (repeat !== 'weekly' || days.length > 0) && (repeat !== 'once' || !!date)
-
-  const submit = () =>
-    saveOnce(
-      {
-        choreId,
-        id: a?.id,
-        body: {
-          kid_ids: who.map(Number),
-          mode: who.length > 1 ? mode : 'each',
-          repeat: {
-            type: repeat as 'daily' | 'weekly' | 'once',
-            days: repeat === 'weekly' ? days.map(Number).sort() : [],
-          },
-          on_date: repeat === 'once' ? date : null,
-          due_time: due || null,
-        },
-      },
-      {
-        onError: toastFail,
-        onSuccess: () => {
-          toastOk(a ? 'Saved' : 'Assigned')
-          onClose?.()
-        },
-      },
-    )
+  const body: AssignmentBody = {
+    kid_ids: who.map(Number),
+    mode: who.length > 1 ? mode : 'each',
+    repeat: { type: repeat as 'daily' | 'weekly' | 'once', days: repeat === 'weekly' ? days.map(Number).sort() : [] },
+    on_date: repeat === 'once' ? date : null,
+    due_time: due || null,
+  }
+  const same = (x: AssignmentBody) =>
+    JSON.stringify([[...x.kid_ids].sort(), x.mode, x.repeat, x.on_date, (x.due_time ?? '').slice(0, 5)]) ===
+    JSON.stringify([[...body.kid_ids].sort(), body.mode, body.repeat, body.on_date, body.due_time ?? ''])
+  const dirty = a ? !same(a) : who.length > 0
+  const key = `a${a?.id ?? 'new'}`
+  const sig = JSON.stringify([body, dirty, ready])
+  useEffect(() => {
+    report(key, { id: a?.id, body, dirty, ready })
+    return () => report(key, null)
+    // body is derived from the same state as sig
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, sig])
 
   return (
     <div className="pk-form">
@@ -126,23 +128,16 @@ export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissa
           ))}
         </div>
       )}
-      <div className="pk-row2">
-        {repeat === 'once' && (
-          <label className="pk-field">
-            <span className="pk-label">Date</span>
-            <input className="pk-input" type="date" value={date} onChange={(e) => setDate(e.currentTarget.value)} />
-          </label>
-        )}
+      {repeat === 'once' && (
         <label className="pk-field">
-          <span className="pk-label">Due by (optional)</span>
-          <input className="pk-input" type="time" value={due} onChange={(e) => setDue(e.currentTarget.value)} />
+          <span className="pk-label">Date</span>
+          <input className="pk-input" type="date" value={date} onChange={(e) => setDate(e.currentTarget.value)} />
         </label>
-      </div>
-      <div className="pk-actions">
-        <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!ready || save.isPending} aria-busy={save.isPending}>
-          <Icon name={save.isPending ? 'progress_activity' : 'check'} className={save.isPending ? 'pk-spin' : ''} />
-          {save.isPending ? 'Saving…' : 'Save'}
-        </button>
+      )}
+      {dirty && !ready && (
+        <span className="pk-hint">{who.length === 0 ? 'Pick who does it.' : repeat === 'weekly' ? 'Pick at least one day.' : 'Pick a date.'}</span>
+      )}
+      {(dismissable || a) && <div className="pk-actions">
         {dismissable && (
           <button type="button" className="p-btn" onClick={onClose}>
             Cancel
@@ -164,7 +159,7 @@ export function AssignmentForm({ kids, choreId, assignment: a, onClose, dismissa
             />
           </>
         )}
-      </div>
+      </div>}
     </div>
   )
 }

@@ -72,10 +72,19 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
       <div className="pt-open-main">
         {run.steps.length > 0 && (
           <ol className="pt-steps">
-            {run.steps.map((s) => {
+            {run.steps.map((s, i) => {
+              // numbered when chained to a neighbour; free steps show a dashed "–" (spec 3.2)
+              const chained = (i > 0 && s.after_previous) || !!run.steps[i + 1]?.after_previous
               const late = !s.done && !!s.due_at && Date.parse(s.due_at) < now
               return (
                 <li key={s.id} className="pt-step" data-done={s.done}>
+                  <span
+                    className="pk-num"
+                    data-free={!chained}
+                    title={s.locked ? 'Locked until the step above is done' : chained ? 'Goes in order' : 'Any time'}
+                  >
+                    {chained ? i + 1 : '–'}
+                  </span>
                   <span className="pt-ck" data-on={s.done} aria-hidden>
                     {s.done && <Icon name="check" size={14} />}
                   </span>
@@ -83,11 +92,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
                     <span className="pt-title">{s.title}</span>
                     {s.done && s.done_at && <small>Done {clock(s.done_at)}</small>}
                   </span>
-                  {s.after_previous && (
-                    <Chip tone="grey" icon={s.locked ? 'lock' : 'link'} className="pt-chain">
-                      After the step above
-                    </Chip>
-                  )}
+                  {s.locked && <Chip tone="grey" icon="lock">Locked</Chip>}
                   {late ? (
                     <Chip tone="red" icon="alarm">Late</Chip>
                   ) : (

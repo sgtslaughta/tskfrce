@@ -79,6 +79,7 @@ export function KidEditor({ kid, onDone, onCreated, focusPin }: { kid?: Kid; onD
             value={pin}
             inputMode="numeric"
             maxLength={4}
+            aria-invalid={pinBad || letters}
             onBlur={() => setLetters(false)}
             onChange={(e) => {
               const v = e.currentTarget.value

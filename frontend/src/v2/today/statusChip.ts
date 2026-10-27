@@ -23,7 +23,7 @@ export function statusChip(
     const mins = c.due_at ? (Date.parse(c.due_at) - now) / 60000 : Infinity
     if (mins < 0) out.push({ tone: 'red', icon: 'alarm', label: 'Overdue' })
     else if (mins <= SOON_MIN) out.push({ tone: 'amb', icon: 'hourglass_bottom', label: `Due in ${Math.ceil(mins)} min` })
-    else out.push({ tone: 'grey', icon: 'schedule', label: 'To do' })
+    else if (!c.note) out.push({ tone: 'grey', icon: 'schedule', label: 'To do' }) // the Note chip says it already
   }
   if (c.note) out.push({ tone: 'amb', icon: 'flag', label: 'Note' })
   if (c.deducted) out.push({ tone: 'red', icon: 'remove_circle', label: `−${c.deducted}` })

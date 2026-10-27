@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDisclosure } from '@mantine/hooks'
-import { useCopyChore, useDeleteChore, useSaveChore } from '@/v2/hooks/useChores'
+import { useCopyChore, useDeleteChore, useSaveAssignment, useSaveChore } from '@/v2/hooks/useChores'
 import { useChoreTypes } from '@/v2/hooks/useChoreTypes'
 import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import type { Kid, LibChore } from '@/v2/types'
+import type { PendingAssignment } from './AssignmentForm'
 import { ChoreSteps, type Step } from './ChoreSteps'
 import { ChoreTypePanel } from './ChoreTypePanel'
 import { ChoreTypePicker } from './ChoreTypePicker'
@@ -35,7 +36,9 @@ const sameSteps = (a: Step[], b: Step[]) => JSON.stringify(a) === JSON.stringify
 /** Chore editor laid out as cards: header, Basics, Steps, Who & when and Notes. */
 export function ChoreDetail({ kids, chore, onSelect }: Props) {
   const save = useSaveChore()
-  const saveOnce = useSingle(save)
+  const saveAssignment = useSaveAssignment()
+  const [saving, setSaving] = useState(false)
+  const busy = useRef(false)
   const del = useDeleteChore()
   const delOnce = useSingle(del)
   const copy = useCopyChore()
@@ -55,6 +58,23 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
   const [next, setNext] = useState(kept?.next ?? '')
   const [photo, setPhoto] = useState(kept?.photo ?? chore?.needs_photo ?? false)
   const pointsErr = intError(points, 0)
+  // Who & when forms report their pending changes here so one Save sends everything
+  const [pending, setPending] = useState<Record<string, PendingAssignment>>({})
+  const report = useCallback(
+    (k: string, p: PendingAssignment | null) =>
+      setPending((cur) => {
+        const { [k]: _old, ...rest } = cur
+        return p ? { ...rest, [k]: p } : rest
+      }),
+    [],
+  )
+  const forms = Object.values(pending)
+  const formsDirty = forms.some((f) => f.dirty)
+  const formsBad = forms.some((f) => f.dirty && !f.ready)
+  const [dueEdit, setDue] = useState<string>()
+  const [gen, setGen] = useState(0) // remounts Who & when on Discard
+  const savedDue = chore?.assignments.map((a) => a.due_time?.slice(0, 5)).filter((t): t is string => !!t).sort().pop() ?? ''
+  const due = dueEdit ?? savedDue
   const typeId = picked ?? chore?.type_id ?? otherType(types)?.id
   const type = types.find((t) => t.id === typeId)
 
@@ -63,24 +83,37 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
     setPoints(String(chore?.points ?? 10))
     setPicked(undefined)
     setSteps(stepsOf(chore))
+    setDue(undefined)
+    setGen((g) => g + 1)
     setNext('')
     setPhoto(chore?.needs_photo ?? false)
   }
 
   // the first step has nothing above it to wait for
-  const stepBody = steps.map((s, i) => ({ ...s, after_previous: i > 0 && s.after_previous }))
-  const submit = () =>
-    saveOnce(
-      { id: chore?.id, body: { title: title.trim(), points: Number(points), needs_photo: photo, type_id: typeId, steps: stepBody } },
-      {
-        onError: toastFail,
-        onSuccess: (c) => {
-          drafts.delete(key)
-          toastOk(chore ? 'Saved' : 'Added. Now choose who does it.')
-          if (!chore) onSelect(c.id)
-        },
-      },
-    )
+  const stepBody = steps
+    .filter((s) => s.title.trim())
+    .map((s, i) => ({ ...s, title: s.title.trim(), after_previous: i > 0 && s.after_previous }))
+  const submit = async () => {
+    if (busy.current) return
+    busy.current = true
+    setSaving(true)
+    try {
+      const c = await save.mutateAsync({
+        id: chore?.id,
+        body: { title: title.trim(), points: Number(points), needs_photo: photo, type_id: typeId, steps: stepBody },
+      })
+      for (const f of forms.filter((f) => f.dirty)) await saveAssignment.mutateAsync({ choreId: chore?.id ?? c.id, id: f.id, body: f.body })
+      drafts.delete(key)
+      setDue(undefined)
+      toastOk(chore ? 'Saved' : 'Added. Now choose who does it.')
+      if (!chore) onSelect(c.id)
+    } catch (e) {
+      toastFail(e)
+    } finally {
+      busy.current = false
+      setSaving(false)
+    }
+  }
 
   const duplicate = () =>
     copyOnce(chore!.id, {
@@ -91,7 +124,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
       },
     })
 
-  const dirty = !!next.trim() || (chore
+  const dirty = !!next.trim() || formsDirty || (chore
     ? title.trim() !== chore.title ||
       !!pointsErr || Number(points) !== chore.points ||
       photo !== chore.needs_photo ||
@@ -112,7 +145,6 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
   }, [dirty])
 
   const when = chore ? schedules(chore).join(' + ') : ''
-  const choreDue = chore?.assignments.map((a) => a.due_time?.slice(0, 5)).filter((t): t is string => !!t).sort().pop() ?? null
   const byId = new Map(kids.map((k) => [k.id, k]))
   const doers = joinNames((chore ? usedBy(chore) : []).flatMap((id) => (byId.has(id) ? [nameOf(byId.get(id)!)] : [])))
 
@@ -190,16 +222,28 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
             />
             {pointsErr && <span id="chore-pts-err" className="pk-error">{pointsErr}</span>}
           </label>
+          <label className="pk-field">
+            <span className="pk-label">Due by (optional)</span>
+            <input
+              className="pk-input"
+              type="time"
+              value={due}
+              disabled={!chore}
+              aria-describedby={chore ? undefined : 'chore-due-hint'}
+              onChange={(e) => setDue(e.currentTarget.value)}
+            />
+            {!chore && <span id="chore-due-hint" className="pk-hint">Set after you choose who does it.</span>}
+          </label>
           <div className="pk-switch">
             <span id="photo-label">Needs a photo</span>
             <button type="button" role="switch" aria-checked={photo} aria-labelledby="photo-label" onClick={() => setPhoto(!photo)} />
           </div>
         </section>
 
-        <ChoreSteps steps={steps} onChange={setSteps} next={next} onNext={setNext} choreDue={choreDue} />
+        <ChoreSteps steps={steps} onChange={setSteps} next={next} onNext={setNext} choreDue={due || null} />
 
         {chore ? (
-          <WhoWhen chore={chore} kids={kids} />
+          <WhoWhen key={gen} chore={chore} kids={kids} due={due} report={report} />
         ) : (
           <section className="pk-panel" aria-label="Who and when">
             <h3>
@@ -256,9 +300,9 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
             Cancel
           </button>
         )}
-        <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!title.trim() || !!pointsErr || save.isPending} aria-busy={save.isPending}>
-          <Icon name={save.isPending ? 'progress_activity' : 'check'} className={save.isPending ? 'pk-spin' : ''} />
-          {save.isPending ? 'Saving…' : 'Save chore'}
+        <button type="button" className="p-btn" data-variant="accent" onClick={submit} disabled={!title.trim() || !!pointsErr || formsBad || saving} aria-busy={saving}>
+          <Icon name={saving ? 'progress_activity' : 'check'} className={saving ? 'pk-spin' : ''} />
+          {saving ? 'Saving…' : 'Save chore'}
         </button>
       </div>
     </div>

@@ -27,6 +27,6 @@ describe('statusChip', () => {
   })
   it('note then deduction follow the state chip', () => {
     const note = { label: 'Need help', text: null, at: due, kid_name: 'Sam' }
-    expect(labels({ ...todo, note, deducted: 10 }, t - 90 * MIN)).toEqual(['To do', 'Note', '−10'])
+    expect(labels({ ...todo, note, deducted: 10 }, t - 90 * MIN)).toEqual(['Note', '−10'])
   })
 })

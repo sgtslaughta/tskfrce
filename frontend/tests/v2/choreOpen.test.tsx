@@ -1,16 +1,17 @@
 import { beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
+import { notifications } from '@mantine/notifications'
 import { api } from '@/v2/api'
 import * as dock from '@/v2/chat/dock'
 import { ChoreOpen } from '@/v2/today/ChoreOpen'
 import type { RunDetail, TodayChore, TodayKid } from '@/v2/types'
 
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
-jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
+jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn(), hide: jest.fn() } }))
 // openChat stays real (the open chore claims it) but records its calls
 jest.mock('@/v2/chat/dock', () => {
   const real = jest.requireActual<typeof import('@/v2/chat/dock')>('@/v2/chat/dock')
@@ -66,7 +67,9 @@ describe('ChoreOpen', () => {
   test('late step shows Late and a chained step its badge', async () => {
     open()
     expect(await screen.findByText('Late')).toBeInTheDocument()
-    expect(screen.getByText('After the step above')).toBeInTheDocument()
+    expect(screen.getByTitle('Goes in order')).toHaveTextContent('1')
+    expect(screen.getByTitle(/^Locked until/)).toHaveTextContent('2')
+    expect(screen.getByText('Locked')).toBeInTheDocument()
   })
 
   test('step Reply calls openChat with the step id', async () => {
@@ -128,5 +131,44 @@ describe('ChoreOpen', () => {
     await userEvent.click(await screen.findByRole('button', { name: /undo skip/i }))
     expect(screen.queryByRole('button', { name: /deduct points/i })).toBeNull()
     await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/chores/11/undo', { method: 'POST' }))
+  })
+
+  test('free steps show a dashed dash, not a number', async () => {
+    detail = run({ steps: [{ id: 7, title: 'Make bed', done: false, due_time: null, due_at: null, after_previous: false, locked: false }] })
+    open()
+    expect(await screen.findByTitle('Any time')).toHaveTextContent('–')
+  })
+
+  test('Move to tomorrow waits out the Undo window, then posts', async () => {
+    jest.useFakeTimers()
+    try {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
+      open()
+      await user.click(await screen.findByRole('button', { name: /Move to tomorrow/ }))
+      expect(apiMock).not.toHaveBeenCalledWith('/chores/11/move', expect.anything())
+      await act(async () => {
+        jest.advanceTimersByTime(5000)
+      })
+      expect(apiMock).toHaveBeenCalledWith('/chores/11/move', { method: 'POST' })
+    } finally {
+      jest.useRealTimers()
+    }
+  })
+
+  test('Undo cancels Skip today', async () => {
+    jest.useFakeTimers()
+    try {
+      const user = userEvent.setup({ advanceTimers: jest.advanceTimersByTime })
+      open()
+      await user.click(await screen.findByRole('button', { name: /Skip today/ }))
+      const toast = (notifications.show as unknown as Mock<(n: { message: { props: { onAction: () => void } } }) => void>).mock.calls.at(-1)![0]
+      act(() => toast.message.props.onAction())
+      await act(async () => {
+        jest.advanceTimersByTime(6000)
+      })
+      expect(apiMock).not.toHaveBeenCalledWith('/chores/11/skip', expect.anything())
+    } finally {
+      jest.useRealTimers()
+    }
   })
 })

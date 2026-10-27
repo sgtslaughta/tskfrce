@@ -199,6 +199,13 @@ _REASON_LABEL = {
 }
 
 
+def _label(p: Points) -> str:
+    """Ledger wording: "Homework approved" for a chore row, else the note or a generic reason."""
+    if p.reason == "chore" and p.description:
+        return f"{p.description} approved"
+    return p.description or _REASON_LABEL.get(p.reason, "Points")
+
+
 @router.get("/{kid_id}/points")
 def points_history(kid_id: int, limit: int = 20, db: Session = Depends(get_db)):
     """Newest ledger rows for the kid's profile (02 Kids → Points history)."""
@@ -214,7 +221,7 @@ def points_history(kid_id: int, limit: int = 20, db: Session = Depends(get_db)):
             "id": p.id,
             "amount": p.amount,
             "reason": p.reason,
-            "label": p.description or _REASON_LABEL.get(p.reason, "Points"),
+            "label": _label(p),
             "at": svc.iso_z(p.created_at),
         }
         for p in rows

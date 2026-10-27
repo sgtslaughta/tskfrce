@@ -72,7 +72,7 @@ export function ChoreSteps({ steps, onChange, next, onNext, choreDue }: Props) {
       </h3>
       <div className="pk-steps">
         {steps.map((s, i) => (
-          <Fragment key={`${i}-${s.title}`}>
+          <Fragment key={i}>
             {i > 0 && (
               <button type="button" className="pk-link" aria-pressed={s.after_previous} onClick={() => set(i, { after_previous: !s.after_previous })}>
                 <Icon name={s.after_previous ? 'link' : 'link_off'} size={14} />
@@ -86,7 +86,13 @@ export function ChoreSteps({ steps, onChange, next, onNext, choreDue }: Props) {
               <span className="pk-num" data-free={!chained(i)}>
                 {chained(i) ? i + 1 : '–'}
               </span>
-              <span className="pk-step-t">{s.title}</span>
+              <input
+                className="pk-step-t"
+                aria-label={`Step ${i + 1} name`}
+                value={s.title}
+                maxLength={100}
+                onChange={(e) => set(i, { title: e.currentTarget.value })}
+              />
               {editing === i ? (
                 <input
                   type="time"

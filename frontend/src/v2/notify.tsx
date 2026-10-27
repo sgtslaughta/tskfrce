@@ -1,6 +1,9 @@
 import { notifications } from '@mantine/notifications'
 import { ReactNode } from 'react'
 import { errorText } from './errorText'
+import { Icon } from './parent/Icon'
+
+const okIcon = <Icon name="check" size={16} />
 
 /**
  * Custom notification content component that displays a message with an optional action button.
@@ -45,6 +48,7 @@ export const toastOk = (message: string, options?: { undo?: () => void }) => {
   notifications.show({
     message: options?.undo ? <NotificationContent message={message} onAction={options.undo} /> : message,
     color: 'fridgeGreen',
+    icon: okIcon,
   })
 }
 
@@ -79,13 +83,14 @@ export function withUndo<T>(
     if (timeoutId) clearTimeout(timeoutId);
     settle();
     notifications.hide(id);
-    notifications.show({ message: 'Undone', color: 'fridgeGreen' });
+    notifications.show({ message: 'Undone', color: 'fridgeGreen', icon: okIcon });
   };
 
   notifications.show({
     id,
     message: <NotificationContent message={message} onAction={undo} />,
     color: 'fridgeGreen',
+    icon: okIcon,
   });
 
   timeoutId = setTimeout(async () => {

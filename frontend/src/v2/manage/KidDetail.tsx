@@ -9,12 +9,14 @@ import { useKidPoints } from '@/v2/hooks/useKids'
 import { when } from '@/v2/components/bellRules'
 import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
-import { choreIcon } from '@/v2/today/choreIcon'
+import { useChoreTypes } from '@/v2/hooks/useChoreTypes'
+import { threadGlyph } from '@/v2/today/choreIcon'
 import type { Kid } from '@/v2/types'
 import { AGE_LABEL } from './ageGroups'
 import { KidEditor } from './KidEditor'
 import { PointsForm } from './PointsForm'
 import { initial, nameOf, schedules } from './choreMeta'
+import { DEVICE_TYPE_ICON, getDeviceType } from './deviceMeta'
 
 type Mode = 'bonus' | 'deduct' | 'edit'
 
@@ -31,6 +33,8 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
   const [mode, setMode] = useState<Mode | null>(focusPin ? 'edit' : null)
   const t = useToday().data?.kids.find((k) => k.id === kid.id)
   const chores = (useLibrary().data ?? []).filter((c) => c.assignments.some((a) => a.active && a.kid_ids.includes(kid.id)))
+  const types = useChoreTypes().data
+  const glyphs = new Map((Array.isArray(types) ? types : []).map((ty) => [ty.id, ty.glyph]))
   const devices = (useDevices().data ?? []).filter((d) => d.owner_ids.includes(kid.id))
   // closing an inline form hands focus back to the button that opened it
   const closeForm = (m: Mode) => {
@@ -108,17 +112,16 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
           {devices.length === 0 && <p className="pk-hint">No devices assigned yet.</p>}
           {devices.map((d) => (
             <div key={d.id} className="pk-line">
-              <span className="pk-card-t">
+              <span className="pk-card-t pk-dev">
+                <Icon name={DEVICE_TYPE_ICON[getDeviceType(d.name, d.vendor)]} size={16} />
                 <b>{d.name}</b>
               </span>
-              {d.online ? (
-                <Chip tone="acc" icon="cloud_done">
-                  Online
-                </Chip>
+              {d.exempt ? (
+                <Chip tone="lav" icon="verified_user">Exempt</Chip>
+              ) : d.online ? (
+                <Chip tone="acc" icon="lock_open">Open</Chip>
               ) : (
-                <Chip tone="grey" icon="cloud_off">
-                  Offline
-                </Chip>
+                <Chip tone="grey" icon="lock">Locked</Chip>
               )}
             </div>
           ))}
@@ -133,7 +136,7 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
           <div className="pk-tags">
             {chores.map((c) => (
               <span key={c.id} className="pk-tag">
-                <Icon name={choreIcon(c.title)} size={16} />
+                <Icon name={threadGlyph(glyphs.get(c.type_id), c.title)} size={16} />
                 {[c.title, ...schedules(c, kid.id)].join(' · ')}
               </span>
             ))}
@@ -144,6 +147,12 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
       </div>
     </div>
   )
+}
+
+/** "Today 5:40 PM", "Yesterday", else "Mon, Oct 20" (mockup 02). */
+const dayTime = (iso: string) => {
+  const w = when(iso)
+  return /^\d/.test(w) ? `Today ${w}` : w
 }
 
 function PointsHistory({ kidId }: { kidId: number }) {
@@ -158,7 +167,7 @@ function PointsHistory({ kidId }: { kidId: number }) {
       {data && rows.length === 0 && <p className="pk-hint">No points yet.</p>}
       {rows.map((p) => (
         <div key={p.id} className="pk-kv">
-          <span className="pk-ph-l">{`${when(p.at)} · ${p.label}`}</span>
+          <span className="pk-ph-l">{`${dayTime(p.at)} · ${p.label}`}</span>
           <b data-neg={p.amount < 0 || undefined} className="pk-ph-n">
             {p.amount < 0 ? `−${-p.amount}` : `+${p.amount}`}
           </b>

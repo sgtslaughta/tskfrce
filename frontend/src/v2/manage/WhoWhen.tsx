@@ -1,12 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import type { Kid, LibChore } from '@/v2/types'
-import { AssignmentForm } from './AssignmentForm'
+import { AssignmentForm, type PendingAssignment } from './AssignmentForm'
 
 /** "Who & when" card: one form per assignment of the chore, plus a form to add another. */
-export function WhoWhen({ chore, kids }: { chore: LibChore; kids: Kid[] }) {
+export function WhoWhen({
+  chore,
+  kids,
+  due,
+  report,
+}: {
+  chore: LibChore
+  kids: Kid[]
+  due: string
+  report: (key: string, p: PendingAssignment | null) => void
+}) {
   const [adding, setAdding] = useState(false)
+  useEffect(() => setAdding(false), [chore.assignments.length])
   const has = chore.assignments.length > 0
   return (
     <section className="pk-panel" aria-label="Who and when">
@@ -22,12 +33,12 @@ export function WhoWhen({ chore, kids }: { chore: LibChore; kids: Kid[] }) {
               Stopped
             </Chip>
           )}
-          <AssignmentForm kids={kids} choreId={chore.id} assignment={a} />
+          <AssignmentForm kids={kids} assignment={a} due={due} report={report} />
         </div>
       ))}
       {(adding || !has) && (
         <div className="pk-sub">
-          <AssignmentForm kids={kids} choreId={chore.id} dismissable={has} onClose={() => setAdding(false)} />
+          <AssignmentForm key={chore.assignments.length} kids={kids} due={due} report={report} dismissable={has} onClose={() => setAdding(false)} />
         </div>
       )}
       {has && !adding && (

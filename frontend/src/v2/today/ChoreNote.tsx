@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import type { TodayChore } from '../types'
 import { Icon } from '../parent/Icon'
 import { openChat } from '../chat/dock'
-import { toastFail, toastOk } from '../notify'
+import { withUndo } from '../notify'
 import { useMoveChore, useSkipChore } from '../hooks/useToday'
 import { useClock } from './useClock'
 
@@ -27,15 +28,20 @@ export function NoteLine({ chore }: { chore: TodayChore }) {
 export function MoveSkip({ chore }: { chore: TodayChore }) {
   const move = useMoveChore()
   const skip = useSkipChore()
+  const [busy, setBusy] = useState(false) // covers the Undo window, before the mutation starts
+  const later = (run: () => Promise<unknown>, message: string) => {
+    setBusy(true)
+    void withUndo(run, message).finally(() => setBusy(false))
+  }
   return (
     <>
       {chore.can_move && (
         <button
           type="button"
           className="p-btn"
-          disabled={move.isPending}
+          disabled={busy || move.isPending}
           data-loading={move.isPending}
-          onClick={() => void move.mutateAsync(chore.id).then(() => toastOk('Moved to tomorrow'), toastFail)}
+          onClick={() => later(() => move.mutateAsync(chore.id), 'Moved to tomorrow')}
         >
           <Icon name="event_repeat" size={17} />
           Move to tomorrow
@@ -44,12 +50,12 @@ export function MoveSkip({ chore }: { chore: TodayChore }) {
       <button
         type="button"
         className="p-btn"
-        disabled={skip.isPending}
+        disabled={busy || skip.isPending}
         data-loading={skip.isPending}
-        onClick={() => void skip.mutateAsync(chore.id).then(() => toastOk('Skipped for today'), toastFail)}
+        onClick={() => later(() => skip.mutateAsync(chore.id), 'Skipped for today')}
       >
         <Icon name="do_not_disturb_on" size={17} />
-        Skip today (no penalty)
+        Skip today<span className="pt-fine"> (no penalty)</span>
       </button>
     </>
   )
