@@ -2,8 +2,8 @@ import { useEffect, type ReactNode } from 'react'
 import { useRouter } from 'next/router'
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
-import { api } from '../api'
-import { ErrorPanel } from '../parent/states'
+import { api, KID_TOKEN_KEY } from '../api'
+import { EmptyState, ErrorPanel } from '../parent/states'
 import { useLook } from '../parent/useLook'
 import type { SetupStatus } from '../types'
 
@@ -34,6 +34,10 @@ export function RequireParent({ children }: { children: ReactNode }) {
     staleTime: 30_000,
   })
 
+  // a kid's own device (kid session, no parent login) opened a parent page: back to the checklist
+  const kidDevice =
+    isInitialized && !isAuthenticated && typeof window !== 'undefined' && !!localStorage.getItem(KID_TOKEN_KEY)
+
   // null = still deciding, '' = allowed
   const target =
     !setup.isSuccess || !isInitialized
@@ -53,7 +57,14 @@ export function RequireParent({ children }: { children: ReactNode }) {
   }, [isAuthenticated])
 
   useEffect(() => {
-    if (target) router.replace(target)
+    if (!kidDevice) return
+    const t = setTimeout(() => router.replace('/kid'), 1500)
+    return () => clearTimeout(t)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [kidDevice])
+
+  useEffect(() => {
+    if (target && !kidDevice) router.replace(target)
     // re-run only when the target changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [target])
@@ -61,6 +72,7 @@ export function RequireParent({ children }: { children: ReactNode }) {
   // signed-in state could not be confirmed while the box was down: reload so auth re-checks the kept tokens
   if (setup.isError)
     return <Unreachable error={setup.error} onRetry={() => (isAuthenticated ? setup.refetch() : window.location.reload())} />
+  if (kidDevice && !setup.data?.needed) return <ForParents onGo={() => router.replace('/kid')} />
   if (target !== '') return <Checking />
   return <>{children}</>
 }
@@ -71,6 +83,22 @@ function Checking() {
   return (
     <main className="p-guard-state" role="status" aria-label="Loading">
       <span className="p-gate-spin" />
+    </main>
+  )
+}
+
+/** Mockup 05 "Kid on a parent page": short note, then the checklist. */
+function ForParents({ onGo }: { onGo: () => void }) {
+  useLook('parent')
+  return (
+    <main className="p-guard-state">
+      <EmptyState
+        icon="checklist"
+        title="This part is for parents"
+        body="Taking you to your checklist…"
+        heading="h1"
+        actions={[{ label: 'Go now', icon: 'arrow_forward', onClick: onGo }]}
+      />
     </main>
   )
 }

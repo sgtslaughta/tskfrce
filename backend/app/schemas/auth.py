@@ -33,6 +33,7 @@ class LoginRequest(BaseModel):
 
     username: str = Field(..., description="Username or email")
     password: str = Field(..., description="Password")
+    remember: bool = Field(False, description="Keep me logged in: longer refresh token")
 
 
 class LoginResponse(BaseModel):

@@ -67,7 +67,12 @@ async def login(login_data: LoginRequest, request: Request, db: Session = Depend
     )
 
     # Create refresh token
-    refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    refresh_days = (
+        settings.REFRESH_TOKEN_REMEMBER_DAYS
+        if login_data.remember
+        else settings.REFRESH_TOKEN_EXPIRE_DAYS
+    )
+    refresh_token_expires = timedelta(days=refresh_days)
     refresh_token = auth_service.create_refresh_token(
         data={
             "sub": str(user.id),
@@ -82,7 +87,7 @@ async def login(login_data: LoginRequest, request: Request, db: Session = Depend
         refresh_token=refresh_token,
         token_type="bearer",
         expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        refresh_expires_in=settings.REFRESH_TOKEN_EXPIRE_DAYS * 24 * 60 * 60,
+        refresh_expires_in=refresh_days * 24 * 60 * 60,
         user_id=user.id,
         username=user.username,
         email=user.email,

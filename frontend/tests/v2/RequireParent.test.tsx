@@ -9,7 +9,7 @@ import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 
 const replace = jest.fn()
 jest.mock('next/router', () => ({ useRouter: () => ({ replace, asPath: '/devices?x=1' }) }))
-jest.mock('@/v2/api', () => ({ api: jest.fn(), CANT_REACH: "Can't reach the home box. Check it's plugged in and on Wi-Fi." }))
+jest.mock('@/v2/api', () => ({ api: jest.fn(), KID_TOKEN_KEY: 'task4ce-kid-token', CANT_REACH: "Can't reach the home box. Check it's plugged in and on Wi-Fi." }))
 jest.mock('@/contexts/UnifiedAuthContext', () => ({ useUnifiedAuth: jest.fn() }))
 
 const apiMock = api as unknown as Mock<(p: string) => Promise<unknown>>
@@ -49,6 +49,17 @@ describe('RequireParent', () => {
     auth({ isAuthenticated: false, user: null })
     renderGuard()
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/login?next=%2Fdevices%3Fx%3D1'))
+  })
+
+  test('a kid device (kid token, no parent login) gets the "for parents" panel, then /kid', async () => {
+    localStorage.setItem('task4ce-kid-token', 'k')
+    auth({ isAuthenticated: false, user: null })
+    renderGuard()
+    expect(await screen.findByText('This part is for parents')).toBeTruthy()
+    await userEvent.click(screen.getByRole('button', { name: /Go now/ }))
+    expect(replace).toHaveBeenCalledWith('/kid')
+    expect(replace).not.toHaveBeenCalledWith(expect.stringContaining('/login'))
+    localStorage.removeItem('task4ce-kid-token')
   })
 
   test('kid sends to /kid', async () => {

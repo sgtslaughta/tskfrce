@@ -1,6 +1,7 @@
 """Task 7A: identity comes only from a verified JWT; kids can't act as parents or others."""
 
 import json
+from datetime import UTC, datetime
 
 import pytest
 from app.core.config import settings
@@ -99,6 +100,25 @@ def test_login_rate_limited_after_10_tries(client, parent):
 def test_login_uses_configured_expiry(client, parent):
     r = client.post("/api/v1/auth/login", json={"username": "mom", "password": "pw-12345"})
     assert r.json()["expires_in"] == settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60
+
+
+def test_keep_me_logged_in_gives_a_longer_refresh_token(client, db, parent):
+    from app.core.auth import AuthService
+
+    def days(body):
+        r = client.post(
+            "/api/v1/auth/login", json={"username": "mom", "password": "pw-12345", **body}
+        )
+        exp = AuthService(db).verify_token(r.json()["refresh_token"])["exp"]
+        return r.json()["refresh_expires_in"] // 86400, (
+            exp - datetime.now(UTC).timestamp()
+        ) / 86400
+
+    short, long_ = days({}), days({"remember": True})
+    assert short[0] == settings.REFRESH_TOKEN_EXPIRE_DAYS and round(short[1]) == short[0]
+    assert (
+        long_[0] == settings.REFRESH_TOKEN_REMEMBER_DAYS > short[0] and round(long_[1]) == long_[0]
+    )
 
 
 def test_setup_rate_limited_after_5_tries(client):

@@ -55,7 +55,7 @@ interface AuthState {
  */
 interface UnifiedAuthContextType extends AuthState {
   /** Login function */
-  login: (credentials: { username: string; password: string }) => Promise<void>;
+  login: (credentials: { username: string; password: string; remember?: boolean }) => Promise<void>;
   /** Log in with an access token already issued by the backend (first-run setup) */
   loginWithToken: (accessToken: string, refreshToken: string, expiresIn: number) => Promise<void>;
   /** Logout function */
@@ -290,13 +290,14 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   /**
    * @description Login function
    */
-  const login = useCallback(async (credentials: { username: string; password: string }) => {
+  const login = useCallback(async (credentials: { username: string; password: string; remember?: boolean }) => {
     try {
       updateAuthState({ isLoading: true, error: null });
 
       const loginResponse = await authService.login({
         username: credentials.username,
-        password: credentials.password
+        password: credentials.password,
+        remember: credentials.remember ?? false, // "Keep me logged in": longer refresh token (§9)
       });
       
       const user: User = {

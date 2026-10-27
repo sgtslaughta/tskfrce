@@ -62,7 +62,7 @@ describe('LoginForm', () => {
     )
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/devices'))
     expect(replace).toHaveBeenCalledTimes(1)
-    expect(login).toHaveBeenCalledWith({ username: 'admin', password: 'secret' })
+    expect(login).toHaveBeenCalledWith({ username: 'admin', password: 'secret', remember: true })
   })
 
   test('first-run box sends you to /setup', async () => {

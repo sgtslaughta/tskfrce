@@ -15,6 +15,7 @@ import { tokenManager } from './tokenManager';
 export interface LoginRequest {
   username: string;
   password: string;
+  remember?: boolean;
 }
 
 /**

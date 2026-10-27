@@ -56,7 +56,7 @@ export function LoginForm() {
     setError('')
     try {
       keepSession(remember)
-      await login({ username: username.trim(), password }) // the effect above redirects
+      await login({ username: username.trim(), password, remember }) // the effect above redirects
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Incorrect username or password')
       setBusy(false)
