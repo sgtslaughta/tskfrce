@@ -40,6 +40,10 @@
 [data-look='parent'] .ph-nm-t small { display: block; color: var(--p-sub); font-size: 11px; font-weight: 400; }
 [data-look='parent'] .ph-tr { position: relative; height: 26px; overflow: hidden; border: 1px solid var(--p-line); border-radius: 8px; background: var(--p-soft); }
 [data-look='parent'] .ph-tr b { position: absolute; top: 0; bottom: 0; display: grid; place-items: center; border-radius: 7px; }
+/* a label wider than a bar at the track edge grows inward instead of being clipped */
+[data-look='parent'] .ph-tr b[data-edge] em { position: absolute; top: 50%; transform: translateY(-50%); }
+[data-look='parent'] .ph-tr b[data-edge='r'] em { right: 0; }
+[data-look='parent'] .ph-tr b[data-edge='l'] em { left: 0; }
 [data-look='parent'] .ph-tr em { padding: 1px 5px; border-radius: 5px; background: rgba(255, 255, 255, 0.85); color: #292928; font-size: 10.5px; font-style: normal; font-weight: 700; white-space: nowrap; }
 [data-look='parent'] .ph-tr b[data-kind='free'] { border: 1.5px dashed var(--p-ink); }
 [data-look='parent'] .ph-tr b[data-kind='free'] em { background: none; color: var(--p-ink); }

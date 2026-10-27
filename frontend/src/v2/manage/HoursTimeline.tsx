@@ -37,7 +37,7 @@ export function HoursTimeline({ rules, kids, groups, onEdit, thisGroup }: Props)
             <div className="ph-tr">
               {r.times.flatMap((t, i) =>
                 segments(t.start, t.end).map(([from, to], j) => (
-                  <b key={`${i}-${j}`} className={r.kind === 'allowed' ? `pt ${tex}` : undefined} data-kind={r.kind} style={{ left: `${from}%`, width: `${to - from}%` }}>
+                  <b key={`${i}-${j}`} className={r.kind === 'allowed' ? `pt ${tex}` : undefined} data-kind={r.kind} data-edge={to >= 100 && from > 0 ? 'r' : from <= 0 && to < 100 ? 'l' : undefined} style={{ left: `${from}%`, width: `${to - from}%` }}>
                     {j === 0 && <em>{rangeLabel(t.start, t.end)}</em>}
                   </b>
                 )),

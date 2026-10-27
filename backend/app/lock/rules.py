@@ -57,16 +57,13 @@ def block_reason(f: DeviceFacts, now_local: datetime) -> str | None:
         return None if ok else "new_device"
     if f.exempt:
         return None
+    if f.override == "unlock":
+        return None  # a parent's unlock overrides hours, off windows and chores
     if f.bonus_active and f.points_unlock_early and f.bonus_any_hours and not in_off(f, now_local):
         return None  # bonus opens outside allowed hours, never inside an internet-off window
     if not in_allowed(f, now_local):
         return "schedule"
-    if (
-        _chores_ok(f)
-        or _in_any(f.free, now_local)
-        or f.override == "unlock"
-        or (f.bonus_active and f.points_unlock_early)
-    ):
+    if _chores_ok(f) or _in_any(f.free, now_local) or (f.bonus_active and f.points_unlock_early):
         return None
     return "chores"
 

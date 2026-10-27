@@ -7,7 +7,7 @@ import { useDeleteDevice, usePatchDevice, useSaveGroup, useTestBlock, type Devic
 import { Chip } from '@/v2/parent/Chip'
 import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Icon } from '@/v2/parent/Icon'
-import { SegmentedControl } from '@/v2/parent/SegmentedControl'
+import { SegmentedControl, tabIds } from '@/v2/parent/SegmentedControl'
 import type { Device, Group, Kid } from '@/v2/types'
 import { ActionButton } from './ActionButton'
 import { ConfirmDelete } from './ConfirmDelete'
@@ -76,7 +76,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
 
   const chips = [
     ...(device.vendor ? [{ text: device.vendor, vendor: device.vendor }] : []),
-    { text: device.online ? 'Online now' : `Last seen ${ago(device.last_seen)}`, tone: device.online ? ('acc' as const) : ('plain' as const), icon: device.online ? 'wifi' : 'schedule' },
+    { text: device.seen_now ? 'Online now' : `Last seen ${ago(device.last_seen)}`, tone: device.seen_now ? ('acc' as const) : ('plain' as const), icon: device.seen_now ? 'wifi' : 'schedule' },
     ...(device.ip ? [{ text: device.ip, tone: 'mono' as const, icon: 'lan' }] : []),
     { text: ownerLabel, icon: 'person' },
   ]
@@ -208,6 +208,8 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
       <SegmentedControl
         value={tab || 'overview'}
         onChange={setTab}
+        label="Device sections"
+        tabs="device"
         options={[
           { value: 'overview', label: 'Overview' },
           { value: 'network', label: 'Network' },
@@ -228,7 +230,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
       />
 
       {tab === 'overview' && (
-        <div className="pk-grid">
+        <div className="pk-grid" role="tabpanel" id={tabIds('device', 'overview').panel} aria-labelledby={tabIds('device', 'overview').tab}>
           {unknown ? ownersPanel : detailsPanel}
           <div className="pk-col">
             {unknown ? detailsPanel : ownersPanel}
@@ -237,8 +239,16 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
           {!guest && <OnlineWeek device={device} />}
         </div>
       )}
-      {tab === 'network' && <DeviceNetwork device={device} timeZone={family?.timezone} />}
-      {tab === 'activity' && <DeviceActivity device={device} kids={kids} timeZone={family?.timezone} />}
+      {tab === 'network' && (
+        <div role="tabpanel" id={tabIds('device', 'network').panel} aria-labelledby={tabIds('device', 'network').tab}>
+          <DeviceNetwork device={device} timeZone={family?.timezone} />
+        </div>
+      )}
+      {tab === 'activity' && (
+        <div role="tabpanel" id={tabIds('device', 'activity').panel} aria-labelledby={tabIds('device', 'activity').tab}>
+          <DeviceActivity device={device} kids={kids} timeZone={family?.timezone} />
+        </div>
+      )}
 
       <ConfirmDelete
         opened={confirm}

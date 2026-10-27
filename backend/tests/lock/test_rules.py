@@ -69,9 +69,25 @@ def test_unlock_override_with_pending_chores():
     assert is_online(facts(owners=PENDING, override="unlock"), NOW)
 
 
-def test_unlock_still_respects_allowed_hours():
-    f = facts(owners=PENDING, override="unlock", allowed_sets=((OUTSIDE,),))
-    assert not is_online(f, NOW)
+def test_unlock_overrides_allowed_hours_and_off_windows():
+    f = facts(owners=PENDING, override="unlock", allowed_sets=((OUTSIDE,),), off=(INSIDE,))
+    assert is_online(f, NOW)
+    assert open_reason(f, NOW) == "manual"
+
+
+def test_lock_override_beats_unlock_facts_and_exempt():
+    assert block_reason(facts(override="lock", exempt=True), NOW) == "manual"
+
+
+def test_bonus_never_opens_off_window():
+    f = facts(
+        owners=PENDING,
+        bonus_active=True,
+        points_unlock_early=True,
+        bonus_any_hours=True,
+        off=(INSIDE,),
+    )
+    assert block_reason(f, NOW) == "schedule"
 
 
 def test_bonus_unlocks_early_only_when_enabled():

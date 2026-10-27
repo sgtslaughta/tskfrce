@@ -1,3 +1,4 @@
+import { clockText } from '../clockText'
 import type { KidChore, KidStep } from '../types'
 
 export type KidTone = 'back' | 'late' | 'soon' | 'new' | 'today' | 'later' | 'wait' | 'done'
@@ -7,17 +8,7 @@ export interface KidChipT {
   label: string
 }
 
-const fmt = (iso: string, tz: string | undefined, short: boolean) => {
-  const o = { hour: 'numeric', minute: '2-digit' } as const
-  let s: string
-  try {
-    s = new Date(iso).toLocaleTimeString('en-US', { ...o, timeZone: tz })
-  } catch {
-    s = new Date(iso).toLocaleTimeString('en-US', o)
-  }
-  s = s.replace(/\u202f/g, ' ')
-  return short ? s.replace(/\s?[AP]M$/i, '') : s
-}
+const fmt = (iso: string, tz: string | undefined, short: boolean) => clockText(iso, tz, short)
 /** "4:30 PM" */
 export const clock = (iso: string, tz?: string) => fmt(iso, tz, false)
 /** "4:30" */

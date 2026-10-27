@@ -91,7 +91,7 @@ describe('device Overview', () => {
 
   test('Activity tab carries the alert count', () => {
     show(dev())
-    const tab = screen.getByRole('button', { name: /Activity/ })
+    const tab = screen.getByRole('tab', { name: /Activity/ })
     expect(tab.textContent).toContain('1')
   })
 })
@@ -99,7 +99,7 @@ describe('device Overview', () => {
 describe('device Network history rows', () => {
   const net = async (d: Device) => {
     show(d)
-    await userEvent.click(screen.getByRole('button', { name: 'Network' }))
+    await userEvent.click(screen.getByRole('tab', { name: 'Network' }))
     return screen.getByRole('region', { name: 'Connection' })
   }
 

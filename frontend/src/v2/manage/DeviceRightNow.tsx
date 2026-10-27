@@ -1,11 +1,11 @@
+import { clockText } from '@/v2/clockText'
 import { useExpired } from '@/v2/hooks/useDevices'
 import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import type { Device } from '@/v2/types'
-import { inFamilyZone } from './deviceMeta'
 import { whyText } from './activityText'
 
-const clock = (iso: string, tz?: string) => inFamilyZone(iso, tz, { timeStyle: 'short' })
+const clock = clockText
 
 /** Device Overview "Right now": state, why, when it locks, and any manual override. */
 export function DeviceRightNow({ device, timeZone }: { device: Device; timeZone?: string }) {

@@ -176,8 +176,8 @@ describe('GroupDetail icon, chore switch, hours and summary', () => {
   const rule = (id: number, name: string, over: Record<string, unknown> = {}) =>
     ({ id, name, category: 'other', kind: 'allowed', days: '0123456', start_date: null, end_date: null, everyone: false, kid_ids: [], group_ids: [], times: [{ start: '08:00', end: '20:00' }], ...over }) as never
   const members = [
-    dev({ id: 1, name: 'Switch', alerts: 1, locks_at: '2026-10-26T23:30:00Z' }),
-    dev({ id: 2, name: 'Xbox', alerts: 2, override: { action: 'unlock', expires_at: null } as never }),
+    dev({ id: 1, name: 'Switch', alerts: 1, seen_now: true, locks_at: '2026-10-26T23:30:00Z' }),
+    dev({ id: 2, name: 'Xbox', alerts: 2, seen_now: true, override: { action: 'unlock', expires_at: null } as never }),
     dev({ id: 4, name: 'PS5', override: { action: 'lock', expires_at: null } as never, locks_at: '2026-10-27T03:00:00Z' }),
   ]
   const show = (rules: never[] = []) =>

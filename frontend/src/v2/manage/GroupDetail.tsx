@@ -183,7 +183,7 @@ export function GroupDetail({ group, devices, kids, groups, rules, onSelect, onR
         )}
       </div>
 
-      {group && <GroupStats members={members} open={members.length - locked} timeZone={timeZone} />}
+      {group && <GroupStats members={members} timeZone={timeZone} />}
 
       {!group && (
         <div className="pk-foot">

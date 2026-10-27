@@ -50,6 +50,7 @@ export function segments(start: string, end: string): Array<[number, number]> {
   const s = (minutes(start) / 1440) * 100
   const e = (minutes(end) / 1440) * 100
   if (s === e) return [[0, 100]]
+  if (e === 0) return [[s, 100]] // ends at midnight
   return s < e ? [[s, e]] : [[s, 100], [0, e]]
 }
 
@@ -62,6 +63,9 @@ function clock(hhmm: string): [string, string] {
 export function rangeLabel(start: string, end: string): string {
   const [s, sm] = clock(start)
   const [e, em] = clock(end)
+  const mid = (t: string) => t === '00:00' || t === '24:00'
+  if (mid(end)) return `${s}${sm}–midnight`
+  if (mid(start)) return `midnight–${e}${em}`
   return sm === em ? `${s}–${e}${em}` : `${s}${sm}–${e}${em}`
 }
 

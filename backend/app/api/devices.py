@@ -27,6 +27,9 @@ router = APIRouter(prefix="/api/v1", tags=["devices"], dependencies=[Depends(req
 BLOCKER_STALE = timedelta(seconds=90)
 
 
+SEEN_NOW = timedelta(minutes=5)  # the box rescans every ~20 s; allow for sleepy phones
+
+
 def device_out(
     db: Session,
     d: Device,
@@ -59,7 +62,9 @@ def device_out(
     alerts, changes = (stats or {}).get(d.id, (0, 0))
     lock_at = None
     if f.status == "assigned" and not f.exempt:
-        lock_at = hours.locks_at(f.allowed_sets, f.off, now_local)
+        lock_at = (
+            None if f.override == "unlock" else hours.locks_at(f.allowed_sets, f.off, now_local)
+        )
     # two or more kids share this device and someone can sign in without a PIN
     active_kids = [k for k in d.owners if k.role == UserRole.KID and k.is_active]
     needs_pins = len(active_kids) >= 2 and any(not k.pin_hash for k in active_kids)
@@ -74,6 +79,7 @@ def device_out(
         "online": online,
         "override": {"action": ov.action, "expires_at": utc_z(ov.expires_at)} if ov else None,
         "last_seen": utc_z(d.last_seen),
+        "seen_now": d.last_seen is not None and now.replace(tzinfo=None) - d.last_seen <= SEEN_NOW,
         "resisting": d.resisting_since is not None,
         "needs_pins": needs_pins,
         "exempt": bool(d.exempt),

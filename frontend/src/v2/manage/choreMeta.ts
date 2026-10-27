@@ -1,4 +1,5 @@
 import type { Assignment, ChoreType, Kid, LibChore } from '@/v2/types'
+import { wallClock } from '@/v2/clockText'
 import { DAYS } from '@/v2/days'
 
 export const nameOf = (k: Kid) => k.full_name ?? k.username
@@ -43,8 +44,7 @@ export function intError(raw: string, min: number, max?: number) {
 }
 
 /** "20:30" → "8:30 PM" */
-export const wallTime = (hhmm: string) =>
-  new Date(`2000-01-01T${hhmm.slice(0, 5)}`).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+export const wallTime = (hhmm: string) => wallClock(hhmm.slice(0, 5))
 
 /** "Maya", "Maya & Leo", "Maya, Leo & Ava" */
 export const joinNames = (names: string[]) =>

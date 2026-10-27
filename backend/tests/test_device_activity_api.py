@@ -202,3 +202,13 @@ def test_kid_override_route_defined_once():
         if getattr(r, "path", "") == "/api/v1/kids/{kid_id}/override" and "POST" in r.methods
     ]
     assert len(posts) == 1
+
+
+def test_seen_now_is_presence_not_unlocked(client, db, kid, parent_headers):
+    fresh = mkdev(db, owners=[kid], last_seen=_now() - timedelta(minutes=1))
+    old = mkdev(db, mac="aa:bb:cc:dd:ee:09", owners=[kid], last_seen=_now() - timedelta(hours=2))
+    never = mkdev(db, mac="aa:bb:cc:dd:ee:0a", owners=[kid])
+    seen = {
+        d["id"]: d["seen_now"] for d in client.get("/api/v1/devices", headers=parent_headers).json()
+    }
+    assert seen == {fresh.id: True, old.id: False, never.id: False}

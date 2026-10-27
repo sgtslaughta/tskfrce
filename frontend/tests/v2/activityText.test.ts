@@ -50,6 +50,7 @@ describe('historyText', () => {
     [{ kind: 'locked', reason: 'schedule' }, 'lock', 'Locked by schedule'],
     [{ kind: 'locked', reason: 'chores' }, 'lock', 'Locked: chores not done'],
     [{ kind: 'locked', reason: 'manual', by_name: 'Dad' }, 'lock', 'Locked by Dad'],
+    [{ kind: 'locked', reason: 'manual', by_name: 'Dad', minutes: 30 }, 'lock', 'Locked 30 min by Dad'],
     [{ kind: 'locked', reason: 'new_device' }, 'lock', 'Locked: new device'],
     [{ kind: 'unlocked', reason: 'manual', by_name: 'Dad', minutes: 30 }, 'lock_open', 'Unlocked 30 min by Dad'],
     [{ kind: 'unlocked', reason: 'manual', by_name: 'Dad' }, 'lock_open', 'Unlocked by Dad'],

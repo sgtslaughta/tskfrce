@@ -80,7 +80,7 @@ export function historyText(e: DeviceEvent): { icon: string; title: string } {
   if (e.kind === 'locked') {
     const title =
       e.reason === 'chores' ? 'Locked: chores not done'
-      : e.reason === 'manual' ? `Locked by ${by}`
+      : e.reason === 'manual' ? (e.minutes ? `Locked ${e.minutes} min by ${by}` : `Locked by ${by}`)
       : e.reason === 'new_device' ? 'Locked: new device'
       : 'Locked by schedule'
     return { icon: 'lock', title }

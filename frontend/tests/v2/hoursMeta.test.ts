@@ -14,7 +14,7 @@ describe('hoursMeta', () => {
     ['08:00', '22:00', '8a–10p'],
     ['16:00', '19:30', '4–7:30p'],
     ['09:00', '21:00', '9a–9p'],
-    ['00:00', '06:00', '12–6a'],
+    ['00:00', '06:00', 'midnight–6a'],
   ])('rangeLabel %s-%s', (s, e, out) => expect(rangeLabel(s, e)).toBe(out))
 
   test('sortRules: everyone by category, then group, then kid', () => {
@@ -71,5 +71,16 @@ describe('hoursMeta', () => {
     expect(KINDS.find((k) => k.key === 'off')?.label).toBe('Internet off')
     expect(daysLabel('01234')).toBe('Mon–Fri')
     expect(segments('22:00', '02:00')).toHaveLength(2)
+  })
+})
+
+describe('midnight', () => {
+  test('range labels say midnight', () => {
+    expect(rangeLabel('18:00', '00:00')).toBe('6p–midnight')
+    expect(rangeLabel('00:00', '06:00')).toBe('midnight–6a')
+    expect(rangeLabel('21:00', '24:00')).toBe('9p–midnight')
+  })
+  test('a bar ending at midnight is one segment', () => {
+    expect(segments('18:00', '00:00')).toEqual([[75, 100]])
   })
 })

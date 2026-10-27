@@ -27,6 +27,8 @@ export interface Device {
   online: boolean
   override: Override | null
   last_seen: string | null
+  /** seen on the network in the last few minutes (not the same as unlocked) */
+  seen_now: boolean
   resisting: boolean
   needs_pins?: boolean
   ip?: string | null
