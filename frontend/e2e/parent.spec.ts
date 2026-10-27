@@ -95,10 +95,11 @@ test.describe('parent journeys', () => {
     const api = await parentApi()
     const before = (await (await api.get('/api/proxy/family')).json()).screen_time_price
     try {
-      await page.goto('/settings?section=screen')
-      const price = page.getByLabel(/Screen time price/)
-      await price.fill(String(before + 1))
-      await page.getByRole('button', { name: 'Save settings' }).click()
+      // screen time lives under Rewards (spec §11 errata 1)
+      await page.goto('/kids?section=rewards&item=screen')
+      const how = page.getByRole('region', { name: 'How it works' })
+      await how.getByLabel('Price (points per 15 min)').fill(String(before + 1))
+      await how.getByRole('button', { name: 'Save' }).click()
       await expect
         .poll(async () => (await (await api.get('/api/proxy/family')).json()).screen_time_price)
         .toBe(before + 1)
