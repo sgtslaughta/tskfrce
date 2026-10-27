@@ -13,3 +13,5 @@ export interface ModeProps {
   /** undefined in preview and Little */
   onChat?: (id: number) => void
 }
+
+export type KidAge = 'little' | 'kid' | 'teen'

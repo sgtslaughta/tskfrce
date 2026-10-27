@@ -87,3 +87,9 @@ export function tally(chores: KidChore[]) {
   const waiting = live.filter((c) => c.state === 'needs_you').length
   return { approved, total: live.length, left: live.length - approved, todo: live.length - approved - waiting, waiting }
 }
+
+/** Little header: 4 big stars. Filled = progress fraction; all 4 only when every chore is done. */
+export function starsFilled(approved: number, total: number) {
+  if (total <= 0) return 0
+  return approved >= total ? 4 : Math.min(3, Math.round((approved / total) * 4))
+}

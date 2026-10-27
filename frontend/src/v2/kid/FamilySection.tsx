@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Leaderboard } from '../components/Leaderboard'
 import { ProfileModal } from '../components/ProfileModal'
-import { StickerCard } from '../components/StickerCard'
 import { useLeaderboard, useProfiles } from '../hooks/useCommunity'
 import { useAsKid } from '../hooks/usePreview'
 
@@ -14,24 +13,17 @@ export function FamilySection({ meId }: { meId?: number | null }) {
   const sibs = (profiles ?? []).filter((p) => p.kid_id !== meId)
   if (!board && !sibs.length) return null
   return (
-    <StickerCard>
-      <section aria-label="Family" style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 12 }}>
-        <h2 style={{ margin: 0 }}>Family</h2>
-        {board && <Leaderboard rows={board.rows} kid={kidAuth} bare />}
-        {sibs.map((p) => (
-          <button
-            key={p.kid_id}
-            type="button"
-            onClick={() => setOpen(p.kid_id)}
-            style={{ all: 'unset', cursor: 'pointer', display: 'flex', gap: 8, alignItems: 'center', width: '100%', minHeight: 48, borderTop: '1px solid var(--f-line)' }}
-          >
-            <span aria-hidden>{p.avatar}</span>
-            <b style={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere' }}>{p.name}</b>
-            <span className="f-pill">{`Lv ${p.level} · ${p.title}`}</span>
-          </button>
-        ))}
-        <ProfileModal kidId={open} kid={kidAuth} onClose={() => setOpen(null)} />
-      </section>
-    </StickerCard>
+    <section className="me-card" aria-label="Family">
+      <h2 className="me-h k-disp">Family</h2>
+      {board && <Leaderboard rows={board.rows} kid={kidAuth} bare />}
+      {sibs.map((p) => (
+        <button key={p.kid_id} type="button" className="me-sib" onClick={() => setOpen(p.kid_id)}>
+          <span aria-hidden>{p.avatar}</span>
+          <b>{p.name}</b>
+          <span className="k-chip" data-tone="today" data-size="sm">{`Lv ${p.level} · ${p.title}`}</span>
+        </button>
+      ))}
+      <ProfileModal kidId={open} kid={kidAuth} onClose={() => setOpen(null)} />
+    </section>
   )
 }

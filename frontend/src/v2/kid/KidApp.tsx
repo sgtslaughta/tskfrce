@@ -54,9 +54,7 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canS
   let body: ReactNode
   if (tab === 'rewards')
     body = (
-      <section className="k-view k-narrow">
-        <RewardsSection onExpired={onExit} heading={mode === 'little' ? 'Prizes' : 'Rewards'} />
-      </section>
+      <RewardsSection onExpired={onExit} mode={mode} />
     )
   else if (tab === 'me')
     body = (

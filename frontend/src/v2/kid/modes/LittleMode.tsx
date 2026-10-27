@@ -3,7 +3,7 @@ import { Icon } from '@/v2/parent/Icon'
 import type { KidChore, KidToday } from '../../types'
 import { DeductionCards, NoteSent, PhotoButton, SentBackCard, isReady, whyNot } from '../ChoreParts'
 import { KidChip, PointsChip } from '../KidChip'
-import { kidChips, kidSort, tally } from '../kidChips'
+import { kidChips, kidSort, starsFilled, tally } from '../kidChips'
 import { KidSteps } from '../KidSteps'
 import { TellParentSheet } from '../TellParent'
 import { glyph } from './ChoreTile'
@@ -22,9 +22,9 @@ function Top({ d, name, avatar }: { d: KidToday; name: string; avatar: string | 
         {d.locked ? 'No games yet' : 'Games on!'}
       </span>
       {t.total > 0 && (
-        <span className="l-stars" role="img" aria-label={`${t.approved} of ${t.total} done`}>
-          {Array.from({ length: t.total }, (_, i) => (
-            <i key={i} data-ok={i < t.approved || undefined}>
+        <span className="l-stars" role="img" aria-label={`${t.approved} of ${t.total} chores done`}>
+          {Array.from({ length: 4 }, (_, i) => (
+            <i key={i} data-ok={i < starsFilled(t.approved, t.total) || undefined}>
               <Icon name="star" fill />
             </i>
           ))}

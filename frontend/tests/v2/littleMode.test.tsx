@@ -57,7 +57,17 @@ describe('LittleMode', () => {
     expect(within(now()).getByText('Late!')).toBeInTheDocument()
     expect(within(now()).getByText('+10')).toBeInTheDocument()
     expect(p.onSeen).toHaveBeenCalledWith(1)
-    expect(screen.getByLabelText('1 of 6 done')).toBeInTheDocument()
+    const stars = screen.getByLabelText('1 of 6 chores done')
+    expect(stars.querySelectorAll('i')).toHaveLength(4)
+    expect(stars.querySelectorAll('i[data-ok]')).toHaveLength(1)
+  })
+
+  test.each([[0, 6, 0], [3, 6, 2], [5, 6, 3], [6, 6, 4], [1, 11, 0]])('stars: %i/%i done fills %i of 4', (done, total, filled) => {
+    const chores = Array.from({ length: total }, (_, i) => ({ ...tidy, id: 100 + i, state: i < done ? ('done' as const) : ('todo' as const) }))
+    render(wrap(props({ d: today({ chores }) })))
+    const stars = screen.getByLabelText(`${done} of ${total} chores done`)
+    expect(stars.querySelectorAll('i')).toHaveLength(4)
+    expect(stars.querySelectorAll('i[data-ok]')).toHaveLength(filled)
   })
 
   test('the Next row of another overdue chore reads "Late!"; others use little wording', () => {

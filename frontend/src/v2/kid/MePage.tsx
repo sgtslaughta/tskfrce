@@ -1,6 +1,5 @@
-import { Button } from '@mantine/core'
+import { Icon } from '../parent/Icon'
 import { ProgressHeader } from '../components/ProgressHeader'
-import { StickerCard } from '../components/StickerCard'
 import type { Progress } from '../types'
 import { FamilySection } from './FamilySection'
 
@@ -25,23 +24,25 @@ export function MePage({
   kidId?: number | null
 }) {
   return (
-    <section className="k-view k-narrow">
+    <section className="me-view">
       <h1 className="k-sr">{`${name} · Me`}</h1>
       {progress && (
-        <StickerCard>
+        <div className="me-card">
           <ProgressHeader name={name} avatar={avatar} kid progress={progress} />
           {!preview && (
-            <Button variant="default" size="md" mt="xs" onClick={onLocker}>
+            <button type="button" className="r-btn" onClick={onLocker}>
+              <Icon name="palette" />
               Customize
-            </Button>
+            </button>
           )}
-        </StickerCard>
+        </div>
       )}
       <FamilySection meId={kidId} />
       {canSwitch && (
-        <Button variant="default" size="lg" onClick={onExit}>
+        <button type="button" className="r-btn me-out" data-tone="plain" onClick={onExit}>
+          <Icon name="swap_horiz" />
           Not me
-        </Button>
+        </button>
       )}
     </section>
   )
