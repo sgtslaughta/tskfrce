@@ -16,7 +16,7 @@ jest.mock('@/contexts/UnifiedAuthContext', () => ({ useUnifiedAuth: () => ({ use
 const apiMock = api as unknown as Mock<(p: string, init?: { method?: string; body?: unknown }) => Promise<unknown>>
 
 const run = (state: string) => ({
-  id: 41, title: 'Make bed', points: 10, state, due_time: null, kid_ids: [2],
+  id: 41, title: 'Make bed', points: 10, state, due_time: null, kid_ids: [2], type: { id: 1, name: 'Cleaning', glyph: 'cleaning_services' },
   steps: [
     { id: 1, title: 'Pull sheets', done: true, done_at: '2026-10-24T15:02:00Z' },
     { id: 2, title: 'Fluff pillow', done: false, done_at: null },
@@ -99,5 +99,43 @@ describe('chore thread', () => {
     await userEvent.type(screen.getByLabelText('Reason'), 'Left a mess')
     await userEvent.click(go)
     await waitFor(() => expect(bodyOf('/kids/2/deduct')).toEqual({ amount: 20, note: 'Left a mess' }))
+  })
+
+  test('header shows the category chip and Approved once done', async () => {
+    state = 'done'
+    show()
+    expect((await screen.findAllByText('Cleaning')).some((e) => e.closest('.pc-chips'))).toBe(true)
+    expect(screen.getAllByText('Approved').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Done', { selector: '.p-chip' })).toBeNull()
+  })
+
+  test('forms start empty again after a successful send back and deduct', async () => {
+    show()
+    await userEvent.click(await screen.findByRole('button', { name: 'Send back' }))
+    await userEvent.type(screen.getByLabelText('Note for sending back'), 'Fix the pillow')
+    await userEvent.click(screen.getAllByRole('button', { name: 'Send back' }).at(-1)!)
+    await waitFor(() => expect(screen.queryByLabelText('Note for sending back')).toBeNull())
+    await userEvent.click(screen.getByRole('button', { name: 'Send back' }))
+    expect(screen.getByLabelText('Note for sending back')).toHaveValue('')
+    await userEvent.click(screen.getByRole('button', { name: 'Deduct' }))
+    await userEvent.type(screen.getByLabelText('Reason'), 'Left a mess')
+    await userEvent.click(screen.getAllByRole('button', { name: 'Deduct' }).at(-1)!)
+    await waitFor(() => expect(screen.queryByLabelText('Reason')).toBeNull())
+    await userEvent.click(screen.getByRole('button', { name: 'Deduct' }))
+    expect(screen.getByLabelText('Reason')).toHaveValue('')
+  })
+
+  test('onReplySent fires after a reply is posted', async () => {
+    const sent = jest.fn()
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <MantineProvider>
+          <ThreadView kind="chore" refId="41" meId={1} reply={{ label: 'Make bed' }} onReplySent={sent} />
+        </MantineProvider>
+      </QueryClientProvider>,
+    )
+    await userEvent.type(await screen.findByLabelText('Message'), 'hi')
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }))
+    await waitFor(() => expect(sent).toHaveBeenCalled())
   })
 })

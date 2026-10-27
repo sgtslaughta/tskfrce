@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react'
-import { Button } from '@mantine/core'
 import { useCelebrations, useMarkCelebrationSeen } from '../hooks/useKidRewards'
 import { Icon } from '../parent/Icon'
 import { TIER_COLORS, TIER_NAMES } from '../tiers'
@@ -30,7 +29,7 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
   const unlocked = award.kind === 'level' ? (award.unlocked ?? []) : []
   const title = award.title
   return (
-    <div className="award-back">
+    <div className="award-back k-tok">
       <div
         role="dialog"
         aria-modal="true"
@@ -40,7 +39,7 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
       >
         {big && Array.from({ length: 20 }, (_, i) => <span key={i} className="award-confetti" style={{ '--i': i } as React.CSSProperties} />)}
         {award.glyph && <Icon name={award.glyph} size={big ? 56 : 36} />}
-        <p id="award-heading" className="f-display" style={{ margin: 0, fontSize: big ? 28 : 20 }}>
+        <p id="award-heading" className="k-disp" style={{ margin: 0, fontSize: big ? 30 : 22 }}>
           {heading}
         </p>
         <strong
@@ -60,22 +59,22 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
               ))}
             </div>
             {onLocker && (
-              <Button
-                size="lg"
-                variant="default"
+              <button
+                type="button"
+                className="k-bb"
                 onClick={() => {
                   close()
                   onLocker()
                 }}
               >
                 Go to Locker
-              </Button>
+              </button>
             )}
           </>
         )}
-        <Button ref={btn} size="lg" onClick={close}>
+        <button ref={btn} type="button" className="k-bb" data-tone="sun" onClick={close}>
           Nice!
-        </Button>
+        </button>
       </div>
     </div>
   )

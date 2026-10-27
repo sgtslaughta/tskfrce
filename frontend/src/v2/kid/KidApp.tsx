@@ -34,6 +34,7 @@ export interface KidAppProps {
 /** The kid app: full-width shell, age-mode nav, and the Chores / Rewards / Alerts / Me tabs. */
 export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canSwitch, done, children }: KidAppProps) {
   const [tab, setTab] = useState<KidTab>('chores')
+  const [focusId, setFocusId] = useState<number | null>(null)
   const mode = d.age_group === 'little' || d.age_group === 'teen' ? d.age_group : 'kid'
   const seen = useMarkSeen()
   const threads = useThreads(true, !preview && mode !== 'little')
@@ -48,7 +49,11 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canS
     chat: threads.data?.total ?? 0,
     alerts: inbox.data?.unread ?? 0,
   }
-  const onTab = (t: KidTab) => (t === 'chat' && !preview ? openChatList() : setTab(t))
+  const onTab = (t: KidTab) => {
+    setFocusId(null)
+    if (t === 'chat' && !preview) openChatList()
+    else setTab(t)
+  }
   const elsewhere = <p className="k-hint k-elsewhere">{`Alerts and chat show on ${name}'s own screen.`}</p>
 
   let body: ReactNode
@@ -60,13 +65,19 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canS
     body = (
       <MePage name={name} avatar={avatar} progress={d.progress} preview={preview} onLocker={onLocker} canSwitch={canSwitch} onExit={onExit} kidId={kidId} />
     )
-  else if (tab === 'chat' || tab === 'alerts') body = preview ? elsewhere : <KidAlerts onChores={() => setTab('chores')} />
+  else if (tab === 'chat' || tab === 'alerts') body = preview ? elsewhere : <KidAlerts
+        onChores={(id) => {
+          setFocusId(id)
+          setTab('chores')
+        }}
+      />
   else
     body = (
       <>
         {children}
         <Mode
           d={d}
+          focusId={focusId}
           name={name}
           avatar={avatar}
           now={Date.now()}

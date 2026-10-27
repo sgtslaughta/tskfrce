@@ -82,6 +82,9 @@
 .k-app[data-mode='little'] .me-sib { font-size: 22px; min-height: 72px; }
 .k-app[data-mode='little'] .me-out { height: 80px; border-radius: 28px; font-size: 28px; border-width: 4px; }
 .k-app[data-mode='little'] .me-card .r-btn { height: 80px; border-radius: 28px; font-size: 28px; background: var(--k-green); box-shadow: 5px 5px 0 var(--k-navy); }
+.k-app[data-mode='little'] .me-card :where(.f-cap, .f-num, .flair-title) { font-size: 18px; }
+.k-app[data-mode='little'] .me-card .flair-name { font-size: 24px; }
+.k-app[data-mode='little'] .me-card li { padding: 10px 0; }
 .k-app[data-mode='teen'] .me-card { border: 1px solid var(--k-line); border-radius: 14px; padding: 16px; }
 .k-app[data-mode='teen'] .me-h { font-size: 18px; }
 .k-app[data-mode='teen'] .me-card .r-btn, .k-app[data-mode='teen'] .me-out { height: 44px; border-radius: 10px; font-size: 14px; border-width: 1px; }
@@ -93,6 +96,7 @@
 }
 
 @media (max-width: 599px) {
+  .me-card ol .flair-title { display: none; } /* names get the row instead of the level chip */
   .r-head, .r-view[data-mode='little'] .r-head { font-size: 28px; }
   .r-view[data-mode='teen'] .r-head { font-size: 22px; }
   .k-app[data-mode='little'] .me-card { padding: 18px 14px; }

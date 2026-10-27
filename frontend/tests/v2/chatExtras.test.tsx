@@ -36,7 +36,7 @@ beforeEach(() => {
     if (p.startsWith('/chat/search')) return { thread_ids: p.includes('fraction') ? [2] : [] }
     if (p.startsWith('/chat/threads/chore/')) return { ...page('chore', 'Make bed · Mia'), run_id: 41 }
     if (p.startsWith('/chat/threads/private/')) return page('private', 'Mia')
-    if (p === '/chores/41') return { id: 41, title: 'Make bed', points: 10, state, due_time: null, kid_ids: [2], steps: [], photos: [] }
+    if (p === '/chores/41') return { id: 41, title: 'Make bed', points: 10, state, due_time: null, kid_ids: [2], type: { id: 1, name: 'Cleaning', glyph: 'x' }, steps: [], photos: [] }
     if (p === '/family') return { name: 'Fam', quick_replies: ['Looks good', 'Can you redo it?', 'Retake the photo'] }
     if (p === '/today') return { kids: [] }
     if (p.endsWith('/messages')) return { id: 99 }

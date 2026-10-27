@@ -1,10 +1,10 @@
 import { useMediaQuery } from '@mantine/hooks'
 import { useRouter } from 'next/router'
 import { ParentShell } from '@/v2/parent/ParentShell'
-import { ThreadList } from '@/v2/chat/ThreadList'
+import { NoChats, ThreadList } from '@/v2/chat/ThreadList'
 import { ThreadView } from '@/v2/chat/ThreadView'
 import { RequireParent } from '@/v2/components/RequireParent'
-import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
+import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { refOf, useThreads } from '@/v2/hooks/useChat'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import type { ThreadSummary } from '@/v2/hooks/useChat'
@@ -28,19 +28,14 @@ function ChatPageBody() {
     void router.push({ query: { item: `${t.kind}:${refOf(t)}` } }, undefined, { shallow: true })
   }
 
-  const listContent = <ThreadList threads={list} selected={selected ? `${selected.kind}:${refOf(selected)}` : null} onPick={handlePick} meName={user?.username} />
+  const listContent = <ThreadList threads={list} selected={selected ? `${selected.kind}:${refOf(selected)}` : null} onPick={handlePick} meName={user?.username} empty={small && threads.data && list.length === 0 ? <NoChats /> : null} />
 
   const detailContent = bareChore ? (
     <ThreadView key={item} kind="chore" refId={bareChore} meId={user ? Number(user.id) : null} />
   ) : selected ? (
     <ThreadView key={`${selected.kind}:${refOf(selected)}`} kind={selected.kind} refId={refOf(selected)} meId={user ? Number(user.id) : null} />
   ) : threads.data ? (
-    <EmptyState
-      icon="chat_bubble"
-      title="No chats yet"
-      body="Chats start when a kid comments on a chore. Message the whole family, or each kid privately, from Family and the kid chats."
-      actions={[{ label: 'Open Family chat', icon: 'group', href: '/chat?item=family:family' }]}
-    />
+    <NoChats />
   ) : null
 
   return (

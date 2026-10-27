@@ -44,12 +44,11 @@ describe('message actions', () => {
     expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull()
   })
 
-  test('step reply shows its quote line; a kid note renders as an amber note bubble', () => {
+  test('step reply shows its quote line; a kid note renders as a note chip', () => {
     wrap(msg({ step_id: 7, step_title: 'Make bed' }), true)
     expect(screen.getByText('Make bed')).toHaveClass('pc-quote')
     wrap(msg({ id: 6, author_id: 2, author_name: 'Mia', note_label: 'Out of supplies' }), false)
-    expect(screen.getByText('Note: Out of supplies').closest('.p-chip')).toHaveAttribute('data-tone', 'amb')
-    expect(screen.getByTestId('msg-other')).toHaveAttribute('data-note', 'true')
+    expect(screen.getByText('Note: Out of supplies')).toHaveClass('pc-notechip')
   })
 
   test('system messages have no actions', () => {

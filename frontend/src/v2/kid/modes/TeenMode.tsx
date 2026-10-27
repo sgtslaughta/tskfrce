@@ -57,10 +57,10 @@ function Stats({ d }: { d: KidToday }) {
 }
 
 /** Teen (13+) mode content (mockup 11): stats strip, filters, list + detail. */
-export function TeenMode({ d, name, now, onDone, busyId, onSeen, onChat }: ModeProps) {
+export function TeenMode({ d, name, now, onDone, busyId, onSeen, onChat, focusId }: ModeProps) {
   const wide = useMediaQuery('(min-width: 1100px)')
   const [filter, setFilter] = useState<Filter>('all')
-  const [picked, setPicked] = useState<number | null>(null)
+  const [picked, setPicked] = useState<number | null>(focusId ?? null)
   const t = tally(d.chores)
   const list = kidSort(d.chores, now).filter(match[filter])
   const sel = d.chores.find((c) => c.id === picked) ?? (wide ? list[0] : undefined)

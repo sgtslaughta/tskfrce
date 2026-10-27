@@ -3,6 +3,7 @@ import { openChat } from "@/v2/chat/dock";
 import { Button, Modal, Textarea } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { tokenManager } from "@/services/tokenManager";
+import { kidToken } from "../api";
 import type { NeedsItem } from "../types";
 import { Icon } from "../parent/Icon";
 
@@ -13,7 +14,7 @@ export function useAuthImage(path: string | null | undefined) {
     if (!path) return;
     let url: string | null = null;
     let live = true;
-    const token = tokenManager.getAccessToken();
+    const token = tokenManager.getAccessToken() ?? kidToken(); // kid sessions have no parent token
     fetch(`/api/proxy${path}`, {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     })

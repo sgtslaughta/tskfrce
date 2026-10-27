@@ -65,7 +65,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
   if (!run) return null
   const name = kid.name ?? 'your kid'
   const ref = String(chore.id)
-  const thread = <ThreadView key={reply.n} kind="chore" refId={ref} meId={meId} bare reply={reply.to} />
+  const thread = <ThreadView key={reply.n} kind="chore" refId={ref} meId={meId} bare reply={reply.to} onReplySent={() => setReply((r) => ({ ...r, to: undefined }))} />
 
   return (
     <div className="pt-open" data-chat={chat && !isMobile}>

@@ -106,9 +106,12 @@
   .k-status-big .ms { font-size: 32px; }
   .k-status-t { font-size: 22px; }
   .k-status-s { font-size: 15px; }
-  .k-dots { flex-basis: 100%; margin-left: 0; gap: 8px; }
-  .k-dots i { width: 28px; height: 28px; }
-  .k-dots .ms { font-size: 18px; }
+  .k-dots { flex-basis: 100%; flex-wrap: nowrap; margin-left: 0; gap: 6px; }
+  .k-dots i { flex: 0 1 28px; width: auto; max-width: 28px; min-width: 0; aspect-ratio: 1; }
+  .k-dots .ms { font-size: 16px; }
+  .k-step { flex-wrap: wrap; }
+  .k-sx { flex: 1 1 8em; }
+  .k-step > .k-chip { margin-left: auto; }
   .k-steps-card .k-step { font-size: 18px; gap: 10px; padding: 10px 8px; }
   .k-steps-card .k-sx small { font-size: 13px; }
   .k-steps-card .k-num { width: 26px; height: 26px; font-size: 13px; }

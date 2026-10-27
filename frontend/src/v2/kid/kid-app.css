@@ -140,7 +140,7 @@
 .k-cut {
   clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
   border: 0; font-family: var(--font-display), 'Space Grotesk', sans-serif; font-weight: 700;
-  letter-spacing: 0.1em; text-transform: uppercase; font-size: 13px; padding: 13px 18px; min-height: 44px;
+  letter-spacing: 0.1em; text-transform: uppercase; font-size: 16px; padding: 13px 18px; min-height: 52px;
   cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   background: var(--k-sun); color: var(--k-navy);
 }
@@ -152,6 +152,7 @@
   min-height: 44px; background: var(--k-card); cursor: pointer;
 }
 .k-tell .ms { font-size: 18px; }
+.k-sheet-body .k-tell { justify-content: center; }
 
 /* cards and pills */
 .k-ded {

@@ -22,7 +22,7 @@ const ago = (iso: string) => {
 }
 
 /** Kid Alerts page: own inbox, newest first. Tapping a row reads it and goes where it points. */
-export function KidAlerts({ onChores }: { onChores: () => void }) {
+export function KidAlerts({ onChores }: { onChores: (runId: number) => void }) {
   const inbox = useInbox(true)
   const read = useMarkRead(true)
   const readAll = useMarkAllRead(true)
@@ -30,7 +30,7 @@ export function KidAlerts({ onChores }: { onChores: () => void }) {
   const go = (n: InboxItem) => {
     if (!n.read) read.mutate(n.id)
     if (n.kind === 'chat_message') return n.run_id ? openChat('chore', String(n.run_id)) : openChatList()
-    if (n.run_id) onChores()
+    if (n.run_id) onChores(n.run_id)
   }
   return (
     <section className="k-view k-alerts">

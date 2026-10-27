@@ -137,6 +137,7 @@ describe('KidApp', () => {
     await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/notifications/2/read', { method: 'POST', kid: true }))
     await userEvent.click(screen.getByRole('button', { name: /t1/ }))
     expect(screen.getByRole('button', { name: /^Chores/ })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('heading', { level: 1, name: 'Dishes' })).toBeInTheDocument() // the alert's chore is open
     window.removeEventListener('task4ce:open-chat-list', list)
   })
 

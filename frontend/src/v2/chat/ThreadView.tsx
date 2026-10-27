@@ -102,6 +102,7 @@ export function ThreadView({
   kid = false,
   bare = false,
   reply: replyIn,
+  onReplySent,
 }: {
   kind: ThreadKind
   refId: string
@@ -110,6 +111,8 @@ export function ThreadView({
   bare?: boolean
   /** start the composer answering this step/photo; the parent remounts (key) for a new one */
   reply?: ChatReply
+  /** the composer's reply target was sent (or dropped) */
+  onReplySent?: () => void
 }) {
   const thread = useThread(kind, refId, kid)
   const post = usePost(kid)
@@ -184,14 +187,19 @@ export function ThreadView({
         setText('')
         setPhotoId(null)
         setReply(undefined)
+        onReplySent?.()
       } catch (e) {
         toastFail(e)
       }
     })
   const sendGif = async (id: number) => {
     if (!data) return
-    await post.mutateAsync({ threadId: data.id, body: text.trim(), photoId: id })
-    setText('')
+    try {
+      await post.mutateAsync({ threadId: data.id, body: text.trim(), photoId: id })
+      setText('')
+    } catch (e) {
+      toastFail(e)
+    }
   }
   const box = useComposerBox({ text, setText, send, members: data?.members, meId, threadId: data?.id ?? null, kid })
   const names = (data?.members ?? []).map((x) => x.name)
@@ -258,7 +266,10 @@ export function ThreadView({
                   <VisuallyHidden component="span">Replying to </VisuallyHidden>
                   {replyLabel}
                 </span>
-                <button type="button" aria-label="Stop replying" title="Stop replying" onClick={() => setReply(undefined)}>
+                <button type="button" aria-label="Stop replying" title="Stop replying" onClick={() => {
+                  setReply(undefined)
+                  onReplySent?.()
+                }}>
                   <Icon name="close" size={14} />
                 </button>
               </span>

@@ -19,7 +19,7 @@ const MODE = { each: 'Each kid', race: 'Race (first one wins)', team: 'Team (poi
 function PhotoTile({ path }: { path: string }) {
   const src = useAuthImage(path)
   // eslint-disable-next-line @next/next/no-img-element
-  return src ? <img src={src} alt="Chore photo" /> : <span aria-label="Chore photo" />
+  return src ? <img src={src} alt="Chore photo" /> : <span role="img" aria-label="Chore photo" />
 }
 
 const Kv = ({ k, children }: { k: string; children: React.ReactNode }) => (

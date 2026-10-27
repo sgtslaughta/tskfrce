@@ -58,3 +58,12 @@ test('desktop opens the first thread when none is picked', async () => {
   show()
   await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/chat/threads/family/family', expect.anything()))
 })
+
+test('phone with no chats shows the empty state in the list', async () => {
+  const hooks = jest.requireMock('@mantine/hooks') as { useMediaQuery: (q: string) => boolean }
+  const spy = jest.spyOn(hooks, 'useMediaQuery').mockImplementation((q) => q.includes('max-width'))
+  apiMock.mockImplementation(async (p) => (p === '/chat/threads' ? { total: 0, threads: [] } : { kids: [] }))
+  show()
+  expect(await screen.findByRole('heading', { name: 'No chats yet' })).toBeInTheDocument()
+  spy.mockRestore()
+})

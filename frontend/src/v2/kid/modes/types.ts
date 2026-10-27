@@ -3,6 +3,8 @@ import type { KidToday } from '../../types'
 /** Props every age mode (Little / Kid / Teen) takes from the KidApp shell. */
 export interface ModeProps {
   d: KidToday
+  /** chore to open on arrival (from an alert) */
+  focusId?: number | null
   name: string
   avatar: string | null
   now: number

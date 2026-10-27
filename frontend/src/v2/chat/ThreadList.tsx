@@ -7,6 +7,16 @@ import { SegmentedControl } from '../parent/SegmentedControl'
 import { EmptyState } from '../parent/states'
 import { threadGlyph } from '../today/choreIcon'
 
+/** Shown in the detail pane on desktop; phones pass it to the list, where the detail pane is hidden. */
+export const NoChats = () => (
+  <EmptyState
+    icon="chat_bubble"
+    title="No chats yet"
+    body="Chats start when a kid comments on a chore. Message the whole family, or each kid privately, from Family and the kid chats."
+    actions={[{ label: 'Open Family chat', icon: 'group', href: '/chat?item=family:family' }]}
+  />
+)
+
 type FilterTab = 'all' | 'chores' | 'notes' | 'family'
 
 function Tile({ t }: { t: ThreadSummary }) {
@@ -39,12 +49,15 @@ export function ThreadList({
   onPick,
   meName,
   kid = false,
+  empty,
 }: {
   threads: ThreadSummary[]
   selected: string | null
   onPick: (t: ThreadSummary) => void
   meName?: string
   kid?: boolean
+  /** shown above the rows (the phone's empty state) */
+  empty?: React.ReactNode
 }) {
   const [filter, setFilter] = useState<FilterTab>('all')
   const [search, setSearch] = useState('')
@@ -126,9 +139,12 @@ export function ThreadList({
           icon="search_off"
           title={`No chats match “${search.trim()}”`}
           body="Try a kid's name or a chore title."
+          heading="h2"
           actions={[{ label: 'Clear search', icon: 'close', onClick: () => setSearch('') }]}
         />
       )}
+
+      {empty}
 
       <ul aria-label="Conversations" className="pc-rows">
         {flat

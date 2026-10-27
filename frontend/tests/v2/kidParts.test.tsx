@@ -56,6 +56,16 @@ describe('TellParentSheet', () => {
   })
 })
 
+describe('TellParentSheet cancel', () => {
+  test('Cancel closes without posting', async () => {
+    const onClose = jest.fn()
+    render(wrap(<TellParentSheet c={chore()} opened onClose={onClose} />))
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancel' }))
+    expect(onClose).toHaveBeenCalled()
+    expect(apiMock).not.toHaveBeenCalled()
+  })
+})
+
 describe('KidSteps', () => {
   test('locked step is disabled with its unlock hint; next step says do this next', () => {
     render(wrap(<KidSteps c={chore()} />))

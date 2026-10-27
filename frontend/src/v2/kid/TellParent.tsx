@@ -65,6 +65,9 @@ export function TellParentSheet({ c, opened, onClose }: { c: KidChore; opened: b
         Send
         <Icon name="send" />
       </button>
+      <button type="button" className="k-tell" onClick={close}>
+        Cancel
+      </button>
     </Drawer>
   )
 }

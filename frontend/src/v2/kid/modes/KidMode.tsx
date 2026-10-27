@@ -6,8 +6,8 @@ import { StatusBanner } from './StatusBanner'
 import type { ModeProps } from './types'
 
 /** Kid (9–12) mode content (mockup 10): status banner + tiles, or one chore at a time. */
-export function KidMode({ d, name, now, onDone, busyId, onSeen, onChat }: ModeProps) {
-  const [openId, setOpenId] = useState<number | null>(null)
+export function KidMode({ d, name, now, onDone, busyId, onSeen, onChat, focusId }: ModeProps) {
+  const [openId, setOpenId] = useState<number | null>(focusId ?? null)
   const open = d.chores.find((c) => c.id === openId)
   if (open)
     return (

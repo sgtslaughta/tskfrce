@@ -46,6 +46,7 @@ export interface TeenDetailProps {
 
 /** Detail panel (11 .detail): header, cards, steps, photo, latest message, actions. */
 export function TeenDetail({ c, d, now, onBack, onDone, busyId, onChat }: TeenDetailProps) {
+  const Title = onBack ? 'h1' : 'h2' // phone shows the detail alone, so it carries the page h1
   const [tell, setTell] = useState(false)
   const preview = useAsKid() !== null
   const act = c.state === 'todo' && !c.taken_by
@@ -65,7 +66,7 @@ export function TeenDetail({ c, d, now, onBack, onDone, busyId, onChat }: TeenDe
           <Icon name={glyph(c)} />
         </span>
         <div>
-          <h2 className="k-disp">{c.title}</h2>
+          <Title className="k-disp">{c.title}</Title>
           <div className="t-chips">
             {kidChips(c, now, d.timezone).map((k) => (
               <KidChip key={k.tone} chip={k} size="sm" />

@@ -19,8 +19,8 @@ export interface EmptyStateProps {
   tone?: 'soft' | 'acc' | 'red' | 'amb'
   actions?: StateAction[]
   children?: ReactNode
-  /** h1 when the panel is the whole page (expired link, 404); h3 inside a page */
-  heading?: 'h1' | 'h3'
+  /** h1 when the panel is the whole page (expired link, 404); h2 when no h2 sits above it; h3 inside a page */
+  heading?: 'h1' | 'h2' | 'h3'
 }
 
 /** Empty / error / done panel from mockup 05: icon tile, title, one line, pill actions. */

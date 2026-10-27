@@ -14,7 +14,7 @@ import type { ThreadKind } from '@/v2/hooks/useChat'
 
 const STATE: Record<RunDetail['state'], { tone: ChipTone; icon: string; label: string }> = {
   needs_you: { tone: 'lav', icon: 'hourglass_top', label: 'Needs OK' },
-  done: { tone: 'grey', icon: 'check_circle', label: 'Done' },
+  done: { tone: 'grey', icon: 'check_circle', label: 'Approved' },
   todo: { tone: 'grey', icon: 'radio_button_unchecked', label: 'To do' },
   skipped: { tone: 'grey', icon: 'do_not_disturb_on', label: 'Skipped' },
 }
@@ -54,6 +54,7 @@ export function ThreadHead({ kind, title, run, glyph }: { kind: ThreadKind; titl
           <h2>{title}</h2>
           {run && s && (
             <div className="pc-chips">
+              {!small && <Chip tone="grey" icon={run.type.glyph}>{run.type.name}</Chip>}
               <Chip tone={s.tone} icon={s.icon}>{s.label}</Chip>
               <Chip tone="grey" icon="stars" className="pc-pts">{run.points} pts</Chip>
             </div>
@@ -115,7 +116,10 @@ export function ThreadHead({ kind, title, run, glyph }: { kind: ThreadKind; titl
           data-tone="ink"
           onSubmit={(e) => {
             e.preventDefault()
-            sendBack.mutate({ id: run.id, note: note.trim() }, { onSuccess: () => setForm(null) })
+            sendBack.mutate({ id: run.id, note: note.trim() }, { onSuccess: () => {
+              setForm(null)
+              setNote('')
+            } })
           }}
         >
           <b>What should {kidName} fix?</b>
@@ -131,7 +135,17 @@ export function ThreadHead({ kind, title, run, glyph }: { kind: ThreadKind; titl
           className="pt-ded"
           onSubmit={(e) => {
             e.preventDefault()
-            deduct.mutate({ id: run.kid_ids[0], amount: take, note: why }, { onSuccess: () => setForm(null) })
+            deduct.mutate(
+              { id: run.kid_ids[0], amount: take, note: why },
+              {
+                onSuccess: () => {
+                  setForm(null)
+                  setWhy('')
+                  setAmount(10)
+                  setCustom('')
+                },
+              },
+            )
           }}
         >
           <b>Deduct for {run.title}</b>

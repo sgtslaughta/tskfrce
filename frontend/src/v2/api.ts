@@ -35,7 +35,7 @@ export interface ApiInit {
 
 const GENERIC = 'Something went wrong. Check your connection and try again.'
 
-function kidToken(): string | null {
+export function kidToken(): string | null {
   try {
     return localStorage.getItem(KID_TOKEN_KEY)
   } catch {

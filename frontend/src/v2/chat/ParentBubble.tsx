@@ -1,5 +1,4 @@
 import { Icon } from '@/v2/parent/Icon'
-import { Chip } from '@/v2/parent/Chip'
 import type { ChatMessage } from '@/v2/hooks/useChat'
 import { Photo } from './ChatPhoto'
 import { EditBox, MessageActions } from './MessageActions'
@@ -39,7 +38,7 @@ export function ParentBubble({ m, mine, names = [] }: { m: ChatMessage; mine: bo
   }
   return (
     <>
-      <div className="pc-msg" data-mine={mine} data-note={!!m.note_label} data-testid={mine ? 'msg-mine' : 'msg-other'}>
+      <div className="pc-msg" data-mine={mine} data-testid={mine ? 'msg-mine' : 'msg-other'}>
         <MessageActions m={m} mine={mine} kid={false} onEdit={() => setEditing(true)}>
           <small>
             {mine ? 'You' : (m.author_name ?? 'Someone')} · {timeLabel(m.created_at)}
@@ -51,9 +50,10 @@ export function ParentBubble({ m, mine, names = [] }: { m: ChatMessage; mine: bo
             )}
           </small>
           {m.note_label && (
-            <Chip tone="amb" icon="flag" className="pc-notechip">
+            <span className="pc-notechip">
+              <Icon name="flag" size={14} />
               {`Note: ${m.note_label}`}
-            </Chip>
+            </span>
           )}
           {m.step_title && (
             <span className="pc-quote">
