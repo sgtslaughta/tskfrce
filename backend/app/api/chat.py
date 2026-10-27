@@ -29,6 +29,7 @@ class MessageIn(BaseModel):
     body: Annotated[str | None, StringConstraints(strip_whitespace=True, max_length=2000)] = None
     photo_id: int | None = None
     step_id: int | None = None
+    proof_photo_id: int | None = None
 
     @model_validator(mode="after")
     def _something(self):
@@ -46,7 +47,12 @@ def _thread(db: Session, user: User, thread_id: int) -> Thread:
     return t
 
 
-def _msg(t: Thread, m: ThreadMessage, reactions: dict[int, list[dict]] | None = None) -> dict:
+def _msg(
+    t: Thread,
+    m: ThreadMessage,
+    reactions: dict[int, list[dict]] | None = None,
+    proofs: dict[int, int] | None = None,
+) -> dict:
     return {
         "id": m.id,
         "author_id": m.author_id,
@@ -55,6 +61,7 @@ def _msg(t: Thread, m: ThreadMessage, reactions: dict[int, list[dict]] | None = 
         "note_label": m.note_label,
         "step_id": m.step_id,
         "step_title": m.step.title if m.step else None,
+        "proof_photo_n": (proofs or {}).get(m.proof_photo_id),
         "body": m.body,
         "photo_url": chat.photo_url(t, m),
         "created_at": utc_z(m.created_at),
@@ -88,12 +95,13 @@ def thread(
         q = q.filter(ThreadMessage.id < before)
     rows = q.order_by(ThreadMessage.id.desc()).limit(PAGE + 1).all()
     rx = chat.reactions(db, [m.id for m in rows[:PAGE]], user)
+    proofs = chat.proof_numbers(db, t)
     out = {
         "id": t.id,
         "kind": t.kind,
         "title": chat.title(db, t),
         "who": chat.who(db, t),
-        "messages": [_msg(t, m, rx) for m in reversed(rows[:PAGE])],
+        "messages": [_msg(t, m, rx, proofs) for m in reversed(rows[:PAGE])],
         "has_more": len(rows) > PAGE,
         "typing": typing.who(t.id, user.id),
         "members": [
@@ -116,7 +124,17 @@ def send(
         raise HTTPException(422, "We couldn't find that photo. Add it again.")
     if body.step_id is not None and not chat.step_ok(db, t, body.step_id):
         raise HTTPException(422, "We couldn't find that step.")
-    m = chat.post(db, t, user, body.body, body.photo_id, step_id=body.step_id)
+    if body.proof_photo_id is not None and not chat.proof_ok(db, t, body.proof_photo_id):
+        raise HTTPException(422, "We couldn't find that photo.")
+    m = chat.post(
+        db,
+        t,
+        user,
+        body.body,
+        body.photo_id,
+        step_id=body.step_id,
+        proof_photo_id=body.proof_photo_id,
+    )
     ids = chat_extras.mentioned(chat_extras.members(db, t), body.body, user.id)
     covered = set(kid_events.reply_targets(db, t, user))  # already pinged by parent_reply
     ids = [i for i in ids if i not in covered]
@@ -131,7 +149,7 @@ def send(
             thread_id=t.id,
         )
     db.commit()
-    return _msg(t, m)
+    return _msg(t, m, proofs=chat.proof_numbers(db, t))
 
 
 @router.post("/threads/{thread_id}/typing", status_code=204, response_class=Response)
@@ -265,7 +283,7 @@ def edit_message(
     m.body = body.body
     m.edited_at = datetime.utcnow()
     db.commit()
-    return _msg(t, m, chat.reactions(db, [m.id], user))
+    return _msg(t, m, chat.reactions(db, [m.id], user), chat.proof_numbers(db, t))
 
 
 class ReactionIn(BaseModel):
@@ -304,7 +322,7 @@ def react(
     if not chat.toggle_reaction(db, m, user, body.emoji):
         raise HTTPException(422, "That's enough reactions.")
     db.commit()
-    return _msg(t, m, chat.reactions(db, [m.id], user))
+    return _msg(t, m, chat.reactions(db, [m.id], user), chat.proof_numbers(db, t))
 
 
 @router.delete("/messages/{message_id}", status_code=204, response_class=Response)

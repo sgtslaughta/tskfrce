@@ -19,4 +19,7 @@ class ChorePhoto(Base):
     thumb_path = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
-    run = relationship("ChoreRun", backref=backref("photos", cascade="all, delete-orphan"))
+    run = relationship(
+        "ChoreRun",
+        backref=backref("photos", cascade="all, delete-orphan", order_by="ChorePhoto.id"),
+    )

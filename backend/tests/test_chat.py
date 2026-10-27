@@ -329,6 +329,33 @@ def test_step_reply(client, db, parent_headers):
     assert r.status_code == 422
 
 
+def test_proof_photo_reply(client, db, parent_headers):
+    leo, maya, lh, mh, chore = _world(db, client, parent_headers)
+    run, other = chore("Homework", [leo]), chore("Sweep", [maya])
+    mine = [
+        ChorePhoto(run_id=run, uploaded_by_id=leo.id, path="a", thumb_path="a") for _ in range(2)
+    ]
+    foreign = ChorePhoto(run_id=other, uploaded_by_id=maya.id, path="b", thumb_path="b")
+    db.add_all([*mine, foreign])
+    db.commit()
+    tid = _tid(client, parent_headers, "chore", run)
+    post = lambda **kw: client.post(  # noqa: E731
+        f"{C}/threads/{tid}/messages", json={"body": "nice", **kw}, headers=parent_headers
+    )
+    r = post(proof_photo_id=mine[1].id)
+    assert r.status_code == 200 and r.json()["proof_photo_n"] == 2
+    got = client.get(f"{C}/threads/chore/{run}", headers=parent_headers).json()["messages"]
+    assert got[-1]["proof_photo_n"] == 2
+    assert post(proof_photo_id=foreign.id).status_code == 422
+    fid = _tid(client, parent_headers, "family", "family")
+    r = client.post(
+        f"{C}/threads/{fid}/messages",
+        json={"body": "x", "proof_photo_id": mine[0].id},
+        headers=parent_headers,
+    )
+    assert r.status_code == 422
+
+
 def _react(client, h, mid, emoji="👍"):
     return client.post(f"{C}/messages/{mid}/reactions", json={"emoji": emoji}, headers=h)
 

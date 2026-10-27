@@ -196,6 +196,9 @@
 
 /* phone: avatar strip and the kid's facts (desktop has them on the kid card) */
 [data-look='parent'] .pt-phone-facts { display: none; }
+[data-look='parent'] .pt-phone-tabs { padding: 12px 16px 0; }
+[data-look='parent'] .pt-phone-tabs .p-segmented-control { width: 100%; }
+[data-look='parent'] .pt-phone-tabs .p-segmented-button { flex: 1; }
 [data-look='parent'] .pt-strip { display: flex; gap: 14px; padding: 12px 16px 4px; overflow-x: auto; }
 [data-look='parent'] .pt-strip-kid {
   flex: none;

@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import Link from 'next/link'
+import { useRouter } from 'next/router'
+import { Menu } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
 import { Icon } from '@/v2/parent/Icon'
 import { Chip, type ChipTone } from '@/v2/parent/Chip'
 import { threadGlyph } from '@/v2/today/choreIcon'
@@ -18,6 +22,8 @@ const AMOUNTS = [5, 10, 20]
 
 /** Type tile + title; chore threads add state/points chips and Approve / Send back / Deduct from the run. */
 export function ThreadHead({ kind, title, run, glyph }: { kind: ThreadKind; title: string; run?: RunDetail; glyph?: string | null }) {
+  const router = useRouter()
+  const small = useMediaQuery('(max-width: 767px)')
   const approve = useApproveChore()
   const sendBack = useSendBack()
   const deduct = useDeduct()
@@ -32,25 +38,58 @@ export function ThreadHead({ kind, title, run, glyph }: { kind: ThreadKind; titl
   const tile =
     kind === 'chore' ? <Icon name={threadGlyph(glyph, title)} size={24} /> : kind === 'family' ? <Icon name="group" size={24} /> : <b>{(title.trim()[0] ?? '?').toUpperCase()}</b>
   const s = run && STATE[run.state]
+  const { item: _item, ...rest } = router.query
+  const doApprove = () => run && withUndo(() => approve.mutateAsync(run.id), `Approved +${run.points}`)
 
   return (
     <div className="pc-head">
       <div className="pc-head-row">
+        {small && !!router.query.item && (
+          <Link href={{ pathname: router.pathname, query: rest }} className="pc-back" aria-label="Back to chats">
+            <Icon name="chevron_left" size={22} />
+          </Link>
+        )}
         <div className="pc-tile" data-big>{tile}</div>
         <div className="pc-head-t">
           <h2>{title}</h2>
           {run && s && (
             <div className="pc-chips">
               <Chip tone={s.tone} icon={s.icon}>{s.label}</Chip>
-              <Chip tone="grey" icon="stars">{run.points} pts</Chip>
+              <Chip tone="grey" icon="stars" className="pc-pts">{run.points} pts</Chip>
             </div>
           )}
         </div>
-        {run && (
+        {run && small && (
+          <Menu position="bottom-end" withinPortal>
+            <Menu.Target>
+              <button type="button" className="pc-ib" aria-label="Actions" title="Actions">
+                <Icon name="more_vert" size={20} />
+              </button>
+            </Menu.Target>
+            <Menu.Dropdown>
+              {run.state === 'needs_you' && (
+                <>
+                  <Menu.Item leftSection={<Icon name="check" size={17} />} onClick={doApprove}>
+                    Approve +{run.points}
+                  </Menu.Item>
+                  <Menu.Item leftSection={<Icon name="undo" size={17} />} onClick={() => toggle('back')}>
+                    Send back
+                  </Menu.Item>
+                </>
+              )}
+              {run.kid_ids.length > 0 && (
+                <Menu.Item color="red" leftSection={<Icon name="remove_circle" size={17} />} onClick={() => toggle('deduct')}>
+                  Deduct
+                </Menu.Item>
+              )}
+            </Menu.Dropdown>
+          </Menu>
+        )}
+        {run && !small && (
           <div className="pc-acts">
             {run.state === 'needs_you' && (
               <>
-                <button className="p-btn" data-variant="accent" onClick={() => withUndo(() => approve.mutateAsync(run.id), `Approved +${run.points}`)}>
+                <button className="p-btn" data-variant="accent" onClick={doApprove}>
                   <Icon name="check" size={17} />
                   Approve
                 </button>

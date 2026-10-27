@@ -35,7 +35,12 @@ function ChatPageBody() {
   ) : selected ? (
     <ThreadView key={`${selected.kind}:${refOf(selected)}`} kind={selected.kind} refId={refOf(selected)} meId={user ? Number(user.id) : null} />
   ) : threads.data ? (
-    <EmptyState icon="chat_bubble" title="No chats yet" body="Chats start when a kid comments on a chore, or you can message anyone." />
+    <EmptyState
+      icon="chat_bubble"
+      title="No chats yet"
+      body="Chats start when a kid comments on a chore. Message the whole family, or each kid privately, from Family and the kid chats."
+      actions={[{ label: 'Open Family chat', icon: 'group', href: '/chat?item=family:family' }]}
+    />
   ) : null
 
   return (

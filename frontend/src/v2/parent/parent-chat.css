@@ -181,6 +181,20 @@
 
 @media (max-width: 767px) {
   [data-look='parent'] .pc-msg { max-width: 85%; }
+  /* one-line thread header (back, tile, title + state, actions menu): messages get the height */
+  [data-look='parent'] .pc-head { padding: 6px 10px; }
+  [data-look='parent'] .pc-head-row { flex-wrap: nowrap; gap: 8px; }
+  [data-look='parent'] .pc-head .pc-tile { width: 32px; height: 32px; }
+  [data-look='parent'] .pc-head-t { min-width: 0; display: flex; align-items: center; gap: 6px; }
+  [data-look='parent'] .pc-head-t h2 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  [data-look='parent'] .pc-chips { margin: 0; flex: none; flex-wrap: nowrap; }
+  [data-look='parent'] .pc-pts { display: none; }
+  [data-look='parent'] .pc-back { display: grid; place-items: center; width: 28px; height: 28px; flex: none; color: var(--p-ink); }
+  /* quick replies: one scrolling row */
+  [data-look='parent'] .pc-qr { flex-wrap: nowrap; overflow-x: auto; margin: 0 0 8px; padding: 0 12px; scrollbar-width: none; }
+  [data-look='parent'] .pc-qr button { flex: none; white-space: nowrap; }
+  /* the head carries its own back button */
+  [data-look='parent'] .p-detail-only:has(.pc-head) > .p-back-link { display: none; }
 }
 [data-look='parent'] .pc-kid { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 [data-look='parent'] .pc-kid b { display: block; font-size: 14px; color: var(--p-ink); }

@@ -43,58 +43,49 @@ const wrap = (ui: React.ReactElement) =>
       <MantineProvider>{ui}</MantineProvider>
     </QueryClientProvider>,
   )
-const launcher = () => screen.getByRole('button', { name: /^Chat/ })
+const open = () => act(() => openChat('private', '3'))
 
 describe('ChatDock', () => {
-  test('launcher shows the unread total', async () => {
+  test('has no floating launcher', async () => {
     wrap(<ChatDock meId={1} />)
-    expect(await screen.findByTestId('dock-unread')).toHaveTextContent('3')
-    expect(launcher()).toHaveAttribute('aria-expanded', 'false')
+    await waitFor(() => expect(apiMock).toHaveBeenCalled())
+    expect(screen.queryByRole('button', { name: /^Chat/ })).toBeNull()
+    expect(screen.queryByTestId('dock-unread')).toBeNull()
   })
 
-  test('opens to the list, picks a thread, goes back', async () => {
+  test('openChat opens straight to a thread; back goes to the list', async () => {
     wrap(<ChatDock meId={1} />)
-    await userEvent.click(launcher())
-    expect(screen.getByRole('dialog', { name: 'Chat' })).toBeInTheDocument()
-    expect(launcher()).toHaveAttribute('aria-expanded', 'true')
-    await userEvent.click(await screen.findByRole('button', { name: /Maya/ }))
+    open()
     expect(await screen.findByRole('region', { name: 'Maya' })).toBeInTheDocument()
+    expect(apiMock.mock.calls.some(([p]) => p === '/chat/threads/private/3')).toBe(true)
     await userEvent.click(screen.getByRole('button', { name: 'Back to conversations' }))
     expect(await screen.findByRole('list', { name: 'Conversations' })).toBeInTheDocument()
   })
 
-  test('Escape closes and returns focus to the launcher', async () => {
+  test('Escape closes the panel', async () => {
     wrap(<ChatDock meId={1} />)
-    await userEvent.click(launcher())
+    open()
     await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus())
     await userEvent.keyboard('{Escape}')
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(launcher()).toHaveFocus()
-  })
-
-  test('openChat opens straight to a thread', async () => {
-    wrap(<ChatDock meId={1} />)
-    act(() => openChat('private', '3'))
-    expect(await screen.findByRole('region', { name: 'Maya' })).toBeInTheDocument()
-    expect(apiMock.mock.calls.some(([p]) => p === '/chat/threads/private/3')).toBe(true)
   })
 
   test('openChat with a reply target shows a removable Replying to bar', async () => {
     wrap(<ChatDock meId={1} />)
-    act(() => openChat('private', '3', { label: 'Photo' }))
-    expect(await screen.findByTestId('replying')).toHaveTextContent('Replying to Photo')
+    act(() => openChat('private', '3', { label: 'Photo 1' }))
+    expect(await screen.findByTestId('replying')).toHaveTextContent('Replying to Photo 1')
     await userEvent.click(screen.getByRole('button', { name: 'Stop replying' }))
     expect(screen.queryByTestId('replying')).toBeNull()
   })
 
-  test('a photo reply stores the reference in the sent text', async () => {
+  test('a photo reply sends the proof photo id, not text', async () => {
     wrap(<ChatDock meId={1} />)
-    act(() => openChat('private', '3', { label: 'Photo' }))
+    act(() => openChat('private', '3', { proof_photo_id: 7, label: 'Photo' }))
     await userEvent.type(await screen.findByLabelText('Message'), 'nice{Enter}')
     await waitFor(() =>
       expect(apiMock).toHaveBeenCalledWith(
         '/chat/threads/2/messages',
-        expect.objectContaining({ body: expect.objectContaining({ body: '↪ Photo: nice' }) }),
+        expect.objectContaining({ body: expect.objectContaining({ body: 'nice', proof_photo_id: 7 }) }),
       ),
     )
   })
@@ -103,10 +94,5 @@ describe('ChatDock', () => {
     wrap(<ChatDock meId={1} />)
     act(() => openChat('private', '../x'))
     expect(screen.queryByRole('dialog')).toBeNull()
-  })
-
-  test('ChatDock mounts and shows unread count', async () => {
-    wrap(<ChatDock meId={1} />)
-    expect(await screen.findByTestId('dock-unread')).toBeInTheDocument()
   })
 })

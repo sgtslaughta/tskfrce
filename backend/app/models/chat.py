@@ -50,6 +50,10 @@ class ThreadMessage(Base):
     # chore threads: chore_photos.id; private/family threads: chat_photos.id
     photo_id = Column(Integer, nullable=True)
     step_id = Column(Integer, ForeignKey("chore_steps.id", ondelete="SET NULL"), nullable=True)
+    # chore threads: the proof photo a reply answers ("Photo N")
+    proof_photo_id = Column(
+        Integer, ForeignKey("chore_photos.id", ondelete="SET NULL"), nullable=True
+    )
     note_label = Column(String(40), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     edited_at = Column(DateTime, nullable=True)

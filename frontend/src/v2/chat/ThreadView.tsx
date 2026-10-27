@@ -69,6 +69,11 @@ function Bubble({ m, mine, names }: { m: ChatMessage; mine: boolean; names: stri
           {m.step_title && (
             <span style={{ display: 'block', fontSize: '0.85rem', opacity: 0.75 }}>↪ {m.step_title}</span>
           )}
+          {m.proof_photo_n && (
+            <span style={{ display: 'block', fontSize: '0.85rem', opacity: 0.75 }}>
+              <Icon name="image" size={14} /> Photo {m.proof_photo_n}
+            </span>
+          )}
           {m.note_label && <strong style={{ display: 'block' }}>Note: {m.note_label}</strong>}
           {m.photo_url && <Photo url={m.photo_url} />}
           {editing ? <EditBox m={m} kid onDone={() => setEditing(false)} /> : m.body && renderMentions(m.body, names)}
@@ -169,9 +174,13 @@ export function ThreadView({
     once(async () => {
       if (!canSend || !data) return
       try {
-        // a photo reply (no step) can't link the chore proof photo, so the reference rides in the text
-        const body = reply?.label === 'Photo' && !reply.step_id ? `↪ Photo: ${text.trim()}` : text.trim()
-        await post.mutateAsync({ threadId: data.id, body, photoId: photoId ?? undefined, stepId: reply?.step_id })
+        await post.mutateAsync({
+          threadId: data.id,
+          body: text.trim(),
+          photoId: photoId ?? undefined,
+          stepId: reply?.step_id,
+          proofPhotoId: reply?.proof_photo_id,
+        })
         setText('')
         setPhotoId(null)
         setReply(undefined)
@@ -202,6 +211,8 @@ export function ThreadView({
   // Parent look: header, messages, composer, side panel
   if (!kid) {
     const run = kind === 'chore' ? runDetail.data : undefined
+    const photoN = run && reply?.proof_photo_id ? run.photos.findIndex((p) => p.id === reply.proof_photo_id) + 1 : 0
+    const replyLabel = photoN ? `Photo ${photoN}` : reply?.label
     const sideKid = kind === 'private' ? Number(refId) : (run?.kid_ids[0] ?? null)
     const side = wideLay && !bare && ((kind === 'chore' && !!run) || kind === 'private')
     return (
@@ -241,11 +252,11 @@ export function ThreadView({
             }}
           >
             {reply && (
-              <span className="pc-q" data-testid="replying" title={`Replying to ${reply.label}`}>
+              <span className="pc-q" data-testid="replying" title={`Replying to ${replyLabel}`}>
                 <Icon name="subdirectory_arrow_right" size={14} />
                 <span>
                   <VisuallyHidden component="span">Replying to </VisuallyHidden>
-                  {reply.label}
+                  {replyLabel}
                 </span>
                 <button type="button" aria-label="Stop replying" title="Stop replying" onClick={() => setReply(undefined)}>
                   <Icon name="close" size={14} />

@@ -61,6 +61,12 @@ export function ParentBubble({ m, mine, names = [] }: { m: ChatMessage; mine: bo
               {m.step_title}
             </span>
           )}
+          {m.proof_photo_n && (
+            <span className="pc-quote">
+              <Icon name="image" size={14} />
+              Photo {m.proof_photo_n}
+            </span>
+          )}
           {m.photo_url && <Photo url={m.photo_url} className="pc-photo" />}
           {editing ? <EditBox m={m} kid={false} onDone={() => setEditing(false)} /> : m.body && <span>{renderMentions(m.body, names)}</span>}
         </MessageActions>

@@ -46,6 +46,7 @@ export function PhotoViewer({
   const [note, setNote] = useState("");
   const phone = useMediaQuery("(max-width: 768px)");
   const src = useAuthImage(item?.thumb_url?.replace(/\/thumb$/, ""));
+  const proofId = Number(item?.thumb_url?.match(/chore-photos\/(\d+)/)?.[1]) || undefined;
   const close = () => {
     setNote("");
     onClose();
@@ -94,7 +95,7 @@ export function PhotoViewer({
             variant="subtle"
             leftSection={<Icon name="chat" size={17} />}
             onClick={() => {
-              openChat("chore", String(item.id), { label: "Photo" }); // text-only reply: the API takes chat photos, not proof
+              openChat("chore", String(item.id), { proof_photo_id: proofId, label: "Photo" });
               close();
             }}
           >

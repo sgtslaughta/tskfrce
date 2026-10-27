@@ -44,8 +44,8 @@ export function ParentShell({
     router.replace('/login')
   }
 
-  // floating chat button: not on phone (Chat tab) or on the Chat page (it covered Send)
-  const dock = small || router.pathname === '/chat' ? null : <ChatDock meId={user ? Number(user.id) : null} meName={user?.username} />
+  // chat panel/sheet for openChat; the desktop Chat page shows threads itself
+  const dock = !small && router.pathname === '/chat' ? null : <ChatDock meId={user ? Number(user.id) : null} meName={user?.username} />
   const initial = (user?.username ?? '?').charAt(0).toUpperCase()
   const phoneTools = (
     <>

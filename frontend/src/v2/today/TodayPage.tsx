@@ -2,6 +2,7 @@ import Link from "next/link";
 import { viewAs } from '@/v2/kid/viewAs'
 import { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import { useMediaQuery } from "@mantine/hooks";
 import { ParentShell } from "../parent/ParentShell";
 import { EmptyState, ErrorPanel, Skeleton } from "../parent/states";
 import { TipsContainer } from "../components/TipsContainer";
@@ -9,6 +10,8 @@ import { useToday } from "../hooks/useToday";
 import { GetStartingChecklistCard } from "./GetStartingChecklistCard";
 import { KidList } from "./KidList";
 import { KidStrip } from "./KidStrip";
+import { NeedsYouList } from "./NeedsYouList";
+import { SegmentedControl } from "../parent/SegmentedControl";
 import { KidFacts } from "./KidFacts";
 import { ChoreRow } from "./ChoreRow";
 import { useClock } from "./useClock";
@@ -26,6 +29,15 @@ export function TodayPage() {
     setSelectedId(k.id);
     router.push(`/?item=${k.id}`, undefined, { shallow: true }); // deep link + back button follow the choice
   };
+  // phone: "Needs you" replaces the day (desktop has the same list as a tab in the kids sidebar)
+  const small = useMediaQuery("(max-width: 767px)");
+  const [phoneTab, setPhoneTab] = useState<"today" | "needs">("today");
+  const wantNeeds = router.query.tab === "needs";
+  useEffect(() => {
+    if (wantNeeds) setPhoneTab("needs");
+  }, [wantNeeds]);
+  const needs = data?.needs_you ?? [];
+  const showNeeds = !!small && phoneTab === "needs" && !!data;
   const [openChoreId, setOpenChoreId] = useState<number | null>(null);
   // ?chore=<run id> (from a notification) opens that chore on its kid's day
   const runId = Number(router.query.chore) || null;
@@ -46,7 +58,20 @@ export function TodayPage() {
       }
       phone={
         data?.kids.length ? (
-          <KidStrip kids={data.kids} selected={kid?.id} onSelect={setSelectedKid} />
+          <>
+            <div className="pt-phone-tabs">
+              <SegmentedControl
+                label="Today view"
+                value={phoneTab}
+                onChange={setPhoneTab}
+                options={[
+                  { value: "today", label: "Today" },
+                  { value: "needs", label: `Needs you · ${needs.length}` },
+                ]}
+              />
+            </div>
+            {!showNeeds && <KidStrip kids={data.kids} selected={kid?.id} onSelect={setSelectedKid} />}
+          </>
         ) : data ? (
           <></> // no kids: phone shows the detail's "Add your first kid" state, not an empty list
         ) : undefined
@@ -54,6 +79,11 @@ export function TodayPage() {
     >
       {isError && !data && <ErrorPanel kind="unreachable" error={error} onRetry={() => refetch()} />}
       {!data && !isError && <Skeleton rows={4} />}
+      {showNeeds && (
+        <div className="p-today-detail">
+          <NeedsYouList items={needs} />
+        </div>
+      )}
       {data && data.kids.length === 0 && (
         <EmptyState
           icon="person_add"
@@ -65,7 +95,7 @@ export function TodayPage() {
           ]}
         />
       )}
-      {data && kid && (
+      {data && kid && !showNeeds && (
         <div className="p-today-detail">
           <GetStartingChecklistCard kids={data.kids} />
           <div className="pt-head">

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '@mantine/core'
-import { IconArrowLeft, IconMessage, IconX } from '@tabler/icons-react'
+import { Button, Drawer } from '@mantine/core'
+import { useMediaQuery } from '@mantine/hooks'
+import { IconArrowLeft, IconX } from '@tabler/icons-react'
 import { refOf, useThread, useThreads, validRef, type ThreadKind } from '@/v2/hooks/useChat'
 import { OPEN_CHAT_EVENT, OPEN_CHAT_LIST_EVENT, type ChatReply } from './dock'
 import { LoadError, LoadingCards } from '@/v2/components/States'
@@ -28,23 +29,24 @@ function save(open: boolean, pick: Pick | null) {
   }
 }
 
-/** Always-present floating chat: launcher button plus a thread list / thread panel.
- *  `launcher={false}` hides the floating button only (the kid nav has a Chat item). */
-export function ChatDock({ kid = false, meId, meName, launcher: showLauncher = true }: { kid?: boolean; meId: number | null; meName?: string; launcher?: boolean }) {
+/** Chat opened by openChat / openChatList (no launcher: parents use the rail / tab bar, kids their nav).
+ *  Parents get a bottom sheet on phones (mockup 04) and a floating panel on desktop; kids a panel. */
+export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: number | null; meName?: string }) {
   const [open, setOpen] = useState(false)
   const [pick, setPick] = useState<Pick | null>(null)
   const [reply, setReply] = useState<{ to: ChatReply; n: number } | null>(null) // n remounts the composer per request
-  const launcher = useRef<HTMLButtonElement>(null)
   const panel = useRef<HTMLDivElement>(null)
   const threads = useThreads(kid)
-  const unread = threads.data?.total ?? 0
+  const phone = useMediaQuery('(max-width: 767px)')
+  const sheet = !kid && !!phone
 
   // restore after mount (sessionStorage is client-only)
   useEffect(() => {
+    if (!kid) return
     const s = load()
     setOpen(s.open)
     setPick(s.pick)
-  }, [])
+  }, [kid])
   useEffect(() => {
     const on = (e: Event) => {
       const d = (e as CustomEvent<Pick & { reply?: ChatReply }>).detail
@@ -52,13 +54,13 @@ export function ChatDock({ kid = false, meId, meName, launcher: showLauncher = t
       setPick({ kind: d.kind, ref: d.ref })
       setReply((r) => (d.reply ? { to: d.reply, n: (r?.n ?? 0) + 1 } : null))
       setOpen(true)
-      save(true, { kind: d.kind, ref: d.ref })
+      if (kid) save(true, { kind: d.kind, ref: d.ref })
     }
     const list = () => {
       setPick(null)
       setReply(null)
       setOpen(true)
-      save(true, null)
+      if (kid) save(true, null)
     }
     window.addEventListener(OPEN_CHAT_EVENT, on)
     window.addEventListener(OPEN_CHAT_LIST_EVENT, list)
@@ -66,7 +68,7 @@ export function ChatDock({ kid = false, meId, meName, launcher: showLauncher = t
       window.removeEventListener(OPEN_CHAT_EVENT, on)
       window.removeEventListener(OPEN_CHAT_LIST_EVENT, list)
     }
-  }, [])
+  }, [kid])
   // keep focus inside the panel when it opens or switches thread, so Escape always reaches it
   useEffect(() => {
     if (open) panel.current?.focus()
@@ -76,95 +78,93 @@ export function ChatDock({ kid = false, meId, meName, launcher: showLauncher = t
     setOpen(o)
     setPick(p)
     if (p !== pick) setReply(null)
-    save(o, p)
+    if (kid) save(o, p)
   }
-  const close = () => {
-    set(false, pick)
-    launcher.current?.focus()
-  }
+  const close = () => set(false, pick)
   const page = useThread(pick?.kind ?? null, pick?.ref ?? null, kid) // same query as the open ThreadView
   const title =
     pick && threads.data?.threads.find((t) => t.kind === pick.kind && refOf(t) === pick.ref)?.title
 
+  const back = pick && (
+    <Button variant="subtle" size="compact-md" aria-label="Back to conversations" onClick={() => set(true, null)}>
+      <IconArrowLeft size={18} />
+    </Button>
+  )
+  const body = pick ? (
+    <ThreadView
+      key={`${pick.kind}:${pick.ref}:${reply?.n ?? 0}`}
+      kind={pick.kind}
+      refId={pick.ref}
+      meId={meId}
+      kid={kid}
+      bare
+      reply={reply?.to}
+    />
+  ) : (
+    <>
+      {threads.isError && !kid && <ErrorPanel kind="unreachable" error={threads.error} onRetry={() => threads.refetch()} />}
+      {threads.isError && kid && <LoadError error={threads.error} onRetry={() => threads.refetch()} />}
+      {threads.isPending && (kid ? <LoadingCards n={3} h={56} /> : <Skeleton rows={3} />)}
+      <ThreadList
+        threads={threads.data?.threads ?? []}
+        selected={null}
+        meName={meName}
+        kid={kid}
+        onPick={(t) => set(true, { kind: t.kind, ref: refOf(t) })}
+      />
+    </>
+  )
+
+  if (sheet) {
+    return (
+      <Drawer
+        opened={open}
+        onClose={close}
+        position="bottom"
+        size="58%"
+        title={
+          <>
+            {back}
+            {pick ? page.data?.title || title || 'Chat' : 'Chat'}
+            {pick && page.data?.who && <small className="pt-sheet-sub">{page.data.who}</small>}
+          </>
+        }
+        classNames={{ content: 'pt-sheet', body: 'pt-sheet-body' }}
+      >
+        {body}
+      </Drawer>
+    )
+  }
+
+  if (!open) return null
   return (
-    <div className={open ? 'f-dock-open' : undefined}>
-      {showLauncher && (
-        <button
-          ref={launcher}
-          type="button"
-          className="f-dock-btn"
-          aria-label={unread > 0 ? `Chat, ${unread} unread` : 'Chat'}
-          aria-expanded={open}
-          aria-controls="f-chat-dock"
-          onClick={() => (open ? close() : set(true, pick))}
-        >
-          <IconMessage size={28} />
-          {unread > 0 && (
-            <span className="f-dock-badge" data-testid="dock-unread" aria-hidden="true">
-              {unread}
-            </span>
-          )}
-        </button>
-      )}
-      {open && (
-        <div
-          id="f-chat-dock"
-          ref={panel}
-          role="dialog"
-          aria-label="Chat"
-          tabIndex={-1}
-          className={kid ? 'f-dock k-tok k-chat' : 'f-dock'}
-          // kid dock reuses the parent chat layout, with --p-* mapped to kid tokens (chatDock.css)
-          data-look={kid ? 'parent' : undefined}
-          onKeyDown={(e) => {
-            if (e.key === 'Escape') {
-              e.stopPropagation()
-              close()
-            }
-          }}
-        >
-          <div className="f-dock-head">
-            {pick && (
-              <Button variant="subtle" size="compact-md" aria-label="Back to conversations" onClick={() => set(true, null)}>
-                <IconArrowLeft size={18} />
-              </Button>
-            )}
-            <h2>
-              {pick ? page.data?.title || title || 'Chat' : 'Chat'}
-              {pick && page.data?.who && <small className="f-dock-who"> · {page.data.who}</small>}
-            </h2>
-            <Button variant="subtle" size="compact-md" aria-label="Close chat" onClick={close}>
-              <IconX size={18} />
-            </Button>
-          </div>
-          <div className="f-dock-body">
-            {pick ? (
-              <ThreadView
-                key={`${pick.kind}:${pick.ref}:${reply?.n ?? 0}`}
-                kind={pick.kind}
-                refId={pick.ref}
-                meId={meId}
-                kid={kid}
-                bare
-                reply={reply?.to}
-              />
-            ) : (
-              <>
-                {threads.isError && !kid && <ErrorPanel kind="unreachable" error={threads.error} onRetry={() => threads.refetch()} />}
-                {threads.isError && kid && <LoadError error={threads.error} onRetry={() => threads.refetch()} />}
-                {threads.isPending && (kid ? <LoadingCards n={3} h={56} /> : <Skeleton rows={3} />)}
-                <ThreadList
-                  threads={threads.data?.threads ?? []}
-                  selected={null}
-                  meName={meName}
-                  kid={kid}
-                  onPick={(t) => set(true, { kind: t.kind, ref: refOf(t) })}
-                />
-              </>
-            )}
-          </div>
-        </div>
-      )}
+    <div
+      id="f-chat-dock"
+      ref={panel}
+      role="dialog"
+      aria-label="Chat"
+      tabIndex={-1}
+      className={kid ? 'f-dock k-tok k-chat' : 'f-dock'}
+      // kid dock reuses the parent chat layout, with --p-* mapped to kid tokens (chatDock.css)
+      data-look={kid ? 'parent' : undefined}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          e.stopPropagation()
+          close()
+        }
+      }}
+    >
+      <div className="f-dock-head">
+        {back}
+        <h2>
+          {pick ? page.data?.title || title || 'Chat' : 'Chat'}
+          {pick && page.data?.who && <small className="f-dock-who"> · {page.data.who}</small>}
+        </h2>
+        <Button variant="subtle" size="compact-md" aria-label="Close chat" onClick={close}>
+          <IconX size={18} />
+        </Button>
+      </div>
+      <div className="f-dock-body">{body}</div>
     </div>
   )
 }

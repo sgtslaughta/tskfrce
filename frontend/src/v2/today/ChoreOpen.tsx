@@ -111,7 +111,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
 
         {run.photos.length > 0 && (
           <div className="pt-photos">
-            {run.photos.map((p) => (
+            {run.photos.map((p, i) => (
               <span key={p.id} className="pt-photo">
                 <AuthImg path={p.thumb_url} alt={`Photo for ${chore.title}`} />
                 <button
@@ -119,7 +119,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
                   className="pt-rp"
                   aria-label="Reply on photo"
                   title="Reply on photo"
-                  onClick={() => openChat('chore', ref, { label: 'Photo' })}
+                  onClick={() => openChat('chore', ref, { proof_photo_id: p.id, label: `Photo ${i + 1}` })}
                 >
                   <Icon name="chat_bubble" size={14} />
                 </button>

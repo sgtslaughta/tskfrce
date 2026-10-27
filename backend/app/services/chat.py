@@ -7,6 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models.chat import ChatPhoto, MessageReaction, Thread, ThreadMessage, ThreadRead
+from app.models.chore_extra import ChorePhoto
 from app.models.chores import Chore, ChoreAssignment, ChoreRun
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
@@ -84,6 +85,7 @@ def post(
     kind: str = "user",
     note_label: str | None = None,
     step_id: int | None = None,
+    proof_photo_id: int | None = None,
 ) -> ThreadMessage:
     """Add a message. Flushes, never commits. A parent's chore-thread message clears the note."""
     m = ThreadMessage(
@@ -94,6 +96,7 @@ def post(
         photo_id=photo_id,
         note_label=note_label,
         step_id=step_id,
+        proof_photo_id=proof_photo_id,
     )
     db.add(m)
     if author and author.role == UserRole.PARENT and thread.kind == "chore":
@@ -131,6 +134,25 @@ def step_ok(db: Session, thread: Thread, step_id: int) -> bool:
     """A step of the chore this chore thread is about."""
     run = db.get(ChoreRun, thread.run_id) if thread.kind == "chore" else None
     return run is not None and any(s.id == step_id for s in chore_of(run).steps)
+
+
+def proof_ok(db: Session, thread: Thread, photo_id: int) -> bool:
+    """A proof photo of the run this chore thread is about."""
+    return (
+        thread.kind == "chore"
+        and db.query(ChorePhoto.id)
+        .filter(ChorePhoto.id == photo_id, ChorePhoto.run_id == thread.run_id)
+        .first()
+        is not None
+    )
+
+
+def proof_numbers(db: Session, thread: Thread) -> dict[int, int]:
+    """Proof photo id -> 1-based "Photo N" within the run, oldest first."""
+    if thread.kind != "chore":
+        return {}
+    ids = db.query(ChorePhoto.id).filter(ChorePhoto.run_id == thread.run_id).order_by(ChorePhoto.id)
+    return {pid: n for n, (pid,) in enumerate(ids, 1)}
 
 
 def photo_ok(db: Session, thread: Thread, photo_id: int) -> bool:

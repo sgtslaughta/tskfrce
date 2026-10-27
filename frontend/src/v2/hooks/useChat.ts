@@ -36,6 +36,8 @@ export interface ChatMessage {
   /** chore threads: the step this answers */
   step_id?: number | null
   step_title?: string | null
+  /** chore threads: "Photo N" (1-based among the run's photos) this answers */
+  proof_photo_n?: number | null
   /** a kid's ready-made note ("Out of supplies") */
   note_label?: string | null
   reactions?: Reaction[]
@@ -122,10 +124,10 @@ export const useUploadChatPhoto = (kid = false) =>
 export const usePost = (kid = false) => {
   const refresh = useRefresh(kid)
   return useMutation({
-    mutationFn: ({ threadId, body, photoId, stepId }: { threadId: number; body?: string; photoId?: number; stepId?: number }) =>
+    mutationFn: ({ threadId, body, photoId, stepId, proofPhotoId }: { threadId: number; body?: string; photoId?: number; stepId?: number; proofPhotoId?: number }) =>
       api<ChatMessage>(`/chat/threads/${Number(threadId)}/messages`, {
         method: 'POST',
-        body: { body: body || null, photo_id: photoId ?? null, ...(stepId ? { step_id: stepId } : {}) },
+        body: { body: body || null, photo_id: photoId ?? null, ...(stepId ? { step_id: stepId } : {}), ...(proofPhotoId ? { proof_photo_id: proofPhotoId } : {}) },
         kid,
       }),
     onSuccess: refresh,

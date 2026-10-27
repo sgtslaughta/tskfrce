@@ -86,7 +86,7 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
         {!d.locked && !introComplete && !preview && <KidIntroSwipe onComplete={() => setIntroComplete(true)} />}
       </KidApp>
       {!preview && <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />}
-      {!preview && d.age_group !== 'little' && <ChatDock kid launcher={false} meId={kidId ?? null} />}
+      {!preview && d.age_group !== 'little' && <ChatDock kid meId={kidId ?? null} />}
     </>
   )
 }
