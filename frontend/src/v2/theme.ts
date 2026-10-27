@@ -39,10 +39,15 @@ export const fridgeTheme: MantineThemeOverride = createTheme({
     Select: { classNames: { dropdown: 'p-pop', option: 'p-pop-item' } },
     MultiSelect: { classNames: { dropdown: 'p-pop', option: 'p-pop-item' } },
     Tooltip: { classNames: { tooltip: 'f-tip' } },
+    Notification: { defaultProps: { closeButtonProps: { 'aria-label': 'Dismiss' } } },
     Drawer: {
+      // unlabeled ✕ is an axe critical; the dialog <header> is a second banner landmark at 390 (axe)
+      defaultProps: { closeButtonProps: { 'aria-label': 'Close' }, attributes: { header: { role: 'presentation' } } },
       classNames: { content: 'f-sheet', header: 'f-sheet-head', title: 'f-sheet-title', close: 'f-sheet-close', body: 'f-sheet-body', overlay: 'f-overlay' },
     },
     Modal: {
+      // unlabeled ✕ is an axe critical; the dialog <header> is a second banner landmark at 390 (axe)
+      defaultProps: { closeButtonProps: { 'aria-label': 'Close' }, attributes: { header: { role: 'presentation' } } },
       classNames: { content: 'f-sheet', header: 'f-sheet-head', title: 'f-sheet-title', close: 'f-sheet-close', body: 'f-sheet-body', overlay: 'f-overlay' },
     },
   },

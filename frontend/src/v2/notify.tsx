@@ -19,6 +19,7 @@ function NotificationContent({
       <span>{message}</span>
       {onAction && (
         <button
+          className="p-toast-act"
           onClick={onAction}
           style={{
             marginLeft: 'auto',

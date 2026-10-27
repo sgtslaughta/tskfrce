@@ -172,10 +172,16 @@
   color: var(--p-ink);
 }
 
+/* mockup 02 .tabs .on: solid ink pill, card text */
 [data-look='parent'] .p-segmented-button[data-active='true'] {
+  background: var(--p-ink);
+  color: var(--p-card);
+}
+/* form choices (mockup .seg3 .on): raised card */
+[data-look='parent'] .pk-seg .p-segmented-button[data-active='true'] {
   background: var(--p-card);
   color: var(--p-ink);
-  box-shadow: inset 0 0 0 1.5px var(--p-ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 
 [data-look='parent'] .p-banner[data-tone='red'] {
@@ -183,3 +189,11 @@
   border-color: color-mix(in srgb, var(--p-red) 30%, transparent);
 }
 [data-look='parent'] .p-banner[data-tone='red'] :is(.p-banner-title, .p-banner-title .ms, .p-banner-body) { color: var(--p-red); }
+[data-look='parent'] .p-banner-acts { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+[data-look='parent'] .p-banner-x {
+  display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px;
+  background: transparent; color: inherit; cursor: pointer;
+}
+[data-look='parent'] .p-banner-x:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+[data-look='parent'] .p-banner[data-tone='red'] .p-banner-x { color: var(--p-red); }
+[data-look='parent'] .p-banner-acts .p-btn { padding: 5px 10px; font-size: 12px; min-height: 0; }

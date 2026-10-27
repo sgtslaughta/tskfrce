@@ -243,11 +243,6 @@ html[data-look='parent'] .pn-addr .f-input.f-input { font: 12.5px ui-monospace, 
 [data-look='parent'] .rw-dot { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; background: var(--p-soft); box-shadow: inset 0 0 0 1px var(--p-line); color: var(--p-sub); font-size: 9px; font-weight: 700; }
 [data-look='parent'] .rw-dot[data-ok] { background: var(--p-acc); box-shadow: none; color: #292928; }
 
-/* mockup 02 switch: ink track with an accent knob when on, line track when off */
-[data-look='parent'] .rw-sw button { background: var(--p-line); border-color: var(--p-line); }
-[data-look='parent'] .rw-sw button::after { background: var(--p-card); }
-[data-look='parent'] .rw-sw button[aria-checked='true'] { background: var(--p-ink); border-color: var(--p-ink); }
-[data-look='parent'] .rw-sw button[aria-checked='true']::after { background: var(--p-acc); }
 [data-look='parent'] .rw-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 [data-look='parent'] .rw-icons .p-glyph-grid { grid-template-columns: repeat(10, 1fr); }
 @media (max-width: 767px) {

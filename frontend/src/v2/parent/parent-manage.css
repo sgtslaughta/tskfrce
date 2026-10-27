@@ -149,14 +149,16 @@
 [data-look='parent'] .pk-input:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 1px; }
 
 [data-look='parent'] .pk-switch { display: flex; align-items: center; justify-content: space-between; padding-top: 12px; border-top: 1px solid var(--p-line); font-size: 13.5px; color: var(--p-ink); }
+/* mockup 02 .sw: 38x22 line track + card knob; on = ink track + accent knob (one switch app-wide) */
 [data-look='parent'] .pk-switch button {
   position: relative;
-  width: 40px;
-  height: 24px;
+  flex: none;
+  width: 38px;
+  height: 22px;
   padding: 0;
-  border: 1.5px solid var(--p-sub);
-  border-radius: 999px;
-  background: var(--p-soft);
+  border: 0;
+  border-radius: 11px;
+  background: var(--p-line);
   cursor: pointer;
 }
 [data-look='parent'] .pk-switch button::after {
@@ -164,14 +166,14 @@
   position: absolute;
   top: 3px;
   left: 3px;
-  width: 15px;
-  height: 15px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: var(--p-sub);
+  background: var(--p-card);
   transition: transform var(--dur-1) var(--ease-out);
 }
-[data-look='parent'] .pk-switch button[aria-checked='true'] { background: var(--p-acc); border-color: var(--p-acc); }
-[data-look='parent'] .pk-switch button[aria-checked='true']::after { background: #292928; transform: translateX(16px); }
+[data-look='parent'] .pk-switch button[aria-checked='true'] { background: var(--p-ink); }
+[data-look='parent'] .pk-switch button[aria-checked='true']::after { background: var(--p-acc); transform: translateX(16px); }
 [data-look='parent'] .pk-switch button:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
 
 /* steps */

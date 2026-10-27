@@ -52,7 +52,7 @@
 /* toasts sit bottom-centre so neither they nor the floating chat button cover each other;
    on phones they clear the tab bar */
 @media (max-width: 767px) {
-  .mantine-Notifications-root[data-position='bottom-center'] { bottom: calc(76px + env(safe-area-inset-bottom)); }
+  .mantine-Notifications-root[data-position='bottom-center'] { bottom: calc(76px + env(safe-area-inset-bottom)) !important; }
 }
 
 /* Needs you list styling */
@@ -72,3 +72,20 @@
 [data-look='parent'] .p-needs-actions { display: flex; flex-wrap: wrap; gap: 6px; }
 [data-look='parent'] .p-needs-actions .p-btn { padding: 7px 10px; }
 
+
+/* §2.4 toasts on parent screens: inverse surface, accent action link; errors solid red, white text */
+html[data-look='parent'] .mantine-Notification-root {
+  background: var(--p-tbg);
+  border: 1px solid var(--p-tbg);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+  font-family: var(--font-parent), 'DM Sans', system-ui, sans-serif;
+}
+html[data-look='parent'] .mantine-Notification-root::before { display: none; }
+html[data-look='parent'] :is(.mantine-Notification-title, .mantine-Notification-description) { color: var(--p-tfg) !important; }
+html[data-look='parent'] .mantine-Notification-description { font-weight: 600; }
+html[data-look='parent'] .mantine-Notification-closeButton { color: var(--p-tfg); }
+html[data-look='parent'] .mantine-Notification-closeButton:hover { background: color-mix(in srgb, var(--p-tfg) 12%, transparent); }
+html[data-look='parent'] .mantine-Notification-root .p-toast-act { color: var(--p-tact) !important; text-transform: uppercase; letter-spacing: 0.04em; }
+html[data-look='parent'] .mantine-Notification-root[style*='fridgeRed'] { background: #8f1d13; border-color: #8f1d13; }
+html[data-look='parent'] .mantine-Notification-root[style*='fridgeRed'] :is(.mantine-Notification-title, .mantine-Notification-description, .mantine-Notification-closeButton) { color: #fff !important; }

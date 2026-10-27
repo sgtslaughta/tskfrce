@@ -168,7 +168,7 @@ function AppContent({ Component, pageProps }: { Component: any; pageProps: any }
       >
         <Head><title>t@sk4ce</title></Head>
         <FaviconManager />
-        <Notifications position="top-center" />
+        <Notifications position="bottom-center" />
         <UnifiedAuthProvider>
           <Component {...pageProps} />
         </UnifiedAuthProvider>
