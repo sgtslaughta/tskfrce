@@ -181,6 +181,8 @@ def test_today_category_lowest_rank_of_everyone_allowed():
     ]
     assert hours.today_category(rules, D) == "weekend"
     assert hours.today_category([], D) is None
+    only_kid = [rule(5, category="school_night", kids=[1])]
+    assert hours.today_category(only_kid, D) == "school_night"  # no Everyone rules: use the kid's
 
 
 MON = date(2026, 12, 21)

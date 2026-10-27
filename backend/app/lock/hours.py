@@ -175,5 +175,7 @@ def locks_at(allowed_sets, off, now_local: datetime) -> datetime | None:
 
 
 def today_category(rules, d: date) -> str | None:
-    cats = [r.category for r in rules if r.everyone and r.kind == "allowed" and active_on(r, d)]
+    """Kind of day from Everyone's allowed rules; falls back to per-kid/group rules when none."""
+    live = [r for r in rules if r.kind == "allowed" and active_on(r, d)]
+    cats = [r.category for r in live if r.everyone] or [r.category for r in live]
     return min(cats, key=CATEGORY_RANK.__getitem__) if cats else None

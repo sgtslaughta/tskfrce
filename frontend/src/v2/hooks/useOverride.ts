@@ -27,6 +27,7 @@ export function useOverride() {
       toastOk(TOAST[choice.action])
       qc.invalidateQueries({ queryKey: ['today'] })
       qc.invalidateQueries({ queryKey: ['devices'] })
+      qc.invalidateQueries({ queryKey: ['device-activity'] }) // lock history
     },
     onError: toastFail,
   })

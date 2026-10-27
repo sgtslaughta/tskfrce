@@ -16,7 +16,16 @@ function useFreshness(): F {
         return old.updating === n.updating && old.failed === n.failed && old.since === n.since ? old : n
       })
     sync()
-    return qc.getQueryCache().subscribe(sync)
+    // cache events fire while other components render (new observers); defer so we never setState mid-render
+    let t: ReturnType<typeof setTimeout> | undefined
+    const unsub = qc.getQueryCache().subscribe(() => {
+      clearTimeout(t)
+      t = setTimeout(sync, 0)
+    })
+    return () => {
+      clearTimeout(t)
+      unsub()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qc])
   return f

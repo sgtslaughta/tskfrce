@@ -50,7 +50,7 @@ export function GroupDetail({ group, devices, kids, groups, rules, onSelect, onR
   const choreLock = group?.chore_lock ?? draft.chore_lock ?? true
   const ids = group ? group.device_ids : draftIds
   const members = devices.filter((d) => ids.includes(d.id))
-  const locked = members.filter((d) => d.override?.action === 'lock').length
+  const locked = members.filter((d) => !d.online && d.status !== 'guest' && !d.exempt).length
   const memberOwners = members.flatMap((d) => d.owner_ids)
   const owners = kids.filter((k) => memberOwners.includes(k.id)).map(nameOf).join(', ')
 

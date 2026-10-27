@@ -73,10 +73,12 @@ describe('Freshness line', () => {
     const query = observe(qc, 'today', () => new Promise((r) => (release = r)))
     query.setData({ ok: 1 })
     act(() => void query.fetch())
+    act(() => void jest.advanceTimersByTime(1)) // cache events are applied on the next tick
     expect(screen.queryByRole('status')).toBeNull() // quick polls don't flash
     act(() => void jest.advanceTimersByTime(800))
     expect(screen.getByRole('status')).toHaveTextContent(/Updating… last updated/)
     await act(async () => release({ ok: 2 }))
+    act(() => void jest.advanceTimersByTime(1))
     expect(screen.queryByRole('status')).toBeNull()
   })
 

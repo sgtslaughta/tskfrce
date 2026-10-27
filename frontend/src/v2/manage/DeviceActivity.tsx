@@ -59,7 +59,7 @@ export function DeviceActivity({ device, kids, timeZone }: Props) {
   const ev = (e: DeviceEvent) => ({ deviceId: device.id, eventId: e.id })
 
   const actions = (e: DeviceEvent) => {
-    if (e.kind === 'new_address' && e.reviewed) return null // already answered
+    if (e.reviewed) return null // already answered
     if (e.kind === 'new_address')
       return (
         <>

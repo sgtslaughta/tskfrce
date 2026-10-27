@@ -94,13 +94,13 @@ test.describe('every screen', () => {
     await page.screenshot({ path: `${SHOTS}/${info.project.name}/account.png` })
   })
 
-  test('chat dock open', async ({ page }, info) => {
-    test.skip(info.project.name.startsWith('phone'), 'phones use the Chat tab, not the floating dock')
+  // v3 owner decision: no floating chat button; chat lives in the rail and the phone tab bar
+  test('no floating chat button', async ({ page }) => {
     await loginUi(page)
     await page.goto('/')
-    await page.getByRole('button', { name: /^Chat(,| *$)/ }).click()
-    await page.waitForTimeout(600)
-    await page.screenshot({ path: `${SHOTS}/${info.project.name}/chat-dock.png` })
+    await page.waitForLoadState('networkidle')
+    await expect(page.getByRole('button', { name: /^Chat(,| *$)/ })).toHaveCount(0)
+    await expect(page.getByRole('link', { name: /^Chat/ }).first()).toBeVisible()
   })
 
   test('setup wizard', async ({ page }, info) => {

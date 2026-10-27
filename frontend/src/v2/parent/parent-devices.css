@@ -272,7 +272,8 @@
 [data-look='parent'] .da-list { list-style: none; margin: 0; padding: 0; }
 [data-look='parent'] .da-al { position: relative; display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-top: 1px solid var(--p-line); }
 [data-look='parent'] .da-al:first-child { border-top: 0; }
-[data-look='parent'] .da-al[data-reviewed] { opacity: 0.6; }
+[data-look='parent'] .da-al[data-reviewed] .da-t { color: var(--p-sub); font-weight: 500; }
+[data-look='parent'] .da-al[data-reviewed] .da-sev { background: var(--p-soft); color: var(--p-sub); }
 [data-look='parent'] .da-sev { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 11px; }
 [data-look='parent'] .da-sev[data-sev='hi'] { background: var(--p-redbg); color: var(--p-red); }
 [data-look='parent'] .da-sev[data-sev='md'] { background: var(--p-amb); color: var(--p-ambink); }
