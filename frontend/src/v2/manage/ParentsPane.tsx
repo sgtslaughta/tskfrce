@@ -3,6 +3,7 @@ import { CopyButton, TextInput } from '@mantine/core'
 import { useCancelInvite, useInvite, useInvites, useParents, useResetLink } from '@/v2/hooks/useFamily'
 import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import { Icon } from '@/v2/parent/Icon'
+import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { toastFail } from '../notify'
 import { PaneCard, PaneHead } from './PaneParts'
 import { lastActive } from './settingsMeta'
@@ -28,8 +29,7 @@ function LinkRow({ label, url, note }: { label: string; url: string; note: strin
   )
 }
 
-function InviteCard({ onDone }: { onDone: () => void }) {
-  const invite = useInvite()
+function InviteCard({ invite, onDone }: { invite: ReturnType<typeof useInvite>; onDone: () => void }) {
   const once = useSingleFlight()
   const [username, setUsername] = useState('')
   const name = username.trim()
@@ -63,6 +63,7 @@ export function ParentsPane() {
   const parents = useParents()
   const invites = useInvites()
   const cancel = useCancelInvite()
+  const invite = useInvite()
   const reset = useResetLink()
   const [inviting, setInviting] = useState(false)
   const [shown, setShown] = useState<{ name: string; url: string } | null>(null)
@@ -74,61 +75,70 @@ export function ParentsPane() {
           Invite a parent
         </button>
       </PaneHead>
-      <section className="pn-card" aria-label="Parents">
-        {parents.data?.map((p) => {
-          const name = p.full_name || p.username
-          return (
-            <div key={p.id} className="pn-par">
-              <div className="pn-av" aria-hidden="true">{name.charAt(0).toUpperCase()}</div>
-              <div className="pn-t2">
-                {name}
-                {p.is_me && ' (you)'}
-                <small>{lastActive(p.last_active_at)}</small>
+      {parents.isPending && <Skeleton rows={2} />}
+      {parents.isError && <ErrorPanel kind="unreachable" error={parents.error} onRetry={() => parents.refetch()} />}
+      {parents.data && (
+        <section className="pn-card" aria-label="Parents">
+          {parents.data.map((p) => {
+            const name = p.full_name || p.username
+            return (
+              <div key={p.id} className="pn-par">
+                <div className="pn-av" aria-hidden="true">{name.charAt(0).toUpperCase()}</div>
+                <div className="pn-t2">
+                  {name}
+                  {p.is_me && ' (you)'}
+                  <small>{lastActive(p.last_active_at)}</small>
+                </div>
+                {p.is_owner && <span className="p-chip" data-tone="acc">Owner</span>}
+                {!p.is_me && (
+                  <button
+                    type="button"
+                    className="p-btn"
+                    disabled={reset.isPending && reset.variables === p.id}
+                    onClick={() =>
+                      reset.mutate(p.id, { onSuccess: (r) => setShown({ name, url: r.url }), onError: toastFail })
+                    }
+                  >
+                    <Icon name="key" size={17} />
+                    Reset link
+                  </button>
+                )}
               </div>
-              {p.is_owner && <span className="p-chip" data-tone="acc">Owner</span>}
-              {!p.is_me && (
-                <button
-                  type="button"
-                  className="p-btn"
-                  disabled={reset.isPending && reset.variables === p.id}
-                  onClick={() =>
-                    reset.mutate(p.id, { onSuccess: (r) => setShown({ name, url: r.url }), onError: toastFail })
-                  }
-                >
-                  <Icon name="key" size={17} />
-                  Reset link
-                </button>
-              )}
+            )
+          })}
+          {!!invites.data?.length && <div className="pn-cap">Pending invites</div>}
+          {invites.data?.map((i) => (
+            <div key={i.jti} className="pn-par">
+              <div className="pn-av pn-av-soft" aria-hidden="true">{i.username.charAt(0).toUpperCase()}</div>
+              <div className="pn-t2">
+                {i.username}
+                <small>Invite sent · expires in {left(i.expires_in)}</small>
+              </div>
+              <button
+                type="button"
+                className="p-btn"
+                data-variant="red"
+                aria-label={`Cancel invite for ${i.username}`}
+                disabled={cancel.isPending && cancel.variables === i.jti}
+                onClick={() =>
+                  cancel.mutate(i.jti, {
+                    onSuccess: () => invite.variables === i.username && invite.reset(), // the link just sent is dead too
+                    onError: toastFail,
+                  })
+                }
+              >
+                Cancel
+              </button>
             </div>
-          )
-        })}
-        {!!invites.data?.length && <div className="pn-cap">Pending invites</div>}
-        {invites.data?.map((i) => (
-          <div key={i.jti} className="pn-par">
-            <div className="pn-av pn-av-soft" aria-hidden="true">{i.username.charAt(0).toUpperCase()}</div>
-            <div className="pn-t2">
-              {i.username}
-              <small>Invite sent · expires in {left(i.expires_in)}</small>
-            </div>
-            <button
-              type="button"
-              className="p-btn"
-              data-variant="red"
-              aria-label={`Cancel invite for ${i.username}`}
-              disabled={cancel.isPending && cancel.variables === i.jti}
-              onClick={() => cancel.mutate(i.jti, { onError: toastFail })}
-            >
-              Cancel
-            </button>
-          </div>
-        ))}
-      </section>
+          ))}
+        </section>
+      )}
       {shown && (
         <PaneCard icon="key" title={`Reset link for ${shown.name}`}>
           <LinkRow label="Reset link" url={shown.url} note={`Send this to ${shown.name}. It works once, for 30 minutes.`} />
         </PaneCard>
       )}
-      {inviting && <InviteCard onDone={() => setInviting(false)} />}
+      {inviting && <InviteCard invite={invite} onDone={() => setInviting(false)} />}
       <p className="pn-help">Every parent can approve chores, lock devices and change settings. Invite links last 24 hours; reset links 30 minutes.</p>
     </div>
   )

@@ -75,3 +75,32 @@ describe('ParentsPane', () => {
     expect(screen.getByRole('button', { name: 'Create invite link' })).toBeDisabled()
   })
 })
+
+describe('ParentsPane states and cancel', () => {
+  test('error shows a retry panel, not an empty card', async () => {
+    apiMock.mockRejectedValue(new Error('down'))
+    wrap()
+    expect(await screen.findByRole('button', { name: /Try again/ })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Parents' })).toBeNull()
+  })
+
+  test('cancelling the invite just made clears its link and re-enables Create', async () => {
+    let invites: unknown[] = []
+    serve([])
+    const base = apiMock.getMockImplementation()!
+    apiMock.mockImplementation(async (p, i) => {
+      if (p === '/users/invites' && !i) return invites
+      if (p === '/users/invite') { invites = [{ jti: 'j9', username: 'grandma', expires_in: 86400 }]; return { token: 'tok', expires_in: 86400 } }
+      if (p === '/users/invites/j9') { invites = []; return undefined }
+      return base(p, i)
+    })
+    wrap()
+    await userEvent.click(await screen.findByRole('button', { name: 'Invite a parent' }))
+    await userEvent.type(screen.getByLabelText('Their username'), 'grandma')
+    await userEvent.click(screen.getByRole('button', { name: 'Create invite link' }))
+    await screen.findByLabelText('Invite link')
+    await userEvent.click(await screen.findByRole('button', { name: 'Cancel invite for grandma' }))
+    await waitFor(() => expect(screen.queryByLabelText('Invite link')).toBeNull())
+    expect(screen.getByRole('button', { name: 'Create invite link' })).toBeEnabled()
+  })
+})
