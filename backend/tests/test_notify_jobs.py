@@ -69,6 +69,20 @@ def test_overdue_fires_once_in_window(db, pings, parent, kid):
     assert len(pings) == 1
 
 
+def test_cancelled_run_not_overdue_or_in_summary(db, pings, parent, kid):
+    _place(db, events=tuple(notify.EVENTS))
+    gone = make_run(db, parent, kid, day=svc.today(db), due_time="17:00", status="cancelled")
+    make_run(db, parent, kid, day=svc.today(db), title="Kept")
+    assert gone.status == "cancelled"
+    notify_jobs.overdue(db, at(db, "16:59"))
+    notify_jobs.overdue(db, at(db, "17:01"))
+    db.commit()
+    assert pings == []
+    notify_jobs.daily_summary(db, at(db, "19:00"))
+    db.commit()
+    assert "0 of 1 done" in pings[0][2]
+
+
 def test_box_offline_once_and_resets(db, pings, parent):
     _place(db, events=tuple(notify.EVENTS))
     fam, now = get_family(db), at(db, "12:00")

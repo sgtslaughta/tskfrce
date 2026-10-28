@@ -6,7 +6,6 @@ from zoneinfo import ZoneInfo
 from sqlalchemy.orm import Session
 
 from app.core.logging import get_logger
-from app.models.chores import ChoreRun
 from app.models.family import get_family
 from app.models.lock import Device
 from app.models.notify import NotifyHeld, NotifyPlace
@@ -78,8 +77,7 @@ def overdue(db: Session, now_utc: datetime) -> None:
     if prev is None or now - prev > SCAN_GAP:
         return
     tz = ZoneInfo(fam.timezone)
-    runs = db.query(ChoreRun).filter(ChoreRun.day == svc.today(db, now_utc)).all()
-    for r in runs:
+    for r in svc.day_runs(db, svc.today(db, now_utc)).all():
         if svc.state(r) != "todo":
             continue
         due = svc.due_at(r, fam)
@@ -129,11 +127,9 @@ def daily_summary(db: Session, now_utc: datetime) -> None:
         return  # backend was down at summary time: too stale to send
     stats: dict[int, list[int]] = {}  # kid id -> [done, total]
     needs = 0
-    for r in db.query(ChoreRun).filter(ChoreRun.day == svc.today(db, now_utc)):
+    for r in svc.day_runs(db, svc.today(db, now_utc)):
         st = svc.state(r)
         needs += st == "needs_you"
-        if st == "skipped":
-            continue
         for kid_id in svc.run_kid_ids(r):
             s = stats.setdefault(kid_id, [0, 0])
             s[0] += st == "done"
