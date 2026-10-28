@@ -19,7 +19,7 @@ class TestHealthEndpoints:
         assert "status" in data
         assert data["status"] == "healthy"
         assert "timestamp" in data
-        assert "version" in data
+        assert data["version"] == "2.0.0"
 
     def test_health_services(self, client):
         """Test the health endpoint includes service status."""

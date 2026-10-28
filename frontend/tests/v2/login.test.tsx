@@ -121,7 +121,7 @@ describe('LoginForm', () => {
 
 describe('footer', () => {
   test('shows version and box address', () => {
-    expect(footerText('chores.local', '0.1.0')).toBe('t@sk4ce v0.1.0 · chores.local')
+    expect(footerText('chores.local', '2.0.0')).toBe('t@sk4ce v2.0.0 · chores.local')
     expect(footerText('', undefined)).toBe('t@sk4ce')
   })
 })

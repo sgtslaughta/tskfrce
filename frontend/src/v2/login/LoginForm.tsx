@@ -21,7 +21,7 @@ export const safeNext = (next: unknown): string => {
   }
 }
 
-/** "t@sk4ce v0.1.0 · box address" (mockup 06 footer). */
+/** "t@sk4ce v2.0.0 · box address" (mockup 06 footer). */
 export const footerText = (host: string, version = process.env.NEXT_PUBLIC_APP_VERSION) =>
   `t@sk4ce${version ? ` v${version}` : ''}${host ? ` · ${host}` : ''}`
 

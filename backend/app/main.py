@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import OperationalError
 
 # Import API routers
+from app import __version__
 from app.api import (
     auth_router,
     users_router,
@@ -62,7 +63,7 @@ logger = get_logger(__name__)
 fastapi_app = FastAPI(
     title="TaaskMaaster API",
     description="A comprehensive task management system for families",
-    version="0.1.0",
+    version=__version__,
     docs_url="/docs",
     redoc_url="/redoc",
     openapi_url="/openapi.json",
@@ -179,7 +180,7 @@ async def root() -> dict[str, Any]:
     """
     return {
         "message": "Welcome to TaaskMaaster API",
-        "version": "0.1.0",
+        "version": __version__,
         "status": "running",
         "docs": "/docs",
         "health": "/health",

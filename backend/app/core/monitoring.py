@@ -10,6 +10,8 @@ from typing import Any
 
 from prometheus_client import Counter, Gauge, Histogram, generate_latest
 
+from app import __version__
+
 # Prometheus metrics
 REQUEST_COUNT = Counter(
     "http_requests_total",
@@ -122,7 +124,7 @@ def get_health_status() -> dict[str, Any]:
     return {
         "status": overall_health,
         "timestamp": time.time(),
-        "version": "0.1.0",
+        "version": __version__,
         "services": {
             "database": database_health,
         },
