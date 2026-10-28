@@ -4,9 +4,12 @@ describe('pending chat request', () => {
   afterEach(() => jest.restoreAllMocks())
 
   test('claim after openChat gets the request (with its reply) once', () => {
+    const now = jest.spyOn(Date, 'now').mockReturnValue(1_000)
     openChat('chore', '7', { label: 'Step 1' })
     const fn = jest.fn()
-    claimChat('chore', '7', fn)()
+    const release = claimChat('chore', '7', fn)
+    now.mockReturnValue(9_000) // released long after: nothing to hand back
+    release()
     expect(fn).toHaveBeenCalledWith({ label: 'Step 1' })
     const again = jest.fn()
     claimChat('chore', '7', again)()
@@ -28,5 +31,15 @@ describe('pending chat request', () => {
     const fn = jest.fn()
     claimChat('chore', '10', fn)()
     expect(fn).not.toHaveBeenCalled()
+  })
+
+  test('a claim dropped right after taking the request hands it to the next claim', () => {
+    const now = jest.spyOn(Date, 'now').mockReturnValue(1_000)
+    openChat('chore', '11', { label: 'Reply' })
+    claimChat('chore', '11', jest.fn())() // Today mounted the row, then re-rendered it away
+    now.mockReturnValue(1_500)
+    const next = jest.fn()
+    claimChat('chore', '11', next)
+    expect(next).toHaveBeenCalledWith({ label: 'Reply' })
   })
 })
