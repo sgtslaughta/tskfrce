@@ -265,8 +265,13 @@ def test_award_note_and_recent(client, db, parent, kid, parent_headers, kid_head
     )
     built = next(x for x in rec if not x["custom"])
     assert built["by_name"] is None and built["key"] == "first_blood"
-    assert built["reason"] == "Get a chore approved" and cust["reason"] is None
+    assert built["reason"] == "Got a chore approved" and cust["reason"] is None
     assert badge_feed._reason(bd.CATALOG["on_fire"], 1) == "7 days in a row, all chores done"
+    assert badge_feed._reason(bd.CATALOG["big_spender"], 1) == "1 request approved"
+    assert badge_feed._reason(bd.CATALOG["big_spender"], 2) == "5 requests approved"
+    assert badge_feed._reason(bd.CATALOG["speedrunner"], 1) == "1 chore done within 15 minutes"
+    assert badge_feed._reason(bd.CATALOG["time_lord"], 1) == "10 screen-time requests approved"
+    assert set(badge_feed._REASONS) == set(bd.CATALOG)
     assert cust["earned_at"].endswith("Z")
     assert [x["earned_at"] for x in rec] == sorted((x["earned_at"] for x in rec), reverse=True)
     old = db.query(BadgeAward).filter_by(custom_badge_id=bid).one()

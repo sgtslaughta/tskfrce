@@ -44,11 +44,45 @@ def overview(db: Session) -> list[dict]:
     return rows
 
 
+# key -> (one, many) templates; {n} is the tier threshold. One-tier badges are plain text.
+_REASONS = {
+    "first_blood": "Got a chore approved",
+    "drip": "Equipped flair from the Locker",
+    "task_master": ("{n} chore approved", "{n} chores approved"),
+    "workhorse": ("{n} chore approved in one week", "{n} chores approved in one week"),
+    "on_fire": ("{n} day in a row, all chores done", "{n} days in a row, all chores done"),
+    "comeback_kid": ("{n} 7-day streak after a slip", "{n} 7-day streaks after a slip"),
+    "weekend_warrior": (
+        "{n} weekend in a row, all done",
+        "{n} weekends in a row, all done",
+    ),
+    "variety_pack": ("{n} different chore approved", "{n} different chores approved"),
+    "early_bird": ("{n} chore done an hour early", "{n} chores done an hour early"),
+    "speedrunner": ("{n} chore done within 15 minutes", "{n} chores done within 15 minutes"),
+    "clutch": (
+        "{n} chore done in the last 10 minutes",
+        "{n} chores done in the last 10 minutes",
+    ),
+    "never_late": (
+        "{n} deadline chore in a row, on time",
+        "{n} deadline chores in a row, on time",
+    ),
+    "stacking": ("{n} XP earned", "{n} XP earned"),
+    "saver": ("{n} point saved up", "{n} points saved up"),
+    "big_spender": ("{n} request approved", "{n} requests approved"),
+    "goal_getter": ("{n} reward earned", "{n} rewards earned"),
+    "patience_pays": ("{n} big reward (2000+ points)", "{n} big rewards (2000+ points)"),
+    "time_lord": ("{n} screen-time request approved", "{n} screen-time requests approved"),
+}
+
+
 def _reason(b, tier: int) -> str:
-    """Why a built-in tier was earned, from the catalog: "7 days in a row, all chores done"."""
-    if len(b.thresholds) == 1:
-        return b.description.rstrip(".")
-    return f"{b.thresholds[tier - 1]} {b.description[0].lower()}{b.description[1:].rstrip('.')}"
+    """Why a built-in tier was earned: "7 days in a row, all chores done", "1 request approved"."""
+    t = _REASONS[b.key]
+    if isinstance(t, str):
+        return t
+    n = b.thresholds[tier - 1]
+    return t[n != 1].format(n=n)
 
 
 def recent(db: Session, days: int = 7) -> list[dict]:
