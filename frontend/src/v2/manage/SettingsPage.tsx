@@ -11,22 +11,14 @@ import { HoursSection } from './HoursSection'
 import { ParentsPane } from './ParentsPane'
 import { PaneHead } from './PaneParts'
 import { useSettingsLines } from './useSettingsLines'
-import { SettingsList, type SettingsSection } from './SettingsList'
+import { SettingsList } from './SettingsList'
+import { SETTINGS_SECTIONS, type S } from './settingsSections'
 import { KidPushPane } from './KidPushPane'
 import { AppearancePane } from './AppearancePane'
 import { NotificationsPane } from './NotificationsPane'
 import { accentHex } from '@/v2/parent/accent'
 import { toastFail, toastOk } from '@/v2/notify'
 
-type S = 'family' | 'hours' | 'notifications' | 'look' | 'gifs' | 'parents'
-const SETTINGS_SECTIONS: SettingsSection<S>[] = [
-  { id: 'family', label: 'Family', description: 'Name, time zone, points rules', icon: 'home' },
-  { id: 'hours', label: 'Hours', description: 'School nights, weekends', icon: 'schedule' },
-  { id: 'notifications', label: 'Notifications', description: 'Chat app pings, quiet hours, kid phones', icon: 'notifications' },
-  { id: 'look', label: 'Appearance', description: 'Accent colour, dark mode', icon: 'palette' },
-  { id: 'gifs', label: 'GIFs', description: 'Chat GIF search', icon: 'gif_box' },
-  { id: 'parents', label: 'Parents', description: 'Invite and manage parents', icon: 'supervisor_account' },
-]
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
 

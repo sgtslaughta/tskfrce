@@ -87,7 +87,7 @@ export function ParentsPane() {
                 <div className="pn-t2">
                   {name}
                   {p.is_me && ' (you)'}
-                  <small>{lastActive(p.last_active_at)}</small>
+                  <small>{lastActive(p.is_me ? new Date().toISOString() : p.last_active_at)}</small>
                 </div>
                 {p.is_owner && <span className="p-chip" data-tone="acc">Owner</span>}
                 {!p.is_me && (

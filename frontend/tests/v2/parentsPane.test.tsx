@@ -34,6 +34,13 @@ const serve = (invites: unknown[]) =>
   })
 
 describe('ParentsPane', () => {
+  test('my own row is always "Last active now"', async () => {
+    serve([])
+    wrap()
+    const me = (await screen.findByText(/Dad/)).closest('.pn-par') as HTMLElement
+    expect(within(me).getByText('Last active now')).toBeInTheDocument()
+  })
+
   test('owner chip; reset link only for the other parent', async () => {
     serve([])
     wrap()

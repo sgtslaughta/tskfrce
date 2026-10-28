@@ -3,17 +3,9 @@ import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { HELP_URL } from '@/v2/components/AccountMenu'
 import { useFamily, useParents } from '@/v2/hooks/useFamily'
 import { useSettingsLines } from '@/v2/manage/useSettingsLines'
+import { SETTINGS_SECTIONS } from '@/v2/manage/settingsSections'
 import { useBlocker } from '@/v2/hooks/useDevices'
 import { Icon } from './Icon'
-
-const SETTINGS_SECTIONS = [
-  { id: 'family', href: '/settings?section=family', label: 'Family', sub: 'Name, time zone, points', icon: 'home' },
-  { id: 'hours', href: '/settings?section=hours', label: 'Hours', sub: 'When devices can be online', icon: 'schedule' },
-  { id: 'notifications', href: '/settings?section=notifications', label: 'Notifications', sub: 'Pings to your chat apps', icon: 'notifications' },
-  { id: 'look', href: '/settings?section=look', label: 'Appearance', sub: 'Accent colour, light or dark', icon: 'palette' },
-  { id: 'gifs', href: '/settings?section=gifs', label: 'GIFs', sub: 'GIF search in chat', icon: 'gif_box' },
-  { id: 'parents', href: '/settings?section=parents', label: 'Parents', sub: 'Invite a parent, reset links', icon: 'group' },
-]
 
 export function MorePage({ onLogout }: { onLogout: () => void }) {
   const { user } = useUnifiedAuth()
@@ -51,14 +43,14 @@ export function MorePage({ onLogout }: { onLogout: () => void }) {
         <h2 className="p-cap">Settings</h2>
         <ul className="p-more-list">
           {SETTINGS_SECTIONS.map((section) => (
-            <li key={section.href}>
-              <Link href={section.href} className="p-more-link">
+            <li key={section.id}>
+              <Link href={`/settings?section=${section.id}`} className="p-more-link">
                 <span className="p-more-ic">
                   <Icon name={section.icon} size={20} />
                 </span>
                 <span className="p-more-t">
                   {section.label}
-                  <small>{live[section.id] ?? section.sub}</small>
+                  <small>{live[section.id] ?? section.description}</small>
                 </span>
                 <Icon name="chevron_right" size={20} />
               </Link>
