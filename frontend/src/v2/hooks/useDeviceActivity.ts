@@ -26,7 +26,10 @@ export const useMarkOk = () =>
   useActivityMutation(({ deviceId, eventId }: Ev) => api(`/devices/${deviceId}/events/${eventId}/ok`, { method: 'POST' }))
 export const useMergeDevice = () =>
   useActivityMutation(({ deviceId, eventId }: Ev) => api(`/devices/${deviceId}/events/${eventId}/merge`, { method: 'POST' }))
+/** Lock all of a kid's devices, or `clear` the override (back on schedule). */
 export const useLockKid = () =>
-  useActivityMutation(({ kidId, action, minutes }: { kidId: number; action: 'lock' | 'unlock'; minutes?: number }) =>
-    api(`/kids/${kidId}/override`, { method: 'POST', body: { action, minutes } }),
+  useActivityMutation(({ kidId, action }: { kidId: number; action: 'lock' | 'clear' }) =>
+    action === 'clear'
+      ? api(`/kids/${kidId}/override`, { method: 'DELETE' })
+      : api(`/kids/${kidId}/override`, { method: 'POST', body: { action } }),
   )

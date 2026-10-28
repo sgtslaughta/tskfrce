@@ -110,14 +110,14 @@ describe('device Activity', () => {
     )
   })
 
-  test('the Locked toast offers Undo, which unlocks the kid again', async () => {
+  test('the Locked toast offers Undo, which puts the kid back on schedule', async () => {
     show()
     await userEvent.click((await screen.findAllByRole('button', { name: "Lock all Maya's devices" }))[0])
     await waitFor(() => expect(notifications.show).toHaveBeenCalled())
     const toast = render(<>{(notifications.show as Mock).mock.calls.at(-1)![0].message}</>)
     await userEvent.click(toast.getByRole('button', { name: 'Undo' }))
     await waitFor(() =>
-      expect(apiMock).toHaveBeenCalledWith('/kids/7/override', expect.objectContaining({ body: expect.objectContaining({ action: 'unlock' }) })),
+      expect(apiMock).toHaveBeenCalledWith('/kids/7/override', expect.objectContaining({ method: 'DELETE' })),
     )
   })
 
