@@ -21,6 +21,7 @@ class RedeemIn(BaseModel):
     kind: str
     reward_id: int | None = None
     minutes: int | None = None
+    device_id: int | None = None
 
 
 @router.get("/rewards")
@@ -75,7 +76,7 @@ def rewards(db: Session = Depends(get_db), kid: User = Depends(view_kid)):
 
 @router.post("/redeem")
 def redeem(body: RedeemIn, db: Session = Depends(get_db), kid: User = Depends(require_kid)):
-    r = economy.request(db, kid, body.kind, body.reward_id, body.minutes)
+    r = economy.request(db, kid, body.kind, body.reward_id, body.minutes, body.device_id)
     return {
         "id": r.id,
         "kind": r.kind,

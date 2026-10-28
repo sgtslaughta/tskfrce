@@ -44,3 +44,5 @@ class Redemption(Base):
     seen_by_kid = Column(Boolean, nullable=False, default=False)
     auto = Column(Boolean, nullable=False, default=False, server_default="0")
     note = Column(String(200), nullable=True)
+    # the device a screen-time request is about (kid's pick); gone device -> NULL
+    device_id = Column(Integer, ForeignKey("devices.id", ondelete="SET NULL"), nullable=True)

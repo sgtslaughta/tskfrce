@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.api.deps import get_db, require_parent
 from app.api.devices import device_out
-from app.api.rewards import redemption_name
+from app.api.rewards import device_name, redemption_name
 from app.lock import hours
 from app.lock.loop import trigger
 from app.lock.schedule import local_now
@@ -142,6 +142,7 @@ def _needs_you(
             "kid_id": r.kid_id,
             "kid_name": names.get(r.kid_id),
             "title": redemption_name(db, r),
+            "device_name": device_name(db, r),
             "cost": r.cost,
             "kid_balance": balances.get(r.kid_id, 0),
             "submitted_at": _iso(r.created_at),

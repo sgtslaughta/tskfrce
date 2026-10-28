@@ -314,3 +314,42 @@ def test_approve_all_kid_forbidden_and_empty(client, kid_headers, parent_headers
     url = "/api/v1/redemptions/approve-all"
     assert client.post(url, headers=kid_headers).status_code == 403
     assert client.post(url, headers=parent_headers).json() == {"approved": 0, "skipped": 0}
+
+
+def test_screen_request_names_device(client, db, parent, kid, kid_headers, parent_headers):
+    _fund(db, kid, 500)
+    get_family(db).points_unlock_early = True
+    dev = _device(db, kid)
+    db.commit()
+    body = {"kind": "screen_time", "minutes": 30, "device_id": dev.id}
+    rid = client.post(R, json=body, headers=kid_headers).json()["id"]
+    rows = client.get("/api/v1/redemptions?status=pending", headers=parent_headers).json()
+    assert rows[0]["device_id"] == dev.id and rows[0]["device_name"] == "Phone"
+    note = db.query(Notification).filter_by(redemption_id=rid).one()
+    assert "on Phone" in note.body
+    today = client.get("/api/v1/today", headers=parent_headers).json()
+    assert [i["device_name"] for i in today["needs_you"] if i["type"] == "screen_time"] == ["Phone"]
+    db.delete(dev)
+    db.commit()
+    rows = client.get("/api/v1/redemptions?status=pending", headers=parent_headers).json()
+    assert rows[0]["device_name"] is None
+
+
+def test_screen_request_device_optional_and_own(client, db, kid, kid_headers, parent_headers):
+    _fund(db, kid, 500)
+    get_family(db).points_unlock_early = True
+    _device(db, kid)
+    db.commit()
+    other = Device(mac="aa:bb:cc:dd:ee:02", name="Other", status="assigned")
+    db.add(other)
+    db.commit()
+    r = client.post(
+        R, json={"kind": "screen_time", "minutes": 15, "device_id": other.id}, headers=kid_headers
+    )
+    assert r.status_code == 400
+    assert (
+        client.post(R, json={"kind": "screen_time", "minutes": 15}, headers=kid_headers).status_code
+        == 200
+    )
+    rows = client.get("/api/v1/redemptions?status=pending", headers=parent_headers).json()
+    assert rows[0]["device_id"] is None and rows[0]["device_name"] is None

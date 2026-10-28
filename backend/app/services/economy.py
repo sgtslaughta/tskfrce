@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.models.chores import ChoreRun
 from app.models.family import FamilySettings, get_family
-from app.models.lock import Override
+from app.models.lock import Device, Override
 from app.models.points import Points, PointsType
 from app.models.reward import Redemption, Reward
 from app.models.user import User
@@ -150,16 +150,26 @@ def _auto(fam: FamilySettings, kind: str, reward: Reward | None) -> bool:
 
 
 def request(
-    db: Session, kid: User, kind: str, reward_id: int | None, minutes: int | None
+    db: Session,
+    kid: User,
+    kind: str,
+    reward_id: int | None,
+    minutes: int | None,
+    device_id: int | None = None,
 ) -> Redemption:
     """Create a pending spend request and notify parents. Commits."""
     with SPEND_LOCK:
         db.commit()  # end any open snapshot so the balance below sees other commits
-        return _request(db, kid, kind, reward_id, minutes)
+        return _request(db, kid, kind, reward_id, minutes, device_id)
 
 
 def _request(
-    db: Session, kid: User, kind: str, reward_id: int | None, minutes: int | None
+    db: Session,
+    kid: User,
+    kind: str,
+    reward_id: int | None,
+    minutes: int | None,
+    device_id: int | None = None,
 ) -> Redemption:
     fam = get_family(db)
     if kind == "reward":
@@ -176,6 +186,8 @@ def _request(
             raise HTTPException(400, "Screen time isn't turned on. Ask a parent.")
         if not kid.devices:
             raise HTTPException(400, "Ask a parent to add your device first.")
+        if device_id is not None and device_id not in {d.id for d in kid.devices}:
+            raise HTTPException(400, "Pick one of your own devices.")
         cost, reward_id = minutes // 15 * fam.screen_time_price, None
         auto = _auto(fam, kind, None)
         label = f"{minutes} min of screen time"
@@ -188,7 +200,19 @@ def _request(
         from app.services import screen_time  # screen_time imports this module
 
         screen_time.check(db, fam, kid, minutes, datetime.now(UTC))
-    red = Redemption(kid_id=kid.id, kind=kind, reward_id=reward_id, minutes=minutes, cost=cost)
+    if kind != "screen_time":
+        device_id = None
+    red = Redemption(
+        kid_id=kid.id,
+        kind=kind,
+        reward_id=reward_id,
+        minutes=minutes,
+        cost=cost,
+        device_id=device_id,
+    )
+    dev = db.get(Device, device_id) if device_id else None
+    if dev:
+        label += f" on {dev.name}"
     db.add(red)
     db.flush()
     if auto:

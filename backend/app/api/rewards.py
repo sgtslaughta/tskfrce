@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, require_parent
+from app.models.lock import Device
 from app.models.reward import Redemption, Reward
 from app.models.user import User
 from app.schemas.reward import DecideIn, RewardCreate, RewardPatch
@@ -84,6 +85,11 @@ def redemption_name(db: Session, r: Redemption) -> str:
     return reward.name if reward else "Reward"
 
 
+def device_name(db: Session, r: Redemption) -> str | None:
+    d = db.get(Device, r.device_id) if r.device_id else None
+    return d.name if d else None
+
+
 @redemptions_router.get("")
 def list_redemptions(
     status: Literal["pending", "approved", "denied"] = "pending", db: Session = Depends(get_db)
@@ -105,6 +111,8 @@ def list_redemptions(
                 "name": redemption_name(db, r),
                 "icon": reward.icon if reward else None,
                 "minutes": r.minutes,
+                "device_id": r.device_id,
+                "device_name": device_name(db, r),
                 "cost": r.cost,
                 "created_at": r.created_at.isoformat() + "Z",
                 "kid_balance": bal,
