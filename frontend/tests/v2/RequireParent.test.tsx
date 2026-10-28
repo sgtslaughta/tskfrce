@@ -144,6 +144,21 @@ describe('RequireParent states', () => {
     jest.useRealTimers()
   })
 
+  test('signed out + a 502 that never clears: polls (no reload loop), then gives up with the Can\'t reach panel', async () => {
+    jest.useFakeTimers({ advanceTimers: true })
+    route({ '/setup': Object.assign(new Error('bad gateway'), { status: 502 }) })
+    auth({ isAuthenticated: false, user: null })
+    renderGuard()
+    expect(await screen.findByText('Starting your home box')).toBeTruthy()
+    const before = apiMock.mock.calls.length
+    await act(async () => void jest.advanceTimersByTime(3100))
+    await waitFor(() => expect(apiMock.mock.calls.length).toBeGreaterThan(before)) // refetch, not reload
+    await act(async () => void jest.advanceTimersByTime(3 * 60_000))
+    await act(async () => void jest.advanceTimersByTime(3100))
+    expect(await screen.findByText(/Can.t reach/)).toBeTruthy()
+    jest.useRealTimers()
+  })
+
   test('signing out shows the sign-out state, and a failed sign-out brings the page back', async () => {
     auth({})
     renderGuard()
