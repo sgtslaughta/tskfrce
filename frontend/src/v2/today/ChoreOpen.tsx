@@ -43,14 +43,15 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
   const [approving, setApproving] = useState(false)
   const sending = useRef(false) // synchronous guard: a double click or Enter-mash fires before React re-renders
   // openChat for this chore (Reply buttons, step and photo replies) lands in the column beside it
-  useEffect(
-    () =>
-      claimChat('chore', String(chore.id), (to) => {
-        setChat(true)
-        setReply((r) => ({ to, n: r.n + 1 }))
-      }),
-    [chore.id],
-  )
+  const claim = useRef<ReturnType<typeof claimChat>>(null)
+  useEffect(() => {
+    claim.current = claimChat('chore', String(chore.id), (to) => {
+      setChat(true)
+      setReply((r) => ({ to, n: r.n + 1 }))
+    })
+    return claim.current
+  }, [chore.id])
+  const closeChat = () => (claim.current?.forget(), setChat(false))
 
   if (!run && isError)
     return (
@@ -72,7 +73,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
     )
   const name = kid.name ?? 'your kid'
   const ref = String(chore.id)
-  const thread = <ThreadView key={reply.n} kind="chore" refId={ref} meId={meId} bare focus={reply.n > 0} reply={reply.to} onReplySent={() => setReply((r) => ({ ...r, to: undefined }))} />
+  const thread = <ThreadView key={reply.n} kind="chore" refId={ref} meId={meId} bare focus={reply.n > 0} reply={reply.to} onReplySent={() => (claim.current?.forget(), setReply((r) => ({ ...r, to: undefined })))} />
 
   return (
     <div className="pt-open" data-chat={chat && !isMobile}>
@@ -210,7 +211,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
               Deduct points
             </button>
           )}
-          <button className="p-btn" aria-expanded={chat} onClick={() => (chat ? setChat(false) : openChat('chore', ref))}>
+          <button className="p-btn" aria-expanded={chat} onClick={() => (chat ? closeChat() : openChat('chore', ref))}>
             <Icon name="chat" size={17} />
             {chat ? 'Hide chat' : 'Open chat'}
           </button>
@@ -250,7 +251,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
       {isMobile ? (
         <Drawer
           opened={chat}
-          onClose={() => setChat(false)}
+          onClose={closeChat}
           position="bottom"
           size="58%"
           title={
@@ -270,7 +271,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
               <Icon name="subdirectory_arrow_right" size={16} />
               <span className="pt-chat-title">{reply.to?.label ?? chore.title}</span>
               <Tooltip label="Close chat" openDelay={400}>
-                <button aria-label="Close chat" onClick={() => setChat(false)}>
+                <button aria-label="Close chat" onClick={closeChat}>
                   <Icon name="close" size={18} />
                 </button>
               </Tooltip>

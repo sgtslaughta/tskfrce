@@ -42,4 +42,15 @@ describe('pending chat request', () => {
     claimChat('chore', '11', next)
     expect(next).toHaveBeenCalledWith({ label: 'Reply' })
   })
+
+  test('a request the user dealt with is not handed back on release', () => {
+    jest.spyOn(Date, 'now').mockReturnValue(1_000)
+    openChat('chore', '12', { label: 'Reply' })
+    const release = claimChat('chore', '12', jest.fn())
+    release.forget()
+    release()
+    const next = jest.fn()
+    claimChat('chore', '12', next)()
+    expect(next).not.toHaveBeenCalled()
+  })
 })

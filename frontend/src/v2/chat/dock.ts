@@ -17,12 +17,13 @@ const inline = new Map<string, (reply?: ChatReply) => void>()
 // A request nobody claimed yet (Today still loading after a fresh page load); the next claim takes it.
 const PENDING_MS = 15_000
 const HANDOFF_MS = 3_000
+type Release = { (): void; forget: () => void }
 let pending: { key: string; reply?: ChatReply; at: number } | null = null
 
 /** Route openChat(kind, ref) to `fn` while mounted; returns the release function. A fresh Today page can
  *  mount and drop its chore row a few times while loading: a claim released within HANDOFF_MS of taking a
  *  pending request hands it back for the next claim. */
-export function claimChat(kind: ThreadKind, ref: string, fn: (reply?: ChatReply) => void): () => void {
+export function claimChat(kind: ThreadKind, ref: string, fn: (reply?: ChatReply) => void): Release {
   const key = `${kind}:${ref}`
   inline.set(key, fn)
   let taken: typeof pending = null
@@ -32,10 +33,14 @@ export function claimChat(kind: ThreadKind, ref: string, fn: (reply?: ChatReply)
     fn(taken.reply)
   }
   const claimedAt = Date.now()
-  return () => {
+  const release = () => {
     if (inline.get(key) === fn) inline.delete(key)
     if (taken && !pending && Date.now() - claimedAt < HANDOFF_MS) pending = taken
   }
+  release.forget = () => {
+    taken = null // the user dealt with the request: a later release must not hand it back
+  }
+  return release
 }
 
 /** Open a thread: in a claiming inline chat, else the dock (bottom sheet on parent phones, panel elsewhere),
