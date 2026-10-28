@@ -81,11 +81,11 @@ describe('LoginForm', () => {
     expect(safeNext(undefined)).toBe('/')
   })
 
-  test('after a session expiry the login says to log in again (once)', async () => {
+  test('after a session expiry the login says to log in again, and leaves the flag for a reload', async () => {
     sessionStorage.setItem('task4ce-session-expired', '1')
     wrap()
     expect(await screen.findByText(/Please log in again/)).toBeInTheDocument()
-    expect(sessionStorage.getItem('task4ce-session-expired')).toBeNull()
+    expect(sessionStorage.getItem('task4ce-session-expired')).toBe('1')
   })
 
   test('login panel has no status or activity', () => {

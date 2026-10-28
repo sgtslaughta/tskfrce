@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { takeSessionExpired } from './sessionExpired'
+import { peekSessionExpired } from './sessionExpired'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
@@ -36,7 +36,7 @@ export function LoginForm() {
   const [remember, setRemember] = useState(true)
   const [expired, setExpired] = useState(false)
   useEffect(() => {
-    if (takeSessionExpired()) setExpired(true) // read-and-clear, so only ever turn it on (effects can run twice)
+    if (peekSessionExpired()) setExpired(true) // setTokens / log out clear it; a mid-session 401 hard reload must still show it
   }, [])
   const [error, setError] = useState('')
   const [showForgot, setShowForgot] = useState(false)

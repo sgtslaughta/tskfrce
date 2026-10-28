@@ -9,6 +9,15 @@ export function markSessionExpired(): void {
   }
 }
 
+/** Read the flag without clearing it (a new session or an explicit log out clears it). */
+export function peekSessionExpired(): boolean {
+  try {
+    return sessionStorage.getItem(KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
 /** Read and clear the flag. */
 export function takeSessionExpired(): boolean {
   try {
