@@ -12,7 +12,8 @@
 /* Chat tab: the dock fills the content column like Rewards / Me, one screen tall (bar nav takes 72px) */
 .k-app:has(> .k-nav[data-kind='bar']), .k-app:has(> .k-nav[data-kind='little']) { --k-navh: 72px; }
 .k-chatpane { height: calc(100dvh - var(--k-top, 0px) - var(--k-navh, 0px)); box-sizing: border-box; padding-block: 16px; }
-.k-chatpane .f-dock-inline { position: static; width: auto; max-width: none; height: 100%; max-height: none; animation: none; }
+.k-chatpane:not([hidden]) { display: flex; flex-direction: column; gap: 12px; }
+.k-chatpane .f-dock-inline { position: static; width: auto; max-width: none; flex: 1; min-height: 0; max-height: none; animation: none; }
 
 /* nav items (shared) */
 .k-nav { z-index: 20; }

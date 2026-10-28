@@ -120,8 +120,8 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, lock
         </div>
         {chat && (
           <div className="k-inner k-chatpane" hidden={tab !== 'chat'}>
-            <h1 className="k-sr">Chat</h1>
-            <ChatDock kid inline meId={kidId ?? null} />
+            <h1 className="k-hi k-disp">Chat</h1>
+            <ChatDock kid inline meId={kidId ?? null} meName={name} />
           </div>
         )}
       </main>
