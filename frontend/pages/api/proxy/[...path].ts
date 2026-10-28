@@ -6,7 +6,8 @@
 import { NextApiRequest, NextApiResponse } from 'next'
 
 // x-view-as: parent previewing a kid; backend only honours it for a parent token on kid GETs
-const PASS_REQ = ['authorization', 'cookie', 'content-type', 'user-agent', 'accept', 'x-view-as']
+// no 'cookie': backend auth is Bearer-only, browser cookies (settings/login UX) stay on the edge
+const PASS_REQ = ['authorization', 'content-type', 'user-agent', 'accept', 'x-view-as']
 const DROP_RES = ['content-encoding', 'content-length', 'transfer-encoding', 'connection']
 
 // uploads are capped at 10 MB by the backend (MAX_UPLOAD_SIZE); leave room for multipart framing

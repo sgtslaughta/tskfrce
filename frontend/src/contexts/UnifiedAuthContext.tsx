@@ -104,23 +104,6 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
   }, []);
 
   /**
-   * @description Validate that all auth systems are synchronized
-   */
-  const validateAuthSync = useCallback((): boolean => {
-    const cookieState = getLoginState();
-    const accessToken = tokenManager.getAccessToken();
-    const authServiceToken = authService.getAccessToken();
-    
-    // All systems should have the same token or all should be empty
-    const tokensMatch = (
-      cookieState?.token === accessToken &&
-      accessToken === authServiceToken
-    );
-    
-    return tokensMatch && !!accessToken;
-  }, []);
-
-  /**
    * @description Synchronize all authentication systems
    */
   const syncAuthSystems = useCallback(async (user?: User) => {
@@ -137,7 +120,6 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
             username: user.username,
             email: user.email,
             role: user.role,
-            token: accessToken,
             lastLogin: Date.now(),
           });
           
@@ -389,18 +371,16 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
     }
     
     // Direct validation - check if we have valid tokens (more lenient approach)
-    const cookieState = getLoginState();
     const accessToken = tokenManager.getAccessToken();
     const authServiceToken = authService.getAccessToken();
     
     // More lenient check: just ensure we have tokens and they're not obviously broken
-    const hasValidTokens = !!(accessToken && cookieState?.token && authServiceToken);
+    const hasValidTokens = !!(accessToken && authServiceToken);
     
     if (!hasValidTokens) {
       console.log('🔍 AuthReady: Missing tokens:', {
         tokenDetails: {
           accessToken: !!accessToken,
-          cookieToken: !!cookieState?.token,
           authServiceToken: !!authServiceToken
         }
       });

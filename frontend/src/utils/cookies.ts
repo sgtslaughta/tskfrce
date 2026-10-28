@@ -172,47 +172,44 @@ export const getUserSettings = (): UserSettings => {
   return { ...defaultSettings };
 };
 
-/**
- * @description Save login state
- */
-export const saveLoginState = (userData: {
+/** Non-secret login state (UX only). The access token never goes in a cookie. */
+export interface LoginState {
   userId: string;
   username: string;
   email: string;
   role?: string;
-  token?: string;
   lastLogin: number;
-}): void => {
+}
+
+/**
+ * @description Save login state (any `token` field is dropped)
+ */
+export const saveLoginState = (userData: LoginState & { token?: unknown }): void => {
   try {
-    setCookie('taaskmaaster_user', JSON.stringify(userData), {
-      days: 30, // Shorter expiry for login data
-      secure: process.env.NODE_ENV === 'production', // Only secure in production
-      sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
-    });
+    const { token, ...safe } = userData;
+    setCookie('taaskmaaster_user', JSON.stringify(safe), { days: 30, sameSite: 'Lax' });
   } catch (error) {
     console.error('Failed to save login state:', error);
   }
 };
 
 /**
- * @description Get login state
+ * @description Get login state. Migrates old cookies that still carry the JWT by
+ * rewriting them without it (the token itself lives in localStorage via tokenStorage).
  */
-export const getLoginState = (): {
-  userId: string;
-  username: string;
-  email: string;
-  role?: string;
-  token?: string;
-  lastLogin: number;
-} | null => {
+export const getLoginState = (): LoginState | null => {
   try {
     const loginCookie = getCookie('taaskmaaster_user');
-    
+
     if (loginCookie) {
-      return JSON.parse(loginCookie);
+      const parsed = JSON.parse(loginCookie);
+      if (parsed && 'token' in parsed) saveLoginState(parsed);
+      const { token, ...safe } = parsed;
+      return safe;
     }
   } catch (error) {
     console.error('Failed to parse login state:', error);
+    clearLoginState(); // unreadable cookie: drop it, user re-logs if no stored token
   }
 
   return null;

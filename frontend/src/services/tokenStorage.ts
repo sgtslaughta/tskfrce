@@ -66,7 +66,6 @@ export function storeTokens(
       saveLoginState({
         ...loginState,
         ...userInfo,
-        token: tokens.access_token,
         lastLogin: Date.now()
       });
     }
