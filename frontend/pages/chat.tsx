@@ -36,7 +36,7 @@ function ChatPageBody() {
   ) : threads.isPending ? (
     <Skeleton rows={3} />
   ) : null
-  const listContent = <ThreadList threads={list} selected={selected ? `${selected.kind}:${refOf(selected)}` : null} onPick={handlePick} meName={user?.username} empty={small ? phoneState : null} />
+  const listContent = <ThreadList threads={list} selected={selected ? `${selected.kind}:${refOf(selected)}` : null} onPick={handlePick} meName={user?.username} empty={small ? phoneState : null} loaded={!!threads.data} />
 
   const detailContent = bareChore ? (
     <ThreadView key={item} kind="chore" refId={bareChore} meId={user ? Number(user.id) : null} />

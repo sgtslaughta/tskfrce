@@ -31,7 +31,7 @@ export function ParentBubble({ m, mine, names = [], kid = false, kidName, more =
         <div className="pc-sys" data-testid="msg-system">
           <Icon name="task_alt" size={15} />
           <span>
-            {m.body} · {timeLabel(m.created_at)}
+            {more.length ? `${more.length + 1} photos added` : m.body} · {timeLabel(m.created_at)}
           </span>
         </div>
         {m.photo_url && (

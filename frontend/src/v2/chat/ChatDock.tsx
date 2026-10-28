@@ -164,7 +164,7 @@ export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: 
         }
       }}
     >
-      <div className="f-dock-head">
+      {!(kid && inline && !pick) && (<div className="f-dock-head">
         {back}
         <h2>
           {head}
@@ -175,7 +175,7 @@ export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: 
             <IconX size={18} />
           </Button>
         )}
-      </div>
+      </div>)}
       <div className="f-dock-body">{body}</div>
     </div>
   )

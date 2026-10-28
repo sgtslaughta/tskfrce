@@ -41,6 +41,7 @@ describe('proof photo bubble', () => {
     unmount()
     wrap(<ParentBubble m={a} more={[b]} mine={false} kidName="Susan" />)
     expect(screen.getAllByTestId('msg-other')).toHaveLength(1)
+    expect(screen.getByTestId('msg-system').textContent).toContain('2 photos added')
   })
 })
 
