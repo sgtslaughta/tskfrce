@@ -107,11 +107,11 @@ test('hour rules and device activity: one rule, every target', async ({ page }) 
     await expect(state).toContainText('Locked')
     await page.getByRole('button', { name: 'Unlock 30 min' }).click()
     await expect(state).toContainText('Open')
-    await page.getByRole('button', { name: 'Activity' }).click()
+    await page.getByRole('tab', { name: 'Activity' }).click()
     const log = page.getByRole('region', { name: 'Lock history' })
     await expect(async () => {
       await page.reload()
-      await page.getByRole('button', { name: 'Activity' }).click()
+      await page.getByRole('tab', { name: 'Activity' }).click()
       await expect(log.getByText('Locked by Lab Parent')).toBeVisible({ timeout: 10_000 })
       // newest first: a parent's unlock always reads as theirs, even inside allowed hours
       await expect(log.locator('.pk-kv').first()).toContainText(/Unlocked .*by Lab Parent/, { timeout: 10_000 })

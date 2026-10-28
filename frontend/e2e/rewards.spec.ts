@@ -91,7 +91,7 @@ test('rewards, screen time, badges and chat', async ({ page }) => {
     await expect(rows.getByRole('listitem').filter({ hasText: `${first} Kid` }).filter({ hasText: '30 min' }).locator('.p-chip', { hasText: 'Auto' })).toBeVisible()
 
     // 5. badges: award a custom badge with a note, see it under Recent
-    badgeId = (await (await api.post('/api/proxy/badges', { data: { name: badgeName, icon: 'military_tech' } })).json()).id
+    badgeId = (await (await api.post('/api/proxy/custom-badges', { data: { name: badgeName, icon: 'military_tech' } })).json()).id
     await page.goto(`/kids?section=badges&item=custom&pick=${badgeId}`)
     const award = page.getByRole('region', { name: 'Award it' })
     await award.getByRole('button', { name: `${first} Kid`, exact: true }).click()
@@ -143,7 +143,7 @@ test('rewards, screen time, badges and chat', async ({ page }) => {
     }
     if (rewardId) await api.delete(`/api/proxy/rewards/${rewardId}`)
     if (choreId) await api.delete(`/api/proxy/chores/${choreId}`)
-    if (badgeId) await api.delete(`/api/proxy/badges/${badgeId}`)
+    if (badgeId) await api.delete(`/api/proxy/custom-badges/${badgeId}`)
     await setOwners(dev!.owner_ids)
     await api.delete(`/api/proxy/kids/${kid.id}`)
     await api.patch('/api/proxy/screen-time', {

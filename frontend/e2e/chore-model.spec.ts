@@ -62,7 +62,7 @@ test('chore model: type, chained steps, kid note, skip, deduction', async ({ pag
 
     const who = page.getByRole('region', { name: 'Who and when' })
     await who.getByRole('button', { name: kidName }).click()
-    await who.getByRole('button', { name: 'Save', exact: true }).click()
+    await page.getByRole('button', { name: 'Save chore' }).click() // one Save sends the chore and Who & when
     await expect(page.getByRole('button', { name: new RegExp(`^${choreName}`) }).first()).toContainText('2 steps')
 
     const types: { id: number; name: string }[] = await (await api.get('/api/proxy/chore-types')).json()
@@ -88,6 +88,7 @@ test('chore model: type, chained steps, kid note, skip, deduction', async ({ pag
       await kp.goto('/kid')
       await kp.waitForTimeout(2500) // the pin pad takes the keyboard once it has hydrated
       await kp.keyboard.type('1234')
+      await cheer(kp) // a new kid sees the intro first
       await kp.getByRole('button', { name: `Open ${choreName}` }).click()
       const step2 = kp.getByRole('checkbox', { name: 'Sweep the floor' })
       await expect(step2).toBeDisabled()
@@ -143,7 +144,7 @@ test('chore model: type, chained steps, kid note, skip, deduction', async ({ pag
       await cheer(kp)
       await kp.getByRole('button', { name: `Open ${thirdName}` }).click()
       await expect(kp.getByText('Lab Parent took 5 points')).toBeVisible()
-      await expect(kp.getByText('Left a mess')).toBeVisible()
+      await expect(kp.getByText('“Left a mess”')).toBeVisible() // the quote on the chore, not the points line
     } finally {
       await kctx.close()
     }
