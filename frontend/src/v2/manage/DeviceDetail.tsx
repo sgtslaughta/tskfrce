@@ -18,8 +18,8 @@ import { OnlineWeek } from './OnlineWeek'
 import { ago, DEVICE_TYPE_ICON, getDeviceType } from './deviceMeta'
 import { KidPills } from './KidPills'
 import { nameOf } from './choreMeta'
-import { toastFail, toastOk, toasts } from '../notify'
-import { useSingleFlight } from './useSingleFlight'
+import { toastFail, toastOk, toasted } from '../notify'
+import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 
 interface Props {
   device: Device
@@ -55,7 +55,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
   const ownerLabel = guest ? 'Guest' : owners.length ? owners.map(nameOf).join(', ') : 'Unassigned'
   const needsPins = device.needs_pins && owners.length > 0
 
-  const save = (p: DevicePatch, done: string) => once((settled) => patch.mutate({ id: device.id, patch: p }, { ...toasts(done), ...settled }))
+  const save = (p: DevicePatch, done: string) => once(() => toasted(patch.mutateAsync({ id: device.id, patch: p }), done))
   const rename = () => {
     const n = name.trim()
     if (!n) setName(device.name)
@@ -63,15 +63,14 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
   }
   const toggleGroup = (g: Group) => {
     const ids = g.device_ids.includes(device.id) ? g.device_ids.filter((i) => i !== device.id) : [...g.device_ids, device.id]
-    once((settled) => saveGroup.mutate({ id: g.id, name: g.name, device_ids: ids }, { ...toasts('Saved'), ...settled }))
+    once(() => toasted(saveGroup.mutateAsync({ id: g.id, name: g.name, device_ids: ids }), 'Saved'))
   }
   const runTest = () =>
-    onceTest((settled) =>
-      test.mutate(device.id, {
-        onSuccess: (r) => (r.reason === 'ok' ? toastOk(r.message) : notifications.show({ message: r.message, color: 'fridgeRed' })),
-        onError: toastFail,
-        ...settled,
-      }),
+    onceTest(() =>
+      test.mutateAsync(device.id).then(
+        (r) => (r.reason === 'ok' ? toastOk(r.message) : notifications.show({ message: r.message, color: 'fridgeRed' })),
+        toastFail,
+      ),
     )
 
   const ovLive = !useExpired(device.override?.expires_at) && device.override

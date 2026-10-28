@@ -63,6 +63,9 @@ export const toastFail = (e: unknown) => {
 /** Mutation callbacks: toast on success and on failure. */
 export const toasts = (done: string) => ({ onSuccess: () => toastOk(done), onError: toastFail })
 
+/** Same for a mutateAsync promise (use inside a single-flight `once`). */
+export const toasted = (p: Promise<unknown>, done: string) => p.then(() => toastOk(done), toastFail)
+
 /**
  * Show an undo toast immediately and run an async action after a delay.
  * If the user clicks Undo, cancel the action. Resolves once the action ran (or was undone), never rejects.

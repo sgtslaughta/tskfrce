@@ -13,7 +13,7 @@ import { useOverride, type OverrideTarget } from '@/v2/hooks/useOverride'
 import { DevicesSection } from './DevicesSection'
 import { DeviceDetail } from './DeviceDetail'
 import { GroupDetail } from './GroupDetail'
-import { useSingleFlight } from './useSingleFlight'
+import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 
 const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)
 
@@ -62,12 +62,12 @@ function DevicesBody() {
   const once = useSingleFlight()
   // detail buttons: lock until changed, unlock for 30 min, "schedule" = clear the override
   const handleRequestOverride = (req: { kind: string; id: number; action: string }) =>
-    once((settled) => override.mutate({
+    once(() => override.mutateAsync({
       target: { kind: req.kind as OverrideTarget['kind'], id: req.id },
       choice: req.action === 'lock' ? { action: 'lock', minutes: null }
         : req.action === 'unlock' ? { action: 'unlock', minutes: 30 }
         : { action: 'clear' },
-    }, settled))
+    }).catch(() => undefined))
 
   // the action in flight (lock / unlock / clear): the pressed button shows a spinner
   const pending = override.isPending ? override.variables.choice.action : null

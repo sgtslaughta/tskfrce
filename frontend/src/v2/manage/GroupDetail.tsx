@@ -11,8 +11,8 @@ import { ConfirmDelete } from './ConfirmDelete'
 import { GroupStats } from './GroupStats'
 import { HoursTimeline } from './HoursTimeline'
 import { nameOf } from './choreMeta'
-import { toastFail, toastOk, toasts } from '../notify'
-import { useSingleFlight } from './useSingleFlight'
+import { toastFail, toastOk, toasted } from '../notify'
+import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 
 export const GROUP_ICONS = ['tablet_mac', 'sports_esports', 'tv', 'laptop', 'smartphone', 'speaker', 'router', 'devices_other', 'devices']
 
@@ -64,32 +64,25 @@ export function GroupDetail({ group, devices, kids, groups, rules, onSelect, onR
 
   const toggle = (id: number) => {
     const next = ids.includes(id) ? ids.filter((i) => i !== id) : [...ids, id]
-    if (group) once((settled) => save.mutate({ id: group.id, name: group.name, device_ids: next }, { ...toasts('Saved'), ...settled }))
+    if (group) once(() => toasted(save.mutateAsync({ id: group.id, name: group.name, device_ids: next }), 'Saved'))
     else setDraftIds(next)
   }
   const rename = () => {
     const n = name.trim()
     if (!group) return
     if (!n) setName(group.name)
-    else if (n !== group.name) once((settled) => save.mutate({ id: group.id, name: n, device_ids: group.device_ids }, { ...toasts('Renamed'), ...settled }))
+    else if (n !== group.name) once(() => toasted(save.mutateAsync({ id: group.id, name: n, device_ids: group.device_ids }), 'Renamed'))
   }
   const setExtra = (extra: { icon?: string; chore_lock?: boolean }) => {
-    if (group) once((settled) => save.mutate({ id: group.id, name: group.name, device_ids: group.device_ids, icon, chore_lock: choreLock, ...extra }, { ...toasts('Saved'), ...settled }))
+    if (group) once(() => toasted(save.mutateAsync({ id: group.id, name: group.name, device_ids: group.device_ids, icon, chore_lock: choreLock, ...extra }), 'Saved'))
     else setDraft({ ...draft, ...extra })
   }
   const create = () =>
-    once((settled) =>
-      save.mutate(
-        { name: name.trim(), device_ids: draftIds, ...draft },
-        {
-          onError: toastFail,
-          onSuccess: (g) => {
-            toastOk('Created')
-            onSelect((g as Group).id)
-          },
-          ...settled,
-        },
-      ),
+    once(() =>
+      save.mutateAsync({ name: name.trim(), device_ids: draftIds, ...draft }).then((g) => {
+        toastOk('Created')
+        onSelect((g as Group).id)
+      }, toastFail),
     )
 
   return (
