@@ -35,10 +35,10 @@ export function ParentBubble({ m, mine, names = [], kid = false, kidName, more =
           </span>
         </div>
         {m.photo_url && (
-          // proof photos sit in the kid's own bubble, side by side (mockup 02)
-          <div className="pc-msg" data-mine={kid} data-testid={kid ? 'msg-mine' : 'msg-other'}>
+          // proof photos sit in their adder's bubble, side by side (mockup 02)
+          <div className="pc-msg" data-mine={mine} data-testid={mine ? 'msg-mine' : 'msg-other'}>
             <small>
-              {kidName ?? 'Kid'} · {timeLabel(m.created_at)}
+              {mine ? 'You' : (m.author_name ?? kidName ?? 'Kid')} · {timeLabel(m.created_at)}
             </small>
             <div className="pc-pics">
               {[m, ...more].map((x) => x.photo_url && <Photo key={x.id} url={x.photo_url} className="pc-photo" />)}

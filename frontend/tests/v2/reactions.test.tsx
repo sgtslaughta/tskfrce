@@ -102,7 +102,7 @@ describe('reaction toolbar', () => {
   })
 
   test('a proof photo sits in the kid bubble, after the system line', () => {
-    wrap(<ParentBubble m={msg({ kind: 'system', author_id: null, body: 'Photo added', photo_url: '/p/1' })} mine={false} kidName="Mia" />)
+    wrap(<ParentBubble m={msg({ kind: 'system', author_id: null, author_name: null, body: 'Photo added', photo_url: '/p/1' })} mine={false} kidName="Mia" />)
     expect(screen.getByTestId('msg-system')).toHaveTextContent('Photo added')
     expect(screen.getByTestId('msg-other')).toHaveTextContent('Mia')
   })

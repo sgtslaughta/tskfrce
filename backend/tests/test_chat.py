@@ -170,7 +170,7 @@ def test_chore_actions_write_system_messages(client, db, parent_headers):
     assert client.post(f"/api/v1/chores/{cid}/approve", headers=parent_headers).status_code == 200
     msgs = client.get(f"{C}/threads/chore/{cid}", headers=lh).json()["messages"]
     assert [(m["kind"], m["author_id"], m["body"]) for m in msgs] == [
-        ("system", None, "Photo added"),
+        ("system", leo.id, "Photo added"),
         ("system", None, "Sent back: Wipe the sink"),
         ("system", None, "Approved · +15"),
     ]
@@ -459,7 +459,9 @@ def test_kids_own_system_line_is_not_unread_for_them(client, db, parent_headers)
     assert client.get(f"{C}/threads", headers=lh).json()["total"] == 0
     assert client.get(f"{C}/threads", headers=parent_headers).json()["total"] == 1
     msgs = client.get(f"{C}/threads/chore/{cid}", headers=lh).json()["messages"]
-    assert msgs[0]["author_id"] is None
+    assert (
+        msgs[0]["author_id"] == leo.id and msgs[0]["author_name"]
+    )  # a proof line names who added it
 
 
 def test_new_kid_starts_with_existing_chat_read(client, db, parent_headers):
@@ -473,3 +475,16 @@ def test_new_kid_starts_with_existing_chat_read(client, db, parent_headers):
     assert j["total"] == 0
     _say(client, parent_headers, fam, "fresh")
     assert client.get(f"{C}/threads", headers=_headers(db, new)).json()["total"] == 1
+
+
+def test_sibling_sees_who_added_a_proof_photo(client, db, parent_headers):
+    leo, maya, lh, mh, chore = _world(db, client, parent_headers)
+    cid = chore("Trash", [leo, maya], "race")
+    client.post(
+        f"/api/v1/kid/chores/{cid}/photos",
+        files={"file": ("a.jpg", _jpeg(), "image/jpeg")},
+        headers=lh,
+    )
+    line = client.get(f"{C}/threads/chore/{cid}", headers=mh).json()["messages"][-1]
+    assert line["kind"] == "system" and line["author_id"] == leo.id
+    assert client.delete(f"{C}/messages/{line['id']}", headers=mh).status_code in (403, 404)

@@ -53,7 +53,7 @@ def _msg(
     reactions: dict[int, list[dict]] | None = None,
     proofs: dict[int, int] | None = None,
 ) -> dict:
-    who = m.author if m.kind == "user" else None
+    who = m.author if m.kind == "user" or m.photo_id else None  # proof lines keep their actor
     return {
         "id": m.id,
         "author_id": who.id if who else None,
