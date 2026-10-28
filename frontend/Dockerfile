@@ -32,7 +32,7 @@ COPY . .
 
 # Only build in production
 RUN if [ "$NODE_ENV" = "production" ]; then \
-      npm run build; \
+      npm run build || exit 1; \
       if [ ! -f ".next/prerender-manifest.json" ]; then \
         echo '{"version":3,"routes":{},"dynamicRoutes":{},"notFoundRoutes":[],"preview":{"previewModeId":"development-id","previewModeSigningKey":"development-key","previewModeEncryptionKey":"development-key"}}' > .next/prerender-manifest.json; \
       fi; \
