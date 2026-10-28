@@ -348,4 +348,5 @@ html[data-look='parent'] .pn-addr .f-input.f-input { font: 12.5px ui-monospace, 
 [data-look='parent'] .pn-av-soft { background: var(--p-soft); color: var(--p-sub); }
 [data-look='parent'] .pn-t2 { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 13.5px; font-weight: 600; }
 [data-look='parent'] .pn-t2 small { display: block; color: var(--p-sub); font-size: 12px; font-weight: 400; }
+@media (max-width: 1023px) { [data-look='parent'] .pn-fields { grid-template-columns: 1fr; } }
 @media (max-width: 767px) { [data-look='parent'] .pn-fields, [data-look='parent'] .pn-prev { grid-template-columns: 1fr; } }
