@@ -77,7 +77,10 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, lock
 
   let body: ReactNode
   if (showLocker && d.progress)
-    body = <Locker name={name} avatar={avatar} level={d.progress.level} title={d.progress.title} onClose={() => onLockerClose?.()} />
+    body = <Locker name={name} avatar={avatar} level={d.progress.level} title={d.progress.title} onClose={() => {
+      onLockerClose?.()
+      requestAnimationFrame(() => document.querySelector<HTMLElement>('[data-customize]')?.focus()) // Me re-mounts first
+    }} />
   else if (tab === 'rewards')
     body = (
       <RewardsSection onExpired={onExit} mode={mode} />

@@ -17,7 +17,7 @@
 /* the title keeps room for one line; many dots wrap onto rows instead (820px with 8 chores) */
 .k-status > div:not(.k-dots) { flex: 1 0 240px; min-width: 0; }
 .k-status-t { font-family: var(--font-display), 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; line-height: 1.1; }
-.k-status-s { font-size: 17px; color: var(--k-sub); font-weight: 600; margin-top: 4px; }
+.k-status-s { text-wrap: balance; font-size: 17px; color: var(--k-sub); font-weight: 600; margin-top: 4px; }
 .k-dots { display: flex; flex-wrap: wrap; gap: 10px; margin-left: auto; flex: 0 1 auto; min-width: 0; }
 .k-dots i {
   width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--k-ink); display: grid; place-items: center;
@@ -85,7 +85,7 @@
 .k-bb {
   height: 78px; border-radius: 18px; font-family: var(--font-display), 'Space Grotesk', sans-serif; font-weight: 700;
   font-size: 21px; display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
-  border: 3px solid var(--k-ink); background: var(--k-card); color: var(--k-ink); padding: 0 10px;
+  border: 3px solid var(--k-ink); background: var(--k-card); color: var(--k-ink); padding: 0 10px; white-space: nowrap;
 }
 .k-bb .ms { font-size: 30px; }
 .k-bb[data-tone='sun'] { background: var(--k-sun); color: var(--k-navy); box-shadow: var(--k-shadow); }

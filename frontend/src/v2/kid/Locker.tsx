@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NameCard } from '../flair/NameCard'
 import { useEquip, useFlair } from '../hooks/useFlair'
 import { Icon } from '../parent/Icon'
@@ -21,13 +21,15 @@ export function Locker({ name, avatar, level, title, onClose }: Props) {
   const equip = useEquip()
   const [slot, setSlot] = useState<FlairSlot>('card')
   const [picked, setPicked] = useState<Partial<Flair>>({})
+  const h1 = useRef<HTMLHeadingElement>(null)
+  useEffect(() => h1.current?.focus(), [])
   const back = (
     <button type="button" className="k-back" onClick={onClose}>
       <Icon name="arrow_back" />
       Back
     </button>
   )
-  const head = <h1 className="lk-h k-disp">Customize</h1>
+  const head = <h1 ref={h1} tabIndex={-1} className="lk-h k-disp">Customize</h1>
   if (!flair)
     return (
       <section className="lk-view">

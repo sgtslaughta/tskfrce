@@ -88,7 +88,7 @@ describe('TeenMode', () => {
   test('stats show "2 / 6" and "860"', () => {
     render(wrap(props()))
     expect(screen.getByText('Internet paused')).toBeInTheDocument()
-    expect(screen.getByText('4 chores left · night lock 9:00 PM')).toBeInTheDocument()
+    expect(screen.getByText('3 chores left · 1 waiting · night lock 9:00 PM')).toBeInTheDocument()
     expect(screen.getByText('2 / 6')).toBeInTheDocument()
     expect(screen.getByText('done today')).toBeInTheDocument()
     expect(screen.getByText('860')).toBeInTheDocument()

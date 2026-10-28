@@ -14,7 +14,8 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
   if (open && !returnTo.current) returnTo.current = document.activeElement // before the trap steals focus
   useEffect(() => {
     if (open) return
-    ;(returnTo.current as HTMLElement | null)?.focus?.() // the last card closed
+    const el = returnTo.current as HTMLElement | null // the last card closed; its button may be gone
+    ;(el?.isConnected ? el : document.querySelector<HTMLElement>('.r-head, main'))?.focus?.()
     returnTo.current = null
   }, [open])
   const close = () => {

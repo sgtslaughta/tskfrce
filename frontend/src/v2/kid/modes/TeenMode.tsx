@@ -39,7 +39,8 @@ function Stat({ icon, tone, fill, title, sub }: { icon: string; tone: string; fi
 
 function Stats({ d }: { d: KidToday }) {
   const t = tally(d.chores)
-  const left = `${t.left} ${t.left === 1 ? 'chore' : 'chores'} left`
+  const todo = `${t.todo} ${t.todo === 1 ? 'chore' : 'chores'} left`
+  const left = t.waiting ? `${todo} · ${t.waiting} waiting` : todo
   const at = d.locks_at ? clock(d.locks_at, d.timezone) : null
   const streak = d.progress?.streak ?? 0
   return (
@@ -47,7 +48,7 @@ function Stats({ d }: { d: KidToday }) {
       {d.locked ? (
         <Stat icon="lock" tone="coral" fill title="Internet paused" sub={at ? `${left} · night lock ${at}` : left} />
       ) : (
-        <Stat icon="wifi" tone="green" fill title="Internet on" sub={at ? `locks at ${at}` : t.left ? left : 'All done'} />
+        <Stat icon="wifi" tone="green" fill title="Internet on" sub={at ? `locks at ${at}` : t.todo ? left : 'All done'} />
       )}
       <Stat icon="task_alt" tone="green" title={`${t.approved} / ${t.total}`} sub="done today" />
       <Stat icon="star" tone="sun" fill title={String(d.points_balance)} sub="points" />

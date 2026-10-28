@@ -32,7 +32,7 @@ export function MePage({
         <div className="me-card">
           <ProgressHeader name={name} avatar={avatar} kid progress={progress} />
           {!preview && (
-            <button type="button" className="r-btn" onClick={onLocker}>
+            <button type="button" className="r-btn" data-customize onClick={onLocker}>
               <Icon name="palette" />
               Customize
             </button>

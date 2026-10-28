@@ -28,6 +28,7 @@
 .r-btn .ms { font-size: 28px; }
 .r-btn:disabled { background: var(--k-soft); color: var(--k-sub); border-color: var(--k-line); cursor: default; }
 .r-btn[data-tone='plain'] { background: var(--k-card); color: var(--k-ink); border-color: var(--k-ink); }
+.r-btn[data-tone='plain']:disabled { background: var(--k-soft); color: var(--k-sub); border-color: var(--k-line); }
 .r-btn:not(:disabled):hover { filter: brightness(1.05); }
 
 /* Kid: 2-column tiles (10 .tile) */
