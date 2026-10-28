@@ -37,13 +37,6 @@ export interface LoginResponse {
 }
 
 /**
- * @description Refresh token request interface
- */
-export interface RefreshTokenRequest {
-  refresh_token: string;
-}
-
-/**
  * @description Refresh token response interface
  */
 export interface RefreshTokenResponse {

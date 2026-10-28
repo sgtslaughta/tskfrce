@@ -10,9 +10,8 @@ from sqlalchemy.orm import Session, selectinload
 from app.api.deps import get_db, require_parent
 from app.models.chores import ChoreRun, RunStepTick
 from app.models.family import get_family
-from app.models.lock import Device
 from app.models.points import Points
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.schemas.lock import utc_z
 from app.services import badges, chat, economy, kid_events
 from app.services import chores as svc
@@ -21,25 +20,6 @@ from app.services.economy import award_chore
 router = APIRouter(prefix="/api/v1/chores", tags=["chores"])
 
 NOT_WAITING = "This chore isn't waiting for approval."
-
-
-def _shared_devices_without_pin(db: Session) -> list[dict]:
-    """Shared devices where multiple kids own it but at least one lacks a PIN."""
-    nudges = []
-    for device in db.query(Device).all():
-        active_kids = [k for k in device.owners if k.role == UserRole.KID and k.is_active]
-        if len(active_kids) >= 2:
-            kids_without_pin = [k for k in active_kids if not k.pin_hash]
-            if kids_without_pin:  # At least one kid on a shared device has no PIN
-                nudges.append(
-                    {
-                        "device_id": device.id,
-                        "device_name": device.name,
-                        "kid_ids": [k.id for k in active_kids],
-                        "kid_names": [k.full_name for k in active_kids],
-                    }
-                )
-    return nudges
 
 
 def _waiting(db: Session, run_id: int) -> ChoreRun:
@@ -58,8 +38,6 @@ def today(db: Session = Depends(get_db), _: User = Depends(require_parent)):
     for r in svc.with_detail(svc.day_runs(db, svc.today(db)), kids=True).order_by(ChoreRun.id):
         for kid_id in svc.run_kid_ids(r):
             out.setdefault(str(kid_id), []).append(svc.chore_out(r, fam))
-    # Add nudge for shared devices without PINs
-    out["shared_without_pin"] = _shared_devices_without_pin(db)
     return out
 
 

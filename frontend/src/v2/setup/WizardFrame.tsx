@@ -15,8 +15,6 @@ const STEPS = [
   { num: 7, title: 'Remote access', sub: 'Tailscale', opt: true },
 ]
 
-export const STEP_TITLES = STEPS.map(s => s.title)
-
 interface Props {
   step: number // 1-based
   children: ReactNode

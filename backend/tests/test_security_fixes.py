@@ -2,7 +2,6 @@
 
 import pytest
 from app.core.auth import AuthService
-from app.models.lock import Device
 from app.models.user import User, UserRole
 from sqlalchemy.orm import Session
 
@@ -126,71 +125,3 @@ def test_parent_can_view_any_profile(client, db: Session, parent_and_kids):
     response = client.get(f"/api/v1/users/{parent.id}", headers=headers)
     assert response.status_code == 200
     assert response.json()["id"] == parent.id
-
-
-def test_shared_device_without_pin_nudge(client, db: Session, parent_and_kids):
-    """Test that parent GET /api/v1/chores/today includes shared_without_pin nudge."""
-    parent, kid1, kid2 = parent_and_kids
-
-    # Create device with both kids
-    device = Device(mac="aa:bb:cc:dd:ee:01", name="Family iPad", status="assigned")
-    device.owners = [kid1, kid2]
-    db.add(device)
-    db.commit()
-
-    # Login as parent
-    login_response = client.post(
-        "/api/v1/auth/login",
-        json={"username": "secparent", "password": "password123"},
-    )
-    token = login_response.json()["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
-
-    # Get today's chores
-    response = client.get("/api/v1/chores/today", headers=headers)
-    assert response.status_code == 200
-
-    # Check that shared_without_pin is in payload
-    data = response.json()
-    assert "shared_without_pin" in data
-
-    # One kid has no PIN, so device should be in the nudge list
-    assert len(data["shared_without_pin"]) == 1
-    nudge = data["shared_without_pin"][0]
-    assert nudge["device_id"] == device.id
-    assert nudge["device_name"] == "Family iPad"
-    assert kid1.id in nudge["kid_ids"]
-    assert "Leo" in nudge["kid_names"]
-
-
-def test_shared_device_with_all_pins_no_nudge(client, db: Session, parent_and_kids):
-    """Test that shared device with all kids having PINs doesn't appear in nudge."""
-    parent, kid1, kid2 = parent_and_kids
-    auth = AuthService(db)
-
-    # Add PIN to kid1
-    kid1.pin_hash = auth.get_password_hash("5678")
-    db.commit()
-
-    # Create device with both kids
-    device = Device(mac="aa:bb:cc:dd:ee:02", name="Shared Laptop", status="assigned")
-    device.owners = [kid1, kid2]
-    db.add(device)
-    db.commit()
-
-    # Login as parent
-    login_response = client.post(
-        "/api/v1/auth/login",
-        json={"username": "secparent", "password": "password123"},
-    )
-    token = login_response.json()["access_token"]
-    headers = {"Authorization": f"Bearer {token}"}
-
-    # Get today's chores
-    response = client.get("/api/v1/chores/today", headers=headers)
-    assert response.status_code == 200
-
-    # Device should NOT be in nudge list since all kids have PINs
-    data = response.json()
-    assert "shared_without_pin" in data
-    assert len(data["shared_without_pin"]) == 0

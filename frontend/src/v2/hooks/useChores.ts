@@ -22,10 +22,6 @@ export interface AssignmentBody {
   due_time: string | null
 }
 
-/** GET /chores/today: today's chores keyed by kid id. */
-export const useChoresToday = () =>
-  useQuery({ queryKey: ['chores-today'], queryFn: () => api<Record<string, Chore[]>>('/chores/today') })
-
 /** GET /chores: the chore library (archived hidden). */
 export const useLibrary = () => useQuery({ queryKey: ['chore-lib'], queryFn: () => api<LibChore[]>('/chores/') })
 
