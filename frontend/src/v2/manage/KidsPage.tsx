@@ -131,7 +131,7 @@ function KidsBody() {
             icon={EMPTY_ICON[section]}
             title={`No ${noun}s yet`}
             body={`Add your first ${noun} to get started.`}
-            actions={[{ label: `Add a ${noun}`, icon: 'add', onClick: () => pick('new') }]}
+            actions={[{ label: `Add a ${noun}`, icon: 'add', primary: true, onClick: () => pick('new') }]}
           />
         ))}
     </ParentShell>

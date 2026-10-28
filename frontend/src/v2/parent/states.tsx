@@ -9,6 +9,8 @@ export interface StateAction {
   icon: string
   href?: string
   onClick?: () => void
+  /** the main action: ink-filled (mockup 05 .btn.pri) */
+  primary?: boolean
 }
 
 export interface EmptyStateProps {
@@ -36,12 +38,12 @@ export function EmptyState({ icon, title, body, tone = 'soft', actions = [], chi
         <div className="p-state-actions">
           {actions.map((a) =>
             a.href ? (
-              <Link key={a.label} href={a.href} className="p-btn">
+              <Link key={a.label} href={a.href} className="p-btn" data-variant={a.primary ? 'ink' : undefined}>
                 <Icon name={a.icon} size={17} />
                 {a.label}
               </Link>
             ) : (
-              <button key={a.label} type="button" className="p-btn" onClick={a.onClick}>
+              <button key={a.label} type="button" className="p-btn" data-variant={a.primary ? 'ink' : undefined} onClick={a.onClick}>
                 <Icon name={a.icon} size={17} />
                 {a.label}
               </button>
@@ -117,14 +119,14 @@ export function ErrorPanel({
   const actions: StateAction[] =
     kind === 'crash'
       ? [
-          { label: 'Reload', icon: 'refresh', onClick: () => window.location.reload() },
+          { label: 'Reload', icon: 'refresh', primary: true, onClick: () => window.location.reload() },
           { label: 'Copy details', icon: 'content_copy', onClick: () => void navigator.clipboard?.writeText(detail ?? '').catch(() => {}) },
         ]
       : kind === 'notfound'
-      ? [{ label: 'Go to Today', icon: 'home', href: '/' }]
+      ? [{ label: 'Go to Today', icon: 'home', href: '/', primary: true }]
       : kind === 'expired'
         ? [{ label: 'Back to log in', icon: 'login', href: '/login' }]
-        : [{ label: 'Try again', icon: 'refresh', onClick: onRetry ?? (() => window.location.reload()) }]
+        : [{ label: 'Try again', icon: 'refresh', primary: true, onClick: onRetry ?? (() => window.location.reload()) }]
   return (
     <EmptyState
       icon={copy.icon}

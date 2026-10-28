@@ -140,7 +140,7 @@ function ForParents({ onGo }: { onGo: () => void }) {
         title="This part is for parents"
         body="Taking you to your checklist…"
         heading="h1"
-        actions={[{ label: 'Go now', icon: 'arrow_forward', onClick: onGo }]}
+        actions={[{ label: 'Go now', icon: 'arrow_forward', primary: true, onClick: onGo }]}
       />
     </Guard>
   )

@@ -103,7 +103,7 @@ export function TodayPage() {
           title="Add your first kid"
           body="Then give them chores and devices. Takes about a minute."
           actions={[
-            { label: 'Add a kid', icon: 'person_add', href: '/kids?section=kids' },
+            { label: 'Add a kid', icon: 'person_add', href: '/kids?section=kids', primary: true },
             { label: 'Run setup', icon: 'auto_fix_high', href: '/setup' },
           ]}
         />
@@ -143,7 +143,7 @@ export function TodayPage() {
               icon="event_available"
               title={`Nothing for ${kid.name ?? 'them'} today`}
               body="No chores are due today. Their devices follow the schedule only."
-              actions={[{ label: 'Add a chore', icon: 'add', href: '/kids?section=chores&item=new' }]}
+              actions={[{ label: 'Add a chore', icon: 'add', href: '/kids?section=chores&item=new', primary: true }]}
             />
           )}
           {kid.chores.length > 0 && (

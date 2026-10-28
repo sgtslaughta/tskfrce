@@ -104,3 +104,25 @@ describe('preview bar styling', () => {
     expect(await screen.findByRole('button', { name: /Back to parent/ })).toBeInTheDocument()
   })
 })
+
+describe('state-panel actions', () => {
+  const { EmptyState } = jest.requireActual('@/v2/parent/states')
+  const show = () =>
+    render(
+      <EmptyState
+        icon="home"
+        title="T"
+        body="b"
+        actions={[
+          { label: 'Main', icon: 'add', primary: true, onClick: () => {} },
+          { label: 'Other', icon: 'close', href: '/x' },
+        ]}
+      />,
+    )
+
+  test('only the primary action is ink-filled', () => {
+    show()
+    expect(screen.getByRole('button', { name: /Main/ })).toHaveAttribute('data-variant', 'ink')
+    expect(screen.getByRole('link', { name: /Other/ })).not.toHaveAttribute('data-variant')
+  })
+})

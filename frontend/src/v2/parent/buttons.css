@@ -39,6 +39,16 @@
   opacity: 0.9;
 }
 
+[data-look='parent'] .p-btn[data-variant='ink'] {
+  background: var(--p-ink);
+  border-color: var(--p-ink);
+  color: var(--p-card);
+}
+
+[data-look='parent'] .p-btn[data-variant='ink']:hover {
+  opacity: 0.9;
+}
+
 [data-look='parent'] .p-btn[data-variant='red'] {
   color: var(--p-red);
   border-color: color-mix(in srgb, var(--p-red) 40%, var(--p-line));

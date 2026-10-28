@@ -14,7 +14,7 @@ export const NoChats = () => (
     icon="chat_bubble"
     title="No chats yet"
     body="Chats start when a kid comments on a chore. Message the whole family, or each kid privately, from Family and the kid chats."
-    actions={[{ label: 'Open Family chat', icon: 'group', href: '/chat?item=family:family' }]}
+    actions={[{ label: 'Open Family chat', icon: 'group', href: '/chat?item=family:family', primary: true }]}
   />
 )
 
