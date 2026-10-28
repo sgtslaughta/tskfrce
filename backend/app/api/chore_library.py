@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session, selectinload
 from app.api.deps import get_db, require_parent
 from app.models.chore_type import ChoreType
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, ChoreStep
+from app.models.points import Points
 from app.models.user import User, UserRole
 from app.schemas.chore import (
     AssignmentIn,
@@ -21,6 +22,7 @@ from app.schemas.chore import (
 from app.services import chores as svc
 from app.services import kid_events
 from app.services.chore_types import other_id
+from app.services.photos import storage
 
 router = APIRouter(tags=["chores"], dependencies=[Depends(require_parent)])
 
@@ -59,20 +61,19 @@ def chore_out(c: Chore) -> dict:
         ],
         # an assignment with no kids left is a retired one (deleted, history kept)
         assignments=[assignment_out(a) for a in c.assignments if a.kids],
-        archived=c.archived_at is not None,
     ).model_dump()
 
 
 def _chore(db: Session, chore_id: int) -> Chore:
     c = db.get(Chore, chore_id)
-    if c is None or c.archived_at is not None:
+    if c is None:
         raise HTTPException(404, NO_CHORE)
     return c
 
 
 def _assignment(db: Session, assignment_id: int) -> ChoreAssignment:
     a = db.get(ChoreAssignment, assignment_id)
-    if a is None or not a.kids or a.chore.archived_at is not None:
+    if a is None or not a.kids:
         raise HTTPException(404, NO_ASSIGNMENT)
     return a
 
@@ -121,7 +122,7 @@ def _renumber(db: Session, c: Chore) -> None:
 
 
 @router.get("/api/v1/chores/")
-def list_chores(kid_id: int | None = None, archived: bool = False, db: Session = Depends(get_db)):
+def list_chores(kid_id: int | None = None, db: Session = Depends(get_db)):
     q = (
         db.query(Chore)
         .options(
@@ -130,8 +131,6 @@ def list_chores(kid_id: int | None = None, archived: bool = False, db: Session =
         )
         .order_by(Chore.id)
     )
-    if not archived:
-        q = q.filter(Chore.archived_at.is_(None))
     out = []
     for c in q:
         if kid_id is None or any(
@@ -205,23 +204,18 @@ def copy_chore(
 
 @router.delete("/api/v1/chores/{chore_id}", status_code=204, response_class=Response)
 def delete_chore(chore_id: int, db: Session = Depends(get_db)):
-    """With history: archive and stop future runs. Without: remove. Already archived: nothing to do."""
-    c = db.get(Chore, chore_id)
-    if c is None:
-        raise HTTPException(404, NO_CHORE)
-    if c.archived_at is not None:
-        return Response(status_code=204)
+    """Gone for good: assignments, runs, step ticks, proof photos (files too) and chore chat.
+    Points already earned or taken stay in the kids' balances, detached from the run."""
+    c = _chore(db, chore_id)
     ids = [a.id for a in c.assignments]
     runs = db.query(ChoreRun).filter(ChoreRun.assignment_id.in_(ids)).all() if ids else []
-    if not runs:
-        db.delete(c)
-    else:
-        c.archived_at = datetime.utcnow()
-        for a in c.assignments:
-            a.active = False
-        for r in runs:
-            if r.status in ("todo", "submitted"):
-                r.status = "cancelled"
+    if runs:
+        db.query(Points).filter(Points.run_id.in_([r.id for r in runs])).update(
+            {"run_id": None}, synchronize_session=False
+        )
+    svc.delete_runs(db, runs, storage())
+    db.flush()
+    db.delete(c)
     db.commit()
     return Response(status_code=204)
 

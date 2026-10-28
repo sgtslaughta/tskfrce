@@ -240,9 +240,10 @@ def add_photo(
 ):
     r = _open_run(db, kid, chore_id)
     p = save_photo(file, r, kid)
+    line = chat.photo_line(db, r, kid)
     db.add(p)
     db.flush()
-    chat.system(db, r, "Photo added", p.id, actor=kid)
+    chat.system(db, r, line, p.id, actor=kid)
     db.commit()
     return {"id": p.id, "attempt": p.attempt}
 

@@ -267,7 +267,6 @@ export interface LibChore {
   type_id: number
   steps: { id: number; title: string; due_time: string | null; after_previous: boolean }[]
   assignments: Assignment[]
-  archived: boolean
 }
 
 /** GET /kid/whoami */

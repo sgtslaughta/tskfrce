@@ -179,7 +179,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
             <ConfirmDelete
               opened={confirm}
               title={`Delete ${chore.title}?`}
-              body="Chores already done stay in history."
+              body="Its history, photos and chat go too. Points already earned stay."
               onConfirm={() => delOnce(chore.id, { onError: toastFail, onSuccess: () => (toastOk('Deleted'), onSelect(null)) })}
               onClose={close}
             />

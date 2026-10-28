@@ -239,7 +239,7 @@ def _add(db: Session, run: ChoreRun) -> bool:
 
 def make_runs(db: Session, a: ChoreAssignment, day: date) -> list[ChoreRun]:
     """Today's runs for one assignment: one per kid (each) or one shared (race/team)."""
-    if not a.active or a.chore.archived_at is not None or not occurs_on(a, day):
+    if not a.active or not occurs_on(a, day):
         return []
     kids = [k for k in a.kids if k.role == UserRole.KID]
     if not kids:

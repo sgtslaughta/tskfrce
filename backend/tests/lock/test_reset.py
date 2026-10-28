@@ -61,13 +61,6 @@ def test_once_assignment_only_on_its_date(db, parent, kid):
     assert a.active is False
 
 
-def test_archived_chore_makes_no_runs(db, parent, kid):
-    c, _ = make_chore(db, parent, kids=[kid])
-    c.archived_at = datetime(2026, 10, 1)
-    db.commit()
-    assert run_reset(db, D) == 0
-
-
 def test_before_reset_time_yesterday_still_counts(db):
     fam = get_family(db)
     fam.timezone, fam.reset_time, fam.last_reset_date = "UTC", "06:00", D

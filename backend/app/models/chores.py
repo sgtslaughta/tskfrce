@@ -51,7 +51,6 @@ class Chore(Base):
     created_by_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    archived_at = Column(DateTime, nullable=True)
     type_id = Column(Integer, ForeignKey("chore_types.id"), nullable=False, index=True)
 
     type = relationship("ChoreType")

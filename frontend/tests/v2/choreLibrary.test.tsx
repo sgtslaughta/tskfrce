@@ -79,7 +79,7 @@ describe('tabs and list', () => {
     })
   })
 
-  test('chore cards show the summary line and letter avatars; archived are not requested', async () => {
+  test('chore cards show the summary line and letter avatars', async () => {
     await show({})
     const card = within(list()).getByRole('button', { name: /Clean room/ })
     expect(card).toHaveTextContent('15 pts · daily · 2 steps')
@@ -438,7 +438,7 @@ describe('chore detail', () => {
       name: 'Delete Clean room?',
     })
     expect(
-      within(confirm).getByText('Chores already done stay in history.'),
+      within(confirm).getByText('Its history, photos and chat go too. Points already earned stay.'),
     ).toBeInTheDocument()
     await userEvent.click(
       within(confirm).getByRole('button', { name: 'Delete' }),
