@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Link from 'next/link'
-import { EmptyState, ErrorPanel } from '@/v2/parent/states'
+import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { useRouter } from 'next/router'
 import { Drawer, Popover, Tooltip } from '@mantine/core'
 import { useQueryClient } from '@tanstack/react-query'
@@ -164,8 +164,10 @@ export function List({ onGo, sheet, page }: { onGo: () => void; sheet?: boolean;
         ))}
       </div>
       {filtered.length === 0 ? (
-        inbox.isError ? (
+        inbox.isError || inbox.failureCount > 0 ? (
           <ErrorPanel kind="unreachable" error={inbox.error} onRetry={() => inbox.refetch()} />
+        ) : !inbox.data ? (
+          <Skeleton rows={3} />
         ) : (
           <EmptyState
             icon="notifications_off"
@@ -269,6 +271,8 @@ export function Bell({ placement = 'header' }: { placement?: 'rail' | 'header' }
       onChange={setOpened}
       position={placement === 'rail' ? 'right-start' : 'bottom-end'}
       width={400}
+      trapFocus
+      returnFocus
       // §2.2 pointer and sticker shadow (CSS)
       withArrow
       arrowSize={14}

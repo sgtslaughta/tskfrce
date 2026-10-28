@@ -40,6 +40,22 @@ beforeEach(() => {
 })
 
 describe('Bell', () => {
+  test('loading shows a skeleton, not "No notifications"', async () => {
+    apiMock.mockImplementation(() => new Promise(() => {}))
+    wrap(<Bell />)
+    await userEvent.click(screen.getByRole('button', { name: /Notifications/ }))
+    expect(await screen.findByRole('status', { name: 'Loading' })).toBeTruthy()
+    expect(screen.queryByText('No notifications')).toBeNull()
+  })
+
+  test('a failed load shows the error panel, never the empty state', async () => {
+    apiMock.mockRejectedValue(new Error('down'))
+    wrap(<Bell />)
+    await userEvent.click(screen.getByRole('button', { name: /Notifications/ }))
+    expect(await screen.findByRole('button', { name: /Try again/, hidden: true })).toBeTruthy()
+    expect(screen.queryByText('No notifications')).toBeNull()
+  })
+
   test('count hidden at 0 and 9+ over 9', async () => {
     serve([], 0)
     const { unmount } = wrap(<Bell />)
