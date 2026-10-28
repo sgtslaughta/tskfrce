@@ -30,6 +30,7 @@
   --p-red: var(--k-back); --p-redbg: var(--k-coral-bg); --p-amb: color-mix(in srgb, var(--k-amber) 22%, var(--k-card));
   --p-ambink: var(--k-ink); --p-grid: var(--k-grid); --p-meter: var(--k-ink); --p-track: var(--k-line);
   --p-acc: var(--k-sun);
+  --p-tbg: var(--k-ink); --p-tfg: var(--k-card); /* my bubble and the send button */
   background: var(--k-card); color: var(--k-ink); border: 2px solid var(--k-ink); box-shadow: var(--k-shadow);
   border-radius: 16px; font-family: inherit;
 }

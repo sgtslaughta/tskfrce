@@ -23,23 +23,33 @@ export const DaySep = ({ label }: { label: string }) => (
 )
 
 /** Parent chat bubble: others soft, mine inverse (--p-tbg), system lines centred with a tick; `names` = members to bold as @mentions. */
-export function ParentBubble({ m, mine, names = [] }: { m: ChatMessage; mine: boolean; names?: string[] }) {
+export function ParentBubble({ m, mine, names = [], kid = false, kidName }: { m: ChatMessage; mine: boolean; names?: string[]; kid?: boolean; kidName?: string }) {
   const [editing, setEditing] = useState(false)
   if (m.kind === 'system') {
     return (
-      <div className="pc-sys" data-testid="msg-system">
-        <Icon name="task_alt" size={15} />
-        <span>
-          {m.body} · {timeLabel(m.created_at)}
-        </span>
-        {m.photo_url && <Photo url={m.photo_url} className="pc-photo" />}
-      </div>
+      <>
+        <div className="pc-sys" data-testid="msg-system">
+          <Icon name="task_alt" size={15} />
+          <span>
+            {m.body} · {timeLabel(m.created_at)}
+          </span>
+        </div>
+        {m.photo_url && (
+          // proof photos sit in the kid's own bubble (mockup 02)
+          <div className="pc-msg" data-testid="msg-other">
+            <small>
+              {kidName ?? 'Kid'} · {timeLabel(m.created_at)}
+            </small>
+            <Photo url={m.photo_url} className="pc-photo" />
+          </div>
+        )}
+      </>
     )
   }
   return (
     <>
       <div className="pc-msg" data-mine={mine} data-testid={mine ? 'msg-mine' : 'msg-other'}>
-        <MessageActions m={m} mine={mine} kid={false} onEdit={() => setEditing(true)}>
+        <MessageActions m={m} mine={mine} kid={kid} onEdit={() => setEditing(true)}>
           <small>
             {mine ? 'You' : (m.author_name ?? 'Someone')} · {timeLabel(m.created_at)}
             {m.edited_at && (
@@ -68,10 +78,10 @@ export function ParentBubble({ m, mine, names = [] }: { m: ChatMessage; mine: bo
             </span>
           )}
           {m.photo_url && <Photo url={m.photo_url} className="pc-photo" />}
-          {editing ? <EditBox m={m} kid={false} onDone={() => setEditing(false)} /> : m.body && <span>{renderMentions(m.body, names)}</span>}
+          {editing ? <EditBox m={m} kid={kid} onDone={() => setEditing(false)} /> : m.body && <span>{renderMentions(m.body, names)}</span>}
         </MessageActions>
       </div>
-      <ReactionChips m={m} kid={false} mine={mine} />
+      <ReactionChips m={m} kid={kid} mine={mine} />
     </>
   )
 }
