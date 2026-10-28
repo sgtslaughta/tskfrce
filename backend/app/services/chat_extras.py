@@ -2,13 +2,14 @@
 
 import re
 
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Session
 
 from app.models.chat import Thread, ThreadMessage
 from app.models.chores import ChoreRun
 from app.models.user import User, UserRole
 from app.services.chat import can_access
-from app.services.chores import run_kid_ids
+from app.services.chores import kid_runs_filter, run_kid_ids
 
 SEARCH_WINDOW = 200
 
@@ -43,13 +44,21 @@ def mentioned(users: list[User], body: str | None, author_id: int) -> list[int]:
 
 def search(db: Session, user: User, q: str) -> list[int]:
     esc = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-    rows = (
+    base = (
         db.query(ThreadMessage.thread_id)
+        .join(Thread, Thread.id == ThreadMessage.thread_id)
         .filter(ThreadMessage.kind == "user", ThreadMessage.body.ilike(f"%{esc}%", escape="\\"))
-        .order_by(ThreadMessage.id.desc())
-        .limit(SEARCH_WINDOW)
-        .all()
     )
+    if user.role != UserRole.PARENT:  # narrow to the kid's threads before the window cuts
+        mine = select(ChoreRun.id).where(kid_runs_filter(user.id))
+        base = base.filter(
+            or_(
+                Thread.kind == "family",
+                and_(Thread.kind == "private", Thread.kid_id == user.id),
+                and_(Thread.kind == "chore", Thread.run_id.in_(mine)),
+            )
+        )
+    rows = base.order_by(ThreadMessage.id.desc()).limit(SEARCH_WINDOW).all()
     ids = list(dict.fromkeys(r[0] for r in rows))
     out = []
     for tid in ids:

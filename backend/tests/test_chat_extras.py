@@ -139,3 +139,16 @@ def test_parent_mention_not_double_pinged(client, db, parent, parent_headers):
     fid = _fam(client, parent_headers)["id"]  # family thread has no parent_reply ping
     client.post(f"{C}/threads/{fid}/messages", json={"body": "@leo hi"}, headers=parent_headers)
     assert _pings(db, leo).count() == 2
+
+
+def test_search_filters_access_before_the_window(client, db, parent, parent_headers, monkeypatch):
+    monkeypatch.setattr("app.services.chat_extras.SEARCH_WINDOW", 2)
+    leo = _make_user(db, "leo", UserRole.KID)
+    mia = _make_user(db, "mia", UserRole.KID)
+    fid = _fam(client, parent_headers)["id"]
+    pid = client.get(f"{C}/threads/private/{mia.id}", headers=parent_headers).json()["id"]
+    client.post(f"{C}/threads/{fid}/messages", json={"body": "pizza night"}, headers=parent_headers)
+    for _ in range(3):  # newer, but not Leo's to see
+        client.post(f"{C}/threads/{pid}/messages", json={"body": "pizza"}, headers=parent_headers)
+    r = client.get(f"{C}/search", params={"q": "pizza"}, headers=_headers(db, leo))
+    assert r.json() == {"thread_ids": [fid]}
