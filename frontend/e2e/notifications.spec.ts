@@ -77,7 +77,7 @@ test('kid note shows in the bell under Needs you and Reply opens the chore chat'
   try {
     // smallest seeding route: report a device (what the blocker does) at a unique fake LAN address, give it to the kid,
     // and present that address as X-Real-IP (the backend trusts it from loopback)
-    const ip = `10.77.${Date.now() % 250}.${(Date.now() >> 8) % 250 + 1}`
+    const ip = `10.77.${Date.now() % 250}.${Math.floor(Date.now() / 256) % 250 + 1}`
     const real = { 'X-Real-IP': ip }
     const seen = await bk.post('/api/v1/internal/devices/seen', {
       headers: { 'X-Internal-Token': TOKEN! },
@@ -109,8 +109,9 @@ test('kid note shows in the bell under Needs you and Reply opens the chore chat'
     await expect(item).toBeVisible()
     await item.getByRole('button', { name: 'Reply' }).click()
     await expect(page).toHaveURL(new RegExp(`chore=${run.id}`))
-    const chat = page.getByRole('dialog', { name: 'Chat' })
-    await expect(chat.getByRole('heading', { name: new RegExp(choreName) })).toBeVisible()
+    // Today opens the chore's chat inline, in a region named after the chore
+    const chat = page.getByRole('region', { name: choreName })
+    await expect(chat.getByText(`Note: ${label}`)).toBeVisible()
     await expect(chat.getByRole('textbox', { name: 'Message' })).toBeVisible()
   } finally {
     if (deviceId) {
