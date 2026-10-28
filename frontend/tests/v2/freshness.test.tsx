@@ -66,6 +66,19 @@ describe('Freshness line', () => {
     return o
   }
 
+  test('stays quiet while the device is offline (the offline banner wins)', async () => {
+    const spy = jest.spyOn(window.navigator, 'onLine', 'get').mockReturnValue(false)
+    const qc = setup()
+    const query = observe(qc, 'bad', () => Promise.reject({ status: 500 }))
+    query.setData({ ok: 1 })
+    await act(async () => void (await query.fetch().catch(() => undefined)))
+    expect(screen.queryByRole('alert')).toBeNull()
+    spy.mockReturnValue(true)
+    act(() => void window.dispatchEvent(new Event('online')))
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/Couldn.t update/))
+    spy.mockRestore()
+  })
+
   test('shows Updating… with last-updated after a short delay while cached data refetches', async () => {
     jest.useFakeTimers()
     const qc = setup()

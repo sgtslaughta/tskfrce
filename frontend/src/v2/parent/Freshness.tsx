@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { Icon } from './Icon'
+import { useOnline } from '../hooks/useOnline'
 import { agoText, summarize, type Freshness as F } from './freshness'
 
 const SHOW_AFTER_MS = 700 // quick background polls shouldn't flash the line
@@ -35,6 +36,7 @@ function useFreshness(): F {
 export function Freshness() {
   const qc = useQueryClient()
   const { updating, since, failed } = useFreshness()
+  const online = useOnline()
   const [slow, setSlow] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
@@ -46,6 +48,7 @@ export function Freshness() {
     return () => clearTimeout(t)
   }, [updating])
 
+  if (!online) return null // the offline banner already says it
   if (failed)
     return (
       <div className="p-banner" role="alert">
