@@ -4,20 +4,20 @@ import { ProfileModal } from '../components/ProfileModal'
 import { useLeaderboard, useProfiles } from '../hooks/useCommunity'
 import { useAsKid } from '../hooks/usePreview'
 
-/** Kid view of the family: weekly leaderboard and sibling cards that open a profile.
- *  Little kids get only the big sibling cards, so each sibling shows once. */
+/** Kid view of the family, one row per member. Kid/Teen: the weekly ranking, sibling rows open a profile.
+ *  Little: only the big sibling cards (no ranking). Without a ranking, cards for everyone. */
 export function FamilySection({ meId, little = false }: { meId?: number | null; little?: boolean }) {
   const kidAuth = useAsKid() === null // previewing parents use their own token
   const board = useLeaderboard(kidAuth).data
   const profiles = useProfiles(kidAuth).data
   const [open, setOpen] = useState<number | null>(null)
-  const sibs = (profiles ?? []).filter((p) => p.kid_id !== meId)
-  const ranked = board && !little ? board : null
+  const ranked = board?.rows.length && !little ? board : null
+  const sibs = ranked ? [] : (profiles ?? []).filter((p) => p.kid_id !== meId)
   if (!ranked && !sibs.length) return null
   return (
     <section className="me-card" aria-label="Family">
       <h2 className="me-h k-disp">Family</h2>
-      {ranked && <Leaderboard rows={ranked.rows} kid={kidAuth} bare />}
+      {ranked && <Leaderboard rows={ranked.rows} kid={kidAuth} bare onPick={setOpen} meId={meId} />}
       {sibs.map((p) => (
         <button key={p.kid_id} type="button" className="me-sib" onClick={() => setOpen(p.kid_id)}>
           <span aria-hidden>{p.avatar}</span>

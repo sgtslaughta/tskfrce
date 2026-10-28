@@ -76,6 +76,13 @@
 .me-card :where(.f-cap) { color: var(--k-sub); }
 .me-card :where(.f-num, .f-row) { color: var(--k-ink); }
 .me-out { width: auto; align-self: flex-start; }
+.lb-pick { display: block; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; border-radius: 10px; }
+.me-card ol .flair-card-row { flex-wrap: wrap; row-gap: 2px; }
+/* dark: the profile and ranking name cards use the navy kid surface (not the pale #e8eeff slab); sun stripe stays */
+[data-mantine-color-scheme='dark'] .me-card { --f-head-bg: var(--k-soft); --f-head-ink: var(--k-ink); --f-head-sub: var(--k-sub); }
+[data-mantine-color-scheme='dark'] .me-card .flair-card:not(.flair-card-grid, .flair-card-waves, .flair-card-stripes, .flair-card-aurora, .flair-card-sheen, .flair-card-starfield, .flair-card-unicorn) {
+  --fc-track: var(--k-line); --fc-tag: rgba(255, 255, 255, 0.1);
+}
 .k-app[data-mode='little'] .me-card { border: 4px solid var(--k-ink); border-radius: 32px; box-shadow: 5px 5px 0 var(--k-ink); padding: 24px; }
 [data-mantine-color-scheme='dark'] .k-app[data-mode='little'] .me-card { box-shadow: 5px 5px 0 #000; }
 .k-app[data-mode='little'] .me-h { font-size: 32px; }
@@ -96,7 +103,6 @@
 }
 
 @media (max-width: 599px) {
-  .me-card ol .flair-title { display: none; } /* names get the row instead of the level chip */
   .r-head, .r-view[data-mode='little'] .r-head { font-size: 28px; }
   .r-view[data-mode='teen'] .r-head { font-size: 22px; }
   .k-app[data-mode='little'] .me-card { padding: 18px 14px; }

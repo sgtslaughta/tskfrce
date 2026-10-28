@@ -4,9 +4,20 @@ import { useEmblems } from '../hooks/useEmblems'
 import type { LeaderboardRow } from '../types'
 
 /** This week's family ranking; ties share a rank and are marked. */
-export function Leaderboard({ rows, kid = false, bare = false }: { rows: LeaderboardRow[]; kid?: boolean; bare?: boolean }) {
+/** `onPick` makes every row except `meId`'s a button (kid Me: tap a sibling to open their profile). */
+export function Leaderboard({ rows, kid = false, bare = false, onPick, meId }: { rows: LeaderboardRow[]; kid?: boolean; bare?: boolean; onPick?: (kidId: number) => void; meId?: number | null }) {
   const emblems = useEmblems(kid)
   if (!rows.length) return null
+  const card = (r: LeaderboardRow) => {
+    const nc = <NameCard name={r.name} avatar={r.avatar} level={r.level} title={r.title} flair={r.flair ?? NO_FLAIR} emblems={emblems} size="sm" />
+    return onPick && r.kid_id !== meId ? (
+      <button type="button" className="lb-pick" aria-label={`${r.name}, open profile`} onClick={() => onPick(r.kid_id)}>
+        {nc}
+      </button>
+    ) : (
+      nc
+    )
+  }
   return (
     <div className={bare ? undefined : 'f-card'}>
       <div className="f-cap">This week</div>
@@ -17,7 +28,7 @@ export function Leaderboard({ rows, kid = false, bare = false }: { rows: Leaderb
             <li key={r.kid_id} className="f-row" style={{ padding: '6px 0', flexWrap: 'nowrap' }}>
               <b className="f-num" style={{ width: 36 }}>{`${tied ? 'T' : ''}${r.rank}`}</b>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <NameCard name={r.name} avatar={r.avatar} level={r.level} title={r.title} flair={r.flair ?? NO_FLAIR} emblems={emblems} size="sm" />
+                {card(r)}
               </div>
               <b className="f-num">{`${r.score} pts`}</b>
             </li>

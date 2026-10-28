@@ -39,7 +39,7 @@
 .kg-dots i { width: 26px; height: 26px; box-sizing: border-box; border-radius: 50%; border: 3px solid var(--k-ink); background: var(--k-card); }
 .kg-dots i[data-on] { background: var(--k-sun); }
 .k-pin-err {
-  margin: 0; min-height: 24px; font-weight: 700; color: var(--k-ink); text-align: center;
+  margin: 0; min-height: 40px; box-sizing: border-box; display: flex; align-items: center; font-weight: 700; color: var(--k-ink); text-align: center;
 }
 .k-pin-err:not(:empty) { padding: 8px 14px; background: var(--k-coral-bg); border-left: 4px solid var(--k-coral); border-radius: 10px; }
 .k-keys { display: grid; grid-template-columns: repeat(3, minmax(64px, 88px)); gap: 12px; }

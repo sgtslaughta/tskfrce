@@ -12,18 +12,18 @@ jest.mock('@/v2/hooks/useCommunity', () => ({
   ] }),
 }))
 jest.mock('@/v2/hooks/usePreview', () => ({ useAsKid: () => null }))
-jest.mock('@/v2/components/Leaderboard', () => ({ Leaderboard: () => <div>board</div> }))
+jest.mock('@/v2/components/Leaderboard', () => ({ Leaderboard: ({ rows }: { rows: { name: string }[] }) => <div>{rows.map((r) => <span key={r.name}>{r.name}</span>)}</div> }))
 jest.mock('@/v2/components/ProfileModal', () => ({ ProfileModal: () => null }))
 
 describe('FamilySection', () => {
   it('little: sibling cards only, each sibling once, no ranking', () => {
     render(<FamilySection meId={1} little />)
     expect(screen.getAllByText('Sib')).toHaveLength(1)
-    expect(screen.queryByText('board')).toBeNull()
+    expect(screen.queryByText('Me')).toBeNull()
   })
-  it('other modes keep the ranking above the cards', () => {
+  it('kid/teen: one ranking row per member, no extra sibling list', () => {
     render(<FamilySection meId={1} />)
-    expect(screen.getByText('board')).toBeTruthy()
-    expect(screen.getByText('Sib')).toBeTruthy()
+    expect(screen.getAllByText('Sib')).toHaveLength(1)
+    expect(screen.queryByRole('button', { name: /Sib/ })).toBeNull()
   })
 })
