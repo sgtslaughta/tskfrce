@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import { useRouter } from 'next/router'
 import { ReactNode } from 'react'
 import { MantineProvider } from '@mantine/core'
@@ -381,5 +381,21 @@ describe('Rail log out', () => {
     )
     screen.getByRole('button', { name: 'Log out' }).click()
     expect(onLogout).toHaveBeenCalled()
+  })
+})
+
+describe('ParentShell log out', () => {
+  it('drops a stale session-expired note before going to /login', async () => {
+    const replace = jest.fn()
+    ;(useRouter as jest.Mock).mockReturnValue({ pathname: '/', replace, query: {} })
+    sessionStorage.setItem('task4ce-session-expired', '1')
+    render(
+      <MantineProvider>
+        <ParentShell title="Test">Content</ParentShell>
+      </MantineProvider>
+    )
+    screen.getAllByRole('button', { name: 'Log out' })[0].click()
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/login'))
+    expect(sessionStorage.getItem('task4ce-session-expired')).toBeNull()
   })
 })

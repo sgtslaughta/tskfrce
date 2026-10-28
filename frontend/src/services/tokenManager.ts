@@ -5,7 +5,7 @@
  * @version 1.0.0
  */
 
-import { markSessionExpired } from '@/v2/login/sessionExpired';
+import { markSessionExpired, takeSessionExpired } from '@/v2/login/sessionExpired';
 import {
   createSafeStorage,
   storeTokens,
@@ -111,6 +111,7 @@ export class TokenManager {
    */
   public setTokens(tokens: TokenPair, userInfo?: any): void {
     storeTokens(this.safeLocalStorage, tokens, userInfo);
+    takeSessionExpired(); // a fresh session: drop any stale "logged out" note
     this.scheduleTokenRefresh();
     this.resetRefreshRetryCount();
   }
@@ -309,7 +310,6 @@ export class TokenManager {
       };
 
     } catch (error) {
-      console.error('❌ Token refresh failed:', error);
       
       // Check if we should retry
       if (this.refreshRetryCount < this.MAX_REFRESH_RETRIES) {
@@ -322,6 +322,7 @@ export class TokenManager {
         return this.performTokenRefresh(refreshToken);
       }
 
+      console.warn('Token refresh failed:', error instanceof Error ? error.message : error); // once, after the retries
       this.emitEvent('invalid');
       markSessionExpired();
       return {
@@ -380,7 +381,7 @@ export class TokenManager {
 
       this.refreshTokens();
     } else if (validation.isExpired && !this.canRefreshToken()) {
-      markSessionExpired();
+      if (this.getAccessToken()) markSessionExpired(); // a cold visit with no session is not an expiry
 
       this.clearTokens();
     }

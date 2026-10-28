@@ -13,6 +13,7 @@ import { Bell } from '@/v2/components/Bell'
 import { BlockerBanner } from '@/v2/components/BlockerBanner'
 import { Freshness } from '@/v2/parent/Freshness'
 import { ChatDock } from '@/v2/chat/ChatDock'
+import { takeSessionExpired } from '@/v2/login/sessionExpired'
 import { cancelSignOut, startSignOut } from '@/v2/components/RequireParent'
 
 export function ParentShell({
@@ -42,6 +43,7 @@ export function ParentShell({
       cancelSignOut()
       return
     }
+    takeSessionExpired() // an explicit log out is not an expiry
     router.replace('/login')
   }
 
