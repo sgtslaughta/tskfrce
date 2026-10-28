@@ -29,7 +29,9 @@ def mask(url: str) -> str:
     if "://" not in url:
         return "••••"
     scheme, rest = url.split("://", 1)
-    return f"{scheme}://{rest[:4]}••••"[:80]
+    # tokens sit right after the scheme (tgram, discord): show only a host that follows credentials
+    host = rest.rsplit("@", 1)[1].split("/")[0] if "@" in rest else ""
+    return f"{scheme}://{host}••••"[:80]
 
 
 def _check_url(url: str) -> str:

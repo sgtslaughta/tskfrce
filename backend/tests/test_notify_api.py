@@ -9,7 +9,8 @@ def _mk(client, h, **kw):
 
 
 def test_mask():
-    assert mask("discord://abcdefgh/xyz") == "discord://abcd••••"
+    assert mask("discord://abcdefgh/xyz") == "discord://••••"
+    assert mask("mailto://me:pw@gmail.com/x") == "mailto://gmail.com••••"
     assert mask("nothing") == "••••"
 
 
@@ -18,7 +19,7 @@ def test_create_list_never_raw(client, parent_headers):
     assert r.status_code == 201 and r.json()["events"] == list(notify.DEFAULT_EVENTS)
     assert "abcdef" not in r.text and "secret" not in r.text
     res = client.get("/api/v1/notify/places", headers=parent_headers)
-    assert "abcdef" not in res.text and res.json()[0]["url_mask"] == "json://abcd••••"
+    assert "abcdef" not in res.text and res.json()[0]["url_mask"] == "json://localhost••••"
     assert res.json()[0]["readable"] is True
 
 
