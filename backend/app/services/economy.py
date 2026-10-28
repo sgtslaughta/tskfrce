@@ -149,6 +149,15 @@ def _auto(fam: FamilySettings, kind: str, reward: Reward | None) -> bool:
     return kind == "reward" and not reward.needs_approval
 
 
+def pending_cost(db: Session, kid_id: int) -> int:
+    """Points held by this kid's unanswered requests."""
+    return (
+        db.query(func.coalesce(func.sum(Redemption.cost), 0))
+        .filter(Redemption.kid_id == kid_id, Redemption.status == "pending")
+        .scalar()
+    )
+
+
 def request(
     db: Session,
     kid: User,
@@ -193,9 +202,14 @@ def _request(
         label = f"{minutes} min of screen time"
     else:
         raise HTTPException(400, "Pick screen time or a reward.")
-    short = cost - balance(db, kid.id)
-    if short > 0:
-        raise HTTPException(409, f"You need {short} more points for that.")
+    bal = balance(db, kid.id)
+    if cost > bal:
+        raise HTTPException(409, f"You need {cost - bal} more points for that.")
+    held = pending_cost(db, kid.id)
+    if cost > bal - held:
+        raise HTTPException(
+            400, f"{held} of your points are held for requests a parent hasn't answered yet."
+        )
     if kind == "screen_time":
         from app.services import screen_time  # screen_time imports this module
 

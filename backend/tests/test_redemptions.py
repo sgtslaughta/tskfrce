@@ -41,6 +41,14 @@ def _ask(client, h, rid):
     return client.post(R, json={"kind": "reward", "reward_id": rid}, headers=h)
 
 
+def _pend(db, kid, rw):
+    """A pending request made before other requests held points (bypasses the hold check)."""
+    r = Redemption(kid_id=kid.id, kind="reward", reward_id=rw.id, cost=rw.price)
+    db.add(r)
+    db.commit()
+    return r.id
+
+
 def _balance(client, h):
     return client.get("/api/v1/kid/rewards", headers=h).json()["balance"]
 
@@ -87,7 +95,7 @@ def test_double_spend_second_approve_409(client, db, kid, kid_headers, parent_he
     _fund(db, kid, 150)
     rw = _reward(db)
     a = _ask(client, kid_headers, rw.id).json()["id"]
-    b = _ask(client, kid_headers, rw.id).json()["id"]
+    b = _pend(db, kid, rw)
     assert (
         client.post(f"/api/v1/redemptions/{a}/approve", headers=parent_headers).status_code == 200
     )
@@ -220,7 +228,7 @@ def test_approve_all_skips_unaffordable(client, db, kid, kid_headers, parent_hea
     _fund(db, kid, 300)
     rw = _reward(db, 200)
     a = _ask(client, kid_headers, rw.id).json()["id"]
-    b = _ask(client, kid_headers, rw.id).json()["id"]
+    b = _pend(db, kid, rw)
     r = client.post("/api/v1/redemptions/approve-all", headers=parent_headers)
     assert r.json() == {"approved": 1, "skipped": 1}
     assert _balance(client, kid_headers) == 100
@@ -405,3 +413,12 @@ def test_guess_device_matches_normalised_ip(db, kid):
     db.commit()
     assert _guess_device(db, kid, "::ffff:192.168.1.9") == b.id
     assert _guess_device(db, kid, "10.0.0.1") is None  # two devices, no match
+
+
+def test_pending_request_holds_points(client, db, kid, kid_headers):
+    _fund(db, kid, 150)
+    rw = _reward(db)
+    assert _ask(client, kid_headers, rw.id).status_code == 200
+    r = _ask(client, kid_headers, rw.id)
+    assert r.status_code == 400 and "100 of your points are held" in r.json()["detail"]
+    assert db.query(Redemption).count() == 1

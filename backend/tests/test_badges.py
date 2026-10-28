@@ -313,6 +313,23 @@ def test_custom_celebration_has_glyph(client, db, kid, parent_headers, kid_heade
     db.commit()
     feed = client.get("/api/v1/kid/celebrations", headers=kid_headers).json()
     c = next(f for f in feed if f["kind"] == "badge" and f["title"] == "Kindness")
-    assert c["glyph"] == "volunteer_activism" and c["detail"] == "so kind"
+    assert c["glyph"] == "volunteer_activism" and c["note"] == "so kind"
     b = next(f for f in feed if f["kind"] == "badge" and "First Blood" in f["title"])
     assert "glyph" not in b and b["title"].startswith("🩸")
+
+
+def test_custom_badge_celebration_keeps_tier_and_note(client, db, kid, kid_headers, parent_headers):
+    bid = client.post(
+        "/api/v1/custom-badges", json={"name": "Dog walker", "icon": "pets"}, headers=parent_headers
+    ).json()["id"]
+    client.post(
+        f"/api/v1/custom-badges/{bid}/award",
+        json={"kid_id": kid.id, "note": "Tidied up"},
+        headers=parent_headers,
+    )
+    b = [
+        i
+        for i in client.get("/api/v1/kid/celebrations", headers=kid_headers).json()
+        if i["kind"] == "badge"
+    ]
+    assert b[0]["detail"] == bd.TIERS[0] and b[0]["note"] == "Tidied up"

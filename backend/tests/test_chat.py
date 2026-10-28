@@ -446,3 +446,17 @@ def test_reaction_cap_and_chore_access(client, db, parent_headers):
     assert r.status_code == 422 and r.json()["detail"] == "That's enough reactions."
     assert _react(client, lh, mid, "👍").status_code == 200  # removing still works at the cap
     assert _react(client, parent_headers, mid, "🧑‍🍳").status_code == 200  # cap is per user
+
+
+def test_kids_own_system_line_is_not_unread_for_them(client, db, parent_headers):
+    leo, maya, lh, mh, chore = _world(db, client, parent_headers)
+    cid = chore("Dishes", [leo])
+    client.post(
+        f"/api/v1/kid/chores/{cid}/photos",
+        files={"file": ("a.jpg", _jpeg(), "image/jpeg")},
+        headers=lh,
+    )
+    assert client.get(f"{C}/threads", headers=lh).json()["total"] == 0
+    assert client.get(f"{C}/threads", headers=parent_headers).json()["total"] == 1
+    msgs = client.get(f"{C}/threads/chore/{cid}", headers=lh).json()["messages"]
+    assert msgs[0]["author_id"] is None

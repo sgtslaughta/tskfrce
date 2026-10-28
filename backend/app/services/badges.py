@@ -298,7 +298,7 @@ def celebrations(db: Session, kid: User) -> list[dict]:
         }
         if info["custom"]:
             item["title"], item["glyph"] = info["name"], info["icon"]
-            item["detail"] = a.note or info["tier_name"]
+            item["note"] = a.note
         items.append((a.earned_at, item))
     items.sort(key=lambda x: x[0])
     out = [i for _, i in items]

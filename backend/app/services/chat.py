@@ -125,9 +125,12 @@ def resync_note(db: Session, thread: Thread) -> None:
         run.note_label, run.note_at = last.note_label, last.created_at
 
 
-def system(db: Session, run: ChoreRun, body: str, photo_id: int | None = None) -> None:
-    """System line in the run's thread; `photo_id` is a ChorePhoto (proof)."""
-    post(db, thread_for(db, "chore", run_id=run.id), None, body, photo_id, kind="system")
+def system(
+    db: Session, run: ChoreRun, body: str, photo_id: int | None = None, actor: User | None = None
+) -> None:
+    """System line in the run's thread; `photo_id` is a ChorePhoto (proof).
+    `actor` (a kid's own action) keeps it out of that kid's unread count."""
+    post(db, thread_for(db, "chore", run_id=run.id), actor, body, photo_id, kind="system")
 
 
 def step_ok(db: Session, thread: Thread, step_id: int) -> bool:

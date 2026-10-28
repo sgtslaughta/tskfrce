@@ -53,10 +53,11 @@ def _msg(
     reactions: dict[int, list[dict]] | None = None,
     proofs: dict[int, int] | None = None,
 ) -> dict:
+    who = m.author if m.kind == "user" else None
     return {
         "id": m.id,
-        "author_id": m.author_id,
-        "author_name": (m.author.full_name or m.author.username) if m.author else None,
+        "author_id": who.id if who else None,
+        "author_name": (who.full_name or who.username) if who else None,
         "kind": m.kind,
         "note_label": m.note_label,
         "step_id": m.step_id,
