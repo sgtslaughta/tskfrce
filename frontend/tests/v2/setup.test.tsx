@@ -357,6 +357,12 @@ describe('resuming an unfinished setup', () => {
     expect(posts('/chores/9/assignments')).toHaveLength(0)
   })
 
+  test('resuming step 4 shows the starters already made as picked', async () => {
+    resumeAt(4, { '/chores/': [{ id: 9, title: 'Make bed' }, { id: 10, title: 'Custom thing' }] })
+    wrap()
+    expect(await screen.findByText('1 picked')).toBeInTheDocument()
+  })
+
   test('nothing to resume goes to log in', async () => {
     authed = true
     apiMock.mockImplementation(async (path) => (path === '/setup' ? { needed: false } : { step: null }))

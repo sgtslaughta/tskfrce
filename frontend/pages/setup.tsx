@@ -66,6 +66,9 @@ export default function SetupPage() {
     setAccountDone(true)
     setStep(resumeAt)
     api<Kid[]>('/kids').then(setKids).catch(() => {}) // the wizard forgot them; steps 4-5 need them
+    api<LibChore[]>('/chores/') // ...and the starters it already made, so they show as picked
+      .then((have) => setChores((c) => (c.length || !Array.isArray(have) ? c : have.map((h) => h.title).filter((t) => starter(t)))))
+      .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resumeAt])
 
