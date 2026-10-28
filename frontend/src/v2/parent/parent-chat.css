@@ -133,6 +133,7 @@
 [data-look='parent'] .pc-msg[data-mine='true'] { align-self: flex-end; border-radius: 16px 16px 4px 16px; background: var(--p-tbg); color: var(--p-tfg); }
 [data-look='parent'] .pc-msg[data-mine='true'] small { color: inherit; opacity: 0.75; }
 
+[data-look='parent'] .pc-pics { display: flex; flex-wrap: wrap; gap: 6px; }
 [data-look='parent'] .pc-photo { display: block; width: 160px; height: 120px; padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: var(--p-line); cursor: pointer; }
 
 [data-look='parent'] .pc-reply {

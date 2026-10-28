@@ -16,9 +16,9 @@ import {
 } from '@/v2/hooks/useChat'
 import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import { useRunDetail } from '@/v2/hooks/useChores'
-import { LoadError, LoadingCards } from '@/v2/components/States'
 import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { toastFail } from '@/v2/notify'
+import { groupProofPhotos } from './groupPhotos'
 import { DaySep, ParentBubble, dayName } from './ParentBubble'
 import { ThreadHead } from './ThreadHead'
 import { ThreadSidePanel } from './ThreadSidePanel'
@@ -161,9 +161,9 @@ export function ThreadView({
     <div className="pc-grid" data-side={side} data-bare={bare}>
       <section className="pc-thread" aria-label={data ? shownTitle({ kind, title: data.title }, kid) : 'Conversation'}>
         {data && !bare && <ThreadHead kind={kind} title={data.title} run={run} glyph={list?.threads.find((t) => t.id === data.id)?.glyph} />}
-        {thread.isError && !data && (kid ? <LoadError error={thread.error} onRetry={() => thread.refetch()} /> : <ErrorPanel kind="unreachable" error={thread.error} onRetry={() => thread.refetch()} />)}
+        {thread.isError && !data && <ErrorPanel kind="unreachable" error={thread.error} onRetry={() => thread.refetch()} />}
         {thread.isError && data && <p className="pc-empty" role="alert">Can&apos;t reach your home box. Showing what we have.</p>}
-        {thread.isPending && !thread.isError && (kid ? <LoadingCards n={3} h={48} /> : <Skeleton rows={3} />)}
+        {thread.isPending && !thread.isError && <Skeleton rows={3} />}
         <div className="pc-msgs" data-chat-scroll onScroll={onScroll}>
           {(hasMore ?? data?.has_more) && (
             <Button variant="default" size="xs" onClick={loadEarlier} style={{ alignSelf: 'center' }}>
@@ -171,14 +171,14 @@ export function ThreadView({
             </Button>
           )}
           {data && messages.length === 0 && <p className="pc-empty">Nothing here yet. Say hi!</p>}
-          {messages.map((m) => {
+          {groupProofPhotos(messages).map(({ m, more }) => {
             const d = dayName(m.created_at)
             const sep = d !== day
             day = d
             return (
               <Fragment key={m.id}>
                 {sep && <DaySep label={d} />}
-                <ParentBubble m={m} mine={m.author_id !== null && m.author_id === meId} names={names} kid={kid} kidName={kid ? 'You' : (data?.who ?? undefined)} />
+                <ParentBubble m={m} more={more} mine={m.author_id !== null && m.author_id === meId} names={names} kid={kid} kidName={kid ? 'You' : (data?.who ?? undefined)} />
               </Fragment>
             )
           })}

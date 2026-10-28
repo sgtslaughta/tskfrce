@@ -23,7 +23,7 @@ export const DaySep = ({ label }: { label: string }) => (
 )
 
 /** Parent chat bubble: others soft, mine inverse (--p-tbg), system lines centred with a tick; `names` = members to bold as @mentions. */
-export function ParentBubble({ m, mine, names = [], kid = false, kidName }: { m: ChatMessage; mine: boolean; names?: string[]; kid?: boolean; kidName?: string }) {
+export function ParentBubble({ m, mine, names = [], kid = false, kidName, more = [] }: { m: ChatMessage; mine: boolean; names?: string[]; kid?: boolean; kidName?: string; more?: ChatMessage[] }) {
   const [editing, setEditing] = useState(false)
   if (m.kind === 'system') {
     return (
@@ -35,12 +35,14 @@ export function ParentBubble({ m, mine, names = [], kid = false, kidName }: { m:
           </span>
         </div>
         {m.photo_url && (
-          // proof photos sit in the kid's own bubble (mockup 02)
-          <div className="pc-msg" data-testid="msg-other">
+          // proof photos sit in the kid's own bubble, side by side (mockup 02)
+          <div className="pc-msg" data-mine={kid} data-testid={kid ? 'msg-mine' : 'msg-other'}>
             <small>
               {kidName ?? 'Kid'} · {timeLabel(m.created_at)}
             </small>
-            <Photo url={m.photo_url} className="pc-photo" />
+            <div className="pc-pics">
+              {[m, ...more].map((x) => x.photo_url && <Photo key={x.id} url={x.photo_url} className="pc-photo" />)}
+            </div>
           </div>
         )}
       </>
