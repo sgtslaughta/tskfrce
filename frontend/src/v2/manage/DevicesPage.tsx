@@ -64,6 +64,7 @@ function DevicesBody() {
   const handleRequestOverride = (req: { kind: string; id: number; action: string }) =>
     once(() => override.mutateAsync({
       target: { kind: req.kind as OverrideTarget['kind'], id: req.id },
+      previous: req.kind === 'device' ? all.find((d) => d.id === req.id)?.override : null,
       choice: req.action === 'lock' ? { action: 'lock', minutes: null }
         : req.action === 'unlock' ? { action: 'unlock', minutes: 30 }
         : { action: 'clear' },
