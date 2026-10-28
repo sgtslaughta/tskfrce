@@ -326,9 +326,12 @@ export interface KidRewards {
 /** GET /kid/celebrations item. key: "r:<id>" | "b:<id>" | "l:<level>". */
 export interface KidCelebration {
   key: string
-  kind: 'reward' | 'screen_time' | 'badge' | 'level'
+  kind: 'reward' | 'screen_time' | 'badge' | 'level' | 'bonus'
   title: string
+  /** badge: tier name; bonus: the parent's note */
   detail: string
+  /** custom badge: the parent's note */
+  note?: string | null
   size: 'big' | 'small'
   glyph?: string | null
   /** level celebrations: flair newly unlocked */

@@ -1,3 +1,4 @@
+import { FocusTrap } from '@mantine/core'
 import { useEffect, useRef } from 'react'
 import { useCelebrations, useMarkCelebrationSeen } from '../hooks/useKidRewards'
 import { Icon } from '../parent/Icon'
@@ -8,6 +9,14 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
   const seen = useMarkCelebrationSeen(onExpired)
   const btn = useRef<HTMLButtonElement>(null)
   const id = award?.key
+  const open = id !== undefined
+  const returnTo = useRef<Element | null>(null)
+  if (open && !returnTo.current) returnTo.current = document.activeElement // before the trap steals focus
+  useEffect(() => {
+    if (open) return
+    ;(returnTo.current as HTMLElement | null)?.focus?.() // the last card closed
+    returnTo.current = null
+  }, [open])
   const close = () => {
     if (id !== undefined && !seen.isPending) seen.mutate(id)
   }
@@ -23,13 +32,15 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
   }, [id])
   if (!award) return null
   const big = award.size === 'big'
-  const heading = { reward: '🎉 You got it!', screen_time: '⏱️ Time added!', badge: '🏅 New badge!', level: '⬆️ Level up!' }[award.kind]
+  const heading = { reward: '🎉 You got it!', screen_time: '⏱️ Time added!', badge: '🏅 New badge!', level: '⬆️ Level up!', bonus: '⭐ Bonus points!' }[award.kind]
   const tier = award.kind === 'badge' ? award.detail : ''
+  const note = award.kind === 'bonus' ? award.detail : award.note
   const ring = TIER_NAMES.includes(tier as never) ? TIER_COLORS[tier] : undefined
   const unlocked = award.kind === 'level' ? (award.unlocked ?? []) : []
   const title = award.title
   return (
     <div className="award-back k-tok">
+      <FocusTrap active>
       <div
         role="dialog"
         aria-modal="true"
@@ -50,6 +61,7 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
           {title}
         </strong>
         {tier && <span className="f-cap">{tier}</span>}
+        {note && <span className="k-hint">{award.kind === 'bonus' ? note : `“${note}”`}</span>}
         {unlocked.length > 0 && (
           <>
             <span className="f-cap">New flair unlocked</span>
@@ -76,6 +88,7 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
           Nice!
         </button>
       </div>
+      </FocusTrap>
     </div>
   )
 }

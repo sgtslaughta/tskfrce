@@ -18,6 +18,8 @@ export function RewardsSection({ onExpired, mode = 'kid' }: { onExpired: () => v
   const [got, setGot] = useState<number[]>([])
   if (!d?.pending) return null
   const sc = d.screen
+  const held = d.pending.reduce((n, p) => n + p.cost, 0) // asked-for points can't be spent twice
+  const free = d.balance - held
   const data = opts(sc.left_today)
   const mins = data.some((o) => o.value === minutes) ? minutes : (data.find((o) => Number(o.value) >= 30) ?? data[data.length - 1])?.value ?? minutes
   const why =
@@ -47,9 +49,10 @@ export function RewardsSection({ onExpired, mode = 'kid' }: { onExpired: () => v
         <span className="k-sr"> · </span>
         <span className="k-chip" data-tone="sun" data-size={mode === 'little' ? 'lg' : 'md'}>
           <Icon name="star" fill />
-          <b>{d.balance}</b> points
+          <b>{free}</b> points
         </span>
       </h1>
+      {held > 0 && <p className="r-sub">{`${held} points are held for requests a parent hasn't answered yet.`}</p>}
       <div className="r-list">
         {d.screen_time_enabled && (
           <div className="r-item">
@@ -84,7 +87,7 @@ export function RewardsSection({ onExpired, mode = 'kid' }: { onExpired: () => v
                 <button
                   type="button"
                   className="r-btn"
-                  disabled={!!why || !data.length || cost > d.balance || redeem.isPending}
+                  disabled={!!why || !data.length || cost > free || redeem.isPending}
                   onClick={() => redeem.mutate({ kind: 'screen_time', minutes: Number(mins) })}
                 >
                   {sc.auto ? 'Get screen time' : 'Request screen time'}
@@ -101,7 +104,7 @@ export function RewardsSection({ onExpired, mode = 'kid' }: { onExpired: () => v
         {d.rewards.map((r) => {
           const pending = pendingReward(r.id)
           const instant = r.needs_approval === false
-          const pct = Math.min(d.balance / r.price, 1) * 100
+          const pct = Math.min(Math.max(free, 0) / r.price, 1) * 100
           return (
             <div key={r.id} className="r-item">
               <span className="r-ic">
@@ -128,7 +131,7 @@ export function RewardsSection({ onExpired, mode = 'kid' }: { onExpired: () => v
                   <button
                     type="button"
                     className="r-btn"
-                    disabled={d.balance < r.price || redeem.isPending}
+                    disabled={free < r.price || redeem.isPending}
                     onClick={() =>
                       redeem.mutate(
                         { kind: 'reward', reward_id: r.id },

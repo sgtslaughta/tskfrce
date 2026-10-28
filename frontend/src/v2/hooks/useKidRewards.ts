@@ -36,7 +36,10 @@ export function useRedeem(onExpired: () => void) {
       if (e instanceof AuthError) onExpired()
       else toastFail(e)
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: ['kid', 'rewards'] }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: ['kid', 'rewards'] })
+      qc.invalidateQueries({ queryKey: ['kid', 'celebrations'] }) // an auto-approved buy celebrates now
+    },
   })
 }
 

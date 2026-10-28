@@ -84,6 +84,21 @@ describe('RewardsSection', () => {
     expect(screen.queryByRole('button', { name: 'Request' })).toBeNull()
   })
 
+  test('pending requests hold points: free balance shown, other rewards disabled', async () => {
+    route({
+      'GET /kid/rewards': rewards({
+        balance: 60,
+        screen_time_enabled: false,
+        rewards: [{ id: 2, name: 'Ice cream', price: 20, icon: null }, { id: 3, name: 'Toy', price: 30, icon: null }],
+        pending: [{ id: 9, kind: 'reward', reward_id: 2, minutes: null, cost: 40 }],
+      }),
+    })
+    wrap(<RewardsSection onExpired={() => {}} />)
+    expect(await screen.findByText(/40 points are held/)).toBeInTheDocument()
+    expect(screen.getByRole('heading')).toHaveTextContent('20 points')
+    expect(screen.getByRole('button', { name: 'Request' })).toBeDisabled() // Toy: 30 > 20 free
+  })
+
   test('screen time shows cost and posts minutes', async () => {
     route({ 'GET /kid/rewards': rewards(), 'POST /kid/redeem': {} })
     wrap(<RewardsSection onExpired={() => {}} />)
@@ -239,6 +254,21 @@ describe('AwardOverlay', () => {
     expect(d).toHaveTextContent('Task Master')
     expect(d).toHaveTextContent('copper')
     expect(d).toHaveClass('award-toast')
+  })
+
+  test('bonus points: heading and the parent note', async () => {
+    route({ 'GET /kid/celebrations': [{ key: 'p:1', kind: 'bonus', title: '+50 bonus points', detail: 'Helped Grandma', size: 'big' }] })
+    wrap(<AwardOverlay onExpired={() => {}} />)
+    const d = await screen.findByRole('dialog', { name: /Bonus points/ })
+    expect(d).toHaveTextContent('Helped Grandma')
+  })
+
+  test('custom badge: tier caption and the note in quotes', async () => {
+    route({ 'GET /kid/celebrations': [{ ...badge, detail: 'copper', note: 'Tidied up', glyph: 'star' }] })
+    wrap(<AwardOverlay onExpired={() => {}} />)
+    const d = await screen.findByRole('dialog')
+    expect(d).toHaveTextContent('copper')
+    expect(d).toHaveTextContent('“Tidied up”')
   })
 
   test('renders with reduced motion', async () => {
