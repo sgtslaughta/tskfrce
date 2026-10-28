@@ -4,7 +4,6 @@ import { useMediaQuery } from '@mantine/hooks'
 import { IconArrowLeft, IconX } from '@tabler/icons-react'
 import { refOf, useThread, useThreads, validRef, type ThreadKind } from '@/v2/hooks/useChat'
 import { OPEN_CHAT_EVENT, OPEN_CHAT_LIST_EVENT, type ChatReply } from './dock'
-import { LoadError, LoadingCards } from '@/v2/components/States'
 import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { shownTitle, ThreadList } from './ThreadList'
 import { ThreadView } from './ThreadView'
@@ -98,9 +97,9 @@ export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: 
     </Button>
   )
   const listState = threads.isError ? (
-    kid ? <LoadError error={threads.error} onRetry={() => threads.refetch()} /> : <ErrorPanel kind="unreachable" error={threads.error} onRetry={() => threads.refetch()} />
+    <ErrorPanel kind="unreachable" error={threads.error} onRetry={() => threads.refetch()} />
   ) : threads.isPending ? (
-    kid ? <LoadingCards n={3} h={56} /> : <Skeleton rows={3} />
+    <Skeleton rows={3} />
   ) : null
   const body = pick ? (
     <ThreadView
@@ -120,6 +119,7 @@ export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: 
         selected={null}
         meName={meName}
         kid={kid}
+        loaded={!!threads.data}
         onPick={(t) => set(true, { kind: t.kind, ref: refOf(t) })}
       />
     </>
@@ -168,7 +168,7 @@ export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: 
         {back}
         <h2>
           {head}
-          {pick && page.data?.who && <small className="f-dock-who"> · {page.data.who}</small>}
+          {pick && page.data?.who && !kid && <small className="f-dock-who"> · {page.data.who}</small>}
         </h2>
         {!inline && (
           <Button variant="subtle" size="compact-md" aria-label="Close chat" onClick={close}>

@@ -64,6 +64,7 @@ export function ThreadList({
   onPick,
   meName,
   kid = false,
+  loaded = true,
   empty,
 }: {
   threads: ThreadSummary[]
@@ -71,6 +72,8 @@ export function ThreadList({
   onPick: (t: ThreadSummary) => void
   meName?: string
   kid?: boolean
+  /** false while the threads load: the tab counts stay hidden instead of reading 0 */
+  loaded?: boolean
   /** shown above the rows (the phone's empty state) */
   empty?: React.ReactNode
 }) {
@@ -141,8 +144,8 @@ export function ThreadList({
           onChange={setFilter}
           options={[
             { value: 'all', label: 'All' },
-            { value: 'chores', label: `Chores · ${choreCount}` },
-            { value: 'notes', label: `Notes · ${noteCount}` },
+            { value: 'chores', label: loaded ? `Chores · ${choreCount}` : 'Chores' },
+            { value: 'notes', label: loaded ? `Notes · ${noteCount}` : 'Notes' },
             { value: 'family', label: 'Family' },
           ]}
         />
