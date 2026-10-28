@@ -21,6 +21,9 @@ const TABS: { key: FilterKind; label: string }[] = [
   { key: 'needs-you', label: 'Needs you' },
   { key: 'alerts', label: 'Alerts' },
 ]
+/** "Alerts · 3": no count until the inbox has loaded; "+" only when older pages may add to a non-zero count. */
+export const tabLabel = (label: string, n: number | undefined, more: boolean) =>
+  n === undefined ? label : `${label} · ${n}${more && n > 0 ? '+' : ''}`
 const SETTINGS = '/settings?section=notifications'
 
 /** The notification list: inside the bell popover, the phone sheet (`sheet`) or the see-all page (`page`). */
@@ -55,7 +58,6 @@ export function List({ onGo, sheet, page }: { onGo: () => void; sheet?: boolean;
       setLoadingOlder(false)
     }
   }
-  const more = hasMore ? '+' : ''
   const [filter, setFilter] = useState<FilterKind>('all')
   const [sending, setSending] = useState<number | null>(null)
   const [note, setNote] = useState('')
@@ -158,14 +160,14 @@ export function List({ onGo, sheet, page }: { onGo: () => void; sheet?: boolean;
       </div>
       <div className="p-bell-tabs">
         {TABS.map((t) => (
-          <button key={t.key} type="button" className={`p-bell-tab ${filter === t.key ? 'on' : ''}`} onClick={() => setFilter(t.key)}>
-            {t.label} · {counts[t.key]}{more}
+          <button key={t.key} type="button" className={`p-bell-tab ${filter === t.key ? 'on' : ''}`} data-autofocus={filter === t.key || undefined} onClick={() => setFilter(t.key)}>
+            {tabLabel(t.label, inbox.data && counts[t.key], hasMore)}
           </button>
         ))}
       </div>
       {filtered.length === 0 ? (
         inbox.isError || inbox.failureCount > 0 ? (
-          <ErrorPanel kind="unreachable" error={inbox.error} onRetry={() => inbox.refetch()} />
+          <ErrorPanel kind="unreachable" error={inbox.error ?? inbox.failureReason} onRetry={() => inbox.refetch()} />
         ) : !inbox.data ? (
           <Skeleton rows={3} />
         ) : (

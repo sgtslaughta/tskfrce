@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
 import { api } from '@/v2/api'
-import { Bell } from '@/v2/components/Bell'
+import { Bell, tabLabel } from '@/v2/components/Bell'
 import { openChat } from '@/v2/chat/dock'
 
 const push = jest.fn()
@@ -298,5 +298,18 @@ describe('Bell', () => {
     const row = (await screen.findByText('Item 1')).closest('.p-bell-item') as HTMLElement
     expect(row.classList.contains('unread')).toBe(true)
   })
-})
 
+  test('tab labels: no count before data, "+" only on a non-zero count', () => {
+    expect(tabLabel('Alerts', undefined, true)).toBe('Alerts')
+    expect(tabLabel('Alerts', 0, true)).toBe('Alerts · 0')
+    expect(tabLabel('All', 3, true)).toBe('All · 3+')
+    expect(tabLabel('All', 3, false)).toBe('All · 3')
+  })
+
+  test('the popover opens focused on the active tab', async () => {
+    serve([item(1)], 1)
+    wrap(<Bell />)
+    await userEvent.click(screen.getByRole('button', { name: /Notifications/ }))
+    await waitFor(() => expect(screen.getByRole('button', { name: /^All/, hidden: true })).toHaveFocus())
+  })
+})
