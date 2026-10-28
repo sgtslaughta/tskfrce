@@ -87,6 +87,9 @@ function DevicesBody() {
       list={
         devices.isPending ? (
           <Skeleton />
+        ) : devices.isError ? (
+          // the phone shows only the list, so the error (and its retry) has to live here too
+          small && <ErrorPanel kind="unreachable" error={devices.error} onRetry={() => devices.refetch()} />
         ) : (
           <>
             <DevicesSection
@@ -103,7 +106,7 @@ function DevicesBody() {
         )
       }
     >
-      {devices.isError && <ErrorPanel kind="unreachable" error={devices.error} onRetry={() => devices.refetch()} />}
+      {devices.isError && !small && <ErrorPanel kind="unreachable" error={devices.error} onRetry={() => devices.refetch()} />}
       {devices.data?.length === 0 && !small && scan}
       {!devices.isError && selectedDevice && (
         <DeviceDetail
