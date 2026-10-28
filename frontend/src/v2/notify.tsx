@@ -22,7 +22,9 @@ function NotificationContent({
       <span>{message}</span>
       {onAction && (
         <button
+          type="button"
           className="p-toast-act"
+          aria-label={actionLabel}
           onClick={onAction}
           style={{
             marginLeft: 'auto',
@@ -56,13 +58,32 @@ export const toastOk = (message: string, options?: { undo?: () => void }) => {
   })
 }
 
-/** Error toast shows the backend detail from ApiError. */
-export const toastFail = (e: unknown) => {
+/**
+ * Error toast shows the backend detail from ApiError. With `retry` it also offers a "Retry" button
+ * (closes the toast first, so a second click can't re-run it). Non-idempotent actions pass
+ * `retryIfOffline(e, retry)`: a request that never arrived is safe to resend, a refused one is not.
+ */
+export const toastFail = (e: unknown, retry?: unknown) => {
+  // `onError: toastFail` hands react-query's variables in as 2nd arg: only a function counts
+  const again = typeof retry === 'function' ? (retry as () => void) : undefined
   const message = errorText(e)
   // view-as-kid refusals are expected, not failures: neutral toast, no error title
   if (message.startsWith('Preview only.')) return notifications.show({ message, color: 'gray' })
-  return notifications.show({ title: "That didn't work", message, color: 'fridgeRed' })
+  const id = `fail-${Math.random().toString(36).slice(2)}`
+  return notifications.show({
+    id,
+    title: "That didn't work",
+    message: again ? (
+      <NotificationContent message={message} actionLabel="Retry" onAction={() => (notifications.hide(id), again())} />
+    ) : (
+      message
+    ),
+    color: 'fridgeRed',
+  })
 }
+
+/** `retry` only when the request never reached the server (fetch throws a TypeError); undefined otherwise. */
+export const retryIfOffline = (e: unknown, retry: () => void) => (e instanceof TypeError ? retry : undefined)
 
 /** Mutation callbacks: toast on success and on failure. */
 export const toasts = (done: string) => ({ onSuccess: () => toastOk(done), onError: toastFail })

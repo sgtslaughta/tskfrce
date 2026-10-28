@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api, ApiError, AuthError, KID_TOKEN_KEY } from '../api'
 import { blocked, kidInit, useAsKid } from './usePreview'
-import { toastFail, toastOk } from '../notify'
+import { retryIfOffline, toastFail, toastOk } from '../notify'
 import type { KidToday, KidWhoami } from '../types'
 
 const readToken = (): string | null => {
@@ -115,18 +115,19 @@ const refetch = (qc: ReturnType<typeof useQueryClient>) => qc.invalidateQueries(
 export function useTickSubtask() {
   const qc = useQueryClient()
   const as = useAsKid()
-  return useMutation({
+  const m = useMutation({
     mutationFn: (v: { chore: number; sub: number; done: boolean }) =>
       as ? blocked() : api(`/kid/chores/${v.chore}/subtasks/${v.sub}`, { method: 'POST', body: { done: v.done }, kid: true }),
-    onError: (e: Error) => toastFail(e),
+    onError: (e: Error, v) => toastFail(e, () => m.mutate(v)), // a tick is idempotent
     onSettled: () => refetch(qc),
   })
+  return m
 }
 
 export function useUploadPhoto() {
   const qc = useQueryClient()
   const as = useAsKid()
-  return useMutation({
+  const m = useMutation({
     mutationFn: (v: { chore: number; file: File }) => {
       if (as) return blocked()
       const body = new FormData()
@@ -134,20 +135,22 @@ export function useUploadPhoto() {
       return api(`/kid/chores/${v.chore}/photos`, { method: 'POST', body, kid: true })
     },
     onSuccess: () => toastOk('Photo added'),
-    onError: (e: Error) => toastFail(e),
+    onError: (e: Error, v) => toastFail(e, retryIfOffline(e, () => m.mutate(v))),
     onSettled: () => refetch(qc),
   })
+  return m
 }
 
 export function useSendNote() {
   const qc = useQueryClient()
   const as = useAsKid()
-  return useMutation({
+  const m = useMutation({
     mutationFn: (v: { chore: number; label: string; text?: string }) =>
       as ? blocked() : api(`/kid/chores/${v.chore}/note`, { method: 'POST', body: { label: v.label, text: v.text }, kid: true }),
-    onError: (e: Error) => toastFail(e),
+    onError: (e: Error, v) => toastFail(e, retryIfOffline(e, () => m.mutate(v))),
     onSettled: () => refetch(qc),
   })
+  return m
 }
 
 /** Mark a chore as opened (clears "New"). Silent no-op while previewing. */
