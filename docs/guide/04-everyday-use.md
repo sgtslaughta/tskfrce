@@ -135,6 +135,19 @@ You should see: a GIF button in chat.
 
 The bell shows what happened: a chore to approve, a request, a new device, a kid's badge or level up, and if a paused device is "getting around the block". Tap an item to go straight to it. **Mark all read** clears the list.
 
+### Alerts on a kid's phone
+
+**Settings → Notifications** shows a code for each kid. Install the free ntfy app on the kid's phone and scan the code; alerts then arrive even when t@sk4ce is closed.
+
+**Who can read them.** The box's ntfy service (port 2586) has no password, by design. Anyone on your home Wi‑Fi who knows a kid's topic name can read that kid's alerts. The topic is a long random name that works like a password, so keep it secret: only share it by scanning the code, and never pick your own short topic name. Alerts say things like "Dishes is due soon", never passwords.
+
+**Want a password on it?** Use ntfy's own access control. In `docker-compose.prod.yml`, add to the `ntfy` service's `environment`:
+
+    NTFY_AUTH_FILE: /var/cache/ntfy/user.db
+    NTFY_AUTH_DEFAULT_ACCESS: write-only
+
+Then `docker compose -f docker-compose.prod.yml up -d ntfy`, and on the box run `docker compose -f docker-compose.prod.yml exec ntfy ntfy user add pat` and `... exec ntfy ntfy access pat <topic> read-only` for each kid. In the ntfy app, add the box's server with that user's name and password. `write-only` keeps the box able to send without a password; reading needs a login. Details: [ntfy access control](https://docs.ntfy.sh/config/#access-control).
+
 ## Add another parent
 
 **Settings → Parents** makes an invite link for a partner or grandparent.
