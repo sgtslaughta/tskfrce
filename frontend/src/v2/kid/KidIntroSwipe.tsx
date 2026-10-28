@@ -1,6 +1,7 @@
 import { FocusTrap } from '@mantine/core'
 import { useState } from 'react'
 import { useTipState } from '../hooks/useTips'
+import { focusPage } from './focusPage'
 import { Icon } from '../parent/Icon'
 
 interface Props {
@@ -46,6 +47,7 @@ export function KidIntroSwipe({ onComplete, kidId }: Props) {
     markSeen(kidId)
     dismiss(TIP)
     onComplete()
+    setTimeout(() => focusPage('main h1', '.r-head', 'main')) // after the focus trap lets go
   }
 
   return (

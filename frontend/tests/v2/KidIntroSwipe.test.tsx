@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, test } from '@jest/globals'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MantineProvider } from '@mantine/core'
 import { KidIntroSwipe } from '@/v2/kid/KidIntroSwipe'
@@ -23,6 +23,14 @@ const show = (onComplete = jest.fn()) => {
 }
 
 describe('KidIntroSwipe', () => {
+  test('closing moves focus to the page heading', async () => {
+    document.body.insertAdjacentHTML('beforeend', '<main><h1>Today</h1></main>')
+    show()
+    await userEvent.click(screen.getByRole('button', { name: 'Skip' }))
+    await waitFor(() => expect(document.activeElement).toBe(document.querySelector('main h1')))
+    document.querySelector('main')?.remove()
+  })
+
   beforeEach(() => {
     state = { ready: true, dismissed: new Set() }
     dismiss.mockClear()

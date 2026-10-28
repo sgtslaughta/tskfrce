@@ -1,6 +1,7 @@
 import { FocusTrap } from '@mantine/core'
 import { useEffect, useRef } from 'react'
 import { useCelebrations, useMarkCelebrationSeen } from '../hooks/useKidRewards'
+import { focusPage } from './focusPage'
 import { Icon } from '../parent/Icon'
 import { TIER_COLORS, TIER_NAMES } from '../tiers'
 
@@ -15,7 +16,8 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
   useEffect(() => {
     if (open) return
     const el = returnTo.current as HTMLElement | null // the last card closed; its button may be gone
-    ;(el?.isConnected ? el : document.querySelector<HTMLElement>('.r-head, main'))?.focus?.()
+    if (el?.isConnected) el.focus?.()
+    else focusPage('.r-head', 'main')
     returnTo.current = null
   }, [open])
   const close = () => {
