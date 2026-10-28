@@ -12,7 +12,7 @@ import { DeviceActivity } from '@/v2/manage/DeviceActivity'
 import type { Device, DeviceActivity as Activity, DeviceEvent, Kid } from '@/v2/types'
 
 jest.mock('next/router', () => ({ useRouter: () => ({ query: {}, push: jest.fn(), replace: jest.fn() }) }))
-jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
+jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn(), hide: jest.fn() } }))
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
 
 const apiMock = api as unknown as Mock<(p: string, o?: { method?: string; body?: unknown }) => Promise<unknown>>

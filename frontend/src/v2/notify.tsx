@@ -45,8 +45,12 @@ function NotificationContent({
 
 /** Success toast reuses the action word ("Delete" -> "Deleted"). */
 export const toastOk = (message: string, options?: { undo?: () => void }) => {
+  const id = `ok-${Math.random().toString(36).slice(2)}`
+  const undo = options?.undo
   notifications.show({
-    message: options?.undo ? <NotificationContent message={message} onAction={options.undo} /> : message,
+    id,
+    // closing first: a second click can't fire the undo twice
+    message: undo ? <NotificationContent message={message} onAction={() => (notifications.hide(id), undo())} /> : message,
     color: 'fridgeGreen',
     icon: okIcon,
   })
