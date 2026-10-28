@@ -47,11 +47,6 @@
   background: var(--p-amb);
 }
 
-[data-look='parent'] .p-device-item[data-unassigned='true'] .p-device-icon {
-  background: var(--p-ambink);
-  color: var(--p-amb);
-}
-
 /* Icon container with vendor logo */
 [data-look='parent'] .p-device-icon {
   flex-shrink: 0;
@@ -308,3 +303,54 @@
   [data-look='parent'] .da-t { padding-right: 0; }
   [data-look='parent'] .da-w { position: static; display: block; margin-top: 2px; font-size: 12px; text-align: left; }
 }
+
+/* device tabs: mockup 02 underline on desktop, mockup 04 raised card pill on phone (DeviceDetail is the only tablist user) */
+[data-look='parent'] .p-segmented-control[role='tablist'] {
+  background: none;
+  padding: 0;
+  gap: 4px;
+  width: 100%;
+  border-radius: 0;
+  border-bottom: 1px solid var(--p-line);
+}
+[data-look='parent'] .p-segmented-control[role='tablist'] .p-segmented-button {
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+[data-look='parent'] .p-segmented-control[role='tablist'] .p-segmented-button[data-active='true'] {
+  background: none;
+  color: var(--p-ink);
+  border-bottom-color: var(--p-acc);
+}
+@media (max-width: 767px) {
+  [data-look='parent'] .p-segmented-control[role='tablist'] {
+    background: var(--p-soft);
+    padding: 3px;
+    gap: 0;
+    border: 0;
+    border-radius: 12px;
+  }
+  [data-look='parent'] .p-segmented-control[role='tablist'] .p-segmented-button {
+    flex: 1;
+    padding: 7px;
+    font-size: 12.5px;
+    border: 0;
+    margin: 0;
+    border-radius: 9px;
+  }
+  [data-look='parent'] .p-segmented-control[role='tablist'] .p-segmented-button[data-active='true'] {
+    background: var(--p-card);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* header chips: accent "on" and mono tones (mockup 02 .hc.on / .hc.mono) */
+[data-look='parent'] .p-header-chip[data-tone='acc'] { background: var(--p-acc); border-color: var(--p-acc); color: #292928; }
+[data-look='parent'] .p-header-chip[data-tone='acc'] .ms { color: #292928; }
+[data-look='parent'] .p-header-chip[data-tone='mono'] { font-family: ui-monospace, monospace; font-size: 11.5px; }
+
+/* a long device name keeps a readable column; the action buttons wrap beneath it */
+[data-look='parent'] .pk-detail .pk-head-t { flex: 1 1 320px; }
