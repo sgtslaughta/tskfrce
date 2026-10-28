@@ -11,6 +11,9 @@ import pytest
 class TestHealthEndpoints:
     """Test health check endpoints."""
 
+    def test_root_message_uses_current_name(self, client):
+        assert client.get("/").json()["message"] == "Welcome to the t@sk4ce API"
+
     def test_health_endpoint(self, client):
         """Test the basic health endpoint."""
         response = client.get("/health")

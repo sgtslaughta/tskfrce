@@ -179,7 +179,7 @@ async def root() -> dict[str, Any]:
         Dictionary containing API information
     """
     return {
-        "message": "Welcome to TaaskMaaster API",
+        "message": "Welcome to the t@sk4ce API",
         "version": __version__,
         "status": "running",
         "docs": "/docs",
