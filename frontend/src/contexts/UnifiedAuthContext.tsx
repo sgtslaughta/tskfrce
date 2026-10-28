@@ -212,7 +212,7 @@ export const UnifiedAuthProvider: React.FC<{ children: React.ReactNode }> = ({ c
             });
 
           } catch (userError) {
-            console.error('Failed to fetch current user:', userError);
+            console.warn('Failed to fetch current user:', userError);
             // Token might be invalid, try refresh
             await attemptTokenRefresh();
           }
