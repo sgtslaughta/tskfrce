@@ -56,10 +56,13 @@ def deduct(
 
 
 def deadline_utc(fam: FamilySettings, chore_day: date, due_time: str | None) -> datetime | None:
-    """Chore deadline as naive UTC, or None when the chore has no due time."""
+    """Chore deadline as naive UTC, or None when the chore has no due time.
+    The chore day runs reset to reset, so a time before the reset time is the next morning."""
     if not due_time:
         return None
     h, m = map(int, due_time.split(":"))
+    if due_time < fam.reset_time:
+        chore_day += timedelta(days=1)
     local = datetime(
         chore_day.year, chore_day.month, chore_day.day, h, m, tzinfo=ZoneInfo(fam.timezone)
     )

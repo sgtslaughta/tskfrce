@@ -25,6 +25,15 @@ def test_deadline_uses_family_timezone(db):
     assert deadline_utc(fam, date(2026, 10, 21), None) is None
 
 
+def test_deadline_before_reset_ends_the_chore_day(db):
+    """The chore day runs reset to reset: 05:15 with a 06:00 reset is the next morning."""
+    fam = get_family(db)
+    fam.timezone, fam.reset_time = "UTC", "06:00"
+    assert deadline_utc(fam, date(2026, 10, 27), "05:15") == datetime(2026, 10, 28, 5, 15)
+    assert deadline_utc(fam, date(2026, 10, 27), "06:00") == datetime(2026, 10, 27, 6, 0)
+    assert deadline_utc(fam, date(2026, 10, 27), "23:00") == datetime(2026, 10, 27, 23, 0)
+
+
 def _submitted(db, parent, kid, due_time=None, at=None, points=15):
     return make_run(
         db,
