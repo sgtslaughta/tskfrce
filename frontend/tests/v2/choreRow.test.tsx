@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
 import { api } from '@/v2/api'
-import { ChoreRow } from '@/v2/today/ChoreRow'
+import { choreSub, ChoreRow } from '@/v2/today/ChoreRow'
 import type { TodayChore, TodayKid } from '@/v2/types'
 
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
@@ -44,6 +44,10 @@ describe('ChoreRow', () => {
   test('a generic Other type glyph falls back to the title guess, like the profile and chat', () => {
     row({ ...base, title: 'Dishes', type: { id: 3, name: 'Other', glyph: 'task_alt' } })
     expect(screen.getByText('restaurant')).toBeInTheDocument()
+  })
+
+  test('a done chore reads Done <time> · approved', () => {
+    expect(choreSub({ ...base, state: 'done', done_at: '2026-10-20T17:40:00Z' }, () => '5:40 PM')).toBe('Done 5:40 PM · approved')
   })
 
   test('note card shows label and text, with Reply, Move and Skip', () => {
