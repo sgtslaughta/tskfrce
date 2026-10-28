@@ -2,22 +2,24 @@ import Link from 'next/link'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { HELP_URL } from '@/v2/components/AccountMenu'
 import { useFamily, useParents } from '@/v2/hooks/useFamily'
+import { useSettingsLines } from '@/v2/manage/useSettingsLines'
 import { useBlocker } from '@/v2/hooks/useDevices'
 import { Icon } from './Icon'
 
 const SETTINGS_SECTIONS = [
-  { href: '/settings?section=family', label: 'Family', sub: 'Name, time zone, points', icon: 'home' },
-  { href: '/settings?section=hours', label: 'Hours', sub: 'When devices can be online', icon: 'schedule' },
-  { href: '/settings?section=notifications', label: 'Notifications', sub: 'Pings to your chat apps', icon: 'notifications' },
-  { href: '/settings?section=look', label: 'Appearance', sub: 'Accent colour, light or dark', icon: 'palette' },
-  { href: '/settings?section=gifs', label: 'GIFs', sub: 'GIF search in chat', icon: 'gif_box' },
-  { href: '/settings?section=parents', label: 'Parents', sub: 'Invite a parent, reset links', icon: 'group' },
+  { id: 'family', href: '/settings?section=family', label: 'Family', sub: 'Name, time zone, points', icon: 'home' },
+  { id: 'hours', href: '/settings?section=hours', label: 'Hours', sub: 'When devices can be online', icon: 'schedule' },
+  { id: 'notifications', href: '/settings?section=notifications', label: 'Notifications', sub: 'Pings to your chat apps', icon: 'notifications' },
+  { id: 'look', href: '/settings?section=look', label: 'Appearance', sub: 'Accent colour, light or dark', icon: 'palette' },
+  { id: 'gifs', href: '/settings?section=gifs', label: 'GIFs', sub: 'GIF search in chat', icon: 'gif_box' },
+  { id: 'parents', href: '/settings?section=parents', label: 'Parents', sub: 'Invite a parent, reset links', icon: 'group' },
 ]
 
 export function MorePage({ onLogout }: { onLogout: () => void }) {
   const { user } = useUnifiedAuth()
   const family = useFamily()
   const blocker = useBlocker()
+  const live = useSettingsLines() as Record<string, string | undefined>
   const owner = useParents().data?.find((p) => p.is_me)?.is_owner
 
   return (
@@ -56,7 +58,7 @@ export function MorePage({ onLogout }: { onLogout: () => void }) {
                 </span>
                 <span className="p-more-t">
                   {section.label}
-                  <small>{section.sub}</small>
+                  <small>{live[section.id] ?? section.sub}</small>
                 </span>
                 <Icon name="chevron_right" size={20} />
               </Link>

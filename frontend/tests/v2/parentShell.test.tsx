@@ -69,6 +69,8 @@ jest.mock('@/v2/hooks/useFamily', () => ({
   useParents: jest.fn(() => ({ data: [{ id: 1, is_me: true, is_owner: false }] })),
 }))
 
+jest.mock('@/v2/manage/useSettingsLines', () => ({ useSettingsLines: () => ({}) }))
+
 jest.mock('@/v2/hooks/useDevices', () => ({
   useBlocker: jest.fn(() => ({
     data: { online: true },
