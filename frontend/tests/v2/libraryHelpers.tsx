@@ -54,7 +54,6 @@ export const lib = (over = {}) => ({
     { id: 2, title: 'Make bed', due_time: null, after_previous: false },
   ],
   assignments: [asg()],
-  archived: false,
   ...over,
 })
 export const defs = [

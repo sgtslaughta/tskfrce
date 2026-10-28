@@ -34,7 +34,7 @@ def test_create_chore_with_steps_makes_no_runs(client, db, parent_headers):
     _day(db)
     c = _mk(client, parent_headers, steps=["rinse", "stack"], points=7, needs_photo=True)
     assert [s["title"] for s in c["steps"]] == ["rinse", "stack"]
-    assert (c["points"], c["needs_photo"], c["assignments"], c["archived"]) == (7, True, [], False)
+    assert (c["points"], c["needs_photo"], c["assignments"]) == (7, True, [])
     assert db.query(ChoreRun).count() == 0
     assert (
         client.post("/api/v1/chores/", json={"title": ""}, headers=parent_headers).status_code
@@ -146,20 +146,38 @@ def test_removing_a_step_drops_its_ticks_and_keeps_order(
     assert [(s["title"], s["done"]) for s in got] == [("c", False), ("a", True)]
 
 
-def test_delete_with_history_archives_and_history_renders(client, db, kid, parent, parent_headers):
+def test_delete_purges_chore_runs_photos_and_chat_but_keeps_points(
+    client, db, kid, parent, parent_headers, kid_headers
+):
+    from app.models.chat import Thread, ThreadMessage
+    from app.models.chore_extra import ChorePhoto
+    from app.services.economy import balance
+    from app.services.photos import storage
+
+    from tests.test_chore_proof import _up
+
     _day(db)
     c, a = api_chore(client, parent_headers, [kid], title="Dishes")
-    run = db.query(ChoreRun).one()
-    run.status, run.approved_by_id = "done", parent.id
-    db.commit()
+    rid = db.query(ChoreRun).one().id
+    assert _up(client, kid_headers, rid).status_code == 200
+    keys = [k for p in db.query(ChorePhoto) for k in (p.path, p.thumb_path)]
+    assert all(storage().open(k) for k in keys)
+    client.post(f"/api/v1/kid/chores/{rid}/done", headers=kid_headers)
+    client.post(f"/api/v1/chores/{rid}/approve", headers=parent_headers)
+    held = balance(db, kid.id)
+    assert held > 0 and db.query(ThreadMessage).count() > 0
     assert client.delete(f"/api/v1/chores/{c['id']}", headers=parent_headers).status_code == 204
-    assert db.get(Chore, c["id"]).archived_at is not None
-    assert not db.get(ChoreAssignment, a["id"]).active
+    db.expire_all()
+    assert db.get(Chore, c["id"]) is None and db.get(ChoreAssignment, a["id"]) is None
+    assert db.query(ChoreRun).count() == db.query(ChorePhoto).count() == 0
+    assert db.query(Thread).filter(Thread.kind == "chore").count() == 0
+    assert db.query(ThreadMessage).count() == 0
+    for k in keys:
+        assert not (storage().root / k).exists()
+    assert balance(db, kid.id) == held
+    assert {p.run_id for p in db.query(Points)} == {None}
     assert client.get("/api/v1/chores/", headers=parent_headers).json() == []
-    arch = client.get("/api/v1/chores/?archived=true", headers=parent_headers).json()
-    assert arch[0]["archived"] is True
-    k = client.get("/api/v1/today", headers=parent_headers).json()["kids"][0]
-    assert k["chores"][0]["title"] == "Dishes" and k["chores"][0]["state"] == "done"
+    assert client.delete(f"/api/v1/chores/{c['id']}", headers=parent_headers).status_code == 404
 
 
 def test_delete_assignment_with_runs_retires_it(client, db, kid, parent_headers):

@@ -48,7 +48,7 @@ def _payload(db: Session) -> dict:
     ids = [k.id for k in kids]
     bought = screen_time.bought_today(db, fam, ids, datetime.now(UTC))
     rows = {r.kid_id: r for r in db.query(ScreenTimeLimit).filter(ScreenTimeLimit.kid_id.in_(ids))}
-    avg = db.query(func.avg(Chore.points)).filter(Chore.archived_at.is_(None)).scalar()
+    avg = db.query(func.avg(Chore.points)).scalar()
     return {
         "enabled": bool(fam.points_unlock_early),
         "price": fam.screen_time_price,

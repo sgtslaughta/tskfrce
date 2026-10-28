@@ -40,7 +40,6 @@ const chore = (over: Partial<LibChore> = {}): LibChore => ({
   assignments: [
     { id: 11, chore_id: 5, kid_ids: [7], mode: 'each', repeat: { type: 'daily', days: [] }, on_date: null, due_time: '18:00', active: true },
   ],
-  archived: false,
   ...over,
 })
 

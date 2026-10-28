@@ -100,7 +100,6 @@ class ChoreLibOut(BaseModel):
     type_id: int
     steps: list[StepOut]
     assignments: list[AssignmentOut]
-    archived: bool
 
 
 class ChoreOut(BaseModel):

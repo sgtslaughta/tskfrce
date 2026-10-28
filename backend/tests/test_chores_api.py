@@ -38,15 +38,13 @@ def test_once_assignment_runs_once(client, db, kid, parent_headers):
     assert db.query(ChoreRun).count() == 1
 
 
-def test_delete_with_history_archives_and_stops_future_runs(client, db, kid, parent_headers):
+def test_delete_with_history_removes_it_and_stops_future_runs(client, db, kid, parent_headers):
     set_day(db)
     chore, _ = api_chore(client, parent_headers, [kid])
     r = client.delete(f"/api/v1/chores/{chore['id']}", headers=parent_headers)
     assert r.status_code == 204
     assert svc.run_reset(db, date(2026, 10, 21)) == 0
-    c = db.get(Chore, chore["id"])
-    assert c.archived_at is not None
-    assert db.query(ChoreRun).one().status == "cancelled"
+    assert db.get(Chore, chore["id"]) is None and db.query(ChoreRun).count() == 0
 
 
 def test_delete_without_runs_removes_it(client, db, kid, parent_headers):
@@ -93,6 +91,20 @@ def test_parent_unticks_done_chore(client, db, parent, kid, parent_headers):
     assert client.post(f"/api/v1/chores/{t.id}/undo", headers=parent_headers).status_code == 409
 
 
+def test_untick_keeps_deductions(client, db, parent, kid, parent_headers):
+    from app.models.points import Points
+
+    t = make_run(db, parent, kid, status="todo")
+    client.post(f"/api/v1/chores/{t.id}/done", headers=parent_headers)
+    body = {"kid_id": kid.id, "amount": 3, "note": "Sloppy"}
+    assert client.post(
+        f"/api/v1/chores/{t.id}/deduct", json=body, headers=parent_headers
+    ).is_success
+    assert client.post(f"/api/v1/chores/{t.id}/undo", headers=parent_headers).status_code == 200
+    left = db.query(Points).filter(Points.run_id == t.id).all()
+    assert [(p.reason, p.amount) for p in left] == [("deduction", -3)]
+
+
 def test_kid_cannot_approve(client, db, parent, kid, kid_headers):
     t = make_run(db, parent, kid, status="submitted")
     assert client.post(f"/api/v1/chores/{t.id}/approve", headers=kid_headers).status_code == 403
@@ -106,8 +118,8 @@ def test_delete_cancels_submitted_run(client, db, parent, kid, parent_headers):
     run.status = "submitted"
     db.commit()
     client.delete(f"/api/v1/chores/{chore['id']}", headers=parent_headers)
-    db.refresh(run)
-    assert run.status == "cancelled"
+    db.expire_all()
+    assert db.query(ChoreRun).count() == 0
 
 
 def test_approve_unknown_run_is_404(client, parent_headers):
@@ -133,7 +145,6 @@ def test_library_lists_chores_for_a_kid(client, db, kid, parent_headers, kid_hea
         "points": 25,
         "needs_photo": True,
         "steps": [],
-        "archived": False,
     }
     assert {k: rows[0][k] for k in want} == want
     asg = rows[0]["assignments"][0]
@@ -158,10 +169,9 @@ def test_thread_list_says_which_kids_a_chore_is_for(client, db, parent, kid, par
     assert next(r for r in rows if r["kind"] == "chore")["kid_ids"] == [kid.id]
 
 
-def test_delete_archived_chore_is_ok_and_unknown_is_404(client, db, kid, parent_headers):
+def test_delete_twice_and_unknown_is_404(client, db, kid, parent_headers):
     set_day(db)
     chore, _ = api_chore(client, parent_headers, [kid])
     assert client.delete(f"/api/v1/chores/{chore['id']}", headers=parent_headers).status_code == 204
-    assert client.delete(f"/api/v1/chores/{chore['id']}", headers=parent_headers).status_code == 204
-    assert db.get(Chore, chore["id"]).archived_at is not None
+    assert client.delete(f"/api/v1/chores/{chore['id']}", headers=parent_headers).status_code == 404
     assert client.delete("/api/v1/chores/99999", headers=parent_headers).status_code == 404

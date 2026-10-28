@@ -22,7 +22,7 @@ export interface AssignmentBody {
   due_time: string | null
 }
 
-/** GET /chores: the chore library (archived hidden). */
+/** GET /chores: the chore library. */
 export const useLibrary = () => useQuery({ queryKey: ['chore-lib'], queryFn: () => api<LibChore[]>('/chores/') })
 
 function useChoreMutation<V, R>(fn: (v: V) => Promise<R>) {
@@ -41,7 +41,7 @@ export const useSaveChore = () =>
       ? api<LibChore>(`/chores/${id}`, { method: 'PATCH', body })
       : api<LibChore>('/chores/', { method: 'POST', body }),
   )
-/** Removes a chore, or archives it when it has history. */
+/** Removes a chore with its runs, photos and chat; points earned stay. */
 export const useDeleteChore = () => useChoreMutation((id: number) => api(`/chores/${id}`, { method: 'DELETE' }))
 export const useCopyChore = () =>
   useChoreMutation((id: number) => api<LibChore>(`/chores/${id}/copy`, { method: 'POST' }))
