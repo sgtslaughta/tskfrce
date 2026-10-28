@@ -35,4 +35,11 @@ if __name__ == "__main__":
         code = subprocess.run(sys.argv[1:], env={**os.environ, **seed()}).returncode
     finally:
         j.cleanup()
+        # the e2e container registers as a device (e2e-run...) on every run; drop it
+        try:
+            for d in j.parent("GET", "/api/v1/devices"):
+                if "e2e-run" in d["name"]:
+                    j.parent("DELETE", f"/api/v1/devices/{d['id']}")
+        except Exception:  # noqa: BLE001, S110 - best effort, never mask the test result
+            pass
     sys.exit(code)
