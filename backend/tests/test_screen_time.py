@@ -103,6 +103,8 @@ def test_auto_approve_pays_and_unlocks(client, db, kid, kid_headers, parent):
     assert n.title == "Timmy bought 15 min of screen time on Phone"
     assert n.body == "Approved automatically · 20 points"
     assert db.query(Redemption).one().auto is True
+    ledger = db.query(Points).filter_by(user_id=kid.id).order_by(Points.id.desc()).first()
+    assert ledger.description == "15 min of screen time"
 
 
 def _counts(db):

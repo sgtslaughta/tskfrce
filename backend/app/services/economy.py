@@ -256,7 +256,7 @@ def decide(
 def _what(db: Session, r: Redemption) -> str:
     """Ledger description: the reward name, or the screen-time amount."""
     if r.kind == "screen_time":
-        return f"{r.minutes} min screen time"
+        return f"{r.minutes} min of screen time"
     reward = db.get(Reward, r.reward_id)
     return reward.name if reward else "Reward"
 
