@@ -253,7 +253,7 @@
 [data-look='parent'] .p-device-meta .p-chip { flex: none; }
 [data-look='parent'] .pk-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; align-content: start; }
 [data-look='parent'] .p-segmented-button .p-chip { margin-left: 6px; }
-[data-look='parent'] .p-segmented-button { display: inline-flex; align-items: center; }
+[data-look='parent'] .p-segmented-button { display: inline-flex; align-items: center; justify-content: center; }
 
 /* ── Activity tab (mockup 02 .kpis / .al / .sev / .bars; 04 phone sizes) ── */
 [data-look='parent'] .da-kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
