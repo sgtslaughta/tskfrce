@@ -140,8 +140,14 @@ test.describe('every screen', () => {
       await page.screenshot({ path: `${dir}/kid-pin.png`, fullPage: true })
       await page.keyboard.type('1234')
       await page.waitForTimeout(1500)
+      await page.screenshot({ path: `${dir}/kid-intro.png`, fullPage: true })
+      // first visit shows the intro over the page; Customize lives on the Me tab
+      const skip = page.getByRole('button', { name: 'Skip', exact: true })
+      if (await skip.isVisible()) await skip.click()
+      await page.waitForTimeout(600)
       await page.screenshot({ path: `${dir}/kid-home.png`, fullPage: true })
-      await page.getByRole('button', { name: /customize/i }).first().click()
+      await page.getByRole('navigation', { name: 'Kid menu' }).getByRole('button', { name: 'Me' }).click()
+      await page.getByRole('button', { name: /customize/i }).first().click({ timeout: 15_000 })
       await page.waitForTimeout(800)
       await page.screenshot({ path: `${dir}/kid-locker.png`, fullPage: true })
     } finally {
