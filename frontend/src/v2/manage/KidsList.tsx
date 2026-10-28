@@ -31,6 +31,10 @@ export function KidsList({ kids, selected, onSelect }: Props) {
               <Chip tone="acc" icon="cloud_done">
                 Online
               </Chip>
+            ) : t && !t.devices?.length ? (
+              <Chip tone="grey" icon="devices_off">
+                No devices
+              </Chip>
             ) : !k.has_pin ? (
               <Chip tone="lav" icon="lock_open">
                 No PIN

@@ -3,7 +3,7 @@ import { Chip } from '../parent/Chip'
 import { Icon } from '../parent/Icon'
 import { ChoreOpen } from './ChoreOpen'
 import { ChoreNote, NoteLine } from './ChoreNote'
-import { choreIcon } from './choreIcon'
+import { threadGlyph } from './choreIcon'
 import { statusChip } from './statusChip'
 import { useClock, useNow } from './useClock'
 
@@ -47,7 +47,7 @@ export function ChoreRow({
           {ticked && <Icon name="check" size={16} />}
         </span>
         <span className="pt-ty" aria-hidden>
-          <Icon name={chore.type?.glyph ?? choreIcon(chore.title)} size={18} />
+          <Icon name={threadGlyph(chore.type?.glyph, chore.title)} size={18} />
         </span>
         <span className="pt-t">
           <span className="pt-title">{chore.title}</span>

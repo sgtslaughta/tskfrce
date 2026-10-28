@@ -55,7 +55,7 @@ export function MoveSkip({ chore }: { chore: TodayChore }) {
         onClick={() => later(() => skip.mutateAsync(chore.id), 'Skipped for today')}
       >
         <Icon name="do_not_disturb_on" size={17} />
-        Skip today<span className="pt-fine"> (no penalty)</span>
+        Skip today<span className="pt-fine">(no penalty)</span>
       </button>
     </>
   )

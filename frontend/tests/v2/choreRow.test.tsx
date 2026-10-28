@@ -41,6 +41,11 @@ describe('ChoreRow', () => {
     expect(screen.getByText('cleaning_services')).toBeInTheDocument()
   })
 
+  test('a generic Other type glyph falls back to the title guess, like the profile and chat', () => {
+    row({ ...base, title: 'Dishes', type: { id: 3, name: 'Other', glyph: 'task_alt' } })
+    expect(screen.getByText('restaurant')).toBeInTheDocument()
+  })
+
   test('note card shows label and text, with Reply, Move and Skip', () => {
     row({ ...base, note })
     expect(screen.getByText(/Mia: Out of supplies · “No more toilet spray”/)).toBeInTheDocument()
