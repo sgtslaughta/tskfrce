@@ -14,7 +14,8 @@ describe('settingsMeta', () => {
   })
   test('lastActive', () => {
     expect(lastActive(null)).toBe('Never signed in')
-    expect(lastActive(back(5), now)).toBe('Active 5 min ago')
+    expect(lastActive(back(5), now)).toBe('Last active 5 min ago')
+    expect(lastActive(back(1), now)).toBe('Last active now')
   })
   test('boxLine is honest when offline', () => {
     expect(boxLine(undefined)).toBeUndefined()

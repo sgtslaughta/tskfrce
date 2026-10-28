@@ -11,7 +11,7 @@ export function ago(iso: string, now = Date.now()): string {
 
 /** Parents list sub-line. */
 export const lastActive = (iso: string | null | undefined, now = Date.now()) =>
-  iso ? `Active ${ago(iso, now)}` : 'Never signed in'
+  iso ? `Last active ${now - Date.parse(iso) < 120_000 ? 'now' : ago(iso, now)}` : 'Never signed in'
 
 /** Home box status, honest about how long it has been quiet. */
 export const boxLine = (b: { online: boolean; last_seen: string | null } | undefined, now = Date.now(), short = false) =>
