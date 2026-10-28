@@ -136,7 +136,7 @@ def mark_not_done(run_id: int, db: Session = Depends(get_db), _: User = Depends(
     if r is None:
         raise HTTPException(404, "That chore doesn't exist.")
     if r.status == "skipped":
-        r.status = "todo"
+        r.status = "submitted" if r.submitted_at else "todo"
         chat.system(db, r, "Back on today's list")
         db.commit()
         return svc.chore_out(r, get_family(db))

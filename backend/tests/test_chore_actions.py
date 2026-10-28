@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from app.models.chores import ChoreRun
 from app.models.family import get_family
@@ -75,3 +75,14 @@ def test_undo_skip(client, db, parent_headers):
     assert db.get(ChoreRun, ids[0]).status == "todo"
     k = _kid_row(client, parent_headers)
     assert (k["done"], k["total"]) == (0, 1)
+
+
+def test_undo_skip_of_submitted_goes_back_to_waiting(client, db, parent_headers):
+    _, ids = _setup(db, client, parent_headers, {"type": "daily"})
+    run = db.get(ChoreRun, ids[0])
+    run.status, run.submitted_at = "submitted", datetime.utcnow()
+    db.commit()
+    client.post(f"/api/v1/chores/{ids[0]}/skip", headers=parent_headers)
+    assert client.post(f"/api/v1/chores/{ids[0]}/undo", headers=parent_headers).status_code == 200
+    db.expire_all()
+    assert db.get(ChoreRun, ids[0]).status == "submitted"
