@@ -3,13 +3,13 @@ import { useRecentAwards } from '@/v2/hooks/useCustomBadges'
 import { Icon } from '@/v2/parent/Icon'
 import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
 import type { RecentAward } from '@/v2/types'
+import { daysAgo } from '../clockText'
 import { TierPips, tierLabel } from './TierPips'
 
 /** "today", "yesterday", "Mon", else "Oct 3". */
 export function dayWord(iso: string, now = new Date()) {
   const d = new Date(iso)
-  const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
-  const diff = Math.round((day(now) - day(d)) / 86400000)
+  const diff = daysAgo(iso, now)
   if (diff <= 0) return 'today'
   if (diff === 1) return 'yesterday'
   if (diff < 7) return d.toLocaleDateString(undefined, { weekday: 'short' })

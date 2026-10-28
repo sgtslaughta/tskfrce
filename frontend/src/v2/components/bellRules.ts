@@ -1,4 +1,5 @@
 import type { InboxItem } from '../hooks/useInbox'
+import { daysAgo } from '../clockText'
 
 /** Security alerts: the bell's Alerts tab. */
 export const ALERT_KINDS = ['device_resisting', 'device_bypass', 'box_offline']
@@ -36,17 +37,13 @@ export const severity = (n: InboxItem): { name: string; tone: Tone } => {
   }
 }
 
-const sameDay = (a: Date, b: Date) =>
-  a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate()
-
-export const isToday = (iso: string, now = new Date()): boolean => sameDay(new Date(iso), now)
+export const isToday = (iso: string, now = new Date()): boolean => daysAgo(iso, now) === 0
 
 /** "9:14 PM" today, "Yesterday", else "Mon 20". */
 export const when = (iso: string, now = new Date()): string => {
   const then = new Date(iso)
-  if (sameDay(then, now)) return then.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-  const y = new Date(now)
-  y.setDate(y.getDate() - 1)
-  if (sameDay(then, y)) return 'Yesterday'
+  const diff = daysAgo(then, now)
+  if (diff === 0) return then.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  if (diff === 1) return 'Yesterday'
   return then.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' })
 }

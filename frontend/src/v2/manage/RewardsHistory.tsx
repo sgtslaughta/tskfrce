@@ -5,6 +5,7 @@ import { Chip } from '@/v2/parent/Chip'
 import { Icon } from '@/v2/parent/Icon'
 import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
 import type { HistoryRow } from '@/v2/types'
+import { daysAgo } from '../clockText'
 import { initial } from './choreMeta'
 import { downloadCsv, toCsv } from './historyCsv'
 import { fmtMin } from './ScreenTimePane'
@@ -14,8 +15,7 @@ type Kind = NonNullable<HistoryQuery['kind']>
 /** "Today 5:12 PM", "Yesterday", "Mon", else "Oct 3". */
 export function whenAt(iso: string, now = new Date()) {
   const d = new Date(iso)
-  const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
-  const diff = Math.round((day(now) - day(d)) / 86400000)
+  const diff = daysAgo(iso, now)
   if (diff === 0) return `Today ${d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`
   if (diff === 1) return 'Yesterday'
   if (diff < 7) return d.toLocaleDateString(undefined, { weekday: 'short' })

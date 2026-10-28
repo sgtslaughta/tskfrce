@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { refOf, useChatSearch, type ThreadSummary } from '@/v2/hooks/useChat'
+import { daysAgo } from '../clockText'
 import { Chip } from '../parent/Chip'
 import { Icon } from '../parent/Icon'
 import { ListHeader } from '../parent/ListHeader'
@@ -46,7 +47,7 @@ export function nest(threads: ThreadSummary[]): Array<{ t: ThreadSummary; kids: 
 export function when(iso: string | null, now = new Date()): string {
   if (!iso) return ''
   const d = new Date(iso)
-  const days = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) / 864e5)
+  const days = daysAgo(iso, now)
   if (days === 0) return 'Today'
   if (days === 1) return 'Yesterday'
   return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })

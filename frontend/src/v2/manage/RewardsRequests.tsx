@@ -3,6 +3,7 @@ import { useApproveAll, useDecideRedemption, usePendingRedemptions } from '@/v2/
 import { Icon } from '@/v2/parent/Icon'
 import { EmptyState, ErrorPanel, Skeleton } from '@/v2/parent/states'
 import type { PendingRedemption } from '@/v2/types'
+import { daysAgo } from '../clockText'
 import { initial } from './choreMeta'
 import { rewardGlyph } from './RewardDetail'
 import { toastFail, toastOk, withUndo } from '../notify'
@@ -12,8 +13,7 @@ const clock = (d: Date) => d.toLocaleTimeString(undefined, { hour: 'numeric', mi
 /** "5:51 PM" today, "yesterday", else "Mon 5:51 PM". */
 export function askedAt(iso: string, now = new Date()) {
   const d = new Date(iso)
-  const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
-  const diff = Math.round((day(now) - day(d)) / 86400000)
+  const diff = daysAgo(iso, now)
   if (diff === 0) return clock(d)
   if (diff === 1) return 'yesterday'
   return `${d.toLocaleDateString(undefined, { weekday: 'short' })} ${clock(d)}`

@@ -24,3 +24,9 @@ export function wallClock(hhmm: string): string {
   if (m === 0 && (h === 0 || h === 24)) return 'midnight'
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h % 24 < 12 ? 'AM' : 'PM'}`
 }
+
+/** Whole calendar days from `iso` to `now` in the browser zone (0 = same day, 1 = yesterday). */
+export function daysAgo(iso: string | Date, now = new Date()): number {
+  const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime()
+  return Math.round((day(now) - day(new Date(iso))) / 86400000)
+}
