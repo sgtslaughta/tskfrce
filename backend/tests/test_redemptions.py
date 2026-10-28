@@ -366,10 +366,11 @@ def _picked(client, db, kid_headers):
     return db.query(Redemption).one().device_id
 
 
-def test_device_guessed_from_client_ip(client, db, kid, kid_headers):
+def test_device_guessed_from_client_ip(client, db, kid, kid_headers, monkeypatch):
+    monkeypatch.setattr("app.api.kid_rewards.client_ip", lambda _r: "10.1.1.7")
     _screen_ready(db, kid)
     a = _device(db, kid)
-    b = Device(mac="aa:bb:cc:dd:ee:03", name="Tablet", status="assigned", ip="testclient")
+    b = Device(mac="aa:bb:cc:dd:ee:03", name="Tablet", status="assigned", ip="10.1.1.7")
     b.owners.append(kid)
     db.add(b)
     db.commit()
@@ -391,3 +392,16 @@ def test_device_unguessed_with_several_and_no_ip_match(client, db, kid, kid_head
     db.add(b)
     db.commit()
     assert _picked(client, db, kid_headers) is None
+
+
+def test_guess_device_matches_normalised_ip(db, kid):
+    from app.api.kid_rewards import _guess_device
+
+    a = _device(db, kid)
+    a.ip = "192.168.1.5"
+    b = Device(mac="aa:bb:cc:dd:ee:02", name="Tablet", status="assigned", ip="192.168.1.9")
+    b.owners.append(kid)
+    db.add(b)
+    db.commit()
+    assert _guess_device(db, kid, "::ffff:192.168.1.9") == b.id
+    assert _guess_device(db, kid, "10.0.0.1") is None  # two devices, no match

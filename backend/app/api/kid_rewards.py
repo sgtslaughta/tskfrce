@@ -7,7 +7,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.api.kid import require_kid, view_kid
+from app.api.kid import request_device, require_kid, view_kid
 from app.api.rewards import redemption_name
 from app.core.client_ip import client_ip
 from app.models.family import get_family
@@ -75,11 +75,12 @@ def rewards(db: Session = Depends(get_db), kid: User = Depends(view_kid)):
     }
 
 
-def _guess_device(kid: User, ip: str) -> int | None:
+def _guess_device(db: Session, kid: User, ip: str) -> int | None:
     """The kid's device with this IP, else their only device, else None."""
-    mine = kid.devices
-    hit = [d for d in mine if d.ip == ip or ip in d.ipv6]
-    return hit[0].id if hit else mine[0].id if len(mine) == 1 else None
+    dev = request_device(db, ip, kid.devices)
+    if dev is not None and dev in kid.devices:
+        return dev.id
+    return kid.devices[0].id if len(kid.devices) == 1 else None
 
 
 @router.post("/redeem")
@@ -91,7 +92,7 @@ def redeem(
 ):
     device_id = body.device_id
     if device_id is None and body.kind == "screen_time":
-        device_id = _guess_device(kid, client_ip(request))
+        device_id = _guess_device(db, kid, client_ip(request))
     r = economy.request(db, kid, body.kind, body.reward_id, body.minutes, device_id)
     return {
         "id": r.id,
