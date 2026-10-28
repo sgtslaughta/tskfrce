@@ -221,6 +221,7 @@ export function ThreadView({
     const run = kind === 'chore' ? runDetail.data : undefined
     const photoN = run && reply?.proof_photo_id ? run.photos.findIndex((p) => p.id === reply.proof_photo_id) + 1 : 0
     const replyLabel = photoN ? `Photo ${photoN}` : reply?.label
+    const labelPending = kind === 'chore' && !!reply?.proof_photo_id && runDetail.isPending // photo number unknown until the run loads
     const sideKid = kind === 'private' ? Number(refId) : (run?.kid_ids[0] ?? null)
     const side = wideLay && !bare && ((kind === 'chore' && !!run) || kind === 'private')
     return (
@@ -260,11 +261,11 @@ export function ThreadView({
             }}
           >
             {reply && (
-              <span className="pc-q" data-testid="replying" title={`Replying to ${replyLabel}`}>
+              <span className="pc-q" data-testid="replying" title={labelPending ? 'Replying' : `Replying to ${replyLabel}`}>
                 <Icon name="subdirectory_arrow_right" size={14} />
                 <span>
                   <VisuallyHidden component="span">Replying to </VisuallyHidden>
-                  {replyLabel}
+                  {labelPending ? <i className="pc-q-sk" data-testid="reply-sk" aria-label="Loading" /> : replyLabel}
                 </span>
                 <button type="button" aria-label="Stop replying" title="Stop replying" onClick={() => {
                   setReply(undefined)

@@ -78,6 +78,23 @@ describe('ChatDock', () => {
     expect(screen.queryByTestId('replying')).toBeNull()
   })
 
+  test('a chore photo reply shows a placeholder, then the real photo number', async () => {
+    let release: (v: unknown) => void = () => {}
+    apiMock.mockImplementation(async (p) => {
+      if (p === '/chat/threads') return threads
+      if (p === '/chores/5') return new Promise((r) => (release = r))
+      if (p.startsWith('/chat/threads/chore/')) return { id: 4, kind: 'chore', title: 'Dishes', messages: [], has_more: false }
+      return undefined
+    })
+    wrap(<ChatDock meId={1} />)
+    act(() => openChat('chore', '5', { proof_photo_id: 7, label: 'Photo' }))
+    expect(await screen.findByTestId('reply-sk')).toBeInTheDocument()
+    expect(screen.getByTestId('replying')).not.toHaveTextContent('Photo')
+    await act(async () => release({ id: 5, kid_ids: [], photos: [{ id: 6 }, { id: 7 }] }))
+    await waitFor(() => expect(screen.getByTestId('replying')).toHaveTextContent('Replying to Photo 2'))
+    expect(screen.queryByTestId('reply-sk')).toBeNull()
+  })
+
   test('a photo reply sends the proof photo id, not text', async () => {
     wrap(<ChatDock meId={1} />)
     act(() => openChat('private', '3', { proof_photo_id: 7, label: 'Photo' }))

@@ -253,3 +253,7 @@
   align-self: flex-start; display: inline-flex; align-items: center; gap: 5px; margin-bottom: 4px; padding: 3px 9px;
   border-radius: 999px; background: var(--p-amb); color: var(--p-ambink); font-size: 11.5px; font-weight: 700;
 }
+[data-look='parent'] .pc-q-sk { display: inline-block; width: 44px; height: 9px; border-radius: 6px; background: var(--p-soft); vertical-align: middle; }
+@media (prefers-reduced-motion: no-preference) {
+  [data-look='parent'] .pc-q-sk { animation: p-sk 1.2s ease-in-out infinite alternate; }
+}
