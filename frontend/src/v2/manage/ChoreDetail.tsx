@@ -225,7 +225,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
             {!chore && <span id="chore-due-hint" className="pk-hint">Set after you choose who does it.</span>}
           </label>
           {dueEdit === undefined && dueTimes.size > 1 && (
-            <span className="pk-hint">Kids have different times — saving changes all</span>
+            <span className="pk-hint">Kids have different times. Set Due by to give them all one time.</span>
           )}
           </div>
           <div className="pk-switch">
