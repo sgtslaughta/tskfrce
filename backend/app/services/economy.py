@@ -208,7 +208,7 @@ def _request(
     held = pending_cost(db, kid.id)
     if cost > bal - held:
         raise HTTPException(
-            400, f"{held} of your points are held for requests a parent hasn't answered yet."
+            409, f"{held} of your points are held for requests a parent hasn't answered yet."
         )
     if kind == "screen_time":
         from app.services import screen_time  # screen_time imports this module

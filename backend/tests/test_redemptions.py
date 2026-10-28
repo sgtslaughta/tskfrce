@@ -420,5 +420,5 @@ def test_pending_request_holds_points(client, db, kid, kid_headers):
     rw = _reward(db)
     assert _ask(client, kid_headers, rw.id).status_code == 200
     r = _ask(client, kid_headers, rw.id)
-    assert r.status_code == 400 and "100 of your points are held" in r.json()["detail"]
+    assert r.status_code == 409 and "100 of your points are held" in r.json()["detail"]
     assert db.query(Redemption).count() == 1
