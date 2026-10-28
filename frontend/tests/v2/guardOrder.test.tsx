@@ -13,7 +13,7 @@ import { SettingsPage } from '@/v2/manage/SettingsPage'
 
 const replace = jest.fn()
 jest.mock('next/router', () => ({ useRouter: () => ({ replace, asPath: '/devices', query: {} }) }))
-jest.mock('@/v2/api', () => ({ api: jest.fn(), CANT_REACH: 'x' }))
+jest.mock('@/v2/api', () => ({ api: jest.fn(), kidToken: () => null, CANT_REACH: 'x' }))
 jest.mock('@/contexts/UnifiedAuthContext', () => ({ useUnifiedAuth: jest.fn() }))
 jest.mock('@/v2/parent/ParentShell', () => ({
   ParentShell: ({ children }: { children: ReactNode }) => <>{children}</>,

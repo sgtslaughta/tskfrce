@@ -9,7 +9,7 @@ import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 
 const replace = jest.fn()
 jest.mock('next/router', () => ({ useRouter: () => ({ replace, asPath: '/devices?x=1' }) }))
-jest.mock('@/v2/api', () => ({ api: jest.fn(), KID_TOKEN_KEY: 'task4ce-kid-token', CANT_REACH: "Can't reach the home box. Check it's plugged in and on Wi-Fi." }))
+jest.mock('@/v2/api', () => ({ api: jest.fn(), kidToken: () => localStorage.getItem('task4ce-kid-token'), CANT_REACH: "Can't reach the home box. Check it's plugged in and on Wi-Fi." }))
 jest.mock('@/contexts/UnifiedAuthContext', () => ({ useUnifiedAuth: jest.fn() }))
 
 const apiMock = api as unknown as Mock<(p: string) => Promise<unknown>>

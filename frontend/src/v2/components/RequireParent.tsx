@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } fro
 import { useRouter } from 'next/router'
 import { useQuery, type QueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
-import { api, KID_TOKEN_KEY } from '../api'
+import { api, kidToken } from '../api'
 import { BoxStarting, EmptyState, ErrorPanel, SetupResuming, WaitingState } from '../parent/states'
 import { startingUp } from '../parent/freshness'
 import { markSessionExpired } from '../login/sessionExpired'
@@ -55,7 +55,7 @@ export function RequireParent({ children }: { children: ReactNode }) {
 
   // a kid's own device (kid session, no parent login) opened a parent page: back to the checklist
   const kidDevice =
-    isInitialized && !isAuthenticated && typeof window !== 'undefined' && !!localStorage.getItem(KID_TOKEN_KEY)
+    isInitialized && !isAuthenticated && typeof window !== 'undefined' && !!kidToken()
 
   // null = still deciding, '' = allowed
   const target =
