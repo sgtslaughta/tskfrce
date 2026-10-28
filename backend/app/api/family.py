@@ -97,7 +97,8 @@ def _needs_you(
 ) -> list[dict]:
     """Submitted chores and pending requests, oldest first."""
     sub = [r for r in runs if r.status == "submitted"]
-    photos, proofs = {}, {}
+    photos: dict[tuple[int, int], int] = {}
+    proofs: dict[int, list[ChorePhoto]] = {}
     if sub:
         rows = (
             db.query(ChorePhoto)
@@ -106,7 +107,6 @@ def _needs_you(
             .all()
         )
         photos = {(p.run_id, p.attempt): p.id for p in rows}  # latest wins
-        proofs: dict[int, list[ChorePhoto]] = {}
         for p in rows:
             proofs.setdefault(p.run_id, []).append(p)
     items = []
