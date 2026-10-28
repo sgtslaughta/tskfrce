@@ -7,6 +7,7 @@ import { MantineProvider } from '@mantine/core'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fridgeTheme } from '@/v2/theme'
 import { api } from '@/v2/api'
+import { notifications } from '@mantine/notifications'
 import { DeviceActivity } from '@/v2/manage/DeviceActivity'
 import type { Device, DeviceActivity as Activity, DeviceEvent, Kid } from '@/v2/types'
 
@@ -106,6 +107,17 @@ describe('device Activity', () => {
     await userEvent.click((await screen.findAllByRole('button', { name: "Lock all Maya's devices" }))[0])
     await waitFor(() =>
       expect(apiMock).toHaveBeenCalledWith('/kids/7/override', expect.objectContaining({ method: 'POST', body: expect.objectContaining({ action: 'lock' }) })),
+    )
+  })
+
+  test('the Locked toast offers Undo, which unlocks the kid again', async () => {
+    show()
+    await userEvent.click((await screen.findAllByRole('button', { name: "Lock all Maya's devices" }))[0])
+    await waitFor(() => expect(notifications.show).toHaveBeenCalled())
+    const toast = render(<>{(notifications.show as Mock).mock.calls.at(-1)![0].message}</>)
+    await userEvent.click(toast.getByRole('button', { name: 'Undo' }))
+    await waitFor(() =>
+      expect(apiMock).toHaveBeenCalledWith('/kids/7/override', expect.objectContaining({ body: expect.objectContaining({ action: 'unlock' }) })),
     )
   })
 

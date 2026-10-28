@@ -86,7 +86,7 @@ export function DeviceActivity({ device, kids, timeZone }: Props) {
               className="p-btn"
               data-variant="red"
               disabled={lockKid.isPending}
-              onClick={() => lockKid.mutate({ kidId: kid.id, action: 'lock' }, { onSuccess: () => toastOk(`Locked all ${kid.name}'s devices`) })}
+              onClick={() => lockKid.mutate({ kidId: kid.id, action: 'lock' }, { onSuccess: () => toastOk(`Locked all ${kid.name}'s devices`, { undo: () => lockKid.mutate({ kidId: kid.id, action: 'unlock' }) }) })}
             >
               <Icon name="lock" size={16} />
               Lock all {kid.name}&apos;s devices
