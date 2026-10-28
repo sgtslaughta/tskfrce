@@ -27,6 +27,13 @@ export function undoChoice(previous: Override | null | undefined, now = Date.now
   return { action: previous.action, minutes: left }
 }
 
+/** A group has no override of its own: what all its devices share, else null (they differ, so Undo goes to schedule). */
+export function sharedOverride(devices: { override: Override | null }[]): Override | null {
+  const [first] = devices
+  const same = first?.override && devices.every((d) => d.override?.action === first.override!.action && d.override?.expires_at === first.override!.expires_at)
+  return same ? first.override : null
+}
+
 /** Lock / unlock (optionally timed) or clear the manual override on a device, kid or group. Locking offers Undo. */
 export function useOverride() {
   const qc = useQueryClient()
