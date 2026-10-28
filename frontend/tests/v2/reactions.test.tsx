@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
-import { render, screen, waitFor } from '@testing-library/react'
+import { createEvent, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
@@ -11,6 +11,7 @@ import { searchEmoji } from '@/v2/chat/emojiData'
 import type { ChatMessage } from '@/v2/hooks/useChat'
 
 jest.mock('@/v2/api', () => ({ api: jest.fn() }))
+jest.mock('@/v2/chat/ChatPhoto', () => ({ Photo: () => <i /> }))
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
 
 const apiMock = api as unknown as Mock<(p: string, i?: { method?: string; body?: unknown }) => Promise<unknown>>
@@ -24,6 +25,12 @@ const wrap = (ui: React.ReactNode) =>
       <MantineProvider env="test">{ui}</MantineProvider>
     </QueryClientProvider>,
   )
+// jsdom has no PointerEvent: build a pointerout (React's pointerleave source) and stamp the type on it
+const leave = (el: Element, pointerType: string) => {
+  const ev = createEvent.pointerOut(el)
+  Object.defineProperty(ev, 'pointerType', { value: pointerType })
+  fireEvent(el, ev)
+}
 const posted = (emoji: string) =>
   waitFor(() =>
     expect(apiMock).toHaveBeenCalledWith('/chat/messages/5/reactions', expect.objectContaining({ method: 'POST', body: { emoji } })),
@@ -80,6 +87,24 @@ describe('reaction toolbar', () => {
     wrap(<ParentBubble m={msg()} mine />)
     await userEvent.hover(screen.getByRole('button', { name: 'Add reaction' }))
     expect(await screen.findByRole('button', { name: 'React 👍' })).toBeInTheDocument()
+  })
+
+  test('a touch tap keeps the quick row open (touch "leave" is ignored)', async () => {
+    wrap(<ParentBubble m={msg()} mine />)
+    const btn = screen.getByRole('button', { name: 'Add reaction' })
+    await userEvent.click(btn)
+    const bar = btn.parentElement as HTMLElement
+    leave(bar, 'touch')
+    await new Promise((r) => setTimeout(r, 300))
+    expect(screen.getByRole('button', { name: 'React 👍' })).toBeInTheDocument()
+    leave(bar, 'mouse')
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'React 👍' })).toBeNull())
+  })
+
+  test('a proof photo sits in the kid bubble, after the system line', () => {
+    wrap(<ParentBubble m={msg({ kind: 'system', author_id: null, body: 'Photo added', photo_url: '/p/1' })} mine={false} kidName="Mia" />)
+    expect(screen.getByTestId('msg-system')).toHaveTextContent('Photo added')
+    expect(screen.getByTestId('msg-other')).toHaveTextContent('Mia')
   })
 
   test('more opens a searchable picker; search filters the grid', async () => {

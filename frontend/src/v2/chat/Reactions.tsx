@@ -68,11 +68,13 @@ export function ReactBar({ m, kid, onOpen }: { m: ChatMessage; kid: boolean; onO
   return (
     <span
       className="msg-react-bar"
-      onMouseEnter={() => {
+      onPointerEnter={(e) => {
+        if (e.pointerType !== 'mouse') return
         overBar.current = true
         cancel()
       }}
-      onMouseLeave={() => {
+      onPointerLeave={(e) => {
+        if (e.pointerType !== 'mouse') return // Chromium fires a touch "leave" right after the tap
         overBar.current = false
         if (!picker) later(close)
       }}
@@ -93,7 +95,7 @@ export function ReactBar({ m, kid, onOpen }: { m: ChatMessage; kid: boolean; onO
         aria-label="Add reaction"
         title="React"
         aria-expanded={open}
-        onMouseEnter={() => later(() => setOpen(true))}
+        onPointerEnter={(e) => e.pointerType === 'mouse' && later(() => setOpen(true))}
         onClick={() => (cancel(), setOpen(true))}
       >
         <Icon name="add_reaction" size={16} />
@@ -134,9 +136,9 @@ export function ReactBar({ m, kid, onOpen }: { m: ChatMessage; kid: boolean; onO
                 aria-label="More reactions"
                 title="More reactions"
                 aria-expanded={picker}
-                onMouseEnter={() => later(() => openPicker(false))}
+                onPointerEnter={(e) => e.pointerType === 'mouse' && later(() => openPicker(false))}
                 // passing over "+" on the way to a quick emoji must not open the picker
-                onMouseLeave={() => !picker && cancel()}
+                onPointerLeave={(e) => e.pointerType === 'mouse' && !picker && cancel()}
                 onClick={() => openPicker(true)}
               >
                 <Icon name="add" size={18} />
