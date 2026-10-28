@@ -205,8 +205,12 @@ def copy_chore(
 
 @router.delete("/api/v1/chores/{chore_id}", status_code=204, response_class=Response)
 def delete_chore(chore_id: int, db: Session = Depends(get_db)):
-    """With history: archive and stop future runs. Without: remove."""
-    c = _chore(db, chore_id)
+    """With history: archive and stop future runs. Without: remove. Already archived: nothing to do."""
+    c = db.get(Chore, chore_id)
+    if c is None:
+        raise HTTPException(404, NO_CHORE)
+    if c.archived_at is not None:
+        return Response(status_code=204)
     ids = [a.id for a in c.assignments]
     runs = db.query(ChoreRun).filter(ChoreRun.assignment_id.in_(ids)).all() if ids else []
     if not runs:

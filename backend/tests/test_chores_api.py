@@ -156,3 +156,12 @@ def test_thread_list_says_which_kids_a_chore_is_for(client, db, parent, kid, par
     client.post(f"/api/v1/chat/threads/{tid}/messages", json={"body": "hi"}, headers=parent_headers)
     rows = client.get("/api/v1/chat/threads", headers=parent_headers).json()["threads"]
     assert next(r for r in rows if r["kind"] == "chore")["kid_ids"] == [kid.id]
+
+
+def test_delete_archived_chore_is_ok_and_unknown_is_404(client, db, kid, parent_headers):
+    set_day(db)
+    chore, _ = api_chore(client, parent_headers, [kid])
+    assert client.delete(f"/api/v1/chores/{chore['id']}", headers=parent_headers).status_code == 204
+    assert client.delete(f"/api/v1/chores/{chore['id']}", headers=parent_headers).status_code == 204
+    assert db.get(Chore, chore["id"]).archived_at is not None
+    assert client.delete("/api/v1/chores/99999", headers=parent_headers).status_code == 404

@@ -161,3 +161,13 @@ def test_today_needs_you_includes_pending_notes(client, db, parent_headers):
     assert [x for x in _today(client, parent_headers)["needs_you"] if x["type"] == "note"] == []
     bell = client.get("/api/v1/notifications", headers=parent_headers).json()["items"]
     assert next(i for i in bell if i["kind"] == "chore_note")["pending"] is False
+
+
+def test_done_chore_carries_done_at(client, db, parent_headers):
+    a, _, ha, _ = _setup(db)
+    _create(client, parent_headers, [a], title="Dishes")
+    rid = _ids(client, ha)[0]
+    chores = lambda: _today(client, parent_headers)["kids"][0]["chores"]  # noqa: E731
+    assert chores()[0]["done_at"] is None
+    client.post(f"/api/v1/kid/chores/{rid}/done", headers=ha)
+    assert chores()[0]["done_at"].endswith("Z")

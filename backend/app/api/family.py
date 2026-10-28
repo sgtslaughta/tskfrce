@@ -175,6 +175,7 @@ def _chore_out(
         "state": st,
         "due_time": r.assignment.due_time,
         "due_at": utc_z(svc.due_at(r, fam)),
+        "done_at": utc_z(r.submitted_at or r.approved_at),
         "type": svc.type_out(c),
         "sent_back": svc.sent_back(r),
         "mode": mode,
