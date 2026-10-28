@@ -3,7 +3,6 @@ import json
 import threading
 
 import pytest
-
 from blocker.api import make_api
 from blocker.state_store import StateStore
 
@@ -53,7 +52,7 @@ def api():
 
 @pytest.mark.parametrize("token", [None, "", "wrong"])
 def test_state_requires_token(api, token):
-    server, store = api
+    server, _store = api
     status, _ = _call(server, "/state", {"blocked": []}, token=token)
     assert status == 403
 

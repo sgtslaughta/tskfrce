@@ -23,14 +23,14 @@ def resolve_hostname(ip: str) -> str | None:
     """Best-effort reverse DNS. Never raises."""
     try:
         return socket.gethostbyaddr(ip)[0] or None
-    except Exception:
+    except Exception:  # noqa: BLE001 - best effort, the daemon keeps running
         return None
 
 
 def _scapy_send(kind: str, cfg: Config):
     """Real scapy I/O. Returns (answered, unanswered) where answered holds
     (sent, rcv) pairs and rcv exposes `.ip` and `.mac`."""
-    from scapy.all import ARP, Ether, IPv6, ICMPv6EchoRequest, get_if_addr, srp
+    from scapy.all import ARP, Ether, ICMPv6EchoRequest, IPv6, get_if_addr, srp
 
     iface = cfg.lan_iface or None
     if kind == "arp":
@@ -61,7 +61,7 @@ def scan_once(
             addrs = v6.setdefault(_norm(rcv.mac), [])
             if rcv.ip not in addrs:
                 addrs.append(rcv.ip)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - best effort, the daemon keeps running
         log.warning("ndp sweep failed: %s", e)
     seen_list = []
     for mac, ip in v4.items():
@@ -87,6 +87,6 @@ def run_discovery(
             for seen in scan_once(cfg):
                 if on_seen:
                     on_seen(seen)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - best effort, the daemon keeps running
             log.warning("scan failed: %s", e)
         stop.wait(cfg.scan_interval + random.uniform(0, min(2.0, cfg.scan_interval * 0.1)))

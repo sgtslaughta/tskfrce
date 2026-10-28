@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { api } from '@/v2/api'
-import { toastFail, toastOk } from '@/v2/notify'
+import { retryIfOffline, toastFail, toastOk } from '@/v2/notify'
 import type { AgeGroup, Kid } from '@/v2/types'
 
 export interface KidBody {
@@ -15,14 +15,16 @@ export const useKids = (enabled = true) => useQuery({ queryKey: ['kids'], queryF
 
 function useKidMutation<V>(fn: (v: V) => Promise<unknown>, done?: string) {
   const qc = useQueryClient()
-  return useMutation({
+  const m = useMutation({
     mutationFn: fn,
-    onError: done ? toastFail : undefined,
+    // shared by create/delete: resend only when the request never arrived
+    onError: done ? (e: Error, v: V) => toastFail(e, retryIfOffline(e, () => m.mutate(v))) : undefined,
     onSuccess: () => {
       if (done) toastOk(done)
       return Promise.all(['kids', 'devices', 'today', 'chore-lib', 'chores-today'].map((k) => qc.invalidateQueries({ queryKey: [k] })))
     },
   })
+  return m
 }
 
 export const useCreateKid = () => useKidMutation((body: KidBody) => api('/kids', { method: 'POST', body }))

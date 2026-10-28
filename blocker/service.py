@@ -44,7 +44,7 @@ def _detect_box_ip(cfg: Config) -> str:
         from scapy.all import get_if_addr
 
         return get_if_addr(cfg.lan_iface or "eth0")
-    except Exception:
+    except Exception:  # noqa: BLE001 - best effort, the daemon keeps running
         return ""
 
 
@@ -148,7 +148,7 @@ class Service:
     def _lan(self):
         try:
             return self._redir._lanfacts()
-        except Exception:
+        except Exception:  # noqa: BLE001 - best effort, the daemon keeps running
             return None  # LAN detection failed -> gateway/box facts unknown
 
     def _live_addrs(self, mac: str) -> TargetAddrs:
@@ -338,7 +338,7 @@ class Service:
         if self._api is not None:
             try:
                 self._api.shutdown()
-            except Exception:
+            except Exception:  # noqa: BLE001, S110 - best effort shutdown
                 pass
 
 

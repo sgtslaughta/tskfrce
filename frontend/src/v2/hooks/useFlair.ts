@@ -9,15 +9,16 @@ export function useFlair() {
 
 export function useEquip() {
   const qc = useQueryClient()
-  return useMutation({
+  const m = useMutation({
     mutationFn: (body: { slot: FlairSlot; id: string | null }) =>
       api<{ equipped: Flair; new_badges: { name: string }[] }>('/kid/flair', { method: 'PUT', body, kid: true }),
     onSuccess: (r) => r.new_badges.forEach((b) => toastOk(`Badge unlocked: ${b.name}`)),
-    onError: toastFail,
+    onError: (e, body) => toastFail(e, () => m.mutate(body)), // PUT: safe to repeat
     onSettled: () => {
       for (const k of ['flair', 'today']) qc.invalidateQueries({ queryKey: ['kid', k] })
       qc.invalidateQueries({ queryKey: ['profiles'] })
       qc.invalidateQueries({ queryKey: ['leaderboard'] })
     },
   })
+  return m
 }

@@ -94,7 +94,7 @@ def apply(ruleset: str) -> None:
 
 def flush() -> None:
     """Remove our table. Fail open: ignore 'No such file' when the table is absent."""
-    subprocess.run(["nft", "delete", "table", "inet", TABLE], capture_output=True)
+    subprocess.run(["nft", "delete", "table", "inet", TABLE], capture_output=True, check=False)
 
 
 def enable_forwarding() -> None:
