@@ -14,6 +14,11 @@ def test_mask():
     for secret in ("userkey", "apptoken123"):  # a secret can follow the @ (Pushover)
         assert secret not in mask("pover://userkey@apptoken123")
     assert mask("pover://userkey@apptoken123") == "pover://••••"
+    assert mask("json://user:pass@host.example/path?token=abc") == "json://host.example••••"
+    leaky = mask("mailto://u:p@example.com?to=x&pass=sekret")
+    assert leaky == "mailto://example.com••••"
+    assert mask("json://u:p@host:notaport/") == "json://••••"
+    assert mask("json://u:p@ho$t.example/") == "json://••••"
     assert mask("nothing") == "••••"
 
 

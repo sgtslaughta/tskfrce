@@ -39,7 +39,14 @@ def mask(url: str) -> str:
     # tokens can sit before or after the "@" (tgram, discord, pover): show only a real host
     host = ""
     if scheme.lower() in HOST_SCHEMES and "@" in rest:
-        host = rest.rsplit("@", 1)[1].split("/")[0]
+        try:
+            parts = urlsplit(url)
+            parts.port  # noqa: B018 - raises ValueError on a bad port
+            host = parts.hostname or ""
+        except ValueError:  # bad port etc.
+            host = ""
+        if not re.fullmatch(r"[A-Za-z0-9.-]{1,64}", host):
+            host = ""
     return f"{scheme}://{host}••••"[:80]
 
 
