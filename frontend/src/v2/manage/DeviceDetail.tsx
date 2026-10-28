@@ -196,6 +196,11 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
           <ActionButton icon="lock_open" busy={pendingAction === 'unlock'} disabled={!!pendingAction} onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'unlock' })}>
             Unlock 30 min
           </ActionButton>
+          {device.override && (
+            <ActionButton icon="event_repeat" busy={pendingAction === 'clear'} disabled={!!pendingAction} onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'schedule' })}>
+              Back to schedule
+            </ActionButton>
+          )}
           <ActionButton icon="shield" label={`Test block on ${device.name}`} busy={test.isPending} onClick={runTest}>
             {test.isPending ? 'Testing…' : 'Test block'}
           </ActionButton>

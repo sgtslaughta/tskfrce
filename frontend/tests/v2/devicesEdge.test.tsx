@@ -82,6 +82,16 @@ describe('DeviceDetail', () => {
     expect(await screen.findByText(`Locked until ${want}`)).toBeTruthy()
   })
 
+  test('Back to schedule shows only while an override is set and clears it', async () => {
+    const onRequestOverride = jest.fn()
+    const { unmount } = render(wrap(<DeviceDetail device={dev()} kids={kids} onRequestOverride={onRequestOverride} />))
+    expect(screen.queryByRole('button', { name: 'Back to schedule' })).toBeNull()
+    unmount()
+    render(wrap(<DeviceDetail device={dev({ override: { action: 'lock', expires_at: null } })} kids={kids} onRequestOverride={onRequestOverride} />))
+    await userEvent.click(screen.getByRole('button', { name: 'Back to schedule' }))
+    expect(onRequestOverride).toHaveBeenCalledWith({ kind: 'device', id: 1, action: 'schedule' })
+  })
+
   test('a double click on Delete in the dialog sends exactly one DELETE', async () => {
     render(wrap(<DeviceDetail device={dev()} kids={kids} onRequestOverride={() => {}} />))
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }))

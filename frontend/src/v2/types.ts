@@ -203,6 +203,8 @@ export interface NeedsItem {
   kid_id: number | null
   kid_name: string | null
   title: string
+  /** screen time: the device the kid asked about */
+  device_name?: string | null
   attempt?: number
   thumb_url?: string | null
   subtasks_done?: number
@@ -370,6 +372,8 @@ export interface PendingRedemption {
   /** the reward's glyph; null for screen time or a missing reward */
   icon: string | null
   minutes: number | null
+  /** the device the kid asked about; null = not named (or since deleted) */
+  device_name?: string | null
   cost: number
   created_at: string
   kid_balance: number
