@@ -36,6 +36,7 @@ export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: 
   const [pick, setPick] = useState<Pick | null>(null)
   const [reply, setReply] = useState<{ to: ChatReply; n: number } | null>(null) // n remounts the composer per request
   const panel = useRef<HTMLDivElement>(null)
+  const opener = useRef<Element | null>(null) // what had focus before the dock opened
   const threads = useThreads(kid)
   const phone = useMediaQuery('(max-width: 767px)')
   const sheet = !kid && !!phone
@@ -53,6 +54,7 @@ export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: 
       if (!d || !validRef(d.kind, d.ref)) return
       setPick({ kind: d.kind, ref: d.ref })
       setReply((r) => (d.reply ? { to: d.reply, n: (r?.n ?? 0) + 1 } : null))
+      if (!panel.current?.contains(document.activeElement)) opener.current = document.activeElement
       setOpen(true)
       if (kid) save(true, { kind: d.kind, ref: d.ref })
     }
@@ -71,7 +73,7 @@ export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: 
   }, [kid])
   // keep focus inside the panel when it opens or switches thread, so Escape always reaches it
   useEffect(() => {
-    if (open && !inline) panel.current?.focus()
+    if (open && !inline && !panel.current?.contains(document.activeElement)) panel.current?.focus()
   }, [open, pick, inline])
 
   const set = (o: boolean, p: Pick | null) => {
@@ -80,7 +82,11 @@ export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: 
     if (p !== pick) setReply(null)
     if (kid) save(o, p)
   }
-  const close = () => set(inline, pick)
+  const close = () => {
+    set(inline, pick)
+    if (opener.current instanceof HTMLElement && opener.current.isConnected) opener.current.focus()
+    opener.current = null
+  }
   const page = useThread(pick?.kind ?? null, pick?.ref ?? null, kid) // same query as the open ThreadView
   const title =
     pick && threads.data?.threads.find((t) => t.kind === pick.kind && refOf(t) === pick.ref)?.title
@@ -91,6 +97,11 @@ export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: 
       <IconArrowLeft size={18} />
     </Button>
   )
+  const listState = threads.isError ? (
+    kid ? <LoadError error={threads.error} onRetry={() => threads.refetch()} /> : <ErrorPanel kind="unreachable" error={threads.error} onRetry={() => threads.refetch()} />
+  ) : threads.isPending ? (
+    kid ? <LoadingCards n={3} h={56} /> : <Skeleton rows={3} />
+  ) : null
   const body = pick ? (
     <ThreadView
       key={`${pick.kind}:${pick.ref}:${reply?.n ?? 0}`}
@@ -103,10 +114,8 @@ export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: 
     />
   ) : (
     <>
-      {threads.isError && !kid && <ErrorPanel kind="unreachable" error={threads.error} onRetry={() => threads.refetch()} />}
-      {threads.isError && kid && <LoadError error={threads.error} onRetry={() => threads.refetch()} />}
-      {threads.isPending && (kid ? <LoadingCards n={3} h={56} /> : <Skeleton rows={3} />)}
       <ThreadList
+        empty={listState}
         threads={threads.data?.threads ?? []}
         selected={null}
         meName={meName}

@@ -28,7 +28,15 @@ function ChatPageBody() {
     void router.push({ query: { item: `${t.kind}:${refOf(t)}` } }, undefined, { shallow: true })
   }
 
-  const listContent = <ThreadList threads={list} selected={selected ? `${selected.kind}:${refOf(selected)}` : null} onPick={handlePick} meName={user?.username} empty={small && threads.data && list.length === 0 ? <NoChats /> : null} />
+  // phones hide the detail pane, so loading, error and empty states go in the list
+  const phoneState = threads.data ? (
+    list.length === 0 ? <NoChats /> : null
+  ) : threads.isError ? (
+    <ErrorPanel kind="unreachable" error={threads.error} onRetry={() => threads.refetch()} />
+  ) : threads.isPending ? (
+    <Skeleton rows={3} />
+  ) : null
+  const listContent = <ThreadList threads={list} selected={selected ? `${selected.kind}:${refOf(selected)}` : null} onPick={handlePick} meName={user?.username} empty={small ? phoneState : null} />
 
   const detailContent = bareChore ? (
     <ThreadView key={item} kind="chore" refId={bareChore} meId={user ? Number(user.id) : null} />
@@ -40,8 +48,7 @@ function ChatPageBody() {
 
   return (
     <ParentShell title="Chat" list={listContent}>
-      {threads.isError && !threads.data && <ErrorPanel kind="unreachable" error={threads.error} onRetry={() => threads.refetch()} />}
-      {threads.isPending && !threads.data && <Skeleton />}
+      {!small && !threads.data && (threads.isError ? <ErrorPanel kind="unreachable" error={threads.error} onRetry={() => threads.refetch()} /> : <Skeleton />)}
       {detailContent}
     </ParentShell>
   )

@@ -70,6 +70,21 @@ describe('ChatDock', () => {
     expect(screen.queryByRole('dialog')).toBeNull()
   })
 
+  test('Escape returns focus to what opened the dock', async () => {
+    wrap(
+      <>
+        <button>opener</button>
+        <ChatDock meId={1} />
+      </>,
+    )
+    const opener = screen.getByRole('button', { name: 'opener' })
+    opener.focus()
+    open()
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus())
+    await userEvent.keyboard('{Escape}')
+    expect(opener).toHaveFocus()
+  })
+
   test('openChat with a reply target shows a removable Replying to bar', async () => {
     wrap(<ChatDock meId={1} />)
     act(() => openChat('private', '3', { label: 'Photo 1' }))

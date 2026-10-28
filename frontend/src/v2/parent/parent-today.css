@@ -263,7 +263,9 @@
 [data-look='parent'] .pt-ded[data-tone='ink'] b { color: var(--p-ink); }
 
 /* phone chat bottom sheet: messages scroll, reply box stays pinned */
-.pt-sheet-body { display: flex; flex-direction: column; height: calc(100% - 60px); padding-bottom: 0; }
+.pt-sheet { display: flex; flex-direction: column; }
+.pt-sheet-body { display: flex; flex-direction: column; flex: 1; min-height: 0; padding-bottom: 0; }
+.pt-sheet .mantine-Drawer-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pt-sheet-body > .pc-grid { flex: 1; }
 
 /* focus rings on every small control in Today */
