@@ -213,7 +213,7 @@
   border: 1px solid var(--p-line); background: var(--p-card); color: var(--p-sub); font: inherit; font-size: 12px; cursor: pointer;
 }
 [data-look='parent'] .pc-caret:hover { color: var(--p-ink); }
-[data-look='parent'] .pc-caret:focus-visible { outline: 2px solid var(--p-acc); outline-offset: 2px; }
+[data-look='parent'] .pc-caret:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
 [data-look='parent'] .pc-caret .ms { transition: transform 0.15s; }
 [data-look='parent'] .pc-group[data-open='true'] .pc-caret .ms { transform: rotate(180deg); }
 [data-look='parent'] .pc-caret-dot { position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border-radius: 50%; background: var(--p-acc); }

@@ -218,7 +218,7 @@ describe('Rail', () => {
         <Rail />
       </MantineProvider>
     )
-    const chatItem = Array.from(container.querySelectorAll('a[aria-label="Chat"]')).pop() as HTMLElement
+    const chatItem = Array.from(container.querySelectorAll('a[aria-label="Chat, 3 unread"]')).pop() as HTMLElement
     const dot = chatItem?.querySelector('.p-rail-dot')
 
     expect(dot).toBeInTheDocument()

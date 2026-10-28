@@ -62,7 +62,7 @@ export function Rail({ onLogout }: { onLogout?: () => void }) {
               href={item.href || ''}
               className="p-rail-item"
               aria-current={router.pathname === item.href ? 'page' : undefined}
-              aria-label={item.label}
+              aria-label={item.dot ? `${item.label}, ${unread} unread` : item.label}
             >
               <Icon name={item.icon} />
               {item.dot && <span className="p-rail-dot" aria-hidden="true" />}

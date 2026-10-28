@@ -148,6 +148,8 @@
   background: var(--p-acc);
   box-shadow: 0 0 0 1.5px var(--p-ink);
 }
+/* touch shows the x all the time: the dot moves beside it */
+@media (hover: none) { .p-bell-item.unread::after, .p-bell-item.unread:hover::after, .p-bell-item.unread:focus-within::after { display: block; right: 38px; } }
 
 .p-bell-icon {
   width: 34px;
