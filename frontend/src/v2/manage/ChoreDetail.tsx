@@ -243,7 +243,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
         <ChoreSteps steps={steps} onChange={setSteps} next={next} onNext={setNext} choreDue={due || null} />
 
         {chore ? (
-          <WhoWhen key={gen} chore={chore} kids={kids} due={due} report={report} />
+          <WhoWhen key={gen} chore={chore} kids={kids} due={due} dueTouched={dueEdit !== undefined} report={report} />
         ) : (
           <section className="pk-panel" aria-label="Who and when">
             <h3>

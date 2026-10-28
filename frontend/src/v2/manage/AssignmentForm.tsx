@@ -38,6 +38,8 @@ interface Props {
   assignment?: Assignment
   /** The chore's Due by (Basics), HH:MM or ''. */
   due: string
+  /** Due by was edited: only then does it replace this assignment's own due time. */
+  dueTouched?: boolean
   /** Report this form's pending change to the editor (null on unmount). */
   report: (key: string, p: PendingAssignment | null) => void
   /** Called after a remove, and by Cancel (shown only when this form can be dismissed). */
@@ -46,7 +48,7 @@ interface Props {
 }
 
 /** Who does a chore, how often and by when. Add or edit one assignment. */
-export function AssignmentForm({ kids, assignment: a, due, report, onClose, dismissable }: Props) {
+export function AssignmentForm({ kids, assignment: a, due, dueTouched, report, onClose, dismissable }: Props) {
   const del = useDeleteAssignment()
   const delOnce = useSingle(del)
   const [confirm, { open, close }] = useDisclosure(false)
@@ -62,7 +64,7 @@ export function AssignmentForm({ kids, assignment: a, due, report, onClose, dism
     mode: who.length > 1 ? mode : 'each',
     repeat: { type: repeat as 'daily' | 'weekly' | 'once', days: repeat === 'weekly' ? days.map(Number).sort() : [] },
     on_date: repeat === 'once' ? date : null,
-    due_time: due || null,
+    due_time: !a || dueTouched ? due || null : (a.due_time?.slice(0, 5) ?? null),
   }
   const same = (x: AssignmentBody) =>
     JSON.stringify([[...x.kid_ids].sort(), x.mode, x.repeat, x.on_date, (x.due_time ?? '').slice(0, 5)]) ===

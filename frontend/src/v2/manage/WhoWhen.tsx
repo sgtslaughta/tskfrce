@@ -9,11 +9,13 @@ export function WhoWhen({
   chore,
   kids,
   due,
+  dueTouched,
   report,
 }: {
   chore: LibChore
   kids: Kid[]
   due: string
+  dueTouched?: boolean
   report: (key: string, p: PendingAssignment | null) => void
 }) {
   const [adding, setAdding] = useState(false)
@@ -33,12 +35,12 @@ export function WhoWhen({
               Stopped
             </Chip>
           )}
-          <AssignmentForm kids={kids} assignment={a} due={due} report={report} />
+          <AssignmentForm kids={kids} assignment={a} due={due} dueTouched={dueTouched} report={report} />
         </div>
       ))}
       {(adding || !has) && (
         <div className="pk-sub">
-          <AssignmentForm key={chore.assignments.length} kids={kids} due={due} report={report} dismissable={has} onClose={() => setAdding(false)} />
+          <AssignmentForm key={chore.assignments.length} kids={kids} due={due} dueTouched={dueTouched} report={report} dismissable={has} onClose={() => setAdding(false)} />
         </div>
       )}
       {has && !adding && (

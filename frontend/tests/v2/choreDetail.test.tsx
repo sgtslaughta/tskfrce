@@ -93,6 +93,37 @@ describe('chore editor: type, steps, notes', () => {
     expect((await saveBody()).steps.map((s) => s.after_previous)).toEqual([false, true])
   })
 
+  test('two assignments with different due times: opening is clean and saving keeps both', async () => {
+    const two = chore({
+      assignments: [
+        { id: 11, chore_id: 5, kid_ids: [7], mode: 'each', repeat: { type: 'daily', days: [] }, on_date: null, due_time: '20:00', active: true },
+        { id: 12, chore_id: 5, kid_ids: [7], mode: 'each', repeat: { type: 'weekly', days: [5, 6] }, on_date: null, due_time: '07:30', active: true },
+      ],
+    })
+    await show(two)
+    expect(screen.queryByText('Unsaved changes')).toBeNull()
+    await userEvent.clear(screen.getByLabelText('Points'))
+    await userEvent.type(screen.getByLabelText('Points'), '40')
+    await userEvent.click(screen.getByRole('button', { name: 'Save chore' }))
+    await waitFor(() => expect(calls('PATCH')).toHaveLength(1))
+    expect(calls('PATCH')[0][0]).toBe('/chores/5')
+  })
+
+  test('editing Due by applies it to every assignment', async () => {
+    const two = chore({
+      assignments: [
+        { id: 11, chore_id: 5, kid_ids: [7], mode: 'each', repeat: { type: 'daily', days: [] }, on_date: null, due_time: '20:00', active: true },
+        { id: 12, chore_id: 5, kid_ids: [7], mode: 'each', repeat: { type: 'weekly', days: [5, 6] }, on_date: null, due_time: '07:30', active: true },
+      ],
+    })
+    await show(two)
+    fireEvent.change(screen.getByLabelText('Due by (optional)'), { target: { value: '19:00' } })
+    await userEvent.click(screen.getByRole('button', { name: 'Save chore' }))
+    await waitFor(() => expect(calls('PATCH')).toHaveLength(3))
+    const bodies = calls('PATCH').slice(1).map(([, i]) => (i!.body as { due_time: string }).due_time)
+    expect(bodies).toEqual(['19:00', '19:00'])
+  })
+
   test('a step due after the chore shows the warning', async () => {
     await show()
     await userEvent.click(screen.getByRole('button', { name: 'Due time, due time for Pack backpack' }))
