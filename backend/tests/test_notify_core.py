@@ -156,16 +156,26 @@ def test_deliver_fails_closed_on_malformed_url(monkeypatch):
     assert notify.deliver(["json://[::1/x"], "t", "b") == (False, "It didn't go through.")
 
 
-def test_deliver_bad_url_not_on_root_logger(caplog):
+def test_deliver_bad_url_not_on_root_logger():
     import logging
 
     from app.services import notify
 
-    caplog.set_level(logging.DEBUG)
-    ok, err = notify.deliver(["discord://SECRETPW"], "t", "b")
+    # a plain root handler, like uvicorn's: pytest 9's caplog also sees non-propagating loggers
+    seen: list[str] = []
+    h = logging.Handler(logging.DEBUG)
+    h.emit = lambda r: seen.append(r.getMessage())
+    root = logging.getLogger()
+    old_level = root.level
+    root.addHandler(h)
+    root.setLevel(logging.DEBUG)
+    try:
+        ok, err = notify.deliver(["discord://SECRETPW"], "t", "b")
+    finally:
+        root.removeHandler(h)
+        root.setLevel(old_level)
     assert not ok and "SECRETPW" not in (err or "")
-    assert all("SECRETPW" not in r.getMessage() for r in caplog.records)
-    assert "SECRETPW" not in caplog.text
+    assert not any("SECRETPW" in m for m in seen)
 
 
 def test_concurrent_deliveries_dont_cross_secrets(monkeypatch):
