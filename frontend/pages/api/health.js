@@ -1,7 +1,7 @@
 /**
  * @fileoverview Health Check API Endpoint
  * @description Simple health check endpoint for Docker health monitoring
- * @author TaaskMaaster Team
+ * @author t@sk4ce Team
  * @version 1.0.0
  */
 

@@ -1,5 +1,5 @@
 """
-User schemas for TaaskMaaster.
+User schemas for t@sk4ce.
 
 This module contains Pydantic schemas for user-related API operations.
 """

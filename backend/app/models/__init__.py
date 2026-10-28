@@ -1,5 +1,5 @@
 """
-Database models for TaaskMaaster.
+Database models for t@sk4ce.
 
 This package contains all SQLAlchemy models for the application.
 """

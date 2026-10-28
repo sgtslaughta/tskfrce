@@ -1,5 +1,5 @@
 """
-Authentication API router for TaaskMaaster.
+Authentication API router for t@sk4ce.
 
 This module contains API endpoints for authentication and authorization.
 """

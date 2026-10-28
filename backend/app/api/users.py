@@ -1,5 +1,5 @@
 """
-Users API router for TaaskMaaster.
+Users API router for t@sk4ce.
 
 This module contains API endpoints for user management and authentication.
 """

@@ -1,5 +1,5 @@
 """
-Services package for TaaskMaaster.
+Services package for t@sk4ce.
 
 This package contains business logic services for the application.
 """

@@ -1,5 +1,5 @@
 """
-User model for TaaskMaaster.
+User model for t@sk4ce.
 
 This module contains the User model for authentication and user management.
 """

@@ -1,5 +1,5 @@
 """
-Health check tests for TaaskMaaster backend.
+Health check tests for t@sk4ce backend.
 
 These tests verify that the basic health endpoints and infrastructure
 are working correctly.

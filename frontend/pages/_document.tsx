@@ -1,7 +1,7 @@
 /**
  * @fileoverview Next.js Document component
  * @description Custom document setup with fonts and meta tags
- * @author TaaskMaaster Team
+ * @author t@sk4ce Team
  * @version 1.0.0
  */
 

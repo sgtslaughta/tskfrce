@@ -1,5 +1,5 @@
 """
-Authentication and authorization utilities for TaaskMaaster.
+Authentication and authorization utilities for t@sk4ce.
 
 This module provides JWT-based authentication, password hashing,
 and authorization utilities.

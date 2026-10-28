@@ -1,5 +1,5 @@
 """
-Monitoring configuration for TaaskMaaster backend.
+Monitoring configuration for t@sk4ce backend.
 
 This module provides Prometheus metrics collection and health check endpoints
 for monitoring application performance and health.

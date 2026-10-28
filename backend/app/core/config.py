@@ -1,7 +1,7 @@
 """
 Application configuration settings.
 
-This module contains all configuration settings for the TaaskMaaster application,
+This module contains all configuration settings for the t@sk4ce application,
 including database, authentication, and external service configurations.
 """
 
@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     """
 
     # Application settings
-    APP_NAME: str = "TaaskMaaster"
+    APP_NAME: str = "t@sk4ce"
     DEBUG: bool = False
     ENVIRONMENT: str = "development"
 

@@ -1,5 +1,5 @@
 """
-Main FastAPI application for TaaskMaaster.
+Main FastAPI application for t@sk4ce.
 
 This module contains the main FastAPI application with health checks,
 monitoring, and basic API endpoints.
@@ -61,7 +61,7 @@ logger = get_logger(__name__)
 
 # Create FastAPI application
 fastapi_app = FastAPI(
-    title="TaaskMaaster API",
+    title="t@sk4ce API",
     description="A comprehensive task management system for families",
     version=__version__,
     docs_url="/docs",
@@ -271,7 +271,7 @@ async def internal_error_handler(request: Request, exc: Exception) -> JSONRespon
 @fastapi_app.on_event("startup")
 async def startup_event():
     """Application startup event."""
-    logger.info("TaaskMaaster API starting up")
+    logger.info("t@sk4ce API starting up")
 
     # Initialize database
     from app.core.database import init_database
@@ -296,21 +296,21 @@ async def startup_event():
 
         fastapi_app.state.lock_task = asyncio.create_task(run_forever())
 
-    logger.info("TaaskMaaster API startup complete")
+    logger.info("t@sk4ce API startup complete")
 
 
 # Shutdown event
 @fastapi_app.on_event("shutdown")
 async def shutdown_event():
     """Application shutdown event."""
-    logger.info("TaaskMaaster API shutting down")
+    logger.info("t@sk4ce API shutting down")
 
     task = getattr(fastapi_app.state, "lock_task", None)
     if task:
         task.cancel()
     # await cleanup_database()
 
-    logger.info("TaaskMaaster API shutdown complete")
+    logger.info("t@sk4ce API shutdown complete")
 
 
 if __name__ == "__main__":

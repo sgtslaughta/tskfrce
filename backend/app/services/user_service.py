@@ -1,5 +1,5 @@
 """
-User service for TaaskMaaster.
+User service for t@sk4ce.
 
 This module contains business logic for user management and authentication.
 """

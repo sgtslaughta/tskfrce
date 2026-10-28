@@ -1,7 +1,7 @@
 /**
  * @fileoverview Next.js App component
  * @description Main application wrapper with Mantine and context providers
- * @author TaaskMaaster Team
+ * @author t@sk4ce Team
  * @version 1.0.0
  */
 

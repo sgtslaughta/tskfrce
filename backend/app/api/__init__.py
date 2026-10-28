@@ -1,5 +1,5 @@
 """
-API package for TaaskMaaster.
+API package for t@sk4ce.
 
 This package contains all API endpoints and routers.
 """

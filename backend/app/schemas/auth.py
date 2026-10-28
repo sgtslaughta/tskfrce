@@ -1,5 +1,5 @@
 """
-Authentication schemas for TaaskMaaster.
+Authentication schemas for t@sk4ce.
 
 This module contains Pydantic schemas for authentication-related API operations.
 """

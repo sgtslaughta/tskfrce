@@ -1,5 +1,5 @@
 """
-Logging configuration for TaaskMaaster backend.
+Logging configuration for t@sk4ce backend.
 
 This module provides structured logging configuration using structlog
 for better observability and debugging capabilities.

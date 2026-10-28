@@ -1,5 +1,5 @@
 """
-Pydantic schemas for TaaskMaaster.
+Pydantic schemas for t@sk4ce.
 
 This package contains all Pydantic schemas for API request/response validation.
 """

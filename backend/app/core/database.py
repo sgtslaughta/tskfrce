@@ -2,7 +2,7 @@
 Database configuration and session management.
 
 This module handles SQLAlchemy database configuration, connection pooling,
-and session management for the TaaskMaaster application.
+and session management for the t@sk4ce application.
 """
 
 from collections.abc import Iterator
