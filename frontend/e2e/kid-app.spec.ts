@@ -27,10 +27,14 @@ async function hhmmIn(api: APIRequestContext, min: number) {
 /**
  * Kid "Ivy" (teen) with a chained 2-step chore due in 20 min and a second chore.
  * The due time is a whole minute, so start early in a minute: "Due in 20 min" holds for ~50 s.
+ * Within 20 min before the family's reset time the due time lands after the reset while the chore day
+ * has not rolled yet (the deadline would be in the past), so the reset time is moved 3 h behind now.
  */
 async function seedIvy(api: APIRequestContext, tag: string) {
   const sec = new Date().getSeconds()
   if (sec > 3) await new Promise((r) => setTimeout(r, (60 - sec) * 1000))
+  const { reset_time } = await (await api.get('/api/proxy/family')).json()
+  await api.patch('/api/proxy/family', { data: { reset_time: await hhmmIn(api, -180) } })
   const kid = await (await api.post('/api/proxy/kids', { data: { full_name: 'Ivy', pin: '1234', age_group: 'teen' } })).json()
   const titles = { due: `E2E chain ${tag}`, other: `E2E feed fish ${tag}` }
   const due = await (
@@ -45,6 +49,7 @@ async function seedIvy(api: APIRequestContext, tag: string) {
   const undo = async () => {
     for (const id of [due.id, other.id]) await api.delete(`/api/proxy/chores/${id}`)
     await api.delete(`/api/proxy/kids/${kid.id}`)
+    await api.patch('/api/proxy/family', { data: { reset_time } })
   }
   return { kid, titles, undo }
 }
