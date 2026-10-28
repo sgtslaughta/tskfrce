@@ -1,7 +1,7 @@
 """polish 3: users.last_active_at for the Parents list
 
 Revision ID: s2b3c4d5e6f7
-Revises: r3b2c3d4e5f6
+Revises: s1a2b3c4d5e6
 Create Date: 2026-10-27 15:00:00.000000
 """
 
@@ -11,7 +11,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "s2b3c4d5e6f7"
-down_revision: str | Sequence[str] | None = "r3b2c3d4e5f6"
+down_revision: str | Sequence[str] | None = "s1a2b3c4d5e6"
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
 

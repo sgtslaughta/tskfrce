@@ -78,7 +78,7 @@ function BoxRow() {
     <div className="pn-kv pn-box">
       <span>Home box</span>
       <Chip tone={box.online ? 'acc' : 'amb'} icon={box.online ? 'check_circle' : 'router'}>
-        {box.online ? 'Healthy' : `Offline — ${box.last_seen ? `last seen ${ago(box.last_seen)}` : 'never seen'}`}
+        {box.online ? `Healthy${process.env.NEXT_PUBLIC_APP_VERSION ? ` · v${process.env.NEXT_PUBLIC_APP_VERSION}` : ''}` : `Offline — ${box.last_seen ? `last seen ${ago(box.last_seen)}` : 'never seen'}`}
       </Chip>
     </div>
   )
