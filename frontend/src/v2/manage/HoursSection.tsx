@@ -32,7 +32,7 @@ export function HoursSection() {
   const [open, setOpen] = useState(false)
   const edit = (e: Editing) => (setEditing(e), setOpen(true))
   const rules = hours.data?.rules ?? []
-  const today = CATEGORIES.find((c) => c.key === hours.data?.today)?.label
+  const today = hours.data?.today === 'other' ? undefined : CATEGORIES.find((c) => c.key === hours.data?.today)?.label
   const has = (k: HourRule['kind']) => rules.some((r) => r.kind === k)
 
   return (

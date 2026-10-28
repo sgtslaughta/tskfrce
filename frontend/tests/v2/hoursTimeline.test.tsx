@@ -57,4 +57,9 @@ describe('HoursTimeline', () => {
     render(<HoursTimeline rules={[]} kids={kids} groups={groups} />)
     expect(screen.getByText('No hours yet. Devices can be online any time until you add some.')).toBeInTheDocument()
   })
+
+  test('empty state inside a group does not claim devices are unrestricted', () => {
+    render(<HoursTimeline rules={[]} kids={kids} groups={groups} thisGroup />)
+    expect(screen.getByText("No hours just for this group. Each kid's own hours still apply.")).toBeInTheDocument()
+  })
 })

@@ -55,9 +55,11 @@ export function GroupDetail({ group, devices, kids, groups, rules, onSelect, onR
   const owners = kids.filter((k) => memberOwners.includes(k.id)).map(nameOf).join(', ')
 
   const chips = [
-    { text: `${members.length} ${members.length === 1 ? 'device' : 'devices'}` },
-    ...(members.length ? [{ text: `${members.length - locked} open` }, { text: `${locked} locked` }] : []),
-    ...(owners ? [{ text: owners }] : []),
+    { text: `${members.length} ${members.length === 1 ? 'device' : 'devices'}`, icon: 'devices' },
+    ...(members.length
+      ? [{ text: `${members.length - locked} open`, icon: 'lock_open', tone: members.length > locked ? ('acc' as const) : ('plain' as const) }, { text: `${locked} locked`, icon: 'lock' }]
+      : []),
+    ...(owners ? [{ text: owners, icon: 'group' }] : []),
   ]
 
   const toggle = (id: number) => {

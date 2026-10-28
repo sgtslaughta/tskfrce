@@ -18,7 +18,8 @@ const when = (r: HourRule) =>
 
 /** Pattern timeline (mockup 02 Settings → Hours): one row per rule, bars per time over a 24 h track. */
 export function HoursTimeline({ rules, kids, groups, onEdit, thisGroup }: Props) {
-  if (!rules.length) return <p className="ph-empty">No hours yet. Devices can be online any time until you add some.</p>
+  if (!rules.length)
+    return <p className="ph-empty">{thisGroup ? "No hours just for this group. Each kid's own hours still apply." : 'No hours yet. Devices can be online any time until you add some.'}</p>
   return (
     <div className="ph-tl" data-edit={!!onEdit}>
       {sortRules(rules).map((r) => {

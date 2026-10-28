@@ -6,6 +6,7 @@ import { ParentShell } from '@/v2/parent/ParentShell'
 import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { RequireParent } from '@/v2/components/RequireParent'
 import { useBlocker, useDevices } from '@/v2/hooks/useDevices'
+import { useHours } from '@/v2/hooks/useHours'
 import { usePlaces } from '@/v2/hooks/useNotify'
 import { useFamily, useParents, usePatchFamily } from '@/v2/hooks/useFamily'
 import { FamilyCard, GifsCard } from './FamilyCards'
@@ -38,10 +39,12 @@ function SettingsBody() {
   const parents = useParents().data
   const devices = useDevices().data
   const places = usePlaces().data
+  const rules = useHours().data?.rules
   const box = boxLine(useBlocker().data, Date.now(), true)
   const count = (a: unknown[] | undefined) => (Array.isArray(a) ? a.length : undefined)
   const live: Partial<Record<S, string | undefined>> = {
     family: [box, countLine(count(devices), 'device')].filter(Boolean).join(' · ') || undefined,
+    hours: countLine(count(rules), 'rule'),
     notifications: count(places) ? `${countLine(count(places), 'place')} connected` : undefined,
     parents: countLine(count(parents), 'parent'),
   }

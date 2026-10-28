@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
 import { notifications } from '@mantine/notifications'
 import { useDisclosure } from '@mantine/hooks'
-import { useDeleteDevice, usePatchDevice, useSaveGroup, useTestBlock, type DevicePatch } from '@/v2/hooks/useDevices'
+import { useDeleteDevice, useExpired, usePatchDevice, useSaveGroup, useTestBlock, type DevicePatch } from '@/v2/hooks/useDevices'
 import { Chip } from '@/v2/parent/Chip'
 import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Icon } from '@/v2/parent/Icon'
@@ -74,6 +74,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
       }),
     )
 
+  const ovLive = !useExpired(device.override?.expires_at) && device.override
   const chips = [
     ...(device.vendor ? [{ text: device.vendor, vendor: device.vendor }] : []),
     { text: device.seen_now ? 'Online now' : `Last seen ${ago(device.last_seen)}`, tone: device.seen_now ? ('acc' as const) : ('plain' as const), icon: device.seen_now ? 'wifi' : 'schedule' },
@@ -196,7 +197,7 @@ export function DeviceDetail({ device, kids, groups = [], onDeleted, onRequestOv
           <ActionButton icon="lock_open" busy={pendingAction === 'unlock'} disabled={!!pendingAction} onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'unlock' })}>
             Unlock 30 min
           </ActionButton>
-          {device.override && (
+          {ovLive && (
             <ActionButton icon="event_repeat" busy={pendingAction === 'clear'} disabled={!!pendingAction} onClick={() => onRequestOverride({ kind: 'device', id: device.id, action: 'schedule' })}>
               Back to schedule
             </ActionButton>
