@@ -16,7 +16,9 @@ class DismissedTip(Base):
     __tablename__ = "dismissed_tips"
 
     id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
     tip_key = Column(String(64), nullable=False)
     dismissed_at = Column(DateTime, nullable=False, default=datetime.utcnow)
 

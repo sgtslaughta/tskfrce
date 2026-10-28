@@ -20,6 +20,7 @@ from app.models.family import get_family
 from app.models.points import Points
 from app.models.user import User, UserRole
 from app.schemas.chore import ChoreOut
+from app.schemas.lock import utc_z
 from app.services.chore_types import notes_for
 from app.services.economy import deadline_utc
 
@@ -125,14 +126,10 @@ def chore_out(run: ChoreRun, fam) -> dict:
         attempt=run.attempt or 1,
         last_note=run.last_note,
         submitted_by_id=run.submitted_by_id,
-        due_at=iso_z(due_at(run, fam)),
+        due_at=utc_z(due_at(run, fam)),
         type=type_out(c),
         sent_back=sent_back(run),
     ).model_dump()
-
-
-def iso_z(dt: datetime | None) -> str | None:
-    return dt.isoformat() + "Z" if dt else None
 
 
 def type_out(c: Chore) -> dict:
@@ -185,7 +182,7 @@ def deductions(db: Session, runs: list[ChoreRun]) -> dict[int, list[dict]]:
                 "amount": -p.amount,
                 "note": p.description,
                 "by_name": by,
-                "at": iso_z(p.created_at),
+                "at": utc_z(p.created_at),
             }
         )
     return out
@@ -195,7 +192,7 @@ def note_out(run: ChoreRun, texts: dict) -> dict | None:
     if not run.note_label:
         return None
     text, kid = texts.get(run.id, (None, None))
-    return {"label": run.note_label, "text": text, "at": iso_z(run.note_at), "kid_name": kid}
+    return {"label": run.note_label, "text": text, "at": utc_z(run.note_at), "kid_name": kid}
 
 
 def sent_back(run: ChoreRun) -> bool:
@@ -218,10 +215,10 @@ def steps_out(run: ChoreRun, fam) -> list[dict]:
                 "id": s.id,
                 "title": s.title,
                 "done": tick is not None,
-                "done_at": iso_z(tick.done_at) if tick else None,
+                "done_at": utc_z(tick.done_at) if tick else None,
                 "due_time": s.due_time,
                 "after_previous": bool(s.after_previous),
-                "due_at": iso_z(deadline_utc(fam, run.day, s.due_time)),
+                "due_at": utc_z(deadline_utc(fam, run.day, s.due_time)),
                 "locked": bool(s.after_previous) and not prev_done,
             }
         )

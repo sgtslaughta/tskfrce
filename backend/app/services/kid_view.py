@@ -8,6 +8,7 @@ from app.lock import hours
 from app.lock.schedule import local_now
 from app.models.chores import ChoreRun, ChoreSeen
 from app.models.user import User
+from app.schemas.lock import utc_z
 from app.services import chores as svc
 
 NEW_FOR = timedelta(hours=24)
@@ -48,7 +49,7 @@ def extras(
         "photo_count_current": svc.photo_count(run),
         "last_note": run.last_note,
         "subtasks": svc.steps_out(run, fam),
-        "due_at": svc.iso_z(svc.due_at(run, fam)),
+        "due_at": utc_z(svc.due_at(run, fam)),
         "type": svc.type_out(c),
         "notes": svc.notes_out(run),
         "note": svc.note_out(run, texts),
@@ -56,7 +57,7 @@ def extras(
         "deductions": deds,
         "taken_by": (taker.full_name or taker.username) if taker and mode == "race" else None,
         "new": fresh and run.assignment_id not in seen,
-        "done_at": svc.iso_z(run.submitted_at or run.approved_at),
+        "done_at": utc_z(run.submitted_at or run.approved_at),
     }
 
 
@@ -73,4 +74,4 @@ def locks_at(db: Session, kid: User, fam, now_utc: datetime) -> str | None:
     now_local = local_now(fam.timezone, now_utc)
     r = hours.resolve(hours.load(db), {kid.id}, set(), now_local.date())
     end = hours.locks_at(r.allowed_sets, r.off, now_local)
-    return svc.iso_z(end.astimezone(UTC).replace(tzinfo=None)) if end else None
+    return utc_z(end.astimezone(UTC).replace(tzinfo=None)) if end else None

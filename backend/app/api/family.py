@@ -20,7 +20,7 @@ from app.models.family import get_family
 from app.models.lock import Device
 from app.models.reward import Redemption, Reward
 from app.models.user import User, UserRole
-from app.schemas.lock import FamilyPatch
+from app.schemas.lock import FamilyPatch, utc_z
 from app.services import chores as svc
 from app.services import inbox, progression, push
 
@@ -88,10 +88,6 @@ def patch_family(body: FamilyPatch, db: Session = Depends(get_db)):
     return _fam_out(fam)
 
 
-def _iso(dt: datetime | None) -> str | None:
-    return dt.isoformat() + "Z" if dt else None
-
-
 def _needs_you(
     db: Session,
     runs: list[ChoreRun],
@@ -126,7 +122,7 @@ def _needs_you(
                 "thumb_url": f"/chore-photos/{pid}/thumb" if pid else None,
                 "subtasks_done": sum(s["done"] for s in steps),
                 "subtasks_total": len(steps),
-                "submitted_at": _iso(r.submitted_at),
+                "submitted_at": utc_z(r.submitted_at),
                 "mode": svc.mode_of(r),
             }
         )
@@ -145,7 +141,7 @@ def _needs_you(
             "device_name": device_name(db, r),
             "cost": r.cost,
             "kid_balance": balances.get(r.kid_id, 0),
-            "submitted_at": _iso(r.created_at),
+            "submitted_at": utc_z(r.created_at),
         }
         for r in reds
     ]
@@ -178,7 +174,7 @@ def _chore_out(
         "points": c.points or 0,
         "state": st,
         "due_time": r.assignment.due_time,
-        "due_at": svc.iso_z(svc.due_at(r, fam)),
+        "due_at": utc_z(svc.due_at(r, fam)),
         "type": svc.type_out(c),
         "sent_back": svc.sent_back(r),
         "mode": mode,
@@ -202,7 +198,7 @@ def _locks_at(pre: Prefetch, kid_id: int, now_local: datetime) -> str | None:
     """When the kid's hours next stop allowing (what applies to them as owner)."""
     r = hours.resolve(pre.rules, {kid_id}, set(), now_local.date())
     end = hours.locks_at(r.allowed_sets, r.off, now_local)
-    return _iso(end.astimezone(UTC).replace(tzinfo=None)) if end else None
+    return utc_z(end.astimezone(UTC).replace(tzinfo=None)) if end else None
 
 
 @router.get("/today")
@@ -251,7 +247,7 @@ def today(db: Session = Depends(get_db)):
                 "done": sum(svc.state(t) == "done" for t in mine),
                 "total": len(mine),
                 "needs_you_count": sum(n["kid_id"] == k.id for n in needs),
-                "last_active": _iso(max(seen)) if seen else None,
+                "last_active": utc_z(max(seen)) if seen else None,
                 "progress": prog[k.id],
                 "points": balances.get(k.id, 0),
                 "next_reward": _next_reward(prices, balances.get(k.id, 0)),

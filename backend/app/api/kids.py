@@ -23,7 +23,7 @@ from app.models.points import Points, PointsType
 from app.models.reward import Redemption
 from app.models.tips import DismissedTip
 from app.models.user import User, UserRole
-from app.schemas.lock import KidCreate, KidPatch
+from app.schemas.lock import KidCreate, KidPatch, utc_z
 from app.services import chat, economy
 from app.services import chores as svc
 from app.services.photos import storage
@@ -222,7 +222,7 @@ def points_history(kid_id: int, limit: int = 20, db: Session = Depends(get_db)):
             "amount": p.amount,
             "reason": p.reason,
             "label": _label(p),
-            "at": svc.iso_z(p.created_at),
+            "at": utc_z(p.created_at),
         }
         for p in rows
     ]

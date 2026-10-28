@@ -13,6 +13,7 @@ from app.models.family import get_family
 from app.models.lock import Device
 from app.models.points import Points
 from app.models.user import User, UserRole
+from app.schemas.lock import utc_z
 from app.services import badges, chat, economy, kid_events
 from app.services import chores as svc
 from app.services.economy import award_chore
@@ -86,7 +87,7 @@ def run_detail(run_id: int, db: Session = Depends(get_db), _: User = Depends(req
         "due_time": r.assignment.due_time,
         "kid_ids": svc.run_kid_ids(r),
         "steps": svc.steps_out(r, fam),
-        "due_at": svc.iso_z(svc.due_at(r, fam)),
+        "due_at": utc_z(svc.due_at(r, fam)),
         "type": svc.type_out(chore),
         "sent_back": svc.sent_back(r),
         "note": svc.note_out(r, svc.note_texts(db, [r])),

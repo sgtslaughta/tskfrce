@@ -10,6 +10,7 @@ from app.api.deps import get_db, require_parent
 from app.models.lock import Device
 from app.models.reward import Redemption, Reward
 from app.models.user import User
+from app.schemas.lock import utc_z
 from app.schemas.reward import DecideIn, RewardCreate, RewardPatch
 from app.services import economy
 
@@ -114,7 +115,7 @@ def list_redemptions(
                 "device_id": r.device_id,
                 "device_name": device_name(db, r),
                 "cost": r.cost,
-                "created_at": r.created_at.isoformat() + "Z",
+                "created_at": utc_z(r.created_at),
                 "kid_balance": bal,
                 "kid_balance_after": bal - r.cost,
                 "note": r.note,
@@ -165,8 +166,8 @@ def history(
             "auto": bool(r.auto),
             "decided_by_name": names.get(r.decided_by_id),
             "note": r.note,
-            "created_at": r.created_at.isoformat() + "Z",
-            "decided_at": r.decided_at.isoformat() + "Z" if r.decided_at else None,
+            "created_at": utc_z(r.created_at),
+            "decided_at": utc_z(r.decided_at),
         }
         for r in reds
     ]
