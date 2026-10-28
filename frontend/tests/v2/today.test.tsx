@@ -127,7 +127,7 @@ describe('TodayPage', () => {
     await userEvent.click(kidButton)
     expect(await screen.findByText(/kid1.*s day/i)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /view as kid/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /add chore/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /add chore/i })).toHaveAttribute('href', '/kids?section=chores&item=new')
   })
 
   test('expanded kid card shows letter avatar and real stats', async () => {

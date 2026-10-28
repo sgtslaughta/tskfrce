@@ -56,10 +56,12 @@ function KidsBody() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loaded.isSuccess, item, known])
 
-  // Deep link /kids?section=kids&kid=7&pin=1 selects that kid (phones need ?item to show the detail).
+  // Deep link /kids?section=kids&kid=7&pin=1 selects that kid (phones need ?item to show the detail);
+  // /kids?section=chores&kid=7 opens a new chore.
   const kidParam = first(query.kid)
   useEffect(() => {
-    if (kidParam && !query.item) router.replace({ pathname: '/kids', query: { section: 'kids', item: kidParam, pin: first(query.pin) } })
+    if (!kidParam || query.item) return
+    router.replace({ pathname: '/kids', query: want === 'chores' ? { section: 'chores', item: 'new' } : { section: 'kids', item: kidParam, pin: first(query.pin) } })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kidParam, query.item])
 
@@ -118,13 +120,13 @@ function KidsBody() {
             section={section}
             counts={{ chores: chores.data?.length, kids: kids.data?.length }}
           />
-          {kids.isPending ? <Skeleton /> : lists[section]}
+          {loaded.isPending ? <Skeleton /> : lists[section]}
         </>
       }
     >
-      {kids.isError && <ErrorPanel kind="unreachable" error={kids.error} onRetry={() => kids.refetch()} />}
+      {loaded.isError && <ErrorPanel kind="unreachable" error={loaded.error} onRetry={() => loaded.refetch()} />}
       {details[section] ||
-        (!fixed && !kids.isError && total === 0 && (
+        (!fixed && !loaded.isError && total === 0 && (
           <EmptyState
             icon={EMPTY_ICON[section]}
             title={`No ${noun}s yet`}

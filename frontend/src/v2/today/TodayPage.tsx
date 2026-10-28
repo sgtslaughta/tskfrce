@@ -118,7 +118,7 @@ export function TodayPage() {
                 <Icon name="visibility" size={17} />
                 View as kid
               </Link>
-              <Link href={`/kids?section=chores&kid=${kid.id}`} className="p-btn" data-variant="accent">
+              <Link href="/kids?section=chores&item=new" className="p-btn" data-variant="accent">
                 <Icon name="add" size={17} />
                 Add chore
               </Link>
@@ -143,7 +143,7 @@ export function TodayPage() {
               icon="event_available"
               title={`Nothing for ${kid.name ?? 'them'} today`}
               body="No chores are due today. Their devices follow the schedule only."
-              actions={[{ label: 'Add a chore', icon: 'add', href: `/kids?section=chores&kid=${kid.id}` }]}
+              actions={[{ label: 'Add a chore', icon: 'add', href: '/kids?section=chores&item=new' }]}
             />
           )}
           {kid.chores.length > 0 && (
