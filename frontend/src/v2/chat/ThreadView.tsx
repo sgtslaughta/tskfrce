@@ -35,6 +35,7 @@ export function ThreadView({
   meId,
   kid = false,
   bare = false,
+  focus = false,
   reply: replyIn,
   onReplySent,
 }: {
@@ -43,6 +44,8 @@ export function ThreadView({
   meId: number | null
   kid?: boolean
   bare?: boolean
+  /** focus the composer on mount */
+  focus?: boolean
   /** start the composer answering this step/photo; the parent remounts (key) for a new one */
   reply?: ChatReply
   /** the composer's reply target was sent (or dropped) */
@@ -223,7 +226,7 @@ export function ThreadView({
           </button>
           <textarea
             ref={box.box}
-            autoFocus={!!replyIn} // a "Reply on photo" request lands in the composer
+            autoFocus={!!replyIn || focus} // a "Reply on photo" request lands in the composer
             aria-label="Message"
             value={text}
             rows={1}

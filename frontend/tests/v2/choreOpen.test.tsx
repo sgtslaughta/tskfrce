@@ -78,6 +78,13 @@ describe('ChoreOpen', () => {
     expect(dock.openChat).toHaveBeenCalledWith('chore', '11', { step_id: 7, label: 'Make bed' })
   })
 
+  test('a plain Reply (no target) puts focus in the chat composer', async () => {
+    open()
+    await screen.findByText('Late')
+    act(() => dock.openChat('chore', '11'))
+    await waitFor(() => expect(screen.getByLabelText('Message')).toHaveFocus())
+  })
+
   test('step reply opens the chat beside the chore and sends step_id', async () => {
     open()
     await userEvent.click(await screen.findByRole('button', { name: 'Reply on Make bed' }))
