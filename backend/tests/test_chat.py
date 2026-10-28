@@ -233,6 +233,17 @@ def test_delete_rules(client, db, parent_headers):
     assert client.delete(f"{C}/messages/{old}", headers=parent_headers).status_code == 404
 
 
+def test_kid_cannot_delete_own_system_message(client, db, parent_headers):
+    leo, maya, lh, mh, _ = _world(db, client, parent_headers)
+    tid = _tid(client, lh, "family", "family")
+    sysm = ThreadMessage(thread_id=tid, author_id=leo.id, kind="system", body="photo submitted")
+    db.add(sysm)
+    db.commit()
+    assert client.delete(f"{C}/messages/{sysm.id}", headers=lh).status_code == 403
+    db.expire_all()
+    assert db.get(ThreadMessage, sysm.id) is not None
+
+
 def test_delete_kid_with_chat(client, db, parent_headers):
     leo, maya, lh, mh, _ = _world(db, client, parent_headers)
     _say(client, lh, _tid(client, lh, "family", "family"))

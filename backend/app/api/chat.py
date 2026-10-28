@@ -335,7 +335,9 @@ def delete_message(
     if m is None or not chat.can_access(db, user, db.get(Thread, m.thread_id)):
         raise HTTPException(404, "We couldn't find that message.")
     if user.role != UserRole.PARENT and (
-        m.author_id != user.id or datetime.utcnow() - m.created_at > DELETE_WINDOW
+        m.kind != "user"
+        or m.author_id != user.id
+        or datetime.utcnow() - m.created_at > DELETE_WINDOW
     ):
         raise HTTPException(403, "You can only delete your own messages for 5 minutes.")
     note = m.note_label
