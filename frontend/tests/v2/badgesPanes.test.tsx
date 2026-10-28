@@ -36,8 +36,8 @@ const overview = [
   { key: 'custom:3', name: 'Kindness', description: 'Helped someone', icon: 'volunteer_activism', custom: true, tiers: { '7': 3, '8': 5 } },
 ]
 const recent = [
-  { id: 1, kid_id: 7, kid_name: 'Ava', key: 'custom:3', name: 'Kindness', icon: 'volunteer_activism', custom: true, tier: 1, tier_name: 'copper', note: 'shared her snack', by_name: 'Mom', earned_at: new Date().toISOString() },
-  { id: 2, kid_id: 7, kid_name: 'Mia', key: 'on_fire', name: 'On Fire', icon: '🔥', custom: false, tier: 2, tier_name: 'silver', note: null, by_name: null, earned_at: new Date().toISOString() },
+  { id: 1, kid_id: 7, kid_name: 'Ava', key: 'custom:3', name: 'Kindness', icon: 'volunteer_activism', custom: true, tier: 1, tier_name: 'copper', note: 'shared her snack', reason: null, by_name: 'Mom', earned_at: new Date().toISOString() },
+  { id: 2, kid_id: 7, kid_name: 'Mia', key: 'on_fire', name: 'On Fire', icon: '🔥', custom: false, tier: 2, tier_name: 'silver', note: null, reason: '14 days in a row, all chores done', by_name: null, earned_at: new Date().toISOString() },
 ]
 const data = (over: Record<string, unknown> = {}) =>
   serve({
@@ -111,6 +111,7 @@ describe('badges panes', () => {
     expect(await within(detail()).findByText('Ava got Kindness · Copper')).toBeInTheDocument()
     expect(within(detail()).getByText(/Given by Mom · “shared her snack” · today/)).toBeInTheDocument()
     expect(within(detail()).getByText('Mia reached On Fire · Silver')).toBeInTheDocument()
+    expect(within(detail()).getByText('Automatic · 14 days in a row, all chores done · today')).toBeInTheDocument()
   })
 
   test('Recent with nothing shows the empty state', async () => {

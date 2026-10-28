@@ -19,7 +19,7 @@ export function dayWord(iso: string, now = new Date()) {
 function AwardRow({ a }: { a: RecentAward }) {
   const kid = a.kid_name ?? 'Kid'
   const when = dayWord(a.earned_at)
-  const sub = a.by_name ? [`Given by ${a.by_name}`, a.note && `“${a.note}”`, when].filter(Boolean).join(' · ') : when
+  const sub = (a.by_name ? [`Given by ${a.by_name}`, a.note && `“${a.note}”`, when] : [a.reason ? `Automatic · ${a.reason}` : 'Automatic', when]).filter(Boolean).join(' · ')
   return (
     <li className="bd-aw">
       <span className="bd-glyph bd-glyph-sm">

@@ -44,6 +44,13 @@ def overview(db: Session) -> list[dict]:
     return rows
 
 
+def _reason(b, tier: int) -> str:
+    """Why a built-in tier was earned, from the catalog: "7 days in a row, all chores done"."""
+    if len(b.thresholds) == 1:
+        return b.description.rstrip(".")
+    return f"{b.thresholds[tier - 1]} {b.description[0].lower()}{b.description[1:].rstrip('.')}"
+
+
 def recent(db: Session, days: int = 7) -> list[dict]:
     """Awards earned within `days`, newest first (max 50); built-in tiers and parent awards."""
     since = datetime.utcnow() - timedelta(days=days)
@@ -71,11 +78,13 @@ def recent(db: Session, days: int = 7) -> list[dict]:
         if a.custom_badge_id is not None:
             c = customs.get(a.custom_badge_id)
             key, name, icon = f"custom:{a.custom_badge_id}", "Badge", "military_tech"
+            reason = None
             if c:
                 name, icon = c.name, c.icon
         else:
             b = CATALOG[a.badge_key]
             key, name, icon = b.key, b.name, b.icon
+            reason = _reason(b, a.tier)
         out.append(
             {
                 "id": a.id,
@@ -88,6 +97,7 @@ def recent(db: Session, days: int = 7) -> list[dict]:
                 "tier": a.tier,
                 "tier_name": TIERS[a.tier - 1],
                 "note": a.note,
+                "reason": reason,
                 "by_name": names.get(a.awarded_by_id),
                 "earned_at": utc_z(a.earned_at),
             }

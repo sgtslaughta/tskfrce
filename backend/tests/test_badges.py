@@ -6,6 +6,7 @@ from app.models.family import get_family
 from app.models.points import Points, PointsType
 from app.models.reward import Redemption, Reward
 from app.models.user import UserRole
+from app.services import badge_feed
 from app.services import badges as bd
 from app.services.progression import xp_for_level as xp_for
 
@@ -264,6 +265,8 @@ def test_award_note_and_recent(client, db, parent, kid, parent_headers, kid_head
     )
     built = next(x for x in rec if not x["custom"])
     assert built["by_name"] is None and built["key"] == "first_blood"
+    assert built["reason"] == "Get a chore approved" and cust["reason"] is None
+    assert badge_feed._reason(bd.CATALOG["on_fire"], 1) == "7 days in a row, all chores done"
     assert cust["earned_at"].endswith("Z")
     assert [x["earned_at"] for x in rec] == sorted((x["earned_at"] for x in rec), reverse=True)
     old = db.query(BadgeAward).filter_by(custom_badge_id=bid).one()

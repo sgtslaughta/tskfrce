@@ -82,6 +82,8 @@ export interface RecentAward {
   tier: number
   tier_name: string
   note: string | null
+  /** why a built-in tier was earned (null for parent awards) */
+  reason: string | null
   by_name: string | null
   earned_at: string
 }
