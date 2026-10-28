@@ -113,7 +113,7 @@ test('a screen-time request card names the device', async () => {
   data({ '/redemptions': [{ ...pending[0], id: 61, kind: 'screen_time', name: '30 min of screen time', icon: null, minutes: 30, device_name: 'Kitchen tablet' }] })
   mockRoute.query = { section: 'rewards', item: 'requests' }
   render(wrap(<KidsPage />))
-  expect(await within(detail()).findByText(/on Kitchen tablet/)).toBeInTheDocument()
+  expect(await within(detail()).findByText(/from Kitchen tablet/)).toBeInTheDocument()
 })
 
 test('request cards use the icon sent with the request, not a name match', async () => {

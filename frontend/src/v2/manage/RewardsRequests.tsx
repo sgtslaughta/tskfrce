@@ -31,7 +31,7 @@ function RequestCard({ req, glyph, hide }: { req: PendingRedemption; glyph: stri
     void withUndo(() => decide.mutateAsync(v), `Approved ${req.name}`).finally(() => hide(false))
   }
   return (
-    <article className="rw-rq" aria-label={`${req.name} for ${kid}${req.device_name ? ` on ${req.device_name}` : ''}`}>
+    <article className="rw-rq" aria-label={`${req.name} for ${kid}${req.device_name ? ` from ${req.device_name}` : ''}`}>
       <span className="rw-glyph">
         <Icon name={glyph} size={24} />
       </span>
@@ -41,7 +41,7 @@ function RequestCard({ req, glyph, hide }: { req: PendingRedemption; glyph: stri
           <span className="rw-avx" aria-hidden="true">
             {initial(kid)}
           </span>
-          {kid}{req.device_name ? ` · on ${req.device_name}` : ''} · asked {askedAt(req.created_at)}
+          {kid}{req.device_name ? ` · from ${req.device_name}` : ''} · asked {askedAt(req.created_at)}
         </small>
       </div>
       <div className="rw-math">

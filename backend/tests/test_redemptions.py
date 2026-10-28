@@ -326,7 +326,7 @@ def test_screen_request_names_device(client, db, parent, kid, kid_headers, paren
     rows = client.get("/api/v1/redemptions?status=pending", headers=parent_headers).json()
     assert rows[0]["device_id"] == dev.id and rows[0]["device_name"] == "Phone"
     note = db.query(Notification).filter_by(redemption_id=rid).one()
-    assert "on Phone" in note.body
+    assert "from Phone" in note.body
     today = client.get("/api/v1/today", headers=parent_headers).json()
     assert [i["device_name"] for i in today["needs_you"] if i["type"] == "screen_time"] == ["Phone"]
     db.delete(dev)

@@ -45,7 +45,7 @@ test('a screen-time request names the device, and still renders without one', ()
   const t: NeedsItem = { type: 'screen_time', id: 5, kid_id: 1, kid_name: 'Mia', title: '30 min of screen time', cost: 40, kid_balance: 60 }
   show([t, { ...t, id: 6, title: '15 min of screen time', device_name: "Mia's iPad" }])
   expect(card('30 min of screen time')).toHaveTextContent('Mia · 40 pts')
-  expect(card('15 min of screen time')).toHaveTextContent("Mia · on Mia's iPad · 40 pts")
+  expect(card('15 min of screen time')).toHaveTextContent("Mia · from Mia's iPad · 40 pts")
 })
 
 test('send back needs a note, then posts it', async () => {

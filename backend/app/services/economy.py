@@ -212,7 +212,7 @@ def _request(
     )
     dev = db.get(Device, device_id) if device_id else None
     if dev:
-        label += f" on {dev.name}"
+        label += f" from {dev.name}"
     db.add(red)
     db.flush()
     if auto:

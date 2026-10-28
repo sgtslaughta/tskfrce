@@ -127,7 +127,7 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
                     ? `: ${i.note ?? ''}`
                     : chore
                     ? `${i.attempt && i.attempt > 1 ? ` · ${ordinal(i.attempt)} try` : ''}${i.subtasks_total ? ` · ${i.subtasks_done}/${i.subtasks_total} steps` : ''}${i.submitted_at ? ` · ${clock(i.submitted_at)}` : ''}`
-                    : `${i.device_name ? ` · on ${i.device_name}` : ''} · ${i.cost} pts · has ${i.kid_balance}`}
+                    : `${i.device_name ? ` · from ${i.device_name}` : ''} · ${i.cost} pts · has ${i.kid_balance}`}
                 </small>
               </span>
               <Chip tone={k.tone} icon={k.icon}>

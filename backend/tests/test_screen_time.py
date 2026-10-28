@@ -100,7 +100,7 @@ def test_auto_approve_pays_and_unlocks(client, db, kid, kid_headers, parent):
     assert client.get("/api/v1/kid/rewards", headers=kid_headers).json()["balance"] == 480
     assert db.query(Override).filter_by(device_id=dev.id, source="bonus").count() == 1
     n = db.query(Notification).filter_by(user_id=parent.id, kind="redemption_decided").one()
-    assert n.title == "Timmy bought 15 min of screen time on Phone"
+    assert n.title == "Timmy bought 15 min of screen time from Phone"
     assert n.body == "Approved automatically · 20 points"
     assert db.query(Redemption).one().auto is True
     ledger = db.query(Points).filter_by(user_id=kid.id).order_by(Points.id.desc()).first()
