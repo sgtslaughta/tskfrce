@@ -102,6 +102,8 @@ describe('chore editor: type, steps, notes', () => {
     })
     await show(two)
     expect(screen.queryByText('Unsaved changes')).toBeNull()
+    expect(screen.getByText(/Kids have different times/)).toBeInTheDocument()
+    expect(document.querySelector('.p-header-chip[data-tone="acc"]')).toHaveTextContent(/pts$/)
     await userEvent.clear(screen.getByLabelText('Points'))
     await userEvent.type(screen.getByLabelText('Points'), '40')
     await userEvent.click(screen.getByRole('button', { name: 'Save chore' }))

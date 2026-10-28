@@ -50,6 +50,11 @@ describe('ChoreRow', () => {
     expect(choreSub({ ...base, state: 'done', done_at: '2026-10-20T17:40:00Z' }, () => '5:40 PM')).toBe('Done 5:40 PM · approved')
   })
 
+  test('sub-line counts photos and messages', () => {
+    expect(choreSub({ ...base, photos: 2, messages: 1 })).toMatch(/2 photos · 1 message$/)
+    expect(choreSub({ ...base, photos: 1 })).toMatch(/1 photo$/)
+  })
+
   test('note card shows label and text, with Reply, Move and Skip', () => {
     row({ ...base, note })
     expect(screen.getByText(/Mia: Out of supplies · “No more toilet spray”/)).toBeInTheDocument()

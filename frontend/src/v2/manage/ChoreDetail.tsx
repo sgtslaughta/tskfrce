@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDisclosure } from '@mantine/hooks'
 import { useCopyChore, useDeleteChore, useSaveAssignment, useSaveChore } from '@/v2/hooks/useChores'
 import { useChoreTypes } from '@/v2/hooks/useChoreTypes'
-import { Chip } from '@/v2/parent/Chip'
+import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Icon } from '@/v2/parent/Icon'
 import type { Kid, LibChore } from '@/v2/types'
 import type { PendingAssignment } from './AssignmentForm'
@@ -75,6 +75,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
   const [gen, setGen] = useState(0) // remounts Who & when on Discard
   const savedDue = chore?.assignments.map((a) => a.due_time?.slice(0, 5)).filter((t): t is string => !!t).sort().pop() ?? ''
   const due = dueEdit ?? savedDue
+  const dueTimes = new Set(chore?.assignments.map((a) => a.due_time?.slice(0, 5)).filter(Boolean))
   const typeId = picked ?? chore?.type_id ?? otherType(types)?.id
   const type = types.find((t) => t.id === typeId)
 
@@ -156,26 +157,14 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
         </span>
         <div className="pk-head-t">
           <h2>{title.trim() || 'New chore'}</h2>
-          <div className="pk-chips">
-            {type && (
-              <Chip tone="grey" icon="category">
-                {type.name}
-              </Chip>
-            )}
-            <Chip tone="acc" icon="stars">
-              {pointsErr ? 0 : Number(points)} pts
-            </Chip>
-            {when && (
-              <Chip tone="grey" icon="calendar_month">
-                {when}
-              </Chip>
-            )}
-            {photo && (
-              <Chip tone="grey" icon="photo_camera">
-                Needs photo
-              </Chip>
-            )}
-          </div>
+          <HeaderChips
+            items={[
+              type && { icon: 'category', text: type.name },
+              { icon: 'stars', text: `${pointsErr ? 0 : Number(points)} pts`, tone: 'acc' as const },
+              when && { icon: 'event_repeat', text: when },
+              photo && { icon: 'photo_camera', text: 'Needs photo' },
+            ].filter((c) => !!c)}
+          />
         </div>
         {chore && (
           <div className="pk-actions">
@@ -222,6 +211,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
             />
             {pointsErr && <span id="chore-pts-err" className="pk-error">{pointsErr}</span>}
           </label>
+          <div>
           <label className="pk-field">
             <span className="pk-label">Due by (optional)</span>
             <input
@@ -234,6 +224,10 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
             />
             {!chore && <span id="chore-due-hint" className="pk-hint">Set after you choose who does it.</span>}
           </label>
+          {dueEdit === undefined && dueTimes.size > 1 && (
+            <span className="pk-hint">Kids have different times — saving changes all</span>
+          )}
+          </div>
           <div className="pk-switch">
             <span id="photo-label">Needs a photo</span>
             <button type="button" role="switch" aria-checked={photo} aria-labelledby="photo-label" onClick={() => setPhoto(!photo)} />

@@ -10,7 +10,7 @@ import { NeedsYouList } from '@/v2/today/NeedsYouList'
 import type { NeedsItem } from '@/v2/types'
 import { openChat } from '@/v2/chat/dock'
 
-jest.mock('@/v2/api', () => ({ api: jest.fn() }))
+jest.mock('@/v2/api', () => ({ api: jest.fn(), kidToken: () => null }))
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn() } }))
 const push = jest.fn()
 jest.mock('next/router', () => ({ useRouter: () => ({ push }) }))
@@ -20,7 +20,10 @@ const apiMock = api as unknown as Mock<(p: string, init?: object) => Promise<unk
 const chore: NeedsItem = { type: 'chore', id: 11, kid_id: 1, kid_name: 'Mia', title: 'Dishes', attempt: 2, submitted_at: '2026-10-24T20:00:00Z' }
 const reward: NeedsItem = { type: 'reward', id: 11, kid_id: 1, kid_name: 'Mia', title: 'Ice cream', cost: 40, kid_balance: 60 }
 
-beforeEach(() => apiMock.mockReset().mockResolvedValue({}))
+beforeEach(() => {
+  apiMock.mockReset().mockResolvedValue({})
+  global.fetch = jest.fn(() => Promise.resolve({ ok: false })) as unknown as typeof fetch
+})
 
 const show = (items: NeedsItem[]) =>
   render(
@@ -122,3 +125,15 @@ test('approve all leaves notes out', () => {
   expect(screen.getByRole('button', { name: /approve all 2/i })).toBeInTheDocument()
 })
 
+
+test('the photo viewer pages through every photo of the run, latest first, and flags earlier tries', async () => {
+  const photos = [
+    { id: 1, thumb_url: '/chore-photos/1/thumb', earlier: true },
+    { id: 2, thumb_url: '/chore-photos/2/thumb', earlier: false },
+  ]
+  show([{ ...chore, thumb_url: photos[1].thumb_url, photos }])
+  await userEvent.click(screen.getByRole('button', { name: /open photo for dishes/i }))
+  expect(await screen.findByText('Photo 2 of 2')).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Previous photo' }))
+  expect(screen.getByText(/Photo 1 of 2 · Earlier try/)).toBeInTheDocument()
+})

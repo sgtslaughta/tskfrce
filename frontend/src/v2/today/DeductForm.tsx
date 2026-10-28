@@ -63,7 +63,7 @@ export function DeductForm({
       )}
       <span className="pt-ded-amts" role="group" aria-label="Amount">
         {DEDUCT_PRESETS.map((a) => (
-        <button type="button" key={a} className="pt-amt" data-on={amount === a} aria-pressed={amount === a} onClick={() => setAmount(a)}>
+        <button type="button" key={a} autoFocus={a === DEDUCT_PRESETS[0]} className="pt-amt" data-on={amount === a} aria-pressed={amount === a} onClick={() => setAmount(a)}>
           −{a}
         </button>
       ))}

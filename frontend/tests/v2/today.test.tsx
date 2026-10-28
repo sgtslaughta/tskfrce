@@ -279,8 +279,8 @@ describe('TodayPage', () => {
     expect(statusLabels.length).toBeGreaterThan(0)
   })
 
-  test('Earned is today\'s approved points and a kid without devices reads No devices', async () => {
-    const k = { ...kid(1), online_all: false, chores: [
+  test('Earned is the server\'s awarded points and a kid without devices reads No devices', async () => {
+    const k = { ...kid(1), online_all: false, earned: 10, chores: [
       { id: 11, title: 'Dishes', points: 10, state: 'done' as const, due_time: null },
       { id: 12, title: 'Laundry', points: 20, state: 'todo' as const, due_time: null },
     ] }

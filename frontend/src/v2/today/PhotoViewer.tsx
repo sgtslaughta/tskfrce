@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { openChat } from "@/v2/chat/dock";
 import { Modal, Textarea } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
@@ -35,6 +35,8 @@ export function useAuthImage(path: string | null | undefined) {
 export interface ViewerPhoto {
   id: number;
   thumb_url: string;
+  /** from a sent-back attempt */
+  earlier?: boolean;
 }
 
 /** Full-screen (phones) photo viewer: pages through `photos`; with onApprove / onSendBack it also decides (sending back needs a note). */
@@ -56,11 +58,15 @@ export function PhotoViewer({
 }) {
   const [note, setNote] = useState("");
   const [idx, setIdx] = useState(start);
+  const replied = useRef(false); // Reply moves focus to the chat composer, so the thumbnail must not take it back
   const phone = useMediaQuery("(max-width: 767px)");
   const list = photos ?? (item?.thumb_url ? [{ id: Number(item.thumb_url.match(/chore-photos\/(\d+)/)?.[1]) || 0, thumb_url: item.thumb_url }] : []);
   const shown = list[Math.min(idx, list.length - 1)];
   const src = useAuthImage(shown?.thumb_url.replace(/\/thumb$/, ""));
   useEffect(() => setIdx(start), [item?.id, start]);
+  useEffect(() => {
+    if (item) replied.current = false;
+  }, [item]);
   const close = () => {
     setNote("");
     onClose();
@@ -72,6 +78,7 @@ export function PhotoViewer({
       onClose={close}
       zIndex={400}
       fullScreen={!!phone}
+      returnFocus={!replied.current}
       transitionProps={{ duration: 0 }}
       classNames={{ title: "pt-pv-title" }}
       title={item ? `${item.kid_name ?? "A kid"} · ${item.title}` : ""}
@@ -87,6 +94,7 @@ export function PhotoViewer({
           </button>
           <span aria-live="polite">
             Photo {idx + 1} of {list.length}
+            {shown?.earlier && " · Earlier try"}
           </span>
           <button type="button" className="p-btn" aria-label="Next photo" onClick={() => step(1)}>
             <Icon name="chevron_right" size={17} />
@@ -136,6 +144,7 @@ export function PhotoViewer({
             type="button"
             className="p-btn"
             onClick={() => {
+              replied.current = true;
               openChat("chore", String(item.id), { proof_photo_id: shown?.id || undefined, label: `Photo ${idx + 1}` });
               close();
             }}

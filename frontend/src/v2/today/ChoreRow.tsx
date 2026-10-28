@@ -16,6 +16,8 @@ export function choreSub(c: TodayChore, clock: (iso: string) => string = (i) => 
   else if (c.due_time) bits.push(`Due ${wall(new Date(`2000-01-01T${c.due_time}`))}`)
   if (c.state === 'done') bits.push('approved')
   if ((c.subtasks_total ?? 0) > 1) bits.push(`${c.subtasks_done ?? 0} of ${c.subtasks_total} steps`)
+  if (c.photos) bits.push(`${c.photos} photo${c.photos > 1 ? 's' : ''}`)
+  if (c.messages) bits.push(`${c.messages} message${c.messages > 1 ? 's' : ''}`)
   if (c.taken_by) bits.push(`by ${c.taken_by}`)
   if (c.deducted) bits.push(`−${c.deducted} deducted`)
   return bits.join(' · ')

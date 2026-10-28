@@ -8,6 +8,7 @@ import { useToday } from '@/v2/hooks/useToday'
 import { useKidPoints } from '@/v2/hooks/useKids'
 import { when } from '@/v2/components/bellRules'
 import { Chip } from '@/v2/parent/Chip'
+import { HeaderChips } from '@/v2/parent/HeaderChips'
 import { Icon } from '@/v2/parent/Icon'
 import { useChoreTypes } from '@/v2/hooks/useChoreTypes'
 import { threadGlyph } from '@/v2/today/choreIcon'
@@ -52,21 +53,13 @@ export function KidDetail({ kid, focusPin, onDeleted }: Props) {
         </span>
         <div className="pk-head-t">
           <h2>{name}</h2>
-          <div className="pk-chips">
-            {t?.points !== undefined && (
-              <Chip tone="acc" icon="stars">
-                {t.points} pts
-              </Chip>
-            )}
-            {t?.progress && (
-              <Chip tone="grey" icon="trending_up">
-                Level {t.progress.level}
-              </Chip>
-            )}
-            <Chip tone={kid.has_pin ? 'grey' : 'lav'} icon={kid.has_pin ? 'lock' : 'lock_open'}>
-              {kid.has_pin ? 'PIN set' : 'No PIN'}
-            </Chip>
-          </div>
+          <HeaderChips
+            items={[
+              t?.points !== undefined && { icon: 'stars', text: `${t.points} pts`, tone: 'acc' as const },
+              t?.progress && { icon: 'trending_up', text: `Level ${t.progress.level}` },
+              { icon: kid.has_pin ? 'lock' : 'lock_open', text: kid.has_pin ? 'PIN set' : 'No PIN' },
+            ].filter((c) => !!c)}
+          />
         </div>
         <div className="pk-actions">
           <Link className="p-btn" href={viewAs(kid.id, asPath)}>

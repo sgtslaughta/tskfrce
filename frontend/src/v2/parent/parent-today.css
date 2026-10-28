@@ -110,6 +110,8 @@
 [data-look='parent'] .pt-photos img { width: 80px; height: 60px; object-fit: cover; border-radius: 10px; border: 1px solid var(--p-line); }
 [data-look='parent'] .pt-photo { position: relative; display: block; }
 [data-look='parent'] .pt-photo .pt-rp { position: absolute; right: -5px; bottom: -5px; width: 22px; height: 22px; }
+[data-look='parent'] .pt-photo[data-earlier='true'] img { opacity: .55; }
+[data-look='parent'] .pt-photo-old { display: block; text-align: center; font-size: 11px; color: var(--p-sub); }
 
 /* kid note flag (mockup 03): amber wash over the row and its actions */
 [data-look='parent'] .pt-chore[data-flag='true'] { background: color-mix(in srgb, var(--p-amb) 55%, transparent); }

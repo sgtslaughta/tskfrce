@@ -148,6 +148,9 @@ export interface TodayChore {
   /** points taken off, total */
   deducted?: number
   can_move?: boolean
+  /** proof photos of this attempt / chat messages on the run */
+  photos?: number
+  messages?: number
   /** kid hasn't opened it yet (kid view) */
   new?: boolean
 }
@@ -166,7 +169,9 @@ export interface RunDetail {
   sent_back: boolean
   note: { label: string; text: string | null; at: string; kid_name: string | null } | null
   can_move: boolean
-  photos: Array<{ id: number; thumb_url: string }>
+  attempt: number
+  /** earlier = from a sent-back attempt */
+  photos: Array<{ id: number; thumb_url: string; earlier: boolean }>
 }
 
 export interface TodayDevice {
@@ -188,6 +193,8 @@ export interface TodayKid {
   progress?: Progress
   /** points balance */
   points?: number
+  /** points the ledger holds for today's chores (bonuses in, deductions out) */
+  earned?: number
   /** points still needed for the cheapest reward not yet affordable; null = none */
   next_reward?: number | null
   /** UTC ISO end of today's allowed hours; null = no hours set or already outside them */
@@ -207,6 +214,7 @@ export interface NeedsItem {
   device_name?: string | null
   attempt?: number
   thumb_url?: string | null
+  photos?: Array<{ id: number; thumb_url: string; earlier: boolean }>
   subtasks_done?: number
   subtasks_total?: number
   submitted_at?: string | null

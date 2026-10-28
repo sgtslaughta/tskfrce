@@ -124,10 +124,11 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
         {run.photos.length > 0 && (
           <div className="pt-photos">
             {run.photos.map((p, i) => (
-              <span key={p.id} className="pt-photo">
+              <span key={p.id} className="pt-photo" data-earlier={p.earlier}>
                 <button type="button" aria-label={`Open photo ${i + 1}`} onClick={() => setPhoto(i)}>
                   <AuthImg path={p.thumb_url} alt={`Photo for ${chore.title}`} />
                 </button>
+                {p.earlier && <small className="pt-photo-old">Earlier</small>}
                 <button
                   type="button"
                   className="pt-rp"

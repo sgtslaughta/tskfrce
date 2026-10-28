@@ -172,7 +172,7 @@ export function TodayPage() {
               </div>
               <div className="p-summary-item">
                 <span className="p-summary-label">Earned</span>
-                <span className="p-summary-value">{kid.chores.filter((c) => c.state === 'done').reduce((n, c) => n + c.points, 0)}</span>
+                <span className="p-summary-value">{kid.earned ?? 0}</span>
               </div>
               {kid.last_active && (
                 <div className="p-summary-item">

@@ -190,6 +190,8 @@ export function NeedsYouList({ items }: { items: NeedsItem[] }) {
       })}
       <PhotoViewer
         item={viewing}
+        photos={viewing?.photos}
+        start={Math.max(0, (viewing?.photos?.length ?? 1) - 1)}
         onClose={() => setViewing(null)}
         onApprove={(id) => run(() => approve.mutateAsync(id), 'Approved', `p${id}`)}
         onSendBack={submitSendBack}
