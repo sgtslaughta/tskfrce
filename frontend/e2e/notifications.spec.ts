@@ -24,7 +24,7 @@ test('apprise place: add, mask, test, chip, quiet hours, bell, delete', async ({
     await page.getByRole('button', { name: 'Save', exact: true }).click()
 
     const card = page.getByRole('region', { name, exact: true })
-    await expect(card.getByText(/^json:\/\/127\.••••/)).toBeVisible()
+    await expect(card.getByText(/^json:\/\/••••$/)).toBeVisible()
     await expect(page.getByText('json://127.0.0.1:9/nowhere')).toHaveCount(0)
 
     await card.getByRole('button', { name: 'Test', exact: true }).click()
