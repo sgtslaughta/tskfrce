@@ -11,6 +11,7 @@ import { Icon } from "../parent/Icon";
 export function useAuthImage(path: string | null | undefined) {
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
+    setSrc(null); // never show the previous (revoked) blob
     if (!path) return;
     let url: string | null = null;
     let live = true;

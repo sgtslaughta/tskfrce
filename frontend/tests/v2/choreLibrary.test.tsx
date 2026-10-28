@@ -119,7 +119,7 @@ describe('chore detail', () => {
       within(detail()).getByRole('heading', { name: 'Trash' }),
     ).toBeInTheDocument()
     expect(within(detail()).getByText('15 pts')).toBeInTheDocument()
-    expect(within(detail()).getByText('daily')).toBeInTheDocument()
+    expect(within(detail()).getByText('Daily')).toBeInTheDocument()
     expect(within(detail()).queryByText('Needs photo')).toBeNull()
   })
 

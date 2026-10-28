@@ -190,6 +190,15 @@ describe('ChoreOpen', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Send back' }))
     await userEvent.type(screen.getByLabelText('Note for sending back'), '{Escape}')
     expect(screen.queryByLabelText('Note for sending back')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Send back' })).toHaveFocus()
+  })
+
+  test('Esc closes Deduct and focus returns to its button', async () => {
+    open()
+    await userEvent.click(await screen.findByRole('button', { name: /deduct points/i }))
+    await userEvent.type(screen.getByLabelText('Reason'), '{Escape}')
+    expect(screen.queryByLabelText('Reason')).toBeNull()
+    expect(screen.getByRole('button', { name: /deduct points/i })).toHaveFocus()
   })
 
   test('proof photos open in a viewer that pages through all of them', async () => {

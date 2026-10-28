@@ -30,3 +30,11 @@ test('parent token wins (parent and view-as-kid)', async () => {
   await waitFor(() => expect(fetchMock).toHaveBeenCalled())
   expect(authOf()).toBe('Bearer parent-jwt')
 })
+
+test('a cleared path drops the previous blob', async () => {
+  jest.spyOn(tokenManager, 'getAccessToken').mockReturnValue('t')
+  const { result, rerender } = renderHook(({ p }: { p: string | null }) => useAuthImage(p), { initialProps: { p: '/a' } as { p: string | null } })
+  await waitFor(() => expect(result.current).toBe('blob:x'))
+  rerender({ p: null })
+  expect(result.current).toBeNull()
+})

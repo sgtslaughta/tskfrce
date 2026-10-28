@@ -145,7 +145,7 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
     return () => window.removeEventListener('beforeunload', warn)
   }, [dirty])
 
-  const when = chore ? schedules(chore).join(' + ') : ''
+  const when = chore ? schedules(chore).join(' + ').replace(/^./, (c) => c.toUpperCase()) : ''
   const byId = new Map(kids.map((k) => [k.id, k]))
   const doers = joinNames((chore ? usedBy(chore) : []).flatMap((id) => (byId.has(id) ? [nameOf(byId.get(id)!)] : [])))
 

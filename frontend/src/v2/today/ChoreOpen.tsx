@@ -41,6 +41,8 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
   const [note, setNote] = useState('')
   const [photo, setPhoto] = useState<number | null>(null) // index of the enlarged proof photo
   const [approving, setApproving] = useState(false)
+  const backBtn = useRef<HTMLButtonElement>(null)
+  const dedBtn = useRef<HTMLButtonElement>(null)
   const sending = useRef(false) // synchronous guard: a double click or Enter-mash fires before React re-renders
   // openChat for this chore (Reply buttons, step and photo replies) lands in the column beside it
   const claim = useRef<ReturnType<typeof claimChat>>(null)
@@ -165,7 +167,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
                 <Icon name="check" size={17} />
                 Approve +{chore.points}
               </button>
-              <button className="p-btn" aria-expanded={back} onClick={() => setBack(!back)}>
+              <button ref={backBtn} className="p-btn" aria-expanded={back} onClick={() => setBack(!back)}>
                 <Icon name="undo" size={17} />
                 Send back
               </button>
@@ -206,7 +208,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
             </button>
           )}
           {chore.state !== 'skipped' && (
-            <button className="p-btn" data-variant="red" aria-expanded={ded} onClick={() => setDed(!ded)}>
+            <button ref={dedBtn} className="p-btn" data-variant="red" aria-expanded={ded} onClick={() => setDed(!ded)}>
               <Icon name="remove_circle" size={17} />
               Deduct points
             </button>
@@ -222,7 +224,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
           <form
             className="pt-ded"
             data-tone="ink"
-            onKeyDown={(e) => e.key === 'Escape' && setBack(false)}
+            onKeyDown={(e) => e.key === 'Escape' && (setBack(false), backBtn.current?.focus())}
             onSubmit={(e) => {
               e.preventDefault()
               if (sending.current || !note.trim()) return
@@ -245,7 +247,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
           </form>
         )}
 
-        {ded && <DeductForm runId={chore.id} title={chore.title} kidIds={run.kid_ids} kidId={kid.id} onDone={() => setDed(false)} />}
+        {ded && <DeductForm runId={chore.id} title={chore.title} kidIds={run.kid_ids} kidId={kid.id} onDone={() => (setDed(false), dedBtn.current?.focus())} />}
       </div>
 
       {isMobile ? (
