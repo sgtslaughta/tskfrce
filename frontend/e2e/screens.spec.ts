@@ -74,8 +74,11 @@ test.describe('every screen', () => {
   test('bell open', async ({ page }, info) => {
     await loginUi(page)
     await page.goto('/')
-    await page.getByRole('button', { name: /^Notifications/ }).click()
-    await expect(page.getByText('Notifications', { exact: true }).last()).toBeVisible()
+    // a click before hydration is lost: retry until the panel opens
+    await expect(async () => {
+      await page.getByRole('button', { name: /^Notifications/ }).click()
+      await expect(page.getByText('Notifications', { exact: true }).last()).toBeVisible({ timeout: 2000 })
+    }).toPass({ timeout: 20000 })
     await page.waitForTimeout(500)
     await page.screenshot({ path: `${SHOTS}/${info.project.name}/bell-open.png` })
   })
