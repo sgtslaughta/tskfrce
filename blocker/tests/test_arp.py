@@ -10,7 +10,7 @@ import pytest
 
 pytest.importorskip("scapy")
 
-from blocker.arp import (  # noqa: E402
+from blocker.arp import (
     LanFacts,
     RedirectionManager,
     TargetAddrs,
@@ -19,7 +19,7 @@ from blocker.arp import (  # noqa: E402
     redirect_packets,
     restore,
 )
-from blocker.config import Config  # noqa: E402
+from blocker.config import Config
 
 CFG = Config(
     backend_url="http://b",
@@ -83,7 +83,7 @@ def test_kid_side_ndp_keeps_router_flag():
 
 
 def test_redirect_ndp_gateway_side_is_host_advert():
-    from scapy.all import ICMPv6ND_NA, ICMPv6NDOptDstLLAddr, Ether
+    from scapy.all import Ether, ICMPv6ND_NA, ICMPv6NDOptDstLLAddr
 
     t = TargetAddrs(mac=DEV, ip6=("fe80::50",))
     gw = _gw_nas(redirect_packets(t, LAN))
@@ -96,7 +96,7 @@ def test_redirect_ndp_gateway_side_is_host_advert():
 
 
 def test_restore_ndp_gateway_heal_is_host_advert():
-    from scapy.all import ICMPv6ND_NA, ICMPv6NDOptDstLLAddr, Ether
+    from scapy.all import Ether, ICMPv6ND_NA, ICMPv6NDOptDstLLAddr
 
     t = TargetAddrs(mac=DEV, ip6=("fe80::50",))
     gw = _gw_nas(restore(t, LAN))
@@ -163,9 +163,9 @@ def test_restore_sends_truth():
 
     t = TargetAddrs(mac=DEV, ip="192.168.1.50", ip6=("fe80::50",))
     pkts = restore(t, LAN)
-    arp = [p for p in pkts if p.haslayer(ARP)][0]
+    arp = next(p for p in pkts if p.haslayer(ARP))
     assert arp[ARP].hwsrc == LAN.gateway_mac  # truthful v4 gateway MAC, not the box
-    na = [p for p in pkts if p.haslayer(ICMPv6NDOptDstLLAddr)][0]
+    na = next(p for p in pkts if p.haslayer(ICMPv6NDOptDstLLAddr))
     assert na[ICMPv6NDOptDstLLAddr].lladdr == LAN.gateway_mac6  # v6 MAC, not v4's
 
 

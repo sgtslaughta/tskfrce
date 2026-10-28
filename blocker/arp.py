@@ -71,7 +71,7 @@ def ndp_advert(
     ``router`` sets the R flag: True when impersonating the router to a device,
     False when advertising a host (the device) to the gateway.
     """
-    from scapy.all import ICMPv6ND_NA, ICMPv6NDOptDstLLAddr, Ether, IPv6
+    from scapy.all import Ether, ICMPv6ND_NA, ICMPv6NDOptDstLLAddr, IPv6
 
     flag = 1 if router else 0
     na = ICMPv6ND_NA(tgt=gateway_ip6, R=flag, S=0, O=1) / ICMPv6NDOptDstLLAddr(lladdr=box_mac)
@@ -163,7 +163,7 @@ def _detect_gateway_ip6(cfg) -> str | None:
         if isinstance(nh, list):
             nh = nh[0] if nh else None
         return nh if nh and nh != "::" else None
-    except Exception:
+    except Exception:  # noqa: BLE001 - best effort, the daemon keeps running
         return None
 
 
@@ -183,7 +183,7 @@ def detect_lan(cfg) -> LanFacts:
     if gw_ip6:
         try:
             gw_mac6 = getmacbyip6(gw_ip6) or None
-        except Exception:
+        except Exception:  # noqa: BLE001 - best effort, the daemon keeps running
             gw_mac6 = None
     return LanFacts(
         gateway_ip=gw,

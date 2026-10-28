@@ -5,7 +5,6 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 
 import pytest
-
 from blocker import backend
 from blocker.backend import Seen, fetch_blocked, report_resisting, report_seen
 from blocker.config import Config

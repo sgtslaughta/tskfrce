@@ -3,7 +3,6 @@ import threading
 from http.server import HTTPServer
 
 import pytest
-
 from blocker.config import Config
 from blocker.portal import PortalHTTP, dns_response
 

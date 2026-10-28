@@ -2,7 +2,6 @@ import threading
 from types import SimpleNamespace as NS
 
 import pytest
-
 from blocker import discovery
 from blocker.config import Config
 from blocker.discovery import resolve_hostname, run_discovery, scan_once

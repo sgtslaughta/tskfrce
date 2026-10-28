@@ -1,5 +1,4 @@
 import pytest
-
 from blocker.state_store import MAC_RE, StateStore
 
 

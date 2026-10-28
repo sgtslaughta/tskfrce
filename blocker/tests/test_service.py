@@ -7,7 +7,6 @@ from types import SimpleNamespace
 from unittest.mock import Mock
 
 import pytest
-
 from blocker.arp import TargetAddrs
 from blocker.backend import Seen
 from blocker.config import Config
@@ -107,7 +106,7 @@ def test_stale_address_dropped_when_other_mac_claims_it():
 
 
 def test_untimestamped_device_is_stale_but_keeps_unclaimed_address():
-    svc, fw, redir = _svc(clock=lambda: 1.0)
+    svc, _fw, redir = _svc(clock=lambda: 1.0)
     svc._devices[MAC] = TargetAddrs(mac=MAC, ip="192.168.1.50")
     svc.store.set_blocked([MAC])
     assert redir.targets[MAC].ip == "192.168.1.50"
@@ -139,14 +138,14 @@ def test_blocked_mac_without_ip_is_pending_then_enforced_when_seen():
 
 
 def test_reconcile_applies_fetched_set():
-    svc, fw, redir = _svc(fetch=lambda cfg: [MAC])
+    svc, _fw, redir = _svc(fetch=lambda cfg: [MAC])
     svc._reconcile_once()
     assert svc.store.current() == {MAC}
     assert redir.targets.get(MAC) is not None
 
 
 def test_reconcile_keeps_last_set_when_app_unreachable():
-    svc, fw, redir = _svc(fetch=lambda cfg: None)
+    svc, _fw, _redir = _svc(fetch=lambda cfg: None)
     svc.store.set_blocked([MAC])
     svc._reconcile_once()  # fetch returns None -> no change
     assert svc.store.current() == {MAC}
@@ -173,7 +172,7 @@ def _watch(from_gateway=0, to_box=0, resets=None):
     ],
 )
 def test_test_block_reason(from_gateway, to_box, reason, offline, router_resisted):
-    svc, fw, redir = _svc(watch=_watch(from_gateway, to_box))
+    svc, _fw, _redir = _svc(watch=_watch(from_gateway, to_box))
     svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
     r = svc.test_block(MAC)
     assert r["reason"] == reason
@@ -184,7 +183,7 @@ def test_test_block_reason(from_gateway, to_box, reason, offline, router_resiste
 
 
 def test_test_block_unseen():
-    svc, fw, redir = _svc(watch=_watch(0, 0))  # device never seen -> no ip
+    svc, _fw, _redir = _svc(watch=_watch(0, 0))  # device never seen -> no ip
     r = svc.test_block(MAC)
     assert r["reason"] == "unseen"
     assert r["offline"] is False
@@ -192,7 +191,7 @@ def test_test_block_unseen():
 
 
 def test_test_block_preserves_other_blocks():
-    svc, fw, redir = _svc(watch=_watch(0, 0))
+    svc, fw, _redir = _svc(watch=_watch(0, 0))
     other = "aa:bb:cc:dd:ee:ff"
     svc._on_seen(Seen(mac=other, ip="192.168.1.9", ipv6=[], hostname=None, vendor=None))
     svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
@@ -205,7 +204,7 @@ def test_test_block_preserves_other_blocks():
 
 
 def _probe_svc(prior, during=None, boom=False):
-    svc, fw, redir = _svc(watch=_watch(0, 4))
+    svc, fw, _redir = _svc(watch=_watch(0, 4))
     for m, ip in ((MAC, "192.168.1.50"), ("aa:bb:cc:dd:ee:ff", "192.168.1.9")):
         svc._on_seen(Seen(mac=m, ip=ip, ipv6=[], hostname=None, vendor=None))
     svc.store.set_blocked(prior)
@@ -255,7 +254,7 @@ def test_duplicate_ip_still_enforced_for_blocked_mac():
 
 def test_test_block_resets_tally_before_wait():
     resets: list = []
-    svc, fw, redir = _svc(watch=_watch(0, 4, resets))
+    svc, _fw, _redir = _svc(watch=_watch(0, 4, resets))
     svc._on_seen(Seen(mac=MAC, ip="192.168.1.50", ipv6=[], hostname=None, vendor=None))
     svc.test_block(MAC)
     assert resets == [MAC]
@@ -265,7 +264,7 @@ def test_test_block_resets_tally_before_wait():
 def test_test_block_ok_with_ip6_needs_gateway_mac6(gw6):
     from blocker.arp import LanFacts
 
-    svc, fw, redir = _svc(watch=_watch(0, 4))
+    svc, _fw, redir = _svc(watch=_watch(0, 4))
     if gw6 == "boom":
 
         def lanfacts():
@@ -377,7 +376,7 @@ def test_lanfacts_failure_still_enforces_kid():
 
 
 def test_test_block_rejects_malformed_mac():
-    svc, fw, redir = _svc()
+    svc, _fw, _redir = _svc()
     with pytest.raises(ValueError):
         svc.test_block("aa:bb:cc:dd:ee:ff } ; flush ruleset ; {")
     assert svc._probing == set()

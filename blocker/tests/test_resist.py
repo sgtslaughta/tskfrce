@@ -1,7 +1,6 @@
 from types import SimpleNamespace
 
 import pytest
-
 from blocker.arp import LanFacts, TargetAddrs
 from blocker.resist import ResistanceCounter, ResistanceWatch
 

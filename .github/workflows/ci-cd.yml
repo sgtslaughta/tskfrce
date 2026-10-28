@@ -32,8 +32,8 @@ jobs:
         npm ci
     - name: Run linting
       run: |
-        cd backend && ruff format --check . && ruff check .
-        cd ../frontend
+        ruff format --check backend blocker && ruff check backend blocker
+        cd frontend
         npm run lint
         npm run type-check
 
