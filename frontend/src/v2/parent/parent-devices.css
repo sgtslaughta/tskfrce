@@ -202,6 +202,7 @@
 @media (max-width: 767px) {
   [data-look='parent'] .pk-actions-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   [data-look='parent'] .pk-actions-grid .p-btn { white-space: normal; line-height: 1.2; }
+  [data-look='parent'] .pk-actions-grid > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 }
 
 /* device list: internet state as a colour-coded glyph (words live in the tooltip) */
