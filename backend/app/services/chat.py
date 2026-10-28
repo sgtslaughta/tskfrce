@@ -187,9 +187,9 @@ def mark_read(db: Session, thread: Thread, user: User) -> None:
 
 
 def mark_existing_read(db: Session, user: User) -> None:
-    """A new user starts with the existing threads they can see already read. Flushes, never commits."""
-    for t in db.query(Thread):
-        if can_access(db, user, t):
+    """A new user starts with the family thread (and any private one of theirs) already read. Flushes, never commits."""
+    for t in (find(db, "family"), find(db, "private", kid_id=user.id)):
+        if t is not None:
             mark_read(db, t, user)
 
 
