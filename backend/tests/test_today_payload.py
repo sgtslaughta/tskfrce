@@ -171,3 +171,46 @@ def test_done_chore_carries_done_at(client, db, parent_headers):
     assert chores()[0]["done_at"] is None
     client.post(f"/api/v1/kid/chores/{rid}/done", headers=ha)
     assert chores()[0]["done_at"].endswith("Z")
+
+
+def test_needs_you_photos_and_row_counts(client, db, parent_headers):
+    a, _, ha, _ = _setup(db)
+    _create(client, parent_headers, [a])
+    cid = _ids(client, ha)[0]
+    client.post(f"/api/v1/kid/chores/{cid}/done", headers=ha)
+    db.add(ChorePhoto(run_id=cid, attempt=1, uploaded_by_id=a.id, path="p", thumb_path="t"))
+    db.get(ChoreRun, cid).attempt = 2
+    db.add(ChorePhoto(run_id=cid, attempt=2, uploaded_by_id=a.id, path="p2", thumb_path="t2"))
+    db.commit()
+    tid = client.get(f"/api/v1/chat/threads/chore/{cid}", headers=parent_headers).json()["id"]
+    msg = {"body": "hi"}
+    client.post(f"/api/v1/chat/threads/{tid}/messages", json=msg, headers=parent_headers)
+    t = _today(client, parent_headers)
+    assert [p["earlier"] for p in t["needs_you"][0]["photos"]] == [True, False]
+    ch = t["kids"][0]["chores"][0]
+    assert ch["photos"] == 1  # current attempt only
+    assert ch["messages"] == 1
+    detail = client.get(f"/api/v1/chores/{cid}", headers=parent_headers).json()
+    assert [p["earlier"] for p in detail["photos"]] == [True, False]
+
+
+def test_kid_earned_is_ledger_net(client, db, parent_headers):
+    a, _, ha, _ = _setup(db)
+    _create(client, parent_headers, [a], points=10)
+    cid = _ids(client, ha)[0]
+    client.post(f"/api/v1/kid/chores/{cid}/done", headers=ha)
+    client.post(f"/api/v1/chores/{cid}/approve", headers=parent_headers)
+    db.add(
+        Points(
+            user_id=a.id,
+            points_type=PointsType.BONUS,
+            amount=-4,
+            reason="deduction",
+            run_id=cid,
+            description="x",
+        )
+    )
+    db.commit()
+    ledger = sum(p.amount for p in db.query(Points).filter(Points.run_id == cid))
+    assert ledger >= 6
+    assert _today(client, parent_headers)["kids"][0]["earned"] == ledger

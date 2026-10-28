@@ -69,7 +69,15 @@ def run_detail(run_id: int, db: Session = Depends(get_db), _: User = Depends(req
         "type": svc.type_out(chore),
         "sent_back": svc.sent_back(r),
         "note": svc.note_out(r, svc.note_texts(db, [r])),
-        "photos": [{"id": p.id, "thumb_url": f"/chore-photos/{p.id}/thumb"} for p in r.photos],
+        "attempt": r.attempt,
+        "photos": [
+            {
+                "id": p.id,
+                "thumb_url": f"/chore-photos/{p.id}/thumb",
+                "earlier": p.attempt < r.attempt,
+            }
+            for p in r.photos
+        ],
     }
 
 

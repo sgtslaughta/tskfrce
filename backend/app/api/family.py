@@ -97,7 +97,7 @@ def _needs_you(
 ) -> list[dict]:
     """Submitted chores and pending requests, oldest first."""
     sub = [r for r in runs if r.status == "submitted"]
-    photos = {}
+    photos, proofs = {}, {}
     if sub:
         rows = (
             db.query(ChorePhoto)
@@ -106,6 +106,9 @@ def _needs_you(
             .all()
         )
         photos = {(p.run_id, p.attempt): p.id for p in rows}  # latest wins
+        proofs: dict[int, list[ChorePhoto]] = {}
+        for p in rows:
+            proofs.setdefault(p.run_id, []).append(p)
     items = []
     for r in sub:
         kid_id = r.submitted_by_id or (svc.run_kid_ids(r) or [None])[0]
@@ -120,6 +123,14 @@ def _needs_you(
                 "title": svc.chore_of(r).title,
                 "attempt": r.attempt,
                 "thumb_url": f"/chore-photos/{pid}/thumb" if pid else None,
+                "photos": [
+                    {
+                        "id": p.id,
+                        "thumb_url": f"/chore-photos/{p.id}/thumb",
+                        "earlier": p.attempt < r.attempt,
+                    }
+                    for p in proofs.get(r.id, [])
+                ],
                 "subtasks_done": sum(s["done"] for s in steps),
                 "subtasks_total": len(steps),
                 "submitted_at": utc_z(r.submitted_at),
@@ -163,7 +174,14 @@ def _needs_you(
 
 
 def _chore_out(
-    r: ChoreRun, names: dict[int, str], fam, notes: dict, tmrw: date, deds: list[dict]
+    r: ChoreRun,
+    names: dict[int, str],
+    fam,
+    notes: dict,
+    tmrw: date,
+    deds: list[dict],
+    photos: int = 0,
+    messages: int = 0,
 ) -> dict:
     c, st, mode = svc.chore_of(r), svc.state(r), svc.mode_of(r)
     steps = svc.steps_out(r, fam)
@@ -187,6 +205,8 @@ def _chore_out(
         "taken_by": names.get(r.submitted_by_id) if taken else None,
         "can_move": svc.can_move(r, tmrw),
         "deducted": sum(d["amount"] for d in deds),
+        "photos": photos,
+        "messages": messages,
     }
 
 
@@ -231,6 +251,8 @@ def today(db: Session = Depends(get_db)):
     names = {k.id: k.full_name for k in kid_rows}
     notes = svc.note_texts(db, shown)
     deds = svc.deductions(db, shown)
+    n_photos, n_msgs = svc.run_counts(db, shown)
+    earned = svc.earned_today(db, shown)
     needs = _needs_you(db, tasks, names, fam, balances)
     prices = sorted(p for (p,) in db.query(Reward.price).filter(Reward.active.is_(True)))
     now_local = local_now(fam.timezone, now)
@@ -251,6 +273,7 @@ def today(db: Session = Depends(get_db)):
                 "last_active": utc_z(max(seen)) if seen else None,
                 "progress": prog[k.id],
                 "points": balances.get(k.id, 0),
+                "earned": earned.get(k.id, 0),
                 "next_reward": _next_reward(prices, balances.get(k.id, 0)),
                 "locks_at": _locks_at(pre, k.id, now_local),
                 "chores": [
@@ -261,6 +284,8 @@ def today(db: Session = Depends(get_db)):
                         notes,
                         tmrw,
                         [d for d in deds.get(t.id, []) if d["kid_id"] == k.id],
+                        n_photos.get(t.id, 0),
+                        n_msgs.get(t.id, 0),
                     )
                     for t in shown_by[k.id]
                 ],

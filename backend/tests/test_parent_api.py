@@ -150,6 +150,7 @@ def test_today_shape(client, db, parent, kid, parent_headers):
         "id",
         "name",
         "points",
+        "earned",
         "next_reward",
         "locks_at",
         "avatar",

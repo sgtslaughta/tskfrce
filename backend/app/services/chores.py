@@ -7,13 +7,14 @@ status and history; title, points, steps and photo rule are read from its chore.
 from datetime import UTC, date, datetime, timedelta
 
 from fastapi import HTTPException
-from sqlalchemy import or_, select
+from sqlalchemy import func, or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.lock.reset import current_chore_day
 from app.lock.schedule import occurs_on
 from app.models.chat import Thread, ThreadMessage
+from app.models.chore_extra import ChorePhoto
 from app.models.chore_type import ChoreType
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, RunStepTick, run_kids
 from app.models.family import get_family
@@ -297,6 +298,42 @@ def delete_runs(db: Session, runs: list[ChoreRun], storage) -> None:
         for t in r.threads:
             db.query(ThreadRead).filter(ThreadRead.thread_id == t.id).delete()
         db.delete(r)
+
+
+def run_counts(db: Session, runs: list[ChoreRun]) -> tuple[dict[int, int], dict[int, int]]:
+    """(run_id -> current-attempt photos, run_id -> kid/parent messages), two grouped queries."""
+    ids = [r.id for r in runs]
+    if not ids:
+        return {}, {}
+    attempt = {r.id: r.attempt for r in runs}
+    photos = {
+        rid: n
+        for rid, a, n in db.query(ChorePhoto.run_id, ChorePhoto.attempt, func.count())
+        .filter(ChorePhoto.run_id.in_(ids))
+        .group_by(ChorePhoto.run_id, ChorePhoto.attempt)
+        if a == attempt[rid]
+    }
+    msgs = dict(
+        db.query(Thread.run_id, func.count())
+        .join(ThreadMessage, ThreadMessage.thread_id == Thread.id)
+        .filter(Thread.kind == "chore", Thread.run_id.in_(ids), ThreadMessage.kind == "user")
+        .group_by(Thread.run_id)
+        .all()
+    )
+    return photos, msgs
+
+
+def earned_today(db: Session, runs: list[ChoreRun]) -> dict[int, int]:
+    """kid_id -> points the ledger really holds for these runs (bonuses in, deductions out)."""
+    ids = [r.id for r in runs]
+    if not ids:
+        return {}
+    rows = (
+        db.query(Points.user_id, func.sum(Points.amount))
+        .filter(Points.run_id.in_(ids), Points.reason.in_(("chore", "early_bonus", "deduction")))
+        .group_by(Points.user_id)
+    )
+    return {k: int(n) for k, n in rows}
 
 
 def photo_count(run: ChoreRun) -> int:
