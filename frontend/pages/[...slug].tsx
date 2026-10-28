@@ -17,7 +17,7 @@ export default function NotFound() {
         </div>
         <h1 className="p-state-title">That page isn&apos;t here</h1>
         <p className="p-state-body">The link may be old, or the chore was deleted.</p>
-        <Link href="/" className="p-btn">
+        <Link href="/" className="p-btn" data-variant="ink">
           <Icon name="home" size={17} />
           Go to Today
         </Link>
