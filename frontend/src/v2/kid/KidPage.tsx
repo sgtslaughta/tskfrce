@@ -6,6 +6,7 @@ import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { Icon } from '../parent/Icon'
 import { PreviewProvider, setPreviewName, useAsKid } from '../hooks/usePreview'
 import { useKids } from '../hooks/useKids'
+import { useCelebrations } from '../hooks/useKidRewards'
 import { useKidSession, useKidToday, useMarkDone, loginMessage } from '../hooks/useKid'
 import { useLook } from '../parent/useLook'
 import type { KidWhoami } from '../types'
@@ -44,6 +45,7 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
   const today = useKidToday(onExit)
   const done = useMarkDone(onExit)
   const d = today.data
+  const award = !!useCelebrations(onExit).data?.length // the intro waits for award cards
   if (!d && today.isError)
     return (
       <Gate>
@@ -72,7 +74,7 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
         canSwitch={canSwitch}
         done={done}
       >
-        {!d.locked && !introComplete && !preview && <KidIntroSwipe kidId={kidId} onComplete={() => setIntroComplete(true)} />}
+        {!introComplete && !preview && !award && <KidIntroSwipe kidId={kidId} onComplete={() => setIntroComplete(true)} />}
       </KidApp>
       {!preview && <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />}
     </>

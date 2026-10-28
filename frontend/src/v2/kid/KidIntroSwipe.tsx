@@ -51,7 +51,7 @@ export function KidIntroSwipe({ onComplete, kidId }: Props) {
   return (
     <div className="k-intro-back k-tok">
       <FocusTrap active>
-        <div className="k-intro" role="dialog" aria-modal="true" aria-labelledby="k-intro-t" data-testid="kid-intro-swipe">
+        <div className="k-intro" role="dialog" aria-modal="true" aria-labelledby="k-intro-t" data-testid="kid-intro-swipe" onKeyDown={(e) => e.key === 'Escape' && finish()}>
           <span className="k-intro-ic" aria-hidden key={`i${step}`}>
             <Icon name={card.icon} size={56} />
           </span>

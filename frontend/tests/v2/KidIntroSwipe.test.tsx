@@ -47,6 +47,13 @@ describe('KidIntroSwipe', () => {
     expect(done).toHaveBeenCalled()
   })
 
+  test('Escape is Skip', async () => {
+    const done = show()
+    await userEvent.keyboard('{Escape}')
+    expect(dismiss).toHaveBeenCalledWith('onboard.kid')
+    expect(done).toHaveBeenCalled()
+  })
+
   test('dots jump to a card', async () => {
     show()
     await userEvent.click(screen.getByRole('button', { name: 'Go to slide 3' }))
