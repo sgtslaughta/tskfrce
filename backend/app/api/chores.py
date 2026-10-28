@@ -118,7 +118,8 @@ def mark_done(run_id: int, db: Session = Depends(get_db), parent: User = Depends
 
 @router.post("/{run_id}/undo")
 def mark_not_done(run_id: int, db: Session = Depends(get_db), _: User = Depends(require_parent)):
-    """Parent unticks a done chore: back to to-do, its points and step ticks removed."""
+    """Parent unticks a done chore: back to to-do, the points it earned and its step ticks
+    removed. Deductions stay: taking points away is not undone by unticking."""
     r = db.get(ChoreRun, run_id)
     if r is None:
         raise HTTPException(404, "That chore doesn't exist.")
@@ -130,7 +131,7 @@ def mark_not_done(run_id: int, db: Session = Depends(get_db), _: User = Depends(
     if r.status != "done":
         raise HTTPException(409, "This chore isn't done.")
     # ponytail: spent points can leave the balance below 0; badges already earned stay
-    db.query(Points).filter(Points.run_id == r.id).delete()
+    db.query(Points).filter(Points.run_id == r.id, Points.amount > 0).delete()
     r.ticks.clear()
     r.status = "todo"
     r.approved_at = r.completed_at = r.approved_by_id = None
