@@ -254,3 +254,12 @@ def test_wave_a_migration_up_down(tmp_path):
     assert "ix_chore_type_notes_type_id" not in {
         i["name"] for i in insp.get_indexes("chore_type_notes")
     }
+
+
+def test_glyph_change_moves_notes(client, parent_headers):
+    h = parent_headers
+    t = client.post(
+        "/api/v1/chore-types", json={"name": "Garden", "glyph": "eco", "notes": ["a"]}, headers=h
+    ).json()
+    r = client.patch(f"/api/v1/chore-types/{t['id']}", json={"glyph": "park"}, headers=h).json()
+    assert [n["glyph"] for n in r["notes"]] == ["park"]

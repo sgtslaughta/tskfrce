@@ -110,6 +110,9 @@ def patch_type(type_id: int, body: TypePatch, db: Session = Depends(get_db)):
         t.glyph = body.glyph
     if body.notes is not None:
         _set_notes(t, body.notes)
+    elif body.glyph is not None:
+        for n in t.notes:
+            n.glyph = t.glyph
     db.commit()
     return _out(t, _count(db, t))
 
