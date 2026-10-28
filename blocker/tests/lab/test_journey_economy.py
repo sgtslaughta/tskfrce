@@ -73,9 +73,11 @@ def test_bedtime_beats_screen_time():
     on_cleanup(lambda: parent("DELETE", f"/api/v1/hours/{w['id']}"))
     make_chore([a["id"]])
     wait_online("kid1", False)
-    r = request_screen(a)
-    parent("POST", f"/api/v1/redemptions/{r['id']}/approve")
-    assert balance(a) == 15  # paid, yet the window still wins
+    # default rule: screen time only works inside allowed hours, so nothing is charged
+    with pytest.raises(HTTPError) as e:
+        request_screen(a)
+    assert e.value.status == 409
+    assert balance(a) == 20
     assert not wait_for(lambda: online("kid1"), timeout=15)
 
 
