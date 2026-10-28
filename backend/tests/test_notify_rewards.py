@@ -16,7 +16,7 @@ def test_auto_screen_time_pings_parents(client, db, kid, kid_headers, pings):
     db.commit()
     r = client.post(REDEEM, json={"kind": "screen_time", "minutes": 15}, headers=kid_headers)
     assert r.status_code == 200, r.text
-    assert [p[1] for p in pings] == [f"{kid.full_name} bought 15 min of screen time"]
+    assert [p[1] for p in pings] == [f"{kid.full_name} bought 15 min of screen time on Phone"]
     assert pings[0][2].startswith("Approved automatically · 20 points")
 
 
@@ -47,4 +47,4 @@ def test_auto_ping_held_in_quiet_hours(client, db, kid, kid_headers, pings, monk
     client.post(REDEEM, json={"kind": "screen_time", "minutes": 15}, headers=kid_headers)
     assert pings == []
     held = db.query(NotifyHeld).all()
-    assert [h.title for h in held] == [f"{kid.full_name} bought 15 min of screen time"]
+    assert [h.title for h in held] == [f"{kid.full_name} bought 15 min of screen time on Phone"]

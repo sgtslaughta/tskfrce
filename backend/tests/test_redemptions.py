@@ -352,4 +352,42 @@ def test_screen_request_device_optional_and_own(client, db, kid, kid_headers, pa
         == 200
     )
     rows = client.get("/api/v1/redemptions?status=pending", headers=parent_headers).json()
-    assert rows[0]["device_id"] is None and rows[0]["device_name"] is None
+    assert rows[0]["device_name"] == "Phone"  # the kid's only device
+
+
+def _screen_ready(db, kid):
+    _fund(db, kid, 500)
+    get_family(db).points_unlock_early = True
+    db.commit()
+
+
+def _picked(client, db, kid_headers):
+    client.post(R, json={"kind": "screen_time", "minutes": 15}, headers=kid_headers)
+    return db.query(Redemption).one().device_id
+
+
+def test_device_guessed_from_client_ip(client, db, kid, kid_headers):
+    _screen_ready(db, kid)
+    a = _device(db, kid)
+    b = Device(mac="aa:bb:cc:dd:ee:03", name="Tablet", status="assigned", ip="testclient")
+    b.owners.append(kid)
+    db.add(b)
+    db.commit()
+    assert _picked(client, db, kid_headers) == b.id
+    assert a.id != b.id
+
+
+def test_device_guessed_when_only_one(client, db, kid, kid_headers):
+    _screen_ready(db, kid)
+    a = _device(db, kid)
+    assert _picked(client, db, kid_headers) == a.id
+
+
+def test_device_unguessed_with_several_and_no_ip_match(client, db, kid, kid_headers):
+    _screen_ready(db, kid)
+    _device(db, kid)
+    b = Device(mac="aa:bb:cc:dd:ee:04", name="Tablet", status="assigned", ip="10.9.9.9")
+    b.owners.append(kid)
+    db.add(b)
+    db.commit()
+    assert _picked(client, db, kid_headers) is None
