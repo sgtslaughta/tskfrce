@@ -1,6 +1,6 @@
 """Chat threads: lazy creation, access rules, posting and unread counts."""
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
@@ -131,6 +131,31 @@ def system(
     """System line in the run's thread; `photo_id` is a ChorePhoto (proof).
     `actor` (a kid's own action) keeps it out of that kid's unread count."""
     post(db, thread_for(db, "chore", run_id=run.id), actor, body, photo_id, kind="system")
+
+
+PHOTO_BURST = timedelta(minutes=2)  # same window the chat uses to fold photos into one bubble
+
+
+def photo_line(db: Session, run: ChoreRun, kid: User) -> str:
+    """ "Photo added", or "N photos added" when it joins a burst of this kid's photos, so the
+    thread list preview counts them like the folded chat bubble does."""
+    tail = []
+    for m in (
+        db.query(ThreadMessage)
+        .filter(ThreadMessage.thread_id == thread_for(db, "chore", run_id=run.id).id)
+        .order_by(ThreadMessage.id.desc())
+        .limit(50)
+    ):
+        if m.kind != "system" or not m.photo_id or m.author_id != kid.id:
+            break
+        tail.append(m.created_at)
+    start, n = None, 0
+    for at in [*reversed(tail), datetime.utcnow()]:
+        if start is None or at - start > PHOTO_BURST:
+            start, n = at, 1
+        else:
+            n += 1
+    return "Photo added" if n == 1 else f"{n} photos added"
 
 
 def step_ok(db: Session, thread: Thread, step_id: int) -> bool:

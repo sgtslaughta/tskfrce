@@ -174,3 +174,15 @@ def test_large_normal_photo_is_shrunk(client, db, parent_headers):
     p = db.query(ChorePhoto).one()
     full = Image.open(storage().open(p.path))
     assert max(full.size) <= 1600
+
+
+def test_photo_lines_count_a_burst(client, db, parent_headers):
+    from app.models.chat import ThreadMessage
+
+    k, h, cid = _setup(db, client, parent_headers)
+    for _ in range(3):
+        assert _up(client, h, cid).status_code == 200
+    bodies = [m.body for m in db.query(ThreadMessage).order_by(ThreadMessage.id)]
+    assert bodies == ["Photo added", "2 photos added", "3 photos added"]
+    rows = client.get("/api/v1/chat/threads", headers=parent_headers).json()["threads"]
+    assert "3 photos added" in [r.get("last_text") for r in rows]
