@@ -6,7 +6,7 @@ import { Tooltip } from '@mantine/core'
 import { ListHeader } from '@/v2/parent/ListHeader'
 import { SegmentedControl } from '@/v2/parent/SegmentedControl'
 import type { Device, Group as DeviceGroup, Kid } from '@/v2/types'
-import { ago, DEVICE_TYPE_ICON, getDeviceType, type DeviceType } from './deviceMeta'
+import { deviceSubline, DEVICE_TYPE_ICON, getDeviceType, type DeviceType } from './deviceMeta'
 
 interface Props {
   devices: Device[]
@@ -113,7 +113,7 @@ export function DeviceList({
         <div className="p-device-info">
           <div className="p-device-name" title={d.name}>{d.name}</div>
           <div className="p-device-meta">
-            <span>{owner} · {d.last_seen ? ago(d.last_seen) : 'never seen'}</span>
+            <span>{deviceSubline(d, owner)}</span>
             {d.exempt && (
               <span className="p-chip" data-tone="lav">Exempt</span>
             )}

@@ -37,3 +37,16 @@ export const inFamilyZone = (iso: string, timeZone?: string, opts: Intl.DateTime
     return new Date(iso).toLocaleString(undefined, opts)
   }
 }
+
+/** Device-list sub-line: who it belongs to and when it was last seen; new and guest devices say what matters instead. */
+export const deviceSubline = (
+  d: { status: string; vendor: string | null; first_seen?: string | null; last_seen: string | null },
+  owner: string,
+): string => {
+  if (d.status === 'guest') return 'Guest · never blocked'
+  if (d.status === 'unassigned') {
+    const at = d.first_seen ?? d.last_seen
+    return `${d.vendor ?? 'New device'}${at ? ` · joined ${ago(at)}` : ''}`
+  }
+  return `${owner} · ${d.last_seen ? ago(d.last_seen) : 'never seen'}`
+}
