@@ -93,10 +93,12 @@ export function RewardsRequests({ onHistory }: { onHistory: () => void }) {
         <div className="pk-head-t">
           <h2>Requests</h2>
           <div className="p-header-chips">
-            <span className="p-header-chip" data-tone="lav">
-              <Icon name="hourglass_top" size={16} />
-              {list.length} waiting
-            </span>
+            {pending.data && (
+              <span className="p-header-chip" data-tone="lav">
+                <Icon name="hourglass_top" size={16} />
+                {list.length} waiting
+              </span>
+            )}
             <span className="p-header-chip">
               <Icon name="stars" size={16} />
               Points paid on approve

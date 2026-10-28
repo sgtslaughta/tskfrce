@@ -10,7 +10,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`
 
 /** Rewards list column: Requests, Catalogue, Screen time, History. */
 export function RewardsNav({ selected, onSelect }: { selected?: string; onSelect: (item: RewardsItem) => void }) {
-  const waiting = usePendingRedemptions().data?.length ?? 0
+  const waiting = usePendingRedemptions().data?.length
   const rewards = useRewards().data ?? []
   const st = useScreenTime().data
   const hidden = rewards.filter((r) => !r.visible).length
@@ -19,8 +19,8 @@ export function RewardsNav({ selected, onSelect }: { selected?: string; onSelect
       id: 'requests',
       icon: 'pending_actions',
       name: 'Requests',
-      sub: waiting ? `${waiting} waiting for you` : 'Nothing waiting',
-      end: waiting > 0 && (
+      sub: waiting === undefined ? '' : waiting ? `${waiting} waiting for you` : 'Nothing waiting',
+      end: !!waiting && (
         <span className="rw-badge" aria-label={`${waiting} waiting`}>
           {waiting}
         </span>

@@ -98,6 +98,15 @@ describe('rewards: requests', () => {
     expect(within(list()).getByRole('button', { name: /Requests/ })).toHaveTextContent('Nothing waiting')
     await waitFor(() => expect(within(list()).getByRole('button', { name: /Catalogue/ })).toHaveTextContent('2 rewards · 1 hidden'))
   })
+
+  test('while requests are loading nothing claims 0 waiting', async () => {
+    data({ '/redemptions': new Promise(() => {}) })
+    mockRoute.query = { section: 'rewards', item: 'requests' }
+    render(wrap(<KidsPage />))
+    await waitFor(() => expect(within(list()).getByRole('button', { name: /Catalogue/ })).toHaveTextContent('2 rewards'))
+    expect(within(list()).getByRole('button', { name: /Requests/ })).not.toHaveTextContent(/waiting/i)
+    expect(within(detail()).queryByText(/waiting/)).not.toBeInTheDocument()
+  })
 })
 
 test('a screen-time request card names the device', async () => {
