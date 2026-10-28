@@ -76,7 +76,7 @@ export function tally(chores: KidChore[]) {
   const live = chores.filter((c) => c.state !== 'skipped')
   const approved = live.filter((c) => c.state === 'done').length
   const waiting = live.filter((c) => c.state === 'needs_you').length
-  return { approved, total: live.length, left: live.length - approved, todo: live.length - approved - waiting, waiting }
+  return { approved, total: live.length, todo: live.length - approved - waiting, waiting }
 }
 
 /** Little header: 4 big stars. Filled = progress fraction; all 4 only when every chore is done. */

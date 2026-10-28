@@ -86,7 +86,7 @@ describe('list helpers', () => {
   ]
   test('kidSort', () => expect(kidSort(list, NOW).map((c) => c.id)).toEqual([4, 3, 5, 2, 1]))
   test('tally ignores skipped', () => {
-    expect(tally([...list, mk({ id: 6, state: 'skipped' })])).toEqual({ approved: 1, total: 5, left: 4, todo: 3, waiting: 1 })
-    expect(tally([])).toEqual({ approved: 0, total: 0, left: 0, todo: 0, waiting: 0 })
+    expect(tally([...list, mk({ id: 6, state: 'skipped' })])).toEqual({ approved: 1, total: 5, todo: 3, waiting: 1 })
+    expect(tally([])).toEqual({ approved: 0, total: 0, todo: 0, waiting: 0 })
   })
 })
