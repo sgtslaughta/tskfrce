@@ -30,6 +30,7 @@ describe('ThreadList for a kid', () => {
     render(<ThreadList threads={threads} selected={null} onPick={() => {}} kid />)
     expect(screen.queryByText('Susan')).toBeNull()
     expect(screen.getByText('Parents')).toBeTruthy()
+    expect(screen.queryByText('S')).toBeNull() // tile is the family icon, not the kid's initial
     expect(screen.queryByRole('button', { name: /Show .* chore chat/ })).toBeNull()
     const rows = screen.getAllByText(/Approved · \+10 · \w{3}, Oct \d+/)
     expect(rows).toHaveLength(2)

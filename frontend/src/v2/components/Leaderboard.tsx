@@ -11,8 +11,9 @@ export function Leaderboard({ rows, kid = false, bare = false, onPick, meId }: {
   const card = (r: LeaderboardRow) => {
     const nc = <NameCard name={r.name} avatar={r.avatar} level={r.level} title={r.title} flair={r.flair ?? NO_FLAIR} emblems={emblems} size="sm" />
     return onPick && r.kid_id !== meId ? (
-      <button type="button" className="lb-pick" aria-label={`${r.name}, open profile`} onClick={() => onPick(r.kid_id)}>
+      <button type="button" className="lb-pick" onClick={() => onPick(r.kid_id)}>
         {nc}
+        <span className="k-sr">, open profile</span>
       </button>
     ) : (
       nc
@@ -30,7 +31,7 @@ export function Leaderboard({ rows, kid = false, bare = false, onPick, meId }: {
               <div style={{ flex: 1, minWidth: 0 }}>
                 {card(r)}
               </div>
-              <b className="f-num">{`${r.score} pts`}</b>
+              <b className="f-num" style={{ flex: 'none', width: '9ch', textAlign: 'right' }}>{`${r.score} pts`}</b>
             </li>
           )
         })}

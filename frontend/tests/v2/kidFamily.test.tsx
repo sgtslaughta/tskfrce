@@ -11,6 +11,7 @@ jest.mock('@/v2/hooks/useCommunity', () => ({
     { kid_id: 2, name: 'Sib', avatar: 'b', level: 2, title: 'Pro' },
   ] }),
 }))
+jest.mock('@/v2/hooks/useEmblems', () => ({ useEmblems: () => ({}) }))
 jest.mock('@/v2/hooks/usePreview', () => ({ useAsKid: () => null }))
 jest.mock('@/v2/components/Leaderboard', () => ({ Leaderboard: ({ rows }: { rows: { name: string }[] }) => <div>{rows.map((r) => <span key={r.name}>{r.name}</span>)}</div> }))
 jest.mock('@/v2/components/ProfileModal', () => ({ ProfileModal: () => null }))
@@ -20,6 +21,7 @@ describe('FamilySection', () => {
     render(<FamilySection meId={1} little />)
     expect(screen.getAllByText('Sib')).toHaveLength(1)
     expect(screen.queryByText('Me')).toBeNull()
+    expect(screen.getByRole('button', { name: /Sib.*open profile/ })).toBeInTheDocument()
   })
   it('kid/teen: one ranking row per member, no extra sibling list', () => {
     render(<FamilySection meId={1} />)

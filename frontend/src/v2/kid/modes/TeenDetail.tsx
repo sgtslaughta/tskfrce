@@ -68,7 +68,7 @@ export function TeenDetail({ c, d, now, onBack, onDone, busyId, onChat }: TeenDe
         <div>
           <Title className="k-disp">{c.title}</Title>
           <div className="t-chips">
-            {kidChips(c, now, d.timezone).map((k) => (
+            {kidChips(c, now, d.timezone, false, true).map((k) => (
               <KidChip key={k.tone} chip={k} size="sm" />
             ))}
             <span className="k-chip" data-tone="today" data-size="sm">{`+${c.points} pts`}</span>

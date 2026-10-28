@@ -35,7 +35,7 @@ export function TeenRow({
   onSelect: () => void
 }) {
   const dim = c.state === 'done' || c.state === 'needs_you'
-  const chip = kidChips(c, now, tz)[0]
+  const chip = kidChips(c, now, tz, false, true)[0]
   return (
     <button type="button" className="t-row" data-done={dim || undefined} aria-pressed={selected} onClick={onSelect}>
       <span className="t-ck">{dim && <Icon name="check" />}</span>

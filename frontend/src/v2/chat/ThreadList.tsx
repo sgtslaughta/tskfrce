@@ -20,7 +20,8 @@ export const NoChats = () => (
 
 type FilterTab = 'all' | 'chores' | 'notes' | 'family'
 
-function Tile({ t }: { t: ThreadSummary }) {
+function Tile({ t, kid }: { t: ThreadSummary; kid: boolean }) {
+  if (t.kind === 'private' && kid) return <Icon name="family_restroom" size={20} />
   if (t.kind === 'private') return <b>{(t.title.trim()[0] ?? '?').toUpperCase()}</b>
   return <Icon name={t.kind === 'family' ? 'group' : threadGlyph(t.glyph, t.title)} size={20} />
 }
@@ -106,7 +107,7 @@ export function ThreadList({
     return (
       <button type="button" className="pc-row" data-selected={selected === key} aria-current={selected === key ? 'true' : undefined} onClick={() => onPick(t)}>
         <span className="pc-tile">
-          <Tile t={t} />
+          <Tile t={t} kid={kid} />
         </span>
         <span className="pc-row-t">
           <b>{shownTitle(t, kid)}</b>

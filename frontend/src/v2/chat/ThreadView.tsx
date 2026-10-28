@@ -28,6 +28,7 @@ import { ThreadHead } from './ThreadHead'
 import { ThreadSidePanel } from './ThreadSidePanel'
 import { MentionMenu, useComposerBox } from './MentionMenu'
 import { QuickReplies } from './QuickReplies'
+import { shownTitle } from './ThreadList'
 import { TypingLine } from './TypingLine'
 import { renderMentions } from './mentions'
 import type { ChatReply } from './dock'
@@ -315,7 +316,7 @@ export function ThreadView({
 
   // For kid look, use original layout
   return (
-    <section aria-label={data?.title ?? 'Conversation'} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
+    <section aria-label={data ? shownTitle({ kind, title: data.title }, true) : 'Conversation'} style={{ display: 'flex', flexDirection: 'column', minHeight: 0, height: '100%' }}>
       {thread.isError && <LoadError error={thread.error} onRetry={() => thread.refetch()} />}
       {thread.isPending && !thread.isError && <LoadingCards n={3} h={48} />}
       <div data-chat-scroll onScroll={onScroll} style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 2px', minHeight: 240 }}>

@@ -16,8 +16,8 @@ export const clockShort = (iso: string, tz?: string) => fmt(iso, tz, true)
 
 const HOUR = 3_600_000
 
-/** Every chip that applies, in priority order (back, late, soon, new, today). */
-export function kidChips(c: KidChore, now: number, tz?: string, little = false): KidChipT[] {
+/** Every chip that applies, in priority order (back, late, soon, new, today). `ampm` keeps AM/PM on the due time (Teen). */
+export function kidChips(c: KidChore, now: number, tz?: string, little = false, ampm = false): KidChipT[] {
   if (c.state === 'skipped') return []
   if (c.state === 'needs_you') return [{ tone: 'wait', icon: 'hourglass_top', label: 'Waiting for OK' }]
   if (c.state === 'done') return [{ tone: 'done', icon: 'check', label: little ? 'Done' : 'Approved' }]
@@ -31,7 +31,7 @@ export function kidChips(c: KidChore, now: number, tz?: string, little = false):
   }
   if (c.new) out.push({ tone: 'new', icon: 'fiber_new', label: 'New' })
   if (due !== null && due - now > HOUR) {
-    out.push({ tone: 'today', icon: 'schedule', label: `${little ? 'By' : 'Due'} ${clockShort(c.due_at!, tz)}` })
+    out.push({ tone: 'today', icon: 'schedule', label: `${little ? 'By' : 'Due'} ${(ampm ? clock : clockShort)(c.due_at!, tz)}` })
   }
   return out
 }

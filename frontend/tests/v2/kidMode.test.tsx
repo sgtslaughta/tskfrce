@@ -56,6 +56,12 @@ describe('KidMode', () => {
     expect(screen.getByLabelText('0 of 2 done')).toBeInTheDocument()
   })
 
+  test('a chore waiting for OK fills a dot and is not "left"', () => {
+    render(wrap(props({ d: today({ chores: [kitchen, { ...dog, state: 'needs_you' }] }) })))
+    expect(screen.getByText('Finish 1 more chore to turn it on · 1 waiting for OK')).toBeInTheDocument()
+    expect(screen.getByLabelText('1 of 2 done')).toBeInTheDocument()
+  })
+
   test('a tile is named by its visible text (WCAG 2.5.3), prefixed with Open', () => {
     render(wrap(props()))
     const tile = screen.getByRole('button', { name: /^Open Clean Kitchen/ })

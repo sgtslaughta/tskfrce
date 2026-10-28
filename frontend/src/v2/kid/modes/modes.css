@@ -107,7 +107,7 @@
   .k-status-t { font-size: 22px; }
   .k-status-s { font-size: 15px; }
   .k-dots { flex-basis: 100%; flex-wrap: nowrap; margin-left: 0; gap: 6px; }
-  .k-dots i { flex: 0 1 28px; width: auto; max-width: 28px; min-width: 0; aspect-ratio: 1; }
+  .k-dots i { flex: 0 1 28px; width: auto; height: auto; max-width: 28px; min-width: 0; aspect-ratio: 1; }
   .k-dots .ms { font-size: 16px; }
   .k-step { flex-wrap: wrap; }
   .k-sx { flex: 1 1 8em; }

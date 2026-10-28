@@ -23,6 +23,7 @@ describe('kidChips', () => {
     const c = mk({ due_at: '2026-10-26T23:30:00Z' })
     expect(labels(c)).toEqual(['Due 7:30'])
     expect(labels(c, true)).toEqual(['By 7:30'])
+    expect(kidChips(c, NOW, 'America/New_York', false, true)[0].label).toBe('Due 7:30 PM') // Teen keeps AM/PM
   })
   test('times follow the given zone, not the device', () => {
     const c = mk({ due_at: '2026-10-26T23:30:00Z' })

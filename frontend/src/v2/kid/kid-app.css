@@ -153,6 +153,7 @@
 }
 .k-tell .ms { font-size: 18px; }
 .k-sheet-body .k-tell { justify-content: center; }
+.k-sheet-body > .k-tell { border: 2px solid var(--k-ink); }
 
 /* cards and pills */
 .k-ded {
