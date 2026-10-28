@@ -1,13 +1,14 @@
+import { FocusTrap } from '@mantine/core'
 import { useState } from 'react'
-import { Button } from '@mantine/core'
 import { useTipState } from '../hooks/useTips'
-import { StickerCard } from '../components/StickerCard'
 import { Icon } from '../parent/Icon'
 
 interface Props {
   onComplete: () => void
+  kidId?: number | null
 }
 
+const TIP = 'onboard.kid'
 // ponytail: one wording for every age; age-group copy arrives with the age setting (Plan D)
 const CARDS = [
   { icon: 'task_alt', title: 'Do your chores', desc: 'Finish the chores your family gives you.' },
@@ -15,75 +16,66 @@ const CARDS = [
   { icon: 'mail', title: 'Tell a parent', desc: 'Stuck? Send a note and they will help.' },
 ]
 
-export function KidIntroSwipe({ onComplete }: Props) {
+// the box remembers the dismissal per kid; this browser flag backs it up if that save fails
+const flag = (kidId?: number | null) => `tskfrce.intro.${kidId ?? 'kid'}`
+const seenHere = (kidId?: number | null) => {
+  try {
+    return localStorage.getItem(flag(kidId)) === '1'
+  } catch {
+    return false
+  }
+}
+const markSeen = (kidId?: number | null) => {
+  try {
+    localStorage.setItem(flag(kidId), '1')
+  } catch {
+    /* private mode: the box copy still counts */
+  }
+}
+
+/** First-visit intro: a once-only sheet over the kid app (not part of the chore list). Styles: kid-intro.css. */
+export function KidIntroSwipe({ onComplete, kidId }: Props) {
   const { ready, isDismissed, dismiss } = useTipState(true)
   const [step, setStep] = useState(0)
 
-  if (!ready || isDismissed('onboard.kid')) return null
-  const cards = CARDS
+  if (!ready || isDismissed(TIP) || seenHere(kidId)) return null
+  const last = step === CARDS.length - 1
+  const card = CARDS[step]
 
-  const handleNext = () => {
-    if (step < cards.length - 1) {
-      setStep(step + 1)
-    } else {
-      dismiss('onboard.kid')
-      onComplete()
-    }
-  }
-
-  const handleSkip = () => {
-    dismiss('onboard.kid')
+  const finish = () => {
+    markSeen(kidId)
+    dismiss(TIP)
     onComplete()
   }
 
   return (
-    <StickerCard>
-      <div className="f-intro-container" data-testid="kid-intro-swipe">
-        <div className="f-intro-content">
-          <div className="f-intro-icon" key={`icon-${step}`}>
-            <Icon name={cards[step].icon} size={64} />
+    <div className="k-intro-back k-tok">
+      <FocusTrap active>
+        <div className="k-intro" role="dialog" aria-modal="true" aria-labelledby="k-intro-t" data-testid="kid-intro-swipe">
+          <span className="k-intro-ic" aria-hidden key={`i${step}`}>
+            <Icon name={card.icon} size={56} />
+          </span>
+          <h2 id="k-intro-t" className="k-intro-t k-disp" key={`t${step}`}>
+            {card.title}
+          </h2>
+          <p className="k-intro-d" key={`d${step}`}>
+            {card.desc}
+          </p>
+          <div className="k-intro-dots">
+            {CARDS.map((_, i) => (
+              <button key={i} type="button" className="k-intro-dot" data-active={i === step} onClick={() => setStep(i)} aria-label={`Go to slide ${i + 1}`} />
+            ))}
           </div>
-          <div className="f-intro-text">
-            <h2 className="f-intro-title" key={`title-${step}`}>
-              {cards[step].title}
-            </h2>
-            <p className="f-intro-desc" key={`desc-${step}`}>
-              {cards[step].desc}
-            </p>
+          <div className="k-intro-btns">
+            <button type="button" className="r-btn" data-tone="plain" onClick={finish}>
+              Skip
+            </button>
+            <button type="button" className="r-btn" data-autofocus onClick={() => (last ? finish() : setStep(step + 1))}>
+              {last ? 'Done' : 'Next'}
+            </button>
           </div>
         </div>
-
-        <div className="f-intro-dots">
-          {cards.map((_, i) => (
-            <button
-              key={i}
-              className="f-intro-dot"
-              data-active={i === step}
-              onClick={() => setStep(i)}
-              aria-label={`Go to slide ${i + 1}`}
-              type="button"
-            />
-          ))}
-        </div>
-
-        <div className="f-intro-buttons">
-          <Button
-            variant="default"
-            size="md"
-            onClick={handleSkip}
-            fullWidth
-          >
-            Skip
-          </Button>
-          <Button
-            size="md"
-            onClick={handleNext}
-            fullWidth
-          >
-            {step === cards.length - 1 ? 'Done' : 'Next'}
-          </Button>
-        </div>
-      </div>
-    </StickerCard>
+      </FocusTrap>
+    </div>
   )
 }

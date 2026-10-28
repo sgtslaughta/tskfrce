@@ -1,0 +1,26 @@
+/* Kid Customize (Locker): a Me sub-view in the kid shell, in each age mode's card style (see kid-rewards.css .me-card). */
+.lk-view { display: flex; flex-direction: column; gap: 20px; }
+.lk-h { margin: 0; font-size: 34px; font-weight: 700; }
+.lk-slots { display: flex; flex-wrap: wrap; gap: 8px; }
+.lk-slot, .lk-item {
+  font: inherit; font-weight: 700; color: var(--k-ink); background: var(--k-card); border: 2px solid var(--k-line); cursor: pointer;
+}
+.lk-slot { font-size: 16px; min-height: 44px; padding: 0 16px; border-radius: 999px; }
+.lk-slot[aria-pressed='true'], .lk-item[aria-pressed='true'] { background: var(--k-sun); color: var(--k-navy); border-color: var(--k-navy); }
+.lk-items { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.lk-item { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 64px; padding: 8px; border-radius: 14px; font-size: 16px; text-align: center; overflow-wrap: anywhere; }
+.lk-item[data-locked]:not([aria-pressed='true']) { background: var(--k-soft); color: var(--k-sub); }
+.lk-item small { display: inline-flex; align-items: center; gap: 2px; font-size: 13px; font-weight: 700; }
+.lk-item small .ms { font-size: 14px; }
+.lk-acts { display: flex; gap: 12px; flex-wrap: wrap; }
+.lk-acts .r-btn { width: auto; flex: 1 1 140px; }
+.lk-slot:focus-visible, .lk-item:focus-visible { outline: 3px solid var(--k-sun); outline-offset: 2px; }
+.k-app[data-mode='little'] .me-card .lk-acts .r-btn:disabled { background: var(--k-soft); box-shadow: none; }
+.k-app[data-mode='little'] .lk-h { font-size: 40px; }
+.k-app[data-mode='little'] .lk-slot { min-height: 56px; font-size: 20px; }
+.k-app[data-mode='little'] .lk-item { min-height: 88px; font-size: 20px; border-width: 3px; border-radius: 20px; }
+.k-app[data-mode='teen'] .lk-h { font-size: 26px; }
+.k-app[data-mode='teen'] .lk-slot, .k-app[data-mode='teen'] .lk-item { border-width: 1px; font-size: 14px; }
+.k-app[data-mode='teen'] .lk-slot { min-height: 40px; border-radius: 10px; }
+.k-app[data-mode='teen'] .lk-item { min-height: 52px; border-radius: 10px; }
+@media (max-width: 599px) { .lk-h { font-size: 28px; } .lk-items { grid-template-columns: repeat(2, minmax(0, 1fr)); } }

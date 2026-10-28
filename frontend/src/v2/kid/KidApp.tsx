@@ -7,6 +7,7 @@ import { useMarkSeen } from '../hooks/useKid'
 import { askOnFirstClick, useOsNotify } from '../osNotify'
 import type { KidToday } from '../types'
 import { KidAlerts } from './KidAlerts'
+import { Locker } from './Locker'
 import { tally } from './kidChips'
 import { KidNav, type KidTab } from './KidNav'
 import { MePage } from './MePage'
@@ -26,6 +27,9 @@ export interface KidAppProps {
   preview: boolean
   onExit: () => void
   onLocker: () => void
+  /** Customize open (a Me sub-view) */
+  lockerOpen?: boolean
+  onLockerClose?: () => void
   canSwitch: boolean
   done: { mutate: (id: number) => void; isPending: boolean; variables?: number }
   /** shown above the chores (first-visit intro) */
@@ -33,8 +37,10 @@ export interface KidAppProps {
 }
 
 /** The kid app: full-width shell, age-mode nav, and the Chores / Rewards / Alerts / Me tabs. */
-export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canSwitch, done, children }: KidAppProps) {
-  const [tab, setTab] = useState<KidTab>('chores')
+export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, lockerOpen = false, onLockerClose, canSwitch, done, children }: KidAppProps) {
+  const [chosen, setTab] = useState<KidTab>('chores')
+  const showLocker = lockerOpen && !!d.progress
+  const tab = showLocker ? 'me' : chosen
   const [focusId, setFocusId] = useState<number | null>(null)
   const mode = d.age_group === 'little' || d.age_group === 'teen' ? d.age_group : 'kid'
   const seen = useMarkSeen()
@@ -63,13 +69,16 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canS
   }
   const onTab = (t: KidTab) => {
     setFocusId(null)
+    onLockerClose?.()
     if (t === 'chat' && chat) openChatList() // the event above switches the tab
     else setTab(t)
   }
   const elsewhere = <p className="k-hint k-elsewhere">{`Alerts and chat show on ${name}'s own screen.`}</p>
 
   let body: ReactNode
-  if (tab === 'rewards')
+  if (showLocker && d.progress)
+    body = <Locker name={name} avatar={avatar} level={d.progress.level} title={d.progress.title} onClose={() => onLockerClose?.()} />
+  else if (tab === 'rewards')
     body = (
       <RewardsSection onExpired={onExit} mode={mode} />
     )
@@ -111,6 +120,7 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canS
         </div>
         {chat && (
           <div className="k-inner k-chatpane" hidden={tab !== 'chat'}>
+            <h1 className="k-sr">Chat</h1>
             <ChatDock kid inline meId={kidId ?? null} />
           </div>
         )}

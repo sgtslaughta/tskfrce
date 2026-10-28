@@ -13,7 +13,6 @@ import { AwardOverlay } from './AwardOverlay'
 import { KidApp } from './KidApp'
 import { KidIntroSwipe } from './KidIntroSwipe'
 import { KidPicker } from './KidPicker'
-import { Locker } from './Locker'
 import { PinPad } from './PinPad'
 
 type K = KidWhoami['kids'][number]
@@ -47,28 +46,16 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
   const d = today.data
   if (!d && today.isError)
     return (
-      <Narrow>
+      <Gate>
         <Msg>{CANT_REACH}</Msg>
         <KBtn onClick={() => today.refetch()}>Retry</KBtn>
-      </Narrow>
+      </Gate>
     )
   if (!d)
     return (
-      <Narrow>
+      <Gate>
         <Msg>Loading…</Msg>
-      </Narrow>
-    )
-  if (lockerOpen && d.progress)
-    return (
-      <Narrow wide>
-        <Locker
-          name={name ?? 'You'}
-          avatar={avatar ?? null}
-          level={d.progress.level}
-          title={d.progress.title}
-          onClose={() => setLockerOpen(false)}
-        />
-      </Narrow>
+      </Gate>
     )
   return (
     <>
@@ -80,27 +67,17 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
         preview={preview}
         onExit={onExit}
         onLocker={() => setLockerOpen(true)}
+        lockerOpen={lockerOpen}
+        onLockerClose={() => setLockerOpen(false)}
         canSwitch={canSwitch}
         done={done}
       >
-        {!d.locked && !introComplete && !preview && <KidIntroSwipe onComplete={() => setIntroComplete(true)} />}
+        {!d.locked && !introComplete && !preview && <KidIntroSwipe kidId={kidId} onComplete={() => setIntroComplete(true)} />}
       </KidApp>
       {!preview && <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />}
     </>
   )
 }
-
-/** Centred column for the loading and locker screens. */
-const Narrow = ({ children, wide }: { children: React.ReactNode; wide?: boolean }) =>
-  wide ? (
-    <main className="f-shell" style={{ minHeight: '100vh' }}>
-      <div className="f-main" style={{ maxWidth: 640 }}>
-        {children}
-      </div>
-    </main>
-  ) : (
-    <Gate>{children}</Gate>
-  )
 
 /** Parent-only read-only look at a kid's screen (/kid?as=<id>), full width like the real one (08 phone 3 bar). */
 function KidPreview({ id }: { id: number }) {
@@ -140,9 +117,9 @@ function PreviewGate({ id }: { id: number }) {
   const { user, isLoading } = useUnifiedAuth()
   if (isLoading)
     return (
-      <Narrow>
+      <Gate>
         <Msg>Loading…</Msg>
-      </Narrow>
+      </Gate>
     )
   return user?.role === 'parent' ? <KidPreview id={id} /> : <KidScreen />
 }

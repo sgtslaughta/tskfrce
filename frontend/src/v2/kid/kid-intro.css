@@ -1,126 +1,17 @@
-/**
- * @fileoverview Kid first-login intro swipe styles
- * 3-card fridge-style intro with keyboard accessibility
- */
-
-.f-intro-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 32px;
-  padding: 24px;
-  min-height: 420px;
-  text-align: center;
+/* Kid first-visit intro: a centred sheet in the kid look (--k-* tokens, 2px ink border, hard shadow). */
+.k-intro-back { position: fixed; inset: 0; z-index: 300; display: grid; place-items: center; padding: 16px; background: rgba(20, 26, 46, 0.6); }
+.k-intro {
+  width: min(440px, 100%); display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; padding: 28px 22px 22px;
+  background: var(--k-card); color: var(--k-ink); border: 2px solid var(--k-ink); border-radius: 20px; box-shadow: var(--k-shadow);
 }
-
-.f-intro-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-  flex: 1;
-  justify-content: center;
-}
-
-.f-intro-icon {
-  font-size: 80px;
-  color: var(--f-sun);
-  animation: f-intro-bounce-in 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .f-intro-icon {
-    animation: none;
-  }
-}
-
-.f-intro-text {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.f-intro-title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--f-ink);
-  font-family: var(--font-display), 'Space Grotesk', system-ui, sans-serif;
-  animation: f-intro-fade-in 200ms ease-out 50ms backwards;
-}
-
-.f-intro-desc {
-  margin: 0;
-  font-size: 16px;
-  color: var(--f-sub);
-  animation: f-intro-fade-in 200ms ease-out 100ms backwards;
-}
-
-.f-intro-dots {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-  margin: 8px 0;
-}
-
-.f-intro-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-  background-color: var(--f-mute);
-  transition: background-color 150ms ease-out;
-  padding: 0;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .f-intro-dot {
-    transition: none;
-  }
-}
-
-.f-intro-dot[data-active='true'] {
-  background-color: var(--f-sun);
-}
-
-.f-intro-dot:focus-visible {
-  outline: 2px solid var(--f-sun);
-  outline-offset: 2px;
-}
-
-.f-intro-buttons {
-  display: flex;
-  gap: 12px;
-  width: 100%;
-  margin-top: auto;
-}
-
-.f-intro-buttons button {
-  flex: 1;
-  min-height: 44px;
-}
-
-/* Animations */
-@keyframes f-intro-bounce-in {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes f-intro-fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+.k-intro-ic { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; background: var(--k-sun); color: var(--k-navy); border: 3px solid var(--k-ink); animation: k-intro-pop 200ms ease-out; }
+.k-intro-t { margin: 0; font-size: 28px; font-weight: 700; }
+.k-intro-d { margin: 0; font-size: 18px; font-weight: 600; color: var(--k-sub); min-height: 3.2em; }
+.k-intro-dots { display: flex; gap: 10px; padding: 4px 0; }
+.k-intro-dot { width: 14px; height: 14px; padding: 0; border-radius: 50%; cursor: pointer; background: var(--k-line); border: 2px solid var(--k-sub); }
+.k-intro-dot[data-active='true'] { background: var(--k-sun); border-color: var(--k-ink); }
+.k-intro-dot:focus-visible { outline: 3px solid var(--k-sun); outline-offset: 2px; }
+.k-intro-btns { display: flex; gap: 12px; width: 100%; }
+.k-intro-btns .r-btn { flex: 1; width: auto; }
+@keyframes k-intro-pop { from { opacity: 0; transform: scale(0.8); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .k-intro-ic { animation: none; } }

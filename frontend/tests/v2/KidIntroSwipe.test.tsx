@@ -26,6 +26,7 @@ describe('KidIntroSwipe', () => {
   beforeEach(() => {
     state = { ready: true, dismissed: new Set() }
     dismiss.mockClear()
+    localStorage.clear()
   })
 
   test('walks three cards, Done dismisses on the box and completes', async () => {
@@ -58,6 +59,24 @@ describe('KidIntroSwipe', () => {
     expect(screen.queryByTestId('kid-intro-swipe')).not.toBeInTheDocument()
     state = { ready: false, dismissed: new Set() }
     show()
+    expect(screen.queryByTestId('kid-intro-swipe')).not.toBeInTheDocument()
+  })
+
+  test('Skip also remembers in this browser, so a failed save does not bring it back', async () => {
+    localStorage.clear()
+    const first = render(
+      <MantineProvider>
+        <KidIntroSwipe kidId={4} onComplete={() => {}} />
+      </MantineProvider>,
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Skip' }))
+    expect(localStorage.getItem('tskfrce.intro.4')).toBe('1')
+    first.unmount()
+    render(
+      <MantineProvider>
+        <KidIntroSwipe kidId={4} onComplete={() => {}} />
+      </MantineProvider>,
+    )
     expect(screen.queryByTestId('kid-intro-swipe')).not.toBeInTheDocument()
   })
 })
