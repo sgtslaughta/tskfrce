@@ -25,12 +25,21 @@ BAD_EVENTS = "Pick events from the list."
 NO_PLACE = "That place doesn't exist."
 
 
+HOST_SCHEMES = {
+    f"{n}{s}"
+    for n in ("mailto", "json", "xml", "form", "ntfy", "matrix", "gotify")
+    for s in ("", "s")
+}
+
+
 def mask(url: str) -> str:
     if "://" not in url:
         return "••••"
     scheme, rest = url.split("://", 1)
-    # tokens sit right after the scheme (tgram, discord): show only a host that follows credentials
-    host = rest.rsplit("@", 1)[1].split("/")[0] if "@" in rest else ""
+    # tokens can sit before or after the "@" (tgram, discord, pover): show only a real host
+    host = ""
+    if scheme.lower() in HOST_SCHEMES and "@" in rest:
+        host = rest.rsplit("@", 1)[1].split("/")[0]
     return f"{scheme}://{host}••••"[:80]
 
 

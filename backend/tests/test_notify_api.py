@@ -11,6 +11,9 @@ def _mk(client, h, **kw):
 def test_mask():
     assert mask("discord://abcdefgh/xyz") == "discord://••••"
     assert mask("mailto://me:pw@gmail.com/x") == "mailto://gmail.com••••"
+    for secret in ("userkey", "apptoken123"):  # a secret can follow the @ (Pushover)
+        assert secret not in mask("pover://userkey@apptoken123")
+    assert mask("pover://userkey@apptoken123") == "pover://••••"
     assert mask("nothing") == "••••"
 
 
