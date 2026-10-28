@@ -6,12 +6,13 @@ import { useRunDetail } from '../hooks/useChores'
 import { useApproveChore, useMarkDone, useMarkNotDone, useSendBack } from '../hooks/useToday'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { Icon } from '../parent/Icon'
+import { Skeleton } from '../parent/states'
 import { errorText } from '../errorText'
 import { toastFail, toastOk, withUndo } from '../notify'
 import { Chip } from '../parent/Chip'
 import { ThreadView } from '../chat/ThreadView'
 import { claimChat, openChat, type ChatReply } from '../chat/dock'
-import { useAuthImage } from './PhotoViewer'
+import { PhotoViewer, useAuthImage } from './PhotoViewer'
 import { MoveSkip } from './ChoreNote'
 import { DeductForm } from './DeductForm'
 import { useClock, useNow } from './useClock'
@@ -32,12 +33,13 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
   const clock = useClock()
   const now = useNow()
   const meId = Number(useUnifiedAuth().user?.id) || null
-  const isMobile = useMediaQuery('(max-width: 768px)')
+  const isMobile = useMediaQuery('(max-width: 767px)')
   const [chat, setChat] = useState(false)
   const [reply, setReply] = useState<{ to?: ChatReply; n: number }>({ n: 0 }) // n remounts the composer per reply
   const [ded, setDed] = useState(false)
   const [back, setBack] = useState(false)
   const [note, setNote] = useState('')
+  const [photo, setPhoto] = useState<number | null>(null) // index of the enlarged proof photo
   const [approving, setApproving] = useState(false)
   const sending = useRef(false) // synchronous guard: a double click or Enter-mash fires before React re-renders
   // openChat for this chore (Reply buttons, step and photo replies) lands in the column beside it
@@ -62,7 +64,12 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
         </div>
       </div>
     )
-  if (!run) return null
+  if (!run)
+    return (
+      <div className="pt-open">
+        <Skeleton rows={2} />
+      </div>
+    )
   const name = kid.name ?? 'your kid'
   const ref = String(chore.id)
   const thread = <ThreadView key={reply.n} kind="chore" refId={ref} meId={meId} bare reply={reply.to} onReplySent={() => setReply((r) => ({ ...r, to: undefined }))} />
@@ -118,7 +125,9 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
           <div className="pt-photos">
             {run.photos.map((p, i) => (
               <span key={p.id} className="pt-photo">
-                <AuthImg path={p.thumb_url} alt={`Photo for ${chore.title}`} />
+                <button type="button" aria-label={`Open photo ${i + 1}`} onClick={() => setPhoto(i)}>
+                  <AuthImg path={p.thumb_url} alt={`Photo for ${chore.title}`} />
+                </button>
                 <button
                   type="button"
                   className="pt-rp"
@@ -211,6 +220,7 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
           <form
             className="pt-ded"
             data-tone="ink"
+            onKeyDown={(e) => e.key === 'Escape' && setBack(false)}
             onSubmit={(e) => {
               e.preventDefault()
               if (sending.current || !note.trim()) return
@@ -268,6 +278,12 @@ export function ChoreOpen({ chore, kid }: { chore: TodayChore; kid: TodayKid }) 
           </div>
         )
       )}
+      <PhotoViewer
+        item={photo === null ? null : { type: 'chore', id: chore.id, kid_id: kid.id, kid_name: kid.name, title: chore.title }}
+        photos={run.photos}
+        start={photo ?? 0}
+        onClose={() => setPhoto(null)}
+      />
     </div>
   )
 }

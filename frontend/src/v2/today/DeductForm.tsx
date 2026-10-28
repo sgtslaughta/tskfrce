@@ -36,6 +36,7 @@ export function DeductForm({
   return (
     <form
       className="pt-ded"
+      onKeyDown={(e) => e.key === 'Escape' && onDone()}
       onSubmit={(e) => {
         e.preventDefault()
         if (sending.current || !ok) return

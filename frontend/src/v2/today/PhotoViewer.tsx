@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { openChat } from "@/v2/chat/dock";
-import { Button, Modal, Textarea } from "@mantine/core";
+import { Modal, Textarea } from "@mantine/core";
 import { useMediaQuery } from "@mantine/hooks";
 import { tokenManager } from "@/services/tokenManager";
 import { kidToken } from "../api";
@@ -32,26 +32,40 @@ export function useAuthImage(path: string | null | undefined) {
   return src;
 }
 
-/** Full-screen (phones) photo with Approve / Send back; sending back needs a note. */
+export interface ViewerPhoto {
+  id: number;
+  thumb_url: string;
+}
+
+/** Full-screen (phones) photo viewer: pages through `photos`; with onApprove / onSendBack it also decides (sending back needs a note). */
 export function PhotoViewer({
   item,
+  photos,
+  start = 0,
   onClose,
   onApprove,
   onSendBack,
 }: {
   item: NeedsItem | null;
+  /** All photos of the run; defaults to the item's own thumbnail. */
+  photos?: ViewerPhoto[];
+  start?: number;
   onClose: () => void;
-  onApprove: (id: number) => void;
-  onSendBack: (id: number, note: string) => void;
+  onApprove?: (id: number) => void;
+  onSendBack?: (id: number, note: string) => void;
 }) {
   const [note, setNote] = useState("");
-  const phone = useMediaQuery("(max-width: 768px)");
-  const src = useAuthImage(item?.thumb_url?.replace(/\/thumb$/, ""));
-  const proofId = Number(item?.thumb_url?.match(/chore-photos\/(\d+)/)?.[1]) || undefined;
+  const [idx, setIdx] = useState(start);
+  const phone = useMediaQuery("(max-width: 767px)");
+  const list = photos ?? (item?.thumb_url ? [{ id: Number(item.thumb_url.match(/chore-photos\/(\d+)/)?.[1]) || 0, thumb_url: item.thumb_url }] : []);
+  const shown = list[Math.min(idx, list.length - 1)];
+  const src = useAuthImage(shown?.thumb_url.replace(/\/thumb$/, ""));
+  useEffect(() => setIdx(start), [item?.id, start]);
   const close = () => {
     setNote("");
     onClose();
   };
+  const step = (d: number) => setIdx((i) => (i + d + list.length) % list.length);
   return (
     <Modal
       opened={!!item}
@@ -59,49 +73,76 @@ export function PhotoViewer({
       zIndex={400}
       fullScreen={!!phone}
       transitionProps={{ duration: 0 }}
+      classNames={{ title: "pt-pv-title" }}
       title={item ? `${item.kid_name ?? "A kid"} · ${item.title}` : ""}
     >
       {src && (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={src} alt={item?.title ?? "Chore photo"} style={{ width: "100%", borderRadius: 6 }} />
       )}
-      <Textarea
-        label="Note for sending back"
-        value={note}
-        onChange={(e) => setNote(e.currentTarget.value)}
-        maxLength={500}
-        mt="sm"
-      />
-      <div className="f-row" style={{ marginTop: 12 }}>
-        <Button
-          onClick={() => {
-            if (item) onApprove(item.id);
-            close();
-          }}
-        >
-          Approve
-        </Button>
-        <Button
-          variant="default"
-          disabled={!note.trim()}
-          onClick={() => {
-            if (item) onSendBack(item.id, note.trim());
-            close();
-          }}
-        >
-          Send back
-        </Button>
-        {item && (
-          <Button
-            variant="subtle"
-            leftSection={<Icon name="chat" size={17} />}
+      {list.length > 1 && (
+        <div className="pt-pv-pager">
+          <button type="button" className="p-btn" aria-label="Previous photo" onClick={() => step(-1)}>
+            <Icon name="chevron_left" size={17} />
+          </button>
+          <span aria-live="polite">
+            Photo {idx + 1} of {list.length}
+          </span>
+          <button type="button" className="p-btn" aria-label="Next photo" onClick={() => step(1)}>
+            <Icon name="chevron_right" size={17} />
+          </button>
+        </div>
+      )}
+      {onSendBack && (
+        <Textarea
+          label="Note for sending back"
+          value={note}
+          onChange={(e) => setNote(e.currentTarget.value)}
+          maxLength={500}
+          mt="sm"
+        />
+      )}
+      <div className="pt-pv-acts">
+        {onApprove && (
+          <button
+            type="button"
+            className="p-btn"
+            data-variant="accent"
             onClick={() => {
-              openChat("chore", String(item.id), { proof_photo_id: proofId, label: "Photo" });
+              if (item) onApprove(item.id);
               close();
             }}
           >
+            <Icon name="check" size={16} />
+            Approve
+          </button>
+        )}
+        {onSendBack && (
+          <button
+            type="button"
+            className="p-btn"
+            disabled={!note.trim()}
+            onClick={() => {
+              if (item) onSendBack(item.id, note.trim());
+              close();
+            }}
+          >
+            <Icon name="undo" size={16} />
+            Send back
+          </button>
+        )}
+        {item && (
+          <button
+            type="button"
+            className="p-btn"
+            onClick={() => {
+              openChat("chore", String(item.id), { proof_photo_id: shown?.id || undefined, label: `Photo ${idx + 1}` });
+              close();
+            }}
+          >
+            <Icon name="chat" size={16} />
             Reply
-          </Button>
+          </button>
         )}
       </div>
     </Modal>

@@ -10,7 +10,7 @@ import * as dock from '@/v2/chat/dock'
 import { ChoreOpen } from '@/v2/today/ChoreOpen'
 import type { RunDetail, TodayChore, TodayKid } from '@/v2/types'
 
-jest.mock('@/v2/api', () => ({ api: jest.fn() }))
+jest.mock('@/v2/api', () => ({ api: jest.fn(), kidToken: () => null }))
 jest.mock('@mantine/notifications', () => ({ notifications: { show: jest.fn(), hide: jest.fn() } }))
 // openChat stays real (the open chore claims it) but records its calls
 jest.mock('@/v2/chat/dock', () => {
@@ -54,11 +54,11 @@ beforeEach(() => {
   })
 })
 
-const open = () =>
+const open = (c: TodayChore = chore) =>
   render(
     <QueryClientProvider client={new QueryClient()}>
       <MantineProvider>
-        <ChoreOpen chore={chore} kid={kid} />
+        <ChoreOpen chore={c} kid={kid} />
       </MantineProvider>
     </QueryClientProvider>,
   )
@@ -170,5 +170,31 @@ describe('ChoreOpen', () => {
     } finally {
       jest.useRealTimers()
     }
+  })
+
+  test('while the details load a placeholder shows', async () => {
+    apiMock.mockImplementation(() => new Promise(() => undefined))
+    open()
+    expect(await screen.findByRole('status', { name: 'Loading' })).toBeInTheDocument()
+  })
+
+  test('Esc closes the Send back form', async () => {
+    open({ ...chore, state: 'needs_you' })
+    await userEvent.click(await screen.findByRole('button', { name: 'Send back' }))
+    await userEvent.type(screen.getByLabelText('Note for sending back'), '{Escape}')
+    expect(screen.queryByLabelText('Note for sending back')).toBeNull()
+  })
+
+  test('proof photos open in a viewer that pages through all of them', async () => {
+    global.fetch = jest.fn(() => Promise.reject(new Error('x'))) as never
+    detail = run({ photos: [{ id: 3, thumb_url: '/chore-photos/3/thumb' }, { id: 4, thumb_url: '/chore-photos/4/thumb' }] })
+    open()
+    await userEvent.click(await screen.findByRole('button', { name: 'Open photo 2' }))
+    expect(await screen.findByText('Photo 2 of 2')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Next photo' }))
+    expect(screen.getByText('Photo 1 of 2')).toBeInTheDocument()
+    expect(global.fetch).toHaveBeenCalledWith('/api/proxy/chore-photos/3', expect.anything())
+    await userEvent.click(screen.getByRole('button', { name: 'Reply' }))
+    expect(dock.openChat).toHaveBeenCalledWith('chore', '11', { proof_photo_id: 3, label: 'Photo 1' })
   })
 })

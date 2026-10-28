@@ -102,6 +102,10 @@
   cursor: pointer;
 }
 
+[data-look='parent'] .pt-photo > button:first-child { display: block; padding: 0; border: 0; background: none; cursor: zoom-in; border-radius: 10px; }
+.pt-pv-title { line-height: 1.3; font-weight: 700; color: var(--p-ink); }
+.pt-pv-pager { display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 8px; font-size: 13px; }
+.pt-pv-acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 [data-look='parent'] .pt-photos { display: flex; gap: 8px; flex-wrap: wrap; }
 [data-look='parent'] .pt-photos img { width: 80px; height: 60px; object-fit: cover; border-radius: 10px; border: 1px solid var(--p-line); }
 [data-look='parent'] .pt-photo { position: relative; display: block; }
@@ -185,7 +189,7 @@
 [data-look='parent'] .pt-chat-head button { border: 0; background: none; color: var(--p-sub); cursor: pointer; display: grid; }
 [data-look='parent'] .pt-chat > :last-child { flex: 1; padding: 0 12px 12px; }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   [data-look='parent'] .pt-head h2 { font-size: 24px; }
   [data-look='parent'] .pt-row { padding: 12px; gap: 10px; }
   [data-look='parent'] .pt-pts,
