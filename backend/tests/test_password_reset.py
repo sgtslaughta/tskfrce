@@ -116,3 +116,22 @@ def _hash_matches(db, token):
 
     h = hashlib.sha256(token.encode()).hexdigest()
     return db.query(PasswordReset).filter_by(token_hash=h).count() == 1
+
+
+def test_last_active_stamped_on_login_and_throttled(client, db, parent, parent_headers):
+    from datetime import UTC, datetime, timedelta
+
+    assert parent.last_active_at is None
+    assert client.get("/api/v1/parents", headers=parent_headers).status_code == 200
+    db.refresh(parent)
+    first = parent.last_active_at
+    assert first is not None
+    client.get("/api/v1/parents", headers=parent_headers)
+    db.refresh(parent)
+    assert parent.last_active_at == first  # within 5 min: no new write
+    parent.last_active_at = datetime.now(UTC).replace(tzinfo=None) - timedelta(minutes=6)
+    db.commit()
+    rows = client.get("/api/v1/parents", headers=parent_headers).json()
+    assert rows[0]["last_active_at"].endswith("Z")
+    db.refresh(parent)
+    assert parent.last_active_at > datetime.now(UTC).replace(tzinfo=None) - timedelta(minutes=1)

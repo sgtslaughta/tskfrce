@@ -1,10 +1,13 @@
 import { useState, type ReactNode } from 'react'
 import { Input, NativeSelect, NumberInput, PasswordInput, SegmentedControl, Switch, TextInput } from '@mantine/core'
+import { useBlocker } from '@/v2/hooks/useDevices'
 import { usePatchFamily } from '@/v2/hooks/useFamily'
 import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import type { Family } from '@/v2/types'
 import { toastFail, toastOk } from '../notify'
 import { PaneCard, PaneHead } from './PaneParts'
+import { Chip } from '@/v2/parent/Chip'
+import { ago } from './settingsMeta'
 
 function zones(current: string): string[] {
   const all = (Intl as unknown as { supportedValuesOf?: (k: string) => string[] }).supportedValuesOf?.('timeZone') ?? []
@@ -67,6 +70,20 @@ const Switchy = ({ label, checked, onChange }: { label: string; checked: boolean
   </div>
 )
 
+/** Home box heartbeat as a status row (mockup: Network card). */
+function BoxRow() {
+  const box = useBlocker().data
+  if (!box) return null
+  return (
+    <div className="pn-kv pn-box">
+      <span>Home box</span>
+      <Chip tone={box.online ? 'acc' : 'amb'} icon={box.online ? 'check_circle' : 'router'}>
+        {box.online ? 'Healthy' : `Offline — ${box.last_seen ? `last seen ${ago(box.last_seen)}` : 'never seen'}`}
+      </Chip>
+    </div>
+  )
+}
+
 export function FamilyCard({ fam }: { fam: Family }) {
   return (
     <Pane title="Family" sub="The basics for your household." fam={fam}>
@@ -111,6 +128,7 @@ export function FamilyCard({ fam }: { fam: Family }) {
               onChange={(v) => set({ new_devices_blocked: v })}
             />
             <p className="pn-help pn-note">New phones and laptops stay paused until you give them an owner.</p>
+            <BoxRow />
           </PaneCard>
         </>
       )}

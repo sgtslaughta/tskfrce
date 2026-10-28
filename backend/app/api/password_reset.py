@@ -11,6 +11,7 @@ from app.core.database import get_db_session
 from app.core.ratelimit import limit
 from app.models.family import FamilySettings
 from app.models.user import User, UserRole
+from app.schemas.lock import utc_z
 from app.services.password_reset import EXPIRED, create_reset, redeem_reset, reset_valid
 
 router = APIRouter(tags=["password-reset"])
@@ -45,6 +46,7 @@ def list_parents(
             "full_name": u.full_name,
             "is_me": u.id == me.id,
             "is_owner": u.id == owner,
+            "last_active_at": utc_z(u.last_active_at),
         }
         for u in rows
     ]

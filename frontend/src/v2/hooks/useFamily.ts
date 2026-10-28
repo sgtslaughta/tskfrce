@@ -49,6 +49,7 @@ export interface ParentRow {
   full_name: string | null
   is_me: boolean
   is_owner: boolean
+  last_active_at: string | null
 }
 
 export const useParents = () => useQuery({ queryKey: ['parents'], queryFn: () => api<ParentRow[]>('/parents') })

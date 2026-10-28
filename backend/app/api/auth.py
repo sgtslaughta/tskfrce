@@ -10,7 +10,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_current_user, touch_active
 from app.core.auth import AuthService
 from app.core.client_ip import client_ip
 from app.core.config import settings
@@ -55,6 +55,8 @@ async def login(login_data: LoginRequest, request: Request, db: Session = Depend
             detail="That username and password don't match.",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+    touch_active(db, user)
 
     # Create access token
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)

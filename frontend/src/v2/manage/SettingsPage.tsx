@@ -5,10 +5,13 @@ import { useRouter } from 'next/router'
 import { ParentShell } from '@/v2/parent/ParentShell'
 import { ErrorPanel, Skeleton } from '@/v2/parent/states'
 import { RequireParent } from '@/v2/components/RequireParent'
-import { useFamily, usePatchFamily } from '@/v2/hooks/useFamily'
+import { useBlocker, useDevices } from '@/v2/hooks/useDevices'
+import { usePlaces } from '@/v2/hooks/useNotify'
+import { useFamily, useParents, usePatchFamily } from '@/v2/hooks/useFamily'
 import { FamilyCard, GifsCard } from './FamilyCards'
 import { HoursSection } from './HoursSection'
 import { ParentsPane } from './ParentsPane'
+import { boxLine, countLine } from './settingsMeta'
 import { SettingsList, type SettingsSection } from './SettingsList'
 import { KidPushPane } from './KidPushPane'
 import { AppearancePane } from './AppearancePane'
@@ -32,6 +35,17 @@ function SettingsBody() {
   const { query, replace } = useRouter()
   const family = useFamily()
   const patch = usePatchFamily()
+  const parents = useParents().data
+  const devices = useDevices().data
+  const places = usePlaces().data
+  const box = boxLine(useBlocker().data, Date.now(), true)
+  const count = (a: unknown[] | undefined) => (Array.isArray(a) ? a.length : undefined)
+  const live: Partial<Record<S, string | undefined>> = {
+    family: [box, countLine(count(devices), 'device')].filter(Boolean).join(' · ') || undefined,
+    notifications: count(places) ? `${countLine(count(places), 'place')} connected` : undefined,
+    parents: countLine(count(parents), 'parent'),
+  }
+  const sections = SETTINGS_SECTIONS.map((s) => ({ ...s, description: live[s.id] ?? s.description }))
   const want = first(query.section)
   // Screen time moved to Kids & chores → Rewards (spec §11 erratum 1)
   useEffect(() => {
@@ -43,7 +57,7 @@ function SettingsBody() {
   return (
     <ParentShell
       title="Settings"
-      list={<SettingsList sections={SETTINGS_SECTIONS} section={small && !valid ? undefined : section} bare={small} />}
+      list={<SettingsList sections={sections} section={small && !valid ? undefined : section} bare={small} />}
       phone={valid ? <Link href="/settings" className="p-back-link">← Settings</Link> : undefined}
     >
       {family.isError && <ErrorPanel kind="unreachable" error={family.error} onRetry={() => family.refetch()} />}

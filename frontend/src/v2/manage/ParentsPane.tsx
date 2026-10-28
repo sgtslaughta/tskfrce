@@ -5,6 +5,7 @@ import { useSingleFlight } from '@/v2/hooks/useSingleFlight'
 import { Icon } from '@/v2/parent/Icon'
 import { toastFail } from '../notify'
 import { PaneCard, PaneHead } from './PaneParts'
+import { lastActive } from './settingsMeta'
 
 const left = (s: number) => (s >= 3600 ? `${Math.ceil(s / 3600)} h` : `${Math.max(1, Math.ceil(s / 60))} min`)
 
@@ -82,7 +83,7 @@ export function ParentsPane() {
               <div className="pn-t2">
                 {name}
                 {p.is_me && ' (you)'}
-                <small>@{p.username}</small>
+                <small>{lastActive(p.last_active_at)}</small>
               </div>
               {p.is_owner && <span className="p-chip" data-tone="acc">Owner</span>}
               {!p.is_me && (

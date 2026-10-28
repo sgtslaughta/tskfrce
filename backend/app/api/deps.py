@@ -5,6 +5,8 @@ Common dependencies used across API endpoints including database sessions,
 authentication, and user context management.
 """
 
+from datetime import UTC, datetime, timedelta
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
@@ -35,6 +37,20 @@ def user_from_token(token: str | None, db: Session) -> User | None:
     return AuthService(db).get_current_user(token) if token else None
 
 
+ACTIVE_EVERY = timedelta(minutes=5)
+
+
+def touch_active(db: Session, user: User) -> None:
+    """Stamp last_active_at, at most once per ACTIVE_EVERY (one cheap write, not one per request)."""
+    now = datetime.now(UTC).replace(tzinfo=None)
+    if user.last_active_at is None or now - user.last_active_at >= ACTIVE_EVERY:
+        # updated_at pinned: this is not an edit of the user
+        db.query(User).filter(User.id == user.id).update(
+            {User.last_active_at: now, User.updated_at: User.updated_at}
+        )
+        db.commit()
+
+
 def get_current_user_from_token(
     token: HTTPAuthorizationCredentials | None = Depends(security), db: Session = Depends(get_db)
 ) -> User:
@@ -42,6 +58,7 @@ def get_current_user_from_token(
     user = user_from_token(token.credentials if token else None, db)
     if user is None:
         raise _unauthorized()
+    touch_active(db, user)
     return user
 
 

@@ -21,12 +21,15 @@ jest.mock('@/v2/components/States', () => ({
 jest.mock('@/v2/hooks/useFamily', () => ({
   useFamily: () => ({ data: mockFamily, isPending: false, isError: false }),
   usePatchFamily: () => ({ mutate: mockPatch, isPending: false }),
+  useParents: () => ({ data: [{}, {}] }),
 }))
 jest.mock('@/v2/hooks/useKids', () => ({
   useKids: () => ({ data: mockKids }),
 }))
 jest.mock('@/v2/hooks/useDevices', () => ({
   useGroups: () => ({ data: mockGroups }),
+  useBlocker: () => ({ data: { online: true, last_seen: null } }),
+  useDevices: () => ({ data: [] }),
 }))
 
 const mockPatch = jest.fn()
