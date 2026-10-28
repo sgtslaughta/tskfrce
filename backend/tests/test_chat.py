@@ -5,7 +5,7 @@ from app.models.chat import MessageReaction, ThreadMessage
 from app.models.chore_extra import ChorePhoto
 from app.models.chores import Chore, ChoreAssignment, ChoreRun, ChoreStep
 from app.models.family import get_family
-from app.models.user import UserRole
+from app.models.user import User, UserRole
 from PIL import Image
 
 from tests.conftest import _headers, _make_user
@@ -460,3 +460,16 @@ def test_kids_own_system_line_is_not_unread_for_them(client, db, parent_headers)
     assert client.get(f"{C}/threads", headers=parent_headers).json()["total"] == 1
     msgs = client.get(f"{C}/threads/chore/{cid}", headers=lh).json()["messages"]
     assert msgs[0]["author_id"] is None
+
+
+def test_new_kid_starts_with_existing_chat_read(client, db, parent_headers):
+    leo, _, _, _, _ = _world(db, client, parent_headers)
+    fam = _tid(client, parent_headers, "family", "family")
+    _say(client, parent_headers, fam, "old news")
+    r = client.post("/api/v1/kids", json={"full_name": "Newbie"}, headers=parent_headers)
+    assert r.status_code == 200, r.text
+    new = db.get(User, r.json()["id"])
+    j = client.get(f"{C}/threads", headers=_headers(db, new)).json()
+    assert j["total"] == 0
+    _say(client, parent_headers, fam, "fresh")
+    assert client.get(f"{C}/threads", headers=_headers(db, new)).json()["total"] == 1

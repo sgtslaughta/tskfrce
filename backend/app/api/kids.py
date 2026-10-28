@@ -79,6 +79,8 @@ def create_kid(body: KidCreate, db: Session = Depends(get_db)):
         age_group=body.age_group or "kid",
     )
     db.add(kid)
+    db.flush()
+    chat.mark_existing_read(db, kid)
     db.commit()
     trigger()
     return _out(kid)

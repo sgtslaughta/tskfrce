@@ -186,6 +186,13 @@ def mark_read(db: Session, thread: Thread, user: User) -> None:
         r.last_read_at = now
 
 
+def mark_existing_read(db: Session, user: User) -> None:
+    """A new user starts with the existing threads they can see already read. Flushes, never commits."""
+    for t in db.query(Thread):
+        if can_access(db, user, t):
+            mark_read(db, t, user)
+
+
 def _title(
     db: Session, t: Thread, names: dict[int, str], chores: dict[int, str] | None = None
 ) -> str:
