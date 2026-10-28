@@ -1,25 +1,18 @@
-import { Button } from '@mantine/core'
 import type { KidWhoami } from '../types'
 
 type K = KidWhoami['kids'][number]
 
-/** Big avatar buttons. Never picks for the kid. */
+/** Big avatar cards in the kid look (kid-gate.css). Never picks for the kid. */
 export function KidPicker({ kids, onPick }: { kids: K[]; onPick: (k: K) => void }) {
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, justifyContent: 'center' }}>
+    <div className="k-picks">
       {kids.map((k) => (
-        <Button
-          key={k.id}
-          variant="default"
-          onClick={() => onPick(k)}
-          style={{ height: 150, width: 150 }}
-          styles={{ label: { flexDirection: 'column', gap: 6, whiteSpace: 'normal' } }}
-        >
-          <span aria-hidden style={{ fontSize: 56, lineHeight: 1 }}>
+        <button key={k.id} type="button" className="k-pick" onClick={() => onPick(k)}>
+          <span aria-hidden className="k-pick-av">
             {k.avatar || '🙂'}
           </span>
-          <span style={{ fontSize: 22 }}>{k.full_name || 'Me'}</span>
-        </Button>
+          <span className="k-pick-nm">{k.full_name || 'Me'}</span>
+        </button>
       ))}
     </div>
   )

@@ -135,6 +135,8 @@ describe('KidApp', () => {
     await userEvent.click(screen.getByRole('button', { name: /t2/ }))
     expect(list).toHaveBeenCalled()
     await waitFor(() => expect(apiMock).toHaveBeenCalledWith('/notifications/2/read', { method: 'POST', kid: true }))
+    expect(screen.getByRole('button', { name: /^Chat/ })).toHaveAttribute('aria-current', 'page') // the chat alert opened the Chat tab
+    await userEvent.click(screen.getByRole('button', { name: /^Alerts/ }))
     await userEvent.click(screen.getByRole('button', { name: /t1/ }))
     expect(screen.getByRole('button', { name: /^Chores/ })).toHaveAttribute('aria-current', 'page')
     expect(screen.getByRole('heading', { level: 1, name: 'Dishes' })).toBeInTheDocument() // the alert's chore is open

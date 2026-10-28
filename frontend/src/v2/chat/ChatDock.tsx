@@ -6,7 +6,7 @@ import { refOf, useThread, useThreads, validRef, type ThreadKind } from '@/v2/ho
 import { OPEN_CHAT_EVENT, OPEN_CHAT_LIST_EVENT, type ChatReply } from './dock'
 import { LoadError, LoadingCards } from '@/v2/components/States'
 import { ErrorPanel, Skeleton } from '@/v2/parent/states'
-import { ThreadList } from './ThreadList'
+import { shownTitle, ThreadList } from './ThreadList'
 import { ThreadView } from './ThreadView'
 
 type Pick = { kind: ThreadKind; ref: string }
@@ -31,8 +31,8 @@ function save(open: boolean, pick: Pick | null) {
 
 /** Chat opened by openChat / openChatList (no launcher: parents use the rail / tab bar, kids their nav).
  *  Parents get a bottom sheet on phones (mockup 04) and a floating panel on desktop; kids a panel. */
-export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: number | null; meName?: string }) {
-  const [open, setOpen] = useState(false)
+export function ChatDock({ kid = false, meId, meName, inline = false }: { kid?: boolean; meId: number | null; meName?: string; inline?: boolean }) {
+  const [open, setOpen] = useState(inline) // inline: always shown, the kid Chat tab hosts it
   const [pick, setPick] = useState<Pick | null>(null)
   const [reply, setReply] = useState<{ to: ChatReply; n: number } | null>(null) // n remounts the composer per request
   const panel = useRef<HTMLDivElement>(null)
@@ -44,9 +44,9 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
   useEffect(() => {
     if (!kid) return
     const s = load()
-    setOpen(s.open)
+    setOpen(inline || s.open)
     setPick(s.pick)
-  }, [kid])
+  }, [kid, inline])
   useEffect(() => {
     const on = (e: Event) => {
       const d = (e as CustomEvent<Pick & { reply?: ChatReply }>).detail
@@ -71,8 +71,8 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
   }, [kid])
   // keep focus inside the panel when it opens or switches thread, so Escape always reaches it
   useEffect(() => {
-    if (open) panel.current?.focus()
-  }, [open, pick])
+    if (open && !inline) panel.current?.focus()
+  }, [open, pick, inline])
 
   const set = (o: boolean, p: Pick | null) => {
     setOpen(o)
@@ -80,11 +80,12 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
     if (p !== pick) setReply(null)
     if (kid) save(o, p)
   }
-  const close = () => set(false, pick)
+  const close = () => set(inline, pick)
   const page = useThread(pick?.kind ?? null, pick?.ref ?? null, kid) // same query as the open ThreadView
   const title =
     pick && threads.data?.threads.find((t) => t.kind === pick.kind && refOf(t) === pick.ref)?.title
 
+  const head = pick ? shownTitle({ kind: pick.kind, title: page.data?.title || title || 'Chat' }, kid) : 'Chat'
   const back = pick && (
     <Button variant="subtle" size="compact-md" aria-label="Back to conversations" onClick={() => set(true, null)}>
       <IconArrowLeft size={18} />
@@ -125,7 +126,7 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
         title={
           <>
             {back}
-            {pick ? page.data?.title || title || 'Chat' : 'Chat'}
+            {head}
             {pick && page.data?.who && <small className="pt-sheet-sub">{page.data.who}</small>}
           </>
         }
@@ -141,10 +142,10 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
     <div
       id="f-chat-dock"
       ref={panel}
-      role="dialog"
+      role={inline ? 'region' : 'dialog'}
       aria-label="Chat"
       tabIndex={-1}
-      className={kid ? 'f-dock k-tok k-chat' : 'f-dock'}
+      className={`f-dock${kid ? ' k-tok k-chat' : ''}${inline ? ' f-dock-inline' : ''}`}
       // kid dock reuses the parent chat layout, with --p-* mapped to kid tokens (chatDock.css)
       data-look={kid ? 'parent' : undefined}
       onKeyDown={(e) => {
@@ -157,12 +158,14 @@ export function ChatDock({ kid = false, meId, meName }: { kid?: boolean; meId: n
       <div className="f-dock-head">
         {back}
         <h2>
-          {pick ? page.data?.title || title || 'Chat' : 'Chat'}
+          {head}
           {pick && page.data?.who && <small className="f-dock-who"> · {page.data.who}</small>}
         </h2>
-        <Button variant="subtle" size="compact-md" aria-label="Close chat" onClick={close}>
-          <IconX size={18} />
-        </Button>
+        {!inline && (
+          <Button variant="subtle" size="compact-md" aria-label="Close chat" onClick={close}>
+            <IconX size={18} />
+          </Button>
+        )}
       </div>
       <div className="f-dock-body">{body}</div>
     </div>

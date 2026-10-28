@@ -8,6 +8,11 @@
 .k-main { flex: 1; min-width: 0; }
 .k-inner { container: k-main / inline-size; max-width: 1280px; margin: 0 auto; padding: 24px 28px 32px; display: flex; flex-direction: column; gap: 20px; }
 @media (max-width: 599px) { .k-inner { padding: 16px 16px 24px; } }
+.k-inner[hidden] { display: none; }
+/* Chat tab: the dock fills the content column like Rewards / Me, one screen tall (bar nav takes 72px) */
+.k-app:has(> .k-nav[data-kind='bar']), .k-app:has(> .k-nav[data-kind='little']) { --k-navh: 72px; }
+.k-chatpane { height: calc(100dvh - var(--k-top, 0px) - var(--k-navh, 0px)); box-sizing: border-box; padding-block: 16px; }
+.k-chatpane .f-dock-inline { position: static; width: auto; max-width: none; height: 100%; max-height: none; animation: none; }
 
 /* nav items (shared) */
 .k-nav { z-index: 20; }
@@ -96,7 +101,7 @@
 
 /* Alerts page */
 .k-alerts-hd { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.k-alist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; max-width: 760px; }
+.k-alist { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
 .k-arow {
   width: 100%; display: flex; align-items: center; gap: 14px; padding: 14px 16px; text-align: left; font: inherit; cursor: pointer;
   color: var(--k-ink); background: var(--k-card); border: 2px solid var(--k-line); border-radius: 16px;

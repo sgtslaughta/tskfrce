@@ -49,6 +49,7 @@ import '../src/v2/kid/kid-app.css';
 import '../src/v2/kid/modes/modes.css';
 import '../src/v2/kid/kid-shell.css';
 import '../src/v2/kid/kid-rewards.css';
+import '../src/v2/kid/kid-gate.css';
 import '../src/v2/components/bell.css';
 import '../src/v2/interactions.css';
 

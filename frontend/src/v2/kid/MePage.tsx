@@ -13,6 +13,7 @@ export function MePage({
   canSwitch,
   onExit,
   kidId,
+  little = false,
 }: {
   name: string
   avatar: string | null
@@ -22,6 +23,7 @@ export function MePage({
   canSwitch: boolean
   onExit: () => void
   kidId?: number | null
+  little?: boolean
 }) {
   return (
     <section className="me-view">
@@ -37,7 +39,7 @@ export function MePage({
           )}
         </div>
       )}
-      <FamilySection meId={kidId} />
+      <FamilySection meId={kidId} little={little} />
       {canSwitch && (
         <button type="button" className="r-btn me-out" data-tone="plain" onClick={onExit}>
           <Icon name="swap_horiz" />

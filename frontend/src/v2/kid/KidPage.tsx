@@ -1,14 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { backFrom } from './viewAs'
 import { useRouter } from 'next/router'
-import { Button } from '@mantine/core'
 import { CANT_REACH } from '../api'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { Icon } from '../parent/Icon'
 import { PreviewProvider, setPreviewName, useAsKid } from '../hooks/usePreview'
-import { AuthBrand } from '../components/AuthBrand'
-import { StickerCard } from '../components/StickerCard'
-import { ChatDock } from '../chat/ChatDock'
 import { useKids } from '../hooks/useKids'
 import { useKidSession, useKidToday, useMarkDone, loginMessage } from '../hooks/useKid'
 import { useLook } from '../parent/useLook'
@@ -22,18 +18,24 @@ import { PinPad } from './PinPad'
 
 type K = KidWhoami['kids'][number]
 
-const Msg = ({ children }: { children: string }) => (
-  <StickerCard>
-    <p className="f-display" style={{ margin: 0, padding: 12, fontSize: 24, textAlign: 'center' }}>
-      {children}
-    </p>
-  </StickerCard>
+const Msg = ({ children }: { children: string }) => <p className="k-gate-msg">{children}</p>
+
+const KBtn = ({ onClick, plain, children }: { onClick: () => void; plain?: boolean; children: string }) => (
+  <button type="button" className="r-btn" data-tone={plain ? 'plain' : undefined} onClick={onClick}>
+    {children}
+  </button>
 )
 
-const SwitchBtn = ({ onClick }: { onClick: () => void }) => (
-  <Button variant="default" size="lg" onClick={onClick}>
-    Not me
-  </Button>
+/** Kid sign-in / status screen: brand, then the content, in the kid look (kid-gate.css). */
+const Gate = ({ children }: { children: React.ReactNode }) => (
+  <main className="k-app k-gate">
+    <div className="k-gate-in">
+      <div className="k-brand">
+        <i aria-hidden>@</i>t@sk4ce
+      </div>
+      {children}
+    </div>
+  </main>
 )
 
 function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; avatar?: string | null; kidId?: number | null; onExit: () => void; canSwitch: boolean }) {
@@ -47,9 +49,7 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
     return (
       <Narrow>
         <Msg>{CANT_REACH}</Msg>
-        <Button size="lg" onClick={() => today.refetch()}>
-          Retry
-        </Button>
+        <KBtn onClick={() => today.refetch()}>Retry</KBtn>
       </Narrow>
     )
   if (!d)
@@ -86,19 +86,21 @@ function Session({ name, avatar, kidId, onExit, canSwitch }: { name?: string; av
         {!d.locked && !introComplete && !preview && <KidIntroSwipe onComplete={() => setIntroComplete(true)} />}
       </KidApp>
       {!preview && <AwardOverlay onExpired={onExit} onLocker={() => setLockerOpen(true)} />}
-      {!preview && d.age_group !== 'little' && <ChatDock kid meId={kidId ?? null} />}
     </>
   )
 }
 
-/** Narrow centred column for the sign-in, loading and locker screens. */
-const Narrow = ({ children, wide }: { children: React.ReactNode; wide?: boolean }) => (
-  <main className="f-shell" style={{ minHeight: '100vh' }}>
-    <div className={wide ? 'f-main' : 'f-main f-auth'} style={wide ? { maxWidth: 640 } : undefined}>
-      {children}
-    </div>
-  </main>
-)
+/** Centred column for the loading and locker screens. */
+const Narrow = ({ children, wide }: { children: React.ReactNode; wide?: boolean }) =>
+  wide ? (
+    <main className="f-shell" style={{ minHeight: '100vh' }}>
+      <div className="f-main" style={{ maxWidth: 640 }}>
+        {children}
+      </div>
+    </main>
+  ) : (
+    <Gate>{children}</Gate>
+  )
 
 /** Parent-only read-only look at a kid's screen (/kid?as=<id>), full width like the real one (08 phone 3 bar). */
 function KidPreview({ id }: { id: number }) {
@@ -188,17 +190,26 @@ function KidScreen() {
   else if (who?.has_pin)
     body = (
       <>
-        <h1 style={{ textAlign: 'center', margin: 0 }}>
-          {who.avatar} {who.full_name}, enter your PIN
+        <h1 className="k-disp">
+          <span className="k-pin-who">
+            <span aria-hidden className="k-pick-av">
+              {who.avatar || '🙂'}
+            </span>
+            {who.full_name}, enter your PIN
+          </span>
         </h1>
         <PinPad busy={login.isPending} error={err} onSubmit={(pin) => login.mutate({ kid_id: who.id, pin })} />
-        {kids.length > 1 && <SwitchBtn onClick={exit} />}
+        {kids.length > 1 && (
+          <KBtn plain onClick={exit}>
+            Not me
+          </KBtn>
+        )}
       </>
     )
   else if (!who)
     body = (
       <>
-        <h1 style={{ textAlign: 'center', margin: 0 }}>Who is this?</h1>
+        <h1 className="k-disp">Who is this?</h1>
         <KidPicker kids={kids} onPick={pick} />
       </>
     )
@@ -206,9 +217,7 @@ function KidScreen() {
     body = err ? (
       <>
         <Msg>{err}</Msg>
-        <Button size="lg" onClick={exit}>
-          Try again
-        </Button>
+        <KBtn onClick={exit}>Try again</KBtn>
       </>
     ) : (
       <Msg>Loading…</Msg>
@@ -216,11 +225,6 @@ function KidScreen() {
 
   if (authed) return <Session name={who?.full_name ?? undefined} avatar={who?.avatar} kidId={who?.id ?? kidId} onExit={exit} canSwitch={kids.length > 1} />
   return (
-    <main className="f-shell" style={{ minHeight: '100vh' }}>
-      <div className="f-main f-auth">
-        <AuthBrand />
-        {body}
-      </div>
-    </main>
+    <Gate>{body}</Gate>
   )
 }

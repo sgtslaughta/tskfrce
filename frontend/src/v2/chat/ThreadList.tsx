@@ -42,6 +42,19 @@ export function nest(threads: ThreadSummary[]): Array<{ t: ThreadSummary; kids: 
   return [...groups, ...orphans.map((t) => ({ t, kids: [] }))]
 }
 
+/** Kid rows get a day so two chats about the same chore can be told apart: "Today", "Yesterday", else "Mon, Oct 26". */
+export function when(iso: string | null, now = new Date()): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const days = Math.round((new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime() - new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()) / 864e5)
+  if (days === 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+/** Kids see their own private thread as "Parents", never under their own name. */
+export const shownTitle = (t: { kind: string; title: string }, kid: boolean) => (kid && t.kind === 'private' ? 'Parents' : t.title)
+
 /** Threads with search, tabs, and unread badges; `selected` is "kind:ref", `meName` turns "You:" on own lines. */
 export function ThreadList({
   threads,
@@ -81,12 +94,12 @@ export function ThreadList({
   const choreCount = threads.filter((t) => t.kind === 'chore').length
   const noteCount = threads.filter((t) => t.note).length
   const lastLine = (t: ThreadSummary) => {
-    if (!t.last_text) return 'No messages yet'
-    if (!t.last_author) return t.last_text
-    return `${meName && t.last_author === meName ? 'You' : t.last_author}: ${t.last_text}`
+    const day = kid && t.kind === 'chore' ? when(t.last_message_at) : ''
+    const line = !t.last_text ? 'No messages yet' : !t.last_author ? t.last_text : `${meName && t.last_author === meName ? 'You' : t.last_author}: ${t.last_text}`
+    return day ? `${line} · ${day}` : line
   }
 
-  const flat = filter !== 'all' || !!search.trim() // tabs and search list matches flat
+  const flat = kid || filter !== 'all' || !!search.trim() // kids, tabs and search list flat: no group named after the kid
   const row = (t: ThreadSummary) => {
     const key = `${t.kind}:${refOf(t)}`
     return (
@@ -95,7 +108,7 @@ export function ThreadList({
           <Tile t={t} />
         </span>
         <span className="pc-row-t">
-          <b>{t.title}</b>
+          <b>{shownTitle(t, kid)}</b>
           <span>{lastLine(t)}</span>
         </span>
         {t.note && (

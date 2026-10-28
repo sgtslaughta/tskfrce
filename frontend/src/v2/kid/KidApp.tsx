@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import { openChat, openChatList } from '../chat/dock'
+import { ChatDock } from '../chat/ChatDock'
+import { openChat, openChatList, OPEN_CHAT_EVENT, OPEN_CHAT_LIST_EVENT } from '../chat/dock'
 import { useThreads } from '../hooks/useChat'
 import { useInbox } from '../hooks/useInbox'
 import { useMarkSeen } from '../hooks/useKid'
@@ -43,6 +44,17 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canS
   useEffect(() => {
     if (!preview) askOnFirstClick()
   }, [preview])
+  const chat = !preview && mode !== 'little' // Chat is a tab here, hosted by an always-mounted inline ChatDock
+  useEffect(() => {
+    if (!chat) return
+    const show = () => setTab('chat')
+    window.addEventListener(OPEN_CHAT_EVENT, show)
+    window.addEventListener(OPEN_CHAT_LIST_EVENT, show)
+    return () => {
+      window.removeEventListener(OPEN_CHAT_EVENT, show)
+      window.removeEventListener(OPEN_CHAT_LIST_EVENT, show)
+    }
+  }, [chat])
   const Mode = MODES[mode]
   const badges = {
     chores: tally(d.chores).todo,
@@ -51,7 +63,7 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canS
   }
   const onTab = (t: KidTab) => {
     setFocusId(null)
-    if (t === 'chat' && !preview) openChatList()
+    if (t === 'chat' && chat) openChatList() // the event above switches the tab
     else setTab(t)
   }
   const elsewhere = <p className="k-hint k-elsewhere">{`Alerts and chat show on ${name}'s own screen.`}</p>
@@ -63,9 +75,10 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canS
     )
   else if (tab === 'me')
     body = (
-      <MePage name={name} avatar={avatar} progress={d.progress} preview={preview} onLocker={onLocker} canSwitch={canSwitch} onExit={onExit} kidId={kidId} />
+      <MePage name={name} avatar={avatar} progress={d.progress} preview={preview} onLocker={onLocker} canSwitch={canSwitch} onExit={onExit} kidId={kidId} little={mode === 'little'} />
     )
-  else if (tab === 'chat' || tab === 'alerts') body = preview ? elsewhere : <KidAlerts
+  else if (tab === 'chat') body = chat ? null : elsewhere
+  else if (tab === 'alerts') body = preview ? elsewhere : <KidAlerts
         onChores={(id) => {
           setFocusId(id)
           setTab('chores')
@@ -93,7 +106,14 @@ export function KidApp({ d, name, avatar, kidId, preview, onExit, onLocker, canS
     <div className="k-app" data-mode={mode}>
       <KidNav mode={mode} tab={tab} onTab={onTab} badges={badges} avatar={avatar} />
       <main className="k-main">
-        <div className="k-inner">{body}</div>
+        <div className="k-inner" hidden={tab === 'chat' && chat}>
+          {body}
+        </div>
+        {chat && (
+          <div className="k-inner k-chatpane" hidden={tab !== 'chat'}>
+            <ChatDock kid inline meId={kidId ?? null} />
+          </div>
+        )}
       </main>
     </div>
   )

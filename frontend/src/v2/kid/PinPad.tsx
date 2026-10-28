@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Button } from '@mantine/core'
+import { Icon } from '@/v2/parent/Icon'
 
 const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', '⌫']
 
@@ -40,30 +40,32 @@ export function PinPad({
   }, [pin])
 
   return (
-    <div role="group" aria-label="PIN" style={{ display: 'grid', gap: 14, justifyItems: 'center' }}>
-      <div aria-hidden style={{ display: 'flex', gap: 14, fontSize: 36, minHeight: 44 }}>
+    <div role="group" aria-label="PIN" className="k-pin">
+      <div aria-hidden className="kg-dots">
         {[0, 1, 2, 3].map((i) => (
-          <span key={i}>{i < pin.length ? '●' : '○'}</span>
+          <i key={i} data-on={i < pin.length || undefined} />
         ))}
       </div>
-      <span aria-live="polite" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+      <span aria-live="polite" className="k-sr">
         {pin.length ? `${pin.length} of 4 digits` : ''}
       </span>
-      <p role="alert" style={{ margin: 0, minHeight: 24, fontWeight: 700 }}>
+      <p role="alert" className="k-pin-err">
         {error ?? ''}
       </p>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(64px, 88px))', gap: 10 }}>
+      <div className="k-keys">
         {KEYS.map((k, i) =>
           k ? (
-            <Button
+            <button
               key={i}
-              variant={k === '⌫' ? 'default' : 'filled'}
+              type="button"
+              className="k-key"
+              data-del={k === '⌫' || undefined}
               aria-label={k === '⌫' ? 'Delete' : k}
+              disabled={busy}
               onClick={() => press(k)}
-              style={{ height: 72, fontSize: 28 }}
             >
-              {k}
-            </Button>
+              {k === '⌫' ? <Icon name="backspace" /> : k}
+            </button>
           ) : (
             <span key={i} />
           ),

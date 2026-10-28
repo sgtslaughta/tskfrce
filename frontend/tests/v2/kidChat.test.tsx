@@ -58,8 +58,12 @@ describe('kid chat', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Chat 5' }))
     const list = await screen.findByRole('list', { name: 'Conversations' })
     expect(list).toHaveTextContent('Family')
-    expect(list).toHaveTextContent('Mom & Dad')
+    expect(list).toHaveTextContent('Parents')
     expect(list).not.toHaveTextContent('Maya')
+    // a full-width tab in the page, not a floating dialog
+    expect(screen.getByRole('region', { name: 'Chat' })).toBeInTheDocument()
+    expect(screen.queryByRole('dialog', { name: 'Chat' })).toBeNull()
+    expect(screen.getByRole('button', { name: /^Chat/ })).toHaveAttribute('aria-current', 'page')
   })
 
   test('chore chat link opens its thread with the kid token', async () => {
