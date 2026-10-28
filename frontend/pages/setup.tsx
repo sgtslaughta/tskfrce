@@ -40,6 +40,7 @@ export default function SetupPage() {
   const [parent, setParent] = useState<ParentForm>({ username: '', password: '', again: '', fullName: '' })
   const [kids, setKids] = useState<Kid[]>([])
   const [chores, setChores] = useState<string[]>([])
+  const [addedStarters, setAdded] = useState<string[]>([]) // starters a resumed wizard already created: shown as Added, not editable
   const [hours, setHours] = useState<RuleBody[]>(DEFAULT_DRAFTS)
   const [choresLock, setChoresLock] = useState(true)
   const applied = useRef(new Set<string>())
@@ -66,8 +67,8 @@ export default function SetupPage() {
     setAccountDone(true)
     setStep(resumeAt)
     api<Kid[]>('/kids').then(setKids).catch(() => {}) // the wizard forgot them; steps 4-5 need them
-    api<LibChore[]>('/chores/') // ...and the starters it already made, so they show as picked
-      .then((have) => setChores((c) => (c.length || !Array.isArray(have) ? c : have.map((h) => h.title).filter((t) => starter(t)))))
+    api<LibChore[]>('/chores/') // ...and the starters it already made
+      .then((have) => Array.isArray(have) && setAdded(have.map((h) => h.title).filter((t) => starter(t))))
       .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [resumeAt])
@@ -262,7 +263,7 @@ export default function SetupPage() {
           )}
           {step === 3 && <StepKids kids={kids} name={kidDraft} onName={setKidDraft} onAdd={(k) => setKids([...kids, k])}
               draftError={tried && kidDraft.trim() ? `Add ${kidDraft.trim()} first or clear the field.` : undefined} />}
-          {step === 4 && <StepChores selected={chores} hasKids={kids.length > 0} onChange={setChores} />}
+          {step === 4 && <StepChores selected={chores} made={addedStarters} hasKids={kids.length > 0} onChange={setChores} />}
           {step === 5 && <StepDevices kids={kids} />}
           {step === 6 && <StepHours drafts={hours} onChange={setHours} choresLock={choresLock} onChoresLock={setChoresLock} />}
           {step === 7 && <StepRemote />}

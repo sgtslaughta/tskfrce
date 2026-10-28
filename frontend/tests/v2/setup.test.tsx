@@ -346,21 +346,25 @@ describe('resuming an unfinished setup', () => {
     expect(await screen.findByText(/1 kid, 3 chores, 0 devices, 2 schedules/)).toBeInTheDocument()
   })
 
-  test('re-picking a starter that already exists does not create it again', async () => {
+  test('a starter that already exists is locked as Added and not created again', async () => {
     const user = userEvent.setup()
     resumeAt(4, { '/chores/': [{ id: 9, title: 'Make bed' }] })
     wrap()
-    await user.click(await screen.findByRole('button', { name: /^Make bed/ }))
+    const bed = await screen.findByRole('button', { name: /^Make bed/ })
+    await waitFor(() => expect(bed).toBeDisabled())
+    expect(bed).toHaveAttribute('aria-pressed', 'true')
+    expect(bed).toHaveTextContent('Added')
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await screen.findByText(/Looking for devices/)
     expect(posts('/chores/')).toHaveLength(0)
     expect(posts('/chores/9/assignments')).toHaveLength(0)
   })
 
-  test('resuming step 4 shows the starters already made as picked', async () => {
+  test('resuming step 4: made starters are Added and do not count as picked', async () => {
     resumeAt(4, { '/chores/': [{ id: 9, title: 'Make bed' }, { id: 10, title: 'Custom thing' }] })
     wrap()
-    expect(await screen.findByText('1 picked')).toBeInTheDocument()
+    expect(await screen.findByText('Added')).toBeInTheDocument()
+    expect(screen.getByText('0 picked')).toBeInTheDocument()
   })
 
   test('nothing to resume goes to log in', async () => {
