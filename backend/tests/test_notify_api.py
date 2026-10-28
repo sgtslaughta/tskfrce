@@ -9,17 +9,17 @@ def _mk(client, h, **kw):
 
 
 def test_mask():
-    assert mask("discord://abcdefgh/xyz") == "discord://••••"
-    assert mask("mailto://me:pw@gmail.com/x") == "mailto://gmail.com••••"
-    for secret in ("userkey", "apptoken123"):  # a secret can follow the @ (Pushover)
-        assert secret not in mask("pover://userkey@apptoken123")
-    assert mask("pover://userkey@apptoken123") == "pover://••••"
-    assert mask("json://user:pass@host.example/path?token=abc") == "json://host.example••••"
-    leaky = mask("mailto://u:p@example.com?to=x&pass=sekret")
-    assert leaky == "mailto://example.com••••"
-    assert mask("json://u:p@host:notaport/") == "json://••••"
-    assert mask("json://u:p@ho$t.example/") == "json://••••"
     assert mask("nothing") == "••••"
+    for url, want in {
+        "discord://abcdefgh/xyz": "discord",
+        "mailto://u:p@example.com?to=x&pass=sekret": "mailto",
+        "json://user:pass@host.example/path?token=abc": "json",
+        "pover://userkey@apptoken123": "pover",
+        "matrix://u:p@hs.example/#/room": "matrix",
+        "ntfy://tok@ntfy.sh/topic": "ntfy",
+        "json://u:p@host:notaport/": "json",
+    }.items():
+        assert mask(url) == f"{want}://••••"
 
 
 def test_create_list_never_raw(client, parent_headers):
@@ -27,7 +27,7 @@ def test_create_list_never_raw(client, parent_headers):
     assert r.status_code == 201 and r.json()["events"] == list(notify.DEFAULT_EVENTS)
     assert "abcdef" not in r.text and "secret" not in r.text
     res = client.get("/api/v1/notify/places", headers=parent_headers)
-    assert "abcdef" not in res.text and res.json()[0]["url_mask"] == "json://localhost••••"
+    assert "abcdef" not in res.text and res.json()[0]["url_mask"] == "json://••••"
     assert res.json()[0]["readable"] is True
 
 

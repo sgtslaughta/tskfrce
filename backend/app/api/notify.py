@@ -25,29 +25,11 @@ BAD_EVENTS = "Pick events from the list."
 NO_PLACE = "That place doesn't exist."
 
 
-HOST_SCHEMES = {
-    f"{n}{s}"
-    for n in ("mailto", "json", "xml", "form", "ntfy", "matrix", "gotify")
-    for s in ("", "s")
-}
-
-
 def mask(url: str) -> str:
+    """Scheme only: secrets can sit anywhere in an Apprise URL."""
     if "://" not in url:
         return "••••"
-    scheme, rest = url.split("://", 1)
-    # tokens can sit before or after the "@" (tgram, discord, pover): show only a real host
-    host = ""
-    if scheme.lower() in HOST_SCHEMES and "@" in rest:
-        try:
-            parts = urlsplit(url)
-            parts.port  # noqa: B018 - raises ValueError on a bad port
-            host = parts.hostname or ""
-        except ValueError:  # bad port etc.
-            host = ""
-        if not re.fullmatch(r"[A-Za-z0-9.-]{1,64}", host):
-            host = ""
-    return f"{scheme}://{host}••••"[:80]
+    return f"{url.split('://', 1)[0][:20]}://••••"
 
 
 def _check_url(url: str) -> str:
