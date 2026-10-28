@@ -488,3 +488,19 @@ def test_sibling_sees_who_added_a_proof_photo(client, db, parent_headers):
     line = client.get(f"{C}/threads/chore/{cid}", headers=mh).json()["messages"][-1]
     assert line["kind"] == "system" and line["author_id"] == leo.id
     assert client.delete(f"{C}/messages/{line['id']}", headers=mh).status_code in (403, 404)
+
+
+def test_mark_read_survives_a_racing_insert(client, db, parent_headers, monkeypatch):
+    from app.models.chat import Thread, ThreadRead
+    from app.services import chat
+
+    leo, maya, lh, mh, _ = _world(db, client, parent_headers)
+    t = db.get(Thread, _tid(client, lh, "family", "family"))
+    chat.mark_read(db, t, leo)
+    db.commit()
+    real_get = db.get
+    # the other request inserted the row after our lookup
+    monkeypatch.setattr(db, "get", lambda m, k: None if m is ThreadRead else real_get(m, k))
+    chat.mark_read(db, t, leo)
+    db.commit()
+    assert db.query(ThreadRead).filter_by(thread_id=t.id, user_id=leo.id).count() == 1

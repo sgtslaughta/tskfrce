@@ -181,9 +181,13 @@ def mark_read(db: Session, thread: Thread, user: User) -> None:
     r = db.get(ThreadRead, (thread.id, user.id))
     now = datetime.utcnow()
     if r is None:
-        db.add(ThreadRead(thread_id=thread.id, user_id=user.id, last_read_at=now))
-    else:
-        r.last_read_at = now
+        try:
+            with db.begin_nested():  # two opens at once can race us to the same row
+                db.add(ThreadRead(thread_id=thread.id, user_id=user.id, last_read_at=now))
+            return
+        except IntegrityError:
+            r = db.query(ThreadRead).filter_by(thread_id=thread.id, user_id=user.id).one()
+    r.last_read_at = now
 
 
 def mark_existing_read(db: Session, user: User) -> None:
