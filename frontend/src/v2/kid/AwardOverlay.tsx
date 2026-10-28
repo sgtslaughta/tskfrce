@@ -16,7 +16,7 @@ export function AwardOverlay({ onExpired, onLocker }: { onExpired: () => void; o
   useEffect(() => {
     if (open) return
     const el = returnTo.current as HTMLElement | null // the last card closed; its button may be gone
-    if (el?.isConnected) el.focus?.()
+    if (el && el !== document.body && el.isConnected) el.focus?.() // body: the buy button was already swapped out
     else focusPage('.r-head', 'main')
     returnTo.current = null
   }, [open])

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test } from '@jest/globals'
 import type { Mock } from 'jest-mock'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MantineProvider } from '@mantine/core'
@@ -284,6 +284,21 @@ describe('AwardOverlay', () => {
     const d = await screen.findByRole('dialog')
     expect(d).toHaveTextContent('copper')
     expect(d).toHaveTextContent('“Tidied up”')
+  })
+
+  test('after the last card, focus falls back to the Rewards heading when nothing real had focus', async () => {
+    let n = 0
+    apiMock.mockImplementation(async (p, i) => {
+      if (p === '/kid/celebrations' && !i?.method) return n++ ? [] : [reward]
+      return {}
+    })
+    wrap(<AwardOverlay onExpired={() => {}} />)
+    await screen.findByRole('dialog') // opened while <body> had focus (the buy button was already swapped out)
+    const h = Object.assign(document.createElement('h1'), { className: 'r-head', textContent: 'Rewards' })
+    document.body.append(h)
+    await userEvent.click(screen.getByRole('button', { name: 'Nice!' }))
+    await waitFor(() => expect(document.activeElement).toBe(h))
+    h.remove()
   })
 
   test('renders with reduced motion', async () => {

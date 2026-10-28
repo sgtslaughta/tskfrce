@@ -219,13 +219,13 @@ export function ChoreDetail({ kids, chore, onSelect }: Props) {
               type="time"
               value={due}
               disabled={!chore}
-              aria-describedby={chore ? undefined : 'chore-due-hint'}
+              aria-describedby={!chore ? 'chore-due-hint' : dueEdit === undefined && dueTimes.size > 1 ? 'chore-due-diff' : undefined}
               onChange={(e) => setDue(e.currentTarget.value)}
             />
             {!chore && <span id="chore-due-hint" className="pk-hint">Set after you choose who does it.</span>}
           </label>
           {dueEdit === undefined && dueTimes.size > 1 && (
-            <span className="pk-hint">Kids have different times. Set Due by to give them all one time.</span>
+            <span id="chore-due-diff" className="pk-hint">Kids have different times. Set Due by to give them all one time.</span>
           )}
           </div>
           <div className="pk-switch">
