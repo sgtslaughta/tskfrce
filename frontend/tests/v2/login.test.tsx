@@ -119,6 +119,14 @@ describe('LoginForm', () => {
   })
 })
 
+test('forgot pane moves focus to its heading and back to the trigger', async () => {
+  wrap()
+  await userEvent.click(screen.getByRole('button', { name: 'Forgot password?' }))
+  expect(screen.getByRole('heading', { name: 'Forgot your password?' })).toHaveFocus()
+  await userEvent.click(screen.getByRole('button', { name: 'Back to log in' }))
+  expect(screen.getByRole('button', { name: 'Forgot password?' })).toHaveFocus()
+})
+
 describe('footer', () => {
   test('shows version and box address', () => {
     expect(footerText('chores.local', '2.0.0')).toBe('t@sk4ce v2.0.0 · chores.local')

@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { takeSessionExpired } from './sessionExpired'
 import Link from 'next/link'
 import { useRouter } from 'next/router'
@@ -40,6 +40,13 @@ export function LoginForm() {
   }, [])
   const [error, setError] = useState('')
   const [showForgot, setShowForgot] = useState(false)
+  const forgotBtn = useRef<HTMLButtonElement>(null)
+  const forgotTitle = useRef<HTMLHeadingElement>(null)
+  const swapped = useRef(false)
+  useEffect(() => {
+    if (!swapped.current) return void (swapped.current = true) // not on first paint
+    ;(showForgot ? forgotTitle : forgotBtn).current?.focus() // keep keyboard / screen-reader users in place
+  }, [showForgot])
   const [busy, setBusy] = useState(false)
   const [host, setHost] = useState('')
   const next = safeNext(router.query?.next)
@@ -150,7 +157,7 @@ export function LoginForm() {
                   </i>
                   Keep me logged in
                 </label>
-                <button type="button" className="p-auth-link" onClick={() => setShowForgot(true)}>
+                <button type="button" className="p-auth-link" ref={forgotBtn} onClick={() => setShowForgot(true)}>
                   Forgot password?
                 </button>
               </div>
@@ -172,7 +179,7 @@ export function LoginForm() {
             </>
           ) : (
             <div className="p-auth-pane">
-              <h1>Forgot your password?</h1>
+              <h1 ref={forgotTitle} tabIndex={-1}>Forgot your password?</h1>
               <div className="p-subtitle">There&apos;s no email reset: the box is offline-first.</div>
               <div className="p-auth-invite">
                 <Icon name="supervisor_account" />
