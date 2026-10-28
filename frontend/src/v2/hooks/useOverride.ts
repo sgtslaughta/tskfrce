@@ -22,8 +22,8 @@ const send = (target: OverrideTarget, choice: OverrideChoice) => {
 
 /** What puts a target back as it was: its previous manual override (minutes left), or the schedule. */
 export function undoChoice(previous: Override | null | undefined, now = Date.now()): OverrideChoice {
-  if (!previous) return { action: 'clear' }
-  const left = previous.expires_at ? Math.max(1, Math.ceil((Date.parse(previous.expires_at) - now) / 60_000)) : null
+  if (!previous || (previous.expires_at && Date.parse(previous.expires_at) <= now)) return { action: 'clear' }
+  const left = previous.expires_at ? Math.ceil((Date.parse(previous.expires_at) - now) / 60_000) : null
   return { action: previous.action, minutes: left }
 }
 

@@ -13,4 +13,7 @@ describe('undoChoice', () => {
   test('a previous open-ended override stays open-ended', () => {
     expect(undoChoice({ action: 'lock', expires_at: null }, now)).toEqual({ action: 'lock', minutes: null })
   })
+  test('a previous override that already expired goes back to the schedule', () => {
+    expect(undoChoice({ action: 'unlock', expires_at: '2026-01-01T09:59:00Z' }, now)).toEqual({ action: 'clear' })
+  })
 })
