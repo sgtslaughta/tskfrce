@@ -107,6 +107,11 @@ def downgrade() -> None:
     with op.batch_alter_table("redemptions") as b:
         b.drop_column("note")
         b.drop_column("auto")
+    for table in ("rewards", "custom_badges"):  # glyph names must fit the old String(8) again
+        op.execute(sa.text(f"UPDATE {table} SET icon = substr(icon, 1, 8)"))
+    with op.batch_alter_table("custom_badges") as b:
+        b.alter_column("icon", existing_type=sa.String(40), type_=sa.String(8), nullable=False)
     with op.batch_alter_table("rewards") as b:
+        b.alter_column("icon", existing_type=sa.String(40), type_=sa.String(8), nullable=True)
         b.drop_column("needs_approval")
         b.drop_column("visible")
