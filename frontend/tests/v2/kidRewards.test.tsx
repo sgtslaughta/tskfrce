@@ -99,6 +99,21 @@ describe('RewardsSection', () => {
     expect(screen.getByRole('button', { name: 'Request' })).toBeDisabled() // Toy: 30 > 20 free
   })
 
+  test('a pending reward keeps a full bar; one held point is singular; screen-time minimum uses free points', async () => {
+    route({
+      'GET /kid/rewards': rewards({
+        balance: 101,
+        screen: { ...rewards().screen, min_points: 101 },
+        rewards: [{ id: 2, name: 'Ice cream', price: 100, icon: null }],
+        pending: [{ id: 9, kind: 'reward', reward_id: 2, minutes: null, cost: 1 }],
+      }),
+    })
+    wrap(<RewardsSection onExpired={() => {}} />)
+    expect(await screen.findByText(/1 point is held/)).toBeInTheDocument()
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '100')
+    expect(screen.getByText('You can buy screen time once you have 101 points.')).toBeInTheDocument()
+  })
+
   test('screen time shows cost and posts minutes', async () => {
     route({ 'GET /kid/rewards': rewards(), 'POST /kid/redeem': {} })
     wrap(<RewardsSection onExpired={() => {}} />)

@@ -78,7 +78,7 @@ def all_in_off_window(db: Session, kid: User, now_utc: datetime) -> bool:
 
 def check(db: Session, fam: FamilySettings, kid: User, minutes: int, now_utc: datetime) -> None:
     cap, min_points = limit_for(db, fam, kid.id)
-    if min_points and economy.balance(db, kid.id) < min_points:
+    if min_points and economy.balance(db, kid.id) - economy.pending_cost(db, kid.id) < min_points:
         raise HTTPException(409, f"You can buy screen time once you have {min_points} points.")
     if cap is not None:
         left = cap - bought_today(db, fam, [kid.id], now_utc)[kid.id]

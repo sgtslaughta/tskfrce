@@ -25,7 +25,7 @@ export function RewardsSection({ onExpired, mode = 'kid' }: { onExpired: () => v
   const why =
     sc.left_today !== null && sc.left_today < 15
       ? "You've had all your screen time for today."
-      : sc.min_points !== null && d.balance < sc.min_points
+      : sc.min_points !== null && free < sc.min_points
         ? `You can buy screen time once you have ${sc.min_points} points.`
         : sc.only_in_hours && !sc.in_hours
           ? 'Screen time only works during your allowed hours.'
@@ -44,7 +44,7 @@ export function RewardsSection({ onExpired, mode = 'kid' }: { onExpired: () => v
   )
   return (
     <div className="r-view" data-mode={mode}>
-      <h1 className="r-head k-disp">
+      <h1 className="r-head k-disp" tabIndex={-1}>
         {mode === 'little' ? 'Prizes' : 'Rewards'}
         <span className="k-sr"> · </span>
         <span className="k-chip" data-tone="sun" data-size={mode === 'little' ? 'lg' : 'md'}>
@@ -52,7 +52,7 @@ export function RewardsSection({ onExpired, mode = 'kid' }: { onExpired: () => v
           <b>{free}</b> points
         </span>
       </h1>
-      {held > 0 && <p className="r-sub">{`${held} points are held for requests a parent hasn't answered yet.`}</p>}
+      {held > 0 && <p className="r-sub">{`${held} ${held === 1 ? 'point is' : 'points are'} held for requests a parent hasn't answered yet.`}</p>}
       <div className="r-list">
         {d.screen_time_enabled && (
           <div className="r-item">
@@ -104,7 +104,7 @@ export function RewardsSection({ onExpired, mode = 'kid' }: { onExpired: () => v
         {d.rewards.map((r) => {
           const pending = pendingReward(r.id)
           const instant = r.needs_approval === false
-          const pct = Math.min(Math.max(free, 0) / r.price, 1) * 100
+          const pct = pending ? 100 : Math.min(Math.max(free, 0) / r.price, 1) * 100
           return (
             <div key={r.id} className="r-item">
               <span className="r-ic">

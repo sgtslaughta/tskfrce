@@ -189,3 +189,15 @@ def test_kid_rewards_says_when_an_off_window_blocks_bonus(client, db, kid, kid_h
     make_rule(db, kind="off", times=(("00:00", "00:00"),), kid_ids=(kid.id,))
     sc = client.get("/api/v1/kid/rewards", headers=kid_headers).json()["screen"]
     assert sc["off_now"] is True
+
+
+def test_min_points_counts_only_free_points(client, db, kid, kid_headers, parent_headers):
+    _setup(db, kid, balance=130)  # a 15 min request costs 20
+    client.put(
+        f"{S}/limits/{kid.id}",
+        json={"max_minutes": None, "min_points": 100},
+        headers=parent_headers,
+    )
+    assert _ask(client, kid_headers).status_code == 200  # 130 free
+    assert _ask(client, kid_headers).status_code == 200  # 110 free
+    assert _ask(client, kid_headers).status_code == 409  # 90 free, under the 100 minimum
