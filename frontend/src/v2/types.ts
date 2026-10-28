@@ -304,6 +304,8 @@ export interface KidToday {
   locked: boolean
   chores: KidChore[]
   points_balance: number
+  /** points tied up in requests a parent has not answered yet */
+  points_held?: number
   progress?: Progress
   /** family time zone, for step deadlines (kids can't read /family) */
   timezone?: string

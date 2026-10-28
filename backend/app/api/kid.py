@@ -24,7 +24,7 @@ from app.models.points import Points
 from app.models.reward import Redemption
 from app.models.user import User, UserRole
 from app.schemas.lock import utc_z
-from app.services import badges, chat, inbox, kid_view, progression
+from app.services import badges, chat, economy, inbox, kid_view, progression
 from app.services import chores as svc
 from app.services.chore_types import notes_for
 from app.services.photos import save_photo
@@ -175,6 +175,7 @@ def today(request: Request, db: Session = Depends(get_db), kid: User = Depends(v
             for r in runs
         ],
         "points_balance": balances[kid.id],
+        "points_held": economy.pending_cost(db, kid.id),
         "progress": prog,
         "timezone": fam.timezone,
     }

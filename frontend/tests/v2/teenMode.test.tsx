@@ -85,6 +85,14 @@ describe('TeenMode', () => {
     expect(rows()[0]).toHaveTextContent('Feed the cat')
   })
 
+  test('the points stat is what is free after held requests, never negative', () => {
+    const { unmount } = render(wrap(props({ d: today({ points_held: 60 }) })))
+    expect(screen.getByText('800')).toBeInTheDocument()
+    unmount()
+    render(wrap(props({ d: today({ points_held: 900 }) })))
+    expect(screen.getByText('0')).toBeInTheDocument()
+  })
+
   test('stats show "2 / 6" and "860"', () => {
     render(wrap(props()))
     expect(screen.getByText('Internet paused')).toBeInTheDocument()

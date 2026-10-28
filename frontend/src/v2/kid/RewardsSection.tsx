@@ -19,7 +19,7 @@ export function RewardsSection({ onExpired, mode = 'kid' }: { onExpired: () => v
   if (!d?.pending) return null
   const sc = d.screen
   const held = d.pending.reduce((n, p) => n + p.cost, 0) // asked-for points can't be spent twice
-  const free = d.balance - held
+  const free = Math.max(0, d.balance - held)
   const data = opts(sc.left_today)
   const mins = data.some((o) => o.value === minutes) ? minutes : (data.find((o) => Number(o.value) >= 30) ?? data[data.length - 1])?.value ?? minutes
   const why =

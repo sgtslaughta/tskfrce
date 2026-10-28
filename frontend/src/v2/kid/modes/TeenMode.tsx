@@ -51,7 +51,7 @@ function Stats({ d }: { d: KidToday }) {
         <Stat icon="wifi" tone="green" fill title="Internet on" sub={at ? `locks at ${at}` : t.todo ? left : 'All done'} />
       )}
       <Stat icon="task_alt" tone="green" title={`${t.approved} / ${t.total}`} sub="done today" />
-      <Stat icon="star" tone="sun" fill title={String(d.points_balance)} sub="points" />
+      <Stat icon="star" tone="sun" fill title={String(Math.max(0, d.points_balance - (d.points_held ?? 0)))} sub="points" />
       <Stat icon="local_fire_department" tone="fire" fill title={`${streak} ${streak === 1 ? 'day' : 'days'}`} sub="streak" />
     </div>
   )

@@ -7,6 +7,7 @@ from app.models.chore_type import ChoreType
 from app.models.family import get_family
 from app.models.lock import Device
 from app.models.points import Points, PointsType
+from app.models.reward import Redemption
 from app.models.user import User, UserRole
 from app.services import chores as svc
 from fastapi.testclient import TestClient
@@ -168,6 +169,17 @@ def test_today_only_own_chores_points_and_locked(kc, db, parent, kid):
         (mine.id, "x", 3, "todo")
     ]
     assert j["points_balance"] == 7 and j["locked"] is True
+
+
+def test_today_reports_points_held_by_pending_requests(kc, db, parent, kid):
+    get_family(db).last_reset_date = DAY.date()
+    mkdev(db, kid)
+    mkchore(db, parent, kid)
+    db.add(Points(user_id=kid.id, points_type=PointsType.TASK_COMPLETION, amount=7))
+    db.add(Redemption(kid_id=kid.id, kind="screen_time", minutes=15, cost=5, status="pending"))
+    db.commit()
+    j = kc.get("/api/v1/kid/today", headers=kid_hdr(db, kid)).json()
+    assert (j["points_balance"], j["points_held"]) == (7, 5)
 
 
 def test_kid_marks_own_chore_done(kc, db, parent, kid, monkeypatch):
