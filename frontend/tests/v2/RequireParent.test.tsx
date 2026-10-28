@@ -159,6 +159,22 @@ describe('RequireParent states', () => {
     jest.useRealTimers()
   })
 
+  test('signed in + a box that stays down: the timed retry refetches (no reload), settling on Can\'t reach', async () => {
+    jest.useFakeTimers({ advanceTimers: true })
+    route({ '/setup': Object.assign(new Error('bad gateway'), { status: 502 }) })
+    auth({})
+    renderGuard()
+    expect(await screen.findByText('Starting your home box')).toBeTruthy()
+    await act(async () => void jest.advanceTimersByTime(3 * 60_000 + 3100))
+    expect(await screen.findByText(/Can.t reach/)).toBeTruthy()
+    const before = apiMock.mock.calls.length
+    await act(async () => void jest.advanceTimersByTime(9000)) // AutoRetry
+    await waitFor(() => expect(apiMock.mock.calls.length).toBeGreaterThan(before))
+    expect(screen.getByText(/Can.t reach/)).toBeTruthy()
+    expect(screen.queryByText('Starting your home box')).toBeNull()
+    jest.useRealTimers()
+  })
+
   test('signing out shows the sign-out state, and a failed sign-out brings the page back', async () => {
     auth({})
     renderGuard()

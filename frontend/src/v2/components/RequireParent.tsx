@@ -170,7 +170,7 @@ function Unreachable({ error, since, onRetry, onPoll }: { error: unknown; since:
   }, [starting])
   return (
     <Guard>
-      {starting ? <BoxStarting /> : <ErrorPanel kind="unreachable" heading="h1" error={error instanceof TypeError ? undefined : error} onRetry={onRetry} />}
+      {starting ? <BoxStarting /> : <ErrorPanel kind="unreachable" heading="h1" error={error instanceof TypeError ? undefined : error} onRetry={onRetry} onAutoRetry={onPoll} />}
     </Guard>
   )
 }

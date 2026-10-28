@@ -103,6 +103,7 @@ export function ErrorPanel({
   error,
   title,
   onRetry,
+  onAutoRetry,
   heading,
   detail,
 }: {
@@ -110,6 +111,8 @@ export function ErrorPanel({
   error?: unknown
   title?: string
   onRetry?: () => void
+  /** unreachable only: the quiet timed retry (defaults to onRetry) */
+  onAutoRetry?: () => void
   /** h1 when the panel is the whole page */
   heading?: 'h1' | 'h2'
   /** crash only: text behind the "Copy details" button */
@@ -136,7 +139,7 @@ export function ErrorPanel({
       actions={actions}
       heading={heading ?? (kind === 'expired' || kind === 'notfound' ? 'h1' : 'h2')}
     >
-      {kind === 'unreachable' && <AutoRetry onRetry={onRetry ?? (() => window.location.reload())} />}
+      {kind === 'unreachable' && <AutoRetry onRetry={onAutoRetry ?? onRetry ?? (() => window.location.reload())} />}
     </EmptyState>
   )
 }
