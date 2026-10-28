@@ -5,7 +5,7 @@ import { useRouter } from 'next/router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useUnifiedAuth } from '@/contexts/UnifiedAuthContext'
 import { api, ApiError } from '@/v2/api'
-import type { Device, HourRule, HoursPayload, Kid, RuleBody, SetupStatus } from '@/v2/types'
+import type { Device, HourRule, HoursPayload, Kid, LibChore, RuleBody, SetupStatus } from '@/v2/types'
 import { markSetupDone, STEP_KEY } from '@/v2/components/RequireParent'
 import { SetupResuming } from '@/v2/parent/states'
 import { LAST, saveStep } from '@/v2/setup/setupStep'
@@ -58,7 +58,7 @@ export default function SetupPage() {
   const resumeAt = typeof resume.data?.step === 'number' ? resume.data.step : null
   useEffect(() => {
     if (!returning || isInitialized === false || (isAuthenticated && resume.isPending)) return
-    if (resumeAt === null) router.replace('/login')
+    if (resumeAt === null && !accountDone) router.replace('/login') // Finish clears the saved step: stay for "all set"
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status.data, isInitialized, isAuthenticated, resume.isPending, resumeAt])
   useEffect(() => {
@@ -154,6 +154,9 @@ export default function SetupPage() {
               run: async () => {
                 let id = choreIds.current.get(title)
                 if (id === undefined) {
+                  // made before a reload? then it is already assigned: don't make it twice
+                  const have = await api<LibChore[]>('/chores/')
+                  if (Array.isArray(have) && have.some((c) => c.title === title)) return
                   const st = starter(title)
                   const types = await choreTypes()
                   const typeId = types.find((t) => t.name === st?.type)?.id
@@ -208,6 +211,13 @@ export default function SetupPage() {
     7: { title: 'Reach it from anywhere', sub: 'Approve chores when you\'re not home, using Tailscale (free, private).' },
   } as const
 
+  // what really exists (a resumed wizard forgot what it made)
+  const made = useQuery({
+    queryKey: ['setup-made'],
+    queryFn: async () => ({ chores: (await api<unknown[]>('/chores/')).length, rules: (await api<HoursPayload>('/hours')).rules.length }),
+    enabled: step > LAST,
+    retry: false,
+  })
   const devices = (qc.getQueryData<Device[]>(['setup-devices']) ?? []).filter((d) => d.status !== 'unassigned').length
   const schedules = Array.from(applied.current).filter((k) => k.startsWith('rule:')).length
 
@@ -223,7 +233,7 @@ export default function SetupPage() {
         <WizardFrame
           step={step}
           title={step > LAST ? 'You\'re all set' : stepTitles[step as keyof typeof stepTitles].title}
-          subtitle={step > LAST ? finishSummary(kids.length, chores.length, devices, schedules) : stepTitles[step as keyof typeof stepTitles].sub}
+          subtitle={step > LAST ? finishSummary(kids.length, made.data?.chores ?? chores.length, devices, made.data?.rules ?? schedules) : stepTitles[step as keyof typeof stepTitles].sub}
           onBack={step > 2 || (step === 2 && !accountDone) ? () => go(step - 1) : undefined}
           onNext={next}
           nextLabel={step === LAST ? 'Finish' : 'Next'}
@@ -234,6 +244,7 @@ export default function SetupPage() {
           }}
           busy={create.isPending || apply.isPending}
           done={step > LAST}
+          note={step === 4 ? `${chores.length} picked` : undefined}
         >
           {step === 1 && <StepParent value={parent} showError={tried} onChange={setParent} />}
           {step === 2 && (

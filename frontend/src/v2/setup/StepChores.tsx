@@ -8,7 +8,7 @@ interface Props {
   onChange: (v: string[]) => void
 }
 
-/** Step 4 (mockup 07): starter cards with their chore type, points and a tick; "N picked". */
+/** Step 4 (mockup 07): starter cards with their chore type, points and a tick. */
 export function StepChores({ selected, hasKids, onChange }: Props) {
   const toggle = (t: string) => onChange(selected.includes(t) ? selected.filter((x) => x !== t) : [...selected, t])
   return (
@@ -33,7 +33,6 @@ export function StepChores({ selected, hasKids, onChange }: Props) {
           )
         })}
       </div>
-      <p className={styles.picked}>{`${selected.length} picked`}</p>
     </>
   )
 }

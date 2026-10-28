@@ -279,6 +279,10 @@
     display: none;
   }
 
+  .st {
+    white-space: nowrap;
+  }
+
   .st .dot {
     width: 32px;
     height: 32px;
@@ -314,4 +318,4 @@
   display: grid; place-items: center; color: #292928; flex: none;
 }
 .starter[aria-pressed='true'] .starterCb { background: var(--p-acc); border-color: var(--p-acc); }
-.picked { margin: 10px 0 0; font-size: 13px; color: var(--p-sub); text-align: right; }
+.picked { font-size: 13px; color: var(--p-sub); }

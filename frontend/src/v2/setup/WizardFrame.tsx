@@ -26,12 +26,14 @@ interface Props {
   onSkip?: () => void
   onStepClick?: (step: number) => void
   busy?: boolean
+  /** small count shown in the button row, left of Next (e.g. "4 picked") */
+  note?: string
   /** the finished screen: accent icon tile above the title, and no Back/Next row (its own buttons lead on) */
   done?: boolean
 }
 
 export function WizardFrame({
-  step, children, title, subtitle, onBack, onNext, nextLabel = 'Next', onSkip, onStepClick, busy, done
+  step, children, title, subtitle, onBack, onNext, nextLabel = 'Next', onSkip, onStepClick, busy, done, note
 }: Props) {
   useLook('parent')
   const [maxStepReached, setMaxStepReached] = useState(step)
@@ -130,12 +132,13 @@ export function WizardFrame({
             <span />
           )}
           <Group ml="auto">
+            {note && <span className={styles.picked}>{note}</span>}
             {onSkip && (
               <Button variant="subtle" onClick={onSkip}>
                 Skip
               </Button>
             )}
-            <Button type="submit" variant="filled" loading={busy} leftSection={nextLabel === 'Finish' ? <span className="ms" aria-hidden="true">check</span> : <span className="ms" aria-hidden="true">arrow_forward</span>}>
+            <Button type="submit" variant="filled" loading={busy} rightSection={<span className="ms" aria-hidden="true">{nextLabel === 'Finish' ? 'check' : 'arrow_forward'}</span>}>
               {nextLabel}
             </Button>
           </Group>

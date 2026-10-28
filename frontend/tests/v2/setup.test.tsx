@@ -65,6 +65,8 @@ beforeEach(() => {
   loginWithToken.mockReset()
 })
 
+const posts = (path: string) => apiMock.mock.calls.filter(([p, i]) => p === path && i?.method === 'POST')
+
 const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
 
 async function toParent(user: ReturnType<typeof userEvent.setup>) {
@@ -139,9 +141,6 @@ describe('setup wizard', () => {
     await user.click(screen.getByRole('button', { name: 'Next' }))
     await screen.findByLabelText('Name')
   }
-  const posts = (path: string) =>
-    apiMock.mock.calls.filter(([p, i]) => p === path && i?.method === 'POST')
-
   test('empty family name blocks Next; the account POST carries the family name and time zone', async () => {
     const user = userEvent.setup()
     wrap()
@@ -290,6 +289,8 @@ describe('setup wizard', () => {
     await toParent(user)
     await user.type(screen.getByLabelText(/^Password/), 'longenough1')
     await user.type(screen.getByLabelText('Type it again'), 'different')
+    expect(screen.queryByText("The two passwords don't match.")).toBeNull() // not while typing
+    await user.tab()
     expect(screen.getByText("The two passwords don't match.")).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Next' }))
     expect(screen.queryByLabelText('Family name')).toBeNull()
@@ -322,6 +323,38 @@ describe('resuming an unfinished setup', () => {
     expect(await screen.findByText('Whose devices are these?')).toBeInTheDocument()
     expect(replace).not.toHaveBeenCalled()
     expect(apiMock).toHaveBeenCalledWith('/kids')
+  })
+
+  const kid = { id: 7, full_name: 'Ava', username: 'kid-ava', avatar: '🦊', has_pin: false }
+  const resumeAt = (step: number, extra: Record<string, unknown> = {}) => {
+    authed = true
+    apiMock.mockImplementation(async (path, init) => {
+      if (path === '/setup') return { needed: false }
+      if (path === '/setup/step') return init?.method === 'PUT' ? {} : { step }
+      if (path === '/kids') return [kid]
+      return path in extra ? extra[path] : []
+    })
+  }
+
+  test('Finish on a resumed wizard shows "You\'re all set" with the real counts', async () => {
+    const user = userEvent.setup()
+    resumeAt(7, { '/chores/': [{ id: 1 }, { id: 2 }, { id: 3 }], '/hours': { rules: [{}, {}] } })
+    wrap()
+    await user.click(await screen.findByRole('button', { name: 'Finish' }))
+    expect(await screen.findByText("You're all set")).toBeInTheDocument()
+    expect(replace).not.toHaveBeenCalled()
+    expect(await screen.findByText(/1 kid, 3 chores, 0 devices, 2 schedules/)).toBeInTheDocument()
+  })
+
+  test('re-picking a starter that already exists does not create it again', async () => {
+    const user = userEvent.setup()
+    resumeAt(4, { '/chores/': [{ id: 9, title: 'Make bed' }] })
+    wrap()
+    await user.click(await screen.findByRole('button', { name: /^Make bed/ }))
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    await screen.findByText(/Looking for devices/)
+    expect(posts('/chores/')).toHaveLength(0)
+    expect(posts('/chores/9/assignments')).toHaveLength(0)
   })
 
   test('nothing to resume goes to log in', async () => {

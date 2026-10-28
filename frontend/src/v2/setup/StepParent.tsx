@@ -1,4 +1,4 @@
-import type { ChangeEvent } from 'react'
+import { useState, type ChangeEvent } from 'react'
 import { PasswordInput, TextInput } from '@mantine/core'
 
 export interface ParentForm { username: string; password: string; again: string; fullName: string }
@@ -20,6 +20,7 @@ interface Props {
 
 export function StepParent({ value, showError, onChange }: Props) {
   const err = parentErrors(value)
+  const [againSeen, setAgainSeen] = useState(false) // the mismatch shows once they leave the field, not while typing
   const set = (k: keyof ParentForm) => (e: ChangeEvent<HTMLInputElement>) =>
     onChange({ ...value, [k]: e.currentTarget.value })
   return (
@@ -30,7 +31,7 @@ export function StepParent({ value, showError, onChange }: Props) {
       <PasswordInput mt="md" label="Password" value={value.password} onChange={set('password')} autoComplete="new-password"
         description={showError && err.password ? undefined : 'At least 8 characters.'} error={showError ? err.password : undefined} />
       <PasswordInput mt="md" label="Type it again" value={value.again} onChange={set('again')} autoComplete="new-password"
-        error={showError || value.again ? err.again : undefined} />
+        onBlur={() => setAgainSeen(true)} error={showError || againSeen ? err.again : undefined} />
     </>
   )
 }
