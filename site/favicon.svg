@@ -1,25 +1,13 @@
-<svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-  <!-- Light mode background -->
-  <rect width="64" height="64" fill="#f4f7fa"/>
-
-  <!-- Task/checkbox icon -->
-  <rect x="16" y="12" width="32" height="40" rx="4" fill="none" stroke="#1d2b53" stroke-width="2"/>
-  <circle cx="24" cy="24" r="3" fill="#1d2b53"/>
-  <circle cx="24" cy="36" r="3" fill="#1d2b53"/>
-  <circle cx="24" cy="48" r="3" fill="#1d2b53"/>
-
-  <!-- Checkmark for approval -->
-  <path d="M 28 20 L 30 22 L 34 18" stroke="#7bd389" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-
-  <!-- Points/reward -->
-  <polygon points="44,24 46,29 51,30 47,34 48,39 44,36 40,39 41,34 37,30 42,29" fill="#ffc93c"/>
-
-  <!-- Dark mode variant -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- The app's round "@" logo in the v3 parent palette (parent-tokens.css): ink disc, lime @ -->
   <style>
+    .disc { fill: #292928; }
+    .at { fill: #c3f832; font: 700 44px 'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif; }
     @media (prefers-color-scheme: dark) {
-      svg { background: #1e2026; }
-      circle, rect, path { stroke: #e8eeff; }
-      polygon { fill: #ffc93c; }
+      .disc { fill: #c3f832; }
+      .at { fill: #1c1c1b; }
     }
   </style>
+  <circle class="disc" cx="32" cy="32" r="31"/>
+  <text class="at" x="32" y="33" text-anchor="middle" dominant-baseline="central">@</text>
 </svg>
