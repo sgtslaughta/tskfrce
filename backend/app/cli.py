@@ -4,7 +4,6 @@ import sys
 
 from app.core.config import settings
 from app.core.database import SessionLocal, _import_all_models
-from app.models.family import FamilySettings
 from app.models.user import User, UserRole
 from app.services.password_reset import create_reset
 
@@ -20,10 +19,7 @@ def reset_password(username: str) -> int:
             return 1
         token = create_reset(db, user, None)
         name = user.username  # read before the session closes and detaches user
-        fam = db.get(FamilySettings, 1)
-        base = ((fam and fam.app_address) or settings.BOX_URL or "http://<this-box>:3000").rstrip(
-            "/"
-        )
+    base = (settings.BOX_URL or "http://<this-box>:3000").rstrip("/")
     print(f"Open this link to set a new password for {name} (works once, 30 minutes):")
     print(f"{base}/reset?token={token}")
     return 0
