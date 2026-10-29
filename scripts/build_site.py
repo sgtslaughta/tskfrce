@@ -4,20 +4,23 @@ Build script to generate the t@sk4ce guide as static HTML pages.
 Converts markdown guide files to styled HTML pages matching the main site.
 """
 
-import os
+import html as html_lib
 import re
 import shutil
-import html as html_lib
 from pathlib import Path
-from urllib.parse import quote
 
 try:
     import markdown
-    from markdown.extensions import tables, fenced_code, toc
+    from markdown.extensions import fenced_code, tables, toc
 except ImportError:
     print("Error: markdown package not installed. Install with: pip install markdown")
     exit(1)
 
+from site_templates import (  # noqa: E402 (needs the check above)
+    chapter_page,
+    nav_card,
+    standalone_page,
+)
 
 # Configuration
 GUIDE_SOURCE = Path("docs/guide")
@@ -39,51 +42,6 @@ GUIDE_CHAPTERS = [
 ]
 
 REMOTE_ACCESS_ENTRY = ("remote-access.md", "Remote access (Tailscale)")
-
-
-# Shared page chrome (matches site/index.html)
-FONTS = """  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap">"""
-
-BAR = """    <header class="f-bar">
-      <a href="../" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
-      <nav class="f-bar-buttons" aria-label="Site">
-        <a id="back-to-app" class="f-back" style="display: none;" href="../?from=app">← Back to app</a>
-        <a class="f-nav" aria-current="page" href="index.html">Guide</a>
-        <a class="f-nav" data-wide href="../engineering.html">Engineering</a>
-      </nav>
-    </header>"""
-
-FOOTER = """    <footer class="f-footer">
-      <div class="f-footer-cols">
-        <div>
-          <a href="../" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
-          <p>Chores first, then screens.</p>
-        </div>
-        <div>
-          <h2>t@sk4ce</h2>
-          <ul>
-            <li><a href="https://github.com/sgtslaughta/tskfrce">GitHub</a></li>
-            <li><a href="https://github.com/sgtslaughta/tskfrce/blob/main/LICENSE">GPL-3.0</a></li>
-          </ul>
-        </div>
-        <div>
-          <h2>Help</h2>
-          <ul>
-            <li><a href="index.html">Start the guide</a></li>
-            <li><a href="06-troubleshooting.html">Troubleshooting</a></li>
-          </ul>
-        </div>
-        <div>
-          <h2>For developers</h2>
-          <ul>
-            <li><a href="../engineering.html">Architecture</a></li>
-          </ul>
-        </div>
-      </div>
-      <p class="f-footer-note">t@sk4ce: Chores first, then screens. Free, open-source family software.</p>
-    </footer>"""
 
 
 def ensure_dirs():
@@ -177,23 +135,13 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
     if prev_ch:
         prev_file, prev_title = prev_ch
         prev_html = get_output_filename(prev_file)
-        prev_link = f"""
-    <a href="{prev_html}" class="guide-nav-card guide-nav-prev">
-      <div class="guide-nav-label">← Previous</div>
-      <div class="guide-nav-title">{prev_title}</div>
-    </a>
-"""
+        prev_link = nav_card(prev_html, "prev", "← Previous", prev_title)
 
     next_link = ""
     if next_ch:
         next_file, next_title = next_ch
         next_html = get_output_filename(next_file)
-        next_link = f"""
-    <a href="{next_html}" class="guide-nav-card guide-nav-next">
-      <div class="guide-nav-label">Next →</div>
-      <div class="guide-nav-title">{next_title}</div>
-    </a>
-"""
+        next_link = nav_card(next_html, "next", "Next →", next_title)
 
     toc_html = render_toc(headings)
 
@@ -219,102 +167,10 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
     else:
         summary_text = f"Chapter {current_num} of {chapter_count} · {title}"
 
-    html = f"""<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{title} — t@sk4ce</title>
-  <meta name="description" content="t@sk4ce beginner's guide for parents.">
-{FONTS}
-  <link rel="stylesheet" href="../styles.css">
-  <link rel="stylesheet" href="../guide.css">
-  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-  <script>
-    // Back to app link (only show if from=app)
-    window.addEventListener('load', function() {{
-      const params = new URLSearchParams(window.location.search);
-      const fromApp = params.get('from') === 'app';
-      sessionStorage.setItem('guideFromApp', fromApp);
-      const backBtn = document.getElementById('back-to-app');
-      if (backBtn) {{
-        backBtn.style.display = fromApp ? 'flex' : 'none';
-      }}
-
-      // Restore scroll position and "from=app" across guide pages
-      window.addEventListener('beforeunload', function() {{
-        sessionStorage.setItem('guideScrollPos', window.scrollY);
-      }});
-    }});
-
-    // Copy button for code blocks
-    function copyToClipboard(text, btn) {{
-      navigator.clipboard.writeText(text).then(() => {{
-        const original = btn.textContent;
-        btn.textContent = '✓ Copied';
-        btn.classList.add('copied');
-        setTimeout(() => {{
-          btn.textContent = original;
-          btn.classList.remove('copied');
-        }}, 2000);
-      }});
-    }}
-  </script>
-</head>
-<body>
-  <div class="f-shell">
-{BAR}
-
-    <main class="guide-layout">
-      <!-- Chapter sidebar (desktop) / collapsible (mobile) -->
-      <aside class="guide-sidebar">
-        <details class="guide-chapters-toggle">
-          <summary>{summary_text}</summary>
-          <nav class="guide-chapters">
-            {chapter_links}
-          </nav>
-        </details>
-        <script>
-          // desktop: sidebar always open; phone: starts closed
-          if (matchMedia('(min-width: 961px)').matches) document.querySelector('.guide-chapters-toggle').open = true;
-        </script>
-      </aside>
-
-      <!-- Main content -->
-      <article class="guide-content">
-        <div class="guide-content-inner">
-          <header class="guide-header">
-            <div class="guide-crumb">{breadcrumb}</div>
-            <h1>{title}</h1>
-          </header>
-
-          <div class="guide-body">
-            {toc_html}
-            {content_html}
-          </div>
-
-          <!-- Previous/Next navigation -->
-          <nav class="guide-nav" aria-label="Chapters"{' data-first' if not prev_ch else ''}>
-            {prev_link}
-            {next_link}
-          </nav>
-
-          <!-- Edit on GitHub -->
-          <div class="guide-edit-link">
-            <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/guide/{chapters_list[current_idx][0]}" target="_blank" rel="noopener">
-              Edit this page on GitHub →
-            </a>
-          </div>
-        </div>
-      </article>
-    </main>
-
-{FOOTER}
-  </div>
-</body>
-</html>
-"""
-    return html
+    return chapter_page(
+        title, summary_text, chapter_links, breadcrumb, toc_html, content_html,
+        prev_link, next_link, first=not prev_ch, source=chapters_list[current_idx][0],
+    )
 
 
 def get_output_filename(source_filename):
@@ -346,7 +202,7 @@ def process_guide_file(source_file, all_chapters, chapter_idx):
         print(f"Warning: {source_file} not found, skipping")
         return None
 
-    with open(source_file, "r") as f:
+    with open(source_file) as f:
         md_content = f.read()
 
     # Strip maintainer notes from README
@@ -440,7 +296,7 @@ def style_callouts(html):
     for pattern in warning_patterns:
         html = re.sub(
             rf'<p>({re.escape(pattern)})',
-            rf'<p class="callout callout-warning">\1',
+            r'<p class="callout callout-warning">\1',
             html,
         )
 
@@ -474,9 +330,9 @@ def build_site():
 
     # Build remote-access page separately (not in main chapter list navigation)
     if REMOTE_ACCESS_SOURCE.exists():
-        print(f"  Building remote-access.html...")
+        print("  Building remote-access.html...")
         # For remote-access, create a standalone page without chapter nav
-        with open(REMOTE_ACCESS_SOURCE, "r") as f:
+        with open(REMOTE_ACCESS_SOURCE) as f:
             md_content = f.read()
 
         html = markdown_to_html(md_content)
@@ -510,82 +366,7 @@ def build_standalone_page(content_html, title):
     # Breadcrumb
     breadcrumb = f"Guide › {title}"
 
-    html = f"""<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{title} — t@sk4ce</title>
-  <meta name="description" content="t@sk4ce beginner's guide for parents.">
-{FONTS}
-  <link rel="stylesheet" href="../styles.css">
-  <link rel="stylesheet" href="../guide.css">
-  <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-  <script>
-    // Back to app link
-    window.addEventListener('load', function() {{
-      const params = new URLSearchParams(window.location.search);
-      const fromApp = params.get('from') === 'app';
-      const backBtn = document.getElementById('back-to-app');
-      if (backBtn) {{
-        backBtn.style.display = fromApp ? 'flex' : 'none';
-      }}
-    }});
-
-    function copyToClipboard(text, btn) {{
-      navigator.clipboard.writeText(text).then(() => {{
-        const original = btn.textContent;
-        btn.textContent = '✓ Copied';
-        btn.classList.add('copied');
-        setTimeout(() => {{
-          btn.textContent = original;
-          btn.classList.remove('copied');
-        }}, 2000);
-      }});
-    }}
-  </script>
-</head>
-<body>
-  <div class="f-shell">
-{BAR}
-
-    <main class="guide-layout">
-      <!-- Chapter sidebar -->
-      <aside class="guide-sidebar">
-        <nav class="guide-chapters">
-          {chapter_links}
-        </nav>
-      </aside>
-
-      <!-- Main content -->
-      <article class="guide-content">
-        <div class="guide-content-inner">
-          <header class="guide-header">
-            <div class="guide-crumb">{breadcrumb}</div>
-            <h1>{title}</h1>
-          </header>
-
-          <div class="guide-body">
-            {toc_html}
-            {content_html}
-          </div>
-
-          <!-- Edit on GitHub -->
-          <div class="guide-edit-link">
-            <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/remote-access.md" target="_blank" rel="noopener">
-              Edit this page on GitHub →
-            </a>
-          </div>
-        </div>
-      </article>
-    </main>
-
-{FOOTER}
-  </div>
-</body>
-</html>
-"""
-    return html
+    return standalone_page(title, chapter_links, breadcrumb, toc_html, content_html)
 
 
 if __name__ == "__main__":
