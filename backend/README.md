@@ -1,275 +1,97 @@
-# TaaskMaaster
+# t@sk4ce backend
 
-A comprehensive task management system designed to help parents encourage children to complete household tasks through gamification and rewards.
+FastAPI app with SQLAlchemy, Alembic and SQLite. It holds chores, points, rewards, chat, device rules and the lock loop that tells the home-box blocker who to pause. Overview for contributors: [docs/engineering.md](../docs/engineering.md).
 
-## Features
+## Run
 
-- **Containerized Deployment**: Full Docker Compose setup for easy deployment
-- **Modern Web Frontend**: Next.js with TypeScript and Tailwind CSS
-- **Robust Backend**: FastAPI with SQLAlchemy and comprehensive API
-- **File Storage**: Local-disk storage for media and files
-- **Authentication**: JWT-based auth with optional OAuth/SSO support
-- **Gamification**: Points, achievements, leaderboards, and rewards
-- **Task Management**: Flexible task creation, lists, goals, and templates
-- **Monitoring**: Prometheus metrics and health checks
-- **CI/CD**: GitHub Actions with container registry and security scanning
+With Docker (from the repo root):
 
-## Quick Start
-
-### Prerequisites
-
-- Docker and Docker Compose
-- Git
-- Node.js 18+ (for local development)
-- Python 3.11+ (for local development)
-
-### Development Setup
-
-#### Quick Start (Recommended)
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd taaskMaaster
-
-# Start everything with one command
-./scripts/start.sh
+cp .env.example .env     # set INTERNAL_TOKEN; scripts/start.sh does this for you
+docker compose up -d --build
 ```
 
-#### Manual Setup
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd taaskMaaster
-   ```
+The dev stack serves the frontend on http://localhost:3000 and the API on http://localhost:8000 (docs at `/docs`). A home-box install uses `docker-compose.prod.yml` through `install.sh`.
 
-2. **Copy environment configuration (optional)**
-   ```bash
-   cp .env.example .env
-   # Edit .env if you need custom settings
-   ```
-
-3. **Start the development environment**
-   ```bash
-   docker-compose up -d
-   ```
-
-4. **Access the application**
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - API Documentation: http://localhost:8000/docs
-
-### Local Development
-
-#### Backend Development
+Without Docker:
 
 ```bash
 cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
+alembic upgrade head
 uvicorn app.main:app --reload
 ```
 
-#### Frontend Development
+`entrypoint.sh` (the container start) backs up the database to `DATA_DIR/backups/` when it is behind, runs `alembic upgrade head`, then starts uvicorn (with `--reload` only when `ENVIRONMENT=development`).
+
+## Settings
+
+Read from the environment or `.env` (`app/core/config.py`).
+
+| Variable | Default | Meaning |
+|---|---|---|
+| `DATA_DIR` | `./data` | SQLite file, uploads, `secrets.json`, backups |
+| `DATABASE_URL` | `sqlite:///{DATA_DIR}/task4ce.db` | Database |
+| `SECRET_KEY`, `JWT_SECRET_KEY`, `INTERNAL_TOKEN` | generated on first boot | Saved in `DATA_DIR/secrets.json`. Env wins. The compose files require `INTERNAL_TOKEN` so the blocker shares it |
+| `BOX_URL` | none | Public address of the box, used in reset links |
+| `TRUSTED_PROXY_IPS` | loopback | Peers allowed to set `X-Real-IP` (the frontend proxy) |
+| `CORS_ORIGINS`, `TRUSTED_HOSTS` | localhost | Comma lists read in `app/main.py` |
+| `BLOCKER_URL` | `http://127.0.0.1:7777` | Where the backend pushes blocked devices |
+| `LOCK_INTERVAL_SECONDS`, `LOCK_LOOP_ENABLED` | `30`, `true` | Lock loop |
+| `NTFY_URL`, `NTFY_PUBLIC_URL`, `NTFY_PORT`, `NTFY_CONF_FILE` | none | Kid phone alerts through ntfy |
+| `ACCESS_TOKEN_EXPIRE_MINUTES`, `REFRESH_TOKEN_EXPIRE_DAYS`, `REFRESH_TOKEN_REMEMBER_DAYS` | `30`, `7`, `30` | Token lifetimes |
+| `MAX_UPLOAD_SIZE` | 10 MB | Photo upload cap |
+| `LOG_LEVEL`, `ENVIRONMENT`, `DEBUG` | `INFO`, `development`, `false` | Logging and mode |
+
+## Layout
+
+```
+backend/
+├── app/
+│   ├── main.py        # app, middleware, router wiring, /health, /metrics
+│   ├── cli.py         # python -m app.cli reset-password <username>
+│   ├── api/           # routers, one file per area
+│   ├── core/          # config, auth, secrets, crypto, rate limit, database
+│   ├── models/        # SQLAlchemy tables
+│   ├── schemas/       # Pydantic request and response models
+│   ├── services/      # business logic (chores, economy, chat, notify, photos...)
+│   ├── lock/          # online rules, hours, schedule, lock loop, blocker client
+│   ├── flair/         # flair catalog
+│   └── utils/         # backup_db
+├── alembic/           # migrations
+├── tests/             # pytest
+├── entrypoint.sh
+└── Dockerfile
+```
+
+## Migrations
 
 ```bash
-cd frontend
-npm install
-npm run dev
+cd backend
+alembic revision -m "short name"   # then edit the new file in alembic/versions/
+alembic upgrade head
 ```
 
-## Project Structure
+Rules and the schema design: [relational schema spec](../docs/superpowers/specs/2026-10-21-v2-relational-schema-design.md).
 
-```
-taaskMaaster/
-├── backend/                 # FastAPI backend
-│   ├── app/
-│   │   ├── api/            # API routes
-│   │   ├── core/           # Core configuration
-│   │   ├── db/             # Database models and migrations
-│   │   ├── models/         # Pydantic models
-│   │   ├── schemas/        # Data schemas
-│   │   ├── services/       # Business logic
-│   │   └── utils/          # Utility functions
-│   ├── tests/              # Backend tests
-│   └── requirements.txt    # Python dependencies
-├── frontend/               # Next.js frontend
-│   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── pages/          # Next.js pages
-│   │   ├── styles/         # CSS and styling
-│   │   ├── utils/          # Utility functions
-│   │   ├── hooks/          # Custom React hooks
-│   │   └── contexts/       # React contexts
-│   └── package.json        # Node.js dependencies
-├── docker/                 # Docker configurations
-├── docs/                   # Documentation
-├── scripts/                # Utility scripts
-├── .github/workflows/      # CI/CD pipelines
-└── docker-compose.yml      # Development environment
-```
-
-## API Documentation
-
-The API documentation is automatically generated and available at:
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-## Testing
-
-### Python Test Suite (Recommended)
-
-We've converted to a comprehensive Python-based testing framework using pytest.
-
-#### Quick Start
-```bash
-# Install test dependencies
-pip install -r tests/requirements.txt
-
-# Run all tests
-python run_tests.py
-
-# Run quick tests (skip slow tests)
-python run_tests.py quick
-
-# Run with verbose output
-python run_tests.py -v all
-```
-
-#### Test Types
+## Test and lint
 
 ```bash
-# Infrastructure tests (Docker, services, connectivity)
-python run_tests.py infrastructure
-
-# Backend API tests
-python run_tests.py backend
-
-# Frontend tests
-python run_tests.py frontend
-
-# Integration tests
-python run_tests.py integration
-
-# Generate coverage report
-python run_tests.py coverage
+cd backend && python -m pytest tests -q
+cd .. && ruff format --check backend blocker && ruff check backend blocker
 ```
 
-#### Advanced Usage
-
-```bash
-# Start services before testing
-python run_tests.py -s all
-
-# Stop services after testing
-python run_tests.py -S all
-
-# Run specific test file
-pytest tests/test_infrastructure.py -v
-
-# Run with coverage
-pytest tests/ --cov=backend/app --cov-report=html
-```
-
-### Test Coverage
-
-The Python test suite includes:
-
-- **🏗️ Infrastructure Tests**: Docker environment, service status, network connectivity
-- **🔧 Backend Tests**: API endpoints, health checks, error handling, security
-- **🌐 Frontend Tests**: Page loading, HTML structure, API connectivity
-- **🔗 Integration Tests**: Service communication, data flow
-- **🔒 Security Tests**: Headers, CORS, port exposure
-- **⚡ Performance Tests**: Response times, concurrent requests
-- **📊 Coverage Reports**: HTML and terminal coverage reports
-
-### Test Features
-
-- **🎯 Comprehensive Coverage**: Tests all aspects of the system
-- **⚡ Fast Execution**: Parallel test execution with pytest-xdist
-- **📊 Detailed Reporting**: HTML reports, coverage analysis
-- **🔧 Easy Configuration**: Environment-based configuration
-- **🛠️ Flexible Test Selection**: Run specific test categories
-- **🚀 Service Management**: Automatic service startup/shutdown
-- **📝 Clear Documentation**: Well-documented test cases
-
-### Test Reports
-
-After running tests, you'll get:
-- ✅/❌ Pass/fail indicators for each test
-- 📊 Performance metrics (response times)
-- 🔒 Security assessment results
-- 📈 Coverage reports (HTML and terminal)
-- 🐛 Detailed error messages and stack traces
-- 💡 Troubleshooting suggestions for failed tests
-
-## Deployment
-
-### Production Deployment
-
-1. **Set up production environment**
-   ```bash
-   cp .env.example .env.prod
-   # Configure production settings
-   ```
-
-2. **Build and deploy**
-   ```bash
-   docker-compose -f docker-compose.prod.yml up -d
-   ```
-
-### Docker Registry
-
-Images are automatically built and pushed to GitHub Container Registry:
-- Backend: `ghcr.io/your-org/taaskmaaster/backend:latest`
-- Frontend: `ghcr.io/your-org/taaskmaaster/frontend:latest`
+CI runs both (`.github/workflows/ci-cd.yml`).
 
 ## Monitoring
 
-### Health Checks
-- Application: http://localhost:8000/health
-- Metrics: http://localhost:8000/metrics
-
-### Logs
-```bash
-# View all logs
-docker-compose logs -f
-
-# View specific service logs
-docker-compose logs -f backend
-docker-compose logs -f frontend
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-
-- Follow the existing code style and conventions
-- Write tests for new features
-- Update documentation as needed
-- Ensure all tests pass before submitting PR
-
-## License
-
-This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+`GET /health` for health and `GET /metrics` for Prometheus. Logs: `docker compose logs -f backend`.
 
 ## Account recovery
 
-On the box: `docker compose -f docker-compose.prod.yml exec backend python -m app.cli reset-password <parent-username>` prints a one-time link (30 minutes). Another parent can also make one in Settings → Parents.
+On the box: `docker compose -f docker-compose.prod.yml exec backend python -m app.cli reset-password <parent-username>` prints a one-time link (30 minutes). Another parent can also make one in Settings, Parents.
 
-## Support
+## License
 
-For support and questions:
-- Create an issue in the GitHub repository
-- Check the documentation in the `docs/` directory
-- Review the API documentation at `/docs`
-
-## Roadmap
-
-See the [implementation plan](docs/implementation_plan.md) for detailed development phases and timelines.
+GPL-3.0, see [LICENSE](../LICENSE).
