@@ -11,28 +11,14 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="home.css">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <script>
-    // "Back to app" only when opened from the app (?from=app)
-    window.addEventListener('load', function () {
-      const back = document.getElementById('back-to-app');
-      if (back) back.hidden = new URLSearchParams(location.search).get('from') !== 'app';
-    });
-    function copyToClipboard(text, btn) {
-      navigator.clipboard.writeText(text).then(function () {
-        const original = btn.textContent;
-        btn.textContent = '✓ Copied';
-        btn.classList.add('copied');
-        setTimeout(function () { btn.textContent = original; btn.classList.remove('copied'); }, 2000);
-      });
-    }
-  </script>
+  <script src="site.js" defer></script>
 </head>
 <body>
   <div class="f-shell">
     <header class="f-bar">
       <a href="./" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
       <nav class="f-bar-buttons" aria-label="Site">
-        <a id="back-to-app" class="f-back" hidden href="#" onclick="history.back(); return false;">← Back to app</a>
+        <a id="back-to-app" class="f-back" hidden href="./">← Back to app</a>
         <a class="f-nav" href="guide/">Guide</a>
         <a class="f-nav" data-wide href="engineering.html">Engineering</a>
         <a class="f-nav" data-wide href="https://github.com/sgtslaughta/tskfrce">GitHub</a>

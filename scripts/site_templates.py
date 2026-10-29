@@ -8,7 +8,7 @@ FONTS = """  <link rel="preconnect" href="https://fonts.googleapis.com">
 BAR = """    <header class="f-bar">
       <a href="../" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
       <nav class="f-bar-buttons" aria-label="Site">
-        <a id="back-to-app" class="f-back" style="display: none;" href="../?from=app">← Back to app</a>
+        <a id="back-to-app" class="f-back" hidden href="../">← Back to app</a>
         <a class="f-nav" aria-current="page" href="index.html">Guide</a>
         <a class="f-nav" data-wide href="../engineering.html">Engineering</a>
       </nav>
@@ -68,36 +68,7 @@ def chapter_page(title, summary_text, chapter_links, breadcrumb, toc_html, conte
   <link rel="stylesheet" href="../styles.css">
   <link rel="stylesheet" href="../guide.css">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-  <script>
-    // Back to app link (only show if from=app)
-    window.addEventListener('load', function() {{
-      const params = new URLSearchParams(window.location.search);
-      const fromApp = params.get('from') === 'app';
-      sessionStorage.setItem('guideFromApp', fromApp);
-      const backBtn = document.getElementById('back-to-app');
-      if (backBtn) {{
-        backBtn.style.display = fromApp ? 'flex' : 'none';
-      }}
-
-      // Restore scroll position and "from=app" across guide pages
-      window.addEventListener('beforeunload', function() {{
-        sessionStorage.setItem('guideScrollPos', window.scrollY);
-      }});
-    }});
-
-    // Copy button for code blocks
-    function copyToClipboard(text, btn) {{
-      navigator.clipboard.writeText(text).then(() => {{
-        const original = btn.textContent;
-        btn.textContent = '✓ Copied';
-        btn.classList.add('copied');
-        setTimeout(() => {{
-          btn.textContent = original;
-          btn.classList.remove('copied');
-        }}, 2000);
-      }});
-    }}
-  </script>
+  <script src="../site.js" defer></script>
 </head>
 <body>
   <div class="f-shell">
@@ -167,29 +138,7 @@ def standalone_page(title, chapter_links, breadcrumb, toc_html, content_html):
   <link rel="stylesheet" href="../styles.css">
   <link rel="stylesheet" href="../guide.css">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-  <script>
-    // Back to app link
-    window.addEventListener('load', function() {{
-      const params = new URLSearchParams(window.location.search);
-      const fromApp = params.get('from') === 'app';
-      const backBtn = document.getElementById('back-to-app');
-      if (backBtn) {{
-        backBtn.style.display = fromApp ? 'flex' : 'none';
-      }}
-    }});
-
-    function copyToClipboard(text, btn) {{
-      navigator.clipboard.writeText(text).then(() => {{
-        const original = btn.textContent;
-        btn.textContent = '✓ Copied';
-        btn.classList.add('copied');
-        setTimeout(() => {{
-          btn.textContent = original;
-          btn.classList.remove('copied');
-        }}, 2000);
-      }});
-    }}
-  </script>
+  <script src="../site.js" defer></script>
 </head>
 <body>
   <div class="f-shell">
