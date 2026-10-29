@@ -284,6 +284,32 @@ pre code { background: none; border: 0; padding: 0; font-size: inherit; }
 .page-head h1 { font-size: 44px; }
 .description { color: var(--p-sub); font-size: 18px; }
 
+.f-main > section > h3 { margin-top: 28px; }
+.f-card ul { padding-left: 20px; }
+.eng-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); gap: 12px; }
+.eng-2 { grid-template-columns: repeat(auto-fit, minmax(min(380px, 100%), 1fr)); }
+.eng-list li + li { margin-top: 6px; }
+.eng-more { margin-top: 16px; color: var(--p-sub); }
+.eng-end { text-align: center; }
+.eng-end p { margin: 0 auto; color: var(--p-sub); }
+
+/* Architecture diagram: full width on desktop; scrolls inside its card on phones */
+.arch { margin: 20px 0 0; padding: 16px; max-width: 800px; }
+.arch-scroll { overflow-x: auto; border-radius: 8px; }
+.f-main .arch-scroll svg { display: block; width: 100%; min-width: 620px; max-width: none; }
+.arch-hint { display: none; margin-top: 8px; font-size: 13px; color: var(--p-sub); }
+.arch-box { fill: var(--p-card); stroke: var(--p-line); stroke-width: 1.5; }
+.arch-acc { fill: var(--p-acc); stroke: var(--p-acc); }
+.arch-group { fill: var(--p-soft); stroke: var(--p-sub); stroke-width: 1.2; stroke-dasharray: 6 5; }
+.arch-t { font: 600 14px var(--font); fill: var(--p-ink); text-anchor: middle; }
+.arch-on { fill: var(--p-on-acc); }
+.arch-s { font: 400 12px var(--mono); fill: var(--p-sub); text-anchor: middle; }
+.arch-g { font: 700 13px var(--font); fill: var(--p-ink); }
+.arch-l { font: 500 11.5px var(--font); fill: var(--p-sub); }
+.arch-line { fill: none; stroke: var(--p-sub); stroke-width: 1.5; marker-end: url(#arrowhead); }
+.arch-dash { stroke-dasharray: 5 4; }
+.arch-head { fill: var(--p-sub); }
+
 /* ── Motion and small screens ─────────────────────────────────────────── */
 
 @media (prefers-reduced-motion: reduce) {
@@ -297,5 +323,7 @@ pre code { background: none; border: 0; padding: 0; font-size: inherit; }
   .page-head h1 { font-size: 34px; }
   .f-nav[data-wide] { display: none; }
   .f-main > section { padding-top: 44px; }
+  .arch { padding: 12px; }
+  .arch-hint { display: block; }
   .f-footer-cols { gap: 28px; }
 }
