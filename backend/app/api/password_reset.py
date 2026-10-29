@@ -22,8 +22,14 @@ class ResetIn(BaseModel):
     password: str = Field(..., min_length=8)
 
 
-def reset_url(request: Request, token: str) -> str:
-    base = settings.BOX_URL or request.headers.get("origin") or str(request.base_url)
+def reset_url(request: Request, db: Session, token: str) -> str:
+    fam = db.get(FamilySettings, 1)
+    base = (
+        (fam and fam.app_address)
+        or settings.BOX_URL
+        or request.headers.get("origin")
+        or str(request.base_url)
+    )
     return f"{base.rstrip('/')}/reset?token={token}"
 
 
@@ -64,7 +70,7 @@ def make_reset_link(
     target = db.get(User, parent_id)
     if target is None or target.role != UserRole.PARENT or not target.is_active:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "That parent was not found.")
-    return {"url": reset_url(request, create_reset(db, target, me))}
+    return {"url": reset_url(request, db, create_reset(db, target, me))}
 
 
 @router.post("/api/v1/auth/reset", status_code=status.HTTP_204_NO_CONTENT)

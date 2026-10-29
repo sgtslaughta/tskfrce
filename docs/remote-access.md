@@ -46,5 +46,5 @@ Tip: bookmark it.
 
 - Only people you share your Tailscale account or machine with can reach it.
 - Kids do not need this. Their own page works on the home Wi-Fi.
-- Password reset links use the address saved as `BOX_URL` in the `.env` file. If you want links that work from away: in the Terminal on the box, type `cd ~/task4ce`, then `nano .env`, change the `BOX_URL=` line to your Tailscale address (for example `BOX_URL=http://100.101.102.103:3000`), save (Ctrl+O, Enter), leave (Ctrl+X), and type `docker compose -f docker-compose.prod.yml up -d` to apply it. Running the install line again does not change this file.
+- Want links in pings and password resets to work from away? In the app, open **Settings → Notifications** and put your Tailscale address (for example `http://100.101.102.103:3000`) in **App address**. Don't change `BOX_URL` in the `.env` file: kids' devices at home still use that address.
 - Turn it off any time: `sudo tailscale down` on the box.

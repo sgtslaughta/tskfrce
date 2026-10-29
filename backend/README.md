@@ -34,7 +34,7 @@ Read from the environment or `.env` (`app/core/config.py`).
 | `DATA_DIR` | `./data` | SQLite file, uploads, `secrets.json`, backups |
 | `DATABASE_URL` | `sqlite:///{DATA_DIR}/task4ce.db` | Database |
 | `SECRET_KEY`, `JWT_SECRET_KEY`, `INTERNAL_TOKEN` | generated on first boot | Saved in `DATA_DIR/secrets.json`. Env wins. The compose files require `INTERNAL_TOKEN` so the blocker shares it |
-| `BOX_URL` | none | Public address of the box, used in reset links |
+| `BOX_URL` | none | Home address of the box: kid push links, ntfy host, blocker redirect, reset links unless the in-app App address is set |
 | `TRUSTED_PROXY_IPS` | loopback | Peers allowed to set `X-Real-IP` (the frontend proxy) |
 | `CORS_ORIGINS`, `TRUSTED_HOSTS` | localhost | Comma lists read in `app/main.py` |
 | `BLOCKER_URL` | `http://127.0.0.1:7777` | Where the backend pushes blocked devices |

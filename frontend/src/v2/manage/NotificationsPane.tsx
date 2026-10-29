@@ -64,7 +64,7 @@ function AddressCard({ s, save }: { s: NotifySettings; save: (p: SettingsPatch) 
         <Icon name="link" size={18} />
         <span className="pn-name">App address</span>
       </h3>
-      <p className="pn-help">Used for the link in each ping.</p>
+      <p className="pn-help">Used for links in pings and password reset links.</p>
       <TextInput
         aria-label="App address"
         className="pn-addr"
