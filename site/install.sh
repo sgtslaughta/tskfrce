@@ -121,7 +121,9 @@ write_env() {
     echo "SECRET_KEY=$(random_hex)"
     echo "INTERNAL_TOKEN=$(random_hex)"
     echo "BOX_URL=http://$ip_addr:$PORT"
-    echo "NTFY_PUBLIC_URL=http://$ip_addr:2586"
+    ntfy_port="${NTFY_PORT:-2586}"
+    echo "NTFY_PUBLIC_URL=http://$ip_addr:${ntfy_port##*:}"
+    [ -z "${NTFY_PORT:-}" ] || echo "NTFY_PORT=$NTFY_PORT"
     echo "TRUSTED_HOSTS=localhost,127.0.0.1,backend"
     echo "FRONTEND_PORT=0.0.0.0:$PORT"
     echo "BACKEND_PORT=127.0.0.1:$API_PORT"
@@ -139,7 +141,7 @@ wait_healthy() {
   api="$(env_value BACKEND_PORT | sed 's/.*://')"
   say "Starting up. The first time takes several minutes while it builds..."
   waited=0
-  while [ "$waited" -lt 180 ]; do
+  while [ "$waited" -lt 600 ]; do
     if curl -fsS "http://127.0.0.1:${api:-8000}/health" >/dev/null 2>&1 &&
       curl -fsS "http://127.0.0.1:${port:-3000}/api/health" >/dev/null 2>&1; then
       return 0
@@ -160,7 +162,7 @@ main() {
     die "Docker could not build or start t@sk4ce." \
       "Run: cd $DIR && docker compose -f docker-compose.prod.yml logs   and share what it says when asking for help."
   wait_healthy ||
-    die "t@sk4ce did not answer within 3 minutes." \
+    die "t@sk4ce did not answer within 10 minutes." \
       "Wait a minute and open the address below. If it still fails: cd $DIR && docker compose -f docker-compose.prod.yml logs"
   say ""
   say "t@sk4ce is running. Open $(env_value BOX_URL) on your phone or computer."
