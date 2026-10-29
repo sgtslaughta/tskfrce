@@ -59,37 +59,25 @@ def copy_images():
 
 
 def extract_headings(html):
-    """Extract h2 and h3 headings for 'On this page' TOC."""
+    """The page's h2 headings, in order, for the 'On this page' list."""
     headings = []
-    h2_pattern = re.compile(r'<h2[^>]*id="([^"]*)"[^>]*>([^<]+)</h2>')
-    h3_pattern = re.compile(r'<h3[^>]*id="([^"]*)"[^>]*>([^<]+)</h3>')
-
-    for match in h2_pattern.finditer(html):
-        headings.append(("h2", match.group(2), match.group(1)))
-    for match in h3_pattern.finditer(html):
-        headings.append(("h3", match.group(2), match.group(1)))
-
+    for m in re.finditer(r'<h2[^>]*id="([^"]*)"[^>]*>(.*?)</h2>', html, re.DOTALL):
+        text = html_lib.unescape(re.sub(r"<[^>]+>", "", m.group(2))).replace("¶", "").strip()
+        text = html_lib.escape(text, quote=False)
+        headings.append(("h2", text, m.group(1)))
     return headings
 
 
 def render_toc(headings):
-    """Generate 'On this page' table of contents HTML."""
-    if not headings:
+    """'On this page': a row of links to the page's sections."""
+    if len(headings) < 2:
         return ""
-
-    html = '<div class="guide-toc">\n'
-    html += '<h3>On this page</h3>\n'
-    html += '<ul>\n'
-
-    for level, text, anchor in headings:
-        if level == "h2":
-            html += f'<li><a href="#{anchor}">{text}</a></li>\n'
-        elif level == "h3":
-            html += f'<li style="margin-left: 1em;"><a href="#{anchor}">{text}</a></li>\n'
-
-    html += '</ul>\n'
-    html += '</div>\n'
-    return html
+    items = "".join(f'<li><a href="#{anchor}">{text}</a></li>\n' for _, text, anchor in headings)
+    return (
+        '<nav class="guide-toc" aria-labelledby="toc-title">\n'
+        '<p class="guide-toc-title" id="toc-title">On this page</p>\n'
+        f"<ul>\n{items}</ul>\n</nav>\n"
+    )
 
 
 def rewrite_links(html, source_file):
@@ -160,12 +148,7 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
         breadcrumb = f"Guide › {title}"
 
     # Build chapter summary for mobile (closed by default)
-    chapter_count = len(chapters_list)
-    current_num = current_idx + 1
-    if current_idx == 0:
-        summary_text = f"Chapters ({chapter_count})"
-    else:
-        summary_text = f"Chapter {current_num} of {chapter_count} · {title}"
+    summary_text = "Chapters" if current_idx == 0 else f"Chapters · {title}"
 
     return chapter_page(
         title, summary_text, chapter_links, breadcrumb, toc_html, content_html,
@@ -240,6 +223,13 @@ def process_guide_file(source_file, all_chapters, chapter_idx):
 
     # Add copy buttons to code blocks
     html = add_copy_buttons(html)
+
+    # Screenshots load as they scroll into view; tap one to see it full size
+    html = re.sub(
+        r'<img ([^>]*?)src="([^"]+)"([^>]*)>',
+        r'<a class="guide-shot" href="\2"><img loading="lazy" decoding="async" \1src="\2"\3></a>',
+        html,
+    )
 
     # Add callout styling
     html = style_callouts(html)
