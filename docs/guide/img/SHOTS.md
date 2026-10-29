@@ -1,15 +1,17 @@
-# Screenshots to capture
+# Screenshots
 
-Referenced by the guide and README. Save each as `docs/guide/img/<name>.png` (compressed, about 1280 px wide for desktop shots, 360 px wide for phone shots). Use light mode, a demo family ("The Smiths", kids Pat and Sam), and the lab e2e artifacts when possible.
+Referenced by the guide and README. v3 look, light mode, JPEG (quality ~82), at most 1400 px wide: desktop shots at 1280 px, phone shots taken at 390 px (2x) and saved 600 px wide.
 
-| File | Screen and state to capture |
+Taken with Playwright from a demo family (kids Bobby and Susan), read-only: every write request was aborted. Kid screens were rendered as a kid session whose reads go through the parent "view as" header.
+
+| File | Screen and state |
 |---|---|
-| `today.png` | Parent **Today**, desktop. "Needs you" shows 3 to 4 items (a chore with a photo thumbnail, a Redo "2nd try", a screen time request, a reward request). One kid tab open with Still to do and Done. |
-| `today-empty.png` | Parent **Today** right after setup: no items in "Needs you", kid tabs with 0/0 chores. |
-| `setup-family.png` | Setup wizard step 1 "Your family", with the step list visible and a family name typed. |
-| `setup-devices.png` | Setup wizard step 4 "Devices": two or three devices, one assigned to a kid chip, one marked Guest. |
-| `devices.png` | **Devices** page, "New" and "Assigned" counts visible, one device online, one paused, one with the device drawer open showing Test block. |
-| `chat.png` | Chat dock open on a chore thread: a proof photo, a send-back note, and a text reply. |
-| `kid-today.png` | Kid page (phone, 360 px): name card with level and title, points, streak, a checklist of 3 chores. |
-| `kid-chore.png` | Kid page: one chore expanded with steps (one ticked), "Photo needed" and "Mark done" disabled. |
-| `kid-locker.png` | Kid **Locker**: live preview of the name card, slot tabs (Card, Ring, Name, Emblem, Title), a locked item showing its unlock level. |
+| `today.jpg` | Parent **Today**, desktop, Bobby's day with overdue and to-do chores. |
+| `today-empty.jpg` | Parent **Today** on a kid with nothing done yet (Susan, 0 of 7). |
+| `setup-family.jpg` | Setup wizard step 1, with the step list visible. |
+| `setup-devices.jpg` | Setup wizard step 5 "Whose devices are these?", devices assigned to kid chips and Guest. |
+| `devices.jpg` | **Devices** page with one device open (owners, right now, lock and test block buttons). |
+| `chat.jpg` | **Chat** on a chore thread with a kid note ("Need help"). |
+| `kid-today.jpg` | Kid page (phone): internet paused, chore cards with points and due chips. |
+| `kid-chore.jpg` | Kid page: one chore opened with chained steps, "I'm done!" held back. |
+| `kid-locker.jpg` | Kid **Customize** (Locker): name card preview, slot tabs, locked items with unlock level. |

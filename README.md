@@ -6,7 +6,7 @@ Chores first, then screens. t@sk4ce is a free family app where kids do their cho
 
 **📖 [Full beginner's guide online](https://sgtslaughta.github.io/tskfrce/guide/) — step-by-step for parents, no technical knowledge needed.**
 
-![The Today screen: chores waiting for a parent to approve, and one tab for each kid](docs/guide/img/today.png)
+![The Today screen: chores waiting for a parent to approve, and one tab for each kid](docs/guide/img/today.jpg)
 
 ## What you get
 

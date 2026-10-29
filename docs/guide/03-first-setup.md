@@ -4,7 +4,7 @@
 
 When you open t@sk4ce for the first time, a short wizard asks a few questions. It has seven steps. You can change every answer later.
 
-![The first step of the setup wizard](img/setup-family.png)
+![The first step of the setup wizard](img/setup-family.jpg)
 
 ## Step 1. Your family
 
@@ -36,7 +36,7 @@ For each device, tap the kid who owns it. Tap **Guest** for devices that should 
 
 You should see: each device shows the kid's name highlighted. Devices you skip stay in a "New" list, and you can finish later on the **Devices** page.
 
-![Choosing who owns each device](img/setup-devices.png)
+![Choosing who owns each device](img/setup-devices.jpg)
 
 If no devices appear after a few minutes, skip this step and see [Troubleshooting](06-troubleshooting.md).
 
@@ -58,7 +58,7 @@ This step explains how to check in from outside the house. It is optional. Tap *
 
 You should see: the **Today** screen with a tab for each kid.
 
-![The Today screen right after setup](img/today-empty.png)
+![The Today screen right after setup](img/today-empty.jpg)
 
 ## Test that pausing works
 

@@ -16,7 +16,7 @@ If a parent sends a chore back, read the note and try again. It's not a punishme
 
 Your parent will give you a web address, or put a bookmark on your device. Open it. The app knows which device you are on and shows your name. Tap it. If you have a PIN, type it.
 
-![The kid screen with today's chores](img/kid-today.png)
+![The kid screen with today's chores](img/kid-today.jpg)
 
 ## Chores
 
@@ -24,7 +24,7 @@ Your parent will give you a web address, or put a bookmark on your device. Open 
 - **Race** chores go to the first person who gets them approved. Be quick.
 - **Team** chores are shared. Anyone can tick steps, and the points are split.
 
-![A chore with steps and a photo button](img/kid-chore.png)
+![A chore with steps and a photo button](img/kid-chore.jpg)
 
 ## Points, levels and badges
 
@@ -34,7 +34,7 @@ Points are for spending. Levels only go up and show how much you've done in all.
 
 Tap **Customize** to open the Locker and dress up your name: cards, rings, name colors, emblems and titles. Higher levels unlock more. Items you haven't unlocked show the level you need.
 
-![The Locker](img/kid-locker.png)
+![The Locker](img/kid-locker.jpg)
 
 ## Spending points
 

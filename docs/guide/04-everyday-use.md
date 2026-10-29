@@ -6,7 +6,7 @@ The top bar has four places: **Today**, **Devices**, **Kids & chores** and **Set
 
 This is the page you will use most.
 
-![The Today screen](img/today.png)
+![The Today screen](img/today.jpg)
 
 **Needs you** is at the top. It lists everything waiting for a decision, from all kids:
 
@@ -89,7 +89,7 @@ Rewards are the things you create yourself. A kid sees a progress bar toward eac
 
 ## Devices and hours
 
-![The Devices page](img/devices.png)
+![The Devices page](img/devices.jpg)
 
 On **Devices**, three lists:
 
@@ -110,7 +110,7 @@ A banner at the top of the page appears if the **home box is offline**. See [Tro
 
 The chat button opens a small dock at the bottom of the page.
 
-![The chat dock](img/chat.png)
+![The chat dock](img/chat.jpg)
 
 - **Chore threads**: every chore has a thread. Proof photos and your send-back notes show up there. Anyone can add text or photos.
 - **Private**: one chat for each kid with the parents. Other kids can't see it.
