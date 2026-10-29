@@ -256,7 +256,7 @@ def add_copy_buttons(html):
             f'<div class="code-block-wrapper">'
             f'<button class="copy-btn" type="button" data-copy="{attr}" '
             f'onclick="copyToClipboard(this.dataset.copy, this)">📋 Copy</button>'
-            f"{prefix}{code}{suffix}"
+            f"{prefix.replace('<pre>', '<pre tabindex=\"0\">')}{code}{suffix}"
             f"</div>"
         )
         return button
