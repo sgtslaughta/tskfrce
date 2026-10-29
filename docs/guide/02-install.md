@@ -27,13 +27,13 @@ You should see: a last message that says **t@sk4ce is running. Open http://192.1
 
 Write down the address now (or take a photo of the screen). If you lose it, type `hostname -I` in the Terminal on the box: the first number is the box's address, and you add `:3000` after it.
 
-If something goes wrong, the message says what happened and what to do next. Run the same line again after you fix it. It is safe to run again. If the message says it "did not answer within 3 minutes", the box may just be slow (a Raspberry Pi can be). Wait five minutes, then try Step 2 anyway.
+If something goes wrong, the message says what happened and what to do next. Run the same line again after you fix it. It is safe to run again. If the message says it "did not answer within 10 minutes", the box may just be slow (a Raspberry Pi can be). Wait five minutes, then try Step 2 anyway.
 
 ## Step 2. Open t@sk4ce
 
 On your phone or another computer **on the same Wi-Fi**, open a web browser (Safari, Chrome and so on). Type the address from the last message into the **address bar** at the top, not into the search box. Include the `http://` and the `:3000`. There is no app to download: t@sk4ce is a web page.
 
-You should see: a page that welcomes you and asks about your family. That is the setup. Go to [First-time setup](03-first-setup.md).
+You should see: "t@sk4ce setup" and "Make your parent account". That is the setup wizard. Go to [First-time setup](03-first-setup.md).
 
 Tip: bookmark this page. On a phone, you can also choose **Add to Home Screen** in the browser's share or menu button, to get an icon. Write the address on a sticky note near the router. The box's address can change if the router is restarted; if the page stops opening, run `hostname -I` on the box again.
 
@@ -51,7 +51,7 @@ The installer does these things. You can do them yourself instead:
 
 1. Install Docker from https://docs.docker.com/engine/install/ and check with `docker --version`.
 2. Download the code: `git clone https://github.com/sgtslaughta/tskfrce.git task4ce && cd task4ce`.
-3. Write a `.env` file with `SECRET_KEY` and `INTERNAL_TOKEN` (each a long random string, for example from `openssl rand -hex 32`), `BOX_URL=http://<box address>:3000`, `LAN_IFACE=<network name: the word after "dev" in the output of ip route show default, for example eth0>` and `COMPOSE_PROFILES=blocker`.
+3. Write a `.env` file with `SECRET_KEY` and `INTERNAL_TOKEN` (each a long random string, for example from `openssl rand -hex 32`), `BOX_URL=http://<box address>:3000`, `NTFY_PUBLIC_URL=http://<box address>:2586` (for kids' phone alerts), `LAN_IFACE=<network name: the word after "dev" in the output of ip route show default, for example eth0>` and `COMPOSE_PROFILES=blocker`.
 4. Start it: `docker compose -f docker-compose.prod.yml up -d --build`.
 
 Mac and Windows can run the app to try it out (not the internet pausing): leave out `COMPOSE_PROFILES=blocker`.

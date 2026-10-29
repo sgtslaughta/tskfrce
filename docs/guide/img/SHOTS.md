@@ -7,8 +7,11 @@ Taken with Playwright from a demo family (kids Bobby and Susan), read-only: ever
 | File | Screen and state |
 |---|---|
 | `today.jpg` | Parent **Today**, desktop, Bobby's day with overdue and to-do chores. |
-| `today-empty.jpg` | Parent **Today** on a kid with nothing done yet (Susan, 0 of 7). |
-| `setup-family.jpg` | Setup wizard step 1, with the step list visible. |
+| `today-kid.jpg` | Parent **Today** on a kid with nothing done yet (Susan, 0 of 7). |
+| `needs-you.jpg` | Parent **Today**, desktop, **Needs you** tab. The demo had nothing waiting, so four sample requests were injected into the `/today` response. |
+| `setup-account.jpg` | Setup wizard step 1 "Make your parent account", with the step list visible. |
+| `setup-family.jpg` | Setup wizard step 2 "Your family" (step 1 filled in locally; nothing is sent before step 2's Next). |
+| `setup-hours.jpg` | Setup wizard step 6 "When can devices be online?" with the starting schedule (resumed at step 6 by faking `/setup/step`). |
 | `setup-devices.jpg` | Setup wizard step 5 "Whose devices are these?", devices assigned to kid chips and Guest. |
 | `devices.jpg` | **Devices** page with one device open (owners, right now, lock and test block buttons). |
 | `chat.jpg` | **Chat** on a chore thread with a kid note ("Need help"). |

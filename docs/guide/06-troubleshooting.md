@@ -6,18 +6,18 @@ Commands on this page are typed in the Terminal on the home box (see [Install](0
 
 If a command says "permission denied" for Docker, put `sudo` in front of it. If it says "no configuration file provided" or "no such file", you are not in the `task4ce` folder.
 
-## A banner says the home box is offline
+## The app says "Home box offline"
 
-The banner reads something like "The home box went quiet at ..." It means the app has not heard from the box for a few minutes.
+A red message at the top says **Home box offline** and "It went quiet at ...". It means the app has not heard from the box for a minute or two.
 
 **While the box is offline, paused devices may be back online.** The internet just works. Nothing is broken at home.
 
 1. Check the box has power and the network cable is plugged in at both ends.
    You should see: lights on the box and on the router port.
 2. Wait two minutes.
-   You should see: the banner goes away by itself.
+   You should see: the message goes away by itself.
 3. If it stays, open the Terminal on the box, go to the folder (`cd ~/task4ce`) and type `docker compose -f docker-compose.prod.yml ps`.
-   You should see: `blocker`, `backend` and `frontend` all running.
+   You should see: `blocker`, `backend`, `frontend` and `ntfy` all running.
 4. If `blocker` is missing, type `docker compose -f docker-compose.prod.yml up -d blocker`.
    You should see: `Started`.
 5. If it keeps stopping, type `docker compose -f docker-compose.prod.yml logs blocker --tail 30` and send it with a new issue on GitHub (see "Still stuck" below).
@@ -30,19 +30,20 @@ Work through these in order:
 
 1. Is the device **assigned** to a kid? Guests are never paused. New devices are paused only if **Block new devices until I assign them** is on in **Settings → Family**.
 2. Are all that kid's chores approved for today? If yes, the internet is on. If the kid has no chores today, it is also on.
-3. Is it **Free time** or **Allowed hours** for them? See **Settings → Hours**.
-4. Is there a manual unlock? Open the device, **Lock options**, then **Clear** to remove it.
-5. Press **Test block** on the device and read the answer:
-   - "We haven't seen this device on the network yet": the box can't see it. Wake the device and join your Wi-Fi.
-   - "Success": it works.
+3. Is **Lock until today's chores are done** off in **Settings → Hours**? Then only the hours count. Is it inside a **Free time** window?
+4. Open the device. Is **Always allowed (never lock)** on? Do you see **Back to schedule**? That means someone unlocked it by hand: tap **Back to schedule**.
+5. Did the kid buy screen time? It shows under **Kids & chores → Rewards → Screen time**.
+6. Press **Test block** on the device and read the answer:
+   - "We haven't seen this device on the network yet, so we couldn't test it.": the box can't see it. Wake the device and join your Wi-Fi.
+   - "Success — the device lost internet access while blocked.": it works.
    - "The device is trying to get around the block. The box is still stopping it, but someone may have changed its network settings.": see below.
-   - "We couldn't see this device use the internet during the test.": open a video on the device and test again. If it repeats, your router may be stopping the box. Check the [router list](../routers.md).
+   - "We couldn't see this device use the internet during the test. ...": open a video on the device and test again. If it repeats, your router may be stopping the box. Check the [router list](../routers.md).
 
 ## My kid found a way around it
 
 This can happen. t@sk4ce stops normal use, and tells you when it notices. It can't stop everything.
 
-If a paused device keeps reaching the internet, you get a notification, "<device> is getting around the block", and a badge on the device. It clears by itself once the device stops.
+If a paused device keeps reaching the internet, you get a notification, "<device> got around the lock", and a red "got around the lock" chip on the device. It clears by itself once the device stops.
 
 What kids try, and what happens (details in [the home box notes](../blocker.md)):
 
@@ -59,10 +60,10 @@ The real fix is a talk. If you see the alert, ask. Keep the box out of reach.
 **If there is another parent:**
 
 1. They sign in and tap **Settings**, then **Parents**.
-2. They tap **Reset password** next to your name, then **Copy link**.
+2. They tap **Reset link** next to your name, then **Copy link**.
    You should see: a link and the words "It works once, for 30 minutes."
 3. They send you the link. Open it, type a new password twice and tap **Save password**.
-   You should see: the log in page with "Password saved".
+   You should see: the log in page with "Password saved. Log in with your new password."
 
 **If you are the only parent**, type this on the home box (in the `task4ce` folder), with your username in place of `mom` (the user name you chose in setup, not your display name):
 
@@ -76,14 +77,14 @@ If the link says it has expired, make a new one. Each new link cancels the old o
 
 ## A kid forgot their PIN
 
-1. Sign in as a parent. Tap **Kids & chores**, then **Kids**, then the kid.
-2. Set a new PIN or clear it.
+1. Sign in as a parent. Tap **Kids & chores**, then **Kids**, then the kid, then **Edit**.
+2. Type a new 4-digit PIN and save, or tap **Remove PIN**.
    You should see: the kid can sign in with the new PIN.
 
 ## A kid can't open their page
 
 1. Make sure the device is assigned to that kid on the **Devices** page. Kids can only sign in from their own devices.
-2. After too many wrong PINs the app waits about a minute. Wait and try again.
+2. After too many wrong PINs the app says "Too many tries. Wait a minute and try again." Wait a minute.
 
 ## Backups
 

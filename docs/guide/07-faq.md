@@ -10,7 +10,12 @@ No. It's free and open source. You supply the small computer.
 
 ## Where does my family's information go?
 
-It stays in your home, on the home box. There are no accounts with us, no ads and no tracking. The only time anything leaves is if you turn on GIFs in chat, and then GIF searches go to GIPHY through the box. See [Everyday use](04-everyday-use.md#gifs-off-by-default).
+It stays in your home, on the home box. There are no accounts with us, no ads and no tracking. Something only leaves your home if you turn it on:
+
+- **GIFs in chat**: GIF searches go to GIPHY through the box. See [Everyday use](04-everyday-use.md#gifs-off-by-default).
+- **Notifications to your chat apps**: pings go to the service you chose. See [Everyday use](04-everyday-use.md#notifications).
+- **Instant alerts on iPhones**: a content-free wake-up goes to ntfy.sh. The alert text stays home.
+- **Remote access**: Tailscale connects your phone to the box privately. See [Remote access](../remote-access.md).
 
 <a id="can-my-kid-get-around-it"></a>
 ## Can my kid get around it?
@@ -49,11 +54,15 @@ No. A kid can use any device assigned to them, and siblings can share one. A PIN
 
 ## Can there be two parents?
 
-Yes. In **Settings → Parents**, invite your partner.
+Yes. In **Settings → Parents**, tap **Invite a parent** and send them the link.
 
-## What's a race? What's a team?
+## What do "First one wins" and "Team effort" mean?
 
-Both give one chore to several kids. In a **race**, the first kid whose work gets approved gets the points. In a **team**, anyone can do the steps and the points are split evenly. In **each**, every kid has their own copy.
+Both give one chore to several kids. With **First one wins**, the first kid to finish it gets the points. With **Team effort**, anyone can do the steps and the points are split evenly. With **Each does it**, every kid has their own copy.
+
+## What ages is it for?
+
+From about 5 up. Each kid gets a look that fits: **Little (5–8)** shows one chore at a time with big buttons, **Kid (9–12)** has big tiles, and **Teen (13+)** is a compact list. See [For kids](05-for-kids.md).
 
 ## What are the badge levels?
 

@@ -12,9 +12,12 @@ Chores first, then screens. t@sk4ce is a free family app where kids do their cho
 
 - **Chores that stick.** Create a chore once, give it to one kid or several (each, race or team), and repeat it daily, on some days or just once. Add steps and ask for a photo as proof.
 - **Approve or send back.** One screen ("Needs you") shows everything waiting for a decision.
-- **Points, levels and rewards.** Approved chores earn points. Kids level up, earn badges, unlock flair in the Locker, and spend points on rewards or extra screen time.
+- **Points, levels and rewards.** Approved chores earn points. Kids level up, earn badges, unlock flair for their name card, and spend points on rewards or extra screen time.
+- **A screen for every age.** Little (5–8), Kid (9–12) and Teen (13+) looks, each with the same chores.
 - **Chat.** A thread for every chore, a private chat for each kid, and a family chat.
-- **Internet that follows the chores.** Pick which devices are paused until their chores are approved, plus allowed hours and free time.
+- **Internet that follows the chores.** Pick which devices are paused until their chores are approved, plus hours for school nights, weekends, holidays and summer.
+- **Notifications.** Pings in the chat apps you already use (through Apprise), and chore alerts on kids' phones (through ntfy on the box).
+- **Remote access.** Check in from anywhere with Tailscale (optional).
 
 It is honest about its limits: a determined kid can get around it (a phone hotspot, a different device). The app tells you when it notices. If the home box is switched off, the internet simply works.
 
@@ -31,7 +34,7 @@ Or here's the short version:
    curl -fsSL https://sgtslaughta.github.io/tskfrce/install.sh | sh
    ```
 
-3. [Do the first-time setup](https://sgtslaughta.github.io/tskfrce/guide/03-first-setup.html): add your family, kids and devices.
+3. [Do the first-time setup](https://sgtslaughta.github.io/tskfrce/guide/03-first-setup.html): seven short steps for your family, kids, chores, devices and hours.
 4. [Learn the everyday routine](https://sgtslaughta.github.io/tskfrce/guide/04-everyday-use.html): approve chores, answer requests, give rewards.
 5. [Show your kids](https://sgtslaughta.github.io/tskfrce/guide/05-for-kids.html): a one-page guide you can hand over.
 
