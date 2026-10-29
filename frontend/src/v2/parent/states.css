@@ -1,0 +1,104 @@
+/**
+ * @fileoverview Empty, error and loading states (mockup 05-states.html).
+ */
+
+[data-look='parent'] .p-state {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  max-width: 420px;
+  margin: 48px auto;
+  padding: 0 24px;
+  text-align: center;
+}
+[data-look='parent'] .p-state-icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+  border-radius: 14px;
+  background: var(--p-soft);
+  color: var(--p-sub);
+}
+[data-look='parent'] .p-state-icon[data-tone='acc'] { background: var(--p-acc); color: #292928; }
+[data-look='parent'] .p-state-icon[data-tone='red'] { background: var(--p-redbg); color: var(--p-red); }
+[data-look='parent'] .p-state-icon[data-tone='amb'] { background: var(--p-amb); color: var(--p-ambink); }
+/* kid-look sticker (mockup 05 "Kid on a parent page") */
+[data-look='parent'] .p-state-icon[data-tone='sun'] { background: #ffc93c; color: #1d2b53; border: 2px solid #1d2b53; box-shadow: 3px 3px 0 #1d2b53; }
+[data-look='parent'] .p-state-title { margin: 0; font-size: 17px; font-weight: 700; color: var(--p-ink); }
+[data-look='parent'] .p-state-body { margin: 0; font-size: 13px; line-height: 1.5; color: var(--p-sub); }
+[data-look='parent'] .p-state-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 6px; }
+
+/* skeleton rows: same rhythm as list cards; shimmer only when motion is welcome */
+[data-look='parent'] .p-skeleton { display: grid; gap: 10px; padding: 12px; }
+[data-look='parent'] .p-sk-row { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 16px; border: 1px solid var(--p-line); }
+[data-look='parent'] .p-sk-row i { width: 34px; height: 34px; border-radius: 50%; flex: none; }
+[data-look='parent'] .p-sk-row span { flex: 1; display: grid; gap: 8px; }
+[data-look='parent'] .p-sk-row b { height: 9px; width: 70%; border-radius: 6px; }
+[data-look='parent'] .p-sk-row b + b { width: 40%; }
+[data-look='parent'] .p-sk-row :is(i, b) { background: var(--p-soft); }
+@media (prefers-reduced-motion: no-preference) {
+  [data-look='parent'] .p-sk-row :is(i, b) { animation: p-sk 1.2s ease-in-out infinite alternate; }
+}
+@keyframes p-sk { to { opacity: 0.45; } }
+
+/* 404 page */
+[data-look='parent'] .p-404 {
+  min-height: 100vh;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  padding: 24px;
+  text-align: center;
+  background: var(--p-bg);
+  color: var(--p-ink);
+}
+[data-look='parent'] .p-404-num { font-size: 88px; font-weight: 800; line-height: 1; letter-spacing: -0.04em; }
+[data-look='parent'] .p-404-num span {
+  display: inline-block;
+  margin: 0 4px;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: var(--p-acc);
+  color: #292928;
+}
+
+/* route guard: full-page error / loading before the shell mounts */
+[data-look='parent'] .p-gate-spin {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 3px solid var(--p-track);
+  border-top-color: var(--p-meter);
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-look='parent'] .p-gate-spin { animation: p-gate-spin 0.8s linear infinite; }
+}
+@keyframes p-gate-spin { to { transform: rotate(360deg); } }
+/* full-page error before the shell exists (route guard) */
+[data-look='parent'] .p-guard-state { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--p-bg); }
+[data-look='parent'] .p-state-retry { margin: 6px 0 0; font-size: 12px; color: var(--p-sub); }
+
+/* "Updating… last updated 10s ago" (mockup 05): one quiet line, the list underneath stays as it was */
+[data-look='parent'] .p-updating {
+  display: flex; align-items: center; gap: 8px; width: fit-content; margin: 8px 24px 0; padding: 6px 12px;
+  border: 1px solid var(--p-line); border-radius: 14px; background: var(--p-card); font-size: 12.5px; color: var(--p-ink);
+}
+[data-look='parent'] .p-updating span:not(.p-gate-spin) { color: var(--p-sub); }
+[data-look='parent'] .p-updating .p-gate-spin { width: 14px; height: 14px; border-width: 2.5px; }
+
+/* waiting states: three pulsing dots and a sliding bar (mockup 05) */
+[data-look='parent'] .p-dots { display: flex; gap: 6px; }
+[data-look='parent'] .p-dots i { width: 8px; height: 8px; border-radius: 50%; background: var(--p-ink); opacity: 0.5; }
+[data-look='parent'] .p-bar { width: 200px; height: 6px; margin-top: 4px; border-radius: 6px; overflow: hidden; background: var(--p-track); }
+[data-look='parent'] .p-bar i { display: block; width: 40%; height: 100%; border-radius: 6px; background: var(--p-meter); }
+@media (prefers-reduced-motion: no-preference) {
+  [data-look='parent'] .p-dots i { animation: p-dot 1s infinite; }
+  [data-look='parent'] .p-dots i:nth-child(2) { animation-delay: 0.15s; }
+  [data-look='parent'] .p-dots i:nth-child(3) { animation-delay: 0.3s; }
+  [data-look='parent'] .p-bar i { animation: p-bar 1.4s ease-in-out infinite; }
+}
+@keyframes p-dot { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+@keyframes p-bar { 0% { margin-left: -40%; } 100% { margin-left: 100%; } }

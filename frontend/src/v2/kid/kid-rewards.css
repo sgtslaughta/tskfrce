@@ -1,0 +1,119 @@
+/* Kid Rewards/Prizes + Me tabs, per age mode. No mockup: built from each mode's chore-screen
+   patterns (09 Little giant tiles, 10 Kid tiles, 11 Teen list rows). Tokens: kid-app.css --k-*. */
+.r-view, .me-view { display: flex; flex-direction: column; gap: 20px; }
+.r-head { margin: 0; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; font-size: 34px; font-weight: 700; }
+.r-head .k-chip b { font-weight: inherit; }
+.r-list { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18px; }
+.r-item { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 16px; align-items: center; background: var(--k-card); color: var(--k-ink); min-width: 0; }
+.r-ic { width: 72px; height: 72px; border-radius: 18px; background: var(--k-soft); display: grid; place-items: center; flex: none; font-size: 36px; line-height: 1; }
+.r-ic .ms { font-size: 40px; }
+.r-ic[data-tone='blue'] { background: var(--k-blue); }
+.r-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.r-name { font-size: 24px; font-weight: 700; line-height: 1.1; overflow-wrap: anywhere; }
+.r-sub { margin: 0; font-size: 17px; font-weight: 600; color: var(--k-sub); }
+.r-sub b { color: var(--k-ink); font-family: var(--font-display), 'Space Grotesk', sans-serif; }
+.r-bar { height: 12px; border-radius: 6px; background: var(--k-soft); overflow: hidden; margin-top: 4px; }
+.r-bar i { display: block; height: 100%; background: var(--k-green); }
+.r-sel {
+  font: inherit; font-weight: 700; font-size: 17px; color: var(--k-ink); background: var(--k-card); min-height: 48px;
+  border: 2px solid var(--k-line); border-radius: 12px; padding: 0 12px; max-width: 280px;
+}
+.r-act { grid-column: 1 / -1; display: flex; }
+.r-empty { font-size: 20px; font-weight: 600; color: var(--k-sub); margin: 0; }
+.r-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer; width: 100%;
+  font-family: var(--font-display), 'Space Grotesk', sans-serif; font-weight: 700; font-size: 20px; height: 56px;
+  border-radius: 999px; border: 3px solid var(--k-navy); background: var(--k-sun); color: var(--k-navy); padding: 0 20px;
+}
+.r-btn .ms { font-size: 28px; }
+.r-btn:disabled { background: var(--k-soft); color: var(--k-sub); border-color: var(--k-line); cursor: default; }
+.r-btn[data-tone='plain'] { background: var(--k-card); color: var(--k-ink); border-color: var(--k-ink); }
+.r-btn[data-tone='plain']:disabled { background: var(--k-soft); color: var(--k-sub); border-color: var(--k-line); }
+.r-btn:not(:disabled):hover { filter: brightness(1.05); }
+
+/* Kid: 2-column tiles (10 .tile) */
+.r-view[data-mode='kid'] .r-item { border: 2px solid var(--k-line); border-radius: 20px; padding: 20px; }
+@container k-main (min-width: 720px) { .r-view[data-mode='kid'] .r-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Little: huge friendly tiles, giant buttons (09 .now) */
+.r-view[data-mode='little'] .r-head { font-size: 40px; }
+.r-view[data-mode='little'] .r-item { border: 4px solid var(--k-ink); border-radius: 32px; box-shadow: 5px 5px 0 var(--k-ink); padding: 24px; gap: 18px; }
+[data-mantine-color-scheme='dark'] .r-view[data-mode='little'] .r-item { box-shadow: 5px 5px 0 #000; }
+.r-view[data-mode='little'] .r-ic { width: 110px; height: 110px; border-radius: 28px; background: var(--k-sun); color: var(--k-navy); border: 4px solid var(--k-navy); font-size: 60px; }
+.r-view[data-mode='little'] .r-ic[data-tone='blue'] { background: var(--k-blue); color: var(--k-ink); border-color: var(--k-ink); }
+.r-view[data-mode='little'] .r-ic .ms { font-size: 72px; }
+.r-view[data-mode='little'] .r-name { font-size: 36px; }
+.r-view[data-mode='little'] .r-sub { font-size: 20px; }
+.r-view[data-mode='little'] .r-bar { height: 20px; border-radius: 10px; }
+.r-view[data-mode='little'] .r-sel { min-height: 60px; font-size: 22px; border-width: 3px; border-radius: 16px; }
+.r-view[data-mode='little'] .r-btn { height: 80px; border-radius: 28px; font-size: 30px; background: var(--k-green); box-shadow: 5px 5px 0 var(--k-navy); }
+.r-view[data-mode='little'] .r-btn:disabled { background: var(--k-soft); border-color: var(--k-line); box-shadow: none; }
+@container k-main (min-width: 900px) { .r-view[data-mode='little'] .r-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Teen: dense list rows (11 .t-row) */
+.r-view[data-mode='teen'] .r-head { font-size: 26px; }
+.r-view[data-mode='teen'] .r-list { gap: 0; background: var(--k-card); border: 1px solid var(--k-line); border-radius: 14px; overflow: hidden; }
+.r-view[data-mode='teen'] .r-item { grid-template-columns: auto minmax(0, 1fr) auto; padding: 12px 14px; gap: 12px; border-top: 1px solid var(--k-line); border-radius: 0; }
+.r-view[data-mode='teen'] .r-item:first-child { border-top: 0; }
+.r-view[data-mode='teen'] .r-ic { width: 40px; height: 40px; border-radius: 10px; background: var(--k-sun); color: var(--k-navy); font-size: 22px; }
+.r-view[data-mode='teen'] .r-ic[data-tone='blue'] { background: var(--k-blue); color: var(--k-ink); }
+.r-view[data-mode='teen'] .r-ic .ms { font-size: 22px; }
+.r-view[data-mode='teen'] .r-name { font-size: 15px; font-family: inherit; }
+.r-view[data-mode='teen'] .r-sub { font-size: 12.5px; font-weight: 500; }
+.r-view[data-mode='teen'] .r-bar { height: 6px; }
+.r-view[data-mode='teen'] .r-sel { min-height: 36px; font-size: 14px; border-width: 1px; border-radius: 8px; }
+.r-view[data-mode='teen'] .r-act { grid-column: auto; width: 150px; justify-content: flex-end; }
+.r-view[data-mode='teen'] .r-btn { width: auto; min-width: 90px; height: 40px; border-radius: 10px; font-size: 14px; border-width: 1px; border-color: var(--k-sun); white-space: nowrap; }
+.r-view[data-mode='teen'] .r-btn:disabled { border-color: var(--k-line); }
+
+/* Me: profile + family cards in the mode's card style */
+.me-card { background: var(--k-card); color: var(--k-ink); display: flex; flex-direction: column; gap: 14px; min-width: 0; border: 2px solid var(--k-line); border-radius: 20px; padding: 20px; }
+.me-h { margin: 0; font-size: 24px; }
+.me-card :where(.f-cap) { color: var(--k-sub); }
+.me-card :where(.f-num, .f-row) { color: var(--k-ink); }
+.me-out { width: auto; align-self: flex-start; }
+.lb-pick { display: block; width: 100%; padding: 0; border: 0; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; border-radius: 10px; }
+.me-card ol .flair-card-row { flex-wrap: wrap; row-gap: 2px; }
+/* dark: the profile and ranking name cards use the navy kid surface (not the pale #e8eeff slab); sun stripe stays */
+[data-mantine-color-scheme='dark'] .me-card { --f-head-bg: var(--k-soft); --f-head-ink: var(--k-ink); --f-head-sub: var(--k-sub); }
+[data-mantine-color-scheme='dark'] .me-card .flair-card:not(.flair-card-grid, .flair-card-waves, .flair-card-stripes, .flair-card-aurora, .flair-card-sheen, .flair-card-starfield, .flair-card-unicorn) {
+  --fc-track: var(--k-line); --fc-tag: rgba(255, 255, 255, 0.1);
+}
+.k-app[data-mode='little'] .me-card { border: 4px solid var(--k-ink); border-radius: 32px; box-shadow: 5px 5px 0 var(--k-ink); padding: 24px; }
+[data-mantine-color-scheme='dark'] .k-app[data-mode='little'] .me-card { box-shadow: 5px 5px 0 #000; }
+.k-app[data-mode='little'] .me-h { font-size: 32px; }
+.k-app[data-mode='little'] .me-out { height: 80px; border-radius: 28px; font-size: 28px; border-width: 4px; }
+.k-app[data-mode='little'] .me-card .r-btn { height: 80px; border-radius: 28px; font-size: 28px; background: var(--k-green); box-shadow: 5px 5px 0 var(--k-navy); }
+.k-app[data-mode='little'] .me-card :where(.f-cap, .f-num, .flair-title) { font-size: 18px; }
+.k-app[data-mode='little'] .me-card .flair-name { font-size: 24px; }
+.k-app[data-mode='little'] .me-card li { padding: 10px 0; }
+.k-app[data-mode='teen'] .me-card { border: 1px solid var(--k-line); border-radius: 14px; padding: 16px; }
+.k-app[data-mode='teen'] .me-h { font-size: 18px; }
+.k-app[data-mode='teen'] .me-card .r-btn, .k-app[data-mode='teen'] .me-out { height: 44px; border-radius: 10px; font-size: 14px; border-width: 1px; }
+.k-app[data-mode='teen'] .me-card .r-btn { border-color: var(--k-sun); }
+@container k-main (min-width: 720px) {
+  .me-view { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+  .me-out { grid-column: 1 / -1; }
+}
+
+@media (max-width: 599px) {
+  .r-head, .r-view[data-mode='little'] .r-head { font-size: 28px; }
+  .r-view[data-mode='teen'] .r-head { font-size: 22px; }
+  .k-app[data-mode='little'] .me-card { padding: 18px 14px; }
+  .r-item { gap: 12px; }
+  .r-view[data-mode='kid'] .r-item { padding: 16px; }
+  .r-ic { width: 56px; height: 56px; }
+  .r-ic .ms { font-size: 32px; }
+  .r-name { font-size: 21px; }
+  .r-view[data-mode='little'] .r-item { padding: 18px 16px; }
+  .r-view[data-mode='little'] .r-ic { width: 84px; height: 84px; }
+  .r-view[data-mode='little'] .r-ic .ms { font-size: 52px; }
+  .r-view[data-mode='little'] .r-name { font-size: 28px; }
+  .r-view[data-mode='little'] .r-btn { height: 68px; font-size: 24px; }
+  .r-view[data-mode='teen'] .r-ic { width: 36px; height: 36px; }
+  .r-view[data-mode='teen'] .r-ic .ms { font-size: 20px; }
+  .r-view[data-mode='teen'] .r-name { font-size: 15px; }
+  .r-view[data-mode='teen'] .r-item { grid-template-columns: auto minmax(0, 1fr); }
+  .r-view[data-mode='teen'] .r-act { grid-column: 1 / -1; width: auto; }
+  .r-view[data-mode='teen'] .r-btn { width: 100%; }
+}

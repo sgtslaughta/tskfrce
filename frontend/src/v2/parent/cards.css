@@ -1,0 +1,201 @@
+/**
+ * @fileoverview Card and container component styles
+ * Cards, chips, popovers, and banners for parent shell
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Cards and containers */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-card {
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Chips */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex: none;
+}
+
+[data-look='parent'] .p-chip[data-tone='acc'] {
+  background: var(--p-acc);
+  color: #292928;
+}
+
+[data-look='parent'] .p-chip[data-tone='lav'] {
+  background: var(--p-lav);
+  color: var(--p-lav-ink);
+}
+
+[data-look='parent'] .p-chip[data-tone='red'] {
+  background: var(--p-redbg);
+  color: var(--p-red);
+}
+
+[data-look='parent'] .p-chip[data-tone='amb'] {
+  background: var(--p-amb);
+  color: var(--p-ambink);
+}
+
+[data-look='parent'] .p-chip[data-tone='grey'] {
+  background: var(--p-card);
+  color: var(--p-sub);
+  border: 1px solid var(--p-line);
+}
+
+[data-look='parent'] .p-chip .ms {
+  font-size: 12px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Header chips row */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-header-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+[data-look='parent'] .p-header-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px 4px 8px;
+  background: var(--p-soft);
+  border: 1px solid var(--p-line);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-ink);
+  white-space: nowrap;
+}
+
+[data-look='parent'] .p-header-chip .ms {
+  font-size: 15px;
+  color: var(--p-sub);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Popovers and menus */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-pop {
+  background: var(--p-card);
+  border: 2px solid var(--p-ink);
+  border-radius: 12px;
+  box-shadow: 3px 3px 0 var(--p-acc);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Banners */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-banner {
+  margin: 12px 24px 0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--p-ambink) 30%, transparent);
+  background: var(--p-amb);
+  color: var(--p-ambink);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+[data-look='parent'] .p-banner-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  color: var(--p-ambink);
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+[data-look='parent'] .p-banner-title .ms {
+  font-size: 18px;
+  color: var(--p-ambink);
+}
+
+[data-look='parent'] .p-banner-body {
+  color: var(--p-ambink);
+  margin-left: 26px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Segmented control */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-segmented-control {
+  display: flex;
+  gap: 4px;
+  background: var(--p-soft);
+  padding: 4px;
+  border-radius: 10px;
+  width: fit-content;
+}
+
+[data-look='parent'] .p-segmented-button {
+  padding: 6px 12px;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-sub);
+  cursor: pointer;
+  transition: all 0.15s ease-out;
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-look='parent'] .p-segmented-button {
+    transition: none;
+  }
+}
+
+[data-look='parent'] .p-segmented-button:hover {
+  color: var(--p-ink);
+}
+
+/* mockup 02 .tabs .on: solid ink pill, card text */
+[data-look='parent'] .p-segmented-button[data-active='true'] {
+  background: var(--p-ink);
+  color: var(--p-card);
+}
+/* form choices (mockup .seg3 .on): raised card */
+[data-look='parent'] .pk-seg .p-segmented-button[data-active='true'] {
+  background: var(--p-card);
+  color: var(--p-ink);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+[data-look='parent'] .p-banner[data-tone='red'] {
+  background: var(--p-redbg);
+  border-color: color-mix(in srgb, var(--p-red) 30%, transparent);
+}
+[data-look='parent'] .p-banner[data-tone='red'] :is(.p-banner-title, .p-banner-title .ms, .p-banner-body) { color: var(--p-red); }
+[data-look='parent'] .p-banner-acts { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; }
+[data-look='parent'] .p-banner-x {
+  display: grid; place-items: center; width: 28px; height: 28px; padding: 0; border: 0; border-radius: 8px;
+  background: transparent; color: inherit; cursor: pointer;
+}
+[data-look='parent'] .p-banner-x:hover { background: color-mix(in srgb, currentColor 10%, transparent); }
+[data-look='parent'] .p-banner[data-tone='red'] .p-banner-x { color: var(--p-red); }
+[data-look='parent'] .p-banner-acts .p-btn { padding: 5px 10px; font-size: 12px; min-height: 0; }

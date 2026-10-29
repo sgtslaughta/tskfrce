@@ -1,0 +1,212 @@
+"""Apprise notifications: queued on the session, sent only after commit."""
+
+import logging
+import re
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from datetime import UTC, datetime
+from urllib.parse import unquote, urlsplit
+from zoneinfo import ZoneInfo
+
+import apprise
+from sqlalchemy import event
+from sqlalchemy.orm import Session
+
+from app.core.config import settings
+from app.core.crypto import unseal
+from app.core.logging import get_logger
+from app.models.family import get_family
+from app.models.notify import NotifyHeld, NotifyPlace
+
+log = get_logger(__name__)
+# apprise log lines can contain secret URLs: keep them off the root/app handlers
+_alog = logging.getLogger("apprise")
+_alog.propagate = False
+_alog.addHandler(logging.NullHandler())  # no handlers would fall back to stderr
+_alog.setLevel(logging.CRITICAL + 1)  # silent outside LogCapture, which lowers it itself
+# ponytail: serialises all apprise work (LogCapture is process-global, so overlapping sends
+# would read each other's secret-bearing log lines); fine for a home box, swap for per-call
+# log handlers if sends pile up
+apprise_lock = threading.Lock()
+
+EVENTS = {
+    "chore_ok": "Chore needs OK",
+    "kid_note": "Kid note",
+    "reward_request": "Reward request",
+    "new_device": "New device",
+    "resisting": "Device resisting",
+    "badge": "Badge / level up",
+    "summary": "Daily summary",
+    "box_offline": "Box offline",
+    "lock_change": "Locked / unlocked",
+    "overdue": "Overdue",
+}
+SECURITY = {"resisting", "box_offline"}
+HELD = {"chore_ok", "kid_note", "reward_request", "new_device"}
+DEFAULT_EVENTS = (
+    "chore_ok",
+    "kid_note",
+    "reward_request",
+    "new_device",
+    "resisting",
+    "box_offline",
+)
+KIND_EVENT = {
+    "chore_submitted": "chore_ok",
+    "chore_note": "kid_note",
+    "redemption_request": "reward_request",
+    "redemption_decided": "reward_request",  # parents only see this for auto approvals
+    "new_device": "new_device",
+    "device_resisting": "resisting",
+    "device_bypass": "resisting",
+    "badge_earned": "badge",
+    "level_up": "badge",
+    "box_offline": "box_offline",
+}
+
+_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="apprise")
+
+
+def in_quiet(fam, now_utc: datetime) -> bool:
+    start, end = fam.quiet_start, fam.quiet_end
+    if not start or not end or start == end:
+        return False
+    t = now_utc.astimezone(ZoneInfo(fam.timezone)).strftime("%H:%M")
+    return start <= t < end if start < end else t >= start or t < end
+
+
+def link(fam, path: str | None) -> str | None:
+    base = fam.app_address or settings.BOX_URL
+    return base.rstrip("/") + path if base and path else None
+
+
+def ping(db, event: str, title: str, body: str | None = None, path: str | None = None) -> None:
+    fam = get_family(db)
+    quiet = in_quiet(fam, datetime.now(UTC))
+    url = link(fam, path)
+    text = (body or "") + (("\n\n" if body else "") + url if url else "")
+    for p in db.query(NotifyPlace).filter(NotifyPlace.enabled.is_(True)).order_by(NotifyPlace.id):
+        if event not in (p.events or "").split(","):
+            continue
+        if quiet and event in SECURITY and not fam.quiet_security:
+            continue
+        if quiet and event not in SECURITY:
+            if event in HELD:
+                db.add(NotifyHeld(place_id=p.id, title=title[:120], body=(body or "")[:300]))
+            continue
+        try:
+            urls = [unseal(p.url_enc)]
+        except ValueError:
+            log.warning("notify place unreadable", place_id=p.id)
+            continue
+        db.info.setdefault("pings", []).append((urls, title, text))
+
+
+def send_to(db, place: NotifyPlace, title: str, text: str) -> None:
+    """Queue one message to a single place (sent after commit); skips unreadable URLs."""
+    try:
+        urls = [unseal(place.url_enc)]
+    except ValueError:
+        log.warning("notify place unreadable", place_id=place.id)
+        return
+    db.info.setdefault("pings", []).append((urls, title, text))
+
+
+def _redact(msg: str, urls: list[str]) -> str:
+    """Mask every URL and credential-ish piece of it, then cap at 300 chars."""
+    try:
+        parsed = [(u, urlsplit(u)) for u in urls]
+    except ValueError:
+        return "It didn't go through."
+    secrets, always = set(), set()
+    for u, parts in parsed:
+        for v in (parts.username, parts.password):
+            if v:
+                always.update((v, unquote(v)))
+        for whole in (u, unquote(u)):
+            secrets.add(whole)
+            for chunk in (whole.split("://", 1)[-1], parts.netloc, parts.path, parts.query):
+                for c in (chunk, unquote(chunk)):
+                    secrets.add(c)
+                    for piece in re.split(r"[/@:?&=]", c):
+                        secrets.update((piece, unquote(piece)))
+    scheme = {u.split("://", 1)[0] for u in urls}
+    secrets = {x for x in secrets if len(x) >= 4 and x not in scheme} | always
+    for sec in sorted(secrets, key=len, reverse=True):
+        msg = msg.replace(sec, "••••")
+    return msg[:300]
+
+
+TIMED_OUT = "That place didn't answer in time."
+TEST_TIMEOUT = 15.0  # seconds a parent's Test may wait, lock queue included
+_test_pool = ThreadPoolExecutor(max_workers=2, thread_name_prefix="apprise-test")
+
+
+def deliver(
+    urls: list[str], title: str, body: str, lock_timeout: float | None = None
+) -> tuple[bool, str | None]:
+    """Send now. `lock_timeout` bounds the wait behind other deliveries (None = wait)."""
+    if not apprise_lock.acquire(timeout=-1 if lock_timeout is None else lock_timeout):
+        return False, TIMED_OUT
+    try:
+        ap = apprise.Apprise()
+        with apprise.LogCapture(level=apprise.logging.WARNING, fmt="%(message)s") as cap:
+            for u in urls:
+                ap.add(u)
+            ok = ap.notify(title=title, body=body, body_format=apprise.NotifyFormat.TEXT)
+        if ok:
+            return True, None
+        lines = [x for x in cap.getvalue().splitlines() if x.strip()]
+        return False, _redact(lines[-1] if lines else "It didn't go through.", urls)
+    except Exception as exc:  # noqa: BLE001 - delivery must never raise
+        return False, _redact(str(exc), urls)
+    finally:
+        apprise_lock.release()
+
+
+def deliver_bounded(urls: list[str], title: str, body: str) -> tuple[bool, str | None]:
+    """deliver() for the Test button: never blocks longer than TEST_TIMEOUT overall."""
+    fut = _test_pool.submit(deliver, urls, title, body, TEST_TIMEOUT)
+    try:
+        return fut.result(timeout=TEST_TIMEOUT)
+    except TimeoutError:
+        return False, TIMED_OUT
+
+
+def _submit(fn, *args) -> None:
+    _pool.submit(fn, *args)
+
+
+_MENTION = re.compile(r"@(?=everyone|here)|(?<=<)@", re.IGNORECASE)
+
+
+def defang(s: str) -> str:
+    """Kid notes and device names go out verbatim: stop @everyone/@here/<@id> pings."""
+    return _MENTION.sub("@\u200b", s)
+
+
+def _send(urls, title, text) -> None:
+    ok, err = deliver(urls, defang(title), defang(text))
+    if not ok:
+        log.warning("notify delivery failed", error=err)
+
+
+@event.listens_for(Session, "after_commit")
+def _after_commit(session) -> None:
+    if session.in_nested_transaction():
+        return
+    for urls, title, text in session.info.pop("pings", []):
+        _submit(_send, urls, title, text)
+
+
+@event.listens_for(Session, "after_rollback")
+def _after_rollback(session) -> None:
+    if session.in_nested_transaction():
+        return
+    session.info.pop("pings", None)
+
+
+@event.listens_for(Session, "after_transaction_end")
+def _after_end(session, transaction) -> None:
+    if transaction.parent is None:  # close() without commit/rollback
+        session.info.pop("pings", None)

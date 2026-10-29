@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#5a5a5a;font-family:'DM Sans',sans-serif;padding:24px;color:#fff}
+.top{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px}.top h1{font-size:22px;margin:0}.top p{margin:4px 0 0;opacity:.8;font-size:14px}
+.tg{margin-left:auto;background:#fff;color:#292928;border:0;border-radius:999px;padding:8px 14px;font:600 13px 'DM Sans';cursor:pointer}
+.ms{font-family:"Material Symbols Rounded";font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;font-feature-settings:"liga";vertical-align:middle}
+.n{--acc:#c3f832;--bg:#f8f8f8;--card:#fff;--soft:#f3f3f3;--ink:#292928;--sub:#6f6f6c;--line:#e4e4e1;--lav:#e3d4fb;--lavink:#5b3fa0;--red:#b42318;--redbg:#fde8e6;--amb:#fff1d6;--ambink:#8a5a00;--grid:rgba(41,41,40,.10);
+ background:var(--bg);color:var(--ink);display:grid;grid-template-columns:64px 320px 1fr;border-radius:14px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.35);min-height:660px}
+.n.dark{--bg:#1c1c1b;--card:#292928;--soft:#323230;--ink:#f4f4f2;--sub:#a8a8a4;--line:#3d3d3b;--lav:#3d3354;--lavink:#d8c8fb;--red:#ff9b8f;--redbg:#3e2422;--amb:#3b2f17;--ambink:#ffd38a;--grid:rgba(255,255,255,.07)}
+.rail{background:var(--card);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:10px}
+.logo{width:36px;height:36px;border-radius:50%;border:2px solid var(--ink);display:grid;place-items:center;font-weight:700;margin-bottom:18px}
+.ri{width:40px;height:40px;border-radius:12px;display:grid;place-items:center;color:var(--sub);cursor:pointer;position:relative}
+.ri:hover{color:var(--ink)}.ri.on{background:var(--soft);color:var(--ink)}
+.ri .dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--acc);border:2px solid var(--card)}
+.list{background:var(--card);border-right:1px solid var(--line);padding:18px 14px;display:flex;flex-direction:column;gap:10px}
+.lh{display:flex;justify-content:space-between;align-items:center;margin:0 4px 4px}.lh h2{margin:0;font-size:20px}
+.tabs{display:flex;gap:4px;background:var(--soft);border-radius:14px;padding:4px;margin-bottom:4px}
+.tabs span{flex:1;text-align:center;padding:8px 4px;font-size:12.5px;font-weight:500;border-radius:10px;color:var(--sub)}.tabs .on{background:var(--ink);color:var(--card)}
+.it{background:var(--soft);border-radius:16px;padding:11px 12px;border:1.5px solid transparent;display:flex;align-items:center;gap:10px;cursor:pointer}
+.it:hover{border-color:var(--line)}.it.sel{background:var(--card);border-color:var(--ink)}
+.ic{width:36px;height:36px;border-radius:12px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;flex:none;color:var(--sub)}
+.it.sel .ic{background:var(--acc);border-color:var(--acc);color:#292928}
+.av{width:36px;height:36px;border-radius:50%;background:var(--ink);color:var(--card);display:grid;place-items:center;font-weight:700;flex:none}
+.it.sel .av{background:var(--acc);color:#292928}
+.nm{font-weight:600;font-size:14.5px}.mt{font-size:11.5px;color:var(--sub);margin-top:1px}
+.it .chip,.it .badge{margin-left:auto}
+.badge{min-width:20px;height:20px;border-radius:10px;background:var(--acc);color:#292928;font-size:11px;font-weight:700;display:grid;place-items:center;padding:0 6px}
+.add{border:1.5px dashed var(--line);border-radius:16px;padding:11px;text-align:center;color:var(--sub);font-weight:600;font-size:13px}
+.main{position:relative;isolation:isolate;padding:22px 26px;display:flex;flex-direction:column;gap:14px}
+.main::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;-webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 75%);mask-image:radial-gradient(ellipse at 50% 0%,#000 10%,transparent 75%)}
+.mh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.mh h2{margin:0;font-size:28px}.mh .s{color:var(--sub);font-size:13px}
+.hero{display:flex;gap:14px;align-items:center}.big{width:58px;height:58px;border-radius:18px;background:var(--acc);color:#292928;display:grid;place-items:center}.big .ms{font-size:30px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 14px;font:600 13px 'DM Sans';display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.btn .ms{font-size:17px}.btn.acc{background:var(--acc);border-color:var(--acc);color:#292928}.btn.red{color:var(--red)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 18px}
+.card h3{margin:0 0 10px;font-size:14px;display:flex;align-items:center;gap:6px}.card h3 .ms{font-size:18px;color:var(--sub)}
+.card p.h{margin:-6px 0 12px;color:var(--sub);font-size:12.5px}
+.kv{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:8px 0;border-top:1px solid var(--line)}.kv:first-of-type{border-top:0}.kv>span:first-child{color:var(--sub)}
+.chip{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:6px;white-space:nowrap}
+.c-acc{background:var(--acc);color:#292928}.c-lav{background:var(--lav);color:var(--lavink)}.c-grey{background:var(--card);color:var(--sub);border:1px solid var(--line)}.c-red{background:var(--redbg);color:var(--red)}.c-amb{background:var(--amb);color:var(--ambink)}
+.pill{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;display:inline-flex;align-items:center;gap:4px;margin:0 6px 6px 0}.pill .ms{font-size:14px}
+.sw{width:38px;height:22px;border-radius:11px;background:var(--line);position:relative;flex:none}.sw::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:var(--card)}
+.sw.on{background:var(--ink)}.sw.on::after{left:19px;background:var(--acc)}
+.week{display:grid;grid-template-columns:40px repeat(7,1fr);gap:3px;font-size:10.5px;color:var(--sub);align-items:center}
+.week i{height:16px;border-radius:5px;background:var(--soft);display:block}.week i.on{background:var(--acc)}.week i.lk{background:var(--ink);opacity:.85}
+.sumbar{display:grid;grid-template-columns:repeat(4,1fr);background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 18px;font-size:11.5px}.sumbar span{color:var(--sub)}.sumbar b{display:block;font-size:15px;margin-top:3px}
+.inp{display:flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--soft);font-family:ui-monospace,monospace;font-size:12.5px}
+.inp span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.evs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.ev{font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--sub)}.ev.on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.swatches{display:flex;gap:10px;flex-wrap:wrap;padding-bottom:18px}
+.s{width:34px;height:34px;border-radius:11px;cursor:pointer;position:relative}.s.on{outline:2px solid var(--ink);outline-offset:2px}
+.s span{position:absolute;left:50%;top:40px;transform:translateX(-50%);font-size:10px;color:var(--sub);white-space:nowrap}
+/* chat */
+.thread{background:var(--card);border:1px solid var(--line);border-radius:18px;display:flex;flex-direction:column;min-height:460px}
+.th-h{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line)}
+.msgs{flex:1;display:flex;flex-direction:column;gap:8px;padding:16px;justify-content:flex-end}
+.msg{align-self:flex-start;background:var(--soft);border-radius:16px 16px 16px 4px;padding:8px 12px;font-size:13.5px;max-width:70%}.msg small{display:block;color:var(--sub);font-size:11px}
+.msg.me{align-self:flex-end;background:var(--ink);color:var(--card);border-radius:16px 16px 4px 16px}.msg.me small{color:inherit;opacity:.7}
+.sys{align-self:center;font-size:11.5px;color:var(--sub);display:flex;gap:6px;align-items:center}.sys .ms{font-size:15px}
+.ref{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:6px 10px;font-size:12px;margin-bottom:4px;color:var(--sub)}
+.msg.me .ref{background:transparent;border-color:rgba(255,255,255,.25);color:inherit;opacity:.8}
+.reply{display:flex;gap:8px;align-items:center;margin:0 12px 12px;background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:5px 5px 5px 12px}
+.reply input{flex:1;border:0;background:transparent;font:inherit;font-size:13px;color:var(--ink);outline:0}
+.ib{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--sub)}.send{width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--card);display:grid;place-items:center}.send .ms{font-size:16px}
+.scr{display:none}.scr.on{display:contents}
+@media(max-width:1100px){.n{grid-template-columns:56px 270px 1fr}.g2{grid-template-columns:1fr}}
+
+.dtabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.dtabs span{padding:8px 14px;font-size:13px;font-weight:600;color:var(--sub);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.dtabs .on{color:var(--ink);border-color:var(--acc)}
+.pane{display:none;flex-direction:column;gap:14px}.pane.on{display:flex}
+.mono{font-family:ui-monospace,monospace;font-size:12.5px}
+.new{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--lavink);background:var(--lav);border-radius:5px;padding:2px 6px;margin-left:6px}
+.tl{display:grid;grid-template-columns:44px 1fr;gap:4px 8px;font-size:10.5px;color:var(--sub);align-items:center}
+.tl .tr{height:14px;border-radius:5px;background:var(--soft);position:relative;overflow:hidden}
+.tl .tr b{position:absolute;top:0;bottom:0;background:var(--acc);border-radius:4px}
+.tl .tr b.l{background:var(--ink);opacity:.8}
+.ax{display:flex;justify-content:space-between;font-size:10px;color:var(--sub);margin-left:52px}
+.lg{display:flex;gap:14px;font-size:11px;color:var(--sub);margin-top:8px}.lg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.log .kv{align-items:flex-start}.log .kv .ms{font-size:16px;margin-right:6px;color:var(--sub)}
+.bars{display:flex;align-items:flex-end;gap:6px;height:90px;margin-top:6px}.bars div{flex:1;background:var(--acc);border-radius:5px 5px 2px 2px}
+.bl{display:flex;gap:6px;font-size:10px;color:var(--sub)}.bl span{flex:1;text-align:center}
+
+.al{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--line);align-items:flex-start}.al:first-of-type{border-top:0}
+.sev{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none}.sev .ms{font-size:18px}
+.sev.hi{background:var(--redbg);color:var(--red)}.sev.md{background:var(--amb);color:var(--ambink)}.sev.lo{background:var(--soft);color:var(--sub)}
+.al .t{flex:1;font-size:13.5px;font-weight:600}.al .t small{display:block;font-weight:400;color:var(--sub);font-size:12px;margin-top:2px}
+.al .w{font-size:11.5px;color:var(--sub);white-space:nowrap;text-align:right}
+.al .acts{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}.al .btn{padding:5px 10px;font-size:12px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;font-size:11.5px;color:var(--sub)}
+.kpi b{display:block;font-size:22px;color:var(--ink);margin-top:2px}.kpi.hi b{color:var(--red)}
+.filt{display:flex;gap:6px;flex-wrap:wrap}
+
+.hero h2{line-height:1.1}
+.hchips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.hc{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 10px 4px 8px;border-radius:999px;background:var(--soft);border:1px solid var(--line);color:var(--ink);white-space:nowrap}
+.hc .ms{font-size:15px;color:var(--sub)}
+.hc.on{background:var(--acc);border-color:var(--acc);color:#292928}.hc.on .ms{color:#292928}
+.hc.mono{font-family:ui-monospace,monospace;font-size:11.5px}
+
+.vl{display:inline-block;width:14px;height:14px;background:currentColor;-webkit-mask:var(--u) center/contain no-repeat;mask:var(--u) center/contain no-repeat;flex:none}
+.hc .vl{color:var(--ink)}
+.ic{position:relative}
+.ic .vb{position:absolute;right:-5px;bottom:-5px;width:18px;height:18px;border-radius:50%;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink)}
+.ic .vb .vl{width:10px;height:10px}
+
+.grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);font-weight:700;margin:6px 4px 0;display:flex;align-items:center;gap:6px}.grp .ms{font-size:15px}
+.avs{display:flex;margin-left:auto}.avs i{width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--card);font-style:normal;font-size:10px;font-weight:700;display:grid;place-items:center;border:2px solid var(--card);margin-left:-6px}
+.it.sel .avs i{border-color:var(--card)}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--sub);font-weight:600}
+.fi{border:1px solid var(--line);background:var(--soft);border-radius:12px;padding:10px 12px;font:500 14px 'DM Sans';color:var(--ink)}
+.types{display:flex;flex-wrap:wrap;gap:6px}
+.tp{display:inline-flex;align-items:center;gap:5px;font-size:12.5px;font-weight:600;padding:6px 11px 6px 8px;border-radius:999px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.tp .ms{font-size:16px;color:var(--sub)}.tp.on{background:var(--acc);color:#292928;border-color:var(--acc)}.tp.on .ms{color:#292928}
+.steps .st{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--soft);border:1px solid var(--line);border-radius:12px;margin-bottom:6px;font-size:13.5px}
+.steps .st .ms{font-size:18px;color:var(--sub)}.steps .st .gr{cursor:grab}.steps .st span.x{margin-left:auto}
+.days{display:flex;gap:6px}.days span{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;border:1px solid var(--line);color:var(--sub)}.days .on{background:var(--acc);border-color:var(--acc);color:#292928}
+.seg3{display:flex;background:var(--soft);border-radius:12px;padding:3px;gap:3px}.seg3 span{flex:1;text-align:center;padding:7px;border-radius:9px;font-size:12.5px;font-weight:600;color:var(--sub)}.seg3 .on{background:var(--card);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.15)}
+.kidpick{display:flex;gap:8px;flex-wrap:wrap}.kp{display:flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px 4px 4px;font-size:13px;font-weight:600}.kp i{width:24px;height:24px;border-radius:50%;background:var(--soft);color:var(--sub);font-style:normal;display:grid;place-items:center;font-size:11px}
+.kp.on{border-color:var(--ink)}.kp.on i{background:var(--acc);color:#292928}
+.hint{font-size:11.5px;color:var(--sub);font-weight:400}
+.np{display:inline-block;font-size:11.5px;border:1px solid var(--line);border-radius:999px;padding:3px 9px;margin:0 4px 4px 0}.np.u{border-style:dashed;color:var(--sub)}
+.foot{display:flex;gap:8px;justify-content:flex-end}
+
+.tp.newt{border-style:dashed;color:var(--sub)}
+.steps2 .st{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--soft);border:1px solid var(--line);border-radius:12px;font-size:13.5px}
+.steps2 .st .ms{font-size:18px;color:var(--sub)}
+.num{width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--card);font-size:11px;font-weight:700;display:grid;place-items:center;flex:none}
+.num.free{background:transparent;border:1.5px dashed var(--line);color:var(--sub)}
+.st .nm2{flex:1}
+.due{display:inline-flex;align-items:center;gap:3px;font-size:11.5px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:3px 8px;background:var(--card);color:var(--ink);cursor:pointer}
+.due .ms{font-size:14px!important}.due.none{color:var(--sub);border-style:dashed}
+.link{display:flex;align-items:center;gap:6px;margin:0 0 0 20px;height:22px;font-size:11px;color:var(--sub);cursor:pointer}
+.link::before{content:'';width:2px;height:100%;background:var(--line);margin-right:6px}
+.link.on{color:var(--ink);font-weight:600}.link.on::before{background:var(--ink)}
+.link .ms{font-size:14px!important}
+.lgd{display:flex;gap:14px;font-size:11px;color:var(--sub);margin-top:10px;flex-wrap:wrap}
+.warn{font-size:11.5px;color:var(--ambink);background:var(--amb);border-radius:10px;padding:6px 10px;margin-top:8px;display:flex;gap:6px;align-items:center}
+.warn .ms{font-size:15px}
+.sheetbg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;z-index:10}
+.sheetbg.on{display:block}
+.sheet{position:absolute;right:0;top:0;bottom:0;width:min(420px,100%);background:var(--card);color:var(--ink);padding:20px;display:flex;flex-direction:column;gap:14px;overflow:auto;border-left:1px solid var(--line)}
+.sheet h3{margin:0;font-size:18px;display:flex;align-items:center}
+.icg{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}
+.icg span{aspect-ratio:1;border-radius:10px;display:grid;place-items:center;border:1px solid var(--line);color:var(--sub);cursor:pointer}
+.icg span.on{background:var(--acc);border-color:var(--acc);color:#292928}
+.nl .row2{display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--line);border-radius:10px;margin-bottom:6px;font-size:13px}
+.nl .row2 .ms{font-size:16px;color:var(--sub)}.nl .row2 span.x{margin-left:auto}
+.nl .row2.u{border-style:dashed;color:var(--sub)}
+
+.thread{min-height:560px}
+.day{align-self:center;font-size:11px;color:var(--sub);background:var(--soft);border-radius:999px;padding:3px 10px;font-weight:600}
+.pics{display:flex;gap:6px;margin-top:6px}.pics i{width:110px;height:80px;border-radius:12px;background:linear-gradient(135deg,#d9d9d6,#b9b9b4);display:grid;place-items:center;color:#6f6f6c}
+.dark .pics i{background:linear-gradient(135deg,#4a4a47,#3a3a38);color:#a8a8a4}
+.pics i .ms{font-size:28px}
+.gif{width:180px;height:110px;border-radius:12px;background:linear-gradient(135deg,#ffd23f,#ff9ecd);display:grid;place-items:center;font-weight:800;color:#292928;font-size:12px;letter-spacing:.1em;margin-top:4px}
+.note2{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;background:var(--amb);color:var(--ambink);border-radius:999px;padding:3px 9px;margin-bottom:4px}
+.note2 .ms{font-size:14px}
+.react{display:inline-flex;gap:4px;margin-top:4px}.react span{font-size:11px;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:1px 7px;color:var(--ink)}
+.typing{align-self:flex-start;font-size:11.5px;color:var(--sub);display:flex;gap:6px;align-items:center}
+.typing i{width:6px;height:6px;border-radius:50%;background:var(--sub);display:inline-block;margin-right:2px;opacity:.6}
+.qr{display:flex;gap:6px;flex-wrap:wrap;margin:0 12px 8px}
+.qr span{font-size:12px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;background:var(--card);cursor:pointer}
+.qr span.ok{background:var(--acc);border-color:var(--acc);color:#292928;font-weight:700}
+.side{display:flex;flex-direction:column;gap:14px}
+.chatgrid{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:14px;align-items:start}
+@media(max-width:1250px){.chatgrid{grid-template-columns:1fr}.side{display:none}}
+
+.spane{display:none;flex-direction:column;gap:14px}.spane.on{display:flex}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tl2{display:grid;grid-template-columns:90px 1fr;gap:6px 10px;align-items:center;font-size:12px;color:var(--sub)}
+.tl2 .tr{height:22px;border-radius:7px;background:var(--soft);position:relative;overflow:hidden}
+.tl2 .tr b{position:absolute;top:0;bottom:0;background:var(--acc);border-radius:6px;font-size:10px;color:#292928;display:grid;place-items:center;font-weight:700}
+.tl2 .tr b.k{background:var(--ink);color:var(--card)}
+.tyrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.tyrow:first-of-type{border-top:0}
+.tyrow .ic{width:36px;height:36px}.tyrow .t2{flex:1;font-size:13.5px;font-weight:600}.tyrow .t2 small{display:block;color:var(--sub);font-weight:400;font-size:12px}
+.prev{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mini{border-radius:14px;border:1px solid var(--line);padding:12px;display:flex;flex-direction:column;gap:8px}
+.mini.l{background:#f8f8f8;color:#292928}.mini.d{background:#1c1c1b;color:#f4f4f2}
+.mini .b{height:8px;border-radius:6px;background:var(--acc);width:60%}
+.mini .c{align-self:flex-start;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;background:var(--acc);color:#292928}
+.modes{display:flex;gap:8px}.modes span{flex:1;border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center;font-size:13px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer}
+.modes span.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.par{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.par:first-of-type{border-top:0}
+.par .t2{flex:1;font-size:13.5px;font-weight:600}.par .t2 small{display:block;color:var(--sub);font-weight:400;font-size:12px}
+.danger{border-color:color-mix(in srgb,var(--red) 35%,var(--line))}
+
+.pt{--pc:rgba(41,41,40,.38)}
+.pt-school{background:repeating-linear-gradient(45deg,var(--pc) 0 2px,transparent 2px 8px),var(--acc)!important}
+.pt-week{background:var(--acc)!important}
+.pt-holi{background:radial-gradient(circle,var(--pc) 1.6px,transparent 2px) 0 0/8px 8px,var(--acc)!important}
+.pt-summer{background:repeating-linear-gradient(90deg,var(--pc) 0 2px,transparent 2px 7px),var(--acc)!important}
+.pt-kid{background:repeating-linear-gradient(45deg,var(--pc) 0 1.5px,transparent 1.5px 7px),repeating-linear-gradient(-45deg,var(--pc) 0 1.5px,transparent 1.5px 7px),var(--acc)!important}
+.tl3{display:grid;grid-template-columns:150px 1fr;gap:8px 12px;align-items:center;font-size:12.5px}
+.tl3 .nm3{display:flex;align-items:center;gap:8px;font-weight:600}.tl3 .nm3 small{display:block;color:var(--sub);font-weight:400;font-size:11px}
+.sq{width:18px;height:18px;border-radius:5px;flex:none;border:1px solid var(--line)}
+.tl3 .tr{height:26px;border-radius:8px;background:var(--soft);position:relative;overflow:hidden;border:1px solid var(--line)}
+.tl3 .tr b{position:absolute;top:0;bottom:0;border-radius:7px;display:grid;place-items:center}
+.tl3 .tr b em{font-style:normal;font-size:10.5px;font-weight:700;color:#292928;background:rgba(255,255,255,.85);border-radius:5px;padding:1px 5px}
+.ax3{display:flex;justify-content:space-between;font-size:10px;color:var(--sub);margin:6px 0 0 162px}
+.legend2{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;margin-top:4px}.legend2 span{display:flex;align-items:center;gap:6px}
+.prec{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:var(--sub)}
+.prec .p2{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:999px;padding:3px 9px 3px 4px;color:var(--ink);font-weight:600}
+.prec .p2 .sq{width:14px;height:14px}
+.avx{width:18px;height:18px;border-radius:50%;background:var(--ink);color:var(--card);font-size:10px;font-weight:700;display:grid;place-items:center;flex:none}
+
+.rq{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center}
+.rq .rw{width:46px;height:46px;border-radius:14px;background:var(--acc);color:#292928;display:grid;place-items:center}.rq .rw .ms{font-size:24px}
+.rq .t2{font-weight:600;font-size:14.5px}.rq .t2 small{display:block;color:var(--sub);font-weight:400;font-size:12px;margin-top:2px}
+.rq .math{font-size:12px;color:var(--sub);text-align:right}.rq .math b{display:block;font-size:16px;color:var(--ink)}
+.rq .ra{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;align-items:center;border-top:1px solid var(--line);padding-top:10px}
+.rq .ra input{flex:1;min-width:140px;border:1px solid var(--line);border-radius:999px;padding:7px 12px;font:inherit;font-size:12.5px;background:var(--soft);color:var(--ink)}
+.short{color:var(--red);font-weight:600}
+.cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}
+.ci{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px;cursor:pointer;position:relative}
+.ci.sel{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.ci .rw{width:42px;height:42px;border-radius:13px;background:var(--soft);display:grid;place-items:center;color:var(--ink)}
+.ci.sel .rw{background:var(--acc);color:#292928}
+.ci .nm{font-weight:600;font-size:14px}.ci .pr{font-size:12.5px;color:var(--sub)}
+.ci .reach{display:flex;gap:3px;margin-top:2px}.ci .reach i{width:20px;height:20px;border-radius:50%;font-style:normal;font-size:9px;font-weight:700;display:grid;place-items:center;background:var(--soft);color:var(--sub)}
+.ci .reach i.ok{background:var(--acc);color:#292928}
+.ci.off{opacity:.55}.ci .off-t{position:absolute;top:12px;right:12px}
+.ci.addc{border-style:dashed;align-items:center;justify-content:center;color:var(--sub);font-weight:600;min-height:150px}
+.hist .kv b{font-weight:600}
+.rpane{display:none;flex-direction:column;gap:14px}.rpane.on{display:flex}
+
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.bc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.bc .top2{display:flex;gap:10px;align-items:center}
+.bc .bi{width:42px;height:42px;border-radius:13px;background:var(--soft);display:grid;place-items:center;color:var(--ink);flex:none}
+.bc .nm{font-weight:700;font-size:14px}.bc .ds{font-size:11.5px;color:var(--sub)}
+.tiers{display:flex;flex-direction:column;gap:4px;font-size:11.5px}
+.tk{display:flex;align-items:center;gap:6px}.tk .avx{width:18px;height:18px;font-size:9px}
+.pips{display:flex;gap:3px}.pips i{width:14px;height:8px;border-radius:3px;background:var(--soft);border:1px solid var(--line)}
+.pips i.t1{background:#b87333;border-color:#b87333}.pips i.t2{background:#c0c0c0;border-color:#c0c0c0}.pips i.t3{background:#ffd23f;border-color:#ffd23f}.pips i.t4{background:#e5e4e2;border-color:#9a9a96}.pips i.t5{background:linear-gradient(90deg,#7cc8ff,#c9b6ff,#ff9ecd);border-color:transparent}
+.tn{font-size:10.5px;color:var(--sub);margin-left:auto}
+.tlg{display:flex;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--sub)}.tlg span{display:flex;align-items:center;gap:5px}.tlg i{width:14px;height:8px;border-radius:3px;display:inline-block}
+.bpane{display:none;flex-direction:column;gap:14px}.bpane.on{display:flex}
+.aw{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.aw:first-of-type{border-top:0}
+.aw .bi{width:36px;height:36px;border-radius:11px;background:var(--soft);display:grid;place-items:center;flex:none}
+.aw .t2{flex:1;font-size:13.5px;font-weight:600}.aw .t2 small{display:block;color:var(--sub);font-weight:400;font-size:11.5px}
+
+.n{position:relative}
+.bellpop{position:absolute;left:72px;top:64px;width:400px;max-height:560px;background:var(--card);color:var(--ink);border:2px solid var(--ink);border-radius:16px;box-shadow:4px 4px 0 var(--acc);z-index:20;display:flex;flex-direction:column;overflow:hidden}
+.bellpop.hide{display:none}
+.bellpop::before{content:'';position:absolute;left:-9px;top:20px;width:14px;height:14px;background:var(--card);border-left:2px solid var(--ink);border-bottom:2px solid var(--ink);transform:rotate(45deg)}
+.bh{display:flex;align-items:center;gap:8px;padding:12px 14px 8px}.bh b{font-size:16px;flex:1}
+.bh a{font-size:12px;color:var(--sub);font-weight:600;cursor:pointer}
+.btabs{display:flex;gap:4px;padding:0 14px 8px}.btabs span{font-size:12px;font-weight:600;padding:5px 10px;border-radius:999px;color:var(--sub);border:1px solid var(--line)}.btabs .on{background:var(--ink);color:var(--card);border-color:var(--ink)}
+.bl2{overflow:auto;padding:0 6px 6px}
+.bgh{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--sub);font-weight:700;padding:8px 8px 4px}
+.nt{display:flex;gap:10px;padding:10px 8px;border-radius:12px;position:relative}
+.nt:hover{background:var(--soft)}
+.nt.unread::after{content:'';position:absolute;right:10px;top:16px;width:8px;height:8px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 1.5px var(--ink)}
+.nt .ni{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;background:var(--soft);color:var(--ink)}.nt .ni .ms{font-size:18px}
+.ni.hi{background:var(--redbg);color:var(--red)}.ni.md{background:var(--amb);color:var(--ambink)}.ni.lv{background:var(--lav);color:var(--lavink)}.ni.ok{background:var(--acc);color:#292928}
+.nt .tx{flex:1;font-size:13px;font-weight:600;padding-right:14px}.nt .tx small{display:block;font-weight:400;color:var(--sub);font-size:11.5px;margin-top:1px}
+.nt .na{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}.nt .na .btn{padding:4px 10px;font-size:11.5px;min-height:0}
+.bf{border-top:1px solid var(--line);padding:10px 14px;display:flex;justify-content:space-between;font-size:12px;color:var(--sub);font-weight:600}
+.bellbtn{position:relative}.bellbtn .cnt{position:absolute;top:2px;right:0;background:var(--red);color:#fff;font-size:9px;font-weight:700;border-radius:8px;padding:0 4px;border:2px solid var(--card)}
+
+.gstack{display:flex}.gstack span{width:24px;height:24px;border-radius:8px;background:var(--card);border:1px solid var(--line);display:grid;place-items:center;margin-left:-6px;color:var(--sub)}.gstack span .ms{font-size:14px}
+.dvr{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line)}.dvr:first-of-type{border-top:0}
+.dvr .ic{width:36px;height:36px}.dvr .t2{flex:1;font-size:13.5px;font-weight:600}.dvr .t2 small{display:block;color:var(--sub);font-weight:400;font-size:11.5px}
+.dvr .x{color:var(--sub);cursor:pointer}
+.pt-group{background:repeating-linear-gradient(0deg,var(--pc) 0 2px,transparent 2px 7px),var(--acc)!important}
+</style></head><body>
+<div class="top"><div><h1>Chat</h1><p>Use the icon sidebar to switch screens. Try Settings → Appearance to change the accent. Sample data.</p></div>
+<button class="tg" onclick="document.querySelector('.n').classList.toggle('dark')">Toggle dark</button></div>
+
+<div class="n dark"><div class="bellpop hide">
+ <div class="bh"><b>Notifications</b><a>Mark all read</a></div>
+ <div class="btabs"><span class="on">All · 5</span><span>Needs you · 3</span><span>Alerts · 1</span></div>
+ <div class="bl2">
+  <div class="bgh">Today</div>
+  <div class="nt unread"><div class="ni hi"><span class="ms">gpp_maybe</span></div><div class="tx">Mia's iPad got around the lock<small>6 min while locked · re-locked · 9:14 PM</small><div class="na"><button class="btn "><span class="ms">devices</span>View</button><button class="btn "><span class="ms">chat</span>Ask Mia</button></div></div></div>
+  <div class="nt unread"><div class="ni lv"><span class="ms">school</span></div><div class="tx">Mia finished Homework<small>2 photos · needs your OK · 5:40 PM</small><div class="na"><button class="btn acc"><span class="ms">check</span>Approve +30</button><button class="btn "><span class="ms">undo</span>Send back</button></div></div></div>
+  <div class="nt unread"><div class="ni md"><span class="ms">cleaning_services</span></div><div class="tx">Mia left a note on Clean bathroom<small>Out of supplies · “No more toilet spray” · 5:12 PM</small><div class="na"><button class="btn "><span class="ms">chat</span>Reply</button></div></div></div>
+  <div class="nt unread"><div class="ni lv"><span class="ms">redeem</span></div><div class="tx">Leo wants 30 min screen time<small>40 pts · 310 → 270 · 6:10 PM</small><div class="na"><button class="btn acc"><span class="ms">check</span>Approve</button><button class="btn "><span class="ms">close</span>Decline</button></div></div></div>
+  <div class="nt unread"><div class="ni md"><span class="ms">device_unknown</span></div><div class="tx">New device joined<small>Samsung · blocked until you assign it · 4:51 PM</small><div class="na"><button class="btn "><span class="ms">person_add</span>Who's this?</button></div></div></div>
+  <div class="bgh">Earlier</div>
+  <div class="nt"><div class="ni ok"><span class="ms">whatshot</span></div><div class="tx">Mia reached On Fire · Silver<small>30 days in a row · yesterday</small></div></div>
+  <div class="nt"><div class="ni ok"><span class="ms">military_tech</span></div><div class="tx">Ava levelled up to 9<small>Yesterday</small></div></div>
+ </div>
+ <div class="bf"><span><span class="ms">tune</span> Notification settings</span><span>See all <span class="ms">chevron_right</span></span></div>
+</div><div class="sheetbg"><div class="sheet">
+ <h3>New chore type<span class="ms" style="margin-left:auto;cursor:pointer" onclick="this.closest('.sheetbg').classList.remove('on')">close</span></h3>
+ <label class="fld">Name<div class="fi">Laundry</div></label>
+ <label class="fld">Icon <span class="hint">Search or pick</span><div class="fi" style="display:flex;gap:6px;align-items:center;color:var(--sub)"><span class="ms">search</span>laundry</div>
+  <div class="icg"><span class=""><span class="ms">cleaning_services</span></span><span class=""><span class="ms">school</span></span><span class=""><span class="ms">pets</span></span><span class=""><span class="ms">restaurant</span></span><span class=""><span class="ms">yard</span></span><span class=""><span class="ms">music_note</span></span><span class=""><span class="ms">self_care</span></span><span class=""><span class="ms">task_alt</span></span><span class="on"><span class="ms">local_laundry_service</span></span><span class=""><span class="ms">directions_car</span></span><span class=""><span class="ms">sports_soccer</span></span><span class=""><span class="ms">shopping_cart</span></span><span class=""><span class="ms">delete</span></span><span class=""><span class="ms">water_drop</span></span><span class=""><span class="ms">child_care</span></span><span class=""><span class="ms">bed</span></span><span class=""><span class="ms">local_florist</span></span><span class=""><span class="ms">construction</span></span><span class=""><span class="ms">recycling</span></span><span class=""><span class="ms">dishwasher</span></span><span class=""><span class="ms">checkroom</span></span><span class=""><span class="ms">fitness_center</span></span><span class=""><span class="ms">brush</span></span><span class=""><span class="ms">kitchen</span></span></div></label>
+ <div class="fld">Notes a kid can send<div class="nl">
+  <div class="row2"><span class="ms">drag_indicator</span>Out of detergent<span class="ms x">close</span></div>
+  <div class="row2"><span class="ms">drag_indicator</span>Washer is full / running<span class="ms x">close</span></div>
+  <div class="row2"><span class="ms">drag_indicator</span>Didn't know how to sort it<span class="ms x">close</span></div>
+  <div class="row2 u"><span class="ms">add</span>Add a note</div>
+  <div class="hint" style="margin-top:4px">Every type also gets: Need help · Ran out of time · Can't do it today</div></div></div>
+ <div class="foot" style="margin-top:auto"><button class="btn" onclick="this.closest('.sheetbg').classList.remove('on')">Cancel</button><button class="btn acc"><span class="ms">check</span>Create type</button></div>
+</div></div>
+ <div class="rail"><div class="logo" style="margin-bottom:6px">@</div><div class="ri on bellbtn" onclick="document.querySelector('.bellpop').classList.toggle('hide')" title="Notifications"><span class="ms">notifications</span><span class="cnt">5</span></div><div style="height:12px"></div>
+  <div class="ri" title="Today"><span class="ms">home</span></div>
+  <div class="ri on" data-s="dev" title="Devices"><span class="ms">devices</span></div>
+  <div class="ri" data-s="kids" title="Kids &amp; chores"><span class="ms">group</span></div>
+  <div class="ri" data-s="chat" title="Chat"><span class="ms">forum</span><span class="dot"></span></div>
+  <div class="ri" data-s="set" title="Settings" style="margin-top:auto"><span class="ms">settings</span></div>
+  <div class="ri" title="Log out"><span class="ms">logout</span></div>
+ </div>
+
+ <!-- ===== DEVICES ===== -->
+ <div class="scr on" id="dev">
+  <div class="list"><div class="lh"><h2>Devices</h2><span class="ms" style="color:var(--sub)">more_vert</span></div>
+   <div class="tabs"><span class="on">Devices · 9</span><span data-go="groups">Groups · 3</span></div>
+   <div class="it" style="background:var(--amb)"><div class="ic"><span class="ms">device_unknown</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/samsung.svg)"></span></span></div><div><div class="nm">New device</div><div class="mt">Samsung · joined 4:51 PM</div></div><span class="chip c-amb">Who's this?</span></div>
+   <div class="it sel"><div class="ic"><span class="ms">tablet_mac</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/apple.svg)"></span></span></div><div><div class="nm">Mia's iPad</div><div class="mt">Mia · last seen now</div></div><span class="chip c-acc">Open</span></div>
+   <div class="it"><div class="ic"><span class="ms">sports_esports</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/nintendoswitch.svg)"></span></span></div><div><div class="nm">Switch</div><div class="mt">Mia, Leo · 2h ago</div></div><span class="chip c-grey">Locked</span></div>
+   <div class="it"><div class="ic"><span class="ms">smartphone</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/google.svg)"></span></span></div><div><div class="nm">Ava's phone</div><div class="mt">Pixel · Ava · now</div></div><span class="chip c-acc">Open</span></div>
+   <div class="it"><div class="ic"><span class="ms">laptop_chromebook</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/google.svg)"></span></span></div><div><div class="nm">School laptop</div><div class="mt">Chromebook · Mia · always allowed</div></div><span class="chip c-lav">Exempt</span></div>
+   <div class="it"><div class="ic"><span class="ms">tv</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/lg.svg)"></span></span></div><div><div class="nm">Living room TV</div><div class="mt">LG · Family group</div></div><span class="chip c-grey">Locked</span></div>
+   <div class="it"><div class="ic"><span class="ms">phone_iphone</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/apple.svg)"></span></span></div><div><div class="nm">Mom's phone</div><div class="mt">Guest · never blocked</div></div><span class="chip c-grey">Guest</span></div>
+  </div>
+  <div class="main">
+   <div class="mh"><div class="hero"><div class="big"><span class="ms">tablet_mac</span></div><div><h2>Mia's iPad</h2><div class="hchips"><span class="hc"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/apple.svg)"></span>Apple</span><span class="hc on"><span class="ms">wifi</span>Online now</span><span class="hc mono"><span class="ms">lan</span>192.168.1.42</span><span class="hc"><span class="ms">person</span>Mia</span></div></div></div>
+    <div style="display:flex;gap:8px"><button class="btn red"><span class="ms">lock</span>Lock now</button><button class="btn"><span class="ms">schedule</span>Unlock 30 min</button></div></div>
+   <div class="dtabs"><span class="on" data-p="ov">Overview</span><span data-p="net">Network</span><span data-p="act">Activity <span class="chip c-red" style="margin-left:4px">1</span></span></div>
+
+   <div class="pane on" id="ov">
+    <div class="g2">
+     <div class="card"><h3><span class="ms">info</span>Details</h3>
+      <div class="kv"><span>Name</span>Mia's iPad</div><div class="kv"><span>Owners</span><span><span class="pill">Mia</span></span></div>
+      <div class="kv"><span>Groups</span><span><span class="pill">Kids tablets</span></span></div><div class="kv"><span>Guest (never blocked)</span><span class="sw"></span></div></div>
+     <div class="card"><h3><span class="ms">bolt</span>Right now</h3>
+      <div class="kv"><span>State</span><span class="chip c-acc">Open</span></div><div class="kv"><span>Why</span>Chores 3/5 · before lock time</div>
+      <div class="kv"><span>Locks at</span>8:00 PM</div><div class="kv"><span>Override</span>None · on schedule</div></div>
+    </div>
+    <div class="card"><h3><span class="ms">timeline</span>Online this week<span class="new">new data</span></h3><div class="tl"><span>Today</span><div class="tr"><b style="left:29%;width:5%"></b><b style="left:62%;width:9%"></b><b style="left:73%;width:7%"></b><b class="l" style="left:84%;width:16%"></b></div><span>Wed</span><div class="tr"><b style="left:30%;width:3%"></b><b style="left:64%;width:12%"></b><b class="l" style="left:84%;width:16%"></b></div><span>Tue</span><div class="tr"><b style="left:28%;width:4%"></b><b style="left:65%;width:5%"></b><b style="left:72%;width:11%"></b><b class="l" style="left:84%;width:16%"></b></div><span>Mon</span><div class="tr"><b style="left:31%;width:2%"></b><b style="left:66%;width:15%"></b><b class="l" style="left:84%;width:16%"></b></div><span>Sun</span><div class="tr"><b style="left:38%;width:14%"></b><b style="left:55%;width:15%"></b><b style="left:74%;width:12%"></b><b class="l" style="left:90%;width:10%"></b></div></div><div class="ax"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span></div><div class="lg"><span><i style="background:var(--acc)"></i>Online</span><span><i style="background:var(--ink);opacity:.8"></i>Locked</span><span><i style="background:var(--soft);border:1px solid var(--line)"></i>Offline</span></div></div>
+   </div>
+
+   <div class="pane" id="net">
+    <div class="g2">
+     <div class="card"><h3><span class="ms">lan</span>Addresses</h3>
+      <div class="kv"><span>IPv4</span><span class="mono">192.168.1.42</span></div>
+      <div class="kv"><span>IPv6</span><span class="mono" style="text-align:right">fd00::1c2a:9ff:fe41:7b10<br>2601:••:7b10 (+1 more)</span></div>
+      <div class="kv"><span>MAC</span><span class="mono">3a:1f:••:••:c2:09</span></div>
+      <div class="kv"><span>Private MAC</span><span class="chip c-amb">Yes, random</span></div>
+      <div class="kv"><span>Hostname</span><span class="mono">Mias-iPad</span></div>
+      <div class="kv"><span>Maker</span>Apple</div></div>
+     <div class="card"><h3><span class="ms">router</span>Connection</h3>
+      <div class="kv"><span>Status</span><span class="chip c-acc">Online</span></div>
+      <div class="kv"><span>First seen</span>Oct 12, 4:03 PM</div>
+      <div class="kv"><span>Last seen</span>Just now</div>
+      <div class="kv"><span>Blocker hold</span><span class="chip c-acc">Healthy</span></div>
+      <div class="kv"><span>Resisting blocker</span>No</div>
+      <div class="kv"><span>Address changes (7 days)</span>1<span class="new">new data</span></div></div>
+    </div>
+    <div class="card" style="background:var(--amb);border-color:transparent"><h3 style="color:var(--ambink)"><span class="ms">shield</span>Private MAC is on</h3><p class="h" style="color:var(--ambink);margin:0">iPads can switch to a new random address, which would look like a new device. Turn off “Private Wi-Fi Address” for your home network on this iPad so the lock keeps working. <u>How?</u></p></div>
+   </div>
+
+   <div class="pane" id="act">
+    <div class="kpis"><div class="kpi hi"><span>Bypass attempts · 7d</span><b>1</b></div><div class="kpi"><span>Tries while locked · 7d</span><b>38</b></div><div class="kpi"><span>Outside allowed hours · 7d</span><b>5</b></div><div class="kpi"><span>Wrong PINs · 7d</span><b>3</b></div></div>
+    <div class="card"><h3><span class="ms">policy</span>Attempts &amp; alerts<span style="margin-left:auto" class="filt"><span class="ev on">All</span><span class="ev">Bypass</span><span class="ev">While locked</span><span class="ev">Sign-in</span></span></h3>
+     <div class="al"><div class="sev hi"><span class="ms">gpp_maybe</span></div><div class="t">Got around the lock for 6 min<small>Kept reaching the internet while locked: the lock was being dodged (often a manual network setting or VPN). The box re-locked it.</small><div class="acts"><button class="btn"><span class="ms">chat</span>Ask Mia</button><button class="btn red"><span class="ms">lock</span>Lock all Mia's devices</button><button class="btn">Mark OK</button></div></div><div class="w">Tue 9:14 PM<br>Locked time</div></div>
+     <div class="al"><div class="sev md"><span class="ms">swap_horiz</span></div><div class="t">New address right after locking<span class="new">new data</span><small>A “new device” named <span class="mono">Mias-iPad</span> joined 2 min after this iPad locked. Likely a private MAC switch to dodge the lock.</small><div class="acts"><button class="btn"><span class="ms">merge</span>Same device, merge</button><button class="btn">Different device</button></div></div><div class="w">Mon 8:02 PM</div></div>
+     <div class="al"><div class="sev md"><span class="ms">schedule</span></div><div class="t">Tried to get online outside allowed hours<span class="new">new data</span><small>14 tries between 10:40 and 11:55 PM (school night). Each try hit the lock page.</small></div><div class="w">Mon 10:40 PM</div></div>
+     <div class="al"><div class="sev md"><span class="ms">wifi_off</span></div><div class="t">Left Wi-Fi while locked<span class="new">new data</span><small>Dropped off the home network 1 min after locking and came back at unlock. May have used mobile data or a hotspot; the box can't see that traffic.</small></div><div class="w">Sun 8:01 PM</div></div>
+     <div class="al"><div class="sev lo"><span class="ms">pin</span></div><div class="t">3 wrong PIN tries on Leo's sign-in, from this iPad<span class="new">new data</span><small>Someone on Mia's iPad tried to sign in as Leo.</small></div><div class="w">Sun 4:22 PM</div></div>
+     <div class="al"><div class="sev lo"><span class="ms">block</span></div><div class="t">Tried to get online while locked (chores not done)<small>24 tries · lock page opened 3 times</small></div><div class="w">Sat 3–5 PM</div></div>
+    </div>
+    <div class="g2">
+     <div class="card"><h3><span class="ms">bar_chart</span>Time online per day<span class="new">new data</span></h3>
+      <div class="bars"><div style="height:55%"></div><div style="height:70%"></div><div style="height:48%"></div><div style="height:62%"></div><div style="height:40%"></div><div style="height:90%"></div><div style="height:35%"></div></div>
+      <div class="bl"><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span><span>Mon</span><span>Tue</span><span>Today</span></div></div>
+     <div class="card log"><h3><span class="ms">history</span>Lock history<span class="new">schedule &amp; chore events new</span></h3>
+      <div class="kv"><span><span class="ms">lock</span>Locked by schedule</span>Yesterday 8:00 PM</div>
+      <div class="kv"><span><span class="ms">lock_open</span>Unlocked 30 min by Dad</span>Yesterday 7:10 PM</div>
+      <div class="kv"><span><span class="ms">task_alt</span>Opened: chores done</span>Yesterday 5:58 PM</div>
+      <div class="kv"><span><span class="ms">lock</span>Locked by Mom</span>Mon 6:15 PM</div></div>
+    </div>
+   </div>
+  </div>
+ </div>
+
+
+ <!-- ===== GROUPS ===== -->
+ <div class="scr" id="groups">
+  <div class="list"><div class="lh"><h2>Devices</h2><span class="ms" style="color:var(--sub)">more_vert</span></div>
+   <div class="tabs"><span data-go="dev">Devices · 9</span><span class="on">Groups · 3</span></div>
+   <div class="it sel"><div class="ic"><span class="ms">tablet_mac</span></div><div><div class="nm">Kids tablets</div><div class="mt">3 devices · Mia, Leo, Sam</div></div><span class="gstack" style="margin-left:auto"><span><span class="ms">tablet_mac</span></span><span><span class="ms">tablet_android</span></span><span><span class="ms">tablet_mac</span></span></span></div>
+   <div class="it"><div class="ic"><span class="ms">sports_esports</span></div><div><div class="nm">Game consoles</div><div class="mt">2 devices · everyone</div></div><span class="gstack" style="margin-left:auto"><span><span class="ms">sports_esports</span></span><span><span class="ms">sports_esports</span></span></span></div>
+   <div class="it"><div class="ic"><span class="ms">tv</span></div><div><div class="nm">Living room</div><div class="mt">2 devices · family</div></div><span class="gstack" style="margin-left:auto"><span><span class="ms">tv</span></span><span><span class="ms">speaker</span></span></span></div>
+   <div class="add">+ New group</div>
+  </div>
+  <div class="main">
+   <div class="mh"><div class="hero"><div class="big"><span class="ms">tablet_mac</span></div><div><h2>Kids tablets</h2><div class="hchips"><span class="hc"><span class="ms">devices</span>3 devices</span><span class="hc on"><span class="ms">lock_open</span>2 open</span><span class="hc"><span class="ms">lock</span>1 locked</span><span class="hc"><span class="ms">group</span>Mia, Leo, Sam</span></div></div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn red"><span class="ms">lock</span>Lock group</button><button class="btn"><span class="ms">schedule</span>Unlock 30 min</button><button class="btn"><span class="ms">event_repeat</span>Back to schedule</button></div></div>
+   <div class="g2">
+    <div class="card"><h3><span class="ms">devices</span>Devices in this group</h3>
+     <div class="dvr"><div class="ic"><span class="ms">tablet_mac</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/apple.svg)"></span></span></div><div class="t2">Mia's iPad<small>Mia · online</small></div><span class='chip c-acc'>Open</span><span class="ms x">close</span></div>
+     <div class="dvr"><div class="ic"><span class="ms">tablet_android</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/samsung.svg)"></span></span></div><div class="t2">Leo's tablet<small>Leo · online</small></div><span class='chip c-acc'>Open</span><span class="ms x">close</span></div>
+     <div class="dvr"><div class="ic"><span class="ms">tablet_mac</span><span class="vb"><span class="vl" style="--u:url(https://cdn.jsdelivr.net/npm/simple-icons@13.0.0/icons/apple.svg)"></span></span></div><div class="t2">Sam's iPad<small>Sam · chores not done</small></div><span class='chip c-grey'>Locked</span><span class="ms x">close</span></div>
+     <div class="dvr" style="color:var(--sub)"><span class="ms">add</span><div class="t2" style="color:var(--sub)">Add a device</div></div></div>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px"><h3><span class="ms">edit</span>Group</h3>
+     <label class="fld">Group name<div class="fi">Kids tablets</div></label>
+     <label class="fld">Icon<div class="icg" style="grid-template-columns:repeat(8,1fr)"><span class="on"><span class="ms">tablet_mac</span></span><span class=""><span class="ms">sports_esports</span></span><span class=""><span class="ms">tv</span></span><span class=""><span class="ms">laptop</span></span><span class=""><span class="ms">smartphone</span></span><span class=""><span class="ms">speaker</span></span><span class=""><span class="ms">router</span></span><span class=""><span class="ms">devices_other</span></span></div></label>
+     <div class="kv"><span>Lock with the kids' chores</span><span class="sw on"></span></div>
+     <div class="kv"><span>Block new devices that look similar</span><span class="sw"></span></div></div>
+   </div>
+   <div class="card"><h3><span class="ms">calendar_month</span>Hours for this group<span style="margin-left:auto;font-weight:500;font-size:12px;color:var(--sub)">Edit in Settings → Hours</span></h3>
+    <div class="tl3">
+     <div class="nm3"><span class="sq pt pt-school"></span><div>School nights<small>family</small></div></div><div class="tr"><b class="pt pt-school" style="left:29%;width:8%"><em>6–8a</em></b><b class="pt pt-school" style="left:62%;width:21%"><em>3–8p</em></b></div>
+     <div class="nm3"><span class="sq pt pt-week"></span><div>Weekends<small>family</small></div></div><div class="tr"><b class="pt pt-week" style="left:33%;width:58%"><em>8a–10p</em></b></div>
+     <div class="nm3"><span class="sq pt pt-group"></span><div>Tablets only<small>this group</small></div></div><div class="tr"><b class="pt pt-group" style="left:66%;width:14%"><em>4–7:30p</em></b></div>
+    </div><div class="ax3"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span></div></div>
+   <div class="sumbar"><div><span>Online now</span><b>2 of 3</b></div><div><span>Alerts · 7 days</span><b style="color:var(--red)">1</b></div><div><span>Overrides today</span><b>0</b></div><div><span>Next lock</span><b>7:30 PM</b></div></div>
+  </div>
+ </div>
+
+ <!-- ===== KIDS & CHORES ===== -->
+ <div class="scr" id="kids">
+  <div class="list"><div class="lh"><h2>Kids &amp; chores</h2><span class="ms" style="color:var(--sub)">more_vert</span></div>
+   <div class="tabs"><span data-go="chores">Chores · 14</span><span class="on" data-go="kids">Kids · 4</span><span data-go="rewards">Rewards</span><span data-go="badges">Badges</span></div>
+   <div class="it"><div class="av">A</div><div><div class="nm">Ava</div><div class="mt">Level 9 · 1,240 pts</div></div><span class="chip c-grey">PIN set</span></div>
+   <div class="it sel"><div class="av">M</div><div><div class="nm">Mia</div><div class="mt">Level 7 · 860 pts</div></div><span class="chip c-acc">Online</span></div>
+   <div class="it"><div class="av">L</div><div><div class="nm">Leo</div><div class="mt">Level 4 · 310 pts</div></div><span class="chip c-lav">No PIN</span></div>
+   <div class="it"><div class="av">S</div><div><div class="nm">Sam</div><div class="mt">Level 2 · 95 pts</div></div><span class="chip c-grey">Locked</span></div>
+   <div class="add">+ Add a kid</div>
+  </div>
+  <div class="main">
+   <div class="mh"><div class="hero"><div class="big" style="border-radius:50%;font-weight:700;font-size:26px">M</div><div><h2>Mia</h2><div class="s">Level 7 · Rising Star · 6-day streak</div></div></div>
+    <div style="display:flex;gap:8px"><button class="btn"><span class="ms">visibility</span>View as kid</button><button class="btn"><span class="ms">add_circle</span>Bonus</button><button class="btn red"><span class="ms">remove_circle</span>Deduct</button><button class="btn acc"><span class="ms">edit</span>Edit</button></div></div>
+   <div class="g2">
+    <div class="card"><h3><span class="ms">badge</span>Profile</h3><div class="kv"><span>Name</span>Mia</div><div class="kv"><span>PIN</span>•••• set</div><div class="kv"><span>Points</span>860</div><div class="kv"><span>Next reward</span>Movie night · 40 pts away</div></div>
+    <div class="card"><h3><span class="ms">devices</span>Devices</h3>
+     <div class="kv"><span><span class="ms" style="font-size:16px">tablet_mac</span> iPad</span><span class="chip c-acc">Open</span></div>
+     <div class="kv"><span><span class="ms" style="font-size:16px">sports_esports</span> Switch</span><span class="chip c-grey">Locked</span></div>
+     <div class="kv"><span><span class="ms" style="font-size:16px">laptop_chromebook</span> School laptop</span><span class="chip c-lav">Exempt</span></div></div>
+   </div>
+   <div class="card"><h3><span class="ms">checklist</span>Chores assigned</h3>
+    <span class="pill"><span class="ms">restaurant</span>Unload dishwasher · daily</span><span class="pill"><span class="ms">pets</span>Feed the cat · daily</span><span class="pill"><span class="ms">school</span>Homework · weekdays</span><span class="pill"><span class="ms">cleaning_services</span>Tidy room · daily</span><span class="pill"><span class="ms">music_note</span>Piano · M/W/F</span><span class="pill" style="border-style:dashed;color:var(--sub)"><span class="ms">add</span>Assign</span></div>
+   <div class="card"><h3><span class="ms">history</span>Points history</h3>
+    <div class="kv"><span>Today 5:40 PM · Homework approved</span><b style="color:var(--ink)">+30</b></div>
+    <div class="kv"><span>Today 7:02 PM · Feed the cat — late</span><b style="color:var(--red)">−10</b></div>
+    <div class="kv"><span>Yesterday · Bonus: helped with groceries</span><b style="color:var(--ink)">+25</b></div></div>
+  </div>
+ </div>
+
+
+ <!-- ===== CHORES ===== -->
+ <div class="scr" id="chores">
+  <div class="list"><div class="lh"><h2>Kids &amp; chores</h2><span class="ms" style="color:var(--sub)">more_vert</span></div>
+   <div class="tabs"><span class="on" data-go="chores">Chores · 14</span><span data-go="kids">Kids · 4</span><span data-go="rewards">Rewards</span><span data-go="badges">Badges</span></div>
+   <div class="grp"><span class="ms">school</span>Schoolwork</div>
+   <div class="it sel"><div class="ic"><span class="ms">school</span></div><div><div class="nm">Homework</div><div class="mt">30 pts · weekdays · 3 steps · photo</div></div><span class="avs"><i>M</i><i>L</i></span></div>
+   <div class="it"><div class="ic"><span class="ms">menu_book</span></div><div><div class="nm">Reading 20 min</div><div class="mt">15 pts · daily</div></div><span class="avs"><i>A</i><i>S</i></span></div>
+   <div class="grp"><span class="ms">cleaning_services</span>Cleaning</div>
+   <div class="it"><div class="ic"><span class="ms">cleaning_services</span></div><div><div class="nm">Tidy room</div><div class="mt">25 pts · daily · 4 steps</div></div><span class="avs"><i>M</i><i>A</i><i>L</i><i>S</i></span></div>
+   <div class="it"><div class="ic"><span class="ms">cleaning_services</span></div><div><div class="nm">Clean bathroom</div><div class="mt">40 pts · Sat · race</div></div><span class="avs"><i>M</i><i>A</i></span></div>
+   <div class="grp"><span class="ms">pets</span>Pets</div>
+   <div class="it"><div class="ic"><span class="ms">pets</span></div><div><div class="nm">Feed the cat</div><div class="mt">10 pts · daily · 5 PM</div></div><span class="avs"><i>M</i></span></div>
+   <div class="add">+ New chore</div>
+  </div>
+  <div class="main">
+   <div class="mh"><div class="hero"><div class="big"><span class="ms">school</span></div><div><h2>Homework</h2><div class="hchips"><span class="hc"><span class="ms">category</span>Schoolwork</span><span class="hc on"><span class="ms">stars</span>30 pts</span><span class="hc"><span class="ms">event_repeat</span>Weekdays</span><span class="hc"><span class="ms">photo_camera</span>Needs photo</span></div></div></div>
+    <div style="display:flex;gap:8px"><button class="btn red"><span class="ms">delete</span>Delete</button><button class="btn"><span class="ms">content_copy</span>Duplicate</button></div></div>
+   <div class="g2">
+    <div class="card" style="display:flex;flex-direction:column;gap:14px"><h3><span class="ms">edit</span>Basics</h3>
+     <label class="fld">Chore name<div class="fi">Homework</div></label>
+     <label class="fld">Type <span class="hint">Picks the icon and the notes a kid can send</span>
+      <div class="types"><span class="tp"><span class="ms">cleaning_services</span>Cleaning</span><span class="tp on"><span class="ms">school</span>Schoolwork</span><span class="tp"><span class="ms">pets</span>Pets</span><span class="tp"><span class="ms">restaurant</span>Kitchen</span><span class="tp"><span class="ms">yard</span>Outdoor</span><span class="tp"><span class="ms">music_note</span>Practice</span><span class="tp"><span class="ms">self_care</span>Personal</span><span class="tp"><span class="ms">task_alt</span>Other</span><span class="tp newt" onclick="document.querySelector('.sheetbg').classList.add('on')"><span class="ms">add</span>New type</span></div></label>
+     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px"><label class="fld">Points<div class="fi">30</div></label><label class="fld">Due by<div class="fi">6:00 PM</div></label></div>
+     <div class="kv"><span>Needs a photo</span><span class="sw on"></span></div></div>
+    <div class="card"><h3><span class="ms">checklist</span>Steps</h3>
+     <div class="steps2">
+      <div class="st"><span class="ms gr">drag_indicator</span><span class="num">1</span><span class="nm2">Math worksheet</span><span class="due"><span class="ms">schedule</span>by 4:30 PM</span><span class="ms x">close</span></div>
+      <div class="link on"><span class="ms">link</span>Must be done after the step above</div>
+      <div class="st"><span class="ms gr">drag_indicator</span><span class="num">2</span><span class="nm2">Check answers with a parent</span><span class="due"><span class="ms">schedule</span>by 5:00 PM</span><span class="ms x">close</span></div>
+      <div class="link"><span class="ms">link_off</span>Any order</div>
+      <div class="st"><span class="ms gr">drag_indicator</span><span class="num free">–</span><span class="nm2">Reading log (20 min)</span><span class="due none"><span class="ms">schedule</span>Due time</span><span class="ms x">close</span></div>
+      <div class="link"><span class="ms">link_off</span>Any order</div>
+      <div class="st"><span class="ms gr">drag_indicator</span><span class="num free">–</span><span class="nm2">Pack backpack</span><span class="due"><span class="ms">schedule</span>by 8:30 PM</span><span class="ms x">close</span></div>
+      <div class="st" style="border-style:dashed;background:transparent;color:var(--sub);margin-top:6px"><span class="ms">add</span>Add a step</div>
+     </div>
+     <div class="lgd"><span><span class="ms">link</span> tap between steps to chain them</span><span><span class="num" style="display:inline-grid;width:16px;height:16px;font-size:9px;vertical-align:-3px">1</span> must go in order</span><span><span class="num free" style="display:inline-grid;width:16px;height:16px;font-size:9px;vertical-align:-3px">–</span> any time</span></div>
+     <div class="warn"><span class="ms">info</span>“Pack backpack” is due after the chore (6:00 PM). The chore will stay open until 8:30 PM.</div>
+    </div>
+   </div>
+   <div class="g2">
+    <div class="card" style="display:flex;flex-direction:column;gap:12px"><h3><span class="ms">group</span>Who &amp; when</h3>
+     <div class="kidpick"><span class="kp on"><i>M</i>Mia</span><span class="kp on"><i>L</i>Leo</span><span class="kp"><i>A</i>Ava</span><span class="kp"><i>S</i>Sam</span></div>
+     <label class="fld">With more than one kid<div class="seg3"><span class="on">Each does it</span><span>First one wins</span><span>Team effort</span></div></label>
+     <label class="fld">Days<div class="days"><span class="on">M</span><span class="on">T</span><span class="on">W</span><span class="on">T</span><span class="on">F</span><span>S</span><span>S</span></div></label></div>
+    <div class="card"><h3><span class="ms">sms</span>Notes Mia &amp; Leo can send</h3><p class="h">From the Schoolwork type. Edit in Settings → Chore types.</p>
+     <span class="np">Don't understand it</span><span class="np">Left it at school</span><span class="np">Need the computer</span><span class="np u">Need help</span><span class="np u">Ran out of time</span><span class="np u">Can't do it today</span></div>
+   </div>
+   <div class="foot"><button class="btn">Cancel</button><button class="btn acc"><span class="ms">check</span>Save chore</button></div>
+  </div>
+ </div>
+
+
+ <!-- ===== REWARDS ===== -->
+ <div class="scr" id="rewards">
+  <div class="list"><div class="lh"><h2>Kids &amp; chores</h2><span class="ms" style="color:var(--sub)">more_vert</span></div>
+   <div class="tabs"><span data-go="chores">Chores · 14</span><span data-go="kids">Kids · 4</span><span class="on">Rewards</span><span data-go="badges">Badges</span></div>
+   <div class="it sel" data-rp="req"><div class="ic"><span class="ms">pending_actions</span></div><div><div class="nm">Requests</div><div class="mt">2 waiting for you</div></div><span class="badge">2</span></div>
+   <div class="it" data-rp="cat"><div class="ic"><span class="ms">storefront</span></div><div><div class="nm">Catalogue</div><div class="mt">6 rewards · 1 hidden</div></div></div>
+   <div class="it" data-rp="st"><div class="ic"><span class="ms">timer</span></div><div><div class="nm">Screen time</div><div class="mt">20 pts per 15 min</div></div><span class="chip c-acc">On</span></div>
+   <div class="it" data-rp="hist"><div class="ic"><span class="ms">history</span></div><div><div class="nm">History</div><div class="mt">Last 30 days</div></div></div>
+  </div>
+  <div class="main"><div class="rpane on" id="rp-req">
+   <div class="mh"><div><h2>Requests</h2><div class="hchips"><span class="hc" style="background:var(--lav);border-color:var(--lav);color:var(--lavink)"><span class="ms">hourglass_top</span>2 waiting</span><span class="hc"><span class="ms">stars</span>Points paid on approve</span></div></div><button class="btn"><span class="ms">done_all</span>Approve all</button></div>
+   <div class="rq"><div class="rw"><span class="ms">movie</span></div><div class="t2">Movie night pick<small><span class="avx" style="display:inline-grid;vertical-align:-4px;margin-right:4px">M</span>Mia · asked 5:51 PM</small></div>
+  <div class="math">300 pts<b>860 → <span class="">560</span></b></div>
+  <div class="ra"><button class="btn acc"><span class="ms">check</span>Approve</button><button class="btn"><span class="ms">close</span>Decline</button><input placeholder="Add a note (optional)…"></div></div>
+   <div class="rq"><div class="rw"><span class="ms">timer</span></div><div class="t2">30 min screen time<small><span class="avx" style="display:inline-grid;vertical-align:-4px;margin-right:4px">L</span>Leo · asked 6:10 PM · iPad</small></div>
+  <div class="math">40 pts<b>310 → <span class="">270</span></b></div>
+  <div class="ra"><button class="btn acc"><span class="ms">check</span>Approve</button><button class="btn"><span class="ms">close</span>Decline</button><input placeholder="Add a note (optional)…"></div></div>
+   <div class="rq"><div class="rw"><span class="ms">icecream</span></div><div class="t2">Ice cream trip<small><span class="avx" style="display:inline-grid;vertical-align:-4px;margin-right:4px">S</span>Sam · asked yesterday</small></div>
+  <div class="math">150 pts<b>95 → <span class="short">-55</span></b></div>
+  <div class="ra"><button class="btn acc" disabled style=opacity:.5><span class="ms">check</span>Approve</button><button class="btn"><span class="ms">close</span>Decline</button><input placeholder="Add a note (optional)…"><span class="short" style="font-size:12px"><span class="ms">error</span> Not enough points</span></div></div>
+   <button class="btn" style="align-self:flex-start" data-rp="hist"><span class="ms">history</span>See history</button>
+  </div><div class="rpane" id="rp-st">
+   <div class="mh"><div><h2>Screen time</h2><div class="hchips"><span class="hc on"><span class="ms">toggle_on</span>On</span><span class="hc"><span class="ms">stars</span>20 pts = 15 min</span><span class="hc"><span class="ms">hourglass_bottom</span>Max 60 min/day</span></div></div></div>
+   <div class="g2">
+    <div class="card"><h3><span class="ms">tune</span>How it works</h3><div class="kv"><span>Kids can buy extra minutes</span><span class="sw on"></span></div>
+     <div class="form" style="margin-top:8px"><label class="fld">Price<div class="fi">20 pts per 15 min</div></label><label class="fld">Max per day<div class="fi">60 min</div></label></div>
+     <div class="kv" style="margin-top:8px"><span>Approve automatically</span><span class="sw on"></span></div>
+     <div class="kv"><span>Only during allowed hours</span><span class="sw on"></span></div></div>
+    <div class="card"><h3><span class="ms">calculate</span>What points buy</h3><div class="kv"><span>Average chore (20 pts)</span>15 min</div><div class="kv"><span>Mia · 860 pts</span>up to 10h 45m</div><div class="kv"><span>Leo · 310 pts</span>up to 3h 45m</div><div class="kv"><span>Sam · 95 pts</span>up to 1h</div></div>
+   </div>
+   <div class="card"><h3><span class="ms">timer</span>Bought today<span style="margin-left:auto;font-weight:500;font-size:12px;color:var(--sub)">resets 4:00 AM</span></h3><div class="kv"><span style="display:flex;align-items:center;gap:8px;color:var(--ink)"><span class="avx">M</span>Mia</span><span style="display:flex;align-items:center;gap:10px;flex:1;max-width:60%"><span class="bar" style="flex:1;height:8px;border-radius:8px;background:var(--soft);border:1px solid var(--line);overflow:hidden"><i style="display:block;height:100%;width:50%;background:var(--acc)"></i></span><b style="font-size:12px;white-space:nowrap">30 / 60 min</b></span></div><div class="kv"><span style="display:flex;align-items:center;gap:8px;color:var(--ink)"><span class="avx">A</span>Ava</span><span style="display:flex;align-items:center;gap:10px;flex:1;max-width:60%"><span class="bar" style="flex:1;height:8px;border-radius:8px;background:var(--soft);border:1px solid var(--line);overflow:hidden"><i style="display:block;height:100%;width:100%;background:var(--acc)"></i></span><b style="font-size:12px;white-space:nowrap">60 / 60 min</b></span></div><div class="kv"><span style="display:flex;align-items:center;gap:8px;color:var(--ink)"><span class="avx">L</span>Leo</span><span style="display:flex;align-items:center;gap:10px;flex:1;max-width:60%"><span class="bar" style="flex:1;height:8px;border-radius:8px;background:var(--soft);border:1px solid var(--line);overflow:hidden"><i style="display:block;height:100%;width:25%;background:var(--acc)"></i></span><b style="font-size:12px;white-space:nowrap">15 / 60 min</b></span></div><div class="kv"><span style="display:flex;align-items:center;gap:8px;color:var(--ink)"><span class="avx">S</span>Sam</span><span style="display:flex;align-items:center;gap:10px;flex:1;max-width:60%"><span class="bar" style="flex:1;height:8px;border-radius:8px;background:var(--soft);border:1px solid var(--line);overflow:hidden"><i style="display:block;height:100%;width:0%;background:var(--acc)"></i></span><b style="font-size:12px;white-space:nowrap">0 / 60 min</b></span></div></div>
+   <div class="card"><h3><span class="ms">person</span>Per-kid limits</h3><div class="kv"><span>Leo</span>Max 30 min/day</div><div class="kv"><span>Sam</span>Not allowed until 100 pts</div><div class="kv" style="color:var(--sub)"><span><span class="ms">add</span> Add a limit</span></div></div>
+  </div><div class="rpane" id="rp-hist">
+   <div class="mh"><div><h2>History</h2><div class="s">Every reward and screen-time purchase.</div></div><button class="btn"><span class="ms">download</span>Export CSV</button></div>
+   <div class="kpis"><div class="kpi"><span>Spent · 30 days</span><b>2,140</b></div><div class="kpi"><span>Screen time bought</span><b>6h 15m</b></div><div class="kpi"><span>Approved</span><b>18</b></div><div class="kpi"><span>Declined</span><b>3</b></div></div>
+   <div class="card"><h3><span class="ms">filter_list</span><span style="display:flex;gap:6px;flex-wrap:wrap"><span class="ev on">All kids</span><span class="ev">Mia</span><span class="ev">Ava</span><span class="ev">Leo</span><span class="ev">Sam</span><span class="ev" style="margin-left:8px">Rewards</span><span class="ev">Screen time</span></span></h3>
+    <div class="kv"><span style="display:flex;align-items:center;gap:8px;color:var(--ink)"><span class="avx">M</span><span>15 min screen time<small style="display:block;color:var(--sub);font-size:11.5px">Mia · Today 5:12 PM · auto-approved</small></span></span><span style="display:flex;gap:10px;align-items:center"><span class="chip c-lav">Auto</span><b style="color:var(--ink);width:50px;text-align:right">−20</b></span></div>
+    <div class="kv"><span style="display:flex;align-items:center;gap:8px;color:var(--ink)"><span class="avx">A</span><span>Stay up 30 min late<small style="display:block;color:var(--sub);font-size:11.5px">Ava · Yesterday · approved by Mom</small></span></span><span style="display:flex;gap:10px;align-items:center"><span class="chip c-acc">Approved</span><b style="color:var(--ink);width:50px;text-align:right">−200</b></span></div>
+    <div class="kv"><span style="display:flex;align-items:center;gap:8px;color:var(--ink)"><span class="avx">L</span><span>New game<small style="display:block;color:var(--sub);font-size:11.5px">Leo · Yesterday · declined by you · “let's talk Sat”</small></span></span><span style="display:flex;gap:10px;align-items:center"><span class="chip c-grey">Declined</span><b style="color:var(--sub);width:50px;text-align:right">0</b></span></div>
+    <div class="kv"><span style="display:flex;align-items:center;gap:8px;color:var(--ink)"><span class="avx">M</span><span>Pick dinner<small style="display:block;color:var(--sub);font-size:11.5px">Mia · Mon · approved by you</small></span></span><span style="display:flex;gap:10px;align-items:center"><span class="chip c-acc">Approved</span><b style="color:var(--ink);width:50px;text-align:right">−120</b></span></div>
+    <div class="kv"><span style="display:flex;align-items:center;gap:8px;color:var(--ink)"><span class="avx">A</span><span>30 min screen time<small style="display:block;color:var(--sub);font-size:11.5px">Ava · Sun · auto-approved</small></span></span><span style="display:flex;gap:10px;align-items:center"><span class="chip c-lav">Auto</span><b style="color:var(--ink);width:50px;text-align:right">−40</b></span></div>
+    <div class="kv"><span style="display:flex;align-items:center;gap:8px;color:var(--ink)"><span class="avx">S</span><span>Ice cream trip<small style="display:block;color:var(--sub);font-size:11.5px">Sam · Sat · declined by Dad · not enough points</small></span></span><span style="display:flex;gap:10px;align-items:center"><span class="chip c-grey">Declined</span><b style="color:var(--sub);width:50px;text-align:right">0</b></span></div>
+   </div>
+  </div><div class="rpane" id="rp-cat">
+   <div class="mh"><div><h2>Catalogue</h2><div class="s">What kids can spend points on. Circles show who can afford it now.</div></div><button class="btn acc"><span class="ms">add</span>New reward</button></div>
+   <div class="cat"><div class="ci sel"><div class="rw"><span class="ms">movie</span></div><div class="nm">Movie night pick</div><div class="pr">300 pts</div><div class="reach"><i class="ok">M</i><i class="ok">A</i><i class="ok">L</i><i class="">S</i></div></div><div class="ci"><div class="rw"><span class="ms">icecream</span></div><div class="nm">Ice cream trip</div><div class="pr">150 pts</div><div class="reach"><i class="ok">M</i><i class="ok">A</i><i class="">L</i><i class="">S</i></div></div><div class="ci"><div class="rw"><span class="ms">bedtime</span></div><div class="nm">Stay up 30 min late</div><div class="pr">200 pts</div><div class="reach"><i class="ok">M</i><i class="ok">A</i><i class="">L</i><i class="">S</i></div></div><div class="ci"><div class="rw"><span class="ms">restaurant</span></div><div class="nm">Pick dinner</div><div class="pr">120 pts</div><div class="reach"><i class="ok">M</i><i class="ok">A</i><i class="ok">L</i><i class="">S</i></div></div><div class="ci"><div class="rw"><span class="ms">sports_esports</span></div><div class="nm">New game (up to $20)</div><div class="pr">1500 pts</div><div class="reach"><i class="">M</i><i class="">A</i><i class="">L</i><i class="">S</i></div></div><div class="ci"><div class="rw"><span class="ms">park</span></div><div class="nm">Park day</div><div class="pr">250 pts</div><div class="reach"><i class="ok">M</i><i class="ok">A</i><i class="">L</i><i class="">S</i></div></div><div class="ci off"><span class="chip c-grey off-t">Hidden</span><div class="rw"><span class="ms">cake</span></div><div class="nm">Birthday pick</div><div class="pr">500 pts</div></div><div class="ci addc"><span class="ms">add</span>New reward</div></div>
+   <div class="card"><h3><span class="ms">edit</span>Movie night pick</h3><div class="form"><label class="fld">Reward<div class="fi">Movie night pick</div></label><label class="fld">Price<div class="fi">300 pts</div></label></div>
+    <label class="fld" style="margin-top:10px">Icon<div class="icg" style="grid-template-columns:repeat(10,1fr)"><span class="on"><span class="ms">movie</span></span><span class=""><span class="ms">icecream</span></span><span class=""><span class="ms">bedtime</span></span><span class=""><span class="ms">restaurant</span></span><span class=""><span class="ms">sports_esports</span></span><span class=""><span class="ms">park</span></span><span class=""><span class="ms">cake</span></span><span class=""><span class="ms">toys</span></span><span class=""><span class="ms">timer</span></span><span class=""><span class="ms">redeem</span></span></div></label>
+    <div class="kv" style="margin-top:8px"><span>Kids can see it</span><span class="sw on"></span></div><div class="kv"><span>Needs approval</span><span class="sw on"></span></div></div>
+  </div></div>
+ </div>
+
+
+ <!-- ===== BADGES ===== -->
+ <div class="scr" id="badges">
+  <div class="list"><div class="lh"><h2>Kids &amp; chores</h2><span class="ms" style="color:var(--sub)">more_vert</span></div>
+   <div class="tabs"><span data-go="chores">Chores · 14</span><span data-go="kids">Kids · 4</span><span data-go="rewards">Rewards</span><span class="on">Badges</span></div>
+   <div class="it sel" data-bp="all"><div class="ic"><span class="ms">military_tech</span></div><div><div class="nm">All badges</div><div class="mt">Who has what, by tier</div></div></div>
+   <div class="it" data-bp="custom"><div class="ic"><span class="ms">auto_awesome</span></div><div><div class="nm">Custom badges</div><div class="mt">2 made by you · award one</div></div></div>
+   <div class="it" data-bp="recent"><div class="ic"><span class="ms">celebration</span></div><div><div class="nm">Recent awards</div><div class="mt">3 this week</div></div><span class="badge">3</span></div>
+  </div>
+  <div class="main"><div class="bpane on" id="bp-all">
+   <div class="mh"><div><h2>Badges</h2><div class="hchips"><span class="hc"><span class="ms">military_tech</span>18 built-in</span><span class="hc"><span class="ms">auto_awesome</span>2 custom</span><span class="hc on"><span class="ms">celebration</span>3 new this week</span></div></div></div>
+   <div class="tlg"><span><i style="background:#b87333"></i>Copper</span><span><i style="background:#c0c0c0"></i>Silver</span><span><i style="background:#ffd23f"></i>Gold</span><span><i style="background:#e5e4e2"></i>Platinum</span><span><i style="background:linear-gradient(90deg,#7cc8ff,#c9b6ff,#ff9ecd)"></i>Mega-diamond</span></div>
+   <div class="bgrid"><div class="bc"><div class="top2"><div class="bi"><span class="ms">whatshot</span></div><div><div class="nm">On Fire</div><div class="ds">Days in a row, all chores done</div></div></div><div class="tiers"><div class="tk"><span class="avx">M</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Silver</span></div><div class="tk"><span class="avx">A</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class=""></i><i class=""></i></span><span class="tn">Gold</span></div><div class="tk"><span class="avx">L</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div><div class="tk"><span class="avx">S</span><span class="pips"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">—</span></div></div></div><div class="bc"><div class="top2"><div class="bi"><span class="ms">assignment_turned_in</span></div><div><div class="nm">Task Master</div><div class="ds">Chores approved</div></div></div><div class="tiers"><div class="tk"><span class="avx">M</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class=""></i><i class=""></i></span><span class="tn">Gold</span></div><div class="tk"><span class="avx">A</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class="t4"></i><i class=""></i></span><span class="tn">Platinum</span></div><div class="tk"><span class="avx">L</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Silver</span></div><div class="tk"><span class="avx">S</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div></div></div><div class="bc"><div class="top2"><div class="bi"><span class="ms">bolt</span></div><div><div class="nm">Speedrunner</div><div class="ds">Done within 15 minutes</div></div></div><div class="tiers"><div class="tk"><span class="avx">M</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Silver</span></div><div class="tk"><span class="avx">A</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div><div class="tk"><span class="avx">L</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class=""></i><i class=""></i></span><span class="tn">Gold</span></div><div class="tk"><span class="avx">S</span><span class="pips"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">—</span></div></div></div><div class="bc"><div class="top2"><div class="bi"><span class="ms">wb_twilight</span></div><div><div class="nm">Early Bird</div><div class="ds">Done an hour early</div></div></div><div class="tiers"><div class="tk"><span class="avx">M</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div><div class="tk"><span class="avx">A</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class=""></i><i class=""></i></span><span class="tn">Gold</span></div><div class="tk"><span class="avx">L</span><span class="pips"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">—</span></div><div class="tk"><span class="avx">S</span><span class="pips"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">—</span></div></div></div><div class="bc"><div class="top2"><div class="bi"><span class="ms">savings</span></div><div><div class="nm">Saver</div><div class="ds">Points saved up</div></div></div><div class="tiers"><div class="tk"><span class="avx">M</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Silver</span></div><div class="tk"><span class="avx">A</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class=""></i><i class=""></i></span><span class="tn">Gold</span></div><div class="tk"><span class="avx">L</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div><div class="tk"><span class="avx">S</span><span class="pips"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">—</span></div></div></div><div class="bc"><div class="top2"><div class="bi"><span class="ms">schedule</span></div><div><div class="nm">Never Late</div><div class="ds">On time, in a row</div></div></div><div class="tiers"><div class="tk"><span class="avx">M</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div><div class="tk"><span class="avx">A</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Silver</span></div><div class="tk"><span class="avx">L</span><span class="pips"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">—</span></div><div class="tk"><span class="avx">S</span><span class="pips"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">—</span></div></div></div><div class="bc"><div class="top2"><div class="bi"><span class="ms">shield</span></div><div><div class="nm">Weekend Warrior</div><div class="ds">Weekends in a row, all done</div></div></div><div class="tiers"><div class="tk"><span class="avx">M</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div><div class="tk"><span class="avx">A</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Silver</span></div><div class="tk"><span class="avx">L</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div><div class="tk"><span class="avx">S</span><span class="pips"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">—</span></div></div></div><div class="bc"><div class="top2"><div class="bi"><span class="ms">casino</span></div><div><div class="nm">Variety Pack</div><div class="ds">Different chores approved</div></div></div><div class="tiers"><div class="tk"><span class="avx">M</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Silver</span></div><div class="tk"><span class="avx">A</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Silver</span></div><div class="tk"><span class="avx">L</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div><div class="tk"><span class="avx">S</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div></div></div></div>
+  </div><div class="bpane" id="bp-custom">
+   <div class="mh"><div><h2>Custom badges</h2><div class="s">Your own badges. Each award moves that kid up a tier.</div></div><button class="btn acc"><span class="ms">add</span>New badge</button></div>
+   <div class="bgrid"><div class="bc"><div class="top2"><div class="bi"><span class="ms">volunteer_activism</span></div><div><div class="nm">Kindness <span class="chip c-lav">Custom</span></div><div class="ds">Helped someone without being asked</div></div></div><div class="tiers"><div class="tk"><span class="avx">M</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class=""></i><i class=""></i></span><span class="tn">Gold</span></div><div class="tk"><span class="avx">A</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div><div class="tk"><span class="avx">L</span><span class="pips"><i class="t1"></i><i class="t2"></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Silver</span></div><div class="tk"><span class="avx">S</span><span class="pips"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">—</span></div></div></div><div class="bc"><div class="top2"><div class="bi"><span class="ms">pets</span></div><div><div class="nm">Pet Hero <span class="chip c-lav">Custom</span></div><div class="ds">Took care of the pets all week</div></div></div><div class="tiers"><div class="tk"><span class="avx">M</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div><div class="tk"><span class="avx">A</span><span class="pips"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">—</span></div><div class="tk"><span class="avx">L</span><span class="pips"><i class=""></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">—</span></div><div class="tk"><span class="avx">S</span><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span><span class="tn">Copper</span></div></div></div></div>
+   <div class="g2">
+    <div class="card" style="display:flex;flex-direction:column;gap:10px"><h3><span class="ms">edit</span>Kindness</h3><label class="fld">Badge name<div class="fi">Kindness</div></label><label class="fld">Description<div class="fi">Helped someone without being asked</div></label>
+     <label class="fld">Icon<div class="icg" style="grid-template-columns:repeat(8,1fr)"><span class="on"><span class="ms">volunteer_activism</span></span><span class=""><span class="ms">pets</span></span><span class=""><span class="ms">star</span></span><span class=""><span class="ms">favorite</span></span><span class=""><span class="ms">emoji_events</span></span><span class=""><span class="ms">psychology</span></span><span class=""><span class="ms">sports_score</span></span><span class=""><span class="ms">diversity_3</span></span></div></label></div>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px"><h3><span class="ms">redeem</span>Award it</h3>
+     <div class="kidpick"><span class="kp on"><i>M</i>Mia</span><span class="kp"><i>A</i>Ava</span><span class="kp"><i>L</i>Leo</span><span class="kp"><i>S</i>Sam</span></div>
+     <div class="kv"><span>Mia goes</span><span style="display:flex;gap:8px;align-items:center">Gold <span class="ms">arrow_forward</span> <b>Platinum</b></span></div>
+     <label class="fld">Note to Mia (optional)<div class="fi">Helped Leo with his reading</div></label>
+     <button class="btn acc" style="align-self:flex-start"><span class="ms">military_tech</span>Award to Mia</button></div>
+   </div>
+  </div><div class="bpane" id="bp-recent">
+   <div class="mh"><div><h2>Recent awards</h2><div class="s">Earned automatically or given by a parent.</div></div></div>
+   <div class="card"><div class="aw"><div class="bi"><span class="ms">whatshot</span></div><div class="t2">Mia reached On Fire · Silver<small>30 days in a row · today</small></div><span class="pips"><i class="t1"></i><i class="t2"></i><i class=""></i><i class=""></i><i class=""></i></span></div><div class="aw"><div class="bi"><span class="ms">volunteer_activism</span></div><div class="t2">Ava got Kindness · Copper<small>Given by Mom · “shared her snack” · yesterday</small></div><span class="pips"><i class="t1"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span></div><div class="aw"><div class="bi"><span class="ms">assignment_turned_in</span></div><div class="t2">Ava reached Task Master · Platinum<small>250 chores approved · Mon</small></div><span class="pips"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class="t4"></i><i class=""></i></span></div><div class="aw"><div class="bi"><span class="ms">bolt</span></div><div class="t2">Leo reached Speedrunner · Gold<small>10 quick chores · Sun</small></div><span class="pips"><i class="t1"></i><i class="t2"></i><i class="t3"></i><i class=""></i><i class=""></i></span></div></div>
+  </div></div>
+ </div>
+
+ <!-- ===== CHAT ===== -->
+ <div class="scr" id="chat">
+  <div class="list"><div class="lh"><h2>Chat</h2><span class="ms" style="color:var(--sub)">edit_square</span></div>
+   <div class="fi" style="display:flex;gap:6px;align-items:center;color:var(--sub);padding:8px 12px"><span class="ms">search</span>Search chats</div><div class="tabs"><span class="on">All</span><span>Chores · 3</span><span>Notes · 1</span><span>Family</span></div>
+   <div class="it sel"><div class="ic"><span class="ms">school</span></div><div><div class="nm">Homework · Mia</div><div class="mt">Mia: Stuck on #4…</div></div><span class="badge">2</span></div>
+   <div class="it"><div class="ic"><span class="ms">cleaning_services</span></div><div><div class="nm">Clean bathroom · Mia</div><div class="mt">Note: Out of supplies</div></div><span class="chip c-amb">Note</span></div>
+   <div class="it"><div class="ic"><span class="ms">family_restroom</span></div><div><div class="nm">Family</div><div class="mt">Ava: pizza friday??</div></div><span class="badge">1</span></div>
+   <div class="it"><div class="av" style="width:36px;height:36px">L</div><div><div class="nm">Leo</div><div class="mt">You: proud of you bud</div></div></div>
+   <div class="it"><div class="ic"><span class="ms">pets</span></div><div><div class="nm">Feed the cat · Mia</div><div class="mt">You deducted 10</div></div></div>
+  </div>
+  <div class="main"><div class="chatgrid">
+   <div class="thread">
+    <div class="th-h"><div class="ic" style="width:40px;height:40px;border-radius:12px;background:var(--acc);color:#292928;display:grid;place-items:center"><span class="ms">school</span></div>
+     <div><div class="nm">Homework · Mia</div><div class="hchips" style="margin-top:4px"><span class="hc"><span class="ms">category</span>Schoolwork</span><span class="hc" style="background:var(--lav);border-color:var(--lav);color:var(--lavink)"><span class="ms">hourglass_top</span>Needs OK</span><span class="hc"><span class="ms">stars</span>30 pts</span></div></div>
+     <div style="margin-left:auto;display:flex;gap:8px"><button class="btn acc"><span class="ms">check</span>Approve</button><button class="btn"><span class="ms">undo</span>Send back</button><button class="btn red"><span class="ms">remove_circle</span>Deduct</button></div></div>
+    <div class="msgs">
+     <div class="day">Today</div>
+     <div class="sys"><span class="ms">task_alt</span>Mia ticked Math worksheet · 5:02 PM</div>
+     <div class="msg"><div class="note2"><span class="ms">school</span>Note: Don't understand it</div><div class="ref"><span class="ms">subdirectory_arrow_right</span>Math worksheet</div><small>Mia · 5:04 PM</small>Stuck on #4, the fraction one</div>
+     <div class="msg me"><div class="ref"><span class="ms">subdirectory_arrow_right</span>Math worksheet</div><small>You · 5:06 PM</small>Flip the second fraction, then multiply.<div class="react"><span><span class="ms" style="font-size:12px">thumb_up</span> Mia</span></div></div>
+     <div class="msg"><small>Mia · 5:12 PM</small>OHHH ok fixed it</div>
+     <div class="sys"><span class="ms">task_alt</span>Mia marked Homework done · 2 photos · 5:40 PM</div>
+     <div class="msg"><small>Mia · 5:40 PM</small><div class="pics"><i><span class="ms">description</span></i><i><span class="ms">menu_book</span></i></div></div>
+     <div class="msg me"><div class="ref"><span class="ms">image</span>Photo 1</div><small>You · 5:44 PM</small>#4 looks right now. Nice!<div class="gif">GIF · NAILED IT</div></div>
+     <div class="typing"><i></i><i></i><i></i>Mia is typing…</div>
+    </div>
+    <div class="qr"><span class="ok"><span class="ms">check</span> Approve + “Great job!”</span><span>Looks good</span><span>Can you redo #4?</span><span>Retake the photo</span><span><span class="ms">edit</span> Edit replies</span></div>
+    <div class="reply"><span class="ib"><span class="ms">add_photo_alternate</span></span><span class="ib"><span class="ms">gif_box</span></span><span class="ib"><span class="ms">alternate_email</span></span><input placeholder="Message Mia about Homework…"><span class="send"><span class="ms">send</span></span></div>
+   </div>
+   <div class="side">
+    <div class="card"><h3><span class="ms">checklist</span>Steps</h3>
+     <div class="kv"><span><span class="ms">check_circle</span> Math worksheet</span>5:02</div>
+     <div class="kv"><span><span class="ms">check_circle</span> Check answers</span>5:30</div>
+     <div class="kv"><span><span class="ms">check_circle</span> Reading log</span>5:25</div>
+     <div class="kv"><span><span class="ms">check_circle</span> Pack backpack</span>5:38</div></div>
+    <div class="card"><h3><span class="ms">photo_library</span>Photos</h3><div class="pics" style="flex-wrap:wrap"><i style="width:96px;height:70px"><span class="ms">description</span></i><i style="width:96px;height:70px"><span class="ms">menu_book</span></i></div></div>
+    <div class="card"><h3><span class="ms">person</span>Mia today</h3><div class="kv"><span>Chores</span>3 / 5</div><div class="kv"><span>Points</span>860</div><div class="kv"><span>iPad</span><span class="chip c-acc">Open</span></div></div>
+   </div>
+  </div></div>
+ </div>
+
+ <!-- ===== SETTINGS ===== -->
+ <div class="scr" id="set">
+  <div class="list"><div class="lh"><h2>Settings</h2></div>
+   <div class="it" data-sp="family"><div class="ic"><span class="ms">home</span></div><div><div class="nm">Family</div><div class="mt">Name, time zone, points rules</div></div></div>
+   <div class="it" data-sp="screen"><div class="ic"><span class="ms">timer</span></div><div><div class="nm">Screen time</div><div class="mt">Earn minutes with points</div></div></div>
+   <div class="it sel" data-sp="hours"><div class="ic"><span class="ms">schedule</span></div><div><div class="nm">Hours</div><div class="mt">School nights, weekends</div></div></div>
+   <div class="it" data-sp="types"><div class="ic"><span class="ms">category</span></div><div><div class="nm">Chore types</div><div class="mt">8 types · kid notes</div></div></div>
+   <div class="it" data-sp="notif"><div class="ic"><span class="ms">notifications</span></div><div><div class="nm">Notifications</div><div class="mt">2 places connected</div></div><span class="chip c-lav">New</span></div>
+   <div class="it" data-sp="look"><div class="ic"><span class="ms">palette</span></div><div><div class="nm">Appearance</div><div class="mt">Accent colour, dark mode</div></div><span class="chip c-lav">New</span></div>
+   <div class="it" data-sp="gifs"><div class="ic"><span class="ms">gif_box</span></div><div><div class="nm">GIFs</div><div class="mt">Chat GIF search</div></div></div>
+   <div class="it" data-sp="parents"><div class="ic"><span class="ms">supervisor_account</span></div><div><div class="nm">Parents</div><div class="mt">2 parents · invite</div></div></div>
+  </div>
+  <div class="main"><div class="spane" id="sp-family"><div class="mh"><div><h2>Family</h2><div class="s">The basics for your household.</div></div></div>
+ <div class="card"><h3><span class="ms">home</span>Household</h3><div class="form"><label class="fld">Family name<div class="fi">The Garcias</div></label><label class="fld">Time zone<div class="fi">America/New_York</div></label><label class="fld">Day resets at<div class="fi">4:00 AM</div></label><label class="fld">Early finish bonus cap<div class="fi">20 pts</div></label></div></div>
+ <div class="card"><h3><span class="ms">shield</span>Network</h3><div class="kv"><span>Block new devices until I assign them</span><span class="sw on"></span></div><div class="kv"><span>Home box</span><span class="chip c-acc">Healthy · v2.0.0</span></div></div>
+ <div class="card danger"><h3 style="color:var(--red)"><span class="ms">warning</span>Danger zone</h3><div class="kv"><span>Pause all locks (vacation mode)</span><span class="sw"></span></div><div class="kv"><span>Export family data</span><button class="btn"><span class="ms">download</span>Export</button></div></div></div><div class="spane" id="sp-screen"><div class="mh"><div><h2>Screen time</h2><div class="s">Let kids trade points for extra minutes.</div></div></div>
+ <div class="card"><h3><span class="ms">timer</span>Spending points</h3><div class="kv"><span>Kids can spend points on screen time</span><span class="sw on"></span></div><div class="form" style="margin-top:8px"><label class="fld">Price<div class="fi">20 pts per 15 min</div></label><label class="fld">Max per day<div class="fi">60 min</div></label></div></div>
+ <div class="card"><h3><span class="ms">calculate</span>What that means</h3><div class="kv"><span>Mia's 860 pts</span>buys up to 10h 45m</div><div class="kv"><span>Average chore (20 pts)</span>= 15 min</div></div></div><div class="spane on" id="sp-hours"><div class="mh"><div><h2>Hours</h2><div class="s">When devices may be online. Outside these, they lock.</div></div><div style="display:flex;gap:8px"><button class="btn"><span class="ms">event</span>Add holiday</button><button class="btn acc"><span class="ms">add</span>Add window</button></div></div>
+ <div class="card"><h3><span class="ms">calendar_month</span>Family schedule<span style="margin-left:auto;font-weight:500;font-size:12px;color:var(--sub)">Today: <b style="color:var(--ink)">School night</b></span></h3><div class="tl3"><div class="nm3"><span class="sq pt pt-school"></span><div>School nights<small>Sun–Thu</small></div></div><div class="tr"><b class="pt pt-school" style="left:29%;width:8%"><em>6–8a</em></b><b class="pt pt-school" style="left:62%;width:21%"><em>3–8p</em></b></div><div class="nm3"><span class="sq pt pt-week"></span><div>Weekends<small>Fri–Sat</small></div></div><div class="tr"><b class="pt pt-week" style="left:33%;width:58%"><em>8a–10p</em></b></div><div class="nm3"><span class="sq pt pt-holi"></span><div>Holidays<small>Thanksgiving · Dec 20–Jan 3</small></div></div><div class="tr"><b class="pt pt-holi" style="left:33%;width:62%"><em>8a–11p</em></b></div><div class="nm3"><span class="sq pt pt-summer"></span><div>Summer<small>Jun 15 – Aug 31</small></div></div><div class="tr"><b class="pt pt-summer" style="left:38%;width:50%"><em>9a–9p</em></b></div><div class="nm3"><span class="sq pt pt-kid"></span><span class="avx">M</span><div>Mia only<small>school nights</small></div></div><div class="tr"><b class="pt pt-kid" style="left:62%;width:25%"><em>3–9p</em></b></div><div class="nm3"><span class="sq pt pt-kid"></span><span class="avx">L</span><div>Leo only<small>every day</small></div></div><div class="tr"><b class="pt pt-kid" style="left:62%;width:17%"><em>3–7p</em></b></div></div><div class="ax3"><span>12a</span><span>6a</span><span>12p</span><span>6p</span><span>12a</span></div></div>
+ <div class="card"><h3><span class="ms">texture</span>Patterns</h3><div class="legend2"><span><span class="sq pt pt-school"></span>School nights · stripes</span><span><span class="sq pt pt-week"></span>Weekends · solid</span><span><span class="sq pt pt-holi"></span>Holidays · dots</span><span><span class="sq pt pt-summer"></span>Summer · lines</span><span><span class="sq pt pt-kid"></span>Per child · crosshatch</span><span><span class="sq pt pt-group"></span>Per group · horizontal lines</span></div><div style="margin-top:12px"><div class="prec">When windows overlap: <span class="p2"><span class="sq pt pt-kid"></span>Per child</span><span class="ms">chevron_right</span><span class="p2"><span class="sq pt pt-holi"></span>Holiday</span><span class="ms">chevron_right</span><span class="p2"><span class="sq pt pt-summer"></span>Summer</span><span class="ms">chevron_right</span><span class="p2"><span class="sq pt pt-week"></span>Weekend</span><span class="ms">chevron_right</span><span class="p2"><span class="sq pt pt-school"></span>School night</span></div></div></div>
+ <div class="card"><h3><span class="ms">tune</span>Rules</h3><div class="kv"><span>Lock until today's chores are done</span><span class="sw on"></span></div><div class="kv"><span>Exempt school devices during homework</span><span class="sw on"></span></div></div></div><div class="spane" id="sp-types"><div class="mh"><div><h2>Chore types</h2><div class="s">Each type sets the icon and the notes kids can send.</div></div><button class="btn acc" onclick="document.querySelector('.sheetbg').classList.add('on')"><span class="ms">add</span>New type</button></div>
+ <div class="card"><div class="tyrow"><div class="ic"><span class="ms">cleaning_services</span></div><div class="t2">Cleaning<small>3 notes · 6 chores</small></div><span class="chip c-grey">Built-in</span><span class="ms" style="color:var(--sub)">chevron_right</span></div><div class="tyrow"><div class="ic"><span class="ms">school</span></div><div class="t2">Schoolwork<small>3 notes · 2 chores</small></div><span class="chip c-grey">Built-in</span><span class="ms" style="color:var(--sub)">chevron_right</span></div><div class="tyrow"><div class="ic"><span class="ms">pets</span></div><div class="t2">Pets<small>3 notes · 1 chore</small></div><span class="chip c-grey">Built-in</span><span class="ms" style="color:var(--sub)">chevron_right</span></div><div class="tyrow"><div class="ic"><span class="ms">restaurant</span></div><div class="t2">Kitchen<small>3 notes · 2 chores</small></div><span class="chip c-grey">Built-in</span><span class="ms" style="color:var(--sub)">chevron_right</span></div><div class="tyrow"><div class="ic"><span class="ms">yard</span></div><div class="t2">Outdoor<small>3 notes · 0 chores</small></div><span class="chip c-grey">Built-in</span><span class="ms" style="color:var(--sub)">chevron_right</span></div><div class="tyrow"><div class="ic"><span class="ms">music_note</span></div><div class="t2">Practice<small>2 notes · 1 chore</small></div><span class="chip c-grey">Built-in</span><span class="ms" style="color:var(--sub)">chevron_right</span></div><div class="tyrow"><div class="ic"><span class="ms">self_care</span></div><div class="t2">Personal<small>1 note · 1 chore</small></div><span class="chip c-grey">Built-in</span><span class="ms" style="color:var(--sub)">chevron_right</span></div><div class="tyrow"><div class="ic"><span class="ms">task_alt</span></div><div class="t2">Other<small>1 note · 1 chore</small></div><span class="chip c-grey">Built-in</span><span class="ms" style="color:var(--sub)">chevron_right</span></div><div class="tyrow"><div class="ic"><span class="ms">local_laundry_service</span></div><div class="t2">Laundry<small>3 notes · 0 chores</small></div><span class="chip c-lav">Custom</span><span class="ms" style="color:var(--sub)">chevron_right</span></div></div>
+ <div class="card"><h3><span class="ms">sms</span>Notes on every type</h3><span class="np">Need help</span><span class="np">Ran out of time</span><span class="np">Can't do it today</span></div></div><div class="spane" id="sp-notif">
+   <div class="mh"><div><h2>Notifications</h2><div class="s">Send t@sk4ce pings to the chat apps your family already uses.</div></div><button class="btn acc"><span class="ms">add</span>Add a place</button></div>
+   <div class="card"><h3><span class="ms">forum</span>Parents' Signal group<span style="margin-left:auto" class="sw on"></span></h3>
+    <div class="inp"><span class="ms" style="font-size:16px">key</span><span>signal://+1555••••••/group.••••••••</span><button class="btn" style="padding:4px 10px">Test</button></div>
+    <div class="evs"><span class="ev on">Chore needs OK</span><span class="ev on">Kid note</span><span class="ev on">Reward request</span><span class="ev on">New device</span><span class="ev on">Device resisting</span><span class="ev">Badge / level up</span><span class="ev">Daily summary</span><span class="ev on">Box offline</span></div></div>
+   <div class="card"><h3><span class="ms">forum</span>Family Discord<span style="margin-left:auto" class="sw on"></span></h3>
+    <div class="inp"><span class="ms" style="font-size:16px">key</span><span>discord://••••••••/••••••••••••</span><button class="btn" style="padding:4px 10px">Test</button></div>
+    <div class="evs"><span class="ev">Chore needs OK</span><span class="ev">Kid note</span><span class="ev">Reward request</span><span class="ev">New device</span><span class="ev">Device resisting</span><span class="ev on">Badge / level up</span><span class="ev on">Daily summary</span><span class="ev">Box offline</span></div></div>
+   <div class="g2">
+    <div class="card"><h3><span class="ms">bedtime</span>Quiet hours</h3><div class="kv"><span>From</span>9:30 PM</div><div class="kv"><span>To</span>7:00 AM</div><div class="kv"><span>Security alerts still send</span><span class="sw on"></span></div></div>
+    <div class="card"><h3><span class="ms">link</span>App address</h3><p class="h">Used for the link in each ping.</p><div class="inp"><span>http://chores.local</span></div></div>
+   </div>
+   
+  </div><div class="spane" id="sp-look"><div class="mh"><div><h2>Appearance</h2><div class="s">Parent screens only. Kid screens keep their fridge look.</div></div></div>
+ <div class="card"><h3><span class="ms">palette</span>Accent colour</h3><p class="h">Neon by default. All 10 keep dark text readable at 7:1+ contrast.</p><div class="swatches" id="sw"></div></div>
+ <div class="card"><h3><span class="ms">contrast</span>Mode</h3><div class="modes"><span><span class="ms">light_mode</span>Light</span><span><span class="ms">dark_mode</span>Dark</span><span class="on"><span class="ms">brightness_auto</span>Match device</span></div></div>
+ <div class="card"><h3><span class="ms">visibility</span>Preview</h3><div class="prev"><div class="mini l"><b>Mia's day</b><div class="b"></div><span class="c">Approved</span></div><div class="mini d"><b>Mia's day</b><div class="b"></div><span class="c">Approved</span></div></div></div></div><div class="spane" id="sp-gifs"><div class="mh"><div><h2>GIFs</h2><div class="s">GIF search in chat.</div></div></div>
+ <div class="card"><h3><span class="ms">gif_box</span>GIPHY</h3><div class="kv"><span>Allow GIFs in chat</span><span class="sw on"></span></div><div class="form" style="margin-top:8px"><label class="fld">GIF rating<div class="fi">G (all ages)</div></label><label class="fld">GIPHY key<div class="fi">••••••••••••3f9a</div></label></div></div></div><div class="spane" id="sp-parents"><div class="mh"><div><h2>Parents</h2><div class="s">Everyone who can manage the family.</div></div><button class="btn acc"><span class="ms">person_add</span>Invite a parent</button></div>
+ <div class="card"><div class="par"><div class="av">D</div><div class="t2">Dad (you)<small>Last active now</small></div><span class="chip c-acc">Owner</span></div>
+  <div class="par"><div class="av">M</div><div class="t2">Mom<small>Last active 2h ago</small></div><button class="btn"><span class="ms">key</span>Reset link</button></div>
+  <div class="par"><div class="av" style="background:var(--soft);color:var(--sub)">G</div><div class="t2">grandma<small>Invite sent · expires in 2 days</small></div><button class="btn red">Cancel</button></div></div></div></div>
+ </div>
+</div>
+
+<script>
+document.querySelectorAll('.ri[data-s]').forEach(r=>r.onclick=()=>{document.querySelectorAll('.ri').forEach(x=>x.classList.toggle('on',x==r));document.querySelectorAll('.scr').forEach(x=>x.classList.toggle('on',x.id==r.dataset.s))})
+document.querySelectorAll('.list').forEach(l=>l.querySelectorAll('.it').forEach(i=>i.onclick=()=>l.querySelectorAll('.it').forEach(x=>x.classList.toggle('sel',x==i))))
+const C=[['Neon','#c3f832'],['Sun','#ffd23f'],['Tangerine','#ffa94d'],['Bubblegum','#ff9ecd'],['Lilac','#c9b6ff'],['Sky','#7cc8ff'],['Aqua','#5eead4'],['Mint','#86efac'],['Peach','#ffc4a3'],['Ice','#b8f0ff']]
+const sw=document.getElementById('sw'),n=document.querySelector('.n')
+C.forEach(([l,h],i)=>{const d=document.createElement('div');d.className='s'+(i?'':' on');d.style.background=h;d.innerHTML='<span>'+l+'</span>';d.onclick=()=>{sw.querySelectorAll('.s').forEach(x=>x.classList.remove('on'));d.classList.add('on');n.style.setProperty('--acc',h)};sw.appendChild(d)})
+document.querySelectorAll('.dtabs span').forEach(t=>t.onclick=()=>{t.parentElement.querySelectorAll('span').forEach(x=>x.classList.toggle('on',x==t));document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on',p.id==t.dataset.p))})
+document.querySelectorAll('[data-go]').forEach(t=>t.onclick=()=>document.querySelectorAll('.scr').forEach(x=>x.classList.toggle('on',x.id==t.dataset.go)))
+document.querySelectorAll('.tp').forEach(t=>t.onclick=()=>t.parentElement.querySelectorAll('.tp').forEach(x=>x.classList.toggle('on',x==t)))
+document.querySelectorAll('.days span,.kp').forEach(t=>t.onclick=()=>t.classList.toggle('on'))
+document.querySelectorAll('.seg3').forEach(g=>g.querySelectorAll('span').forEach(t=>t.onclick=()=>g.querySelectorAll('span').forEach(x=>x.classList.toggle('on',x==t))))
+// open on chores screen
+document.querySelectorAll('.ri').forEach(x=>x.classList.toggle('on',x.dataset.s=='set'));document.querySelectorAll('.scr').forEach(x=>x.classList.toggle('on',x.id=='set'))
+document.querySelector('.ri[data-s=kids]').onclick=()=>{document.querySelectorAll('.ri').forEach(x=>x.classList.toggle('on',x.dataset.s=='kids'));document.querySelectorAll('.scr').forEach(x=>x.classList.toggle('on',x.id=='chores'))}
+document.querySelectorAll('.link').forEach(l=>l.onclick=()=>{const on=l.classList.toggle('on');l.innerHTML='<span class="ms">'+(on?'link':'link_off')+'</span>'+(on?'Must be done after the step above':'Any order')})
+document.querySelectorAll('.icg span').forEach(t=>t.onclick=()=>t.parentElement.querySelectorAll('span').forEach(x=>x.classList.toggle('on',x==t)))
+document.querySelectorAll('[data-sp]').forEach(i=>i.addEventListener('click',()=>document.querySelectorAll('.spane').forEach(p=>p.classList.toggle('on',p.id=='sp-'+i.dataset.sp))))
+document.querySelectorAll('.modes span').forEach(t=>t.onclick=()=>{t.parentElement.querySelectorAll('span').forEach(x=>x.classList.toggle('on',x==t));const n=document.querySelector('.n');if(/Light/.test(t.textContent))n.classList.remove('dark');if(/Dark/.test(t.textContent))n.classList.add('dark')})
+document.querySelectorAll('[data-rp]').forEach(i=>i.addEventListener('click',()=>{document.querySelectorAll('.rpane').forEach(p=>p.classList.toggle('on',p.id=='rp-'+i.dataset.rp));document.querySelectorAll('#rewards .it').forEach(x=>x.classList.toggle('sel',x.dataset.rp==i.dataset.rp))}))
+document.querySelectorAll('[data-go]').forEach(t=>t.onclick=()=>document.querySelectorAll('.scr').forEach(x=>x.classList.toggle('on',x.id==t.dataset.go)))
+document.querySelectorAll('.ci:not(.addc)').forEach(c=>c.onclick=()=>document.querySelectorAll('.ci').forEach(x=>x.classList.toggle('sel',x==c)))
+document.querySelectorAll('[data-go]').forEach(t=>t.onclick=()=>document.querySelectorAll('.scr').forEach(x=>x.classList.toggle('on',x.id==t.dataset.go)))
+document.querySelectorAll('[data-bp]').forEach(i=>i.addEventListener('click',()=>document.querySelectorAll('.bpane').forEach(p=>p.classList.toggle('on',p.id=='bp-'+i.dataset.bp))))
+document.querySelectorAll('[data-go]').forEach(t=>t.onclick=()=>document.querySelectorAll('.scr').forEach(x=>x.classList.toggle('on',x.id==t.dataset.go)))
+document.querySelectorAll('.ri').forEach(x=>x.classList.toggle('on',x.dataset.s=='dev'));document.querySelectorAll('.scr').forEach(x=>x.classList.toggle('on',x.id=='groups'))
+</script>
+</body></html>

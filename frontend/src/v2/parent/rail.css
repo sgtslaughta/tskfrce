@@ -1,0 +1,88 @@
+/**
+ * @fileoverview Rail navigation styles
+ * Icon rail component for parent shell
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Rail navigation */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 0;
+  background: var(--p-card);
+  border-right: 1px solid var(--p-line);
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+[data-look='parent'] .p-rail-logo {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid var(--p-ink);
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--p-ink);
+  margin-bottom: 16px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+[data-look='parent'] .p-rail-logo:hover {
+  background: var(--p-soft);
+}
+
+[data-look='parent'] .p-rail-item {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 0;
+  background: transparent;
+  color: var(--p-sub);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  font: inherit;
+  padding: 0;
+  text-decoration: none;
+}
+
+[data-look='parent'] .p-rail-item:hover {
+  background: var(--p-soft);
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-rail-item[aria-current] {
+  background: var(--p-soft);
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-rail-bell {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+}
+
+[data-look='parent'] .p-rail-dot {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--p-acc);
+}
+
+[data-look='parent'] .p-rail-spacer {
+  flex: 1;
+}

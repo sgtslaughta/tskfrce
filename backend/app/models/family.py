@@ -1,0 +1,69 @@
+"""Family settings (single row, id=1)."""
+
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Column,
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
+from sqlalchemy.orm import Session
+
+from app.core.database import Base
+
+
+class FamilySettings(Base):
+    __tablename__ = "family_settings"
+    __table_args__ = (
+        CheckConstraint("gif_rating IN ('g','pg')", name="ck_family_gif_rating"),
+        CheckConstraint(
+            "accent IN ('neon','sun','tangerine','bubblegum','lilac','sky','aqua','mint','peach','ice')",
+            name="ck_family_accent",
+        ),
+    )
+
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, default="My Family")
+    timezone = Column(String(50), nullable=False, default="UTC")
+    reset_time = Column(String(5), nullable=False, default="06:00")
+    new_devices_blocked = Column(Boolean, nullable=False, default=True)
+    points_unlock_early = Column(Boolean, nullable=False, default=False)
+    early_bonus_cap = Column(Integer, nullable=False, default=5, server_default="5")
+    screen_time_price = Column(Integer, nullable=False, default=20, server_default="20")
+    gifs_enabled = Column(Boolean, nullable=False, default=False, server_default="0")
+    giphy_api_key = Column(String(100), nullable=True)  # write-only through the API
+    gif_rating = Column(String(2), nullable=False, default="g", server_default="g")
+    accent = Column(String(12), nullable=False, default="neon", server_default="neon")
+    chores_lock = Column(Boolean, nullable=False, default=True, server_default="1")
+    last_reset_date = Column(Date, nullable=True)
+    owner_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    ntfy_upstream_relay = Column(Boolean, nullable=False, default=False, server_default="0")
+    screen_max_minutes = Column(Integer, nullable=True)  # NULL = no daily max
+    screen_auto_approve = Column(Boolean, nullable=False, default=False, server_default="0")
+    screen_only_allowed_hours = Column(Boolean, nullable=False, default=True, server_default="1")
+    quick_replies = Column(Text, nullable=True)  # JSON list; NULL = defaults
+    blocker_last_seen = Column(DateTime, nullable=True)  # naive UTC; home box heartbeat
+    quiet_start = Column(String(5), nullable=True)
+    quiet_end = Column(String(5), nullable=True)
+    quiet_security = Column(Boolean, nullable=False, default=True, server_default="1")
+    app_address = Column(String(200), nullable=True)
+    summary_date = Column(Date, nullable=True)
+    notify_scan_at = Column(DateTime, nullable=True)  # naive UTC
+    blocker_alerted = Column(Boolean, nullable=False, default=False, server_default="0")
+    setup_step = Column(Integer, nullable=True)  # wizard step to resume; NULL = done/not started
+
+
+def get_family(db: Session) -> FamilySettings:
+    """Return the family row, creating it if missing."""
+    fam = db.get(FamilySettings, 1)
+    if fam is None:
+        fam = FamilySettings(id=1, name="My Family")
+        db.add(fam)
+        db.flush()
+
+    db.info["family"] = fam  # strong ref: the identity map is weak, so repeat calls re-query
+    return fam

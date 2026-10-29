@@ -15,6 +15,7 @@ downloads/
 eggs/
 .eggs/
 lib/
+!frontend/src/lib/
 lib64/
 parts/
 sdist/
@@ -85,7 +86,7 @@ ipython_config.py
 # pyenv
 #   For a library or package, you might want to ignore these files since the code is
 #   intended to run in multiple environments; otherwise, check them in:
-# .python-version
+.python-version
 
 # pipenv
 #   According to pypa/pipenv#598, it is recommended to include Pipfile.lock in version control.
@@ -98,7 +99,7 @@ ipython_config.py
 #   Similar to Pipfile.lock, it is generally recommended to include uv.lock in version control.
 #   This is especially recommended for binary packages to ensure reproducibility, and is more
 #   commonly ignored for libraries.
-#uv.lock
+uv.lock
 
 # poetry
 #   Similar to Pipfile.lock, it is generally recommended to include poetry.lock in version control.
@@ -151,8 +152,9 @@ venv.bak/
 # Rope project settings
 .ropeproject
 
-# mkdocs documentation
-/site
+# mkdocs documentation (but we use /site for GitHub Pages)
+# /site
+site/guide/
 
 # mypy
 .mypy_cache/
@@ -205,3 +207,35 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+logs/
+
+# Node.js / Frontend
+frontend/node_modules
+frontend/.next/
+
+# db files
+*.db
+docs/tasks_page_redesign_plan.md
+
+taaskmaaster.db
+docs/task_workflow_enhancement_plan.md
+
+# jetbrains
+.idea/
+.vscode/
+
+# Development files
+.env.development
+.env.no-rate-limit
+.superpowers/
+
+# Runtime data (db, uploads, secrets)
+data/
+!blocker/data/
+!blocker/data/oui.csv
+.claude/worktrees/
+*.tsbuildinfo
+
+# Playwright
+frontend/e2e-artifacts/

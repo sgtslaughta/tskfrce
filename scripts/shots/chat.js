@@ -1,0 +1,11 @@
+const { chromium, B, api, shot } = require('./lib.js')
+;(async () => {
+  const br = await chromium.launch()
+  const page = await (await br.newContext({ viewport: { width: 1280, height: 800 }, colorScheme: 'light' })).newPage()
+  await page.goto(B + '/login'); await page.getByLabel('Username').fill('sam'); await page.getByLabel('Password').fill('rivera-demo-2026')
+  await page.getByRole('button', { name: 'Log in' }).click(); await page.waitForURL(B + '/'); await page.waitForLoadState('networkidle')
+  await page.getByRole('button', { name: /chat/i }).last().click(); await page.waitForTimeout(1000)
+  await page.getByText('Tidy the playroom').last().click(); await page.waitForTimeout(1500)
+  await shot(page, 'chat')
+  await br.close()
+})().catch(e => { console.error(e); process.exit(1) })

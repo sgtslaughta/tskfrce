@@ -1,0 +1,127 @@
+/**
+ * @fileoverview Kid list and selection styling for parent UI
+ */
+
+
+.p-kid-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.p-kid-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--p-soft);
+  border: 1.5px solid transparent;
+  border-radius: 16px;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .p-kid-card {
+    transition: background 0.2s, border-color 0.2s;
+  }
+}
+
+.p-kid-card:hover {
+  border-color: var(--p-line);
+}
+
+.p-kid-card[data-selected="true"] {
+  background: var(--p-card);
+  border-color: var(--p-ink);
+}
+
+.p-kid-avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--p-ink);
+  color: var(--p-card);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.p-kid-card[data-selected="true"] .p-kid-avatar {
+  background: var(--p-acc);
+  color: #292928;
+}
+
+.p-kid-info {
+  flex: 1 1 100px;
+  min-width: 100px;
+}
+
+.p-kid-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--p-ink);
+}
+
+.p-kid-progress span { white-space: nowrap; }
+.p-kid-progress { display: flex; flex-wrap: wrap; column-gap: 10px; overflow-wrap: anywhere; }
+
+.p-kid-progress {
+  font-size: 11.5px;
+  color: var(--p-sub);
+  margin-top: 1px;
+}
+
+.p-kid-status {
+  flex-shrink: 0;
+}
+
+.p-kid-expanded {
+  display: none;
+  width: 100%;
+  padding: 12px 0 0;
+  margin-top: 10px;
+  border-top: 1px solid var(--p-line);
+}
+
+.p-kid-card[data-selected="true"] .p-kid-expanded {
+  display: block;
+}
+
+.p-kid-facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  font-size: 11px;
+  color: var(--p-sub);
+  margin-top: 8px;
+}
+
+.p-kid-facts > div {
+  display: flex;
+  flex-direction: column;
+}
+
+.p-kid-facts b {
+  display: block;
+  font-size: 12.5px;
+  color: var(--p-ink);
+  margin-top: 2px;
+}
+
+.p-kid-card .p-track {
+  margin-top: 6px;
+  height: 8px;
+  border-radius: 8px;
+  background: var(--p-soft);
+  border: 1px solid var(--p-line);
+  overflow: hidden;
+}

@@ -1,0 +1,11 @@
+# Dev-only placeholders from early v1 history (never used in production;
+# secrets are generated at first boot). Real secrets must never be listed here.
+version: 2
+secret:
+  ignored-matches:
+    - name: v1 dev JWT secret placeholder
+      match: dev-jwt-secret-change-in-production
+    - name: v1 MinIO dev default
+      match: minioadmin123
+  ignored-paths:
+    - taaskmaaster.db

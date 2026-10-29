@@ -1,0 +1,270 @@
+/* Parent look bell */
+.p-bell {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--p-line);
+  border-radius: 8px;
+  background: var(--p-card);
+  color: var(--p-ink);
+  cursor: pointer;
+}
+.p-bell:hover { background: var(--p-soft); }
+.p-bell-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 10px;
+  background: var(--p-red);
+  color: var(--p-card);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+}
+
+/* §2.2 sticker popover; no overflow clip so the pointer shows */
+[data-look='parent'] .p-bell-pop {
+  padding: 0;
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 var(--p-acc);
+}
+[data-look='parent'] .p-bell-arrow {
+  background: var(--p-card);
+  border: 2px solid var(--p-ink);
+}
+
+.p-bell-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 560px;
+}
+
+.p-bell-list[data-sheet] { max-height: none; height: calc(100dvh - 84px); }
+.p-bell-list[data-page] { max-height: none; background: var(--p-card); border: 1px solid var(--p-line); border-radius: 16px; }
+
+.p-bell-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 8px;
+  gap: 8px;
+}
+
+.p-bell-head strong {
+  font-size: 16px;
+  flex: 1;
+}
+
+.p-bell-mark-read {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-sub);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.p-bell-mark-read:hover {
+  color: var(--p-ink);
+}
+
+.p-bell-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 14px 8px;
+}
+
+.p-bell-tab {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 999px;
+  color: var(--p-sub);
+  background: transparent;
+  border: 1px solid var(--p-line);
+  cursor: pointer;
+}
+
+.p-bell-tab.on {
+  background: var(--p-ink);
+  color: var(--p-card);
+  border-color: var(--p-ink);
+}
+
+.p-bell-scroll {
+  overflow-y: auto;
+  padding: 0 6px 6px;
+  flex: 1;
+}
+
+.p-bell-group {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--p-sub);
+  font-weight: 700;
+  padding: 8px 8px 4px;
+}
+
+.p-bell-item {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 0 10px;
+  padding: 10px 8px;
+  border-radius: 12px;
+  position: relative;
+}
+
+.p-bell-x {
+  position: absolute; top: 6px; right: 4px;
+  width: 28px; height: 28px; display: grid; place-items: center;
+  border: 0; border-radius: 6px; background: none; color: var(--p-sub); cursor: pointer;
+  opacity: 0;
+}
+.p-bell-item:hover .p-bell-x, .p-bell-x:focus-visible { opacity: 1; }
+.p-bell-x:hover { color: var(--p-ink); background: var(--p-line); }
+@media (hover: none) { .p-bell-x { opacity: 1; } }
+.p-bell-item:hover::after, .p-bell-item:focus-within::after { display: none; }
+
+.p-bell-item:hover {
+  background: var(--p-soft);
+}
+
+.p-bell-item.unread::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 16px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--p-acc);
+  box-shadow: 0 0 0 1.5px var(--p-ink);
+}
+/* touch shows the x all the time: the dot moves beside it */
+@media (hover: none) { .p-bell-item.unread::after, .p-bell-item.unread:hover::after, .p-bell-item.unread:focus-within::after { display: block; right: 38px; } }
+
+.p-bell-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  flex: none;
+  background: var(--p-soft);
+  color: var(--p-ink);
+  font-size: 18px;
+}
+
+.p-bell-icon.hi {
+  background: var(--p-redbg);
+  color: var(--p-red);
+}
+
+.p-bell-icon.md {
+  background: var(--p-amb);
+  color: var(--p-ambink);
+}
+
+.p-bell-icon.lv {
+  background: var(--p-lav);
+  color: var(--p-lav-ink);
+}
+
+.p-bell-icon.ok {
+  background: var(--p-acc);
+  color: #292928;
+}
+
+.p-bell-text {
+  display: block;
+  width: 100%;
+  background: none;
+  border: 0;
+  margin: 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 6px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  font-weight: 600;
+  padding-right: 28px;
+}
+
+.p-bell-text:hover .p-bell-title { text-decoration: underline; }
+.p-bell-text:focus-visible { outline: 2px solid var(--p-acc); outline-offset: 2px; }
+
+.p-bell-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--p-ink);
+}
+
+.p-bell-sub {
+  display: block;
+  font-weight: 400;
+  color: var(--p-sub);
+  font-size: 11.5px;
+  margin-top: 1px;
+}
+
+.p-bell-actions {
+  grid-column: 2;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.p-bell-actions:not(:empty) { margin-top: 7px; }
+.p-bell-actions .p-btn { padding: 4px 10px; font-size: 11.5px; min-height: 0; }
+.p-bell-note {
+  width: 100%;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--p-line);
+  background: var(--p-card);
+  color: var(--p-ink);
+  font: inherit;
+  font-size: 12.5px;
+}
+
+.p-bell-foot {
+  border-top: 1px solid var(--p-line);
+  padding: 10px 14px;
+  display: flex;
+  justify-content: space-between;
+  flex: none;
+}
+.p-bell-foot a {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-sub);
+  text-decoration: none;
+}
+.p-bell-foot a:hover { color: var(--p-ink); }
+.p-bell-foot a:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; border-radius: 4px; }
+
+/* phone sheet: title in the parent face (the list's own header is hidden there) */
+[data-look='parent'] .p-bell-drawer-title { font: 700 18px var(--font-parent), system-ui, sans-serif; color: var(--p-ink); text-transform: none; letter-spacing: 0; }
+[data-look='parent'] .p-bell-drawer-header { background: var(--p-card); border-bottom: 1px solid var(--p-line); }
+[data-look='parent'] .p-bell-drawer-content { background: var(--p-card); }
+[data-look='parent'] .p-bell-drawer-close { color: var(--p-ink); }
+[data-look='parent'] .p-bell-drawer-close:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+.p-bell-tab, .p-bell-mark-read { transition: background var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out); }
+.p-bell-tab:not(.on):hover { background: var(--p-soft); color: var(--p-ink); }
+
+.p-bell-older { display: flex; flex: none; margin: 6px auto 10px; }
+.p-bell-scroll { overscroll-behavior: contain; }
+.p-bell-scroll:focus-visible { outline: 2px solid var(--p-ink); outline-offset: -2px; }

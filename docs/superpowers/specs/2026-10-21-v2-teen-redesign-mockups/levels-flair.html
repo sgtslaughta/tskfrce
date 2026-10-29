@@ -1,0 +1,56 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap');
+.lf { --ink:#1d2b53; --sun:#ffc93c; --red:#ff6b4a; --green:#7bd389; --peri:#5b6fb5; font-family:Inter; color:var(--ink); }
+.lf .h { font-family:'Space Grotesk'; font-weight:700; }
+.lf .cap { text-transform:uppercase; letter-spacing:.08em; font-size:11px; font-weight:600; }
+.lf .mono { font-family:'JetBrains Mono'; font-weight:700; }
+.lf .ladder { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin:10px 0 26px; }
+@media (max-width:900px){ .lf .ladder{grid-template-columns:repeat(2,1fr)} }
+.lf .step { background:#fff; border-radius:8px; padding:12px; box-shadow:0 1px 2px rgba(29,43,83,.06),0 6px 20px rgba(29,43,83,.08); }
+.lf .step .t { font-size:18px; margin:4px 0 2px; }
+.lf .step .u { font-size:12px; color:#4a5a80; }
+.lf .step.lock { opacity:.55; }
+.lf .profiles { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+@media (max-width:900px){ .lf .profiles{grid-template-columns:1fr} }
+.lf .pc { border-radius:8px; overflow:hidden; background:#fff; box-shadow:0 6px 20px rgba(29,43,83,.1); }
+.lf .pc .head { background:var(--ink); color:#fff; padding:16px 14px; display:flex; gap:12px; align-items:center; }
+.lf .av { width:46px; height:46px; border-radius:50%; background:#c9d3ee; display:flex; align-items:center; justify-content:center; font-family:'Space Grotesk'; font-weight:700; color:var(--ink); font-size:18px; flex:none; }
+.lf .nm { font-size:20px; line-height:1.1; }
+.lf .title { font-size:11px; margin-top:4px; padding:2px 7px; border-radius:4px; display:inline-block; }
+.lf .pc .foot { padding:10px 14px; font-size:12px; color:#4a5a80; }
+/* tiers of flair */
+.lf .f1 .title { background:rgba(255,255,255,.14); color:#c6d0ee; }
+.lf .f2 .av { box-shadow:0 0 0 3px var(--green); }
+.lf .f2 .title { background:rgba(123,211,137,.2); color:var(--green); }
+.lf .f2 .nm { color:#fff; }
+.lf .f3 .head { background:linear-gradient(120deg,#1d2b53 0%,#2a3a72 55%,#3b4a8a 100%); position:relative; overflow:hidden; }
+.lf .f3 .head::after { content:""; position:absolute; inset:0; background:linear-gradient(110deg,transparent 30%,rgba(255,201,60,.25) 50%,transparent 70%); animation:sheen 3s infinite; }
+@keyframes sheen { from{transform:translateX(-100%)} to{transform:translateX(100%)} }
+.lf .f3 .av { box-shadow:0 0 0 3px var(--sun),0 0 14px rgba(255,201,60,.7); }
+.lf .f3 .nm { background:linear-gradient(90deg,var(--sun),#ff9a3c); -webkit-background-clip:text; background-clip:text; color:transparent; }
+.lf .f3 .title { background:var(--sun); color:var(--ink); }
+</style>
+
+<h2>Levels with titles, and flair you unlock</h2>
+<p class="subtitle">Draft titles. Every level has a title. Every few levels unlock a new piece of flair. Levels count lifetime points, so spending never drops you.</p>
+
+<div class="lf">
+<h3>Level ladder (draft)</h3>
+<div class="ladder">
+  <div class="step"><div class="cap">Lv 1</div><div class="t h">Rookie</div><div class="u">Starting title</div></div>
+  <div class="step"><div class="cap">Lv 3</div><div class="t h">Regular</div><div class="u">Unlocks: title badge color</div></div>
+  <div class="step"><div class="cap">Lv 5</div><div class="t h">Grinder</div><div class="u">Unlocks: avatar ring</div></div>
+  <div class="step"><div class="cap">Lv 8</div><div class="t h">Clutch</div><div class="u">Unlocks: name color</div></div>
+  <div class="step lock"><div class="cap">Lv 12</div><div class="t h">Elite</div><div class="u">Unlocks: card banner</div></div>
+  <div class="step lock"><div class="cap">Lv 16</div><div class="t h">Veteran</div><div class="u">Unlocks: glowing ring</div></div>
+  <div class="step lock"><div class="cap">Lv 20</div><div class="t h">Legend</div><div class="u">Unlocks: gold name</div></div>
+  <div class="step lock"><div class="cap">Lv 25</div><div class="t h">Mythic</div><div class="u">Unlocks: animated card</div></div>
+</div>
+
+<h3>What flair looks like as you climb</h3>
+<div class="profiles">
+  <div class="pc f1"><div class="head"><div class="av">L</div><div><div class="nm h">Leo</div><span class="title cap">Lv 2 · Rookie</span></div></div><div class="foot">Early: plain card, title tag only.</div></div>
+  <div class="pc f2"><div class="head"><div class="av">S</div><div><div class="nm h">Sam</div><span class="title cap">Lv 9 · Clutch</span></div></div><div class="foot">Mid: colored avatar ring and title, picked from the colors you've unlocked.</div></div>
+  <div class="pc f3"><div class="head"><div class="av">M</div><div><div class="nm h">Maya</div><span class="title cap">Lv 21 · Legend</span></div></div><div class="foot">High: gold name, glowing ring, a light sweep across the card.</div></div>
+</div>
+</div>

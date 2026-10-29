@@ -1,0 +1,441 @@
+/**
+ * @fileoverview Main shell and layout structure
+ * Grid, content area, header, main, and list-detail layout
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Main shell layout and grid */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-shell {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  grid-template-rows: 1fr;
+  height: 100vh;
+  background: var(--p-bg);
+  color: var(--p-ink);
+  font-family: var(--font-parent), system-ui, sans-serif;
+  overflow: hidden;
+}
+
+/* the list + detail columns live inside .p-list-detail, so the shell stays rail + 1fr */
+[data-look='parent'] .p-shell.p-with-list {
+  grid-template-columns: 64px 1fr;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Content area with header and main */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-content {
+  display: flex;
+  flex-direction: column;
+  grid-column: 2;
+  overflow: hidden;
+}
+
+[data-look='parent'] .p-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--p-line);
+  background: var(--p-bg);
+  flex-wrap: wrap;
+}
+
+[data-look='parent'] .p-header h1 {
+  flex: 1;
+  margin: 0;
+  font-size: 28px;
+  font-weight: 500;
+  color: var(--p-ink);
+  line-height: 1.2;
+}
+
+[data-look='parent'] .p-main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  background: var(--p-bg);
+  position: relative;
+}
+
+/* Background grid for detail panel */
+[data-look='parent'] .p-main::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(var(--p-grid) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--p-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 10%, transparent 75%);
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 10%, transparent 75%);
+}
+
+[data-look='parent'] .p-main > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* List-detail layout */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-list-detail {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--p-bg);
+}
+
+[data-look='parent'] .p-list-column {
+  display: flex;
+  flex-direction: column;
+  background: var(--p-card);
+  border-right: 1px solid var(--p-line);
+  padding: 0;
+  gap: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+[data-look='parent'] .p-list-header {
+  flex: 0 0 auto;
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--p-line);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+[data-look='parent'] .p-list-header-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+[data-look='parent'] .p-list-header h2 {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--p-ink);
+  flex: 1;
+  min-width: 0;
+}
+
+[data-look='parent'] .p-list-header-top button {
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid var(--p-line);
+  background: var(--p-card);
+  color: var(--p-ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 0;
+}
+
+[data-look='parent'] .p-list-header-top button:hover {
+  background: var(--p-soft);
+}
+
+[data-look='parent'] .p-list-items {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+[data-look='parent'] .p-detail-column {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 20px 24px;
+}
+
+[data-look='parent'] .p-detail-column.p-grid {
+  position: relative;
+}
+
+[data-look='parent'] .p-detail-column.p-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: linear-gradient(var(--p-grid) 1px, transparent 1px),
+                    linear-gradient(90deg, var(--p-grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 0%, #000 10%, transparent 75%);
+  mask-image: radial-gradient(ellipse at 50% 0%, #000 10%, transparent 75%);
+}
+
+[data-look='parent'] .p-detail-column.p-grid > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Mobile-only: detail-only view (when item is selected) */
+[data-look='parent'] .p-detail-only {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+[data-look='parent'] .p-back-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--p-ink);
+  text-decoration: none;
+  border-bottom: 1px solid var(--p-line);
+  background: var(--p-bg);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+[data-look='parent'] .p-back-link:focus-visible { outline: 2px solid var(--p-ink); outline-offset: -2px; }
+[data-look='parent'] .p-back-link:hover {
+  background: var(--p-soft);
+}
+
+[data-look='parent'] .p-detail-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Mobile-only: list-only view (when no item is selected) */
+[data-look='parent'] .p-list-only {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 8px;
+  background: var(--p-card);
+  overflow-y: auto;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Segmented control styling for list headers */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-segment-tabs .mantine-Tabs-list {
+  display: flex;
+  gap: 4px;
+  background: var(--p-soft);
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 0;
+}
+
+[data-look='parent'] .p-segment-tabs .mantine-Tabs-tab {
+  flex: 1;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 4px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--p-sub);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+[data-look='parent'] .p-segment-tabs .mantine-Tabs-tab:hover:not([data-active]) {
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-segment-tabs .mantine-Tabs-tab[data-active] {
+  background: var(--p-ink);
+  color: var(--p-card);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* More page (phone view) */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-more {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  color: var(--p-ink);
+}
+[data-look='parent'] .p-more > * { flex-shrink: 0; }
+
+[data-look='parent'] .p-more-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: 16px;
+}
+
+[data-look='parent'] .p-more-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--p-ink);
+  color: var(--p-card);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+[data-look='parent'] .p-more-info {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere; /* a long family name must wrap inside the card */
+}
+[data-look='parent'] .p-more-profile .p-chip { flex: none; }
+
+[data-look='parent'] .p-more-info > strong {
+  display: block;
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-more-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+[data-look='parent'] .p-more-section > h2 {
+  margin: 8px 0 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--p-sub);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 12px;
+}
+
+[data-look='parent'] .p-more-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+[data-look='parent'] .p-more-list li {
+  border-top: 1px solid var(--p-line);
+}
+
+[data-look='parent'] .p-more-list li:first-child {
+  border-top: none;
+}
+
+[data-look='parent'] .p-more-section > .p-more-link {
+  border: 1px solid var(--p-line);
+  border-radius: 12px;
+}
+
+[data-look='parent'] .p-more-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  color: var(--p-ink);
+  text-decoration: none;
+  font-size: 14px;
+  background: var(--p-card);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  width: 100%;
+  text-align: left;
+}
+
+[data-look='parent'] .p-more-link:hover {
+  background: var(--p-soft);
+}
+
+[data-look='parent'] .p-more-link .ms {
+  color: var(--p-sub);
+  flex-shrink: 0;
+}
+[data-look='parent'] .p-more-ic {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--p-soft);
+}
+[data-look='parent'] .p-more-t { flex: 1; min-width: 0; font-weight: 600; }
+[data-look='parent'] .p-more-t small { display: block; font-size: 12px; font-weight: 400; color: var(--p-sub); }
+
+[data-look='parent'] .p-more-logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  color: var(--p-red);
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.15s ease;
+  font-size: 14px;
+}
+
+[data-look='parent'] .p-more-logout:hover {
+  background: var(--p-soft);
+}
+
+/* phone header: account initial, opens More */
+[data-look='parent'] .p-head-me {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--p-line);
+  background: var(--p-card);
+  color: var(--p-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* visible only to screen readers */
+.p-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

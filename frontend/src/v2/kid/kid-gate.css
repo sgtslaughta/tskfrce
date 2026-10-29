@@ -1,0 +1,61 @@
+/* Kid sign-in screens: who-is-this picker, PIN pad, status cards. Kid look of mockups 08-12 on the --k-* tokens
+   (kid-app.css): grid paper, 2px ink outlines, hard offset shadow, sun accents, Space Grotesk. Both schemes. */
+.k-gate { min-height: calc(100dvh - var(--k-top, 0px)); flex-direction: row; justify-content: center; align-items: flex-start; padding: 48px 16px 40px; box-sizing: border-box; }
+.k-gate-in { width: 100%; max-width: 520px; display: flex; flex-direction: column; align-items: center; gap: 22px; }
+.k-gate h1 { margin: 0; text-align: center; font-size: 34px; line-height: 1.1; color: var(--k-ink); }
+.k-brand { display: flex; align-items: center; gap: 10px; font-family: var(--font-display), 'Space Grotesk', sans-serif; font-weight: 700; font-size: 22px; color: var(--k-ink); }
+.k-brand i {
+  width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 22px;
+  background: var(--k-sun); color: var(--k-navy); border: 3px solid var(--k-ink);
+}
+
+/* status card (loading, device not set up) */
+.k-gate-msg {
+  width: 100%; box-sizing: border-box; margin: 0; padding: 22px 20px; text-align: center; font-size: 22px; font-weight: 700; line-height: 1.25;
+  font-family: var(--font-display), 'Space Grotesk', sans-serif; color: var(--k-ink);
+  background: var(--k-card); border: 2px solid var(--k-ink); border-radius: 20px; box-shadow: var(--k-shadow);
+}
+
+/* picker */
+.k-picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; width: 100%; }
+.k-pick {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: 12px; min-height: 176px; padding: 20px 12px;
+  font: inherit; color: var(--k-ink); cursor: pointer; background: var(--k-card); border: 2px solid var(--k-ink); border-radius: 20px;
+  box-shadow: var(--k-shadow); transition: transform 0.08s, box-shadow 0.08s;
+}
+.k-pick:hover { background: var(--k-soft); }
+.k-pick:active { transform: translate(4px, 4px); box-shadow: none; }
+.k-pick-av {
+  width: 84px; height: 84px; border-radius: 50%; display: grid; place-items: center; font-size: 46px; line-height: 1;
+  background: var(--k-sun); border: 3px solid var(--k-ink);
+}
+.k-pick-nm { font-family: var(--font-display), 'Space Grotesk', sans-serif; font-weight: 700; font-size: 24px; overflow-wrap: anywhere; text-align: center; }
+
+/* PIN pad */
+.k-pin { display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; }
+.k-pin-who { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.k-pin-who .k-pick-av { width: 72px; height: 72px; font-size: 40px; }
+.kg-dots { display: flex; gap: 16px; min-height: 32px; }
+.kg-dots i { width: 26px; height: 26px; box-sizing: border-box; border-radius: 50%; border: 3px solid var(--k-ink); background: var(--k-card); }
+.kg-dots i[data-on] { background: var(--k-sun); }
+.k-pin-err {
+  margin: 0; min-height: 40px; box-sizing: border-box; display: flex; align-items: center; font-weight: 700; color: var(--k-ink); text-align: center;
+}
+.k-pin-err:not(:empty) { padding: 8px 14px; background: var(--k-coral-bg); border-left: 4px solid var(--k-coral); border-radius: 10px; }
+.k-keys { display: grid; grid-template-columns: repeat(3, minmax(64px, 88px)); gap: 12px; }
+.k-key {
+  height: 72px; font-family: var(--font-display), 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; cursor: pointer;
+  color: var(--k-ink); background: var(--k-card); border: 2px solid var(--k-ink); border-radius: 18px; box-shadow: 3px 3px 0 var(--k-ink);
+}
+.k-key:hover { background: var(--k-soft); }
+.k-key:active { transform: translate(3px, 3px); box-shadow: none; }
+.k-key:disabled { opacity: 0.55; cursor: default; }
+.k-key[data-del] { background: var(--k-soft); }
+.k-key[data-del] .ms { font-size: 30px; }
+[data-mantine-color-scheme='dark'] .k-key { box-shadow: 3px 3px 0 #000; }
+.k-gate .r-btn { width: auto; min-width: 200px; }
+@media (max-width: 599px) {
+  .k-gate h1 { font-size: 28px; }
+  .k-keys { gap: 10px; }
+}
+@media (prefers-reduced-motion: reduce) { .k-pick, .k-key { transition: none; } }

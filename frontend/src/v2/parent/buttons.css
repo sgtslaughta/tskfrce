@@ -1,0 +1,101 @@
+/**
+ * @fileoverview Button component styles
+ * Button variants and states for parent shell
+ */
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+/* Buttons */
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+[data-look='parent'] .p-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--p-line);
+  border-radius: 999px;
+  background: var(--p-card);
+  color: var(--p-ink);
+  font: 600 13px var(--font-parent), system-ui, sans-serif;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+[data-look='parent'] .p-btn:hover {
+  border-color: var(--p-ink);
+  background: var(--p-soft);
+}
+
+[data-look='parent'] .p-btn[data-variant='accent'] {
+  background: var(--p-acc);
+  border-color: var(--p-acc);
+  color: #292928;
+}
+
+[data-look='parent'] .p-btn[data-variant='accent']:hover {
+  opacity: 0.9;
+}
+
+[data-look='parent'] .p-btn[data-variant='ink'] {
+  background: var(--p-ink);
+  border-color: var(--p-ink);
+  color: var(--p-card);
+}
+
+[data-look='parent'] .p-btn[data-variant='ink']:hover {
+  opacity: 0.9;
+}
+
+[data-look='parent'] .p-btn[data-variant='red'] {
+  color: var(--p-red);
+  border-color: color-mix(in srgb, var(--p-red) 40%, var(--p-line));
+}
+
+[data-look='parent'] .p-btn[data-variant='red']:hover {
+  background: color-mix(in srgb, var(--p-red) 10%, transparent);
+}
+
+[data-look='parent'] .p-btn .ms {
+  font-size: 16px;
+}
+
+/* keyboard focus, pressed, disabled and in-flight states (shared by every .p-btn) */
+[data-look='parent'] .p-btn:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 2px; }
+[data-look='parent'] .p-btn:active:not(:disabled) { transform: scale(0.97); }
+[data-look='parent'] .p-btn:disabled {
+  background: var(--p-soft);
+  border-color: var(--p-line);
+  color: var(--p-sub);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+[data-look='parent'] .p-btn[data-loading='true'] { position: relative; pointer-events: none; color: transparent; }
+[data-look='parent'] .p-btn[data-loading='true'] > * { opacity: 0; }
+[data-look='parent'] .p-btn[data-loading='true']::after {
+  content: '';
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--p-ink);
+  border-right-color: transparent;
+  animation: p-spin 0.7s linear infinite;
+}
+@keyframes p-spin { to { transform: rotate(360deg); } }
+[data-look='parent'] .p-btn[data-variant='accent'][data-loading='true']::after { border-color: #292928; border-right-color: transparent; }
+
+/* shared interactive states: one focus ring, pill + day hover/press/disabled (all parent screens) */
+[data-look='parent'] :is(.p-segmented-button, .pk-pill, .pk-day, .pk-ib, .pk-new, .pk-pick-btn, .pk-pick-cell, .p-glyph-item, .p-glyph-search, .p-device-item):focus-visible,
+.mantine-Modal-content :is(.p-btn, button):focus-visible {
+  outline: 2px solid var(--p-ink, #292928);
+  outline-offset: 2px;
+}
+[data-look='parent'] .pk-ib:focus-visible { outline-offset: 0; }
+[data-look='parent'] .p-btn[aria-busy='true'] { cursor: progress; }
+[data-look='parent'] .pk-pill:hover:not(:disabled) { border-color: var(--p-ink); }
+[data-look='parent'] .pk-pill:active:not(:disabled),
+[data-look='parent'] .pk-day:active { transform: scale(0.96); }
+[data-look='parent'] .pk-pill:disabled { opacity: 0.5; cursor: not-allowed; }

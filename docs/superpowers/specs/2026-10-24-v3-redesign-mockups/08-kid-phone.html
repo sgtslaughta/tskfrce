@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&family=DM+Sans:wght@500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#5a5a5a;font-family:Inter,sans-serif;padding:24px;color:#fff}
+.top h1{font-size:22px;margin:0;font-family:'DM Sans'}.top p{margin:4px 0 18px;opacity:.8;font-size:14px;font-family:'DM Sans'}
+.ms{font-family:"Material Symbols Rounded";font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;font-feature-settings:"liga";vertical-align:middle}
+.phones{display:flex;gap:26px;flex-wrap:wrap;align-items:flex-start}
+.cap{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin:0 0 8px;font-family:'DM Sans'}
+/* fridge tokens (unchanged kid look) */
+.ph{--bg:#f4f7fa;--card:#fff;--ink:#1d2b53;--sub:#4a5a80;--line:#dfe5ee;--sun:#ffc93c;--green:#7bd389;--coral:#ff6b4a;--mute:#c9d3e3;--grid:rgba(29,43,83,.08);
+ width:370px;height:780px;border-radius:38px;border:10px solid #111;background:var(--bg);color:var(--ink);position:relative;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 14px 40px rgba(0,0,0,.4)}
+.scroll{flex:1;overflow:auto;padding:14px 14px 30px;display:flex;flex-direction:column;gap:14px;position:relative;isolation:isolate}
+.scroll::before{content:'';position:absolute;inset:0;z-index:-1;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.disp{font-family:'Space Grotesk',sans-serif}
+.card{background:var(--card);border-radius:10px;padding:16px;box-shadow:0 1px 2px rgba(29,43,83,.06),0 6px 20px rgba(29,43,83,.08)}
+.hero{background:var(--ink);color:#fff;border-radius:10px;padding:12px 14px;display:flex;gap:12px;align-items:center}
+.av{width:46px;height:46px;border-radius:50%;background:#c9d3e3;display:grid;place-items:center;font-size:24px;flex:none}
+.hero .nm{font-family:'Space Grotesk';font-size:22px;font-weight:700;display:flex;gap:8px;align-items:center}
+.lv{font-size:11px;letter-spacing:.08em;background:rgba(255,255,255,.14);border-radius:6px;padding:3px 7px;font-family:'Space Grotesk';font-weight:600}
+.xp{height:6px;border-radius:6px;background:rgba(255,255,255,.18);margin:6px 0 4px}.xp i{display:block;height:100%;width:72%;background:var(--sun);border-radius:6px}
+.hero small{font-family:'Space Grotesk';letter-spacing:.08em;font-size:11px;font-weight:600}
+.cut{clip-path:polygon(0 0,calc(100% - 12px) 0,100% 12px,100% 100%,12px 100%,0 calc(100% - 12px));border:0;font-family:'Space Grotesk';font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:13px;padding:13px 18px;cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:6px}
+.cut.sun{background:var(--sun)}.cut.mute{background:var(--mute)}.cut.off{background:#eef1f6;color:#7d89a8}.cut.coral{background:var(--coral);color:#fff}
+.cut .ms{font-size:18px}
+h3.disp{margin:0 0 10px;font-size:22px}
+.ch{border-top:1px solid var(--line);padding:14px 0}.ch:first-of-type{border-top:0;padding-top:4px}
+.cr{display:flex;align-items:center;gap:10px}
+.box{width:26px;height:26px;border-radius:6px;border:2px solid var(--line);background:#eef1f6;flex:none;display:grid;place-items:center}
+.box.ok{background:var(--green);border-color:var(--green)}.box.ok::after{content:'check';font-family:"Material Symbols Rounded";font-size:20px;color:var(--ink)}
+.ct{flex:1;font-family:'Space Grotesk';font-size:21px;font-weight:600;line-height:1.15}
+.pts{font-weight:800;color:var(--sub)}
+.ib{width:42px;height:42px;border-radius:8px;border:1.5px solid var(--line);background:#fff;display:grid;place-items:center;position:relative;color:var(--ink)}
+.ib .dot{position:absolute;top:6px;right:6px;width:8px;height:8px;border-radius:50%;background:var(--coral)}
+.tyb{width:28px;height:28px;border-radius:8px;background:#eef1f6;display:grid;place-items:center;color:var(--sub);flex:none}.tyb .ms{font-size:18px}
+.steps{margin:10px 0 4px 6px;display:flex;flex-direction:column;gap:4px}
+.st{display:flex;align-items:center;gap:10px;font-size:16px;padding:5px 0}
+.st .bx{width:24px;height:24px;border-radius:6px;border:2px solid #b8c3d6;background:#fff;flex:none;display:grid;place-items:center}
+.st.done .bx{background:var(--green);border-color:var(--green)}.st.done .bx::after{content:'check';font-family:"Material Symbols Rounded";font-size:18px}
+.st.done .tx{text-decoration:line-through;color:var(--sub)}
+.st .n{width:20px;height:20px;border-radius:50%;background:var(--ink);color:#fff;font-size:11px;font-weight:800;display:grid;place-items:center;flex:none}
+.st.locked{color:#9aa5bf}.st.locked .bx{background:#eef1f6;border-color:#dfe5ee}.st.locked .bx::after{content:'lock';font-family:"Material Symbols Rounded";font-size:15px;color:#9aa5bf}
+.st.locked .n{background:#c9d3e3}
+.st.next .bx{border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in srgb,var(--sun) 70%,transparent)}
+.tx{flex:1}.tx small{display:block;font-size:12px;color:var(--sub);font-weight:600}
+.due{font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;background:#eef1f6;color:var(--sub);white-space:nowrap;display:inline-flex;gap:3px;align-items:center}.due .ms{font-size:14px}
+.due.soon{background:var(--sun);color:var(--ink)}.due.late{background:var(--coral);color:#fff}
+.pill{display:inline-flex;align-items:center;gap:6px;font-family:'Space Grotesk';font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;border-radius:6px;padding:6px 10px}
+.pill.wait{background:var(--sun)}.pill.note{background:#e4ecff;color:var(--ink)}.pill .ms{font-size:16px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center}
+.why{font-size:13px;color:var(--sub);font-weight:600;margin-top:6px}
+.tell{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-size:14px;color:var(--ink);border:2px dashed #b8c3d6;border-radius:8px;padding:9px 12px;background:#fff;cursor:pointer}
+.tell .ms{font-size:18px}
+.ded{display:flex;gap:10px;align-items:flex-start;background:#ffe9e3;border-left:4px solid var(--coral);border-radius:8px;padding:10px 12px;font-size:14px;margin-top:10px}
+.ded b{font-family:'Space Grotesk'}.ded .ms{color:var(--coral)}
+.scrim{position:absolute;inset:0;background:rgba(29,43,83,.45);z-index:5}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;padding:10px 16px 26px;z-index:6;display:flex;flex-direction:column;gap:12px;border-top:3px solid var(--ink)}
+.grab{width:44px;height:5px;border-radius:3px;background:#dfe5ee;margin:0 auto 4px}
+.sheet h4{margin:0;font-family:'Space Grotesk';font-size:22px}.sheet .s{color:var(--sub);font-size:14px;margin-top:-8px}
+.nts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.nt{display:flex;align-items:center;gap:8px;border:2px solid var(--ink);border-radius:10px;padding:12px 10px;font-weight:700;font-size:14px;min-height:52px;cursor:pointer;background:#fff}
+.nt .ms{font-size:20px}.nt.on{background:var(--sun);box-shadow:3px 3px 0 var(--ink)}
+.nt.u{border-style:dashed;border-color:#8a96b3}
+.ti{border:2px solid #dfe5ee;border-radius:10px;padding:12px;font-size:15px;color:#7d89a8}
+.pv{position:sticky;top:0;z-index:4;background:#292928;color:#f4f4f2;display:flex;align-items:center;gap:8px;padding:10px 12px;font-family:'DM Sans';font-size:13px;font-weight:600}
+.pv .ms{font-size:18px;color:#c3f832}
+.pv button{margin-left:auto;background:#c3f832;color:#292928;border:0;border-radius:999px;padding:7px 12px;font:700 12.5px 'DM Sans';display:inline-flex;gap:4px;align-items:center}
+.pv button .ms{color:#292928;font-size:16px}
+.toast{position:absolute;left:14px;right:14px;bottom:22px;z-index:7;background:#292928;color:#fff;border-radius:14px;padding:11px 12px;font:600 13px 'DM Sans';display:flex;gap:10px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.toast .ic{width:26px;height:26px;border-radius:8px;background:#c3f832;color:#292928;display:grid;place-items:center;box-shadow:inset 0 0 0 1.5px #292928}.toast .ic .ms{font-size:17px}
+.dim{opacity:.55;pointer-events:none}
+.sb{height:28px;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font-size:12px;font-weight:600;flex:none;background:var(--bg)}
+</style></head><body>
+<div class="top"><h1>Kid screens — new features, same fridge look</h1><p>Preset notes by chore type · chained steps · step deadlines · seeing a deduction · parent view-as-kid. Sample data.</p></div>
+<div class="phones">
+
+<!-- 1 -->
+<div><p class="cap">1 · Today: chained steps &amp; deadlines</p><div class="ph">
+ <div class="sb"><span>4:41</span><span></span></div>
+ <div class="scroll">
+  <div class="card" style="padding:12px"><div class="hero"><div class="av">🦁</div><div style="flex:1"><div class="nm">Leo <span class="lv">LV 4 · REGULAR</span></div><div class="xp"><i></i></div><small>330 / 459 XP · 3 DAY STREAK</small></div></div></div>
+  <div class="card"><h3 class="disp">Your chores</h3>
+   <div class="ch">
+    <div class="cr"><span class="box"></span><span class="tyb"><span class="ms">school</span></span><span class="ct">Homework</span><span class="pts">+30</span><span class="ib"><span class="ms">chat</span></span></div>
+    <div class="steps">
+     <div class="st done"><span class="n">1</span><span class="bx"></span><span class="tx">Math worksheet<small>Done 4:12</small></span></div>
+     <div class="st next"><span class="n">2</span><span class="bx"></span><span class="tx">Check answers with Mom<small>Do this next</small></span><span class="due soon"><span class="ms">schedule</span>by 5:00</span></div>
+     <div class="st locked"><span class="n">3</span><span class="bx"></span><span class="tx">Fix mistakes<small>After step 2</small></span><span class="due"><span class="ms">schedule</span>by 6:00</span></div>
+     <div class="st"><span class="bx"></span><span class="tx">Pack backpack<small>Any time</small></span><span class="due"><span class="ms">schedule</span>by 8:30</span></div>
+    </div>
+    <div class="acts"><button class="cut off">Mark done</button><span class="tell"><span class="ms">campaign</span>Tell Mom or Dad</span></div>
+    <div class="why">Finish the steps first</div>
+   </div>
+   <div class="ch">
+    <div class="cr"><span class="box"></span><span class="tyb"><span class="ms">cleaning_services</span></span><span class="ct">Tidy the playroom</span><span class="pts">+25</span></div>
+    <div class="steps">
+     <div class="st done"><span class="bx"></span><span class="tx">Toys in bins<small>Done 3:50</small></span></div>
+     <div class="st"><span class="bx"></span><span class="tx">Books on shelf</span><span class="due late"><span class="ms">alarm</span>Late · was 4:30</span></div>
+    </div>
+    <div class="acts"><button class="cut off">Mark done</button><span class="tell"><span class="ms">campaign</span>Tell Mom or Dad</span></div>
+   </div>
+   <div class="ch">
+    <div class="cr"><span class="box ok"></span><span class="tyb"><span class="ms">pets</span></span><span class="ct">Feed the dog</span><span class="pts" style="color:#c2410c">+10 −10</span></div>
+    <div class="ded"><span class="ms">remove_circle</span><div><b>Dad took 10 points</b><br>“Bowl was empty at 7. Let's be on time.”<div style="margin-top:6px"><span class="tell" style="padding:6px 10px;font-size:13px"><span class="ms">chat</span>Reply</span></div></div></div>
+   </div>
+  </div>
+ </div>
+</div></div>
+
+<!-- 2 -->
+<div><p class="cap">2 · Tell Mom or Dad (notes by type)</p><div class="ph">
+ <div class="sb"><span>4:43</span><span></span></div>
+ <div class="scroll">
+  <div class="card"><h3 class="disp">Your chores</h3>
+   <div class="ch"><div class="cr"><span class="box"></span><span class="tyb"><span class="ms">cleaning_services</span></span><span class="ct">Tidy the playroom</span><span class="pts">+25</span></div></div>
+   <div class="ch"><div class="cr"><span class="box"></span><span class="tyb"><span class="ms">cleaning_services</span></span><span class="ct">Clean the bathroom</span><span class="pts">+40</span></div>
+    <div class="acts"><span class="pill note"><span class="ms">check_circle</span>Note sent: Out of supplies</span></div></div>
+  </div>
+ </div>
+ <div class="scrim"></div>
+ <div class="sheet"><div class="grab"></div>
+  <h4>Tell Mom or Dad</h4><div class="s">About: Clean the bathroom</div>
+  <div class="nts">
+   <div class="nt on"><span class="ms">cleaning_services</span>Out of supplies</div>
+   <div class="nt"><span class="ms">contrast</span>Did part of it</div>
+   <div class="nt"><span class="ms">layers</span>Too messy for one go</div>
+   <div class="nt u"><span class="ms">help</span>Need help</div>
+   <div class="nt u"><span class="ms">schedule</span>Ran out of time</div>
+   <div class="nt u"><span class="ms">block</span>Can't do it today</div>
+  </div>
+  <div class="ti">No more toilet spray</div>
+  <button class="cut sun" style="justify-content:center">Send <span class="ms">send</span></button>
+ </div>
+</div></div>
+
+<!-- 3 -->
+<div><p class="cap">3 · Parent viewing as Leo (preview)</p><div class="ph">
+ <div class="sb" style="background:#292928;color:#f4f4f2"><span>8:02</span><span></span></div>
+ <div class="pv"><span class="ms">visibility</span>Viewing as Leo · preview<button><span class="ms">arrow_back</span>Back to parent</button></div>
+ <div class="scroll">
+  <div class="card" style="padding:12px"><div class="hero"><div class="av">🦁</div><div style="flex:1"><div class="nm">Leo <span class="lv">LV 4 · REGULAR</span></div><div class="xp"><i></i></div><small>330 / 459 XP · 3 DAY STREAK</small></div></div></div>
+  <div class="card" style="text-align:center;border-top:6px solid var(--coral)"><div style="width:84px;height:84px;border-radius:50%;background:var(--coral);display:grid;place-items:center;margin:4px auto 8px;color:#fff"><span class="ms" style="font-size:44px">lock</span></div><div class="disp" style="font-size:28px;font-weight:700">Internet is paused</div><div style="color:var(--sub);margin-top:4px">Finish your chores to unlock.</div></div>
+  <div class="card"><h3 class="disp">Your chores</h3>
+   <div class="ch"><div class="cr"><span class="box"></span><span class="tyb"><span class="ms">cleaning_services</span></span><span class="ct">Tidy the playroom</span><span class="pts">+25</span></div>
+    <div class="acts"><button class="cut sun">Mark done</button><span class="tell"><span class="ms">campaign</span>Tell Mom or Dad</span></div></div>
+   <div class="ch"><div class="cr"><span class="box"></span><span class="tyb"><span class="ms">yard</span></span><span class="ct">Water plants</span><span class="pts">+10</span></div></div>
+  </div>
+ </div>
+ <div class="toast"><span class="ic"><span class="ms">visibility</span></span>Preview only. Log in as Leo to do this.</div>
+</div></div>
+
+</div>
+</body></html>

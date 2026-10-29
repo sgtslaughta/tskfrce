@@ -1,0 +1,106 @@
+/* Name-card backgrounds. The default (and Slate) card follows the approved kid-card header:
+   light = navy with white text; dark = pale #e8eeff with navy text, yellow top stripe and a
+   yellow XP bar. Themed cards (Lv12+) are always-dark designs with their own light ink. */
+.flair-card {
+  --fc-ink: var(--f-head-ink);
+  --fc-sub: var(--f-head-sub);
+  --fc-track: rgba(255, 255, 255, 0.16);
+  --fc-tag: rgba(255, 255, 255, 0.14);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--f-head-bg);
+  border-top: 4px solid var(--f-head-stripe);
+  color: var(--fc-ink);
+}
+[data-mantine-color-scheme='dark'] .flair-card {
+  --fc-track: #c9d3ee;
+  --fc-tag: rgba(29, 43, 83, 0.1);
+}
+.flair-card.flair-card-grid,
+.flair-card.flair-card-waves,
+.flair-card.flair-card-stripes,
+.flair-card.flair-card-aurora,
+.flair-card.flair-card-sheen,
+.flair-card.flair-card-starfield,
+.flair-card.flair-card-unicorn {
+  --fc-ink: #ffffff;
+  --fc-sub: #c6d0ee;
+  --fc-track: rgba(255, 255, 255, 0.16);
+  --fc-tag: rgba(255, 255, 255, 0.14);
+}
+.flair-card .xp-bar { background: var(--fc-track); height: 6px; border-radius: 99px; }
+.flair-card .xp-bar > span { background: linear-gradient(90deg, #ffc93c, #ffb020); border-radius: 99px; }
+.flair-card > * { position: relative; z-index: 1; }
+/* numbers and labels inside a name card follow the card's ink, not the page's */
+[data-mantine-color-scheme] .flair-card .f-num,
+.flair-card .f-num { color: var(--fc-ink); }
+.flair-card .f-cap { color: var(--fc-sub); }
+.flair-card-sm { padding: 6px 10px; gap: 8px; }
+.flair-card-lg { padding: 18px 16px; gap: 14px; }
+.flair-card-body { display: grid; gap: 4px; min-width: 0; flex: 1; }
+.flair-card-row { display: flex; gap: 8px; align-items: center; min-width: 0; flex-wrap: wrap; }
+.flair-card-sm .flair-card-row { flex-wrap: nowrap; }
+
+.flair-card-slate { background: var(--f-head-bg); } /* the default look */
+.flair-card-grid {
+  background-color: #1d2b53;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+.flair-card-waves {
+  background: repeating-radial-gradient(circle at 0 100%, #1d2b53 0 10px, #25366a 10px 20px);
+}
+.flair-card-stripes {
+  background: repeating-linear-gradient(135deg, #1d2b53 0 12px, #26376b 12px 24px);
+}
+.flair-card-aurora {
+  background: linear-gradient(120deg, #1d2b53, #1f4a5c 35%, #3a2f6b 70%, #1d2b53);
+  background-size: 300% 300%;
+}
+.flair-card-sheen { background: linear-gradient(120deg, #1d2b53 0%, #2a3a72 55%, #3b4a8a 100%); }
+.flair-card-sheen::after,
+.flair-card-starfield::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+.flair-card-sheen::after {
+  background: linear-gradient(110deg, transparent 30%, rgba(255, 201, 60, 0.25) 50%, transparent 70%);
+  transform: translateX(-100%);
+}
+.flair-card-starfield {
+  background: radial-gradient(circle at 20% 30%, #2a3a72, #141d3d 80%);
+}
+.flair-card-starfield::after {
+  background-image:
+    radial-gradient(1.5px 1.5px at 15% 25%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 40% 70%, #fff, transparent),
+    radial-gradient(1px 1px at 65% 35%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 85% 60%, #ffc93c, transparent),
+    radial-gradient(1px 1px at 92% 20%, #fff, transparent);
+  opacity: 0.8;
+}
+.flair-card-unicorn {
+  background: linear-gradient(120deg, #2b2058, #1f3c66 35%, #4a2a66 70%, #2b2058);
+  background-size: 300% 300%;
+}
+
+@keyframes flair-drift { to { background-position: 300% 0; } }
+@keyframes flair-sheen { to { transform: translateX(100%); } }
+@keyframes flair-twinkle { 50% { opacity: 0.3; } }
+@media (prefers-reduced-motion: no-preference) {
+  .flair-card-aurora { animation: flair-drift 12s linear infinite; }
+  .flair-card-unicorn { animation: flair-drift 8s linear infinite; }
+  .flair-card-sheen::after { animation: flair-sheen 3s infinite; }
+  .flair-card-starfield::after { animation: flair-twinkle 3s ease-in-out infinite; }
+}

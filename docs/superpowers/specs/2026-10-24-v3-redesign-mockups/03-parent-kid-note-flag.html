@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,400,0..1,0&display=block" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#5a5a5a;font-family:'DM Sans',sans-serif;padding:24px;color:#fff}
+h1{font-size:22px;margin:0 0 4px}.sub{opacity:.8;margin:0 0 18px;font-size:14px}
+.lbl{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.85;margin:0 0 8px}
+.split{display:grid;grid-template-columns:380px 1fr;gap:28px;align-items:start}
+@media(max-width:1000px){.split{grid-template-columns:1fr}}
+.ms{font-family:"Material Symbols Rounded";font-weight:normal;font-style:normal;font-size:20px;line-height:1;display:inline-block;font-feature-settings:"liga";vertical-align:middle}
+/* kid: fridge look, unchanged */
+.f{background:#f4f7fa;color:#1d2b53;font-family:Inter,sans-serif;border-radius:14px;padding:18px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.f h2{font-family:'Space Grotesk';margin:0 0 12px;font-size:22px}
+.fk{background:#fff;border:2px solid #1d2b53;border-radius:8px;box-shadow:3px 3px 0 #ffc93c;padding:12px;margin-bottom:12px}
+.fr{display:flex;gap:10px;align-items:center;font-weight:600}
+.fx{width:24px;height:24px;border:2px solid #1d2b53;border-radius:6px;flex:none}
+.fr .ms{margin-left:auto;color:#4a5a80}
+.q{font-family:'Space Grotesk';font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#4a5a80;margin:12px 0 8px}
+.nt{display:flex;flex-wrap:wrap;gap:8px}
+.n1{display:inline-flex;align-items:center;gap:6px;border:2px solid #1d2b53;border-radius:999px;padding:8px 12px;font-weight:600;font-size:14px;background:#fff;cursor:pointer;min-height:44px}
+.n1 .ms{font-size:18px}
+.n1.on{background:#ffc93c;box-shadow:2px 2px 0 #1d2b53}
+.ti{display:flex;gap:8px;margin-top:10px}.ti input{flex:1;border:2px solid #1d2b53;border-radius:8px;padding:10px;font:inherit}
+.go{background:#1d2b53;color:#fff;border:0;border-radius:8px;padding:0 14px;font-weight:700}
+.sent{margin-top:10px;font-size:13px;color:#2f7a3d;font-weight:600;display:flex;align-items:center;gap:6px}
+/* parent: clean */
+.p{--acc:#c3f832;--card:#fff;--soft:#f3f3f3;--ink:#292928;--sub:#6f6f6c;--line:#e4e4e1;--amb:#fff1d6;--ambink:#8a5a00;
+  background:#f8f8f8;color:var(--ink);border-radius:14px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.p.dark{--card:#292928;--soft:#323230;--ink:#f4f4f2;--sub:#a8a8a4;--line:#3d3d3b;--amb:#3b2f17;--ambink:#ffd38a;background:#1c1c1b}
+.p h2{margin:0 0 12px;font-size:26px}
+.box{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line)}.row:first-child{border-top:0}
+.ck{width:22px;height:22px;border-radius:7px;border:1.5px solid var(--sub);flex:none}
+.t{flex:1;font-weight:600;font-size:14px}.t small{display:block;color:var(--sub);font-weight:400;font-size:12px}
+.chip{font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:6px;white-space:nowrap}
+.c-grey{background:var(--card);color:var(--sub);border:1px solid var(--line)}
+.c-amb{background:var(--amb);color:var(--ambink);display:inline-flex;gap:4px;align-items:center}.c-amb .ms{font-size:13px}
+.flag{background:color-mix(in srgb,var(--amb) 55%,transparent)}
+.note{display:flex;align-items:center;gap:8px;margin:6px 0 0;font-size:12.5px;color:var(--ambink);font-weight:600}
+.note .ms{font-size:16px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;padding:0 16px 14px 50px}
+.btn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:7px 12px;font:600 12.5px 'DM Sans';display:inline-flex;align-items:center;gap:4px}
+.btn .ms{font-size:16px}
+.tg{background:#fff;color:#292928;border:0;border-radius:999px;padding:6px 12px;font:600 12px 'DM Sans';cursor:pointer;float:right}
+.toast{margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:13px;display:flex;gap:10px;align-items:center}
+.toast b{display:block}.toast small{color:var(--sub)}
+</style></head><body>
+<h1>Kid notes on chores</h1>
+<p class="sub">Kid taps a ready-made note (or types one). Parent sees it flagged on the chore and gets a ping. Sample data.</p>
+<div class="split">
+<div><p class="lbl">Kid screen — fridge look (unchanged style)</p>
+<div class="f"><h2>Hi Mia!</h2>
+ <div class="fk"><div class="fr"><div class="fx"></div>Clean bathroom<span class="ms">chat_bubble</span></div>
+  <div class="q">Something wrong? Tell a parent</div>
+  <div class="nt">
+   <span class="n1 on"><span class="ms">cleaning_services</span>Out of supplies</span>
+   <span class="n1"><span class="ms">schedule</span>Ran out of time</span>
+   <span class="n1"><span class="ms">help</span>Need help</span>
+   <span class="n1"><span class="ms">contrast</span>Did part of it</span>
+   <span class="n1"><span class="ms">block</span>Can't do it today</span>
+  </div>
+  <div class="ti"><input placeholder="Add more (optional)…" value="No more toilet spray"><button class="go">Send</button></div>
+  <div class="sent"><span class="ms">check_circle</span>Sent to Mom &amp; Dad</div>
+ </div>
+ <div class="fk"><div class="fr"><div class="fx"></div>Practice piano<span class="ms">chat_bubble</span></div></div>
+</div></div>
+
+<div><p class="lbl">Parent screen — clean look <button class="tg" onclick="document.querySelector('.p').classList.toggle('dark')">Toggle dark</button></p>
+<div class="p dark"><h2>Mia's day</h2>
+ <div class="box">
+  <div class="row"><span class="ck"></span><div class="t">Unload dishwasher<small>Due 5:00 PM</small></div><span class="chip c-grey">To do</span></div>
+  <div class="flag"><div class="row" style="border-top:1px solid var(--line)"><span class="ck"></span><div class="t">Clean bathroom<small>Due 6:00 PM</small>
+    <div class="note"><span class="ms">cleaning_services</span>Mia: Out of supplies · "No more toilet spray" · 5:12 PM</div></div><span class="chip c-amb"><span class="ms">flag</span>Note</span></div>
+   <div class="acts"><button class="btn"><span class="ms">chat</span>Reply</button><button class="btn"><span class="ms">event_repeat</span>Move to tomorrow</button><button class="btn"><span class="ms">do_not_disturb_on</span>Skip today (no penalty)</button></div></div>
+  <div class="row"><span class="ck"></span><div class="t">Practice piano<small>Due 7:30 PM</small></div><span class="chip c-grey">To do</span></div>
+ </div>
+ <div class="toast"><span class="ms">notifications</span><div><b>Mia left a note on Clean bathroom</b><small>Out of supplies · also sent via ntfy / Discord if set up</small></div></div>
+</div></div>
+</div>
+</body></html>

@@ -1,0 +1,150 @@
+/**
+ * @fileoverview Parent onboarding checklist card styles
+ * Dismissible "Getting started" checklist for first-time parents
+ */
+
+[data-look='parent'] .p-onboard-card {
+  background: var(--p-card);
+  border: 1px solid var(--p-line);
+  border-radius: 16px;
+  padding: 16px;
+  margin-bottom: 16px;
+  animation: p-fade-in 150ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-look='parent'] .p-onboard-card {
+    animation: none;
+  }
+}
+
+[data-look='parent'] .p-onboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+[data-look='parent'] .p-onboard-title {
+  margin: 0 0 4px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-onboard-progress {
+  margin: 0;
+  font-size: 13px;
+  color: var(--p-sub);
+}
+
+[data-look='parent'] .p-onboard-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--p-sub);
+  cursor: pointer;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-look='parent'] .p-onboard-dismiss {
+    transition: none;
+  }
+}
+
+[data-look='parent'] .p-onboard-dismiss:hover {
+  background-color: var(--p-soft);
+  color: var(--p-ink);
+}
+
+[data-look='parent'] .p-onboard-dismiss:active {
+  background-color: var(--p-line);
+}
+
+[data-look='parent'] .p-onboard-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+[data-look='parent'] .p-onboard-item {
+  margin: 0;
+  padding: 0;
+}
+
+[data-look='parent'] .p-onboard-item a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  text-decoration: none;
+  color: var(--p-ink);
+  transition: opacity 150ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-look='parent'] .p-onboard-item a {
+    transition: none;
+  }
+}
+
+[data-look='parent'] .p-onboard-item[data-done='true'] .p-onboard-label {
+  color: var(--p-sub);
+}
+
+[data-look='parent'] .p-onboard-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background-color: var(--p-soft);
+  color: var(--p-sub);
+  flex-shrink: 0;
+  transition: background-color 150ms ease-out, color 150ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-look='parent'] .p-onboard-icon {
+    transition: none;
+  }
+}
+
+[data-look='parent'] .p-onboard-icon[data-done='true'] {
+  background-color: var(--p-acc);
+  color: #292928;
+}
+
+[data-look='parent'] .p-onboard-label {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+[data-look='parent'] .p-onboard-arrow {
+  color: var(--p-sub);
+  flex-shrink: 0;
+}
+
+/* Animations */
+@keyframes p-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

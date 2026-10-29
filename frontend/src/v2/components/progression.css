@@ -1,0 +1,31 @@
+.tier-ring {
+  display: inline-grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 4px solid;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 1px var(--edge, var(--ring));
+  font-size: 24px;
+}
+.tier-mega-diamond {
+  border-color: transparent;
+  background:
+    linear-gradient(var(--f-card), var(--f-card)) padding-box,
+    linear-gradient(120deg, var(--mega)) border-box;
+  background-size: auto, 300% 300%;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tier-mega-diamond { animation: tier-shift 4s linear infinite; }
+}
+@keyframes tier-shift {
+  to { background-position: 0 0, 300% 0; }
+}
+.xp-bar {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--f-line, rgba(0, 0, 0, 0.12));
+  overflow: hidden;
+}
+.xp-bar > span { display: block; height: 100%; background: linear-gradient(90deg, #ffc93c, #ffb020); }

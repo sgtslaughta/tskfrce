@@ -1,0 +1,70 @@
+/*
+ * Shared hover / press / focus feedback for every clickable thing,
+ * parent and kid looks. A translucent overlay via background-image keeps
+ * each control's own background colour and works in light and dark.
+ * Mantine Button/ActionIcon keep their built-in states.
+ */
+:root {
+  --hover-tint: rgba(128, 128, 128, 0.14);
+  --press-tint: rgba(128, 128, 128, 0.26);
+}
+
+:is(button, [role='button'], a[class*='p-'], a[class*='f-']):not(.mantine-Button-root):not(.mantine-ActionIcon-root):not(:disabled):not([aria-disabled='true']) {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :is(button, [role='button'], a[class*='p-'], a[class*='f-']):not(.mantine-Button-root):not(.mantine-ActionIcon-root):not(:disabled):not([aria-disabled='true']) {
+    transition: transform 120ms ease-out, box-shadow 150ms ease-out, color 150ms ease-out,
+      border-color 150ms ease-out, filter 150ms ease-out;
+  }
+}
+
+:is(button, [role='button'], a[class*='p-'], a[class*='f-']):not(.mantine-Button-root):not(.mantine-ActionIcon-root):not(:disabled):not([aria-disabled='true']):hover {
+  background-image: linear-gradient(var(--hover-tint), var(--hover-tint));
+}
+
+:is(button, [role='button'], a[class*='p-'], a[class*='f-']):not(.mantine-Button-root):not(.mantine-ActionIcon-root):not(:disabled):not([aria-disabled='true']):active {
+  background-image: linear-gradient(var(--press-tint), var(--press-tint));
+  transform: translateY(1px);
+}
+
+:is(button, [role='button'], a):focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+/* text links: underline firms up on hover */
+.p-auth-link:hover,
+a:not([class]):hover {
+  text-decoration-color: currentColor;
+}
+
+:is(button, a):disabled,
+[aria-disabled='true'] {
+  cursor: not-allowed;
+}
+
+/* directional glyphs drift back and forth toward where the control goes, while hovered */
+@keyframes nudge-fwd { from { transform: translateX(0); } to { transform: translateX(3px); } }
+@keyframes nudge-back { from { transform: translateX(0); } to { transform: translateX(-3px); } }
+@keyframes nudge-out { from { transform: translate(0, 0); } to { transform: translate(2px, -2px); } }
+:is(button, a, [role='button']):hover .ms:is([data-icon='arrow_forward'], [data-icon='chevron_right'],
+  [data-icon='arrow_right_alt'], [data-icon='east'], [data-icon='navigate_next']) {
+  animation: nudge-fwd 450ms ease-in-out infinite alternate;
+}
+:is(button, a, [role='button']):hover .ms:is([data-icon='arrow_back'], [data-icon='chevron_left'],
+  [data-icon='west'], [data-icon='navigate_before']) {
+  animation: nudge-back 450ms ease-in-out infinite alternate;
+}
+:is(button, a, [role='button']):hover .ms:is([data-icon='open_in_new'], [data-icon='north_east']) {
+  animation: nudge-out 450ms ease-in-out infinite alternate;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ms { animation: none !important; transform: none !important; }
+  :is(button, [role='button'], a) {
+    transition: none !important;
+    transform: none !important;
+  }
+}

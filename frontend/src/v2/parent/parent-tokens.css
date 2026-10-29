@@ -1,0 +1,70 @@
+/**
+ * @fileoverview Parent UI token layer - switched on by data-look="parent"
+ * Light and dark tokens with accent system for parent screens
+ */
+
+/* Mantine components read these; html[] outranks Mantine's own :root, else they fall back to Inter */
+html[data-look='parent'] {
+  --mantine-font-family: var(--font-parent), 'DM Sans', system-ui, sans-serif;
+  --mantine-font-family-headings: var(--font-parent), 'DM Sans', system-ui, sans-serif;
+}
+html[data-look='parent'] body { font-family: var(--mantine-font-family); }
+
+[data-look='parent'] {
+  /* Light mode defaults */
+  --p-bg: #f8f8f8;
+  --p-card: #ffffff;
+  --p-soft: #f3f3f3;
+  --p-ink: #292928;
+  --p-sub: #5f5f5c;
+  --p-line: #e4e4e1;
+  --p-lav: #e3d4fb;
+  --p-lav-ink: #4a2f8a;
+  --p-red: #8f1d13;
+  --p-redbg: #fde3e0;
+  --p-amb: #ffefcc;
+  --p-ambink: #5c3a00;
+  --p-grid: rgba(41, 41, 40, 0.1);
+  --p-meter: #292928;
+  --p-track: #e4e4e1;
+  --p-tbg: #292928;
+  --p-tfg: #f4f4f2;
+  --p-tact: #c3f832;
+  --p-acc: #c3f832;
+
+  /* Motion tokens */
+  --dur-1: 150ms;
+  --dur-2: 250ms;
+  --ease-out: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+[data-look='parent'][data-mantine-color-scheme='dark'] {
+  --p-bg: #1c1c1b;
+  --p-card: #292928;
+  --p-soft: #323230;
+  --p-ink: #f4f4f2;
+  --p-sub: #a8a8a4;
+  --p-line: #3d3d3b;
+  --p-lav: #3d3354;
+  --p-lav-ink: #d8c8fb;
+  --p-red: #ff9b8f;
+  --p-redbg: #3e2422;
+  --p-amb: #3b2f17;
+  --p-ambink: #ffd38a;
+  --p-grid: rgba(255, 255, 255, 0.07);
+  --p-meter: var(--p-acc);
+  --p-track: #3d3d3b;
+  --p-tbg: #f4f4f2;
+  --p-tfg: #1c1c1b;
+  --p-tact: #1c1c1b;
+}
+
+/* Lilac accent special case: outline for needs-ok chip */
+[data-look='parent'][data-accent='lilac'] .p-chip[data-tone='lav'] {
+  background: transparent;
+  border: 2px solid var(--p-lav-ink);
+  color: var(--p-lav-ink);
+}
+
+/* form error text uses the darker parent red (§2.4), not Mantine's #fa5252 (3:1) */
+html[data-look='parent'][data-mantine-color-scheme] { --mantine-color-error: var(--p-red); }

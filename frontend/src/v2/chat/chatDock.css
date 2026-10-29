@@ -1,0 +1,130 @@
+.f-dock {
+  position: fixed; right: 16px; bottom: 84px; z-index: 301;
+  width: 380px; height: 560px; max-height: calc(100vh - 100px);
+  display: flex; flex-direction: column; box-sizing: border-box;
+  background: var(--f-card); color: var(--f-ink); border: 1px solid var(--f-line);
+  border-radius: 8px; box-shadow: var(--f-shadow); overflow: hidden;
+  transform-origin: bottom right; animation: f-dock-in 120ms ease-out;
+}
+.f-dock-head {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+  border-bottom: 1px solid var(--f-line);
+}
+.f-dock-head h2 { flex: 1; margin: 0; font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.f-dock-body { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; }
+.f-dock-body > section { height: 100%; }
+@keyframes f-dock-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .f-dock { animation: none; } }
+
+/* Parent look styles for chat dock */
+[data-look='parent'] .f-dock {
+  background: var(--p-card); color: var(--p-ink); border: 1px solid var(--p-line);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+}
+[data-look='parent'] .f-dock .p-list-header-top,
+.f-dock[data-look='parent'] .p-list-header-top { display: none; }
+/* Kid dock: parent chat layout in the kid palette (fridge font, sun accent, both schemes) */
+.f-dock.k-chat[data-look='parent'] {
+  --p-bg: var(--k-bg); --p-card: var(--k-card); --p-soft: var(--k-soft); --p-ink: var(--k-ink);
+  --p-sub: var(--k-sub); --p-line: var(--k-line); --p-lav: var(--k-lav); --p-lav-ink: var(--k-ink);
+  --p-red: var(--k-back); --p-redbg: var(--k-coral-bg); --p-amb: color-mix(in srgb, var(--k-amber) 22%, var(--k-card));
+  --p-ambink: var(--k-ink); --p-grid: var(--k-grid); --p-meter: var(--k-ink); --p-track: var(--k-line);
+  --p-acc: var(--k-sun);
+  --p-tbg: var(--k-ink); --p-tfg: var(--k-card); /* my bubble and the send button */
+  background: var(--k-card); color: var(--k-ink); border: 2px solid var(--k-ink); box-shadow: var(--k-shadow);
+  border-radius: 16px; font-family: inherit;
+}
+[data-look='parent'] .f-dock-head { border-bottom: 1px solid var(--p-line); }
+
+@media (max-width: 767px) {
+  .f-dock { inset: 0; width: auto; height: auto; max-height: none; border-radius: 0; border: 0; }
+  .f-dock.k-chat[data-look='parent'] { border-radius: 0; border: 0; box-shadow: none; }
+}
+.f-dock-who { font-size: 13px; font-weight: 500; opacity: 0.7; }
+
+/* message actions: a pill on the bubble's upper-right edge (Teams-style), shown on hover,
+   focus-within, long-press, or while a reaction menu is open; data-low moves it to the bottom
+   edge when the column would clip it. --msg-pad-* = bubble padding. */
+.msg-act { position: relative; display: flex; flex-direction: column; gap: 4px; }
+.pc-msg .msg-act { --msg-pad-y: 8px; --msg-pad-x: 12px; }
+.msg-act-tools {
+  position: absolute; z-index: 2; top: calc(-20px - var(--msg-pad-y, 0px)); right: calc(8px - var(--msg-pad-x, 0px));
+  display: flex; align-items: center; gap: 2px; padding: 2px; border-radius: 999px;
+  background: var(--p-card, #fff); border: 1px solid var(--p-line, rgba(128,128,128,.3)); box-shadow: 0 2px 8px rgba(0,0,0,.14);
+  opacity: 0; pointer-events: none; transition: opacity 120ms; white-space: nowrap;
+}
+.msg-act[data-low='true'] .msg-act-tools { top: auto; bottom: calc(-20px - var(--msg-pad-y, 0px)); }
+.msg-act:hover .msg-act-tools, .msg-act:focus-within .msg-act-tools, .msg-act[data-pressed='true'] .msg-act-tools, .msg-act[data-open='true'] .msg-act-tools { opacity: 1; pointer-events: auto; }
+.msg-react-bar { position: relative; display: flex; }
+/* quick row: below the React button, growing left over the bubble (nudged right in JS if needed) */
+.msg-quick {
+  position: absolute; top: calc(100% + 6px); right: 0; display: flex; align-items: center; gap: 2px; padding: 2px;
+  border-radius: 999px; background: var(--p-card, #fff); border: 1px solid var(--p-line, rgba(128,128,128,.3)); box-shadow: 0 2px 8px rgba(0,0,0,.14);
+}
+.msg-act-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 999px; padding: 0; cursor: pointer; background: transparent; color: var(--p-ink, inherit); line-height: 1; }
+.msg-act-btn:hover, .msg-act-btn[aria-expanded='true'] { background: var(--p-soft, rgba(128,128,128,.18)); }
+.msg-act-btn:focus-visible { outline: 2px solid var(--p-ink, currentColor); outline-offset: -2px; }
+.msg-act-btn[data-danger]:hover { background: var(--p-redbg, #fde3e0); color: var(--p-red, #8f1d13); }
+.msg-emoji { font-size: 18px; transition: transform 100ms; }
+.msg-emoji:hover { transform: scale(1.2); background: transparent; }
+@media (prefers-reduced-motion: reduce) { .msg-emoji:hover { transform: none; } }
+.msg-picker { width: 288px; max-width: calc(100vw - 32px); padding: 8px; }
+.msg-pick-scroll { max-height: 240px; overflow-y: auto; margin-top: 8px; }
+.msg-pick-cat { font-size: 11px; font-weight: 600; opacity: .7; margin: 6px 2px 2px; }
+.msg-pick-grid { display: grid; grid-template-columns: repeat(8, 1fr); }
+.msg-pick-cell { font-size: 20px; height: 32px; border: 0; border-radius: 6px; background: transparent; cursor: pointer; padding: 0; }
+.msg-pick-cell:hover, .msg-pick-cell:focus-visible { background: var(--p-soft, rgba(128,128,128,.18)); }
+.msg-pick-none { margin: 8px 2px; font-size: 13px; opacity: .7; }
+/* reaction chips under a bubble */
+.msg-reacts { display: flex; flex-wrap: wrap; gap: 4px; align-self: flex-start; margin-top: -4px; }
+.msg-reacts[data-mine='true'] { align-self: flex-end; justify-content: flex-end; }
+.msg-react { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; border-radius: 999px; cursor: pointer; font: inherit; font-size: 13px; background: var(--p-card, transparent); color: var(--p-ink, inherit); border: 1px solid var(--p-line, rgba(128,128,128,.4)); }
+.msg-react span { font-size: 12px; font-weight: 600; }
+.msg-react[aria-pressed='true'] { background: var(--p-soft, rgba(128,128,128,.18)); border-color: var(--p-ink, currentColor); }
+.msg-react:focus-visible { outline: 2px solid var(--p-ink, currentColor); outline-offset: 1px; }
+.msg-edit { width: 100%; min-width: 220px; resize: none; font: inherit; padding: 6px; border-radius: 8px; border: 1.5px solid currentColor; background: transparent; color: inherit; }
+
+/* typing line (both looks): three dots + who */
+.pc-typing { align-self: flex-start; display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--p-sub, var(--f-sub)); }
+.pc-typing i { display: inline-block; width: 6px; height: 6px; margin-right: 2px; border-radius: 50%; background: currentColor; opacity: .6; animation: pc-dot 1.2s ease-in-out infinite; }
+.pc-typing i:nth-child(2) { animation-delay: .2s; }
+.pc-typing i:nth-child(3) { animation-delay: .4s; }
+@keyframes pc-dot { 0%, 60%, 100% { opacity: .6; transform: none; } 30% { opacity: 1; transform: translateY(-2px); } }
+@media (prefers-reduced-motion: reduce) { .pc-typing i { animation: none; } }
+
+/* @mention: bold name; menu = solid popover card (2px ink border, sticker shadow) above the composer */
+.pc-mention { font-weight: 700; }
+.pc-reply { position: relative; }
+.pc-mentions {
+  position: absolute; left: 8px; bottom: calc(100% + 6px); z-index: 5; min-width: 180px; max-height: 220px; overflow-y: auto;
+  margin: 0; padding: 4px; list-style: none; border-radius: 12px;
+  background: var(--p-card, var(--f-card)); color: var(--p-ink, var(--f-ink));
+  border: 2px solid var(--p-ink, var(--f-ink)); box-shadow: 3px 3px 0 var(--p-acc, var(--f-sun));
+}
+.pc-mentions li { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.pc-mentions li[aria-selected='true'], .pc-mentions li:hover { background: var(--p-soft, var(--f-line)); }
+.pc-mentions-av { width: 24px; height: 24px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--p-acc, var(--f-sun)); color: #292928; font-size: 12px; font-weight: 700; }
+
+/* quick replies row (parent): pills; the Approve chip is an accent fill with ink text */
+.pc-qr { flex: none; display: flex; flex-wrap: wrap; gap: 6px; margin: 0 12px 8px; }
+.pc-qr button {
+  display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 999px; cursor: pointer;
+  font: inherit; font-size: 12px; color: var(--p-ink); background: var(--p-card); border: 1px solid var(--p-line);
+}
+.pc-qr button:hover { border-color: var(--p-ink); }
+.pc-qr button[data-ok] { background: var(--p-acc); border-color: var(--p-acc); color: #292928; font-weight: 700; }
+.pc-qr button:focus-visible { outline: 2px solid var(--p-ink); outline-offset: 1px; }
+.pc-qre { display: flex; flex-direction: column; gap: 6px; margin: 0 0 12px; padding: 0; list-style: none; }
+.pc-qre li { display: flex; align-items: center; gap: 2px; }
+.pc-qre li input { flex: 1; min-width: 0; margin-right: 4px; }
+.pc-qre .pc-ib:disabled { opacity: .35; cursor: default; }
+.pc-qre-add { display: flex; gap: 8px; margin-bottom: 16px; }
+.pc-qre-add input { flex: 1; min-width: 0; }
+/* Kid dock composer: compact sticker buttons so the message box keeps its room */
+.f-dock.k-chat form.f-row { gap: 6px; background: var(--k-card) !important; }
+.f-dock.k-chat form.f-row .mantine-Button-root { padding: 0 10px; min-width: 0; flex: none; }
+.f-dock.k-chat form.f-row textarea {
+  background: var(--k-soft); color: var(--k-ink); border: 1.5px solid var(--k-line); border-radius: 12px;
+  min-height: 36px; box-sizing: border-box;
+}
+.f-dock.k-chat form.f-row textarea::placeholder { color: var(--k-sub); }
