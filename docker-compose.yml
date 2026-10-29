@@ -21,8 +21,6 @@ services:
     environment:
       <<: *common-env
       DATA_DIR: /app/data
-      DISABLE_RATE_LIMITING: ${DISABLE_RATE_LIMITING:-false}
-      DISABLE_LOGIN_RATE_LIMIT: ${DISABLE_LOGIN_RATE_LIMIT:-true}
       # Same token as the blocker (the backend would otherwise generate its own)
       INTERNAL_TOKEN: ${INTERNAL_TOKEN:?set INTERNAL_TOKEN in .env}
       BOX_URL: ${BOX_URL:-}
