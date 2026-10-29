@@ -41,6 +41,51 @@ GUIDE_CHAPTERS = [
 REMOTE_ACCESS_ENTRY = ("remote-access.md", "Remote access (Tailscale)")
 
 
+# Shared page chrome (matches site/index.html)
+FONTS = """  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap">"""
+
+BAR = """    <header class="f-bar">
+      <a href="../" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
+      <nav class="f-bar-buttons" aria-label="Site">
+        <a id="back-to-app" class="f-back" style="display: none;" href="../?from=app">← Back to app</a>
+        <a class="f-nav" aria-current="page" href="index.html">Guide</a>
+        <a class="f-nav" data-wide href="../engineering.html">Engineering</a>
+      </nav>
+    </header>"""
+
+FOOTER = """    <footer class="f-footer">
+      <div class="f-footer-cols">
+        <div>
+          <a href="../" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
+          <p>Chores first, then screens.</p>
+        </div>
+        <div>
+          <h2>t@sk4ce</h2>
+          <ul>
+            <li><a href="https://github.com/sgtslaughta/tskfrce">GitHub</a></li>
+            <li><a href="https://github.com/sgtslaughta/tskfrce/blob/main/LICENSE">GPL-3.0</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Help</h2>
+          <ul>
+            <li><a href="index.html">Start the guide</a></li>
+            <li><a href="06-troubleshooting.html">Troubleshooting</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>For developers</h2>
+          <ul>
+            <li><a href="../engineering.html">Architecture</a></li>
+          </ul>
+        </div>
+      </div>
+      <p class="f-footer-note">t@sk4ce: Chores first, then screens. Free, open-source family software.</p>
+    </footer>"""
+
+
 def ensure_dirs():
     """Create output directories if they don't exist."""
     SITE_OUTPUT.mkdir(parents=True, exist_ok=True)
@@ -158,7 +203,8 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
         ch_url = get_output_filename(ch_file)
         is_active = i == current_idx
         active_class = " active" if is_active else ""
-        chapter_links += f'<a href="{ch_url}" class="guide-chapter-link{active_class}">{ch_title}</a>\n'
+        current = ' aria-current="page"' if is_active else ''
+        chapter_links += f'<a href="{ch_url}" class="guide-chapter-link{active_class}"{current}>{ch_title}</a>\n'
 
     # Build breadcrumb
     breadcrumb = "Guide"
@@ -180,6 +226,7 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{title} — t@sk4ce</title>
   <meta name="description" content="t@sk4ce beginner's guide for parents.">
+{FONTS}
   <link rel="stylesheet" href="../styles.css">
   <link rel="stylesheet" href="../guide.css">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -216,13 +263,7 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
 </head>
 <body>
   <div class="f-shell">
-    <!-- Top bar -->
-    <div class="f-bar">
-      <a href="../" class="f-wordmark">t@sk4ce</a>
-      <div class="f-bar-buttons">
-        <a id="back-to-app" class="f-back" style="display: none;" href="../?from=app">← Back to app</a>
-      </div>
-    </div>
+{BAR}
 
     <main class="guide-layout">
       <!-- Chapter sidebar (desktop) / collapsible (mobile) -->
@@ -243,7 +284,7 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
       <article class="guide-content">
         <div class="guide-content-inner">
           <header class="guide-header">
-            <div style="font-size: 13px; color: var(--f-sub); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 600;">{breadcrumb}</div>
+            <div class="guide-crumb">{breadcrumb}</div>
             <h1>{title}</h1>
           </header>
 
@@ -253,7 +294,7 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
           </div>
 
           <!-- Previous/Next navigation -->
-          <nav class="guide-nav" style="display: flex; gap: 12px; margin-top: 40px; flex-direction: {('row-reverse' if not prev_ch else 'row')};">
+          <nav class="guide-nav" aria-label="Chapters"{' data-first' if not prev_ch else ''}>
             {prev_link}
             {next_link}
           </nav>
@@ -268,28 +309,7 @@ def build_page_html(content_html, title, chapters_list, current_idx, headings):
       </article>
     </main>
 
-    <!-- Footer -->
-    <footer style="background: var(--f-card); border-top: 1px solid var(--f-line); padding: 40px 16px; margin-top: 60px; box-shadow: var(--f-shadow);">
-      <div style="max-width: 960px; margin: 0 auto; display: flex; justify-content: space-between; gap: 40px; flex-wrap: wrap;">
-        <div>
-          <h3 style="font-size: 12px; margin: 0 0 12px 0; text-transform: uppercase; color: var(--f-sub); letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif;">t@sk4ce</h3>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 0; font-family: Inter, system-ui, sans-serif;"><a href="https://github.com/sgtslaughta/tskfrce" style="color: var(--f-sun);">GitHub</a></p>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 8px 0 0 0; font-family: Inter, system-ui, sans-serif;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/LICENSE" style="color: var(--f-sun);">GPL-3.0</a></p>
-        </div>
-        <div>
-          <h3 style="font-size: 12px; margin: 0 0 12px 0; text-transform: uppercase; color: var(--f-sub); letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif;">Help</h3>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 0; font-family: Inter, system-ui, sans-serif;"><a href="index.html" style="color: var(--f-sun);">Start the guide</a></p>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 8px 0 0 0; font-family: Inter, system-ui, sans-serif;"><a href="06-troubleshooting.html" style="color: var(--f-sun);">Troubleshooting</a></p>
-        </div>
-        <div>
-          <h3 style="font-size: 12px; margin: 0 0 12px 0; text-transform: uppercase; color: var(--f-sub); letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif;">For developers</h3>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 0; font-family: Inter, system-ui, sans-serif;"><a href="../engineering.html" style="color: var(--f-sun);">Architecture</a></p>
-        </div>
-      </div>
-      <div style="max-width: 960px; margin: 40px auto 0; padding-top: 20px; border-top: 1px solid var(--f-line); text-align: center; font-size: 12px; color: var(--f-sub); font-family: Inter, system-ui, sans-serif;">
-        <p>t@sk4ce: Chores first, then screens. Free, open-source family software.</p>
-      </div>
-    </footer>
+{FOOTER}
   </div>
 </body>
 </html>
@@ -497,6 +517,7 @@ def build_standalone_page(content_html, title):
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{title} — t@sk4ce</title>
   <meta name="description" content="t@sk4ce beginner's guide for parents.">
+{FONTS}
   <link rel="stylesheet" href="../styles.css">
   <link rel="stylesheet" href="../guide.css">
   <link rel="icon" href="../favicon.svg" type="image/svg+xml">
@@ -526,13 +547,7 @@ def build_standalone_page(content_html, title):
 </head>
 <body>
   <div class="f-shell">
-    <!-- Top bar -->
-    <div class="f-bar">
-      <a href="../" class="f-wordmark">t@sk4ce</a>
-      <div class="f-bar-buttons">
-        <a id="back-to-app" class="f-back" style="display: none;" href="../?from=app">← Back to app</a>
-      </div>
-    </div>
+{BAR}
 
     <main class="guide-layout">
       <!-- Chapter sidebar -->
@@ -546,7 +561,7 @@ def build_standalone_page(content_html, title):
       <article class="guide-content">
         <div class="guide-content-inner">
           <header class="guide-header">
-            <div style="font-size: 13px; color: var(--f-sub); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 600;">{breadcrumb}</div>
+            <div class="guide-crumb">{breadcrumb}</div>
             <h1>{title}</h1>
           </header>
 
@@ -565,28 +580,7 @@ def build_standalone_page(content_html, title):
       </article>
     </main>
 
-    <!-- Footer -->
-    <footer style="background: var(--f-card); border-top: 1px solid var(--f-line); padding: 40px 16px; margin-top: 60px; box-shadow: var(--f-shadow);">
-      <div style="max-width: 960px; margin: 0 auto; display: flex; justify-content: space-between; gap: 40px; flex-wrap: wrap;">
-        <div>
-          <h3 style="font-size: 12px; margin: 0 0 12px 0; text-transform: uppercase; color: var(--f-sub); letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif;">t@sk4ce</h3>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 0; font-family: Inter, system-ui, sans-serif;"><a href="https://github.com/sgtslaughta/tskfrce" style="color: var(--f-sun);">GitHub</a></p>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 8px 0 0 0; font-family: Inter, system-ui, sans-serif;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/LICENSE" style="color: var(--f-sun);">GPL-3.0</a></p>
-        </div>
-        <div>
-          <h3 style="font-size: 12px; margin: 0 0 12px 0; text-transform: uppercase; color: var(--f-sub); letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif;">Help</h3>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 0; font-family: Inter, system-ui, sans-serif;"><a href="index.html" style="color: var(--f-sun);">Start the guide</a></p>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 8px 0 0 0; font-family: Inter, system-ui, sans-serif;"><a href="06-troubleshooting.html" style="color: var(--f-sun);">Troubleshooting</a></p>
-        </div>
-        <div>
-          <h3 style="font-size: 12px; margin: 0 0 12px 0; text-transform: uppercase; color: var(--f-sub); letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif;">For developers</h3>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 0; font-family: Inter, system-ui, sans-serif;"><a href="../engineering.html" style="color: var(--f-sun);">Architecture</a></p>
-        </div>
-      </div>
-      <div style="max-width: 960px; margin: 40px auto 0; padding-top: 20px; border-top: 1px solid var(--f-line); text-align: center; font-size: 12px; color: var(--f-sub); font-family: Inter, system-ui, sans-serif;">
-        <p>t@sk4ce: Chores first, then screens. Free, open-source family software.</p>
-      </div>
-    </footer>
+{FOOTER}
   </div>
 </body>
 </html>

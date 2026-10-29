@@ -5,24 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>t@sk4ce — Engineering overview</title>
   <meta name="description" content="Architecture, data model, and security notes for t@sk4ce contributors.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
   <div class="f-shell">
-    <!-- Top bar -->
-    <div class="f-bar">
-      <a href="./" class="f-wordmark">t@sk4ce</a>
-      <div class="f-bar-buttons">
-        <a href="./" class="f-back">← Back to home</a>
-      </div>
-    </div>
+    <header class="f-bar">
+      <a href="./" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
+      <nav class="f-bar-buttons" aria-label="Site">
+        <a class="f-nav" href="guide/">Guide</a>
+        <a class="f-nav" aria-current="page" data-wide href="engineering.html">Engineering</a>
+        <a class="f-back" href="./">← Back to home</a>
+      </nav>
+    </header>
 
     <main class="f-main">
       <!-- Hero -->
-      <section class="hero" style="padding-top: 40px; padding-bottom: 0;">
+      <section class="page-head">
         <h1>Engineering overview</h1>
-        <p class="description" style="color: var(--f-sub); margin-top: 0;">For contributors and technical readers. Parents: <a href="./">back to the main site</a>.</p>
+        <p class="description">For contributors and technical readers. Parents: <a href="./">back to the main site</a>.</p>
       </section>
 
       <!-- Architecture -->
@@ -30,17 +34,17 @@
         <h2>Architecture</h2>
         <p>t@sk4ce runs on a Linux computer in your home and works with any router. Here's the system layout:</p>
 
-        <svg viewBox="0 0 800 400" style="width: 100%; max-width: 800px; margin: 20px 0; border-radius: 8px; background: var(--f-field); padding: 16px; box-shadow: var(--f-shadow);">
+        <svg viewBox="0 0 800 400" style="width: 100%; max-width: 800px; margin: 20px 0; border-radius: 16px; background: var(--p-soft); padding: 16px; border: 1px solid var(--p-line);">
           <defs>
             <style>
-              .arch-text { font-family: 'Space Grotesk', sans-serif; font-size: 13px; fill: var(--f-ink); }
-              .arch-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: var(--f-sub); }
-              .arch-box { stroke: var(--f-edge); stroke-width: 1.5; fill: var(--f-card); }
-              .arch-line { stroke: var(--f-sub); stroke-width: 1.5; }
-              .arch-arrow { fill: none; stroke: var(--f-sub); stroke-width: 1.5; marker-end: url(#arrowhead); }
+              .arch-text { font-family: 'DM Sans', sans-serif; font-size: 13px; fill: var(--p-ink); }
+              .arch-label { font-family: ui-monospace, monospace; font-size: 11px; fill: var(--p-sub); }
+              .arch-box { stroke: var(--p-line); stroke-width: 1.5; fill: var(--p-card); }
+              .arch-line { stroke: var(--p-sub); stroke-width: 1.5; }
+              .arch-arrow { fill: none; stroke: var(--p-sub); stroke-width: 1.5; marker-end: url(#arrowhead); }
             </style>
             <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-              <polygon points="0 0, 10 3, 0 6" fill="var(--f-sub)" />
+              <polygon points="0 0, 10 3, 0 6" fill="var(--p-sub)" />
             </marker>
           </defs>
 
@@ -104,7 +108,7 @@
         </svg>
 
         <p><strong>Key loops:</strong></p>
-        <ul style="color: var(--f-sub);">
+        <ul style="color: var(--p-sub);">
           <li><strong>Lock loop</strong> (backend, every 30 seconds): Decides which devices should be blocked based on chore completion, time windows, and overrides. Pushes the blocked MAC list to the blocker.</li>
           <li><strong>Reconcile</strong> (blocker, continuous): Pulls the blocked MAC list from the backend and applies ARP/NDP redirects and firewall rules. Sends device discoveries and resistance signals back.</li>
           <li><strong>Heartbeat</strong>: The blocker calls the backend every 30 seconds. If the backend doesn't hear from the blocker for 90 seconds, the app shows a "box offline" banner.</li>
@@ -116,18 +120,18 @@
         <h2>Enforcement model and limits</h2>
         <p>The blocker redirects a blocked device's traffic using ARP (IPv4) and NDP (IPv6), then drops internet-bound packets with nftables and serves a captive portal. <strong>It fails open:</strong> if the box dies, devices return online.</p>
 
-        <div class="f-card" style="border-left: 4px solid var(--f-green);">
-          <h3 style="margin-top: 0;">What it does</h3>
-          <ul style="margin: 0; color: var(--f-sub);">
+        <div class="f-card">
+          <h3 style="margin-top: 0;"><span class="p-chip" data-tone="acc">Does</span> What it does</h3>
+          <ul style="margin: 0; color: var(--p-sub);">
             <li>Blocks/unblocks devices in seconds, based on real-time policy decisions.</li>
             <li>Watches for devices trying to work around it (hotspots, changing network settings) and flags them as "resisting."</li>
             <li>Works with IPv4 and IPv6.</li>
           </ul>
         </div>
 
-        <div class="f-card" style="border-left: 4px solid var(--f-red); margin-top: 12px;">
-          <h3 style="margin-top: 0;">What it doesn't do</h3>
-          <ul style="margin: 0; color: var(--f-sub);">
+        <div class="f-card" style="margin-top: 12px;">
+          <h3 style="margin-top: 0;"><span class="p-chip" data-tone="red">Doesn't</span> What it doesn't do</h3>
+          <ul style="margin: 0; color: var(--p-sub);">
             <li>Block cellular hotspots or devices not on your home network.</li>
             <li>Defeat routers with ARP inspection or client isolation (rare, but they exist).</li>
             <li>Stop a determined kid with another device, a laptop on a different network, or a hotspot from a friend.</li>
@@ -135,7 +139,7 @@
           </ul>
         </div>
 
-        <p style="color: var(--f-sub); margin-top: 16px;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/routers.md">See router compatibility list</a> and <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/adr/0001-blocker-enforcement-vs-firewalla.md">technical comparison with other options</a>.</p>
+        <p style="color: var(--p-sub); margin-top: 16px;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/routers.md">See router compatibility list</a> and <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/adr/0001-blocker-enforcement-vs-firewalla.md">technical comparison with other options</a>.</p>
       </section>
 
       <!-- Data model -->
@@ -145,7 +149,7 @@
 
         <div class="f-card">
           <h3 style="margin-top: 0;">Core tables</h3>
-          <ul style="margin: 0; color: var(--f-sub);">
+          <ul style="margin: 0; color: var(--p-sub);">
             <li><strong>chores, chore_steps:</strong> The chore library (reusable templates).</li>
             <li><strong>chore_assignments, assignment_kids:</strong> Who gets which chore and when (daily, weekly, once; individual, race, or team).</li>
             <li><strong>chore_runs, run_kids, run_step_ticks:</strong> Today's work. Runs read the chore title, points, and steps live at render time.</li>
@@ -157,7 +161,7 @@
           </ul>
         </div>
 
-        <p style="color: var(--f-sub); margin-top: 16px;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">Full schema and migration rules</a>.</p>
+        <p style="color: var(--p-sub); margin-top: 16px;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">Full schema and migration rules</a>.</p>
       </section>
 
       <!-- Security notes -->
@@ -165,22 +169,22 @@
         <h2>Security notes</h2>
         <div class="f-card">
           <h3 style="margin-top: 0;">Auth and secrets</h3>
-          <p style="margin: 0; color: var(--f-sub);">JWT bearer tokens for parents and kids. Passwords hashed with bcrypt. Secrets (SECRET_KEY, JWT_SECRET_KEY, INTERNAL_TOKEN) are generated on first boot and stored in DATA_DIR/secrets.json (mode 0600), overridable by env.</p>
+          <p style="margin: 0; color: var(--p-sub);">JWT bearer tokens for parents and kids. Passwords hashed with bcrypt. Secrets (SECRET_KEY, JWT_SECRET_KEY, INTERNAL_TOKEN) are generated on first boot and stored in DATA_DIR/secrets.json (mode 0600), overridable by env.</p>
         </div>
 
         <div class="f-card" style="margin-top: 12px;">
           <h3 style="margin-top: 0;">Kid login</h3>
-          <p style="margin: 0; color: var(--f-sub;">Kids sign in by device IP: the app matches the request IP to a known device and asks for a PIN (if set). Failed tries are rate-limited. IPs come from X-Real-IP only when trusted (the frontend's static address in Docker Compose).</p>
+          <p style="margin: 0; color: var(--p-sub);">Kids sign in by device IP: the app matches the request IP to a known device and asks for a PIN (if set). Failed tries are rate-limited. IPs come from X-Real-IP only when trusted (the frontend's static address in Docker Compose).</p>
         </div>
 
         <div class="f-card" style="margin-top: 12px;">
           <h3 style="margin-top: 0;">Photos</h3>
-          <p style="margin: 0; color: var(--f-sub);">Stored on your box with one-way hashes. Parents can view them; kids can't delete them (parents approve chores, so they decide if a photo counts as proof).</p>
+          <p style="margin: 0; color: var(--p-sub);">Stored on your box with one-way hashes. Parents can view them; kids can't delete them (parents approve chores, so they decide if a photo counts as proof).</p>
         </div>
 
         <div class="f-card" style="margin-top: 12px;">
           <h3 style="margin-top: 0;">Network</h3>
-          <p style="margin: 0; color: var(--f-sub);">The blocker runs with NET_ADMIN and NET_RAW capabilities (host networking). The internal INTERNAL_TOKEN is shared between backend and blocker; they use it for the API calls that control blocking.</p>
+          <p style="margin: 0; color: var(--p-sub);">The blocker runs with NET_ADMIN and NET_RAW capabilities (host networking). The internal INTERNAL_TOKEN is shared between backend and blocker; they use it for the API calls that control blocking.</p>
         </div>
       </section>
 
@@ -190,19 +194,19 @@
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div class="f-card">
             <h3 style="margin-top: 0;">Unit tests</h3>
-            <p style="margin: 0; color: var(--f-sub);">Backend: pytest. Frontend: jest. Blocker: pytest. Run with <code style="background: var(--f-field); padding: 2px 6px; border-radius: 3px;">cd backend && python -m pytest</code>, etc.</p>
+            <p style="margin: 0; color: var(--p-sub);">Backend: pytest. Frontend: jest. Blocker: pytest. Run with <code style="background: var(--p-soft); padding: 2px 6px; border-radius: 3px;">cd backend && python -m pytest</code>, etc.</p>
           </div>
           <div class="f-card">
             <h3 style="margin-top: 0;">Lab</h3>
-            <p style="margin: 0; color: var(--f-sub);">An isolated Docker network with a fake router, fake internet, real backend and blocker, and simulated kid devices. Tests real ARP, nftables, and captive portal journeys. See <a href="https://github.com/sgtslaughta/tskfrce/blob/main/lab/README.md">lab/README.md</a>.</p>
+            <p style="margin: 0; color: var(--p-sub);">An isolated Docker network with a fake router, fake internet, real backend and blocker, and simulated kid devices. Tests real ARP, nftables, and captive portal journeys. See <a href="https://github.com/sgtslaughta/tskfrce/blob/main/lab/README.md">lab/README.md</a>.</p>
           </div>
           <div class="f-card">
             <h3 style="margin-top: 0;">Browser e2e</h3>
-            <p style="margin: 0; color: var(--f-sub);">Playwright tests in the lab. Run with <code style="background: var(--f-field); padding: 2px 6px; border-radius: 3px;">bash scripts/lab.sh e2e</code>.</p>
+            <p style="margin: 0; color: var(--p-sub);">Playwright tests in the lab. Run with <code style="background: var(--p-soft); padding: 2px 6px; border-radius: 3px;">bash scripts/lab.sh e2e</code>.</p>
           </div>
           <div class="f-card">
             <h3 style="margin-top: 0;">CI</h3>
-            <p style="margin: 0; color: var(--f-sub);">GitHub Actions runs linting, all unit tests, lab e2e, and a security scan before each push. Keep the checks green.</p>
+            <p style="margin: 0; color: var(--p-sub);">GitHub Actions runs linting, all unit tests, lab e2e, and a security scan before each push. Keep the checks green.</p>
           </div>
         </div>
       </section>
@@ -211,7 +215,7 @@
       <section>
         <h2>Contributing</h2>
         <p>t@sk4ce is open source (GPL-3.0) and welcomes contributions:</p>
-        <ul style="color: var(--f-sub);">
+        <ul style="color: var(--p-sub);">
           <li><a href="https://github.com/sgtslaughta/tskfrce">GitHub repository</a></li>
           <li><a href="https://github.com/sgtslaughta/tskfrce/blob/main/README.md">Dev setup in the README</a></li>
           <li><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">Full engineering docs</a></li>
@@ -264,40 +268,46 @@
 
         <div class="f-card">
           <h3 style="margin-top: 0;">Built-in badges</h3>
-          <p style="margin: 0; color: var(--f-sub);">Edit <code style="background: var(--f-field); padding: 2px 6px; border-radius: 3px;">backend/app/models/badges.py</code>. Add a new entry with a key, name, icon emoji, and unlock condition. The unlock logic lives in <code style="background: var(--f-field); padding: 2px 6px; border-radius: 3px;">backend/app/badges/</code>.</p>
+          <p style="margin: 0; color: var(--p-sub);">Edit <code style="background: var(--p-soft); padding: 2px 6px; border-radius: 3px;">backend/app/models/badges.py</code>. Add a new entry with a key, name, icon emoji, and unlock condition. The unlock logic lives in <code style="background: var(--p-soft); padding: 2px 6px; border-radius: 3px;">backend/app/badges/</code>.</p>
         </div>
 
         <div class="f-card" style="margin-top: 12px;">
           <h3 style="margin-top: 0;">Custom flair items</h3>
-          <p style="margin: 0; color: var(--f-sub);">Edit <code style="background: var(--f-field); padding: 2px 6px; border-radius: 3px;">backend/app/models/flair.py</code>. Add a slot, name, and item variants (names, colors, rings). Parents unlock flair by spending points or reaching milestones.</p>
+          <p style="margin: 0; color: var(--p-sub);">Edit <code style="background: var(--p-soft); padding: 2px 6px; border-radius: 3px;">backend/app/models/flair.py</code>. Add a slot, name, and item variants (names, colors, rings). Parents unlock flair by spending points or reaching milestones.</p>
         </div>
 
-        <p style="color: var(--f-sub); margin-top: 16px;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">See the full data model and examples</a>.</p>
+        <p style="color: var(--p-sub); margin-top: 16px;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">See the full data model and examples</a>.</p>
       </section>
 
       <!-- Links -->
-      <section style="text-align: center; padding: 40px 0; border-top: 1px solid var(--f-line);">
-        <p style="color: var(--f-sub);">Questions? Check the <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">full engineering docs</a> or open an issue on <a href="https://github.com/sgtslaughta/tskfrce">GitHub</a>.</p>
+      <section style="text-align: center; padding: 40px 0; border-top: 1px solid var(--p-line);">
+        <p style="color: var(--p-sub);">Questions? Check the <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">full engineering docs</a> or open an issue on <a href="https://github.com/sgtslaughta/tskfrce">GitHub</a>.</p>
       </section>
     </main>
 
     <!-- Footer -->
-    <footer>
-      <div class="footer-content">
-        <div class="footer-section">
-          <h3>t@sk4ce</h3>
-          <p><a href="https://github.com/sgtslaughta/tskfrce">GitHub</a></p>
-          <p>Licensed under <a href="https://github.com/sgtslaughta/tskfrce/blob/main/LICENSE">GPL-3.0</a></p>
+    <footer class="f-footer">
+      <div class="f-footer-cols">
+        <div>
+          <a href="./" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
+          <p>Chores first, then screens.</p>
         </div>
-        <div class="footer-section">
-          <h3>Get help</h3>
-          <p><a href="./">Main site</a></p>
-          <p><a href="https://github.com/sgtslaughta/tskfrce/tree/main/docs/guide">User guide</a></p>
+        <div>
+          <h2>t@sk4ce</h2>
+          <ul>
+            <li><a href="https://github.com/sgtslaughta/tskfrce">GitHub</a></li>
+            <li><a href="https://github.com/sgtslaughta/tskfrce/blob/main/LICENSE">GPL-3.0</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Get help</h2>
+          <ul>
+            <li><a href="./">Main site</a></li>
+            <li><a href="guide/">User guide</a></li>
+          </ul>
         </div>
       </div>
-      <div class="footer-bottom">
-        <p>t@sk4ce: Chores first, then screens. Free, open-source family software.</p>
-      </div>
+      <p class="f-footer-note">t@sk4ce: Chores first, then screens. Free, open-source family software.</p>
     </footer>
   </div>
 </body>
