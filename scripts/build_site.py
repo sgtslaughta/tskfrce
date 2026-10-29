@@ -259,15 +259,14 @@ def add_copy_buttons(html):
         prefix = match.group(1)
         code = match.group(2)
         suffix = match.group(3)
-        # Extract plain text from code (remove HTML tags)
-        code_text = re.sub(r"<[^>]+>", "", code)
-        code_text = code_text.replace("&lt;", "<").replace("&gt;", ">").replace("&amp;", "&")
-        # Escape quotes for JavaScript
-        code_text_js = code_text.replace('"', '\\"').replace("\n", "\\n")
+        # Plain text of the code, kept in a data attribute (an inline JS string broke on quotes)
+        code_text = html_lib.unescape(re.sub(r"<[^>]+>", "", code)).strip()
+        attr = html_lib.escape(code_text, quote=True)
         button = (
             f'<div class="code-block-wrapper">'
-            f'<button class="copy-btn" onclick="copyToClipboard(\"{code_text_js}\", this)">📋 Copy</button>'
-            f'{prefix}{code}{suffix}'
+            f'<button class="copy-btn" type="button" data-copy="{attr}" '
+            f'onclick="copyToClipboard(this.dataset.copy, this)">📋 Copy</button>'
+            f"{prefix}{code}{suffix}"
             f"</div>"
         )
         return button
