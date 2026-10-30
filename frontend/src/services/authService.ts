@@ -1,7 +1,6 @@
 /**
- * @fileoverview Authentication Service for TaaskMaaster
+ * @fileoverview Authentication Service
  * @description Service for handling authentication with the backend API
- * @author TaaskMaaster Team
  * @version 1.0.0
  */
 

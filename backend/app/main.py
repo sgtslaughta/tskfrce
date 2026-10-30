@@ -72,7 +72,7 @@ fastapi_app = FastAPI(
 # Add FastAPI middleware
 # Get CORS origins from environment variable
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",")
-trusted_hosts = os.getenv("TRUSTED_HOSTS", "localhost,127.0.0.1,taaskmaaster-backend").split(",")
+trusted_hosts = os.getenv("TRUSTED_HOSTS", "localhost,127.0.0.1,task4ce-backend").split(",")
 
 # Add backend service name for internal Docker communication
 if "backend" not in trusted_hosts:

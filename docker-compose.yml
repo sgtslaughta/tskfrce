@@ -1,4 +1,4 @@
-# Docker Compose configuration for TaaskMaaster
+# Docker Compose configuration
 # Note: version attribute is obsolete in newer Docker Compose versions
 
 # Environment variables with defaults
@@ -15,7 +15,7 @@ services:
       dockerfile: Dockerfile
       args:
         - BUILDKIT_INLINE_CACHE=1
-    container_name: taaskmaaster-backend
+    container_name: task4ce-backend
     ports:
       - "${BACKEND_PORT:-127.0.0.1:8000}:8000"
     environment:
@@ -25,14 +25,14 @@ services:
       INTERNAL_TOKEN: ${INTERNAL_TOKEN:?set INTERNAL_TOKEN in .env}
       BOX_URL: ${BOX_URL:-}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://192.168.1.95:3000}
-      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,192.168.1.95,backend,taaskmaaster-backend}
+      TRUSTED_HOSTS: ${TRUSTED_HOSTS:-localhost,127.0.0.1,192.168.1.95,backend,task4ce-backend}
       # Only the frontend proxy (static IPs below) may set X-Real-IP
       TRUSTED_PROXY_IPS: 127.0.0.1,::1,172.29.40.10,fd00:4ce::10
     volumes:
       - ./backend:/app
       - task4ce_data:/app/data
     networks:
-      - taaskmaaster-network
+      - task4ce-network
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -49,14 +49,14 @@ services:
       args:
         - BUILDKIT_INLINE_CACHE=1
         - NODE_ENV=${NODE_ENV:-development}
-    container_name: taaskmaaster-frontend
+    container_name: task4ce-frontend
     ports:
       - "${FRONTEND_PORT:-0.0.0.0:3000}:3000"
     environment:
       <<: *common-env
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api/proxy}  # Now points to internal proxy
       BACKEND_INTERNAL_URL: http://backend:8000  # Internal Docker network URL
-      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-TaaskMaaster}
+      NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-t@sk4ce}
       NODE_ENV: ${NODE_ENV:-development}
       # WebSocket and HMR configuration
       WATCHPACK_POLLING: true
@@ -70,7 +70,7 @@ services:
       backend:
         condition: service_healthy
     networks:
-      taaskmaaster-network:
+      task4ce-network:
         ipv4_address: 172.29.40.10
         ipv6_address: fd00:4ce::10
     restart: unless-stopped
@@ -89,7 +89,7 @@ services:
     build:
       context: ./blocker
       dockerfile: Dockerfile
-    container_name: taaskmaaster-blocker
+    container_name: task4ce-blocker
     # Host networking + only the two caps needed for L2 work; never privileged
     network_mode: host
     cap_add:
@@ -106,17 +106,17 @@ services:
   # PostgreSQL (optional, for production)
   # postgres:
   #   image: postgres:15-alpine
-  #   container_name: taaskmaaster-postgres
+  #   container_name: task4ce-postgres
   #   ports:
   #     - "5432:5432"
   #   environment:
-  #     - POSTGRES_DB=taaskmaaster
-  #     - POSTGRES_USER=taaskmaaster
-  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-taaskmaaster123}
+  #     - POSTGRES_DB=task4ce
+  #     - POSTGRES_USER=task4ce
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-change-me}
   #   volumes:
   #     - postgres_data:/var/lib/postgresql/data
   #   networks:
-  #     - taaskmaaster-network
+  #     - task4ce-network
   #   restart: unless-stopped
   #   profiles:
   #     - production
@@ -127,7 +127,7 @@ volumes:
   # postgres_data:  # Commented out since postgres is disabled
 
 networks:
-  taaskmaaster-network:
+  task4ce-network:
     driver: bridge
     # Internal network - containers can communicate but external access is limited
     internal: false

@@ -8,10 +8,10 @@ Carried forward from the Plan 1 build ledger. Plan 1 is complete on feat/v2-core
 - Task 2: minor (deferred): pyproject [tool.bandit]/[tool.mypy] stale paths; CI lint installs full reqs
 - Task 2: minor (deferred): mention_service.get_mentionable_users references nonexistent User.first_name/last_name — broken legacy; fix or delete in 7A
 - Task 2: minor (deferred): pytest floor lowered to >=7.4.0 to match pinned 7.4.3
-- Task 3: minor (deferred→T6): config DATABASE_URL default still taaskmaaster.db
+- Task 3: minor (deferred→T6): config DATABASE_URL default still used the old pre-v2 name
 - Task 4+5: minor (deferred): orphan file on failed DB commit in create/delete_media_attachment; dup validate_file_upload noqa F811; LocalStorage.stats unused; traversal URL test may not hit ValueError path
 - Task 4+5: minor (deferred→7A): upload_file still current_user_id=1 unauth; get_file no ownership check; Content-Length precheck after spool (cosmetic)
-- Task 6: minor (deferred→Plan 4 docs): .env.example/README still say TaaskMaaster
+- Task 6: minor (deferred→Plan 4 docs): .env.example/README still use the old pre-v2 name
 - Note→7A: auth.py signs with PyJWT, deps.py decodes with python-jose — unify on one lib (PyJWT) and drop python-jose
 - Task 6: minor (deferred→Plan 4 docs): old host ./data orphaned by named volume; dev ./backend:/app overlay
 - Note→7B: global 404 handler in main.py overwrites HTTPException detail with 'Endpoint not found' — only replace for unmatched routes

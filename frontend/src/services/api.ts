@@ -1,7 +1,6 @@
 /**
- * @fileoverview API Service Configuration for TaaskMaaster
+ * @fileoverview API Service Configuration
  * @description Main API service setup with enhanced token management and error handling
- * @author TaaskMaaster Team
  * @version 1.0.0
  */
 

@@ -1,7 +1,6 @@
 /**
- * @fileoverview HTTP Interceptor for TaaskMaaster
+ * @fileoverview HTTP Interceptor
  * @description Enhanced HTTP interceptor with robust token management, retry logic, and error handling
- * @author TaaskMaaster Team
  * @version 1.0.0
  */
 

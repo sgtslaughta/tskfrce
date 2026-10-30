@@ -8,4 +8,4 @@ secret:
     - name: v1 MinIO dev default
       match: minioadmin123
   ignored-paths:
-    - taaskmaaster.db
+    - task4ce.db

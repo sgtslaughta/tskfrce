@@ -1,7 +1,6 @@
 /**
- * @fileoverview Token Manager for TaaskMaaster
+ * @fileoverview Token Manager
  * @description Centralized, secure token management with automatic refresh, validation, and cleanup
- * @author TaaskMaaster Team
  * @version 1.0.0
  */
 

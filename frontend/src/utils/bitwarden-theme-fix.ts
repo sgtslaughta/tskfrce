@@ -1,7 +1,6 @@
 /**
  * @fileoverview Bitwarden Theme Fix Utility
  * @description Intercepts Bitwarden iframe creation to force dark theme
- * @author TaaskMaaster Team
  * @version 1.0.0
  */
 

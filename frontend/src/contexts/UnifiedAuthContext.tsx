@@ -1,7 +1,6 @@
 /**
- * @fileoverview Unified Authentication Context for TaaskMaaster
+ * @fileoverview Unified Authentication Context
  * @description Centralized authentication state with synchronized token management
- * @author TaaskMaaster Team  
  * @version 2.0.0
  */
 
