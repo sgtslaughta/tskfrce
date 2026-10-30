@@ -13,7 +13,7 @@ Changing the device's own network settings usually doesn't get around the block,
   - **Success — the device lost internet access while blocked.**
   - **The device is trying to get around the block. The box is still stopping it, but someone may have changed its network settings.**
   - **We couldn't see this device use the internet during the test. Open a video on it and test again. If you see this again, your router may be stopping the box — check the router list in the docs.** See [routers.md](routers.md) for routers that resist blocking.
-- **Getting-around alert.** If a paused device keeps reaching the internet, you get a notification titled "<device> is getting around the block", and the device shows a "getting around the block" badge on the Devices page. The badge clears on its own once the device stops reaching the internet while paused, or once you unpause it.
+- **Getting-around alert.** If a paused device keeps reaching the internet, you get a notification titled "<device> got around the lock", and the device shows a "got around the lock" badge on the Devices page. The badge clears on its own once the device stops reaching the internet while paused, or once you unpause it.
 
 Some routers, especially certain mesh systems (e.g. some Eero or Google Wifi models), resist blocking. See the [router compatibility list](routers.md) and press "Test block" to find out if yours works.
 
@@ -42,9 +42,4 @@ It fails open: if the box is off or unplugged, all devices get their internet ba
 
 ## Setup
 
-The parent-friendly steps are in the [install guide](guide/02-install.md). In short:
-
-1. Put `INTERNAL_TOKEN=temporary` and `LAN_IFACE=<your network name, for example eth0>` in a `.env` file next to `docker-compose.yml` (compose refuses to run without a token).
-2. Start the app: `docker compose up -d --build backend frontend`. On its first start the app makes a secret code (the internal token) so the app and the box can trust each other, and stores it in `secrets.json` in its data folder.
-3. Read it with `docker compose exec backend python -c "import json; print(json.load(open('/app/data/secrets.json'))['INTERNAL_TOKEN'])"` and put it in `.env` in place of `temporary`.
-4. Run `docker compose up -d blocker`. The box needs Linux (it uses host networking).
+The install line sets this up for you, including the secret code the app and the box share. The steps are in the [install guide](guide/02-install.md). The box needs Linux, because it uses host networking. If you skipped it during install, add `COMPOSE_PROFILES=blocker` to the `.env` file and run `docker compose -f docker-compose.prod.yml up -d`.

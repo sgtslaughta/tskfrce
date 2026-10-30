@@ -8,7 +8,7 @@ This is a small computer that stays on all the time. It runs t@sk4ce and pauses 
 
 Good choices:
 
-- **A Raspberry Pi 4 or 5** (best). Small, cheap and uses very little power. Get one with at least 2 GB of memory, a power supply, a memory card (32 GB or more) and a network cable.
+- **A Raspberry Pi 4 or 5** (best). Small, cheap and uses very little power. Get one with 4 GB of memory or more (the first install builds the app on the box, and 2 GB can run out), a power supply, a memory card (32 GB or more) and a network cable.
 - **An old computer that runs Linux** and can stay on all day.
 
 The box must run **Linux** to pause the internet. A Windows PC or a Mac can show you the app, but it cannot pause anything.
@@ -17,7 +17,7 @@ The box must run **Linux** to pause the internet. A Windows PC or a Mac can show
 
 ## 2. An ordinary home router
 
-Any normal router from your internet company works. A few kinds, mostly "mesh" Wi-Fi systems, can stop the box from doing its job. See the [router list](../routers.md). You can also just try it: setup includes a "Test block" button that tells you if it works.
+Any normal router from your internet company works. A few kinds, mostly "mesh" Wi-Fi systems, can stop the box from doing its job. See the [router list](../routers.md). You can also just try it: after setup, the **Test block** button on each device tells you if it works.
 
 ## 3. Your kids' devices on your home Wi-Fi
 

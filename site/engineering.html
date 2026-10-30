@@ -5,204 +5,199 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>t@sk4ce — Engineering overview</title>
   <meta name="description" content="Architecture, data model, and security notes for t@sk4ce contributors.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="styles.css">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
 </head>
 <body>
   <div class="f-shell">
-    <!-- Top bar -->
-    <div class="f-bar">
-      <a href="./" class="f-wordmark">t@sk4ce</a>
-      <div class="f-bar-buttons">
-        <a href="./" class="f-back">← Back to home</a>
-      </div>
-    </div>
+    <header class="f-bar">
+      <a href="./" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
+      <nav class="f-bar-buttons" aria-label="Site">
+        <a class="f-nav" href="guide/">Guide</a>
+        <a class="f-nav" aria-current="page" data-wide href="engineering.html">Engineering</a>
+        <a class="f-back" href="./">← Back to home</a>
+      </nav>
+    </header>
 
     <main class="f-main">
-      <!-- Hero -->
-      <section class="hero" style="padding-top: 40px; padding-bottom: 0;">
+      <section class="page-head">
         <h1>Engineering overview</h1>
-        <p class="description" style="color: var(--f-sub); margin-top: 0;">For contributors and technical readers. Parents: <a href="./">back to the main site</a>.</p>
+        <p class="description">For contributors and technical readers. Parents: <a href="guide/">the guide</a> is for you.</p>
       </section>
 
       <!-- Architecture -->
       <section>
         <h2>Architecture</h2>
-        <p>t@sk4ce runs on a Linux computer in your home and works with any router. Here's the system layout:</p>
+        <p>Everything runs on one Linux computer in the home, next to an ordinary router. Four containers: the web app, the API, a small ntfy server for kids' phones, and the blocker on the host network.</p>
+        <figure class="arch f-card">
+          <div class="arch-scroll" tabindex="0" role="region" aria-label="Architecture diagram (scrolls sideways on small screens)">
+            <svg viewBox="0 0 720 430" role="img" aria-labelledby="arch-title arch-desc">
+              <title id="arch-title">t@sk4ce architecture</title>
+              <desc id="arch-desc">Parent and kid browsers talk to the Next.js frontend, which proxies to the FastAPI backend with its SQLite database. The backend pushes kid alerts to ntfy and the list of blocked devices to the blocker. The blocker reports seen and resisting devices back, and redirects paused devices away from the home router with ARP and NDP.</desc>
+              <defs>
+                <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+                  <path d="M0 0 L8 4 L0 8 z" class="arch-head"/>
+                </marker>
+              </defs>
+              <!-- clients and router -->
+              <rect x="20" y="20" width="120" height="50" rx="10" class="arch-box"/>
+              <text x="80" y="43" class="arch-t">Parent</text><text x="80" y="60" class="arch-s">browser</text>
+              <rect x="160" y="20" width="120" height="50" rx="10" class="arch-box"/>
+              <text x="220" y="43" class="arch-t">Kid</text><text x="220" y="60" class="arch-s">browser</text>
+              <rect x="300" y="20" width="140" height="50" rx="10" class="arch-box"/>
+              <text x="370" y="43" class="arch-t">Kid phone</text><text x="370" y="60" class="arch-s">ntfy app</text>
+              <rect x="560" y="20" width="140" height="50" rx="10" class="arch-box arch-acc"/>
+              <text x="630" y="50" class="arch-t arch-on">Home router</text>
 
-        <svg viewBox="0 0 800 400" style="width: 100%; max-width: 800px; margin: 20px 0; border-radius: 8px; background: var(--f-field); padding: 16px; box-shadow: var(--f-shadow);">
-          <defs>
-            <style>
-              .arch-text { font-family: 'Space Grotesk', sans-serif; font-size: 13px; fill: var(--f-ink); }
-              .arch-label { font-family: 'JetBrains Mono', monospace; font-size: 11px; fill: var(--f-sub); }
-              .arch-box { stroke: var(--f-edge); stroke-width: 1.5; fill: var(--f-card); }
-              .arch-line { stroke: var(--f-sub); stroke-width: 1.5; }
-              .arch-arrow { fill: none; stroke: var(--f-sub); stroke-width: 1.5; marker-end: url(#arrowhead); }
-            </style>
-            <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
-              <polygon points="0 0, 10 3, 0 6" fill="var(--f-sub)" />
-            </marker>
-          </defs>
+              <!-- home box -->
+              <rect x="20" y="110" width="680" height="305" rx="14" class="arch-group"/>
+              <text x="36" y="402" class="arch-g">Home box (Linux)</text>
+              <rect x="40" y="150" width="190" height="50" rx="10" class="arch-box"/>
+              <text x="135" y="172" class="arch-t">Next.js :3000</text><text x="135" y="189" class="arch-s">pages, /api/proxy</text>
+              <rect x="40" y="225" width="190" height="60" rx="10" class="arch-box"/>
+              <text x="135" y="248" class="arch-t">FastAPI :8000</text><text x="135" y="265" class="arch-s">lock loop, Apprise</text>
+              <rect x="40" y="320" width="190" height="50" rx="10" class="arch-box"/>
+              <text x="135" y="342" class="arch-t">SQLite + uploads</text><text x="135" y="359" class="arch-s">DATA_DIR volume</text>
+              <rect x="270" y="150" width="150" height="50" rx="10" class="arch-box"/>
+              <text x="345" y="172" class="arch-t">ntfy :2586</text><text x="345" y="189" class="arch-s">kid alerts</text>
 
-          <!-- Clients -->
-          <rect x="20" y="20" width="80" height="60" class="arch-box" rx="4"/>
-          <text x="60" y="50" class="arch-text" text-anchor="middle" font-weight="700">Parent</text>
-          <text x="60" y="65" class="arch-label" text-anchor="middle">browser</text>
+              <!-- blocker -->
+              <rect x="460" y="145" width="225" height="255" rx="12" class="arch-group"/>
+              <text x="474" y="166" class="arch-g">Blocker (host network)</text>
+              <rect x="475" y="178" width="195" height="44" rx="8" class="arch-box"/>
+              <text x="572" y="197" class="arch-t">Discovery</text><text x="572" y="213" class="arch-s">ARP/NDP scan</text>
+              <rect x="475" y="230" width="195" height="44" rx="8" class="arch-box"/>
+              <text x="572" y="249" class="arch-t">Redirect</text><text x="572" y="265" class="arch-s">ARP/NDP, both ways</text>
+              <rect x="475" y="282" width="195" height="44" rx="8" class="arch-box"/>
+              <text x="572" y="301" class="arch-t">nftables drop</text><text x="572" y="317" class="arch-s">+ resistance detector</text>
+              <rect x="475" y="334" width="195" height="44" rx="8" class="arch-box"/>
+              <text x="572" y="353" class="arch-t">Captive portal</text><text x="572" y="369" class="arch-s">DNS :53, HTTP :80</text>
 
-          <rect x="120" y="20" width="80" height="60" class="arch-box" rx="4"/>
-          <text x="160" y="50" class="arch-text" text-anchor="middle" font-weight="700">Kid</text>
-          <text x="160" y="65" class="arch-label" text-anchor="middle">browser</text>
+              <!-- arrows -->
+              <path d="M80 70 L120 148" class="arch-line"/>
+              <path d="M220 70 L150 148" class="arch-line"/>
+              <path d="M370 70 L350 148" class="arch-line"/>
+              <path d="M135 200 L135 223" class="arch-line"/>
+              <path d="M135 285 L135 318" class="arch-line"/>
+              <path d="M230 240 L300 202" class="arch-line"/>
+              <path d="M230 262 L458 262" class="arch-line"/>
+              <text x="244" y="256" class="arch-l">blocked MACs (30 s + on change)</text>
+              <path d="M458 290 L232 290" class="arch-line"/>
+              <text x="244" y="306" class="arch-l">seen, resisting, heartbeat</text>
+              <path d="M600 145 L620 72" class="arch-line arch-dash"/>
+              <text x="628" y="100" class="arch-l">spoofs gateway</text>
+            </svg>
+          </div>
+          <figcaption class="arch-hint">Scroll sideways to see the whole diagram.</figcaption>
+        </figure>
 
-          <!-- Home Box -->
-          <rect x="20" y="120" width="180" height="240" class="arch-box" rx="4" fill="none" stroke-dasharray="5,5"/>
-          <text x="30" y="140" class="arch-text" font-weight="700">Home box (Linux)</text>
-
-          <!-- Frontend -->
-          <rect x="30" y="155" width="160" height="50" class="arch-box" rx="4"/>
-          <text x="110" y="175" class="arch-text" text-anchor="middle" font-weight="700">Next.js frontend</text>
-          <text x="110" y="190" class="arch-label" text-anchor="middle">:3000</text>
-
-          <!-- Backend -->
-          <rect x="30" y="220" width="160" height="50" class="arch-box" rx="4"/>
-          <text x="110" y="240" class="arch-text" text-anchor="middle" font-weight="700">FastAPI backend</text>
-          <text x="110" y="255" class="arch-label" text-anchor="middle">:8000</text>
-
-          <!-- Database -->
-          <rect x="30" y="285" width="160" height="50" class="arch-box" rx="4"/>
-          <text x="110" y="305" class="arch-text" text-anchor="middle" font-weight="700">SQLite + uploads</text>
-          <text x="110" y="320" class="arch-label" text-anchor="middle">DATA_DIR volume</text>
-
-          <!-- Blocker -->
-          <rect x="220" y="120" width="160" height="240" class="arch-box" rx="4" fill="none" stroke-dasharray="5,5"/>
-          <text x="230" y="140" class="arch-text" font-weight="700">Blocker (host network)</text>
-
-          <rect x="230" y="155" width="140" height="40" class="arch-box" rx="4"/>
-          <text x="300" y="175" class="arch-text" text-anchor="middle" font-weight="700">ARP/NDP</text>
-          <text x="300" y="190" class="arch-label" text-anchor="middle">redirection</text>
-
-          <rect x="230" y="210" width="140" height="40" class="arch-box" rx="4"/>
-          <text x="300" y="230" class="arch-text" text-anchor="middle" font-weight="700">nftables</text>
-          <text x="300" y="245" class="arch-label" text-anchor="middle">firewall</text>
-
-          <rect x="230" y="265" width="140" height="50" class="arch-box" rx="4"/>
-          <text x="300" y="285" class="arch-text" text-anchor="middle" font-weight="700">Captive portal</text>
-          <text x="300" y="300" class="arch-label" text-anchor="middle">DNS/HTTP</text>
-
-          <!-- Router -->
-          <rect x="420" y="20" width="100" height="60" class="arch-box" rx="4"/>
-          <text x="470" y="50" class="arch-text" text-anchor="middle" font-weight="700">Home router</text>
-
-          <!-- Connections -->
-          <path d="M 60 80 L 110 155" class="arch-arrow"/>
-          <path d="M 160 80 L 110 155" class="arch-arrow"/>
-          <path d="M 110 205 L 110 220" class="arch-arrow"/>
-          <path d="M 110 270 L 110 285" class="arch-arrow"/>
-          <path d="M 190 180 L 220 180" class="arch-arrow"/>
-          <text x="205" y="170" class="arch-label">state push (30s)</text>
-          <path d="M 300 120 L 300 100 L 470 80" class="arch-arrow" stroke-dasharray="5,5"/>
-          <text x="350" y="95" class="arch-label">traffic spoofing</text>
-        </svg>
-
-        <p><strong>Key loops:</strong></p>
-        <ul style="color: var(--f-sub);">
-          <li><strong>Lock loop</strong> (backend, every 30 seconds): Decides which devices should be blocked based on chore completion, time windows, and overrides. Pushes the blocked MAC list to the blocker.</li>
-          <li><strong>Reconcile</strong> (blocker, continuous): Pulls the blocked MAC list from the backend and applies ARP/NDP redirects and firewall rules. Sends device discoveries and resistance signals back.</li>
-          <li><strong>Heartbeat</strong>: The blocker calls the backend every 30 seconds. If the backend doesn't hear from the blocker for 90 seconds, the app shows a "box offline" banner.</li>
+        <h3>Key loops</h3>
+        <ul>
+          <li><strong>Lock loop</strong> (backend, every 30 seconds, and at once after a change): decides which devices are blocked from chores, hours and manual locks, and pushes the blocked MAC list to the blocker.</li>
+          <li><strong>Reconcile</strong> (blocker): every 30 seconds it pulls the same list, maps MACs to current IPv4 and IPv6 addresses and applies the redirects and firewall rules. It holds no policy of its own.</li>
+          <li><strong>Reports</strong>: the blocker sends devices it sees every 20 seconds and resisting devices every 15 seconds. These calls double as a heartbeat: after 90 seconds without one, the app shows "Home box offline".</li>
         </ul>
       </section>
 
       <!-- Enforcement model -->
       <section>
         <h2>Enforcement model and limits</h2>
-        <p>The blocker redirects a blocked device's traffic using ARP (IPv4) and NDP (IPv6), then drops internet-bound packets with nftables and serves a captive portal. <strong>It fails open:</strong> if the box dies, devices return online.</p>
-
-        <div class="f-card" style="border-left: 4px solid var(--f-green);">
-          <h3 style="margin-top: 0;">What it does</h3>
-          <ul style="margin: 0; color: var(--f-sub);">
-            <li>Blocks/unblocks devices in seconds, based on real-time policy decisions.</li>
-            <li>Watches for devices trying to work around it (hotspots, changing network settings) and flags them as "resisting."</li>
-            <li>Works with IPv4 and IPv6.</li>
+        <p>The blocker puts itself between a paused device and the router with ARP (IPv4) and NDP (IPv6), in both directions, drops internet-bound packets with nftables and answers web requests with a captive portal. <strong>It fails open:</strong> if the box or the blocker stops, devices return online.</p>
+        <div class="f-card">
+          <h3><span class="p-chip" data-tone="acc">Does</span> What it does</h3>
+          <ul>
+            <li>Pauses and unpauses devices within seconds of a decision.</li>
+            <li>Flags a paused device that keeps reaching the internet (for example after its network settings change) as resisting, and alerts parents.</li>
+            <li>Works over IPv4 and IPv6.</li>
           </ul>
         </div>
-
-        <div class="f-card" style="border-left: 4px solid var(--f-red); margin-top: 12px;">
-          <h3 style="margin-top: 0;">What it doesn't do</h3>
-          <ul style="margin: 0; color: var(--f-sub);">
-            <li>Block cellular hotspots or devices not on your home network.</li>
-            <li>Defeat routers with ARP inspection or client isolation (rare, but they exist).</li>
-            <li>Stop a determined kid with another device, a laptop on a different network, or a hotspot from a friend.</li>
-            <li>Prevent the box itself from being turned off or unplugged.</li>
+        <div class="f-card">
+          <h3><span class="p-chip" data-tone="red">Doesn't</span> What it doesn't do</h3>
+          <ul>
+            <li>Control phones on mobile data or a hotspot, or devices on another network.</li>
+            <li>Get past routers with ARP inspection or client isolation (rare, but they exist).</li>
+            <li>Stop a kid who uses a device you haven't set up.</li>
+            <li>Stop someone unplugging the box.</li>
           </ul>
         </div>
-
-        <p style="color: var(--f-sub); margin-top: 16px;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/routers.md">See router compatibility list</a> and <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/adr/0001-blocker-enforcement-vs-firewalla.md">technical comparison with other options</a>.</p>
+        <p class="eng-more"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/routers.md">Router compatibility</a> · <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/adr/0001-blocker-enforcement-vs-firewalla.md">Why this design (ADR 0001)</a></p>
       </section>
 
       <!-- Data model -->
       <section>
         <h2>Data model</h2>
-        <p>All data is stored in SQLite on your home box, with foreign keys and CHECK constraints to enforce integrity.</p>
-
+        <p>SQLite on the home box, defined in <code>backend/app/models/</code> and migrated with Alembic. Foreign keys are on and closed value sets have CHECK constraints.</p>
         <div class="f-card">
-          <h3 style="margin-top: 0;">Core tables</h3>
-          <ul style="margin: 0; color: var(--f-sub);">
-            <li><strong>chores, chore_steps:</strong> The chore library (reusable templates).</li>
-            <li><strong>chore_assignments, assignment_kids:</strong> Who gets which chore and when (daily, weekly, once; individual, race, or team).</li>
-            <li><strong>chore_runs, run_kids, run_step_ticks:</strong> Today's work. Runs read the chore title, points, and steps live at render time.</li>
-            <li><strong>chore_photos, threads, thread_messages:</strong> Photos as proof, plus chore threads, private kid threads, and a family chat.</li>
-            <li><strong>points, redemptions:</strong> The economy ledger. Signed amounts for chores, bonuses, team shares, and redemptions.</li>
-            <li><strong>badge_awards, custom_badges, kid_flair:</strong> Progression. Levels, streaks, and unlockable items are derived from the ledger, not stored.</li>
-            <li><strong>devices, device_groups, time_windows, overrides:</strong> Network policy. Allowed/free hours, manual locks/unlocks.</li>
-            <li><strong>users, family_settings:</strong> Parents, kids, and family config (reset time, screen time price, blocker status).</li>
+          <h3>Tables by area</h3>
+          <ul class="eng-list">
+            <li><strong>Chores:</strong> <code>chores</code>, <code>chore_steps</code>, <code>chore_types</code>, <code>chore_type_notes</code>. A chore is a reusable template.</li>
+            <li><strong>Who and when:</strong> <code>chore_assignments</code>, <code>assignment_kids</code>. Mode each, race or team; repeat daily, weekly or once.</li>
+            <li><strong>Today's work:</strong> <code>chore_runs</code>, <code>run_kids</code>, <code>run_step_ticks</code>. Runs read the title, points and steps live from the chore.</li>
+            <li><strong>Proof and chat:</strong> <code>chore_photos</code>, <code>threads</code>, <code>thread_messages</code>, <code>message_reactions</code>, <code>chat_photos</code>.</li>
+            <li><strong>Economy:</strong> <code>points</code> (a signed ledger), <code>rewards</code>, <code>redemptions</code>, <code>screen_time_limits</code>.</li>
+            <li><strong>Progression:</strong> <code>badge_awards</code>, <code>custom_badges</code>, <code>kid_flair</code>. Levels and streaks are worked out from the ledger, not stored.</li>
+            <li><strong>Network:</strong> <code>devices</code>, <code>device_ipv6</code>, <code>device_groups</code>, <code>device_events</code>, <code>device_presence</code>, <code>overrides</code>.</li>
+            <li><strong>Hours:</strong> <code>hour_rules</code>, <code>hour_rule_times</code>, <code>hour_rule_targets</code>. School night, weekend, holiday, summer or other; online, free time or internet off.</li>
+            <li><strong>Notifications:</strong> <code>notifications</code> (the in-app inbox), <code>notify_places</code>, <code>notify_held</code> (Apprise).</li>
+            <li><strong>Family:</strong> <code>family_settings</code>, <code>users</code>, <code>password_resets</code>, <code>pending_invites</code>, <code>used_invites</code>.</li>
           </ul>
         </div>
-
-        <p style="color: var(--f-sub); margin-top: 16px;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">Full schema and migration rules</a>.</p>
+        <p class="eng-more"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">Full schema notes and migration rules</a></p>
       </section>
 
       <!-- Security notes -->
       <section>
         <h2>Security notes</h2>
-        <div class="f-card">
-          <h3 style="margin-top: 0;">Auth and secrets</h3>
-          <p style="margin: 0; color: var(--f-sub);">JWT bearer tokens for parents and kids. Passwords hashed with bcrypt. Secrets (SECRET_KEY, JWT_SECRET_KEY, INTERNAL_TOKEN) are generated on first boot and stored in DATA_DIR/secrets.json (mode 0600), overridable by env.</p>
-        </div>
-
-        <div class="f-card" style="margin-top: 12px;">
-          <h3 style="margin-top: 0;">Kid login</h3>
-          <p style="margin: 0; color: var(--f-sub;">Kids sign in by device IP: the app matches the request IP to a known device and asks for a PIN (if set). Failed tries are rate-limited. IPs come from X-Real-IP only when trusted (the frontend's static address in Docker Compose).</p>
-        </div>
-
-        <div class="f-card" style="margin-top: 12px;">
-          <h3 style="margin-top: 0;">Photos</h3>
-          <p style="margin: 0; color: var(--f-sub);">Stored on your box with one-way hashes. Parents can view them; kids can't delete them (parents approve chores, so they decide if a photo counts as proof).</p>
-        </div>
-
-        <div class="f-card" style="margin-top: 12px;">
-          <h3 style="margin-top: 0;">Network</h3>
-          <p style="margin: 0; color: var(--f-sub);">The blocker runs with NET_ADMIN and NET_RAW capabilities (host networking). The internal INTERNAL_TOKEN is shared between backend and blocker; they use it for the API calls that control blocking.</p>
+        <div class="eng-grid">
+          <div class="f-card">
+            <h3>Auth and secrets</h3>
+            <p>JWT bearer tokens for parents and kids. Passwords hashed with bcrypt; logins are rate limited. <code>SECRET_KEY</code>, <code>JWT_SECRET_KEY</code> and <code>INTERNAL_TOKEN</code> are generated on first boot into <code>DATA_DIR/secrets.json</code> (mode 0600) unless set in the environment.</p>
+          </div>
+          <div class="f-card">
+            <h3>Kid login</h3>
+            <p>Kids sign in by device: the app matches the request's IP to a known device and its owners, then asks for a PIN if one is set. Failed tries are rate limited. <code>X-Real-IP</code> is trusted only from the frontend's fixed address.</p>
+          </div>
+          <div class="f-card">
+            <h3>Photos</h3>
+            <p>JPEG, PNG or WebP up to 10 MB, checked before decoding, then re-encoded to JPEG, which strips EXIF and GPS. Stored under random names and served only to signed-in users.</p>
+          </div>
+          <div class="f-card">
+            <h3>Network</h3>
+            <p>The blocker runs with <code>NET_ADMIN</code> and <code>NET_RAW</code> on the host network. Backend and blocker share <code>INTERNAL_TOKEN</code>, compared in constant time, for every call that controls blocking.</p>
+          </div>
+          <div class="f-card">
+            <h3>Notifications</h3>
+            <p>Apprise addresses are stored encrypted and shown masked. Kid alerts go through ntfy on the box with a long random topic per kid; ntfy has no password unless you add one.</p>
+          </div>
+          <div class="f-card">
+            <h3>GIFs</h3>
+            <p>Off by default. Only the backend talks to GIPHY, with a fixed host. The family's rating is checked again on the box for every GIF, and kids' devices never contact GIPHY.</p>
+          </div>
         </div>
       </section>
 
       <!-- Testing -->
       <section>
         <h2>Testing</h2>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="eng-grid eng-2">
           <div class="f-card">
-            <h3 style="margin-top: 0;">Unit tests</h3>
-            <p style="margin: 0; color: var(--f-sub);">Backend: pytest. Frontend: jest. Blocker: pytest. Run with <code style="background: var(--f-field); padding: 2px 6px; border-radius: 3px;">cd backend && python -m pytest</code>, etc.</p>
+            <h3>Unit tests</h3>
+            <p>Backend and blocker: pytest. Frontend: Jest. For example <code>cd backend &amp;&amp; python -m pytest tests -q</code>.</p>
           </div>
           <div class="f-card">
-            <h3 style="margin-top: 0;">Lab</h3>
-            <p style="margin: 0; color: var(--f-sub);">An isolated Docker network with a fake router, fake internet, real backend and blocker, and simulated kid devices. Tests real ARP, nftables, and captive portal journeys. See <a href="https://github.com/sgtslaughta/tskfrce/blob/main/lab/README.md">lab/README.md</a>.</p>
+            <h3>Lab</h3>
+            <p>An isolated Docker network with a fake router, a fake internet, the real backend and blocker, and kid devices. Tests real ARP, nftables and captive portal journeys. See <a href="https://github.com/sgtslaughta/tskfrce/blob/main/lab/README.md">lab/README.md</a>.</p>
           </div>
           <div class="f-card">
-            <h3 style="margin-top: 0;">Browser e2e</h3>
-            <p style="margin: 0; color: var(--f-sub);">Playwright tests in the lab. Run with <code style="background: var(--f-field); padding: 2px 6px; border-radius: 3px;">bash scripts/lab.sh e2e</code>.</p>
+            <h3>Browser e2e</h3>
+            <p>Playwright against the lab: <code>bash scripts/lab.sh e2e</code>.</p>
           </div>
           <div class="f-card">
-            <h3 style="margin-top: 0;">CI</h3>
-            <p style="margin: 0; color: var(--f-sub);">GitHub Actions runs linting, all unit tests, lab e2e, and a security scan before each push. Keep the checks green.</p>
+            <h3>CI</h3>
+            <p>On pushes to main and develop, and on pull requests: lint (ruff, ESLint, tsc), backend tests, an installer smoke test, the lab, and a Trivy security scan. Keep it green.</p>
           </div>
         </div>
       </section>
@@ -210,94 +205,86 @@
       <!-- Contributing -->
       <section>
         <h2>Contributing</h2>
-        <p>t@sk4ce is open source (GPL-3.0) and welcomes contributions:</p>
-        <ul style="color: var(--f-sub);">
+        <p>t@sk4ce is open source (GPL-3.0) and welcomes contributions.</p>
+        <ul>
           <li><a href="https://github.com/sgtslaughta/tskfrce">GitHub repository</a></li>
           <li><a href="https://github.com/sgtslaughta/tskfrce/blob/main/README.md">Dev setup in the README</a></li>
-          <li><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">Full engineering docs</a></li>
-          <li>Semantic versioning and semantic commits</li>
-          <li>Test-driven development (failing tests first, then fix)</li>
+          <li><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">Full engineering notes</a></li>
+          <li>Semantic versioning and semantic commits.</li>
+          <li>Tests first: a failing test, then the fix.</li>
         </ul>
       </section>
 
       <!-- Repository map -->
       <section>
         <h2>Repository structure</h2>
-        <pre style="overflow-x: auto;"><code>tskfrce/
-├── backend/              # FastAPI server and blocker logic
-│   ├── app/              # Core app (models, API, lock loop, services)
-│   ├── alembic/          # Database migrations
-│   ├── tests/            # Unit tests
-│   └── pyproject.toml    # Python dependencies
-├── frontend/             # Next.js parent/kid web app
-│   ├── src/v2/           # Design system and v2 screens
-│   ├── pages/            # Route handlers
-│   ├── tests/            # Jest tests
-│   └── package.json      # Node dependencies
-├── blocker/              # Network blocker service
-│   ├── service.py        # Main blocker loop
-│   ├── tests/            # Unit and lab tests
-│   └── pyproject.toml
-├── lab/                  # Docker network for testing
-│   ├── Dockerfile        # Lab images
-│   └── README.md         # Lab setup and journeys
-├── scripts/              # Helper scripts (start, lab, test)
-├── docs/                 # User and contributor docs
-│   ├── guide/            # Parent setup guide
-│   ├── engineering.md    # This overview
-│   ├── blocker.md        # Blocker operator guide
-│   ├── routers.md        # Router compatibility
-│   └── adr/              # Architecture decision records
-├── site/                 # GitHub Pages (this site)
-├── .github/workflows/    # CI/CD (lint, test, deploy)
-├── docker-compose.yml    # Dev compose file
-├── docker-compose.prod.yml # Production compose
-├── install.sh            # One-line installer
-├── LICENSE               # GPL-3.0
-└── README.md             # Project overview</code></pre>
+        <pre tabindex="0"><code>tskfrce/
+├── backend/               # FastAPI app
+│   ├── app/               # api, services, lock loop, models, flair
+│   ├── alembic/           # database migrations
+│   ├── tests/             # pytest
+│   └── requirements.txt
+├── frontend/              # Next.js web app for parents and kids
+│   ├── pages/             # routes (/, /devices, /kids, /chat, /kid, /setup…)
+│   ├── src/v2/            # screens: parent, today, manage, kid, chat, setup
+│   ├── tests/             # Jest
+│   └── e2e/               # Playwright
+├── blocker/               # home box service: discovery, arp, firewall,
+│   └── tests/             #   portal, resist; unit and lab tests
+├── lab/                   # Docker lab: router, host, fake internet
+├── scripts/               # lab driver, site build, helpers
+├── docs/                  # guide, engineering notes, blocker, routers, ADRs
+├── site/                  # this website (GitHub Pages)
+├── .github/workflows/     # CI and Pages
+├── docker-compose.yml     # development
+├── docker-compose.prod.yml
+├── install.sh             # the one-line installer
+└── LICENSE                # GPL-3.0</code></pre>
       </section>
 
       <!-- How to add features -->
       <section>
         <h2>How to add a badge or flair item</h2>
-        <p>Badges and flair are defined in the codebase and unlock at certain milestones (level, chore count, streak, etc.).</p>
-
-        <div class="f-card">
-          <h3 style="margin-top: 0;">Built-in badges</h3>
-          <p style="margin: 0; color: var(--f-sub);">Edit <code style="background: var(--f-field); padding: 2px 6px; border-radius: 3px;">backend/app/models/badges.py</code>. Add a new entry with a key, name, icon emoji, and unlock condition. The unlock logic lives in <code style="background: var(--f-field); padding: 2px 6px; border-radius: 3px;">backend/app/badges/</code>.</p>
+        <div class="eng-grid">
+          <div class="f-card">
+            <h3>Built-in badges</h3>
+            <p>Add a line to <code>CATALOG</code> in <code>backend/app/services/badges.py</code>: key, name, emoji, description, the metric it counts, and the copper-to-mega-diamond thresholds. Then add a test in <code>backend/tests/test_badges.py</code>. Parents make custom badges in the app, no code needed.</p>
+          </div>
+          <div class="f-card">
+            <h3>Flair items</h3>
+            <p>Add an item to <code>CATALOG</code> in <code>backend/app/flair/catalog.py</code> with the level that unlocks it and its slot (card, ring, name, emblem or title). Non-emblem items need CSS in <code>frontend/src/v2/flair/</code>; animations go inside <code>prefers-reduced-motion: no-preference</code>.</p>
+          </div>
         </div>
-
-        <div class="f-card" style="margin-top: 12px;">
-          <h3 style="margin-top: 0;">Custom flair items</h3>
-          <p style="margin: 0; color: var(--f-sub);">Edit <code style="background: var(--f-field); padding: 2px 6px; border-radius: 3px;">backend/app/models/flair.py</code>. Add a slot, name, and item variants (names, colors, rings). Parents unlock flair by spending points or reaching milestones.</p>
-        </div>
-
-        <p style="color: var(--f-sub); margin-top: 16px;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">See the full data model and examples</a>.</p>
+        <p class="eng-more"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">Step-by-step examples</a></p>
       </section>
 
-      <!-- Links -->
-      <section style="text-align: center; padding: 40px 0; border-top: 1px solid var(--f-line);">
-        <p style="color: var(--f-sub);">Questions? Check the <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">full engineering docs</a> or open an issue on <a href="https://github.com/sgtslaughta/tskfrce">GitHub</a>.</p>
+      <section class="eng-end">
+        <p>Questions? Read the <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/engineering.md">full engineering notes</a> or open an issue on <a href="https://github.com/sgtslaughta/tskfrce/issues">GitHub</a>.</p>
       </section>
     </main>
 
-    <!-- Footer -->
-    <footer>
-      <div class="footer-content">
-        <div class="footer-section">
-          <h3>t@sk4ce</h3>
-          <p><a href="https://github.com/sgtslaughta/tskfrce">GitHub</a></p>
-          <p>Licensed under <a href="https://github.com/sgtslaughta/tskfrce/blob/main/LICENSE">GPL-3.0</a></p>
+    <footer class="f-footer">
+      <div class="f-footer-cols">
+        <div>
+          <a href="./" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
+          <p>Chores first, then screens.</p>
         </div>
-        <div class="footer-section">
-          <h3>Get help</h3>
-          <p><a href="./">Main site</a></p>
-          <p><a href="https://github.com/sgtslaughta/tskfrce/tree/main/docs/guide">User guide</a></p>
+        <div>
+          <h2>t@sk4ce</h2>
+          <ul>
+            <li><a href="https://github.com/sgtslaughta/tskfrce">GitHub</a></li>
+            <li><a href="https://github.com/sgtslaughta/tskfrce/blob/main/LICENSE">GPL-3.0</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Help</h2>
+          <ul>
+            <li><a href="./">Main site</a></li>
+            <li><a href="guide/">Full guide</a></li>
+          </ul>
         </div>
       </div>
-      <div class="footer-bottom">
-        <p>t@sk4ce: Chores first, then screens. Free, open-source family software.</p>
-      </div>
+      <p class="f-footer-note">t@sk4ce: Chores first, then screens. Free, open-source family software.</p>
     </footer>
   </div>
 </body>

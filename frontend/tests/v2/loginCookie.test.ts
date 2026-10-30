@@ -7,12 +7,12 @@ const base = { userId: '1', username: 'mom', email: 'm@x', role: 'parent', lastL
 
 beforeEach(() => {
   localStorage.clear()
-  document.cookie = 'taaskmaaster_user=; path=/; max-age=0'
+  document.cookie = 'task4ce_user=; path=/; max-age=0'
 })
 
 test('saveLoginState never writes the token into the cookie', () => {
   saveLoginState({ ...base, token: JWT })
-  expect(getCookie('taaskmaaster_user')).not.toContain(JWT)
+  expect(getCookie('task4ce_user')).not.toContain(JWT)
   expect(getLoginState()).toEqual(base)
 })
 
@@ -23,14 +23,14 @@ test('storeTokens keeps the token in localStorage only', () => {
 })
 
 test('old cookie carrying a token is rewritten without it on read', () => {
-  document.cookie = `taaskmaaster_user=${encodeURIComponent(JSON.stringify({ ...base, token: JWT }))}; path=/`
+  document.cookie = `task4ce_user=${encodeURIComponent(JSON.stringify({ ...base, token: JWT }))}; path=/`
   expect(getLoginState()).toEqual(base)
-  expect(getCookie('taaskmaaster_user')).not.toContain('token')
+  expect(getCookie('task4ce_user')).not.toContain('token')
 })
 
 test('garbage cookie is dropped, not thrown', () => {
-  document.cookie = 'taaskmaaster_user=%7Bnope; path=/'
+  document.cookie = 'task4ce_user=%7Bnope; path=/'
   jest.spyOn(console, 'error').mockImplementation(() => {})
   expect(getLoginState()).toBeNull()
-  expect(getCookie('taaskmaaster_user')).toBeNull()
+  expect(getCookie('task4ce_user')).toBeNull()
 })

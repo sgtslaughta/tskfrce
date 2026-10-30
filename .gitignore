@@ -218,7 +218,7 @@ frontend/.next/
 *.db
 docs/tasks_page_redesign_plan.md
 
-taaskmaaster.db
+task4ce.db
 docs/task_workflow_enhancement_plan.md
 
 # jetbrains

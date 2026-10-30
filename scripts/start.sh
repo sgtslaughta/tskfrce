@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# TaaskMaaster Development Startup Script
+# t@sk4ce Development Startup Script
 # This script sets up the development environment with minimal configuration
 
 set -e
 
-echo "🚀 Starting TaaskMaaster Development Environment"
+echo "🚀 Starting t@sk4ce Development Environment"
 echo "================================================"
 
 # Check if .env file exists, create from example if not
@@ -42,7 +42,7 @@ echo "📊 Service Status:"
 docker-compose ps
 
 echo ""
-echo "🎉 TaaskMaaster is ready!"
+echo "🎉 t@sk4ce is ready!"
 echo "================================================"
 echo "🌐 Frontend: http://localhost:3000"
 echo "🔧 Backend API: http://localhost:8000"

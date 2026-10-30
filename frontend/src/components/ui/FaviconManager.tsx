@@ -1,7 +1,6 @@
 /**
  * @fileoverview Favicon Manager Component
  * @description Dynamically updates favicon based on theme (light/dark)
- * @author TaaskMaaster Team
  * @version 1.0.0
  */
 

@@ -8,6 +8,7 @@ on:
       - 'docs/guide/**'
       - 'docs/remote-access.md'
       - 'scripts/build_site.py'
+      - 'scripts/site_templates.py'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 

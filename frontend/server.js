@@ -1,7 +1,6 @@
 /**
  * @fileoverview Custom Next.js Server with WebSocket Proxy
  * @description Handles both HTTP and WebSocket proxying to backend
- * @author TaaskMaaster Team
  * @version 1.0.0
  */
 

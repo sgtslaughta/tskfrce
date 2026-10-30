@@ -42,8 +42,6 @@ services:
       INTERNAL_TOKEN: labtoken
       BLOCKER_URL: http://10.99.0.4:7777
       TRUSTED_HOSTS: "*"
-      DISABLE_RATE_LIMITING: "true"
-      DISABLE_LOGIN_RATE_LIMIT: "true"
       TRUSTED_PROXY_IPS: 10.99.0.5,10.99.0.6  # frontend proxy; e2e runner seeds kid logins (notifications.spec)
     volumes: !override
       - ../backend:/app

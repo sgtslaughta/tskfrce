@@ -5,99 +5,43 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>t@sk4ce — Chores first, then screens</title>
   <meta name="description" content="A free family app where kids do their chores, parents approve them, and the home internet only switches on once the chores are done.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="home.css">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <script>
-    // Back to app link (only show if from=app)
-    window.addEventListener('load', function() {
-      const params = new URLSearchParams(window.location.search);
-      const fromApp = params.get('from') === 'app';
-      const backBtn = document.getElementById('back-to-app');
-      if (backBtn) {
-        backBtn.style.display = fromApp ? 'flex' : 'none';
-      }
-    });
-    
-    // Copy button
-    function copyToClipboard(text, btn) {
-      navigator.clipboard.writeText(text).then(() => {
-        const original = btn.textContent;
-        btn.textContent = '✓ Copied';
-        btn.classList.add('copied');
-        setTimeout(() => {
-          btn.textContent = original;
-          btn.classList.remove('copied');
-        }, 2000);
-      });
-    }
-  </script>
+  <script src="site.js" defer></script>
 </head>
 <body>
   <div class="f-shell">
-    <!-- Top bar -->
-    <div class="f-bar">
-      <a href="./" class="f-wordmark">t@sk4ce</a>
-      <div class="f-bar-buttons">
-        <a id="back-to-app" class="f-back" style="display: none;" onclick="history.back()">← Back to app</a>
-      </div>
-    </div>
+    <header class="f-bar">
+      <a href="./" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
+      <nav class="f-bar-buttons" aria-label="Site">
+        <a id="back-to-app" class="f-back" hidden href="./">← Back to app</a>
+        <a class="f-nav" href="guide/">Guide</a>
+        <a class="f-nav" data-wide href="engineering.html">Engineering</a>
+        <a class="f-nav" data-wide href="https://github.com/sgtslaughta/tskfrce">GitHub</a>
+      </nav>
+    </header>
 
-    <main class="f-main">
-      <!-- Hero Section -->
+    <main class="home">
+      <!-- Hero -->
       <section class="hero">
-        <h1>Chores first, then screens.</h1>
-        <p class="tagline">A free family app where kids do their chores, parents approve them, and the home internet only switches on once the chores are done. It runs on a small computer in your home — your family's data stays in your house.</p>
-        <div class="hero-buttons">
-          <a href="guide/" class="f-btn" data-variant="filled">Get started</a>
-          <a href="#setup" class="f-btn" data-variant="default">Set up in 20 minutes</a>
-        </div>
-        
-        <!-- Hero mockup: realistic app components with proper styling -->
-        <div class="hero-mocks">
-          <!-- Kid card mockup -->
-          <div class="f-card" style="border-left: 4px solid var(--f-sun);">
-            <div style="background: var(--f-head-bg); color: var(--f-head-ink); padding: 12px 14px; margin: -24px -24px 12px -24px;">
-              <div style="display: flex; justify-content: space-between; align-items: baseline; font-weight: 700;">
-                <span style="font-size: 18px;">Maya</span>
-                <span style="font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 16px;">240 pts</span>
-              </div>
-              <div style="font-size: 11px; color: var(--f-head-sub); margin-top: 4px; font-family: 'JetBrains Mono', monospace; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;">Level 7 · Rookie</div>
-              <div style="height: 6px; background: rgba(255,255,255,0.2); border-radius: 99px; margin-top: 8px; overflow: hidden;">
-                <div style="height: 100%; width: 62%; background: linear-gradient(90deg, #ffc93c, #ffb020);"></div>
-              </div>
-            </div>
-            <div style="padding: 4px 14px 14px;">
-              <div style="display: flex; align-items: center; gap: 8px; padding: 9px 0; border-top: 1px solid var(--f-line);">
-                <div style="width: 15px; height: 15px; background: #7bd389; border: 1.5px solid #7bd389; border-radius: 3px;"></div>
-                <span style="font-size: 13px; font-family: Inter, system-ui, sans-serif;">Unload dishwasher</span>
-                <span style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; color: var(--f-sub);">+10</span>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px; padding: 9px 0; border-top: 1px solid var(--f-line);">
-                <div style="width: 15px; height: 15px; border: 1.5px solid #c9d3e6; border-radius: 3px; background: transparent;"></div>
-                <span style="font-size: 13px; font-family: Inter, system-ui, sans-serif;">Walk the dog</span>
-                <span style="margin-left: auto; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; color: var(--f-sub);">+15</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Parent approval mockup -->
-          <div class="f-card" style="border-left: 4px solid var(--f-sun);">
-            <div style="background: var(--f-head-bg); color: var(--f-head-ink); padding: 12px 14px; margin: -24px -24px 12px -24px;">
-              <div style="font-weight: 700; font-size: 14px; font-family: 'Space Grotesk', system-ui, sans-serif;">Needs you</div>
-            </div>
-            <div style="padding: 4px 14px 14px;">
-              <div style="background: var(--f-mute); border-radius: 6px; padding: 12px; margin-bottom: 12px;">
-                <div style="font-weight: 600; font-size: 13px; color: var(--f-ink); font-family: Inter, system-ui, sans-serif;">Maya — Unload dishwasher</div>
-                <div style="font-size: 12px; color: var(--f-sub); margin-top: 6px; font-family: Inter, system-ui, sans-serif;">Photo added</div>
-              </div>
-              <div style="display: flex; gap: 8px;">
-                <button style="flex: 1; padding: 8px; background: #ffc93c; color: #1d2b53; border: none; border-radius: 0; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); font-weight: 700; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Space Grotesk', system-ui, sans-serif;">Approve</button>
-                <button style="flex: 1; padding: 8px; background: var(--f-edge); color: var(--f-ink); border: none; border-radius: 0; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); font-weight: 700; font-size: 11px; cursor: pointer; text-transform: uppercase; letter-spacing: 0.06em; font-family: 'Space Grotesk', system-ui, sans-serif;">Send back</button>
-              </div>
-            </div>
+        <div class="hero-text">
+          <span class="p-pill"><i></i>Free · open source · runs at home</span>
+          <h1>Chores first, then screens.</h1>
+          <p class="tagline">A free family app where kids do their chores, parents approve them, and the home internet only switches on once the chores are done. It runs on a small computer in your home, so your family's data stays in your house.</p>
+          <div class="hero-buttons">
+            <a href="guide/" class="f-btn" data-variant="accent" data-size="lg">Get started</a>
+            <a href="#setup" class="f-btn" data-size="lg">Set up in 20 minutes</a>
           </div>
         </div>
-        <p style="color: var(--f-sub); font-size: 13px; margin-top: 20px; font-family: Inter, system-ui, sans-serif;">A real family's chores and approvals, in the app.</p>
+        <figure class="hero-shots">
+          <img class="shot-desk" src="img/today-hero.jpg" width="1280" height="800" alt="The parent Today screen: Bobby's chores with overdue and to-do chips, and a card for each kid.">
+          <img class="shot-phone" src="img/today-parent.jpg" width="600" height="1298" alt="The parent Today screen on a phone." loading="lazy">
+          <figcaption class="p-sub">A real family's chores and approvals, in the app.</figcaption>
+        </figure>
       </section>
 
       <!-- How it works -->
@@ -106,135 +50,58 @@
           <h2>How it works</h2>
           <p>Three simple steps, every day.</p>
         </div>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
-          <div class="f-card" style="border-left: 4px solid var(--f-sun); display: flex; flex-direction: column; gap: 16px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--f-sun); color: #1d2b53; border-radius: 0; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); font-weight: 700; font-size: 18px; flex-shrink: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">1</div>
-              <h3 style="margin: 0; font-size: 18px; font-family: 'Space Grotesk', system-ui, sans-serif;">Kids get chores</h3>
-            </div>
-            <p style="margin: 0; color: var(--f-sub); line-height: 1.6; font-family: Inter, system-ui, sans-serif;">Each morning, your kids see their list of chores for the day. Chores earn points, and points unlock rewards and extra screen time.</p>
-          </div>
-
-          <div class="f-card" style="border-left: 4px solid var(--f-sun); display: flex; flex-direction: column; gap: 16px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--f-sun); color: #1d2b53; border-radius: 0; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); font-weight: 700; font-size: 18px; flex-shrink: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">2</div>
-              <h3 style="margin: 0; font-size: 18px; font-family: 'Space Grotesk', system-ui, sans-serif;">Kids submit for approval</h3>
-            </div>
-            <p style="margin: 0; color: var(--f-sub); line-height: 1.6; font-family: Inter, system-ui, sans-serif;">When done, they tap "Done" and can add a photo as proof. Then they wait for your review.</p>
-          </div>
-
-          <div class="f-card" style="border-left: 4px solid var(--f-sun); display: flex; flex-direction: column; gap: 16px;">
-            <div style="display: flex; align-items: center; gap: 12px;">
-              <div style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--f-sun); color: #1d2b53; border-radius: 0; clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px)); font-weight: 700; font-size: 18px; flex-shrink: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">3</div>
-              <h3 style="margin: 0; font-size: 18px; font-family: 'Space Grotesk', system-ui, sans-serif;">Internet comes back</h3>
-            </div>
-            <p style="margin: 0; color: var(--f-sub); line-height: 1.6; font-family: Inter, system-ui, sans-serif;">You review in the app and approve or send back. Once approved, their internet is back on immediately.</p>
-          </div>
-        </div>
+        <ol class="how">
+          <li class="f-card">
+            <div class="mini-row"><span class="ck" aria-hidden="true"></span><b>Feed the dog</b><span class="p-chip">To do</span><span class="pts">+15</span></div>
+            <h3>Kids get chores</h3>
+            <p>Each morning, your kids see their chores for the day, in a look made for their age. Chores earn points, and points buy rewards and extra screen time.</p>
+          </li>
+          <li class="f-card">
+            <div class="mini-row"><span class="ck on" aria-hidden="true"></span><b>Homework</b><span class="p-chip" data-tone="lav">Needs OK</span><span class="pts">+30</span></div>
+            <h3>Kids say they're done</h3>
+            <p>They tick the steps, add a photo if you asked for one, and tap "I'm done!". Then it waits for your OK.</p>
+          </li>
+          <li class="f-card">
+            <div class="mini-row"><span class="ck on" aria-hidden="true"></span><b>Homework</b><span class="p-chip" data-tone="acc">Approved</span><span class="pts">+30</span></div>
+            <h3>Internet comes back</h3>
+            <p>You approve it, or send it back with a note. When the last chore is approved, their devices come back online within seconds, inside the hours you set.</p>
+          </li>
+        </ol>
       </section>
 
       <!-- What kids see -->
-      <section>
+      <section class="split">
         <div class="section-intro">
           <h2>What kids see</h2>
-          <p>A simple, motivating interface.</p>
+          <p>Three looks: Little (5–8), Kid (9–12) and Teen (13+).</p>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
-          <div class="f-card" style="border-left: 4px solid var(--f-sun);">
-            <div class="f-card-head">
-              <h3 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">Today's chores</h3>
-            </div>
-            <div style="padding: 16px 0; border-bottom: 1px solid var(--f-line);">
-              <div style="padding: 12px 0; border-bottom: 1px solid var(--f-line);">
-                <div style="display: flex; align-items: center; gap: 8px; font-family: Inter, system-ui, sans-serif;">
-                  <div style="width: 20px; height: 20px; border: 2px solid #c9d3e6; border-radius: 3px;"></div>
-                  <span style="font-size: 14px; flex: 1;">Feed the dog</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; color: var(--f-sub); font-size: 12px; font-weight: 700;">+15</span>
-                </div>
-              </div>
-              <div style="padding: 12px 0;">
-                <div style="display: flex; align-items: center; gap: 8px; font-family: Inter, system-ui, sans-serif;">
-                  <div style="width: 20px; height: 20px; border: 2px solid #c9d3e6; border-radius: 3px;"></div>
-                  <span style="font-size: 14px; flex: 1;">Tidy room</span>
-                  <span style="font-family: 'JetBrains Mono', monospace; color: var(--f-sub); font-size: 12px; font-weight: 700;">+10</span>
-                </div>
-              </div>
-            </div>
-            <p style="margin: 12px 0 0; color: var(--f-sub); font-size: 13px; font-family: Inter, system-ui, sans-serif;">Each chore shows points. Tap to see steps and add a photo as proof.</p>
-          </div>
-
-          <div class="f-card" style="border-left: 4px solid var(--f-sun);">
-            <div class="f-card-head">
-              <h3 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">Levels & rewards</h3>
-            </div>
-            <div style="padding: 16px 0; font-family: Inter, system-ui, sans-serif;">
-              <div style="margin-bottom: 16px;">
-                <div style="font-size: 12px; color: var(--f-sub); text-transform: uppercase; margin-bottom: 6px; font-family: 'Space Grotesk', system-ui, sans-serif; font-weight: 700; letter-spacing: 0.08em;">Level 5</div>
-                <div style="height: 8px; background: var(--f-mute); border-radius: 99px; overflow: hidden;">
-                  <div style="height: 100%; width: 75%; background: linear-gradient(90deg, #ffc93c, #ffb020);"></div>
-                </div>
-              </div>
-              <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <div style="width: 28px; height: 28px; background: var(--f-sun); border-radius: 0; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer;" title="Streak badge">⚡</div>
-                <div style="width: 28px; height: 28px; background: var(--f-sun); border-radius: 0; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); display: flex; align-items: center; justify-content: center; font-size: 14px; cursor: pointer;" title="Early bird">🌅</div>
-                <div style="width: 28px; height: 28px; background: var(--f-mute); border-radius: 0; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); display: flex; align-items: center; justify-content: center; font-size: 14px; opacity: 0.5; cursor: pointer;" title="Locked">🔒</div>
-              </div>
-            </div>
-            <p style="margin: 12px 0 0; color: var(--f-sub); font-size: 13px; font-family: Inter, system-ui, sans-serif;">Earn badges, level up, and unlock flair in the Locker.</p>
-          </div>
+        <div class="shots">
+          <figure class="f-card shot">
+            <img src="img/kid-home.jpg" width="600" height="1298" loading="lazy" alt="A kid's chore list: internet is paused until seven chores are done, each chore with points and a due time.">
+            <figcaption><h3>Today's chores</h3><p>Each chore shows its points and when it's due. Tap one to see its steps, add a photo, or tell Mom or Dad.</p></figcaption>
+          </figure>
+          <figure class="f-card shot">
+            <img src="img/kid-locker.jpg" width="600" height="1298" loading="lazy" alt="The Customize screen: a name card with level 3, slot tabs, and locked items with the level that unlocks them.">
+            <figcaption><h3>Levels &amp; flair</h3><p>Kids earn badges, level up, and unlock cards, rings and titles for their name in Customize.</p></figcaption>
+          </figure>
         </div>
       </section>
 
       <!-- What parents see -->
-      <section>
+      <section class="split">
         <div class="section-intro">
           <h2>What parents see</h2>
           <p>Everything you need in one view.</p>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px;">
-          <div class="f-card" style="border-left: 4px solid var(--f-sun);">
-            <div class="f-card-head">
-              <h3 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">Today</h3>
-            </div>
-            <div style="padding: 16px 0; font-family: Inter, system-ui, sans-serif;">
-              <div style="background: var(--f-mute); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                <div style="font-weight: 600; font-size: 13px;">Leo</div>
-                <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
-                  <span style="background: #7bd389; color: white; font-size: 11px; padding: 2px 6px; border-radius: 3px; font-weight: 600; font-family: 'Space Grotesk', system-ui, sans-serif;">✓ Homework</span>
-                  <span style="background: #ffc93c; color: #1d2b53; font-size: 11px; padding: 2px 6px; border-radius: 3px; font-weight: 600; font-family: 'Space Grotesk', system-ui, sans-serif;">Waiting</span>
-                </div>
-              </div>
-              <div style="background: var(--f-mute); padding: 12px; border-radius: 6px;">
-                <div style="font-weight: 600; font-size: 13px;">Maya</div>
-                <div style="display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;">
-                  <span style="background: #7bd389; color: white; font-size: 11px; padding: 2px 6px; border-radius: 3px; font-weight: 600; font-family: 'Space Grotesk', system-ui, sans-serif;">✓ Dishes</span>
-                  <span style="background: #7bd389; color: white; font-size: 11px; padding: 2px 6px; border-radius: 3px; font-weight: 600; font-family: 'Space Grotesk', system-ui, sans-serif;">✓ Laundry</span>
-                </div>
-              </div>
-            </div>
-            <p style="margin: 12px 0 0; color: var(--f-sub); font-size: 13px; font-family: Inter, system-ui, sans-serif;">See each kid's chores at a glance: approved, waiting, or not started.</p>
-          </div>
-
-          <div class="f-card" style="border-left: 4px solid var(--f-sun);">
-            <div class="f-card-head">
-              <h3 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">Needs you</h3>
-            </div>
-            <div style="padding: 16px 0; font-family: Inter, system-ui, sans-serif;">
-              <div style="background: var(--f-mute); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                <div style="font-weight: 600; font-size: 13px;">Leo — Do homework</div>
-                <div style="font-size: 11px; color: var(--f-sub); margin-top: 4px;">Photo attached</div>
-              </div>
-              <div style="background: var(--f-mute); padding: 12px; border-radius: 6px; margin-bottom: 12px;">
-                <div style="font-weight: 600; font-size: 13px;">Maya — 2 extra hours?</div>
-                <div style="font-size: 11px; color: var(--f-sub); margin-top: 4px;">Screen time request</div>
-              </div>
-              <div style="display: flex; gap: 8px;">
-                <button style="flex: 1; padding: 6px; background: #ffc93c; color: #1d2b53; border: none; border-radius: 0; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); font-weight: 600; font-size: 10px; cursor: pointer; text-transform: uppercase; font-family: 'Space Grotesk', system-ui, sans-serif;">Review</button>
-              </div>
-            </div>
-            <p style="margin: 12px 0 0; color: var(--f-sub); font-size: 13px; font-family: Inter, system-ui, sans-serif;">One screen for everything waiting: chores, requests, and messages.</p>
-          </div>
+        <div class="shots">
+          <figure class="f-card shot shot-dup">
+            <img src="img/today-parent.jpg" width="600" height="1298" loading="lazy" alt="The parent Today screen on a phone: a row of kids, progress, points, streak and the chore list.">
+            <figcaption><h3>Today</h3><p>See each kid's day at a glance: what's done, what's waiting and what's overdue.</p></figcaption>
+          </figure>
+          <figure class="f-card shot">
+            <img src="img/needs-you.jpg" width="600" height="1298" loading="lazy" alt="The Needs you tab on a phone: a chore to approve, a redo, a screen time request and a reward request, each with Approve.">
+            <figcaption><h3>Needs you</h3><p>One list for everything waiting: chores, redos, screen time and reward requests. Approve them one by one or all at once.</p></figcaption>
+          </figure>
         </div>
       </section>
 
@@ -244,27 +111,21 @@
           <h2>Is it right for my family?</h2>
           <p>t@sk4ce works best when you want chores tied to internet access.</p>
         </div>
-        <div class="f-card" style="border-left: 4px solid var(--f-sun);">
-          <div class="f-card-head">
-            <h3 style="margin: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">What it does well</h3>
+        <div class="fit">
+          <div class="f-card">
+            <h3>What it does well</h3>
+            <ul class="ticks">
+              <li>Kids from about 5 up. Little, Kid and Teen modes keep it simple or detailed.</li>
+              <li>Families with home Wi-Fi and a small always-on Linux computer, like a Raspberry Pi.</li>
+              <li>Parents who can check the app once a day or more.</li>
+              <li>Kids who want something to work toward (points, levels, rewards).</li>
+            </ul>
           </div>
-          <ul style="margin: 0; padding: 0 0 0 20px; color: var(--f-sub); font-size: 14px; font-family: Inter, system-ui, sans-serif;">
-            <li style="padding: 6px 0;">Kids who are old enough to understand cause and effect (usually 8+).</li>
-            <li style="padding: 6px 0;">Families with home internet and an always-on computer (Raspberry Pi, laptop, even a phone).</li>
-            <li style="padding: 6px 0;">Parents who can check the app once a day or more.</li>
-            <li style="padding: 6px 0;">Kids who want something to work toward (points, levels, rewards).</li>
-          </ul>
-        </div>
-        <div class="f-card" style="margin-top: 12px; border-left: 4px solid var(--f-sun);">
-          <div class="f-card-head" style="background: transparent; border: none; padding: 0 0 12px 0;">
-            <h3 style="margin: 0; color: var(--f-ink); font-family: 'Space Grotesk', system-ui, sans-serif;">Be honest about the limits</h3>
+          <div class="p-banner">
+            <h3>Be honest about the limits</h3>
+            <p>t@sk4ce is not a fortress. A determined kid can get around it with a phone hotspot or a device you haven't set up. When a paused device still gets through, the app tells you. That's when you talk to your kid about trust. If the home box is off, the internet just works.</p>
+            <p>This is not spyware. It doesn't track websites, location or keystrokes. It knows chores, points, badges, and when each device was online.</p>
           </div>
-          <p style="margin: 0 0 12px 0; color: var(--f-sub); font-size: 14px; line-height: 1.7; font-family: Inter, system-ui, sans-serif;">
-            t@sk4ce is not a fortress. A determined kid can get around it (a phone hotspot, changing network settings). The app watches for these workarounds and tells you when they happen — that's when you talk to your kid about trust. If the home box is off, the internet just works.
-          </p>
-          <p style="margin: 0; color: var(--f-sub); font-size: 14px; line-height: 1.7; font-family: Inter, system-ui, sans-serif;">
-            This is not spyware. We don't track websites, screen time, location, or keystrokes. Only chore completion, points, levels, and badges.
-          </p>
         </div>
       </section>
 
@@ -272,53 +133,49 @@
       <section id="setup">
         <div class="section-intro">
           <h2>Set it up in 20 minutes</h2>
-          <p>Five straightforward steps.</p>
+          <p>Install it, then a short seven-step setup.</p>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-          <div style="background: var(--f-card); border-left: 4px solid var(--f-sun); border-radius: 6px; padding: 20px; display: flex; gap: 16px;">
-            <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--f-sun); color: #1d2b53; border-radius: 0; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); font-weight: 700; flex-shrink: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">1</div>
-            <div style="font-family: Inter, system-ui, sans-serif;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-family: 'Space Grotesk', system-ui, sans-serif;">Copy the one-line installer</h3>
-              <p style="margin: 0 0 12px 0; color: var(--f-sub); font-size: 13px;">Click the button to copy this command, then paste it into your terminal.</p>
-              <div style="background: var(--f-field); border: 1px solid var(--f-edge); border-radius: 4px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 12px; word-break: break-all; color: var(--f-ink); margin-bottom: 8px;">
-                curl -fsSL https://sgtslaughta.github.io/tskfrce/install.sh | sh
+        <ol class="steps f-card">
+          <li>
+            <span class="num" aria-hidden="true">1</span>
+            <div>
+              <h3>Copy the one-line installer</h3>
+              <p>Copy this line, then paste it into the Terminal on your home box and press Enter.</p>
+              <div class="install">
+                <pre tabindex="0"><code>curl -fsSL https://sgtslaughta.github.io/tskfrce/install.sh | sh</code></pre>
+                <button class="copy-btn" type="button" onclick="copyToClipboard('curl -fsSL https://sgtslaughta.github.io/tskfrce/install.sh | sh', this)">📋 Copy</button>
               </div>
-              <button class="copy-btn" onclick="copyToClipboard('curl -fsSL https://sgtslaughta.github.io/tskfrce/install.sh | sh', this)">📋 Copy</button>
             </div>
-          </div>
-
-          <div style="background: var(--f-card); border-left: 4px solid var(--f-sun); border-radius: 6px; padding: 20px; display: flex; gap: 16px;">
-            <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--f-sun); color: #1d2b53; border-radius: 0; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); font-weight: 700; flex-shrink: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">2</div>
-            <div style="font-family: Inter, system-ui, sans-serif;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-family: 'Space Grotesk', system-ui, sans-serif;">Let the installer run</h3>
-              <p style="margin: 0; color: var(--f-sub); font-size: 13px;">It downloads t@sk4ce, asks a few questions, and starts the app. Wait 2–3 minutes. Your data stays on your computer.</p>
+          </li>
+          <li>
+            <span class="num" aria-hidden="true">2</span>
+            <div>
+              <h3>Let the installer run</h3>
+              <p>It installs Docker if needed, downloads t@sk4ce and starts it. The first time takes several minutes. Your data stays on your box.</p>
             </div>
-          </div>
-
-          <div style="background: var(--f-card); border-left: 4px solid var(--f-sun); border-radius: 6px; padding: 20px; display: flex; gap: 16px;">
-            <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--f-sun); color: #1d2b53; border-radius: 0; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); font-weight: 700; flex-shrink: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">3</div>
-            <div style="font-family: Inter, system-ui, sans-serif;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-family: 'Space Grotesk', system-ui, sans-serif;">Open the app on your phone or computer</h3>
-              <p style="margin: 0; color: var(--f-sub); font-size: 13px;">Go to the IP address the installer gave you. It will show a setup wizard. <a href="guide/02-install.html">See step-by-step instructions →</a></p>
+          </li>
+          <li>
+            <span class="num" aria-hidden="true">3</span>
+            <div>
+              <h3>Open the app on your phone or computer</h3>
+              <p>Go to the address the installer shows, like <code>http://192.168.1.50:3000</code>. <a href="guide/02-install.html">Install steps&nbsp;→</a></p>
             </div>
-          </div>
-
-          <div style="background: var(--f-card); border-left: 4px solid var(--f-sun); border-radius: 6px; padding: 20px; display: flex; gap: 16px;">
-            <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--f-sun); color: #1d2b53; border-radius: 0; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); font-weight: 700; flex-shrink: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">4</div>
-            <div style="font-family: Inter, system-ui, sans-serif;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-family: 'Space Grotesk', system-ui, sans-serif;">Add your family and kids</h3>
-              <p style="margin: 0; color: var(--f-sub); font-size: 13px;">Create a parent account, then add your children and their devices. <a href="guide/03-first-setup.html">Follow the setup wizard guide →</a></p>
+          </li>
+          <li>
+            <span class="num" aria-hidden="true">4</span>
+            <div>
+              <h3>Answer seven short questions</h3>
+              <p>You, Family, Kids, Chores, Devices, Hours and Remote access (optional). About 7 minutes. <a href="guide/03-first-setup.html">Setup guide&nbsp;→</a></p>
             </div>
-          </div>
-
-          <div style="background: var(--f-card); border-left: 4px solid var(--f-sun); border-radius: 6px; padding: 20px; display: flex; gap: 16px;">
-            <div style="display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; background: var(--f-sun); color: #1d2b53; border-radius: 0; clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px)); font-weight: 700; flex-shrink: 0; font-family: 'Space Grotesk', system-ui, sans-serif;">5</div>
-            <div style="font-family: Inter, system-ui, sans-serif;">
-              <h3 style="margin: 0 0 8px 0; font-size: 16px; font-family: 'Space Grotesk', system-ui, sans-serif;">Create a chore and go</h3>
-              <p style="margin: 0; color: var(--f-sub); font-size: 13px;">Make a chore, give it to your kids, and you're ready. <a href="guide/04-everyday-use.html">Learn the everyday routine →</a></p>
+          </li>
+          <li>
+            <span class="num" aria-hidden="true">5</span>
+            <div>
+              <h3>Test it and show your kids</h3>
+              <p>Press Test block on a kid's device, then bookmark the kid page on it. <a href="guide/03-first-setup.html#test-that-pausing-works">How to test&nbsp;→</a></p>
             </div>
-          </div>
-        </div>
+          </li>
+        </ol>
       </section>
 
       <!-- Privacy -->
@@ -327,23 +184,11 @@
           <h2>Privacy</h2>
           <p>Your family's data belongs to you.</p>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px;">
-          <div class="f-card" style="border-left: 4px solid var(--f-sun);">
-            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-family: 'Space Grotesk', system-ui, sans-serif;">Stays in your home</h3>
-            <p style="margin: 0; color: var(--f-sub); font-size: 13px; font-family: Inter, system-ui, sans-serif;">t@sk4ce runs on a computer in your house. Chores, kids, points, chat, and photos never leave your network.</p>
-          </div>
-          <div class="f-card" style="border-left: 4px solid var(--f-sun);">
-            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-family: 'Space Grotesk', system-ui, sans-serif;">No accounts with us</h3>
-            <p style="margin: 0; color: var(--f-sub); font-size: 13px; font-family: Inter, system-ui, sans-serif;">We don't have a server. No sign-up, no passwords saved anywhere but on your box. You own your data.</p>
-          </div>
-          <div class="f-card" style="border-left: 4px solid var(--f-sun);">
-            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-family: 'Space Grotesk', system-ui, sans-serif;">No ads or trackers</h3>
-            <p style="margin: 0; color: var(--f-sub); font-size: 13px; font-family: Inter, system-ui, sans-serif;">t@sk4ce is free and open-source. We don't sell your data, show ads, or track anything. Ever.</p>
-          </div>
-          <div class="f-card" style="border-left: 4px solid var(--f-sun);">
-            <h3 style="margin: 0 0 8px 0; font-size: 16px; font-family: 'Space Grotesk', system-ui, sans-serif;">GIFs are optional</h3>
-            <p style="margin: 0; color: var(--f-sub); font-size: 13px; font-family: Inter, system-ui, sans-serif;">Kids can use GIFs in chat only if you turn it on. They come from GIPHY through your home box — we never pass along who sent them.</p>
-          </div>
+        <div class="grid-4">
+          <div class="f-card"><h3>Stays in your home</h3><p>t@sk4ce runs on a computer in your house. Chores, kids, points, chat and photos stay on your network.</p></div>
+          <div class="f-card"><h3>No accounts with us</h3><p>There is no t@sk4ce server. No sign-up, and passwords are saved only on your box. You own your data.</p></div>
+          <div class="f-card"><h3>No ads or trackers</h3><p>t@sk4ce is free and open source. No ads, no analytics, nothing sold.</p></div>
+          <div class="f-card"><h3>Extras are opt-in</h3><p>GIFs in chat, pings to your chat apps and remote access are off until you turn them on. GIF searches go through your box, so GIPHY never sees a kid's device.</p></div>
         </div>
       </section>
 
@@ -352,26 +197,26 @@
         <div class="section-intro">
           <h2>Frequently asked questions</h2>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 12px;">
+        <div class="faq f-card">
           <details class="faq-item">
             <summary>What computer do I need?</summary>
-            <p>Any always-on Linux machine: a Raspberry Pi 4 or 5, an old laptop, a NAS, or a spare laptop running Ubuntu. Needs to be plugged in and connected to your home network. See <a href="guide/01-what-you-need.html">What you need</a>.</p>
+            <p>A small computer that runs Linux and stays on: a Raspberry Pi 4 or 5 (4 GB or more) or an old computer. Plug it into your router with a network cable. See <a href="guide/01-what-you-need.html">What you need</a>.</p>
           </details>
           <details class="faq-item">
             <summary>Do I need a special router?</summary>
-            <p>No. t@sk4ce works with any router. Tested with TP-Link, Netgear, Eero, Asus, UniFi. With mesh, pick a main router. <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/routers.md">See router compatibility →</a></p>
+            <p>No. Most home routers work. A few, mostly some mesh systems, can stop the box from pausing devices. The Test block button tells you in a minute. <a href="https://github.com/sgtslaughta/tskfrce/blob/main/docs/routers.md">Router list&nbsp;→</a></p>
           </details>
           <details class="faq-item">
             <summary>What if my internet goes down?</summary>
-            <p>t@sk4ce still runs locally — chat and planning work. Chores can't be marked done until internet returns. By design: no internet, no rewarding.</p>
+            <p>t@sk4ce keeps working on your home Wi-Fi: kids can still do chores and you can still approve them. It doesn't need the internet, only your home network.</p>
           </details>
           <details class="faq-item">
-            <summary>Can I use it with devices outside my home?</summary>
-            <p>t@sk4ce is designed for home network devices. If your kid's phone sometimes connects to home WiFi, it blocks when home and lets through when away. VPN access is planned.</p>
+            <summary>Can I use it when I'm away from home?</summary>
+            <p>Yes. With the free Tailscale app you can open t@sk4ce from anywhere and approve chores. It's the last, optional step of setup. <a href="guide/remote-access.html">Remote access&nbsp;→</a> Pausing only works on your home Wi-Fi: a phone on mobile data isn't covered.</p>
           </details>
           <details class="faq-item">
             <summary>What if a kid finds a workaround?</summary>
-            <p>t@sk4ce flags common workarounds (hotspots, other networks) as "resisting" and alerts you. That's your cue to talk about trust. The app doesn't spy further.</p>
+            <p>If a paused device keeps getting through, for example after someone changes its network settings, you get an alert that it "got around the lock". Hotspots and mobile data aren't covered. That's your cue to talk about trust. The app doesn't spy further.</p>
           </details>
           <details class="faq-item">
             <summary>Where's the manual?</summary>
@@ -379,39 +224,46 @@
           </details>
           <details class="faq-item">
             <summary>Is this open source?</summary>
-            <p>Yes! GPL-3.0. <a href="https://github.com/sgtslaughta/tskfrce">Code is on GitHub</a>. Review, modify, learn.</p>
+            <p>Yes, under the GPL-3.0. <a href="https://github.com/sgtslaughta/tskfrce">The code is on GitHub</a>.</p>
           </details>
         </div>
       </section>
 
       <!-- Engineering link -->
-      <section style="text-align: center; padding: 40px 16px;">
-        <p style="color: var(--f-sub); margin: 0; font-size: 14px; font-family: Inter, system-ui, sans-serif;">For technical folks and contributors:</p>
-        <a href="engineering.html" class="f-btn" data-variant="subtle" style="margin-top: 16px;">Architecture & engineering →</a>
+      <section class="eng-link">
+        <p class="p-sub">For technical folks and contributors:</p>
+        <a href="engineering.html" class="f-btn" data-variant="ink">Architecture &amp; engineering&nbsp;→</a>
       </section>
     </main>
 
-    <!-- Footer -->
-    <footer style="background: var(--f-card); border-top: 1px solid var(--f-line); padding: 40px 16px; margin-top: 60px; box-shadow: var(--f-shadow);">
-      <div style="max-width: 960px; margin: 0 auto; display: flex; justify-content: space-between; gap: 40px; flex-wrap: wrap;">
+    <footer class="f-footer">
+      <div class="f-footer-cols">
         <div>
-          <h3 style="font-size: 12px; margin: 0 0 12px 0; text-transform: uppercase; color: var(--f-sub); letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif;">t@sk4ce</h3>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 0; font-family: Inter, system-ui, sans-serif;"><a href="https://github.com/sgtslaughta/tskfrce" style="color: var(--f-sun);">GitHub</a></p>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 8px 0 0 0; font-family: Inter, system-ui, sans-serif;"><a href="https://github.com/sgtslaughta/tskfrce/blob/main/LICENSE" style="color: var(--f-sun);">GPL-3.0</a></p>
+          <a href="./" class="f-wordmark"><span class="f-logo" aria-hidden="true">@</span>t@sk4ce</a>
+          <p>Chores first, then screens.</p>
         </div>
         <div>
-          <h3 style="font-size: 12px; margin: 0 0 12px 0; text-transform: uppercase; color: var(--f-sub); letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif;">Help</h3>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 0; font-family: Inter, system-ui, sans-serif;"><a href="guide/" style="color: var(--f-sun);">Full guide</a></p>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 8px 0 0 0; font-family: Inter, system-ui, sans-serif;"><a href="guide/06-troubleshooting.html" style="color: var(--f-sun);">Troubleshooting</a></p>
+          <h2>t@sk4ce</h2>
+          <ul>
+            <li><a href="https://github.com/sgtslaughta/tskfrce">GitHub</a></li>
+            <li><a href="https://github.com/sgtslaughta/tskfrce/blob/main/LICENSE">GPL-3.0</a></li>
+          </ul>
         </div>
         <div>
-          <h3 style="font-size: 12px; margin: 0 0 12px 0; text-transform: uppercase; color: var(--f-sub); letter-spacing: 0.08em; font-family: 'Space Grotesk', system-ui, sans-serif;">For developers</h3>
-          <p style="font-size: 13px; color: var(--f-sun); margin: 0; font-family: Inter, system-ui, sans-serif;"><a href="engineering.html" style="color: var(--f-sun);">Architecture</a></p>
+          <h2>Help</h2>
+          <ul>
+            <li><a href="guide/">Full guide</a></li>
+            <li><a href="guide/06-troubleshooting.html">Troubleshooting</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>For developers</h2>
+          <ul>
+            <li><a href="engineering.html">Architecture</a></li>
+          </ul>
         </div>
       </div>
-      <div style="max-width: 960px; margin: 40px auto 0; padding-top: 20px; border-top: 1px solid var(--f-line); text-align: center; font-size: 12px; color: var(--f-sub); font-family: Inter, system-ui, sans-serif;">
-        <p>t@sk4ce: Chores first, then screens. Free, open-source family software.</p>
-      </div>
+      <p class="f-footer-note">t@sk4ce: Chores first, then screens. Free, open-source family software.</p>
     </footer>
   </div>
 </body>

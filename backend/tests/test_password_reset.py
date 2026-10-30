@@ -135,3 +135,14 @@ def test_last_active_stamped_on_login_and_throttled(client, db, parent, parent_h
     assert rows[0]["last_active_at"].endswith("Z")
     db.refresh(parent)
     assert parent.last_active_at > datetime.now(UTC).replace(tzinfo=None) - timedelta(minutes=1)
+
+
+def test_link_uses_app_address_over_box_url(client, db, parent_headers, dad, monkeypatch):
+    from app.core.config import settings
+    from app.models.family import get_family
+
+    monkeypatch.setattr(settings, "BOX_URL", "http://192.168.1.20:3000")
+    assert _link(client, parent_headers, dad.id).startswith("http://192.168.1.20:3000/reset?")
+    get_family(db).app_address = "http://100.101.102.103:3000/"
+    db.commit()
+    assert _link(client, parent_headers, dad.id).startswith("http://100.101.102.103:3000/reset?")

@@ -15,7 +15,7 @@ Prerequisite: Projects 1–6 merged into `feat/v2-teen-redesign`, lab e2e green.
 ## Global Constraints
 
 - Site URL: `https://sgtslaughta.github.io/tskfrce/` (repo `sgtslaughta/tskfrce`). The README links to it near the top.
-- Product name in user-facing text: **t@sk4ce**. The old "TaaskMaaster" README content is replaced, not kept.
+- Product name in user-facing text: **t@sk4ce**. The old pre-v2 README content is replaced, not kept.
 - Parent-facing copy: plain words, short sentences, no jargon (no "ARP", "nftables", "container", "VLAN" outside the technical section and docs/engineering.md). Every instruction step is one action with what you should see next.
 - Honest limits stated plainly (from the ADR and `docs/routers.md`): a determined kid can get around it (phone hotspot, changing network settings, another device); the app tells the parent when it notices; if the box is off, the internet just works (fails open).
 - Site: one page plus `site/engineering.html`; works at 360 px with no sideways scroll; light and dark (`prefers-color-scheme`); text contrast ≥ 4.5:1; images have alt text; total page weight < 1.5 MB (compress screenshots to WebP/JPEG ≤ 200 KB each); no third-party scripts or trackers.

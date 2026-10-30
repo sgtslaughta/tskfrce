@@ -143,7 +143,7 @@ export const saveUserSettings = (settings: Partial<UserSettings>): void => {
     const currentSettings = getUserSettings();
     const updatedSettings = { ...currentSettings, ...settings };
     
-    setCookie('taaskmaaster_settings', JSON.stringify(updatedSettings), {
+    setCookie('task4ce_settings', JSON.stringify(updatedSettings), {
       days: 365,
       secure: process.env.NODE_ENV === 'production', // Only secure in production
       sameSite: process.env.NODE_ENV === 'production' ? 'None' : 'Lax',
@@ -158,7 +158,7 @@ export const saveUserSettings = (settings: Partial<UserSettings>): void => {
  */
 export const getUserSettings = (): UserSettings => {
   try {
-    const settingsCookie = getCookie('taaskmaaster_settings');
+    const settingsCookie = getCookie('task4ce_settings');
     
     if (settingsCookie) {
       const parsedSettings = JSON.parse(settingsCookie);
@@ -187,7 +187,7 @@ export interface LoginState {
 export const saveLoginState = (userData: LoginState & { token?: unknown }): void => {
   try {
     const { token, ...safe } = userData;
-    setCookie('taaskmaaster_user', JSON.stringify(safe), { days: 30, sameSite: 'Lax' });
+    setCookie('task4ce_user', JSON.stringify(safe), { days: 30, sameSite: 'Lax' });
   } catch (error) {
     console.error('Failed to save login state:', error);
   }
@@ -199,7 +199,7 @@ export const saveLoginState = (userData: LoginState & { token?: unknown }): void
  */
 export const getLoginState = (): LoginState | null => {
   try {
-    const loginCookie = getCookie('taaskmaaster_user');
+    const loginCookie = getCookie('task4ce_user');
 
     if (loginCookie) {
       const parsed = JSON.parse(loginCookie);
@@ -219,7 +219,7 @@ export const getLoginState = (): LoginState | null => {
  * @description Clear login state
  */
 export const clearLoginState = (): void => {
-  deleteCookie('taaskmaaster_user');
+  deleteCookie('task4ce_user');
 };
 
 /**

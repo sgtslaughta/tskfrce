@@ -90,7 +90,7 @@ test('dot segments are refused', async () => {
 test('forwards bearer auth but never browser cookies', async () => {
   const fetchMock = jest.fn(async (..._a: any[]) => fakeResp(200, '{}', 'application/json'));
   (global as any).fetch = fetchMock;
-  await handler(mockReq('GET', '/api/proxy/today', '', { authorization: 'Bearer t', cookie: 'taaskmaaster_user=x' }), mockRes());
+  await handler(mockReq('GET', '/api/proxy/today', '', { authorization: 'Bearer t', cookie: 'task4ce_user=x' }), mockRes());
   const sent = (fetchMock.mock.calls[0] as any[])[1].headers;
   expect(sent.authorization).toBe('Bearer t');
   expect(sent.cookie).toBeUndefined();

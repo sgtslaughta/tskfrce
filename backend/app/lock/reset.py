@@ -1,6 +1,6 @@
 """Chore day: when the family's day rolls over (reset time, family time zone)."""
 
-from datetime import date, datetime, time
+from datetime import date, datetime, time, timedelta
 
 from app.lock.schedule import local_now
 from app.models.family import FamilySettings
@@ -19,5 +19,9 @@ def chore_day(fam: FamilySettings) -> date | None:
 
 
 def current_chore_day(fam: FamilySettings, now_utc: datetime) -> date:
-    """last_reset_date, or local today on a fresh install."""
-    return fam.last_reset_date or local_now(fam.timezone, now_utc).date()
+    """last_reset_date, or on a fresh install the day the last reset time fell on."""
+    if fam.last_reset_date:
+        return fam.last_reset_date
+    now = local_now(fam.timezone, now_utc)
+    before_reset = now.time() < time.fromisoformat(fam.reset_time)
+    return now.date() - timedelta(days=before_reset)

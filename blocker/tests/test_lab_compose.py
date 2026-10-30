@@ -92,7 +92,6 @@ def test_backend(cfg):
     assert "volumes" in b and "/app/data" in b["volumes"]
     assert list(b["networks"]) == ["lab"]
     assert b["environment"]["TRUSTED_HOSTS"] == "*"
-    assert b["environment"]["DISABLE_RATE_LIMITING"] == "true"
     assert b["networks"]["lab"]["ipv4_address"] == "10.99.0.3"
     assert b["environment"]["INTERNAL_TOKEN"] == "labtoken"
     assert b["environment"]["BLOCKER_URL"] == "http://10.99.0.4:7777"
